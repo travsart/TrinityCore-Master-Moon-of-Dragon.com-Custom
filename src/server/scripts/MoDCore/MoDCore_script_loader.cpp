@@ -11,9 +11,11 @@
 
 /* ######### Continents ######## > */
 void Add_MoDCore_ShadowlandsScripts();
+void Add_MoDCore_EasternKingdomsScripts();
 
 void AddMoDCoreScripts()
 {
 	Add_MoDCore_ShadowlandsScripts();
+	Add_MoDCore_EasternKingdomsScripts();
 }
 
