@@ -102,6 +102,7 @@
 #include "PoolMgr.h"
 #include "PetitionMgr.h"
 #include "PhasingHandler.h"
+#include "PlayerChoice.h"
 #include "QueryCallback.h"
 #include "QueryHolder.h"
 #include "QuestDef.h"
@@ -29786,30 +29787,43 @@ void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
 
     PlayerTalkClass->GetInteractionData().Reset();
     PlayerTalkClass->GetInteractionData().SourceGuid = sender;
-    PlayerTalkClass->GetInteractionData().PlayerChoiceId = uint32(choiceId);
+    PlayerTalkClass->GetInteractionData().SetPlayerChoice(choiceId);
 
     WorldPackets::Quest::DisplayPlayerChoice displayPlayerChoice;
     displayPlayerChoice.SenderGUID = sender;
     displayPlayerChoice.ChoiceID = choiceId;
     displayPlayerChoice.UiTextureKitID = playerChoice->UiTextureKitId;
     displayPlayerChoice.SoundKitID = playerChoice->SoundKitId;
+    displayPlayerChoice.CloseUISoundKitID = playerChoice->CloseSoundKitId;
+    if (playerChoice->Duration > 0s)
+    {
+        SystemTimePoint expireTime = GameTime::GetSystemTime() + playerChoice->Duration;
+        PlayerTalkClass->GetInteractionData().GetPlayerChoice()->SetExpireTime(expireTime);
+        displayPlayerChoice.ExpireTime = expireTime;
+    }
+
     displayPlayerChoice.Question = playerChoice->Question;
     if (playerChoiceLocale)
         ObjectMgr::GetLocaleString(playerChoiceLocale->Question, locale, displayPlayerChoice.Question);
 
-    displayPlayerChoice.Responses.resize(playerChoice->Responses.size());
-    displayPlayerChoice.InfiniteRange = false;
+    displayPlayerChoice.Responses.reserve(playerChoice->Responses.size());
+    displayPlayerChoice.InfiniteRange = playerChoice->InfiniteRange;
     displayPlayerChoice.HideWarboardHeader = playerChoice->HideWarboardHeader;
     displayPlayerChoice.KeepOpenAfterChoice = playerChoice->KeepOpenAfterChoice;
+    displayPlayerChoice.ShowChoicesAsList = playerChoice->ShowChoicesAsList;
+    displayPlayerChoice.ForceDontShowChoicesAsList = playerChoice->ForceDontShowChoicesAsList;
 
-    for (std::size_t i = 0; i < playerChoice->Responses.size(); ++i)
+    for (std::size_t i = 0; i < playerChoice->Responses.size() && (!playerChoice->MaxResponses || displayPlayerChoice.Responses.size() < *playerChoice->MaxResponses); ++i)
     {
         PlayerChoiceResponse const& playerChoiceResponseTemplate = playerChoice->Responses[i];
-        WorldPackets::Quest::PlayerChoiceResponse& playerChoiceResponse = displayPlayerChoice.Responses[i];
+        if (!sConditionMgr->IsObjectMeetingPlayerChoiceResponseConditions(choiceId, playerChoiceResponseTemplate.ResponseId, this))
+            continue;
+
+        WorldPackets::Quest::PlayerChoiceResponse& playerChoiceResponse = displayPlayerChoice.Responses.emplace_back();
         playerChoiceResponse.ResponseID = playerChoiceResponseTemplate.ResponseId;
-        playerChoiceResponse.ResponseIdentifier = playerChoiceResponseTemplate.ResponseIdentifier;
+        playerChoiceResponse.ResponseIdentifier = PlayerTalkClass->GetInteractionData().AddPlayerChoiceResponse(playerChoiceResponseTemplate.ResponseId);
         playerChoiceResponse.ChoiceArtFileID = playerChoiceResponseTemplate.ChoiceArtFileId;
-        playerChoiceResponse.Flags = playerChoiceResponseTemplate.Flags;
+        playerChoiceResponse.Flags = playerChoiceResponseTemplate.Flags.AsUnderlyingType();
         playerChoiceResponse.WidgetSetID = playerChoiceResponseTemplate.WidgetSetID;
         playerChoiceResponse.UiTextureAtlasElementID = playerChoiceResponseTemplate.UiTextureAtlasElementID;
         playerChoiceResponse.SoundKitID = playerChoiceResponseTemplate.SoundKitID;
@@ -29845,44 +29859,31 @@ void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
             playerChoiceResponse.Reward->HonorPointCount = playerChoiceResponseTemplate.Reward->HonorPointCount;
             playerChoiceResponse.Reward->Money = playerChoiceResponseTemplate.Reward->Money;
             playerChoiceResponse.Reward->Xp = playerChoiceResponseTemplate.Reward->Xp;
-            for (PlayerChoiceResponseRewardItem const& item : playerChoiceResponseTemplate.Reward->Items)
+
+            auto fillRewardItems = []<typename Src>(std::vector<Src> const& src, std::vector<WorldPackets::Quest::PlayerChoiceResponseRewardEntry>& dest)
             {
-                playerChoiceResponse.Reward->Items.emplace_back();
-                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
-                rewardEntry.Item.ItemID = item.Id;
-                rewardEntry.Quantity = item.Quantity;
-                if (!item.BonusListIDs.empty())
+                dest.resize(src.size());
+                for (std::size_t j = 0; j < src.size(); ++j)
                 {
-                    rewardEntry.Item.ItemBonus.emplace();
-                    rewardEntry.Item.ItemBonus->BonusListIDs = item.BonusListIDs;
+                    Src const& rewardEntryTemplate = src[j];
+                    WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = dest[j];
+                    rewardEntry.Item.ItemID = rewardEntryTemplate.Id;
+                    rewardEntry.Quantity = rewardEntryTemplate.Quantity;
+                    if constexpr (std::is_same_v<Src, PlayerChoiceResponseRewardItem>)
+                    {
+                        if (!rewardEntryTemplate.BonusListIDs.empty())
+                        {
+                            rewardEntry.Item.ItemBonus.emplace();
+                            rewardEntry.Item.ItemBonus->BonusListIDs = rewardEntryTemplate.BonusListIDs;
+                        }
+                    }
                 }
-            }
-            for (PlayerChoiceResponseRewardEntry const& currency : playerChoiceResponseTemplate.Reward->Currency)
-            {
-                playerChoiceResponse.Reward->Items.emplace_back();
-                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
-                rewardEntry.Item.ItemID = currency.Id;
-                rewardEntry.Quantity = currency.Quantity;
-            }
-            for (PlayerChoiceResponseRewardEntry const& faction : playerChoiceResponseTemplate.Reward->Faction)
-            {
-                playerChoiceResponse.Reward->Items.emplace_back();
-                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
-                rewardEntry.Item.ItemID = faction.Id;
-                rewardEntry.Quantity = faction.Quantity;
-            }
-            for (PlayerChoiceResponseRewardItem const& item : playerChoiceResponseTemplate.Reward->ItemChoices)
-            {
-                playerChoiceResponse.Reward->ItemChoices.emplace_back();
-                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->ItemChoices.back();
-                rewardEntry.Item.ItemID = item.Id;
-                rewardEntry.Quantity = item.Quantity;
-                if (!item.BonusListIDs.empty())
-                {
-                    rewardEntry.Item.ItemBonus.emplace();
-                    rewardEntry.Item.ItemBonus->BonusListIDs = item.BonusListIDs;
-                }
-            }
+            };
+
+            fillRewardItems(playerChoiceResponseTemplate.Reward->Items, playerChoiceResponse.Reward->Items);
+            fillRewardItems(playerChoiceResponseTemplate.Reward->Currency, playerChoiceResponse.Reward->Currencies);
+            fillRewardItems(playerChoiceResponseTemplate.Reward->Faction, playerChoiceResponse.Reward->Factions);
+            fillRewardItems(playerChoiceResponseTemplate.Reward->ItemChoices, playerChoiceResponse.Reward->ItemChoices);
         }
 
         playerChoiceResponse.RewardQuestID = playerChoiceResponseTemplate.RewardQuestID;
