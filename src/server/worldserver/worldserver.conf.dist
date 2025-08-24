@@ -4424,3 +4424,22 @@ Load.Locales = 1
 
 #
 ###################################################################################################
+
+# SoloCraft Module
+SoloCraft.Enabled = 1
+
+# To what group size should solo/small group be "raised"?
+SoloCraft.TargetGroupSize = 5
+
+# Subfunctions
+SoloCraft.ScaleHealth = 1          # Increase creature HP at the start of battle
+SoloCraft.ScaleDamageDealt = 1     # Player -> NPC multiply damage
+SoloCraft.ScaleDamageTaken = 1     # NPC -> Divide player damage
+
+# Scope
+SoloCraft.OnlyInInstances = 1      # Dungeons/Scenarios only
+SoloCraft.IgnoreRaids = 0          # 0 = Exclude raids
+
+# Limits/Debug
+SoloCraft.MaxScale = 10.0
+SoloCraft.Debug = 0
