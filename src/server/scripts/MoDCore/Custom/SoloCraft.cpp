@@ -478,7 +478,7 @@ public:
 
         if (classes.find(player->GetClass()) == classes.end())
             return classBalance;
-        else if (classes[player->GetClass()] >= 0 && classes[player->GetClass()] <= 100)
+        else if (classes[player->GetClass()] <= 100)
             return classes[player->GetClass()];
         else
             return classBalance;
