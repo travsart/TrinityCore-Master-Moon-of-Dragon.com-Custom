@@ -524,7 +524,7 @@ public:
             SoloCraftXPMod = 1.0;
 
             for (uint32 i = STAT_STRENGTH; i < MAX_STATS; ++i)
-                player->ApplyStatPctModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, difficulty * StatsMultPct);
+                player->ApplyStatPctModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, 100.f / (1.f + float(difficulty * StatsMultPct) / 100.f) - 100.f);
 
             if (player->HasPlayerFlag(PLAYER_FLAGS_NO_XP_GAIN) && !SolocraftNoXPFlag)
                 player->RemovePlayerFlag(PLAYER_FLAGS_NO_XP_GAIN);
