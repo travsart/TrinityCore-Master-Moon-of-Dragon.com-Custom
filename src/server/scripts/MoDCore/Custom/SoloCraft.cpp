@@ -16,6 +16,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 bool SoloCraftEnable = 1;
 bool SoloCraftAnnounceModule = 1;
