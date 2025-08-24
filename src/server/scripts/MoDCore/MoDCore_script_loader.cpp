@@ -12,10 +12,12 @@
 /* ######### Continents ######## > */
 void Add_MoDCore_ShadowlandsScripts();
 void Add_MoDCore_EasternKingdomsScripts();
+void Add_MoDCore_SoloCraftScripts();
 
 void AddMoDCoreScripts()
 {
 	Add_MoDCore_ShadowlandsScripts();
 	Add_MoDCore_EasternKingdomsScripts();
+    Add_MoDCore_SoloCraftScripts();
 }
 

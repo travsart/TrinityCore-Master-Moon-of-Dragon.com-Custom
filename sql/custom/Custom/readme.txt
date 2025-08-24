@@ -4,10 +4,6 @@ Otherwise the Server will crash because table not found.
 
 NPC Reward Shop
 Reward System
-Solocraft
-
-
-
 
 
 
@@ -24,3 +20,11 @@ NPC Promotion
 NPC Reward Shop
 NPC Skip Starting
 Skip DeathKnight Starter
+
+
+
+
+
+
+IN CORE IMPLEMENTED:
+SOLOCRAFT
