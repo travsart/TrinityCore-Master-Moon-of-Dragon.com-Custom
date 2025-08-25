@@ -640,7 +640,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (!EventActive)
                 return;
@@ -707,7 +707,7 @@ public:
             tAttack = urand(1700, 2400);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
             {
@@ -785,7 +785,7 @@ public:
             willCastEnrage = urand(0, 1);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (me->GetPositionX() == -1611.40f && me->GetPositionY() == 1498.49f) // I was spawned in location 1
             {
@@ -914,7 +914,7 @@ public:
             willCastEnrage = urand(0, 1);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (me->GetPositionX() == -1732.81f && me->GetPositionY() == 1526.34f) // I was spawned in location 1
             {
@@ -1043,7 +1043,7 @@ public:
             willCastEnrage = urand(0, 1);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (me->GetPositionX() == -1618.86f && me->GetPositionY() == 1505.68f) // I was spawned in location 1 on NW Rooftop
             {
@@ -1172,7 +1172,7 @@ public:
             willCastEnrage = urand(0, 1);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (me->GetPositionX() == -1732.81f && me->GetPositionY() == 1526.34f) // I was just spawned
             {
