@@ -724,7 +724,7 @@ public:
                     switch (urand(0, 2)) // Perform one of 3 random attacks
                     {
                     case 0: // Do Left Hook
-                        if (me->GetOrientation() > 2.0f && me->GetOrientation() < 3.0f || me->GetOrientation() > 5.0f && me->GetOrientation() < 6.0f)
+                        if ((me->GetOrientation() > 2.0f && me->GetOrientation() < 3.0f) || (me->GetOrientation() > 5.0f && me->GetOrientation() < 6.0f))
                             // If Orientation is outside of these ranges, there is a possibility the knockback could knock worgens off the platform
                             // After which, Crowley would chase
                         {
