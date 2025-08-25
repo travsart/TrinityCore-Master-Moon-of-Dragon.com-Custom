@@ -81,7 +81,7 @@ public:
                 me->SetUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
         }
 
-        void JustEngagedWith(Unit* /*who*/) {}
+        void JustEngagedWith(Unit* /*who*/) override {}
 
         void AttackedBy(Unit* pAttacker)
         {

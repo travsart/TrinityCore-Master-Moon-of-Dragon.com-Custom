@@ -569,7 +569,7 @@ public:
                     case 17:
                         if (Player* player = ObjectAccessor::GetPlayer(*me, m_playerGUID))
                         {
-                            player->GetScheduler().Schedule(1s, [this, player](TaskContext /*context*/)
+                            player->GetScheduler().Schedule(1s, [player](TaskContext /*context*/)
                                 {
                                     player->CastSpell(player, SPELL_CONVERSATION_TIDES_OF_WAR_POST_MOVIE, true);
                                 });
