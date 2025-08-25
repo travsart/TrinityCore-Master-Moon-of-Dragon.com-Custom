@@ -602,22 +602,25 @@ private:
         if (!charmer)
             return;
 
+        // Iterator über alle Positionen und Zauber ausführen
         for (uint8 i = 0; i < MAX_TARGET_POSITIONS; i++)
         {
             Position pos = LawnMowerPositions[i];
-          //  charmer->CastSpell({ pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), LawnmowerOrientation }, SPELL_CREATE_LAWMOWER, true);
+            // Zauber auf die Position anwenden
+            charmer->CastSpell(nullptr, SPELL_CREATE_LAWMOWER, true);  // ggf. hier anpassen
 
             pos = GoalStalkerPositions[i];
-           // charmer->CastSpell({ pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), GoalStalkerOrientation }, SPELL_CREATE_GOAL_STALKER, true);
+            charmer->CastSpell(nullptr, SPELL_CREATE_GOAL_STALKER, true);  // ggf. hier anpassen
 
             pos = SpitterTargetPositions[i];
-          //  charmer->CastSpell({ pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), SpitterTargetOrientation }, SPELL_CREATE_SPITTER_TARGET, true);
+            charmer->CastSpell(nullptr, SPELL_CREATE_SPITTER_TARGET, true);  // ggf. hier anpassen
         }
 
+        // Für leere Spots
         for (uint8 i = 0; i < MAX_EMPTY_SPOT_POSITIONS; i++)
         {
             Position pos = EmptySpotPositions[i];
-           // charmer->CastSpell({ pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), EmptySpotOrientation }, SPELL_CREATE_EMPTY_SPOT, true);
+            charmer->CastSpell(nullptr, SPELL_CREATE_EMPTY_SPOT, true);  // ggf. hier anpassen
         }
     }
 
