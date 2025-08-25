@@ -518,7 +518,6 @@ struct npc_brazie_the_bonatist_vehicle : public VehicleAI
 
                     break;
                 }
-
                 case EVENT_ANNOUNCE_GOOD_JOB:
                     if (Player* player = GetPlayer())
                         player->Whisper(SAY_ANNOUNCE_TUTORIAL_2, player, true);
@@ -1173,8 +1172,6 @@ struct npc_brazie_vehicle_notifier : public ScriptedAI
 
 class spell_brazie_summon_plant : public SpellScript
 {
-    PrepareSpellScript(spell_brazie_summon_plant);
-
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo(
@@ -1228,8 +1225,6 @@ class spell_brazie_summon_plant : public SpellScript
 
 class spell_brazie_highlight : public SpellScript
 {
-    PrepareSpellScript(spell_brazie_highlight);
-
     void SetDestPosition(SpellEffIndex /*effIndex*/)
     {
         const_cast<WorldLocation*>(GetExplTargetDest())->Relocate(EmptySpotPositions[0]);
@@ -1244,8 +1239,6 @@ class spell_brazie_highlight : public SpellScript
 
 class spell_brazie_create_random_seed_sack : public SpellScript
 {
-    PrepareSpellScript(spell_brazie_create_random_seed_sack);
-
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo({ SPELL_CREATE_RANDOM_FREEZYA_SACK });
@@ -1267,8 +1260,6 @@ class spell_brazie_create_random_seed_sack : public SpellScript
 
 class spell_brazie_spit : public SpellScript
 {
-    PrepareSpellScript(spell_brazie_spit);
-
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
         return ValidateSpellInfo(
