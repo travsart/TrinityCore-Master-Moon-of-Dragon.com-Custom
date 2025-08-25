@@ -460,27 +460,30 @@ struct npc_brazie_the_bonatist_vehicle : public VehicleAI
                 {
                     uint8 randomPositionIndex = urand(0, MAX_EMPTY_SPOT_POSITIONS - 1);
                     Position pos = EmptySpotPositions[randomPositionIndex];
-                    float angle = frand(0, float(M_PI * 2));
-                    float x = pos.GetPositionX() + cos(angle) * 3;
-                    float y = pos.GetPositionY() + sin(angle) * 3;
 
-               //     if (Player* player = GetPlayer())
-                     //   player->CastSpell({ x, y, pos.GetPositionZ() + 50.0f }, SPELL_CREATE_RANDOM_SUN_POWER, true);
+                    // Directly use the Position object, no need for angle, x, and y calculations
+                    Position targetPos(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ() + 50.0f);  // Adding height
+
+                    // Create CastSpellTargetArg using the position
+                    CastSpellTargetArg targetArgs(targetPos);
+
+                    if (Player* player = GetPlayer())
+                        player->CastSpell(targetArgs, SPELL_CREATE_RANDOM_SUN_POWER, true);  // Cast the spell at the target position
 
                     switch (_currentLevel)
                     {
-                        case LEVEL_TUTORIAL:
-                            _events.Repeat(_timeUntilNextSolarPower);
-                            break;
-                        case LEVEL_1:
-                            if (_timeUntilNextSolarPower == 5s)
-                                _timeUntilNextSolarPower = 10s;
-                            else
-                                _timeUntilNextSolarPower = 5s;
-                            _events.Repeat(_timeUntilNextSolarPower);
-                            break;
-                        default:
-                            break;
+                    case LEVEL_TUTORIAL:
+                        _events.Repeat(_timeUntilNextSolarPower);
+                        break;
+                    case LEVEL_1:
+                        if (_timeUntilNextSolarPower == 5s)
+                            _timeUntilNextSolarPower = 10s;
+                        else
+                            _timeUntilNextSolarPower = 5s;
+                        _events.Repeat(_timeUntilNextSolarPower);
+                        break;
+                    default:
+                        break;
                     }
                     break;
                 }
@@ -490,25 +493,32 @@ struct npc_brazie_the_bonatist_vehicle : public VehicleAI
                     // The tutorial quest only spawns zombies in the center lane
                     uint8 index = _currentLevel == LEVEL_TUTORIAL ? static_cast<uint8>(CENTER_ZOMBIE_LANE_INDEX) : static_cast<uint8>(urand(0, MAX_TARGET_POSITIONS - 1));
                     Position const& pos = SpitterTargetPositions[index];
-                    float angle = pos.GetAbsoluteAngle(GoalStalkerPositions[index]);
 
                     uint32 spellId = 0;
                     switch (eventId)
                     {
-                        case EVENT_CREATE_ZOMBIE:
-                            spellId = SPELL_CREATE_ZOMBIE;
-                            break;
-                        case EVENT_CREATE_GHOUL:
-                            spellId = SPELL_CREATE_GHOUL;
-                            break;
-                        default:
-                            break;
+                    case EVENT_CREATE_ZOMBIE:
+                        spellId = SPELL_CREATE_ZOMBIE;
+                        break;
+                    case EVENT_CREATE_GHOUL:
+                        spellId = SPELL_CREATE_GHOUL;
+                        break;
+                    default:
+                        break;
                     }
 
-                   // if (Player* player = GetPlayer())
-                     //   player->CastSpell({ pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), angle }, spellId, true);
+                    if (Player* player = GetPlayer())
+                    {
+                        // Create CastSpellTargetArg using Position (x, y, z)
+                        CastSpellTargetArg targetArg(pos);
+
+                        // Cast the spell at the target position
+                        player->CastSpell(targetArg, spellId, true);
+                    }
+
                     break;
                 }
+
                 case EVENT_ANNOUNCE_GOOD_JOB:
                     if (Player* player = GetPlayer())
                         player->Whisper(SAY_ANNOUNCE_TUTORIAL_2, player, true);
@@ -910,11 +920,16 @@ struct npc_brazie_spot : public ScriptedAI
                     {
                         uint8 randomPositionIndex = urand(0, MAX_EMPTY_SPOT_POSITIONS - 1);
                         Position pos = EmptySpotPositions[randomPositionIndex];
-                        float angle = frand(0, float(M_PI * 2));
-                        float x = pos.GetPositionX() + cos(angle) * 3;
-                        float y = pos.GetPositionY() + sin(angle) * 3;
 
-                    //    summoner->CastSpell({ x, y, pos.GetPositionZ() + 50.0f }, SPELL_CREATE_RANDOM_SUN_POWER, true);
+                        // Calculate a random angle between 0 and 2*PI
+                        float angle = frand(0, float(M_PI * 2));  // Random angle between 0 and 2*PI
+
+                        // Calculate the new position using angle
+                        float x = pos.GetPositionX() + cos(angle) * 3;  // New X position based on angle
+                        float y = pos.GetPositionY() + sin(angle) * 3;  // New Y position based on angle
+
+                        // Directly use the calculated x, y, and z position for casting the spell
+                        summoner->CastSpell(Position(x, y, pos.GetPositionZ() + 50.0f), SPELL_CREATE_RANDOM_SUN_POWER, true);
                     }
                 }
                 _events.Repeat(17s);
