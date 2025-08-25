@@ -1,9 +1,9 @@
 /*
- * Copyright 2025 GCCore
+ * Copyright 2025 MoDCore <https://moon-of-dragon.com/>
  * 	// Project Zero
  */
  
-// Info: Call all gccore script here.
+// Info: Call all MoDCore script here.
 
 // #################################################### //
 // Add them to Add_MoDCore_NameScripts(){ .. } without void. //

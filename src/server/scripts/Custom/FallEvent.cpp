@@ -1,15 +1,22 @@
-/*******************************************
+/*
+ * Copyright 2025 MoDCore <https://moon-of-dragon.com/>
+ * 	// Project Zero
+ */
+
+ /*******************************************
 * File: FallEvent.cpp
-* Author: TheFrozenThr0ne & CC
+* Author: TheFrozenThr0ne & CG
 * Description: Manages the custom Fall Event
 *              in the game including NPCs,
 *              objects, and event scripts.
 ********************************************/
 
 /* // Condig Statements for worldserver.conf
-* 
+*
+
 FallEvent.Announce = true
 
+*
 */
 
 // Global class for managing the Fall Event
