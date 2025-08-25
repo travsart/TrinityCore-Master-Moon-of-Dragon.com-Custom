@@ -4501,7 +4501,9 @@ SoloCraft.ROGUE = 100
 SoloCraft.SHAMAN = 100
 SoloCraft.WARLOCK = 100
 SoloCraft.WARRIOR = 100
-
+SoloCraft.MONK = 100
+SoloCraft.DEMONHUNTER = 100
+SoloCraft.EVOKER = 100
 
 # XP Gain 
 # This settings will Enable/Disable XP gained while in the current dungeon
@@ -4711,7 +4713,10 @@ Solocraft.HallsOfReflectionH = 5.0
 Solocraft.ChamberOfAspectsRed = 5.0
 Solocraft.ChamberOfAspectsRedH = 5.0
 
+################################################################################################
 # CATA Instances
+################################################################################################
+
 # Blackwing Descent
 Solocraft.BlackwingDescent = 25
 # The Bastion of Twilight
@@ -4725,7 +4730,10 @@ Solocraft.BaradinHold = 25
 # Dragon Soul
 Solocraft.DragonSoul = 25
 
+################################################################################################
 # PANDARIA Instances
+################################################################################################
+
 # Terrace of Endless Spring
 Solocraft.TerraceOfEndlessSpring = 25
 # Mogushan Vaults
@@ -4737,7 +4745,10 @@ Solocraft.ThroneOfThunder = 25
 # Siege of Orgrimmar
 Solocraft.SiegeOfOrgrimmar = 25
 
+################################################################################################
 # WARLORDS Instances
+################################################################################################
+
 # Highmaul
 Solocraft.Highmaul = 25
 # Blackrock Foundry
@@ -4745,7 +4756,10 @@ Solocraft.BlackrockFoundry = 25
 # Hellfire Citadel
 Solocraft.HellfireCitadel = 25
 
+################################################################################################
 # LEGION Instances
+################################################################################################
+
 # The Emerald Nightmare
 Solocraft.TheEmeraldNightmare = 25
 # Trial of Valor
@@ -4757,7 +4771,10 @@ Solocraft.TombOfSargeras = 25
 # Antorus, the Burning Throne
 Solocraft.AntorusTheBurningThrone = 25
 
+################################################################################################
 # BATTLE FOR AZEROTH Instances
+################################################################################################
+
 # Uldir
 Solocraft.Uldir = 25
 # Battle of Dazar'alor
@@ -4769,7 +4786,10 @@ Solocraft.TheEternalPalace = 25
 # Ny'alotha, the Waking City
 Solocraft.NyalothaTheWakingCity = 25
 
+################################################################################################
 # SHADOWLANDS Instances
+################################################################################################
+
 # Castle Nathria
 Solocraft.CastleNathria = 25
 # Sanctum of Domination
@@ -4777,7 +4797,10 @@ Solocraft.SanctumOfDomination = 25
 # Sepulcher of the First Ones
 Solocraft.SepulcherOfTheFirstOnes = 25
 
+################################################################################################
 # DRAGONFLIGHT Instances
+################################################################################################
+
 # Vault of the Incarnates
 Solocraft.VaultOfTheIncarnates = 25
 # Aberrus, the Shadowed Crucible
