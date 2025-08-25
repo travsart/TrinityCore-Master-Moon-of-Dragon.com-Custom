@@ -30895,9 +30895,9 @@ void Player::ForceCompleteQuest(uint32 quest_id)
         }
         case QUEST_OBJECTIVE_MONSTER:
         {
-            if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(obj.ObjectID))
-                for (uint16 z = 0; z < obj.Amount; ++z)
-                    KilledMonsterCredit(obj.ObjectID);
+            // No need for creatureInfo as it's not being used
+            for (uint16 z = 0; z < obj.Amount; ++z)
+                KilledMonsterCredit(obj.ObjectID);
             break;
         }
         case QUEST_OBJECTIVE_GAMEOBJECT:
