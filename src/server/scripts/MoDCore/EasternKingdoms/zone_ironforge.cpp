@@ -94,77 +94,74 @@ public:
                 switch (Phase)
                 {
                 case 0:
-                {
                     Talk(TALK_0);
                     SummonTimer = 1500;
                     Phase++;
-                    break;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 1:
-                {
                     if (Creature* agent = me->FindNearestCreature(NPC_MURADIN, 25.0f, true))
                         agent->AI()->Talk(TALK_0);
 
                     SummonTimer = 2500;
                     Phase++;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 2:
-                {
                     Talk(TALK_1);
                     SummonTimer = 3500;
                     Phase++;
-                    break;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 3:
-                {
                     if (Creature* agent = me->FindNearestCreature(NPC_MURADIN, 25.0f, true))
                         agent->AI()->Talk(TALK_1);
 
                     SummonTimer = 4500;
                     Phase++;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 4:
-                {
                     Talk(TALK_2);
                     SummonTimer = 5500;
                     Phase++;
-                    break;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 5:
-                {
                     if (Creature* agent = me->FindNearestCreature(NPC_MURADIN, 25.0f, true))
                         agent->AI()->Talk(TALK_2);
 
                     SummonTimer = 6500;
                     Phase++;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 6:
-                {
                     Talk(TALK_3);
                     SummonTimer = 7500;
                     Phase++;
-                    break;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 7:
-                {
                     if (Creature* agent = me->FindNearestCreature(NPC_WILDHAMMER, 25.0f, true))
                         agent->AI()->Talk(TALK_0);
 
                     SummonTimer = 8500;
                     Phase++;
-                }
+                    break; // Hier wird der Block verlassen
+
                 case 8:
-                {
                     Talk(TALK_4);
                     Phase++;
-                    break;
-                }
-                default:
-                    break;
-                }
+                    break; // Hier wird der Block verlassen
 
+                default:
+                    break; // Hier wird der Block verlassen
+                }
             }
-            else SummonTimer -= diff;
+            else
+            {
+                SummonTimer -= diff;
+            }
         }
     };
 
