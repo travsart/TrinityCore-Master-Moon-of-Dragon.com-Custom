@@ -584,7 +584,7 @@ public:
         bool EventActive, RunOnce;
         Player* player;
 
-        void Reset()
+        void Reset() override
         {
             EventActive = false;
             RunOnce = true;
@@ -702,7 +702,7 @@ public:
 
         uint32 tAttack;
 
-        void Reset()
+        void Reset() override
         {
             tAttack = urand(1700, 2400);
         }
@@ -777,7 +777,7 @@ public:
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
 
-        void Reset()
+        void Reset() override
         {
             Run = Loc1 = Loc2 = Combat = Jump = false;
             WaypointId = 0;
@@ -906,7 +906,7 @@ public:
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
 
-        void Reset()
+        void Reset() override
         {
             Run = Loc1 = Loc2 = Combat = Jump = false;
             WaypointId = 0;
@@ -1035,7 +1035,7 @@ public:
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Loc1, Loc2, Jump, Combat;
 
-        void Reset()
+        void Reset() override
         {
             Run = Loc1 = Loc2 = Combat = Jump = false;
             WaypointId = 0;
@@ -1164,7 +1164,7 @@ public:
         uint32 WaypointId, willCastEnrage, tEnrage, CommonWPCount;
         bool Run, Jump, Combat;
 
-        void Reset()
+        void Reset() override
         {
             Run = Combat = Jump = false;
             WaypointId = 0;
