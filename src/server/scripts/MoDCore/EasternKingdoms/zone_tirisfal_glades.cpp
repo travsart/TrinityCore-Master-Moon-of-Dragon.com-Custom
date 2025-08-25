@@ -69,7 +69,7 @@ public:
         uint32 m_uiPhaseTimer;
         uint64 m_uiPlayerGUID;
 
-        void Reset()
+        void Reset() override
         {
             m_uiPhase = 0;
             m_uiPhaseTimer = 5000;
