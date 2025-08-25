@@ -433,7 +433,7 @@ public:
 
             me->AI()->Talk(0, player); // Hello again.
 
-            me->AddDelayedEvent(5000, [this, player]() -> void
+            me->AddDelayedEvent(5000, [this]() -> void
                 {
                     me->AI()->Talk(1); //I know the way to Deathknell. Come with me!
                 });

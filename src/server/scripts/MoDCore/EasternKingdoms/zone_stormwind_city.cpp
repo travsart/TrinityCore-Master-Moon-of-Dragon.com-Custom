@@ -1010,7 +1010,7 @@ public:
 
         player->CastSpell(player, 227058, false); //join Broken Shore Scenario
 
-        player->GetScheduler().Schedule(Milliseconds(10000), [this, player](TaskContext /*context*/)
+        player->GetScheduler().Schedule(Milliseconds(10000), [player](TaskContext /*context*/)
             {
                 player->TeleportTo(1460, 445.688f, 2074.756f, 0.154f, 0.1085f);
                 player->RemoveAurasDueToSpell(216356); //scene
