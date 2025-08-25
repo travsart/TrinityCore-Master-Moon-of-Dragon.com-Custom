@@ -3774,6 +3774,22 @@ std::string WorldObject::GetDebugInfo() const
     return sstr.str();
 }
 
+std::list<Creature*> WorldObject::FindNearestCreatures(uint32 entry, float range) const
+{
+    std::list<Creature*> creatureList;
+    GetCreatureListWithEntryInGrid(creatureList, entry, range);
+    return creatureList;
+}
+
+std::list<Creature*> WorldObject::FindNearestCreatures(std::list<uint32> entrys, float range) const
+{
+    std::list<Creature*> creatureList;
+
+    for (std::list<uint32>::iterator itr = entrys.begin(); itr != entrys.end(); ++itr)
+        GetCreatureListWithEntryInGrid(creatureList, (*itr), range);
+    return creatureList;
+}
+
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>&, uint32, float) const;
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::deque<GameObject*>&, uint32, float) const;
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::vector<GameObject*>&, uint32, float) const;

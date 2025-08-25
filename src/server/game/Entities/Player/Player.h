@@ -1721,6 +1721,9 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         void UpdateQuestObjectiveProgress(QuestObjectiveType objectiveType, int32 objectId, int64 addCount, ObjectGuid victimGuid = ObjectGuid::Empty,
             std::vector<QuestObjective const*>* updatedObjectives = nullptr, std::function<bool(QuestObjective const*)> const* objectiveFilter = nullptr);
         bool HasQuestForItem(uint32 itemId) const;
+        void ForceCompleteQuest(uint32 quest_id);
+        int32 GetQuestObjectiveProgress(uint32 questId, int8 storageIndex) const;
+        void PlayConversation(uint32 conversationId);
         QuestObjective const* GetQuestObjectiveForItem(uint32 itemId, bool onlyIncomplete) const;
         bool HasQuestForGO(int32 goId) const;
         bool HasQuestForCurrency(uint32 currencyId) const;

@@ -30869,6 +30869,94 @@ uint32 TraitMgr::PlayerDataAccessor::GetPrimarySpecialization() const
     return AsUnderlyingType(_player->GetPrimarySpecialization());
 }
 
+void Player::ForceCompleteQuest(uint32 quest_id)
+{
+    Quest const* quest = sObjectMgr->GetQuestTemplate(quest_id);
+    if (!quest)
+        return;
+
+    for (uint32 i = 0; i < quest->Objectives.size(); ++i)
+    {
+        QuestObjective const& obj = quest->Objectives[i];
+
+        switch (obj.Type)
+        {
+        case QUEST_OBJECTIVE_ITEM:
+        {
+            uint32 curItemCount = GetItemCount(obj.ObjectID, true);
+            ItemPosCountVec dest;
+            uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, obj.ObjectID, obj.Amount - curItemCount);
+            if (msg == EQUIP_ERR_OK)
+            {
+                Item* item = StoreNewItem(dest, obj.ObjectID, true);
+                SendNewItem(item, obj.Amount - curItemCount, true, false);
+            }
+            break;
+        }
+        case QUEST_OBJECTIVE_MONSTER:
+        {
+            if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(obj.ObjectID))
+                for (uint16 z = 0; z < obj.Amount; ++z)
+                    KilledMonsterCredit(obj.ObjectID);
+            break;
+        }
+        case QUEST_OBJECTIVE_GAMEOBJECT:
+        {
+            for (uint16 z = 0; z < obj.Amount; ++z)
+                KillCreditGO(obj.ObjectID);
+            break;
+        }
+        case QUEST_OBJECTIVE_MIN_REPUTATION:
+        {
+            uint32 curRep = GetReputationMgr().GetReputation(obj.ObjectID);
+            if (curRep < uint32(obj.Amount))
+                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
+                    GetReputationMgr().SetReputation(factionEntry, obj.Amount);
+            break;
+        }
+        case QUEST_OBJECTIVE_MAX_REPUTATION:
+        {
+            uint32 curRep = GetReputationMgr().GetReputation(obj.ObjectID);
+            if (curRep > uint32(obj.Amount))
+                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
+                    GetReputationMgr().SetReputation(factionEntry, obj.Amount);
+            break;
+        }
+        case QUEST_OBJECTIVE_MONEY:
+        {
+            ModifyMoney(obj.Amount);
+            break;
+        }
+        }
+    }
+
+    if (GetQuestStatus(quest_id) != QUEST_STATUS_COMPLETE)
+        CompleteQuest(quest_id);
+}
+
+// This function gets the completed quest objective count for player by questid and storageindex of the quest objective
+int32 Player::GetQuestObjectiveProgress(uint32 questId, int8 storageIndex) const
+{
+    Quest const* qInfo = sObjectMgr->GetQuestTemplate(questId);
+    if (!qInfo)
+        return 0;
+
+    uint16 slot = FindQuestSlot(questId);
+    if (slot >= MAX_QUEST_LOG_SIZE)
+        return 0;
+
+    for (QuestObjective const& obj : qInfo->GetObjectives())
+        if (obj.StorageIndex == storageIndex)
+            return GetQuestSlotObjectiveData(slot, obj);
+
+    return 0;
+}
+
+void Player::PlayConversation(uint32 conversationId)
+{
+    Conversation::CreateConversation(conversationId, this, GetPosition(), { GetGUID() });
+}
+
 void Player::RequestSpellCast(std::unique_ptr<SpellCastRequest> castRequest)
 {
     // We are overriding an already existing spell cast request so inform the client that the old cast is being replaced

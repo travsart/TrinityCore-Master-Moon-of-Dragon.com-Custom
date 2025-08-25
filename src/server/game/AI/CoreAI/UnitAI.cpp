@@ -434,3 +434,12 @@ std::string UnitAI::GetDebugInfo() const
          << "Me: " << (me ? me->GetDebugInfo() : "NULL");
     return sstr.str();
 }
+
+void UnitAI::DoCastRandom(uint32 spellId, float dist, bool triggered, int32 aura, uint32 position)
+{
+    if (me->HasUnitState(UNIT_STATE_CASTING) && !triggered)
+        return;
+
+    if (Unit* target = SelectTarget(SelectTargetMethod::Random, position, dist, true, true, aura))
+        me->CastSpell(target, spellId, triggered);
+}
