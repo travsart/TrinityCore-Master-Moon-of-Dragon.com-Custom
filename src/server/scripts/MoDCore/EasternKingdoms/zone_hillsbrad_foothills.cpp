@@ -232,11 +232,6 @@ Position const EmptySpotPositions[MAX_EMPTY_SPOT_POSITIONS]
     { -49.4618f,  237.34f,   53.35883f }
 };
 
-float const EmptySpotOrientation = 6.143559f;
-float const LawnmowerOrientation = 6.178465f;
-float const SpitterTargetOrientation = 6.232892f;
-float const GoalStalkerOrientation = 6.178465f;
-
 Position const SolarPowerJumpPos    = { -64.24827f, 181.3004f, 53.97961f };
 Position const FreezyaSeedSummonPos = { -49.3594f,  220.245f,  56.35883f, 0.01745329f };
 Position const FreezyaSeedJumpPos   = { -116.2847f, 216.7865f, 53.2755f };
