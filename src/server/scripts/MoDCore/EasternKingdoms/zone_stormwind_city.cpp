@@ -85,7 +85,7 @@ public:
 
                 if (player->hasQuest(QUEST_A_CHILLING_SUMMONS))
                 {
-                    player->GetScheduler().Schedule(Milliseconds(10000), [this, player](TaskContext /*context*/)
+                    player->GetScheduler().Schedule(Milliseconds(10000), [player](TaskContext /*context*/)
                         {
                             player->PlayConversation(16006);
                         });
@@ -102,7 +102,7 @@ public:
 
                 if (player->hasQuest(QUEST_A_CHILLING_SUMMONS))
                 {
-                    player->GetScheduler().Schedule(Milliseconds(10000), [this, player](TaskContext /*context*/)
+                    player->GetScheduler().Schedule(Milliseconds(10000), [player](TaskContext /*context*/)
                         {
                             player->PlayConversation(16007);
                         });
