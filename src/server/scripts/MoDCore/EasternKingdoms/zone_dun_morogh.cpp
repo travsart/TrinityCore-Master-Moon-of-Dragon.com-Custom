@@ -384,70 +384,54 @@ struct npc_sergeant_flinthammer : public ScriptedAI
             Creature* agent;
             if (SummonTimer < diff)
             {
-
                 if (Player* player = ObjectAccessor::GetPlayer(*me, PlayerGUID))
                 {
                     switch (Phase)
                     {
                     case 0:
-                    {
                         Talk(TALK_0);
                         SummonTimer = 3;
                         Phase++;
                         break;
-                    }
                     case 1:
-                    {
                         agent = me->FindNearestCreature(NPC_AMBERSTILL_MOUNTAINEER, 25.0f, true);
                         agent->AI()->Talk(TALK_0);
                         SummonTimer = 4;
                         Phase++;
-                    }
+                        break;
                     case 2:
-                    {
                         Talk(TALK_1);
                         SummonTimer = 5;
                         Phase++;
                         break;
-                    }
                     case 3:
-                    {
                         Talk(TALK_2);
                         SummonTimer = 6;
                         Phase++;
                         break;
-                    }
                     case 4:
-                    {
                         agent = me->FindNearestCreature(NPC_AMBERSTILL_MOUNTAINEER, 25.0f, true);
                         agent->AI()->Talk(TALK_1);
                         SummonTimer = 7;
                         Phase++;
-                    }
+                        break;
                     case 5:
-                    {
                         Talk(TALK_3);
                         SummonTimer = 8;
                         Phase++;
                         break;
-                    }
                     case 6:
-                    {
                         SummonSpawns();
                         SummonTimer = 9;
                         Phase++;
                         break;
-                    }
                     case 7:
-                    {
                         agent = me->FindNearestCreature(NPC_FROSTMANE_RAIDER, 25.0f, true);
                         agent->AI()->Talk(TALK_0);
                         SummonTimer = 10;
                         Phase++;
-                    }
-
+                        break;
                     case 8:
-                    {
                         for (ObjectGuid trollGUID : TrollGUIDs)
                         {
                             if (Creature* Troll = ObjectAccessor::GetCreature(*me, trollGUID))
@@ -459,9 +443,7 @@ struct npc_sergeant_flinthammer : public ScriptedAI
                         SummonTimer = 11;
                         Phase++;
                         break;
-                    }
                     case 9:
-                    {
                         for (ObjectGuid trollGUID : TrollGUIDs)
                             if (Creature* Troll = ObjectAccessor::GetCreature(*me, trollGUID))
                                 Troll->Attack(player, true);
@@ -469,21 +451,19 @@ struct npc_sergeant_flinthammer : public ScriptedAI
                         SummonTimer = 20;
                         Phase++;
                         break;
-                    }
                     case 10:
-                    {
                         if (Player* player = ObjectAccessor::GetPlayer(*me, PlayerGUID))
                             player->KilledMonsterCredit(NPC_AMBERSTILL_RAID_CONTROLLER, PlayerGUID);
                         SummonTimer = 30;
                         break;
-                    }
 
                     default:
                         break;
                     }
                 }
             }
-            else SummonTimer -= diff;
+            else
+                SummonTimer -= diff;
         }
 };
 
