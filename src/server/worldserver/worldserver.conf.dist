@@ -4711,6 +4711,78 @@ Solocraft.HallsOfReflectionH = 5.0
 Solocraft.ChamberOfAspectsRed = 5.0
 Solocraft.ChamberOfAspectsRedH = 5.0
 
+# CATA Instances
+# Blackwing Descent
+Solocraft.BlackwingDescent = 25
+# The Bastion of Twilight
+Solocraft.TheBastionOfTwilight = 25
+# Firelands
+Solocraft.Firelands = 25
+# Throne of the Four Winds
+Solocraft.ThroneOfTheFourWinds = 25
+# Baradin Hold
+Solocraft.BaradinHold = 25
+# Dragon Soul
+Solocraft.DragonSoul = 25
+
+# PANDARIA Instances
+# Terrace of Endless Spring
+Solocraft.TerraceOfEndlessSpring = 25
+# Mogushan Vaults
+Solocraft.MogushanVaults = 25
+# Heart of Fear
+Solocraft.HeartOfFear = 25
+# Throne of Thunder
+Solocraft.ThroneOfThunder = 25
+# Siege of Orgrimmar
+Solocraft.SiegeOfOrgrimmar = 25
+
+# WARLORDS Instances
+# Highmaul
+Solocraft.Highmaul = 25
+# Blackrock Foundry
+Solocraft.BlackrockFoundry = 25
+# Hellfire Citadel
+Solocraft.HellfireCitadel = 25
+
+# LEGION Instances
+# The Emerald Nightmare
+Solocraft.TheEmeraldNightmare = 25
+# Trial of Valor
+Solocraft.TrialOfValor = 25
+# The Nighthold
+Solocraft.Nighthold = 25
+# Tomb of Sargeras
+Solocraft.TombOfSargeras = 25
+# Antorus, the Burning Throne
+Solocraft.AntorusTheBurningThrone = 25
+
+# BATTLE FOR AZEROTH Instances
+# Uldir
+Solocraft.Uldir = 25
+# Battle of Dazar'alor
+Solocraft.BattleOfDazaralor = 25
+# Crucible of Storms
+Solocraft.CrucibleOfStorms = 25
+# The Eternal Palace
+Solocraft.TheEternalPalace = 25
+# Ny'alotha, the Waking City
+Solocraft.NyalothaTheWakingCity = 25
+
+# SHADOWLANDS Instances
+# Castle Nathria
+Solocraft.CastleNathria = 25
+# Sanctum of Domination
+Solocraft.SanctumOfDomination = 25
+# Sepulcher of the First Ones
+Solocraft.SepulcherOfTheFirstOnes = 25
+
+# DRAGONFLIGHT Instances
+# Vault of the Incarnates
+Solocraft.VaultOfTheIncarnates = 25
+# Aberrus, the Shadowed Crucible
+Solocraft.AberrusTheShadowedCrucible = 25
+
 
 ################################################################################################
 #Player Level Thresholds 
@@ -4865,6 +4937,99 @@ Solocraft.QuarryOfTears.Level = 78
 Solocraft.HallsOfReflection.Level = 78
 # The Ruby Sanctum
 Solocraft.ChamberOfAspectsRed.Level = 80
+
+################################################################################################
+#CATA Instances - Base Level
+################################################################################################
+
+# Blackwing Descent
+Solocraft.BlackwingDescent.Level = 80
+# The Bastion of Twilight
+Solocraft.TheBastionOfTwilight.Level = 80
+# Firelands
+Solocraft.Firelands.Level = 80
+# Throne of the Four Winds
+Solocraft.ThroneOfTheFourWinds.Level = 80
+# Baradin Hold
+Solocraft.BaradinHold.Level = 80
+# Dragon Soul
+Solocraft.DragonSoul.Level = 80
+
+################################################################################################
+#PANDARIA Instances - Base Level
+################################################################################################
+
+# Terrace of Endless Spring
+Solocraft.TerraceOfEndlessSpring.Level = 80
+# Mogushan Vaults
+Solocraft.MogushanVaults.Level = 80
+# Heart of Fear
+Solocraft.HeartOfFear.Level = 80
+# Throne of Thunder
+Solocraft.ThroneOfThunder.Level = 80
+# Siege of Orgrimmar
+Solocraft.SiegeOfOrgrimmar.Level = 80
+
+################################################################################################
+#WARLORDS Instances - Base Level
+################################################################################################
+
+# Highmaul
+Solocraft.Highmaul.Level = 80
+# Blackrock Foundry
+Solocraft.BlackrockFoundry.Level = 80
+# Hellfire Citadel
+Solocraft.HellfireCitadel.Level = 80
+
+################################################################################################
+#LEGION Instances - Base Level
+################################################################################################
+
+# The Emerald Nightmare
+Solocraft.TheEmeraldNightmare.Level = 80
+# Trial of Valor
+Solocraft.TrialOfValor.Level = 80
+# The Nighthold
+Solocraft.Nighthold.Level = 80
+# Tomb of Sargeras
+Solocraft.TombOfSargeras.Level = 80
+# Antorus, the Burning Throne
+Solocraft.AntorusTheBurningThrone.Level = 80
+
+################################################################################################
+#BATTLE FOR AZEROTH Instances - Base Level
+################################################################################################
+
+# Uldir
+Solocraft.Uldir.Level = 80
+# Battle of Dazar'alor
+Solocraft.BattleOfDazaralor.Level = 80
+# Crucible of Storms
+Solocraft.CrucibleOfStorms.Level = 80
+# The Eternal Palace
+Solocraft.TheEternalPalace.Level = 80
+# Ny'alotha, the Waking City
+Solocraft.NyalothaTheWakingCity.Level = 80
+
+################################################################################################
+#SHADOWLANDS Instances - Base Level
+################################################################################################
+
+# Castle Nathria
+Solocraft.CastleNathria.Level = 80
+# Sanctum of Domination
+Solocraft.SanctumOfDomination.Level = 80
+# Sepulcher of the First Ones
+Solocraft.SepulcherOfTheFirstOnes.Level = 80
+
+################################################################################################
+#DRAGONFLIGHT Instances - Base Level
+################################################################################################
+
+# Vault of the Incarnates
+Solocraft.VaultOfTheIncarnates.Level = 80
+# Aberrus, the Shadowed Crucible
+Solocraft.AberrusTheShadowedCrucible.Level = 80
 
 ###################################################################################################
 #  Misc
