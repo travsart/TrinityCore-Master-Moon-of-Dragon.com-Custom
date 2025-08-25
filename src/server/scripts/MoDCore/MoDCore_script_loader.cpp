@@ -6,18 +6,27 @@
 // Info: Call all gccore script here.
 
 // #################################################### //
-// Add them to AddGCCoreScripts(){ .. } without void. //
+// Add them to Add_MoDCore_NameScripts(){ .. } without void. //
 // #################################################### //
 
 /* ######### Continents ######## > */
 void Add_MoDCore_ShadowlandsScripts();
 void Add_MoDCore_EasternKingdomsScripts();
-void AddSolocraftScripts();
+/* < ######### Continents ######### */
+
+/* ######### CUSTOM ######## > */
+void Add_MoDCore_SolocraftScripts();
+/* < ######### CUSTOM ######### */
 
 void AddMoDCoreScripts()
 {
+    /* ######### Continents ######## > */
 	Add_MoDCore_ShadowlandsScripts();
 	Add_MoDCore_EasternKingdomsScripts();
-    AddSolocraftScripts();
+    /* < ######### Continents ######### */
+
+    /* ######### CUSTOM ######## > */
+    Add_MoDCore_SolocraftScripts();
+    /* < ######### CUSTOM ######### */
 }
 
