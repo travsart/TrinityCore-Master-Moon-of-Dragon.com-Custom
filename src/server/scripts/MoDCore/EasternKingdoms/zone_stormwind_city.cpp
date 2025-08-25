@@ -1200,8 +1200,10 @@ public:
             {
             case 0:
                 if (player->hasQuest(QUEST_TO_THE_DRAGON_ISLES))
+                {
                     player->ForceCompleteQuest(QUEST_TO_THE_DRAGON_ISLES);
                     player->TeleportTo(2444, 3732.435f, -1900.060f, 6.006f, 2.6638f);
+                }
 
                 CloseGossipMenuFor(player);
                 break;
