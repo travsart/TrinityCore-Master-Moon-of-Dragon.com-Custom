@@ -56,7 +56,7 @@ public:
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
 
-        void MoveInLineOfSight(Unit* who)
+        void MoveInLineOfSight(Unit* who) override
         {
             if (!who || !who->IsAlive() || TalkSequenceIsStarted)
                 return;
@@ -160,7 +160,7 @@ public:
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
 
-        void MoveInLineOfSight(Unit* who)
+        void MoveInLineOfSight(Unit* who) override
         {
             if (!who || !who->IsAlive() || TalkSequenceIsStarted)
                 return;
@@ -264,7 +264,7 @@ public:
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
 
-        void MoveInLineOfSight(Unit* who)
+        void MoveInLineOfSight(Unit* who) override
         {
             if (!who || !who->IsAlive() || TalkSequenceIsStarted)
                 return;
