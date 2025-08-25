@@ -24,7 +24,6 @@
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 
-
 void AddSC_MoDCore_goldshire()
 {
   
