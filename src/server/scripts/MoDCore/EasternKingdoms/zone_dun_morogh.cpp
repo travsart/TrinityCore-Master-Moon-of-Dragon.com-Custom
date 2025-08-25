@@ -368,14 +368,13 @@ struct npc_sergeant_flinthammer : public ScriptedAI
                                 if (Creature* Guard1 = me->SummonCreature(NPC_AMBERSTILL_MOUNTAINEER, -5541.07f, -1317.56f, 398.805f, 2.62334f, TEMPSUMMON_TIMED_DESPAWN, 90s))
                                     if (Creature* Guard2 = me->SummonCreature(NPC_AMBERSTILL_MOUNTAINEER, -5540.12f, -1314.39f, 398.721f, 2.69402f, TEMPSUMMON_TIMED_DESPAWN, 90s))
                                         if (Creature* Guard3 = me->SummonCreature(NPC_AMBERSTILL_MOUNTAINEER, -5540.65f, -1310.12f, 398.374f, 3.14955f, TEMPSUMMON_TIMED_DESPAWN, 90s))
-                                            if (Creature* Guard4 = me->SummonCreature(NPC_AMBERSTILL_MOUNTAINEER, -5542.06f, -1305.57f, 398.801f, 3.41266f, TEMPSUMMON_TIMED_DESPAWN, 90s))
-                                            {
-                                                TrollGUIDs[0] = Troll1->GetGUID();
-                                                TrollGUIDs[1] = Troll2->GetGUID();
-                                                TrollGUIDs[2] = Troll3->GetGUID();
-                                                TrollGUIDs[3] = Troll4->GetGUID();
-                                                bSummoned = true;
-                                            }
+                                        {
+                                            TrollGUIDs[0] = Troll1->GetGUID();
+                                            TrollGUIDs[1] = Troll2->GetGUID();
+                                            TrollGUIDs[2] = Troll3->GetGUID();
+                                            TrollGUIDs[3] = Troll4->GetGUID();
+                                            bSummoned = true;
+                                        }
             }
         }
 
