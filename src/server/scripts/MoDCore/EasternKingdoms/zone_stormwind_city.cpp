@@ -131,7 +131,7 @@ public:
         {
             if (player->hasQuest(QUEST_TIDES_OF_WAR))
             {
-                me->AddDelayedEvent(3000, [this, player]() -> void
+                me->AddDelayedEvent(3000, [player]() -> void
                     {
                         player->PlayConversation(4818);
                     });
