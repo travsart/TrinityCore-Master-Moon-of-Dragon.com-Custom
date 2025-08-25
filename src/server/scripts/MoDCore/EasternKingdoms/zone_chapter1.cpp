@@ -165,11 +165,6 @@ class npc_crowleys_horse : public CreatureScript
         }
 };
 
-const uint32 WorgenOrCitizen[] =
-{
-    34981, 35660, 35836
-};
-
 // 36540
 class npc_mountain_horse_36540 : public CreatureScript
 {
