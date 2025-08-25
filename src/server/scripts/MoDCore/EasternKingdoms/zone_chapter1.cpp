@@ -849,7 +849,7 @@ public:
             }
         }
 
-        void MovementInform(uint32 Type, uint32 PointId)
+        void MovementInform(uint32 Type, uint32 PointId) override
         {
             if (Type != POINT_MOTION_TYPE)
                 return;
@@ -978,7 +978,7 @@ public:
             }
         }
 
-        void MovementInform(uint32 Type, uint32 PointId)
+        void MovementInform(uint32 Type, uint32 PointId) override
         {
             if (Type != POINT_MOTION_TYPE)
                 return;
@@ -1107,7 +1107,7 @@ public:
             }
         }
 
-        void MovementInform(uint32 Type, uint32 PointId)
+        void MovementInform(uint32 Type, uint32 PointId) override
         {
             if (Type != POINT_MOTION_TYPE)
                 return;
@@ -1222,7 +1222,7 @@ public:
             }
         }
 
-        void MovementInform(uint32 Type, uint32 PointId)
+        void MovementInform(uint32 Type, uint32 PointId) override
         {
             if (Type != POINT_MOTION_TYPE)
                 return;
