@@ -51,7 +51,7 @@ public:
         bool TalkSequenceIsStarted;
         Player* player;
 
-        void Reset()
+        void Reset() override
         {
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
@@ -155,7 +155,7 @@ public:
         bool TalkSequenceIsStarted;
         Player* player;
 
-        void Reset()
+        void Reset() override
         {
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
@@ -259,7 +259,7 @@ public:
         bool TalkSequenceIsStarted;
         Player* player;
 
-        void Reset()
+        void Reset() override
         {
             timer = 0; TalkSequenceIsStarted = false; phase = 0;
         }
