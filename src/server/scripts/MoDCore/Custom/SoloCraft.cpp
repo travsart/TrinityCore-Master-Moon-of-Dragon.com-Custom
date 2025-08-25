@@ -95,7 +95,10 @@ public:
             {7, sConfigMgr->GetIntDefault("SoloCraft.SHAMAN", 100) },
             {8, sConfigMgr->GetIntDefault("SoloCraft.MAGE", 100) },
             {9, sConfigMgr->GetIntDefault("SoloCraft.WARLOCK", 100) },
+            {10, sConfigMgr->GetIntDefault("SoloCraft.MONK", 100) },
             {11, sConfigMgr->GetIntDefault("SoloCraft.DRUID", 100) },
+            {12, sConfigMgr->GetIntDefault("SoloCraft.DEMONHUNTER", 100) },
+            {13, sConfigMgr->GetIntDefault("SoloCraft.EVOKER", 100) },
         };
 
         //XP Enabled
@@ -191,6 +194,49 @@ public:
             {658, sConfigMgr->GetIntDefault("Solocraft.QuarryOfTears.Level", 78) },                       // Pit of Saron
             {668, sConfigMgr->GetIntDefault("Solocraft.HallsOfReflection.Level", 78) },                   // Halls of Reflection
             {724, sConfigMgr->GetIntDefault("Solocraft.ChamberOfAspectsRed.Level", 80) },                 // The Ruby Sanctum
+
+            // CATA Instances
+            {669, sConfigMgr->GetIntDefault("Solocraft.BlackwingDescent.Level", 80) },                    // Blackwing Descent
+            {671, sConfigMgr->GetIntDefault("Solocraft.TheBastionOfTwilight.Level", 80) },                // The Bastion of Twilight
+            {720, sConfigMgr->GetIntDefault("Solocraft.Firelands.Level", 80) },                           // Firelands
+            {754, sConfigMgr->GetIntDefault("Solocraft.ThroneOfTheFourWinds.Level", 80) },                // Throne of the Four Winds
+            {757, sConfigMgr->GetIntDefault("Solocraft.BaradinHold.Level", 80) },                         // Baradin Hold
+            {967, sConfigMgr->GetIntDefault("Solocraft.DragonSoul.Level", 80) },                          // Dragon Soul
+
+            // PANDARIAN Instances
+            {996, sConfigMgr->GetIntDefault("Solocraft.TerraceOfEndlessSpring.Level", 80) },              // Terrace of Endless Spring
+            {1008, sConfigMgr->GetIntDefault("Solocraft.MogushanVaults.Level", 80) },                     // Mogu'shan Vaults
+            {1009, sConfigMgr->GetIntDefault("Solocraft.HeartOfFear.Level", 80) },                        // Heart of Fear
+            {1098, sConfigMgr->GetIntDefault("Solocraft.ThroneOfThunder.Level", 80) },                    // Throne of Thunder
+            {1136, sConfigMgr->GetIntDefault("Solocraft.SiegeOfOrgrimmar.Level", 80) },                    // Siege of Orgrimmar
+
+            // WARLOARDS Instances
+            {1205, sConfigMgr->GetIntDefault("Solocraft.Highmaul.Level", 80) },                          // Highmaul
+            {1228, sConfigMgr->GetIntDefault("Solocraft.BlackrockFoundry.Level", 80) },                  // Blackrock Foundry
+            {1448, sConfigMgr->GetIntDefault("Solocraft.HellfireCitadel.Level", 80) },                   // Hellfire Citadel
+
+            // LEGION Instances
+            {1520, sConfigMgr->GetIntDefault("Solocraft.TheEmeraldNightmare.Level", 80) },              // The Emerald Nightmare
+            {1648, sConfigMgr->GetIntDefault("Solocraft.TrialOfValor.Level", 80) },                     // Trial of Valor
+            {1530, sConfigMgr->GetIntDefault("Solocraft.Nighthold.Level", 80) },                        // The Nighthold
+            {1676, sConfigMgr->GetIntDefault("Solocraft.TombOfSargeras.Level", 80) },                   // Tomb of Sargeras
+            {1712, sConfigMgr->GetIntDefault("Solocraft.AntorusTheBurningThrone.Level", 80) },          // Antorus, the Burning Throne
+
+            // BATTLE FOR AZEROTH Instances
+            {1861, sConfigMgr->GetIntDefault("Solocraft.Uldir.Level", 80) },                            // Uldir
+            {2070, sConfigMgr->GetIntDefault("Solocraft.BattleOfDazaralor.Level", 80) },                // Battle of Dazar'alor
+            {2096, sConfigMgr->GetIntDefault("Solocraft.CrucibleOfStorms.Level", 80) },                 // Crucible of Storms
+            {2164, sConfigMgr->GetIntDefault("Solocraft.TheEternalPalace.Level", 80) },                 // The Eternal Palace
+            {2217, sConfigMgr->GetIntDefault("Solocraft.NyalothaTheWakingCity.Level", 80) },            // Ny'alotha, the Waking City
+
+            // SHADOWLANDS Instances
+            {2296, sConfigMgr->GetIntDefault("Solocraft.CastleNathria.Level", 80) },                    // Castle Nathria
+            {2450, sConfigMgr->GetIntDefault("Solocraft.SanctumOfDomination.Level", 80) },              // Sanctum of Domination
+            {2481, sConfigMgr->GetIntDefault("Solocraft.SepulcherOfTheFirstOnes.Level", 80) },          // Sepulcher of the First Ones
+
+            // DRAGONFLIGHT Instances
+            {2522, sConfigMgr->GetIntDefault("Solocraft.VaultOfTheIncarnates.Level", 80) },              // Vault of the Incarnates
+            {2569, sConfigMgr->GetIntDefault("Solocraft.AberrusTheShadowedCrucible.Level", 80) },        // Aberrus, the Shadowed Crucible
         };
 
         // Dungeon Difficulty | Catch alls
@@ -279,6 +325,49 @@ public:
             {658, sConfigMgr->GetFloatDefault("Solocraft.QuarryOfTears", 5.0) },                          // Pit of Saron
             {668, sConfigMgr->GetFloatDefault("Solocraft.HallsOfReflection", 5.0) },                      // Halls of Reflection
             {724, sConfigMgr->GetFloatDefault("Solocraft.ChamberOfAspectsRed", 10.0) },                   // The Ruby Sanctum 10
+
+            // CATA Instances
+            {669, sConfigMgr->GetIntDefault("Solocraft.BlackwingDescent", 25) },                    // Blackwing Descent
+            {671, sConfigMgr->GetIntDefault("Solocraft.TheBastionOfTwilight", 25) },                // The Bastion of Twilight
+            {720, sConfigMgr->GetIntDefault("Solocraft.Firelands", 25) },                           // Firelands
+            {754, sConfigMgr->GetIntDefault("Solocraft.ThroneOfTheFourWinds", 25) },                // Throne of the Four Winds
+            {757, sConfigMgr->GetIntDefault("Solocraft.BaradinHold", 25) },                         // Baradin Hold
+            {967, sConfigMgr->GetIntDefault("Solocraft.DragonSoul", 25) },                          // Dragon Soul
+
+            // PANDARIA Instances
+            {996, sConfigMgr->GetIntDefault("Solocraft.TerraceOfEndlessSpring", 25) },              // Terrace of Endless Spring
+            {1008, sConfigMgr->GetIntDefault("Solocraft.MogushanVaults", 25) },                     // Mogu'shan Vaults
+            {1009, sConfigMgr->GetIntDefault("Solocraft.HeartOfFear", 25) },                        // Heart of Fear
+            {1098, sConfigMgr->GetIntDefault("Solocraft.ThroneOfThunder", 25) },                    // Throne of Thunder
+            {1136, sConfigMgr->GetIntDefault("Solocraft.SiegeOfOrgrimmar", 25) },                    // Siege of Orgrimmar
+
+            // WARLORDS Instances
+            {1205, sConfigMgr->GetIntDefault("Solocraft.Highmaul", 25) },                          // Highmaul
+            {1228, sConfigMgr->GetIntDefault("Solocraft.BlackrockFoundry", 25) },                  // Blackrock Foundry
+            {1448, sConfigMgr->GetIntDefault("Solocraft.HellfireCitadel", 25) },                   // Hellfire Citadel
+
+            // LEGION Instances
+            {1520, sConfigMgr->GetIntDefault("Solocraft.TheEmeraldNightmare", 25) },              // The Emerald Nightmare
+            {1648, sConfigMgr->GetIntDefault("Solocraft.TrialOfValor", 25) },                     // Trial of Valor
+            {1530, sConfigMgr->GetIntDefault("Solocraft.Nighthold", 25) },                        // The Nighthold
+            {1676, sConfigMgr->GetIntDefault("Solocraft.TombOfSargeras", 25) },                   // Tomb of Sargeras
+            {1712, sConfigMgr->GetIntDefault("Solocraft.AntorusTheBurningThrone", 25) },          // Antorus, the Burning Throne
+
+            // BATTLE FOR AZEROTH Instances
+            {1861, sConfigMgr->GetIntDefault("Solocraft.Uldir", 25) },                            // Uldir
+            {2070, sConfigMgr->GetIntDefault("Solocraft.BattleOfDazaralor", 25) },                // Battle of Dazar'alor
+            {2096, sConfigMgr->GetIntDefault("Solocraft.CrucibleOfStorms", 25) },                 // Crucible of Storms
+            {2164, sConfigMgr->GetIntDefault("Solocraft.TheEternalPalace", 25) },                 // The Eternal Palace
+            {2217, sConfigMgr->GetIntDefault("Solocraft.NyalothaTheWakingCity", 25) },            // Ny'alotha, the Waking City
+
+            // SHADOWLANDS Instances
+            {2296, sConfigMgr->GetIntDefault("Solocraft.CastleNathria", 25) },                    // Castle Nathria
+            {2450, sConfigMgr->GetIntDefault("Solocraft.SanctumOfDomination", 25) },              // Sanctum of Domination
+            {2481, sConfigMgr->GetIntDefault("Solocraft.SepulcherOfTheFirstOnes", 25) },          // Sepulcher of the First Ones
+
+            // DRAGONFLIGHT Instances
+            {2522, sConfigMgr->GetIntDefault("Solocraft.VaultOfTheIncarnates", 25) },              // Vault of the Incarnates
+            {2569, sConfigMgr->GetIntDefault("Solocraft.AberrusTheShadowedCrucible", 25) },        // Aberrus, the Shadowed Crucible
         };
 
         // Heroics
@@ -350,7 +439,7 @@ public:
     void OnLogin(Player* player, bool /*firstLogin*/) override
     {
         if (SoloCraftEnable && SoloCraftAnnounceModule)
-            ChatHandler(player->GetSession()).SendSysMessage("This server is running the |cff4CFF00SoloCraft |rmodule.");
+            ChatHandler(player->GetSession()).SendSysMessage("This server is running |cff4CFF00SoloCraft");
     }
 
     void OnLogout(Player* player) override
