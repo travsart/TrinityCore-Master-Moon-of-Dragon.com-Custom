@@ -617,11 +617,11 @@ private:
         }
 
         // Für leere Spots
-        for (uint8 i = 0; i < MAX_EMPTY_SPOT_POSITIONS; i++)
-        {
-            Position pos = EmptySpotPositions[i];
-            charmer->CastSpell(nullptr, SPELL_CREATE_EMPTY_SPOT, true);  // ggf. hier anpassen
-        }
+        // for (uint8 i = 0; i < MAX_EMPTY_SPOT_POSITIONS; i++)
+        // {
+        //     Position pos = EmptySpotPositions[i];
+        //     charmer->CastSpell(nullptr, SPELL_CREATE_EMPTY_SPOT, true);  // ggf. hier anpassen
+        // }
     }
 
     void InitializeLevel()
