@@ -3828,6 +3828,15 @@ std::list<Creature*> WorldObject::FindNearestCreatures(uint32 entry, float range
     return creatureList;
 }
 
+std::list<Creature*> WorldObject::FindNearestCreatures(std::list<uint32> entrys, float range) const
+{
+    std::list<Creature*> creatureList;
+
+    for (std::list<uint32>::iterator itr = entrys.begin(); itr != entrys.end(); ++itr)
+        GetCreatureListWithEntryInGrid(creatureList, (*itr), range);
+    return creatureList;
+}
+
 AreaTrigger* WorldObject::SelectNearestAreaTrigger(uint32 spellId, float distance) const
 {
     AreaTrigger* target = nullptr;
@@ -3907,20 +3916,11 @@ void WorldObject::GetCreatureListWithEntryInGridAppend(std::list<Creature*>& cre
     creatureList.merge(tempList);
 }
 
-std::list<Creature*> WorldObject::FindNearestCreatures(std::list<uint32> entrys, float range) const
-{
-    std::list<Creature*> creatureList;
-
-    for (std::list<uint32>::iterator itr = entrys.begin(); itr != entrys.end(); ++itr)
-        GetCreatureListWithEntryInGrid(creatureList, (*itr), range);
-    return creatureList;
-}
-
 template<class NOTIFIER>
 void WorldObject::VisitNearbyGridObject(const float& radius, NOTIFIER& notifier) const
 {
     if (IsInWorld())
-        GetMap()->VisitGrid(GetPositionX(), GetPositionY(), radius, notifier);
+        Cell::VisitGridObjects(this, notifier, radius);
 }
 
 template TC_GAME_API void WorldObject::GetCreatureListInGrid(std::list<Creature*>&, float) const;
