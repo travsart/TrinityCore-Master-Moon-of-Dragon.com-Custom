@@ -320,8 +320,10 @@ public:
             return true;
         }
 
-        bool OnGossipSelect(Player* player, uint32 sender, uint32 action) override
+        bool OnGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
         {
+            uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
+
             ClearGossipMenuFor(player);
             if (action == GOSSIP_ACTION_INFO_DEF + 1)
             {
