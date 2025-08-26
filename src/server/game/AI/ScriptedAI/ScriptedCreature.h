@@ -302,6 +302,17 @@ struct TC_GAME_API ScriptedAI : public CreatureAI
     private:
         Difficulty _difficulty;
         bool _isCombatMovementAllowed;
+
+        // MoDCore >
+    public:
+
+        // Hook used to execute events scheduled into EventMap without the need
+        // to override UpdateAI
+        // note: You must re-schedule the event within this method if the event
+        // is supposed to run more than once
+        void KillCreditMe(Player* player) { player->KilledMonsterCredit(me->GetEntry()); } //dekkcore
+
+        // < MoDCore
 };
 
 class TC_GAME_API BossAI : public ScriptedAI

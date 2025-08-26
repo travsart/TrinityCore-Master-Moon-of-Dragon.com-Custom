@@ -29708,6 +29708,25 @@ void Player::SendMovementSetCollisionHeight(float height, WorldPackets::Movement
     SendMessageToSet(updateCollisionHeight.Write(), false);
 }
 
+void Player::AddMovieDelayedAction(uint32 movieId, std::function<void()>&& function) //modcore
+{
+    MovieDelayedActions.push_back(std::pair<uint32, std::function<void()>>(movieId, function));
+}
+
+void Player::RemoveMovieDelayedAction(uint32 movieId)
+{
+    auto itr = std::find_if(MovieDelayedActions.begin(), MovieDelayedActions.end(), [movieId](const std::pair<uint32, std::function<void()>>& elem) -> bool
+        {
+            return elem.first == movieId;
+        });
+
+    if (itr != MovieDelayedActions.end())
+    {
+        (*itr).second = nullptr;
+        MovieDelayedActions.erase(itr);
+    }
+} //modcore
+
 void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
 {
     PlayerChoice const* playerChoice = sObjectMgr->GetPlayerChoice(choiceId);

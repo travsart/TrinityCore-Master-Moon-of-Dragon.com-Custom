@@ -2802,6 +2802,9 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         SceneMgr& GetSceneMgr() { return m_sceneMgr; }
         SceneMgr const& GetSceneMgr() const { return m_sceneMgr; }
         RestMgr& GetRestMgr() const { return *_restMgr; }
+        std::vector<std::pair<uint32, std::function<void()>>> MovieDelayedActions; //dekkcore
+        void AddMovieDelayedAction(uint32 movieId, std::function<void()>&& function); //dekkcore
+        void RemoveMovieDelayedAction(uint32 movieId);
         void SetRestState(RestTypes type, PlayerRestState state)
         {
             SetUpdateFieldValue(m_values

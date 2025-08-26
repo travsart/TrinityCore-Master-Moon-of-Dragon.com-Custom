@@ -30,7 +30,13 @@
 #include <set>
 
 class TaskContext;
+class Unit;
+class GameObject;
 
+#define GetContextUnit()        context.GetUnit()
+#define GetContextCreature()    context.GetUnit()->ToCreature()
+#define GetContextPlayer()      context.GetUnit()->ToPlayer()
+#define GetContextGameObject()  context.GetGameObject()
 /// The TaskScheduler class provides the ability to schedule std::function's in the near future.
 /// Use TaskScheduler::Update to update the scheduler.
 /// Popular methods are:
@@ -333,7 +339,7 @@ class TC_COMMON_API TaskContext
 public:
     // Empty constructor
     TaskContext()
-        : _task(), _owner(), _consumed(std::make_shared<bool>(true)) { }
+        : _task(), _owner(), _consumed(std::make_shared<bool>(true)), _contextUnit(nullptr), _contextGob(nullptr) { }
 
     // Construct from task and owner
     explicit TaskContext(TaskScheduler::TaskContainer&& task, std::weak_ptr<TaskScheduler>&& owner)
@@ -483,12 +489,21 @@ public:
         return this->RescheduleGroup(group, ::randtime(min, max));
     }
 
+    /// Allow to retrieve Unit currently updating TaskScheduler
+    Unit* GetUnit() const { return _contextUnit; }
+
+    /// Allow to retrieve GameObject currently updating TaskScheduler
+    GameObject* GetGameObject() const { return _contextGob; }
+
 private:
     /// Asserts if the task was consumed already.
     void AssertOnConsumed() const;
 
     /// Invokes the associated hook of the task.
     void Invoke();
+
+    Unit* _contextUnit;
+    GameObject* _contextGob;
 };
 
 #endif /// TRINITYCORE_TASK_SCHEDULER_H

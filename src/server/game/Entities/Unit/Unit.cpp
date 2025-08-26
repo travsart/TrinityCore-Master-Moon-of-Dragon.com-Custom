@@ -14323,3 +14323,36 @@ DeclinedName::DeclinedName(UF::DeclinedNames const& uf)
     for (std::size_t i = 0; i < MAX_DECLINED_NAME_CASES; ++i)
         name[i] = uf.Name[i];
 }
+
+void Unit::RemoveGameObjectByEntry(uint32 entry, bool del /*= true*/)
+{
+    if (m_gameObj.empty())
+        return;
+    GameObjectList::iterator i, next;
+    for (i = m_gameObj.begin(); i != m_gameObj.end(); i = next)
+    {
+        next = i;
+        if ((*i)->GetEntry() == entry)
+        {
+            (*i)->SetOwnerGUID(ObjectGuid::Empty);
+            if (del)
+            {
+                (*i)->SetRespawnTime(0);
+                (*i)->Delete();
+            }
+
+            next = m_gameObj.erase(i);
+        }
+        else
+            ++next;
+    }
+}
+
+GameObject* Unit::GetGameObjectByEntry(uint32 entry) const //dekkcore
+{
+    for (GameObject* gob : m_gameObj)
+        if (gob->GetEntry() == entry)
+            return gob;
+
+    return nullptr;
+}
