@@ -30976,6 +30976,11 @@ void Player::PlayConversation(uint32 conversationId)
     Conversation::CreateConversation(conversationId, this, GetPosition(), { GetGUID() });
 }
 
+bool Player::SeamlessTeleportToMap(uint32 mapid, TeleportToOptions options /*= TELE_TO_NONE*/)
+{
+    return TeleportTo(mapid, GetPosition().GetPositionX(), GetPosition().GetPositionY(), GetPosition().GetPositionZ(), GetOrientation(), options | TELE_TO_SEAMLESS);
+}
+
 void Player::RequestSpellCast(std::unique_ptr<SpellCastRequest> castRequest)
 {
     // We are overriding an already existing spell cast request so inform the client that the old cast is being replaced

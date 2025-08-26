@@ -856,8 +856,12 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         template <typename Container>
         void GetGameObjectListWithEntryInGrid(Container& gameObjectContainer, uint32 entry, float maxSearchRange = 250.0f) const;
 
+        void GetGameObjectListWithEntryInGridAppend(std::list<GameObject*>& lList, uint32 uiEntry, float fMaxSearchRange = 250.0f) const;
+
         template <typename Container>
         void GetGameObjectListWithOptionsInGrid(Container& gameObjectContainer, float maxSearchRange, FindGameObjectOptions const& options) const;
+
+        void GetCreatureListWithEntryInGridAppend(std::list<Creature*>& lList, uint32 uiEntry, float fMaxSearchRange = 250.0f) const;
 
         template <typename Container>
         void GetCreatureListWithEntryInGrid(Container& creatureContainer, uint32 entry, float maxSearchRange = 250.0f) const;
@@ -938,7 +942,11 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         SmoothPhasing* GetSmoothPhasing() { return _smoothPhasing.get(); }
         SmoothPhasing const* GetSmoothPhasing() const { return _smoothPhasing.get(); }
 
+        //MoDCore
+        Player* FindNearestPlayer(float range, bool alive = true);
         std::list<Creature*> FindNearestCreatures(std::list<uint32> entrys, float range) const;
+        template<class NOTIFIER> void VisitNearbyGridObject(const float& radius, NOTIFIER& notifier) const;
+        //MoDCore
 
     protected:
         std::string m_name;
@@ -998,6 +1006,14 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
          public:
              std::list<Creature*> FindNearestCreatures(uint32 entry, float range) const;
+             std::list<Creature*> FindAllCreaturesInRange(float range);
+             std::list<Creature*> FindAllUnfriendlyCreaturesInRange(float range);
+             std::list<GameObject*> FindNearestGameObjects(uint32 entry, float range) const;
+             AreaTrigger* SelectNearestAreaTrigger(uint32 spellId, float distance) const;
+             std::list<AreaTrigger*> SelectNearestAreaTriggers(uint32 spellId, float range);
+             std::list<Player*> SelectNearestPlayers(float range, bool alive);
+             template <typename Container>
+             void GetCreatureListInGrid(Container& creatureContainer, float maxSearchRange = 250.0f) const;
 };
 
 namespace Trinity

@@ -3332,6 +3332,7 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         void RequestSpellCast(std::unique_ptr<SpellCastRequest> castRequest);
         void CancelPendingCastRequest();
         bool CanRequestSpellCast(SpellInfo const* spell, Unit const* castingUnit) const;
+        bool SeamlessTeleportToMap(uint32 mapid, TeleportToOptions options = TELE_TO_NONE);
 
     private:
         std::unique_ptr<SpellCastRequest> _pendingSpellCastRequest;
