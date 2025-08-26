@@ -3775,7 +3775,6 @@ std::string WorldObject::GetDebugInfo() const
 }
 
 // MoDCore >
-// DekkCore >
 std::list<Creature*> WorldObject::FindAllCreaturesInRange(float range)
 {
     std::list<Creature*> templist;
@@ -3926,7 +3925,7 @@ void WorldObject::VisitNearbyGridObject(const float& radius, NOTIFIER& notifier)
 template TC_GAME_API void WorldObject::GetCreatureListInGrid(std::list<Creature*>&, float) const;
 template TC_GAME_API void WorldObject::GetCreatureListInGrid(std::deque<Creature*>&, float) const;
 template TC_GAME_API void WorldObject::GetCreatureListInGrid(std::vector<Creature*>&, float) const;
-// < DekkCore
+// < MoDCore
 
 
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>&, uint32, float) const;
