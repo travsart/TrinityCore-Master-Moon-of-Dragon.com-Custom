@@ -125,8 +125,6 @@ public:
 // Prisoner - 272512
 class aura_tol_dagor_intro_prisoner : public AuraScript
 {
-    PrepareAuraScript(aura_tol_dagor_intro_prisoner);
-
     void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         GetTarget()->RemoveGameObjectByEntry(GOB_PRISON_BARS);
@@ -1451,7 +1449,6 @@ struct npc_injured_marine : public ScriptedAI
 //254830, releasing
 class spell_releasing : public SpellScript
 {
-    PrepareSpellScript(spell_releasing);
 
     bool killed;
 
@@ -1528,7 +1525,6 @@ struct npc_stoat_den : public ScriptedAI
 //251902, shoot-bola
 class spell_shoot_bola : public SpellScript
 {
-    PrepareSpellScript(spell_shoot_bola);
 
     enum MyEnums
     {
@@ -1776,8 +1772,6 @@ public:
 //253855, Battlehorn of the Mountain
 class spell_battlehorn_of_the_mountain : public SpellScript
 {
-    PrepareSpellScript(spell_battlehorn_of_the_mountain);
-
     enum MyEnums
     {
         QUEST_MOUNTAIN_SOUNDS = 48089,
@@ -1821,8 +1815,6 @@ class spell_battlehorn_of_the_mountain : public SpellScript
 //256323, Shaving
 class spell_shaving : public SpellScript
 {
-    PrepareSpellScript(spell_shaving);
-
     bool shaved;
 
 public:
@@ -1936,8 +1928,6 @@ struct npc_greatfeather : public VehicleAI
 //256465, Tether Shot
 class spell_tether_shot : public SpellScript
 {
-    PrepareSpellScript(spell_tether_shot);
-
     void HandleScript()
     {
         Unit* caster = GetCaster();
