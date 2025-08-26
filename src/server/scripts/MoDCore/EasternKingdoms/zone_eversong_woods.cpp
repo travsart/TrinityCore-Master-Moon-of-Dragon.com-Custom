@@ -113,7 +113,7 @@ struct npc_apprentice_mirveda : public ScriptedAI
       //  summons.Summon(summoned);
     }
 
-    void SummonedCreatureDespawn(Creature* summoned) override
+    void SummonedCreatureDespawn(Creature* /*summoned*/) override
     {
       //  summons.Despawn(summoned);
 
