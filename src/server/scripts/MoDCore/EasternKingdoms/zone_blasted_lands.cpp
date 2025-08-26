@@ -97,7 +97,7 @@ public:
 
         bool OnGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
         {
-            uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
+            // uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
 
             switch (player->GetMapId())
             {
