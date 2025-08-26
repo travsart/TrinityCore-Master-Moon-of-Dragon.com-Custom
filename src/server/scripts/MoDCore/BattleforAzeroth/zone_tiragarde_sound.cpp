@@ -945,7 +945,7 @@ public:
         _ongoing = true;
     }
 
-    void OnQuestReward(Player* player, Quest const* quest, LootItemType /*type*/, uint32 /*opt*/) override
+    void OnQuestReward(Player* /*player*/, Quest const* quest, LootItemType /*type*/, uint32 /*opt*/) override
     {
         if (quest->GetQuestId() == QUEST_BACKUP_WILL_I_PACK)
         {
