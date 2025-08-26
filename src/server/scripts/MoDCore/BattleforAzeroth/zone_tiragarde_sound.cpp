@@ -2674,14 +2674,13 @@ public:
             talk1 = true;
         }
 
-        if (Player* player = attacker->ToPlayer())
-            if (me->GetHealth() < me->CountPctFromMaxHealth(75)) // the intent is not to kill but to sparr
-            {
-                if (!talk2) {
-                    Talk(2);
-                    talk2 = true;
-                }
+        if (me->GetHealth() < me->CountPctFromMaxHealth(75)) // the intent is not to kill but to sparr
+        {
+            if (!talk2) {
+                Talk(2);
+                talk2 = true;
             }
+        }
     }
 
     void JustDied(Unit* killer) override
