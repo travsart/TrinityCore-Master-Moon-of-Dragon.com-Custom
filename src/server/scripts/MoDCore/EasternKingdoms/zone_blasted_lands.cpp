@@ -95,8 +95,10 @@ public:
             return true;
         }
 
-        bool OnGossipSelect(Player* player, uint32 sender, uint32 action) override
+        bool OnGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
         {
+            uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
+
             switch (player->GetMapId())
             {
             case EASTERN_KINGDOM_MAP_ID:
