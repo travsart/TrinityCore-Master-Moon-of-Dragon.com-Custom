@@ -222,7 +222,7 @@ struct npc_flynn_fairwind : public ScriptedAI
 
         me->GetScheduler().Schedule(1s, [this](TaskContext /*context*/)
             {
-                me->GetMotionMaster()->MoveJump(142.033f, -2715.19f, 29.1884f, 0.0f, 19.2911f, 19.2911f);
+                me->GetMotionMaster()->MoveJump(142.033f, -2715.19f, 29.1884f, 0.0f, 19.2911f);
             })
             .Schedule(2s, [this](TaskContext /*context*/)
                 {
