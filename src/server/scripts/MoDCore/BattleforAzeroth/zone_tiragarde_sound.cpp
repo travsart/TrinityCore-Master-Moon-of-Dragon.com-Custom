@@ -1062,7 +1062,7 @@ public:
         }
     }
 
-    void MovementInform(uint32 type, uint32 id) override
+    void MovementInform(uint32 /*type*/, uint32 id) override
     {
         if (id == 1001)
         {
