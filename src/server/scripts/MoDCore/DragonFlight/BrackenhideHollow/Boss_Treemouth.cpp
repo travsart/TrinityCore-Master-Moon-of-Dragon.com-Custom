@@ -146,7 +146,7 @@ public:
             me->DespawnOrUnsummon();
         }
 
-        void UpdateAI(uint32 const /*diff*/)
+        void UpdateAI(uint32 const /*diff*/) override
         {
             if (!UpdateVictim())
                 return;
