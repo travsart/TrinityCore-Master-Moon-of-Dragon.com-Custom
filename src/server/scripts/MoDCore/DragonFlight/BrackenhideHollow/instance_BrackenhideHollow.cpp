@@ -26,14 +26,14 @@
 //     // { DATA, {{  }} },
 //};
 
-ObjectData const creatureData[] =
-{
-    { BOSS_RIRA_HACKLAW,    DATA_RIRA_HACKLAW          },
+//ObjectData const creatureData[] =
+//{
+//    { BOSS_RIRA_HACKLAW,    DATA_RIRA_HACKLAW          },
 //     { BOSS_,    DATA_          },
 //    { BOSS_,    DATA_          },
 //    { BOSS_,    DATA_          },
-    { 0,                            0                                  }  // END
-};
+//    { 0,                            0                                  }  // END
+//};
 
 
 class instance_brackenhide_hollow : public InstanceMapScript
