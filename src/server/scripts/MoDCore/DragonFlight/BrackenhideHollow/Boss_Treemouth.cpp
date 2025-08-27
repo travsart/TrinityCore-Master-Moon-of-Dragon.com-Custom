@@ -267,7 +267,7 @@ class spell_grasping_vines : public SpellScript
                     player->m_movementInfo.AddMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY);
 
                     // Schedule the player to be consumed after the drag duration
-                    player->AddDelayedEvent(DRAG_DURATION, [this, player]()
+                    player->AddDelayedEvent(DRAG_DURATION, [player]()
                         {
                         if (player->IsAlive())
                         {
