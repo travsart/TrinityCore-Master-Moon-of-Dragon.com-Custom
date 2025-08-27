@@ -137,12 +137,13 @@ public:
 
         bool OnGossipHello(Player* player) override
         {
-
-        if (player->hasQuest(QUEST_AWAKEN_DRACTHYR))
-            player->KilledMonsterCredit(181680);
-            player->KilledMonsterCredit(187015);
-            player->KilledMonsterCredit(181712);
-            player->KilledMonsterCredit(181494);
+            if (player->hasQuest(QUEST_AWAKEN_DRACTHYR))
+            {
+                player->KilledMonsterCredit(181680);
+                player->KilledMonsterCredit(187015);
+                player->KilledMonsterCredit(181712);
+                player->KilledMonsterCredit(181494);
+            }
 
             return true;
         }
