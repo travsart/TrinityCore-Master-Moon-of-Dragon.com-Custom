@@ -194,8 +194,10 @@ public:
                 player->PrepareQuestMenu(me->GetGUID());
 
             if (player->hasQuest(QUEST_THE_COURAGE_OF_ONES_CONVICTION))
+            {
                 player->ForceCompleteQuest(QUEST_THE_COURAGE_OF_ONES_CONVICTION);
                 player->TeleportTo(2444, 2096.082f, 2308.810f, 242.460f, 5.258f);
+            }
 
             SendGossipMenuFor(player, player->GetGossipTextId(me), me->GetGUID());
             return true;
