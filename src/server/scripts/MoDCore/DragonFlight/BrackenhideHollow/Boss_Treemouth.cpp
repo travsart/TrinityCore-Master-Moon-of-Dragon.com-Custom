@@ -193,11 +193,11 @@ class spell_consume : public AuraScript
             if (!target || !target->IsPlayer())
                 return;
 
-           if (aurEff->GetEffIndex() == 0) // First effect index is the absorb
-           {
+            if (aurEff->GetEffIndex() == 0) // First effect index is the absorb
+            {
                 // Set up absorb damage
-                uint32 absorbedDamage = 218877;
-           }
+                //uint32 absorbedDamage = 218877;
+            }
         }
     }
 
