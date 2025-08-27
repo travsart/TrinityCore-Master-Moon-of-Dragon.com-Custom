@@ -889,6 +889,7 @@ struct QuestStatusData
     uint32 Timer = 0;
     bool Explored = false;
     std::unordered_set<std::pair<int8, uint32>> SpawnTrackingList;
+    std::vector<uint32> ObjectiveData;
 };
 
 #endif
