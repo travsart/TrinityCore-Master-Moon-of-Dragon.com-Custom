@@ -176,7 +176,7 @@ class spell_consume : public AuraScript
 {
     PrepareAuraScript(spell_consume);
     
-    void HandlePeriodic(AuraEffect const* aurEff)
+    void HandlePeriodic(AuraEffect const* /*aurEff*/)
     {
         if (Unit* caster = GetCaster())
         {
@@ -195,11 +195,11 @@ class spell_consume : public AuraScript
             if (!target || !target->IsPlayer())
                 return;
 
-            if (aurEff->GetEffIndex() == 0) // First effect index is the absorb
-            {
+           // if (aurEff->GetEffIndex() == 0) // First effect index is the absorb
+            //{
                 // Set up absorb damage
-                uint32 absorbedDamage = 218877;
-            }
+                //uint32 absorbedDamage = 218877;
+           // }
         }
     }
 
