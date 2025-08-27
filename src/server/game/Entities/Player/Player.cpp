@@ -31241,3 +31241,45 @@ bool Player::CanExecutePendingSpellCastRequest()
 
     return true;
 }
+
+int32 Player::GetQuestObjectiveDatas(Quest const* quest, int8 storageIndex) const
+{
+    if (storageIndex < 0)
+        TC_LOG_ERROR("entities.player.quest", "Player::GetQuestObjectiveData: Called for quest {} with invalid StorageIndex {} (objective data is not tracked)",
+            quest->GetQuestId(), storageIndex);
+
+    auto itr = m_QuestStatus.find(quest->GetQuestId());
+
+    if (itr == m_QuestStatus.end())
+    {
+        TC_LOG_ERROR("entities.player.quest", "Player::GetQuestObjectiveData: Player '{}' ({}) doesn't have quest status data (QuestID: {})",
+            GetName(), GetGUID().ToString(), quest->GetQuestId());
+        return 0;
+    }
+
+    //QuestStatusData const& status = itr->second;
+
+    //if (uint8(storageIndex) >= status.ObjectiveData.size())
+    //{
+    //    TC_LOG_ERROR("entities.player.quest", "Player::GetQuestObjectiveData: Player '{}' ({}) quest {} out of range StorageIndex {}",
+    //        GetName(), GetGUID().ToString(), quest->GetQuestId(), storageIndex);
+    //    return 0;
+    //}
+
+    //return status.ObjectiveData[storageIndex];
+}
+
+int32 Player::GetQuestObjectiveCounter(uint32 objectiveId) const
+{
+    QuestObjective const* obj = sObjectMgr->GetQuestObjective(objectiveId);
+
+    if (obj == nullptr)
+        return 0;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(obj->QuestID);
+
+    if (quest == nullptr)
+        return 0;
+
+    return GetQuestObjectiveDatas(quest, obj->StorageIndex);
+}

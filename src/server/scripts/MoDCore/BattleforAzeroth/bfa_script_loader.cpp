@@ -15,10 +15,10 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*void AddSC_zone_nazmir();
+void AddSC_zone_nazmir();
 void AddSC_zone_voldun();
 void AddSC_zone_zuldazar();
-void AddSC_zone_drustvar();
+/*void AddSC_zone_drustvar();
 void AddSC_zone_stormsong_valley(); */
 void AddSC_zone_tiragarde_sound();
 
@@ -153,11 +153,11 @@ void AddSC_nazjatar();
 
 void Add_DekkCore_BFAScripts()
 {
-	/*
+	
     AddSC_zone_nazmir();
     AddSC_zone_voldun();
     AddSC_zone_zuldazar();
-	AddSC_zone_drustvar();
+	/*AddSC_zone_drustvar();
     AddSC_zone_stormsong_valley();*/
     AddSC_zone_tiragarde_sound();
 	/*
@@ -285,7 +285,7 @@ void Add_DekkCore_BFAScripts()
     AddSC_bfa_boss_restless_cabal();
     AddSC_instance_crucible_of_storms();
     AddSC_bfa_boss_uunat();
-
+*/
     AddSC_nazjatar();
-	 */
+	 
 }

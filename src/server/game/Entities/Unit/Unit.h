@@ -2042,6 +2042,9 @@ class TC_GAME_API Unit : public WorldObject
         PositionUpdateInfo _positionUpdateInfo;
 
         bool _isCombatDisallowed;
+
+        public:
+            bool SetFlying(bool enable);
 };
 
 #endif

@@ -3964,3 +3964,15 @@ void Creature::ClearUpdateMask(bool remove)
     m_values.ClearChangesMask(&Creature::m_vendorData);
     Unit::ClearUpdateMask(remove);
 }
+
+void Creature::DespawnCreaturesInArea(uint32 entry, float range)
+{
+    std::list<Creature*> creatures;
+    GetCreatureListWithEntryInGrid(creatures, entry, range);
+
+    if (creatures.empty())
+        return;
+
+    for (std::list<Creature*>::iterator iter = creatures.begin(); iter != creatures.end(); ++iter)
+        (*iter)->DespawnOrUnsummon();
+}

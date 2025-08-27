@@ -14318,6 +14318,19 @@ std::string Unit::GetDebugInfo() const
     return sstr.str();
 }
 
+bool Unit::SetFlying(bool enable)
+{
+    if (enable == IsFlying())
+        return false;
+
+    if (enable)
+        AddUnitMovementFlag(MOVEMENTFLAG_FLYING);
+    else
+        RemoveUnitMovementFlag(MOVEMENTFLAG_FLYING);
+
+    return true;
+}
+
 DeclinedName::DeclinedName(UF::DeclinedNames const& uf)
 {
     for (std::size_t i = 0; i < MAX_DECLINED_NAME_CASES; ++i)

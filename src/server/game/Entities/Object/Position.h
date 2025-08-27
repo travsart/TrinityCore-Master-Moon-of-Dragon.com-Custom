@@ -168,6 +168,24 @@ public:
     // constrain arbitrary radian orientation to interval [0,2*PI)
     static float NormalizeOrientation(float o);
 
+    // MoDCore >
+    void GetPositionWithDistInOrientation(float dist, float orientation, float& x, float& y) const
+    {
+        x = GetPositionX() + (dist * cos(orientation));
+        y = GetPositionY() + (dist * sin(orientation));
+    }
+
+    Position GetPositionWithDistInOrientation(float dist, float orientation) const
+    {
+        float x = GetPositionX() + (dist * cos(orientation));
+        float y = GetPositionY() + (dist * sin(orientation));
+
+        return Position(x, y, GetPositionZ(), GetOrientation());
+    }
+
+    Position GetRandomPositionBetween(Position otherPosition) const;
+    // < MoDCore
+
 private:
     static constexpr float NormalizeOrientationConstexprWrapper(float o)
     {

@@ -10,6 +10,7 @@
 // #################################################### //
 
 /* ######### Continents ######## > */
+void Add_MoDCore_DragonflightScripts();
 void Add_MoDCore_ShadowlandsScripts();
 void Add_MoDCore_EasternKingdomsScripts();
 /* < ######### Continents ######### */
@@ -21,6 +22,7 @@ void Add_MoDCore_SolocraftScripts();
 void AddMoDCoreScripts()
 {
     /* ######### Continents ######## > */
+	Add_MoDCore_DragonflightScripts();
 	Add_MoDCore_ShadowlandsScripts();
 	Add_MoDCore_EasternKingdomsScripts();
     /* < ######### Continents ######### */

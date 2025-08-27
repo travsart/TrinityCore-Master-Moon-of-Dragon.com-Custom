@@ -613,6 +613,11 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         uint32 _gossipMenuId;
         Optional<uint32> _trainerId;
         float _sparringHealthPct;
+
+        // MoDCore >
+    public:
+        void DespawnCreaturesInArea(uint32 entry, float range = 125.0f);
+        // < MoDCore
 };
 
 class TC_GAME_API AssistDelayEvent : public BasicEvent

@@ -533,6 +533,8 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
 
         // GCCore >
     public:
+        TaskScheduler _scheduler;
+        TaskScheduler& GetScheduler() { return _scheduler; }
         uint32 GetVignetteId() const;
         // < GCCore
 };

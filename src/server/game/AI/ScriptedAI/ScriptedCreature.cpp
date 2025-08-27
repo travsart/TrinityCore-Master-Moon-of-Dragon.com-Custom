@@ -711,3 +711,22 @@ void WorldBossAI::UpdateAI(uint32 diff)
             return;
     }
 }
+
+// MoDCore >
+void GetPositionWithDistInOrientation(Position* pUnit, float dist, float orientation, float& x, float& y)
+{
+    x = pUnit->GetPositionX() + (dist * cos(orientation));
+    y = pUnit->GetPositionY() + (dist * sin(orientation));
+}
+
+void GetPositionWithDistInOrientation(Position* fromPos, float dist, float orientation, Position& movePosition)
+{
+    float x = 0.0f;
+    float y = 0.0f;
+
+    GetPositionWithDistInOrientation(fromPos, dist, orientation, x, y);
+
+    movePosition.m_positionX = x;
+    movePosition.m_positionY = y;
+    movePosition.m_positionZ = fromPos->GetPositionZ();
+}
