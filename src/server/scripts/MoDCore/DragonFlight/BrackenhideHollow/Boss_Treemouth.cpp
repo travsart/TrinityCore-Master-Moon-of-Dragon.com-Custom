@@ -171,86 +171,8 @@ public:
     }
 };
 
-//377222
-class spell_consume : public AuraScript
-{    
-    void HandlePeriodic(AuraEffect const* /*aurEff*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            // Apply damage every 1.5 seconds
-            uint32 tickDamage = 40631;
-            GetTarget()->DealDamage(caster, GetTarget(), tickDamage, 0);
-        }
-    }
-
-    void HandleAuraApplied(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            Unit* target = GetTarget();
-
-            if (!target || !target->IsPlayer())
-                return;
-
-            if (aurEff->GetEffIndex() == 0) // First effect index is the absorb
-            {
-                // Set up absorb damage
-                //uint32 absorbedDamage = 218877;
-            }
-        }
-    }
-
-    void Register()
-    {
-        OnEffectPeriodic += AuraEffectPeriodicFn(spell_consume::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
-    }
-};
-
-//376934
-class spell_grasping_vines : public SpellScript
-{
-    void HandleSpellEffect(const SpellEffIndex /*effIndex*/)
-    {
-        if (Unit* caster = GetCaster())
-        {
-            std::list<Player*> players;
-            caster->GetPlayerListInGrid(players, 100.0f); // Adjust the range as needed
-
-            // Drag each player towards the caster
-            for (Player* player : players)
-            {
-                if (player->IsAlive())
-                {
-                    // Apply the drag effect
-                    player->SetDisableGravity(true);
-                    player->m_movementInfo.AddMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY);
-
-                    // Schedule the player to be consumed after the drag duration
-                    player->AddDelayedEvent(DRAG_DURATION, [player]()
-                        {
-                        if (player->IsAlive())
-                        {
-                            // Stop dragging and apply the consume effect
-                            player->SetDisableGravity(false);
-                            player->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY);
-                            player->CastSpell(player, SPELL_CONSUME, true);
-                        }
-                        });
-                }
-            }
-        }
-    }
-    void Register() override
-    {
-        OnEffectHit += SpellEffectFn(spell_grasping_vines::HandleSpellEffect, EFFECT_0, SPELL_EFFECT_DUMMY);
-    }
-};
-
 void AddSC_boss_treemouth()
 {
     new boss_treemouth();
     new npc_decaying_slime();
-    new spell_consume();
-    RegisterSpellScript(spell_grasping_vines);
 }
