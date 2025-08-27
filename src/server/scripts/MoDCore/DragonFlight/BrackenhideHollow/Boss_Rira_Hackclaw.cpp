@@ -87,7 +87,7 @@ public:
                 case EVENT_BLADESTORM:
                     DoCastVictim(SPELL_BLADESTORM);
                     DoCastAOE(SPELL_BLADESTORM_VISUAL);
-                    DoCastRandom(SPELL_BLADESTORM_DAMAGE, 100.0f, SPELL_BLADESTORM_AURA);
+                    DoCastRandom(SPELL_BLADESTORM_DAMAGE, 100.0f, true);
                     events.ScheduleEvent(EVENT_BLADESTORM, 8s);
                     break;
                 case EVENT_CLEAVE:

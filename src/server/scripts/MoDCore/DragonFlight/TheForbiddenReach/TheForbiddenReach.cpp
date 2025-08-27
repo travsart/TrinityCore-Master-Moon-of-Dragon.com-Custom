@@ -64,7 +64,7 @@ public:
         if (auto quest_ev = sObjectMgr->GetQuestTemplate(QUEST_AWAKEN_DRACTHYR))
             player->AddQuest(quest_ev, nullptr);
     }
-    void OnLevelChanged(Player* player, uint8 oldLevel) override
+    void OnLevelChanged(Player* player, uint8 /*oldLevel*/) override
     {
         if (player->GetClass() == CLASS_EVOKER && player->GetLevel() >= 10)
         {
