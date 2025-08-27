@@ -184,7 +184,7 @@ class spell_consume : public AuraScript
         }
     }
 
-    void HandleAuraApplied(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    void HandleAuraApplied(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (Unit* caster = GetCaster())
         {
