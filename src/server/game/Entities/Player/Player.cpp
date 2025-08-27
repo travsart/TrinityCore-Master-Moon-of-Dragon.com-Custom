@@ -31245,8 +31245,11 @@ bool Player::CanExecutePendingSpellCastRequest()
 int32 Player::GetQuestObjectiveDatas(Quest const* quest, int8 storageIndex) const
 {
     if (storageIndex < 0)
+    {
         TC_LOG_ERROR("entities.player.quest", "Player::GetQuestObjectiveData: Called for quest {} with invalid StorageIndex {} (objective data is not tracked)",
             quest->GetQuestId(), storageIndex);
+        return 0;
+    }
 
     auto itr = m_QuestStatus.find(quest->GetQuestId());
 
@@ -31256,17 +31259,6 @@ int32 Player::GetQuestObjectiveDatas(Quest const* quest, int8 storageIndex) cons
             GetName(), GetGUID().ToString(), quest->GetQuestId());
         return 0;
     }
-
-    //QuestStatusData const& status = itr->second;
-
-    //if (uint8(storageIndex) >= status.ObjectiveData.size())
-    //{
-    //    TC_LOG_ERROR("entities.player.quest", "Player::GetQuestObjectiveData: Player '{}' ({}) quest {} out of range StorageIndex {}",
-    //        GetName(), GetGUID().ToString(), quest->GetQuestId(), storageIndex);
-    //    return 0;
-    //}
-
-    //return status.ObjectiveData[storageIndex];
 }
 
 int32 Player::GetQuestObjectiveCounter(uint32 objectiveId) const
