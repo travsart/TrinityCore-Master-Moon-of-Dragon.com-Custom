@@ -100,7 +100,7 @@ public:
 
     bool OnGossipHello(Player* player) override
     {
-        if (player->GetQuestStatus(QUEST_SHARP_PRACTICE) == QUEST_STATUS_INCOMPLETE || player->GetQuestStatus(QUEST_SHARP_PRACTICE) == QUEST_STATUS_INCOMPLETE)
+        if (player->GetQuestStatus(QUEST_SHARP_PRACTICE) == QUEST_STATUS_INCOMPLETE)
             AddGossipItemFor(player, GossipOptionNpc::None, GOSSIP_LETS_TEST, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
         SendGossipMenuFor(player, player->GetGossipTextId(me), me->GetGUID());
         return true;
