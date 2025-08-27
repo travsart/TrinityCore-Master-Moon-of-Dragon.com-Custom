@@ -141,7 +141,7 @@ class spell_rira_bladestorm_aura : public AuraScript
 {
     PrepareAuraScript(spell_rira_bladestorm_aura);
 
-    void HandlePeriodic(AuraEffect const* aurEff)
+    void HandlePeriodic(AuraEffect const* /*aurEff*/)
     {
         if (Unit* caster = GetCaster())
         {

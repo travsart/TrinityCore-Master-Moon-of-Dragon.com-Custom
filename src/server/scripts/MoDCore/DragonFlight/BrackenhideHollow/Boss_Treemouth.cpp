@@ -51,7 +51,7 @@ public:
         InstanceScript* instance; // <-- Hinzugefügt
         SummonList summons;
 
-        void Reset()
+        void Reset() override
         {
             events.Reset();
             me->RemoveAurasDueToSpell(SPELL_VINE_WHIP);
