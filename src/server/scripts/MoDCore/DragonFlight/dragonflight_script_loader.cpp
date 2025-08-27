@@ -17,6 +17,8 @@
 
 //Zones
 void AddSC_TheForbiddenReach();
+void AddSC_zone_the_waking_shores();
+void AddSC_zone_thaldraszus();
 
 //BrackenHide Hollow
 void AddSC_instance_brackenhide_hollow();
@@ -29,6 +31,8 @@ void Add_MoDCore_DragonflightScripts()
 {
     //Zones
     AddSC_TheForbiddenReach();
+	AddSC_zone_the_waking_shores();
+	AddSC_zone_thaldraszus();
 	
     //BRACKENHIDE HOLLOW
     AddSC_instance_brackenhide_hollow();
