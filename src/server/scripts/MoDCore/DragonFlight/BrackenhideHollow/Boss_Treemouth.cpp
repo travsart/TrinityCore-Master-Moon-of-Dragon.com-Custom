@@ -207,46 +207,6 @@ class spell_consume : public AuraScript
     }
 };
 
-//376811 
-class spell_decay_spray : public SpellScriptLoader
-{
-public:
-    spell_decay_spray() : SpellScriptLoader("spell_decay_spray") {}
-
-    class spell_decay_spray_AuraScript : public AuraScript
-    {
-        void HandleTick(AuraEffect const* aurEff)
-        {
-            if (Unit* caster = GetCaster())
-            {
-                // Check if the caster is a creature (NPC) and not a player
-                if (caster->IsCreature() && !caster->ToCreature()->GetVictim())
-                {
-                    // Find all players within the cone in front of the caster
-                    std::list<Player*> players;
-                    caster->SelectNearbyTarget();
-
-                    for (Player* player : players)
-                    {
-                        // Inflict nature damage to each player
-                        caster->DealDamage(caster, player, aurEff->GetAmount(), 0);
-                    }
-                }
-            }
-        }
-
-        void Register() override
-        {
-            OnEffectPeriodic += AuraEffectPeriodicFn(spell_decay_spray_AuraScript::HandleTick, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE);
-        }
-    };
-
-    AuraScript* GetAuraScript() const override
-    {
-        return new spell_decay_spray_AuraScript();
-    }
-};
-
 //376934
 class spell_grasping_vines : public SpellScript
 {
@@ -292,6 +252,5 @@ void AddSC_boss_treemouth()
     new boss_treemouth();
     new npc_decaying_slime();
     new spell_consume();
-    new spell_decay_spray();
     RegisterSpellScript(spell_grasping_vines);
 }
