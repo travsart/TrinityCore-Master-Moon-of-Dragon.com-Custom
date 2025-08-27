@@ -78,7 +78,7 @@ public:
             _EnterEvadeMode();
         }
 
-        void UpdateAI(uint32 const diff)
+        void UpdateAI(uint32 const diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -173,9 +173,7 @@ public:
 
 //377222
 class spell_consume : public AuraScript
-{
-    PrepareAuraScript(spell_consume);
-    
+{    
     void HandlePeriodic(AuraEffect const* /*aurEff*/)
     {
         if (Unit* caster = GetCaster())
@@ -217,8 +215,6 @@ public:
 
     class spell_decay_spray_AuraScript : public AuraScript
     {
-        PrepareAuraScript(spell_decay_spray_AuraScript);
-
         void HandleTick(AuraEffect const* aurEff)
         {
             if (Unit* caster = GetCaster())
@@ -254,8 +250,6 @@ public:
 //376934
 class spell_grasping_vines : public SpellScript
 {
-    PrepareSpellScript(spell_grasping_vines);
-
     void HandleSpellEffect(const SpellEffIndex /*effIndex*/)
     {
         if (Unit* caster = GetCaster())
