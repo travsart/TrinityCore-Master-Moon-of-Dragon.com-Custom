@@ -147,7 +147,6 @@ class spell_rira_bladestorm_aura : public AuraScript
         {
             if (Unit* target = GetTarget())
             {
-                int32 _damage = 0;
                 std::list<Unit*> targetList;
                 Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(target, target, 8.0f);
                 Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(target, targetList, u_check);
@@ -156,7 +155,6 @@ class spell_rira_bladestorm_aura : public AuraScript
                 {
                     if (itr->IsAlive())
                     {
-                        _damage += itr->SpellDamageBonusTaken(caster, GetSpellInfo(), 0, SPELL_DIRECT_DAMAGE);
                         caster->CastSpell(target, SPELL_BLADESTORM_DAMAGE, SPELLVALUE_BASE_POINT0);
                     }
                 }

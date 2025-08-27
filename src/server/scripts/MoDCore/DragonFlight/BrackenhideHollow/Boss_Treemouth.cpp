@@ -131,7 +131,7 @@ public:
     {
         npc_decaying_slimeAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void Reset()
+        void Reset() override
         {
             me->SetReactState(REACT_PASSIVE);
         }
