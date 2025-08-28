@@ -24,7 +24,7 @@ void AddSC_MoDCore_goldshire();
 void AddSC_MoDCore_zone_gnomeregan();
 void AddSC_MoDCore_ghostlands();
 void AddSC_MoDCore_eversong_woods();
-void AddSC_MoDCore_elwyn_forest();
+//void AddSC_MoDCore_elwyn_forest();
 void AddSC_MoDCore_duskwood();
 void AddSC_MoDCore_dun_morogh_area_coldridge_valley();
 void AddSC_MoDCore_dun_morogh();
@@ -57,7 +57,7 @@ void Add_MoDCore_EasternKingdomsScripts()
     AddSC_MoDCore_zone_gnomeregan();
     AddSC_MoDCore_ghostlands();
     AddSC_MoDCore_eversong_woods();
-    AddSC_MoDCore_elwyn_forest();
+    //AddSC_MoDCore_elwyn_forest();
     AddSC_MoDCore_duskwood();
     AddSC_MoDCore_dun_morogh_area_coldridge_valley();
     AddSC_MoDCore_dun_morogh();

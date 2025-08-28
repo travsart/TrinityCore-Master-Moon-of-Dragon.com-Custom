@@ -534,10 +534,7 @@ public:
 
     struct npc_westplains_drifterAI : public ScriptedAI
     {
-        npc_westplains_drifterAI(Creature* creature) : ScriptedAI(creature), count(0), Miam(2000) {}
-
-        uint8 count;
-        uint32 Miam;
+        npc_westplains_drifterAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool OnGossipHello(Player* player) override
         {
@@ -648,62 +645,6 @@ public:
                 }
             }
             return true;
-        }
-
-        void Eat()
-        {
-            me->CastSpell(me, SPELL_FULL_BELLY2, true);
-            me->SetStandState(UNIT_STAND_STATE_SIT);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (Miam < diff)
-            {
-                if (Creature* stew = me->FindNearestCreature(STEW2, 10.0f, true))
-                {
-                    if (me->HasAura(SPELL_FULL_BELLY2) && count == 0)
-                        return;
-
-                    switch (count)
-                    {
-                    case 0:
-                        me->SetStandState(UNIT_STAND_STATE_STAND);
-                        Miam = 1000;
-                        count++;
-                        break;
-                    case 1:
-                        Eat();
-                        Miam = 2000;
-                        me->SetStandState(UNIT_STAND_STATE_SIT);
-                        count++;
-                        break;
-                    case 2:
-                        if (stew->ToTempSummon())
-                            if (WorldObject* player = stew->ToTempSummon()->GetSummoner())
-                                player->ToPlayer()->KilledMonsterCredit(42617);
-                        Miam = 25000;
-                        count++;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                else Miam = 3000;
-
-                if (!me->HasAura(SPELL_FULL_BELLY2))
-                    me->SetStandState(UNIT_STAND_STATE_STAND);
-
-                if (count == 3)
-                    Reset();
-            }
-            else Miam -= diff;
-        }
-
-        void Reset() override
-        {
-            count = 0;
-            Miam = 2000;
         }
     };
 
@@ -2111,6 +2052,87 @@ public:
     };
 };
 
+class npc_hungry_hobo : public CreatureScript
+{
+public:
+    npc_hungry_hobo() : CreatureScript("npc_hungry_hobo") {}
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_hungry_hoboAI(creature);
+    }
+
+    struct npc_hungry_hoboAI : public ScriptedAI
+    {
+        npc_hungry_hoboAI(Creature* creature) : ScriptedAI(creature) {}
+
+        uint8 count;
+        uint32 Miam;
+
+        void Reset() override
+        {
+            count = 0;
+            Miam = 2000;
+        }
+
+        void Eat()
+        {
+            me->CastSpell(me, SPELL_FULL_BELLY2, true);
+            me->SetStandState(UNIT_STAND_STATE_SIT);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (Miam < diff)
+            {
+                if (Creature* stew = me->FindNearestCreature(STEW2, 10.0f, true))
+                {
+                    if (me->HasAura(SPELL_FULL_BELLY2) && count == 0)
+                        return;
+
+                    switch (count)
+                    {
+                    case 0:
+                    {
+                        me->SetStandState(UNIT_STAND_STATE_STAND);
+                        Miam = 1000;
+                        count++;
+                        break;
+                    }
+                    case 1:
+                    {
+                        Eat();
+                        Miam = 2000;
+                        me->SetStandState(UNIT_STAND_STATE_SIT);
+                        count++;
+                        break;
+                    }
+                    case 2:
+                    {
+                        if (stew->ToTempSummon())
+                            if (WorldObject* player = stew->ToTempSummon()->GetSummoner())
+                                player->ToPlayer()->KilledMonsterCredit(42617);
+                        Miam = 25000;
+                        count++;
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+                }
+                else Miam = 3000;
+
+                if (!me->HasAura(SPELL_FULL_BELLY2))
+                    me->SetStandState(UNIT_STAND_STATE_STAND);
+
+                if (count == 3)
+                    Reset();
+            }
+            else Miam -= diff;
+        }
+    };
+};
+
 enum Ripsnarl
 {
     AURA_IN_STOCKS = 69196,
@@ -2144,5 +2166,6 @@ void AddSC_MoDCore_westfall()
     //new npc_fire_trigger();
     new npc_summoner();
     new npc_horatio_investigate();
+    new npc_hungry_hobo();
     RegisterCreatureAI(npc_ripsnarl);
 }

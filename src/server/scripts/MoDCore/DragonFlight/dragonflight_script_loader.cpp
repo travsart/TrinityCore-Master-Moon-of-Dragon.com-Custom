@@ -16,7 +16,6 @@
  */
 
 //Zones
-void AddSC_TheForbiddenReach();
 void AddSC_zone_the_waking_shores();
 void AddSC_zone_thaldraszus();
 
@@ -30,7 +29,6 @@ void AddSC_Boss_Gutshoot();
 void Add_MoDCore_DragonflightScripts()
 {
     //Zones
-    AddSC_TheForbiddenReach();
 	AddSC_zone_the_waking_shores();
 	AddSC_zone_thaldraszus();
 	
