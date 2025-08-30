@@ -217,9 +217,33 @@ void InstanceScript::LoadObjectData(ObjectData const* data, ObjectInfoMap& objec
 void InstanceScript::LoadDungeonEncounterData(uint32 bossId, std::array<uint32, MAX_DUNGEON_ENCOUNTERS_PER_BOSS> const& dungeonEncounterIds)
 {
     if (bossId < bosses.size())
+    {
         for (std::size_t i = 0, j = 0; i < MAX_DUNGEON_ENCOUNTERS_PER_BOSS; ++i)
+        {
             if (dungeonEncounterIds[i])
-                bosses[bossId].DungeonEncounters[j++] = sDungeonEncounterStore.AssertEntry(dungeonEncounterIds[i]);
+            {
+                if (j < MAX_DUNGEON_ENCOUNTERS_PER_BOSS)
+                {
+                    // Safe lookup of encounter entry
+                    auto encounter = sDungeonEncounterStore.LookupEntry(dungeonEncounterIds[i]);
+                    if (encounter)
+                    {
+                        bosses[bossId].DungeonEncounters[j++] = encounter;
+                    }
+                    else
+                    {
+                        // Handle invalid encounter gracefully
+                        TC_LOG_DEBUG("scripts", "Dungeon Encounter with ID {} not found for boss {}!", dungeonEncounterIds[i], bossId);
+                    }
+                }
+                else
+                {
+                    // Log a warning if more than the allowed encounters are provided
+                    TC_LOG_DEBUG("scripts", "Too many encounters for boss {}. Encounter ID {} skipped.", bossId, dungeonEncounterIds[i]);
+                }
+            }
+        }
+    }
 }
 
 void InstanceScript::UpdateDoorState(GameObject* door)
