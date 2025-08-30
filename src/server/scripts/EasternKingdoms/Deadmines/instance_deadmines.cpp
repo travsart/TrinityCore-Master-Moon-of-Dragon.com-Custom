@@ -46,7 +46,8 @@ DungeonEncounterData const encounters[] =
     { BOSS_FOE_REAPER_5000,     {{ 1063 }}  },
     { BOSS_ADMIRAL_RIPSNARL,    {{ 1062 }}  },
     { BOSS_CAPTAIN_COOKIE,      {{ 1060 }}  },
-    { BOSS_VANESSA_VANCLEEF,    {{ 1081 }}  }
+    { BOSS_VANESSA_VANCLEEF,    {{ 1081 }}  },
+    { 0,                        {{ 0 }}     }  // <<< END
 };
 
 class instance_deadmines : public InstanceMapScript
