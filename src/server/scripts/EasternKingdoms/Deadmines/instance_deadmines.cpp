@@ -62,7 +62,7 @@ public:
             SetBossNumber(EncounterCount);
             LoadObjectData(creatureData, nullptr);
             LoadDoorData(doorData);
-            //LoadDungeonEncounterData(encounters);
+            LoadDungeonEncounterData(encounters);  // This is where the crash was occurring
         }
     };
 

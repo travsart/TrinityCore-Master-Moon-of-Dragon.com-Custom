@@ -28,12 +28,12 @@ constexpr uint32 const EncounterCount = 6;
 enum DMDataTypes
 {
     // Encounters
-    BOSS_GLUBTOK            = 0,
-    BOSS_HELIX_GEARBREAKER  = 1,
-    BOSS_FOE_REAPER_5000    = 2,
-    BOSS_ADMIRAL_RIPSNARL   = 3,
-    BOSS_CAPTAIN_COOKIE     = 4,
-    BOSS_VANESSA_VANCLEEF   = 5
+    BOSS_GLUBTOK            = 1,
+    BOSS_HELIX_GEARBREAKER  = 2,
+    BOSS_FOE_REAPER_5000    = 3,
+    BOSS_ADMIRAL_RIPSNARL   = 4,
+    BOSS_CAPTAIN_COOKIE     = 5,
+    BOSS_VANESSA_VANCLEEF   = 6
 };
 
 enum DMCreatureIds
