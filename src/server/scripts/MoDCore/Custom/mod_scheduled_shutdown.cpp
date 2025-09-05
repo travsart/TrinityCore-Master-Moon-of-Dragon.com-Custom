@@ -11,6 +11,7 @@ public:
 
     void OnStartup() override
     {
+        shutdownEnabled = sConfigMgr->GetBoolDefault("ScheduledShutdown.Enable", true);
         shutdownHour = sConfigMgr->GetIntDefault("ScheduledShutdown.Hour", 4);
         shutdownMinute = sConfigMgr->GetIntDefault("ScheduledShutdown.Minute", 0);
         announcementSeconds = sConfigMgr->GetIntDefault("ScheduledShutdown.AnnouncementSeconds", 30);
@@ -19,10 +20,22 @@ public:
             announcementSeconds = 1;
 
         alreadyExecuted = false;
+
+        if (shutdownEnabled)
+        {
+            TC_LOG_INFO("server.scripts", "ScheduledShutdown: Enabled (Daily at {:02d}:{:02d})", shutdownHour, shutdownMinute);
+        }
+        else
+        {
+            TC_LOG_INFO("server.scripts", "ScheduledShutdown: Disabled via config.");
+        }
     }
 
     void OnUpdate(uint32 /*diff*/) override
     {
+        if (!shutdownEnabled)
+            return;
+
         time_t now = time(nullptr);
         tm localTime;
 #ifdef _WIN32
@@ -35,13 +48,12 @@ public:
         {
             if (!alreadyExecuted)
             {
-                std::string msg = "Automatically Server-Restart in " + std::to_string(announcementSeconds) + " Seconds!";
+                std::string msg = "Automatic server restart in " + std::to_string(announcementSeconds) + " seconds!";
                 sWorld->SendWorldText(LANG_SYSTEMMESSAGE, msg.c_str());
 
-                // -> Passend zu deiner Signatur
                 sWorld->ShutdownServ(
-                    announcementSeconds, // Delay
-                    0,                   // Options (0 = normal)
+                    announcementSeconds,
+                    0,                   // Shutdown options (normal)
                     RESTART_EXIT_CODE,   // Restart
                     "Planned daily restart"
                 );
@@ -56,7 +68,8 @@ public:
     }
 
 private:
-    int32 shutdownHour = 6;
+    bool shutdownEnabled = true;
+    int32 shutdownHour = 4;
     int32 shutdownMinute = 0;
     int32 announcementSeconds = 30;
     bool alreadyExecuted = false;
