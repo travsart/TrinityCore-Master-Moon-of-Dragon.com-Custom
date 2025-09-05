@@ -398,10 +398,7 @@ struct npc_ebenlocke : public ScriptedAI
     {
         if (quest->GetQuestId() == QUEST_EMBALMERS_REVENGE)
         {
-            Creature* stitches;
-
-            stitches = me->SummonCreature(NPC_STITCHES, Position(-10552.59f, -1108.68f, 31.5114f, 3.193950f), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 90s);
-
+            me->SummonCreature(NPC_STITCHES, Position(-10552.59f, -1108.68f, 31.5114f, 3.193950f), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 90s);
         }
     }
 };
