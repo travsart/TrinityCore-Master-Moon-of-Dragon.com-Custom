@@ -5065,3 +5065,12 @@ Solocraft.AberrusTheShadowedCrucible.Level = 80
 #   Solocraft.Instance.Excluded = "30,489,529,559,562,566,572,607,617,618,628"
 #   This example excludes scaling in PvP BG & Arena maps
 Solocraft.Instance.Excluded = ""
+
+#######################################################################
+# Scheduled Shutdown Module
+#
+# Uhrzeit für automatischen Restart (jeden Tag)
+#
+ScheduledShutdown.Hour = 4
+ScheduledShutdown.Minute = 0
+ScheduledShutdown.AnnouncementSeconds = 30
