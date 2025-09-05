@@ -5069,8 +5069,33 @@ Solocraft.Instance.Excluded = ""
 #######################################################################
 # Scheduled Shutdown Module
 #
-# Uhrzeit für automatischen Restart (jeden Tag)
-#
+# Enable or disable automatic daily server restart
+ScheduledShutdown.Enable = 0
+
+# Time of the shutdown (24h format)
 ScheduledShutdown.Hour = 4
 ScheduledShutdown.Minute = 0
+
+# Time in seconds before restart after announcement
 ScheduledShutdown.AnnouncementSeconds = 30
+#
+#######################################################################
+
+###################################################################################################
+# Global Chat System
+#
+#    GlobalChat.Enable
+#        Description: Enables Global Chat System
+#        Default:     1	- (Enabled)
+#                     0	- (Disabled)
+
+GlobalChat.Enable = 1
+
+#    GlobalChat.Announce
+#        Description: Announces the Global Chat System on character login
+#        Default:     1	- (Enabled)
+#                     0	- (Disabled)
+
+GlobalChat.Announce = 1
+#
+###################################################################################################

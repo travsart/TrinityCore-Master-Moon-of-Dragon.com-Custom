@@ -18,6 +18,7 @@ void Add_MoDCore_EasternKingdomsScripts();
 /* ######### CUSTOM ######## > */
 void Add_MoDCore_SolocraftScripts();
 void Add_MoDCore_ScheduledShutdownScripts();
+void AddSC_MoDCore_global_chat();
 /* < ######### CUSTOM ######### */
 
 void AddMoDCoreScripts()
@@ -31,6 +32,7 @@ void AddMoDCoreScripts()
     /* ######### CUSTOM ######## > */
     Add_MoDCore_SolocraftScripts();
     Add_MoDCore_ScheduledShutdownScripts();
+	AddSC_MoDCore_global_chat();
     /* < ######### CUSTOM ######### */
 }
 
