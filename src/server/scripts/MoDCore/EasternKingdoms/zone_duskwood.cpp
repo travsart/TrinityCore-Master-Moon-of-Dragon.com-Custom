@@ -285,8 +285,6 @@ enum MorbentFel
 
 class spell_sacred_cleansing : public SpellScript
 {
-    PrepareSpellScript(spell_sacred_cleansing);
-
     void SelectTarget(WorldObject*& target)
     {
         target = GetCaster()->FindNearestCreature(NPC_MORBENT_FEL, 15.0f, true);
@@ -326,8 +324,6 @@ class spell_sacred_cleansing : public SpellScript
 
 class spell_summon_stalvan : public SpellScript
 {
-    PrepareSpellScript(spell_summon_stalvan);
-
     bool IsEventRunning()
     {
         return GetCaster()->FindNearestCreature(NPC_STALVAN, 20, true) != nullptr;
@@ -424,7 +420,6 @@ struct npc_oliver_harris : public ScriptedAI
         if (!summoner->IsCreature())
             return;
 
-        ObjectGuid ownerGuid = summoner->GetGUID();
         me->GetOwnerGUID();
         me->SetWalk(true);
         me->GetMotionMaster()->MovePoint(1, -10745.0f, 330.0f, 37.87f, true);
