@@ -1,251 +1,541 @@
-#
-# TrinityCore Playerbot Module Configuration
-#
-# This file contains all configuration options for the optional TrinityCore Playerbot module.
-# The playerbot system provides AI-controlled player characters to create a populated
-# game world for single-player or small server experiences.
-#
-# IMPORTANT: This file is completely separate from worldserver.conf
-# Changes here do not affect core TrinityCore functionality.
-#
-
 ###################################################################################################
-# PLAYERBOT MODULE CORE SETTINGS
+# PLAYERBOT MODULE CONFIGURATION
+#
+# This configuration file controls all aspects of the Playerbot module for TrinityCore.
+# Copy this file to playerbots.conf and edit as needed.
+#
 ###################################################################################################
 
+###################################################################################################
+# GENERAL SETTINGS
 #
 #    Playerbot.Enable
-#        Description: Enable or disable the entire playerbot system
-#        Default:     0 (disabled)
-#                     1 (enabled)
+#        Description: Enable the Playerbot module
+#        Default:     0 (Disabled)
+#                     1 (Enabled)
 #
-
-Playerbot.Enable = 0
-
-#
-#    Playerbot.MaxBotsPerAccount
-#        Description: Maximum number of bot characters per account
-#        Default:     10
-#        Range:       1-50
-#        Note:        Higher values may impact performance
-#
-
-Playerbot.MaxBotsPerAccount = 10
-
-#
-#    Playerbot.MaxTotalBots
-#        Description: Maximum total number of bots on the server
+#    Playerbot.MaxBotsTotal
+#        Description: Maximum number of bot players allowed on the server
 #        Default:     100
 #        Range:       1-1000
-#        Note:        Actual limit depends on server hardware
-#
-
-Playerbot.MaxTotalBots = 100
-
-###################################################################################################
-# PLAYERBOT AI BEHAVIOR SETTINGS
-###################################################################################################
-
 #
 #    Playerbot.UpdateInterval
-#        Description: Time in milliseconds between AI decision updates
-#        Default:     1000 (1 second)
-#        Range:       100-5000
-#        Note:        Lower values = more responsive AI, higher CPU usage
+#        Description: How often bots are updated (in milliseconds)
+#        Default:     1000
+#        Range:       100-10000
 #
+###################################################################################################
 
+Playerbot.Enable = 0
+Playerbot.MaxBotsTotal = 100
 Playerbot.UpdateInterval = 1000
 
-#
-#    Playerbot.AIDecisionTimeLimit
-#        Description: Maximum time in milliseconds for AI decision making
-#        Default:     50
-#        Range:       10-500
-#        Note:        Prevents AI from blocking server updates
-#
-
-Playerbot.AIDecisionTimeLimit = 50
-
-#
-#    Playerbot.DefaultStrategy
-#        Description: Default AI strategy for new bots
-#        Default:     "default"
-#        Options:     "default", "passive", "aggressive", "helper"
-#
-
-Playerbot.DefaultStrategy = "default"
-
 ###################################################################################################
-# PLAYERBOT ACCOUNT MANAGEMENT
-###################################################################################################
-
+# ACCOUNT MANAGEMENT - CRITICAL SETTINGS
+#
+#    Playerbot.MaxBotsPerAccount
+#        Description: Maximum number of bot characters each player can control
+#        Default:     5
+#        Range:       1-50
+#
+#    Playerbot.MaxCharactersPerAccount
+#        Description: Maximum number of characters per bot account
+#        Default:     10
+#        Range:       1-10
+#        IMPORTANT:   HARD LIMIT OF 10 - DO NOT EXCEED
+#
+#    Playerbot.StrictCharacterLimit
+#        Description: Enforce character limit strictly on startup
+#                     0 - Allow startup with violations (excess characters disabled)
+#                     1 - Abort startup if any bot account exceeds limit
+#        Default:     1
+#
+#    Playerbot.AutoFixCharacterLimit
+#        Description: Automatically fix character limit violations
+#                     0 - Only report violations
+#                     1 - Disable excess characters automatically
+#        Default:     0
+#
+#    Playerbot.BotAccountPrefix
+#        Description: Prefix for automatically created bot accounts
+#        Default:     "Bot"
 #
 #    Playerbot.AutoCreateAccounts
 #        Description: Automatically create bot accounts on server start
-#        Default:     0 (disabled)
-#                     1 (enabled)
+#        Default:     0
 #
-
-Playerbot.AutoCreateAccounts = 0
-
-#
-#    Playerbot.AccountPrefix
-#        Description: Prefix for automatically created bot account names
-#        Default:     "bot"
-#        Note:        Accounts will be named: bot1, bot2, bot3, etc.
-#
-
-Playerbot.AccountPrefix = "bot"
-
-#
-#    Playerbot.AutoCreateCharacters
-#        Description: Automatically create bot characters on server start
-#        Default:     0 (disabled)
-#                     1 (enabled)
-#
-
-Playerbot.AutoCreateCharacters = 0
-
-###################################################################################################
-# PLAYERBOT SPAWNING AND LIFECYCLE
-###################################################################################################
-
-#
-#    Playerbot.AutoLogin
-#        Description: Automatically log in bots when server starts
-#        Default:     0 (disabled)
-#                     1 (enabled)
-#
-
-Playerbot.AutoLogin = 0
-
-#
-#    Playerbot.LoginDelay
-#        Description: Delay in seconds between bot logins (prevents spam)
-#        Default:     5
-#        Range:       1-60
-#
-
-Playerbot.LoginDelay = 5
-
-#
-#    Playerbot.RandomLogout
-#        Description: Allow bots to randomly log out/in for realism
-#        Default:     0 (disabled)
-#                     1 (enabled)
-#
-
-Playerbot.RandomLogout = 0
-
-###################################################################################################
-# PLAYERBOT PERFORMANCE SETTINGS
-###################################################################################################
-
-#
-#    Playerbot.EnablePerformanceMonitoring
-#        Description: Monitor and log performance metrics
-#        Default:     1 (enabled)
-#                     0 (disabled)
-#
-
-Playerbot.EnablePerformanceMonitoring = 1
-
-#
-#    Playerbot.PerformanceLogInterval
-#        Description: Interval in seconds between performance log entries
-#        Default:     300 (5 minutes)
-#        Range:       60-3600
-#
-
-Playerbot.PerformanceLogInterval = 300
-
-#
-#    Playerbot.MaxMemoryPerBot
-#        Description: Maximum memory usage per bot in MB (warning threshold)
+#    Playerbot.AccountsToCreate
+#        Description: Number of bot accounts to create automatically
 #        Default:     10
 #        Range:       1-100
 #
-
-Playerbot.MaxMemoryPerBot = 10
-
-###################################################################################################
-# PLAYERBOT DATABASE SETTINGS
 ###################################################################################################
 
+Playerbot.MaxBotsPerAccount = 5
+Playerbot.MaxCharactersPerAccount = 10
+Playerbot.StrictCharacterLimit = 1
+Playerbot.AutoFixCharacterLimit = 0
+Playerbot.BotAccountPrefix = "Bot"
+Playerbot.AutoCreateAccounts = 0
+Playerbot.AccountsToCreate = 10
+
+###################################################################################################
+# CHARACTER CREATION
 #
-#    Playerbot.DatabaseType
-#        Description: Database backend for bot data
+#    Playerbot.AutoCreateCharacters
+#        Description: Automatically create bot characters
+#        Default:     0
+#
+#    Playerbot.RandomBotLevel.Min
+#        Description: Minimum level for randomly created bots
+#        Default:     1
+#        Range:       1-80
+#
+#    Playerbot.RandomBotLevel.Max
+#        Description: Maximum level for randomly created bots
+#        Default:     60
+#        Range:       1-80
+#
+#    Playerbot.StartingGear
+#        Description: Equipment quality for new bots
+#                     0 - No gear
+#                     1 - Gray items
+#                     2 - White items
+#                     3 - Green items
+#                     4 - Blue items
+#        Default:     2
+#
+#    Playerbot.UseRealCharacterDistribution
+#        Description: Use realistic race/class distribution based on WoW statistics
+#        Default:     1
+#
+#    Playerbot.AllowAllRaceClassCombinations
+#        Description: Allow bots to use any race/class combination
+#        Default:     0
+#
+#    Playerbot.PreferredFaction
+#        Description: Preferred faction for bot creation
+#                     0 - Balanced
+#                     1 - Alliance
+#                     2 - Horde
+#        Default:     0
+#
+###################################################################################################
+
+Playerbot.AutoCreateCharacters = 0
+Playerbot.RandomBotLevel.Min = 1
+Playerbot.RandomBotLevel.Max = 60
+Playerbot.StartingGear = 2
+Playerbot.UseRealCharacterDistribution = 1
+Playerbot.AllowAllRaceClassCombinations = 0
+Playerbot.PreferredFaction = 0
+
+###################################################################################################
+# NAME MANAGEMENT
+#
+#    Playerbot.UniqueNames
+#        Description: Ensure all bot names are unique
+#        Default:     1
+#
+#    Playerbot.NameDatabase
+#        Description: Database table containing bot names
+#        Default:     "playerbots_names"
+#
+#    Playerbot.MinAvailableNames
+#        Description: Minimum available names before warning
+#        Default:     100
+#
+#    Playerbot.GenerateRandomNames
+#        Description: Generate random names if name pool is exhausted
+#        Default:     0
+#
+#    Playerbot.ReservePlayerNames
+#        Description: Prevent bots from using active player names
+#        Default:     1
+#
+###################################################################################################
+
+Playerbot.UniqueNames = 1
+Playerbot.NameDatabase = "playerbots_names"
+Playerbot.MinAvailableNames = 100
+Playerbot.GenerateRandomNames = 0
+Playerbot.ReservePlayerNames = 1
+
+###################################################################################################
+# BOT BEHAVIOR
+#
+#    Playerbot.BotAI.UpdateDelay
+#        Description: Minimum delay between AI updates per bot (milliseconds)
+#        Default:     100
+#        Range:       10-5000
+#
+#    Playerbot.BotAI.ReactDelay
+#        Description: Reaction time for bots (simulates human reaction)
+#        Default:     500
+#        Range:       0-2000
+#
+#    Playerbot.BotAI.MaxCombatDistance
+#        Description: Maximum distance bots will engage in combat
+#        Default:     40
+#        Range:       10-100
+#
+#    Playerbot.BotAI.RestHealthPercent
+#        Description: Health percentage at which bots will rest
+#        Default:     60
+#        Range:       1-100
+#
+#    Playerbot.BotAI.RestManaPercent
+#        Description: Mana percentage at which bots will rest
+#        Default:     40
+#        Range:       1-100
+#
+#    Playerbot.BotAI.Strategy
+#        Description: Default AI strategy for bots
+#                     "default" - Balanced behavior
+#                     "passive" - Defensive, avoid combat
+#                     "aggressive" - Seek combat
+#                     "helper" - Support players
+#        Default:     "default"
+#
+###################################################################################################
+
+Playerbot.BotAI.UpdateDelay = 100
+Playerbot.BotAI.ReactDelay = 500
+Playerbot.BotAI.MaxCombatDistance = 40
+Playerbot.BotAI.RestHealthPercent = 60
+Playerbot.BotAI.RestManaPercent = 40
+Playerbot.BotAI.Strategy = "default"
+
+###################################################################################################
+# BOT SPAWNING
+#
+#    Playerbot.AutoLogin
+#        Description: Automatically log in bots when server starts
+#        Default:     0
+#
+#    Playerbot.LoginDelay
+#        Description: Delay between bot logins (seconds)
+#        Default:     5
+#        Range:       1-60
+#
+#    Playerbot.RandomLogout
+#        Description: Allow bots to randomly log out/in for realism
+#        Default:     0
+#
+#    Playerbot.LogoutChance
+#        Description: Chance per hour for bot to logout (percentage)
+#        Default:     10
+#        Range:       1-100
+#
+###################################################################################################
+
+Playerbot.AutoLogin = 0
+Playerbot.LoginDelay = 5
+Playerbot.RandomLogout = 0
+Playerbot.LogoutChance = 10
+
+###################################################################################################
+# PERFORMANCE
+#
+#    Playerbot.Performance.MaxBotsPerUpdate
+#        Description: Maximum number of bots updated per world update
+#        Default:     10
+#        Range:       1-100
+#
+#    Playerbot.Performance.UseThreading
+#        Description: Use multi-threading for bot AI
+#        Default:     0
+#
+#    Playerbot.Performance.ThreadCount
+#        Description: Number of threads for bot AI (if threading enabled)
+#        Default:     2
+#        Range:       1-8
+#
+#    Playerbot.Performance.CacheTime
+#        Description: How long to cache bot data (seconds)
+#        Default:     60
+#        Range:       10-600
+#
+#    Playerbot.Performance.EnableMetrics
+#        Description: Track performance metrics
+#        Default:     1
+#
+#    Playerbot.Performance.MetricsInterval
+#        Description: Interval for metrics logging (seconds)
+#        Default:     300
+#
+###################################################################################################
+
+Playerbot.Performance.MaxBotsPerUpdate = 10
+Playerbot.Performance.UseThreading = 0
+Playerbot.Performance.ThreadCount = 2
+Playerbot.Performance.CacheTime = 60
+Playerbot.Performance.EnableMetrics = 1
+Playerbot.Performance.MetricsInterval = 300
+
+###################################################################################################
+# DATABASE
+#
+#    Playerbot.Database.Host
+#        Description: Database host for playerbot data
+#        Default:     "127.0.0.1"
+#
+#    Playerbot.Database.Port
+#        Description: Database port
+#        Default:     3306
+#
+#    Playerbot.Database.User
+#        Description: Database username
+#        Default:     "trinity"
+#
+#    Playerbot.Database.Password
+#        Description: Database password
+#        Default:     "trinity"
+#
+#    Playerbot.Database.Name
+#        Description: Database name for playerbot tables
+#        Default:     "characters"
+#
+#    Playerbot.Database.WorkerThreads
+#        Description: Number of database worker threads
+#        Default:     1
+#        Range:       1-8
+#
+#    Playerbot.Database.Type
+#        Description: Database location for bot data
+#                     "character" - Use character database
+#                     "separate" - Use separate database (future)
 #        Default:     "character"
-#        Options:     "character" (use existing character DB)
-#                     "separate" (use separate playerbot DB - future)
 #
-
-Playerbot.DatabaseType = "character"
-
-###################################################################################################
-# PLAYERBOT LOGGING SETTINGS
 ###################################################################################################
 
-#
-#    Playerbot.LogLevel
-#        Description: Logging level for playerbot system
-#        Default:     2 (INFO)
-#        Options:     0 (DISABLED), 1 (ERROR), 2 (WARN), 3 (INFO), 4 (DEBUG)
-#
-
-Playerbot.LogLevel = 2
-
-#
-#    Playerbot.LogAIDecisions
-#        Description: Log AI decision making process (verbose)
-#        Default:     0 (disabled)
-#                     1 (enabled)
-#        Note:        Only enable for debugging - generates large logs
-#
-
-Playerbot.LogAIDecisions = 0
+Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Port = 3306
+Playerbot.Database.User = "trinity"
+Playerbot.Database.Password = "trinity"
+Playerbot.Database.Name = "characters"
+Playerbot.Database.WorkerThreads = 1
+Playerbot.Database.Type = "character"
 
 ###################################################################################################
-# PLAYERBOT SOCIAL FEATURES
+# LOGGING
+#
+#    Playerbot.Log.Level
+#        Description: Logging level for playerbot module
+#                     0 - Disabled
+#                     1 - Error only
+#                     2 - Warning and above
+#                     3 - Info and above
+#                     4 - Debug and above
+#                     5 - Trace (everything)
+#        Default:     3
+#
+#    Playerbot.Log.File
+#        Description: Log file for playerbot module
+#        Default:     "Playerbot.log"
+#
+#    Playerbot.Log.PerformanceMetrics
+#        Description: Log performance metrics
+#        Default:     0
+#
+#    Playerbot.Log.AIDecisions
+#        Description: Log AI decision making (debug)
+#        Default:     0
+#
+#    Playerbot.Log.DatabaseQueries
+#        Description: Log database queries (debug)
+#        Default:     0
+#
+#    Playerbot.Log.CharacterActions
+#        Description: Log character actions (movement, combat, etc)
+#        Default:     0
+#
 ###################################################################################################
 
+Playerbot.Log.Level = 3
+Playerbot.Log.File = "Playerbot.log"
+Playerbot.Log.PerformanceMetrics = 0
+Playerbot.Log.AIDecisions = 0
+Playerbot.Log.DatabaseQueries = 0
+Playerbot.Log.CharacterActions = 0
+
+###################################################################################################
+# COMMANDS
 #
-#    Playerbot.EnableGuilds
+#    Playerbot.Commands.MinSecurityLevel
+#        Description: Minimum GM level required to use playerbot commands
+#        Default:     1
+#        Range:       0-3
+#
+#    Playerbot.Commands.AllowPublicBots
+#        Description: Allow non-GM players to summon bots
+#        Default:     0
+#
+#    Playerbot.Commands.PublicBotLimit
+#        Description: Maximum bots a non-GM player can summon
+#        Default:     1
+#        Range:       1-10
+#
+###################################################################################################
+
+Playerbot.Commands.MinSecurityLevel = 1
+Playerbot.Commands.AllowPublicBots = 0
+Playerbot.Commands.PublicBotLimit = 1
+
+###################################################################################################
+# FEATURES
+#
+#    Playerbot.Features.AutoEquip
+#        Description: Automatically equip better items
+#        Default:     1
+#
+#    Playerbot.Features.AutoLearnSpells
+#        Description: Automatically learn spells when leveling
+#        Default:     1
+#
+#    Playerbot.Features.AutoAcceptQuests
+#        Description: Automatically accept quests from party leader
+#        Default:     1
+#
+#    Playerbot.Features.AutoTurnInQuests
+#        Description: Automatically turn in completed quests
+#        Default:     1
+#
+#    Playerbot.Features.UseFood
+#        Description: Bots will use food to regenerate health
+#        Default:     1
+#
+#    Playerbot.Features.UseDrink
+#        Description: Bots will use drinks to regenerate mana
+#        Default:     1
+#
+#    Playerbot.Features.SellGrayItems
+#        Description: Automatically sell gray items to vendors
+#        Default:     1
+#
+#    Playerbot.Features.RepairEquipment
+#        Description: Automatically repair equipment at vendors
+#        Default:     1
+#
+#    Playerbot.Features.BuyAmmo
+#        Description: Automatically buy ammunition for hunters
+#        Default:     1
+#
+#    Playerbot.Features.TrainSkills
+#        Description: Automatically train skills at trainers
+#        Default:     1
+#
+###################################################################################################
+
+Playerbot.Features.AutoEquip = 1
+Playerbot.Features.AutoLearnSpells = 1
+Playerbot.Features.AutoAcceptQuests = 1
+Playerbot.Features.AutoTurnInQuests = 1
+Playerbot.Features.UseFood = 1
+Playerbot.Features.UseDrink = 1
+Playerbot.Features.SellGrayItems = 1
+Playerbot.Features.RepairEquipment = 1
+Playerbot.Features.BuyAmmo = 1
+Playerbot.Features.TrainSkills = 1
+
+###################################################################################################
+# SOCIAL
+#
+#    Playerbot.Social.EnableGuilds
 #        Description: Allow bots to create and join guilds
-#        Default:     0 (disabled)
-#                     1 (enabled)
+#        Default:     0
 #
-
-Playerbot.EnableGuilds = 0
-
-#
-#    Playerbot.EnableChat
+#    Playerbot.Social.EnableChat
 #        Description: Allow bots to participate in chat
-#        Default:     0 (disabled)
-#                     1 (enabled)
+#        Default:     0
 #
-
-Playerbot.EnableChat = 0
-
+#    Playerbot.Social.ChatChance
+#        Description: Chance for bot to respond in chat (percentage)
+#        Default:     10
+#        Range:       1-100
 #
-#    Playerbot.EnableGrouping
-#        Description: Allow bots to form groups with players and other bots
-#        Default:     1 (enabled)
-#                     0 (disabled)
+#    Playerbot.Social.EmoteChance
+#        Description: Chance for bot to use emotes (percentage)
+#        Default:     5
+#        Range:       1-100
 #
+#    Playerbot.Social.EnableGrouping
+#        Description: Allow bots to form groups
+#        Default:     1
+#
+#    Playerbot.Social.EnableTrading
+#        Description: Allow bots to trade with players
+#        Default:     1
+#
+###################################################################################################
 
-Playerbot.EnableGrouping = 1
+Playerbot.Social.EnableGuilds = 0
+Playerbot.Social.EnableChat = 0
+Playerbot.Social.ChatChance = 10
+Playerbot.Social.EmoteChance = 5
+Playerbot.Social.EnableGrouping = 1
+Playerbot.Social.EnableTrading = 1
 
 ###################################################################################################
-# EXPERIMENTAL FEATURES (Use with caution)
+# SECURITY
+#
+#    Playerbot.Security.PreventBotLogin
+#        Description: Prevent direct login to bot accounts
+#        Default:     1
+#
+#    Playerbot.Security.RestrictBotInteraction
+#        Description: Restrict trading/mailing with bots
+#        Default:     0
+#
+#    Playerbot.Security.LogBotActions
+#        Description: Log all bot actions for audit
+#        Default:     0
+#
+#    Playerbot.Security.PreventBotExploit
+#        Description: Prevent exploitation of bot mechanics
+#        Default:     1
+#
+#    Playerbot.Security.MaxGoldPerBot
+#        Description: Maximum gold a bot can carry
+#        Default:     1000
+#        Range:       1-1000000
+#
 ###################################################################################################
 
-#
-#    Playerbot.ExperimentalFeatures
-#        Description: Enable experimental and unstable features
-#        Default:     0 (disabled)
-#                     1 (enabled)
-#        Warning:     May cause server instability
-#
+Playerbot.Security.PreventBotLogin = 1
+Playerbot.Security.RestrictBotInteraction = 0
+Playerbot.Security.LogBotActions = 0
+Playerbot.Security.PreventBotExploit = 1
+Playerbot.Security.MaxGoldPerBot = 1000
 
-Playerbot.ExperimentalFeatures = 0
+###################################################################################################
+# EXPERIMENTAL
+#
+#    Playerbot.Experimental.RandomMovement
+#        Description: Enable random movement for idle bots
+#        Default:     0
+#
+#    Playerbot.Experimental.BotChat
+#        Description: Enable bot chat responses
+#        Default:     0
+#
+#    Playerbot.Experimental.BotEmotes
+#        Description: Enable bot emotes
+#        Default:     0
+#
+#    Playerbot.Experimental.PathfindingV2
+#        Description: Use experimental pathfinding
+#        Default:     0
+#
+#    Playerbot.Experimental.Features
+#        Description: Enable all experimental features
+#        Default:     0
+#        Warning:     May cause instability
+#
+###################################################################################################
+
+Playerbot.Experimental.RandomMovement = 0
+Playerbot.Experimental.BotChat = 0
+Playerbot.Experimental.BotEmotes = 0
+Playerbot.Experimental.PathfindingV2 = 0
+Playerbot.Experimental.Features = 0

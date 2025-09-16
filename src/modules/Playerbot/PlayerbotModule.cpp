@@ -5,20 +5,15 @@
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef PLAYERBOT_ENABLED
 
 #include "PlayerbotModule.h"
 #include "Config/PlayerbotConfig.h"
+#include "Account/BotAccountMgr.h"
+#include "Character/BotNameMgr.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -59,6 +54,32 @@ bool PlayerbotModule::Initialize()
     // Initialize logging
     InitializeLogging();
 
+    // Initialize Bot Account Manager
+    TC_LOG_INFO("server.loading", "Initializing Bot Account Manager...");
+    if (!sBotAccountMgr->Initialize())
+    {
+        _lastError = "Failed to initialize Bot Account Manager";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        
+        // Check if strict mode is enabled
+        if (sPlayerbotConfig->GetBool("Playerbot.StrictCharacterLimit", true))
+        {
+            TC_LOG_FATAL("server.loading", 
+                "Playerbot Module: Bot accounts exceed character limit! "
+                "Server startup aborted. Set Playerbot.StrictCharacterLimit = 0 to allow startup.");
+            return false;
+        }
+    }
+
+    // Initialize Bot Name Manager
+    TC_LOG_INFO("server.loading", "Initializing Bot Name Manager...");
+    if (!sBotNameMgr->Initialize())
+    {
+        _lastError = "Failed to initialize Bot Name Manager";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
     // Register hooks with TrinityCore
     RegisterHooks();
 
@@ -66,6 +87,10 @@ bool PlayerbotModule::Initialize()
     _enabled = true;
 
     TC_LOG_INFO("server.loading", "Playerbot Module: Successfully initialized (Version {})", GetVersion());
+    TC_LOG_INFO("server.loading", "  - {} bot accounts loaded", sBotAccountMgr->GetTotalBotAccounts());
+    TC_LOG_INFO("server.loading", "  - {} names available ({} used)", 
+        sBotNameMgr->GetTotalNameCount(), sBotNameMgr->GetUsedNameCount());
+    
     return true;
 }
 
@@ -78,6 +103,17 @@ void PlayerbotModule::Shutdown()
 
     // Unregister hooks
     UnregisterHooks();
+
+    if (_enabled)
+    {
+        // Shutdown Bot Name Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
+        sBotNameMgr->Shutdown();
+        
+        // Shutdown Bot Account Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
+        sBotAccountMgr->Shutdown();
+    }
 
     // Mark as shutdown
     _initialized = false;
@@ -127,9 +163,18 @@ bool PlayerbotModule::ValidateConfig()
 
     // Validate bot count limits
     uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBotsPerAccount", 10);
-    if (maxBots > 50)
+    if (maxBots < 1 || maxBots > 50)
     {
-        _lastError = "Playerbot.MaxBotsPerAccount exceeds maximum limit (50)";
+        _lastError = Trinity::StringFormat("Playerbot.MaxBotsPerAccount invalid ({}), must be between 1-50", maxBots);
+        TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    // Validate character limit per account - WICHTIG: MAX 10!
+    uint32 maxChars = sPlayerbotConfig->GetInt("Playerbot.MaxCharactersPerAccount", 10);
+    if (maxChars < 1 || maxChars > 10)
+    {
+        _lastError = Trinity::StringFormat("Playerbot.MaxCharactersPerAccount invalid ({}), must be between 1-10", maxChars);
         TC_LOG_WARN("server.loading", "Playerbot Module: {}", _lastError);
         return false;
     }
@@ -148,11 +193,18 @@ bool PlayerbotModule::ValidateConfig()
 
 void PlayerbotModule::InitializeLogging()
 {
-    // TODO: Initialize specialized logging channels for playerbot
-    // - Bot AI decisions
-    // - Performance metrics
-    // - Error conditions
-    // - Debug information
+    // Initialize specialized logging channels for playerbot
+    // These use TrinityCore's existing logging system with module-specific categories
+    
+    // Log categories are configured in Logger.conf:
+    // - module.playerbot (general module logging)
+    // - module.playerbot.ai (AI decision logging)
+    // - module.playerbot.performance (performance metrics)
+    // - module.playerbot.account (account management)
+    // - module.playerbot.character (character management)
+    // - module.playerbot.names (name allocation)
+    
+    TC_LOG_DEBUG("module.playerbot", "Playerbot logging initialized");
 }
 
 #endif // PLAYERBOT_ENABLED

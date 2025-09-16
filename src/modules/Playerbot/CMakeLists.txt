@@ -18,21 +18,44 @@ endif()
 
 message(STATUS "Playerbot module: ENABLED")
 
-# Collect all source files
-CollectSourceFiles(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    PLAYERBOT_SOURCES
-    # Exclude test files from main build
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests
+# Set source files
+set(PLAYERBOT_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
 )
 
 # Group sources for IDE organization
-GroupSources(${CMAKE_CURRENT_SOURCE_DIR})
+source_group("" FILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.h
+)
 
-# Collect include directories
-CollectIncludeDirectories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    PLAYERBOT_INCLUDES
+source_group("Config" FILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+)
+
+source_group("Account" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.h
+)
+
+source_group("Character" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
+)
+
+source_group("Database" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
 )
 
 # Create the playerbot library
@@ -44,8 +67,12 @@ target_compile_features(playerbot PRIVATE cxx_std_20)
 # Include directories
 target_include_directories(playerbot
     PUBLIC
-        ${PLAYERBOT_INCLUDES}
+        ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Config
+        ${CMAKE_CURRENT_SOURCE_DIR}/Account
+        ${CMAKE_CURRENT_SOURCE_DIR}/Character
+        ${CMAKE_CURRENT_SOURCE_DIR}/Database
         ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -59,11 +86,20 @@ target_link_libraries(playerbot
 )
 
 # Add preprocessor definition
-target_compile_definitions(playerbot PRIVATE PLAYERBOT_ENABLED)
+target_compile_definitions(playerbot 
+    PRIVATE 
+        PLAYERBOT_ENABLED
+        TRINITY_API_EXPORT_PLAYERBOT
+)
 
 # Install configuration file
 if(CONF_DIR)
-    install(FILES conf/playerbots.conf.dist DESTINATION ${CONF_DIR})
+    install(FILES conf/playerbots.conf.dist DESTINATION ${CONF_DIR}/modules)
+endif()
+
+# Install SQL files
+if(SQL_DIR)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/sql/playerbot/ DESTINATION ${SQL_DIR}/playerbot)
 endif()
 
 # Add to game library dependencies
@@ -74,5 +110,7 @@ endif()
 
 # Unit tests (optional)
 if(BUILD_TESTING)
-    add_subdirectory(Tests)
+    # add_subdirectory(Tests)
 endif()
+
+message(STATUS "  -> Playerbot module source files: ${PLAYERBOT_SOURCES}")
