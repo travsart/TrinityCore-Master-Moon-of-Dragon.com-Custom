@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "World.h"
 #include "AccountMgr.h"
+#include "BattlenetAccountMgr.h"
 #include "Random.h"
 #include "PlayerbotDatabase.h"
 #include "PreparedStatement.h"
@@ -219,13 +220,13 @@ bool BotAccountMgr::ValidateCharacterLimitsOnStartup()
         "Validating bot account character limits on startup...");
     
     // Check all bot accounts
-    QueryResult result = PlayerbotDatabase.Query(
-        "SELECT c.account, COUNT(*) as char_count "
+    std::string query = "SELECT c.account, COUNT(*) as char_count "
         "FROM characters c "
         "INNER JOIN playerbot_accounts pa ON c.account = pa.account_id "
         "WHERE pa.is_bot = 1 "
         "GROUP BY c.account "
-        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT));
+        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT);
+    QueryResult result = PlayerbotDatabase.Query(query.c_str());
     
     if (!result)
     {
@@ -285,8 +286,8 @@ void BotAccountMgr::DisableExcessCharacters(uint32 accountId, uint32 excessCount
         "Disabling {} excess characters for bot account {}",
         excessCount, accountId);
     
-    // Get characters ordered by level (lowest first) and play time
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    // Get bot characters ordered by level (lowest first)
+    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_SEL_BOT_CHARACTERS_BY_ACCOUNT);
     stmt->setUInt32(0, accountId);
     PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
     
@@ -314,10 +315,10 @@ void BotAccountMgr::DisableExcessCharacters(uint32 accountId, uint32 excessCount
     // Mark characters as disabled
     for (uint32 guid : charactersToDisable)
     {
-        stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
-        stmt->setUInt16(0, uint16(0x00000001 | 0x00000008)); // AT_LOGIN_RENAME | AT_LOGIN_CUSTOMIZE equivalent
-        stmt->setUInt32(1, guid);
-        PlayerbotDatabase.Execute(stmt);
+        PreparedStatement<CharacterDatabaseConnection>* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
+        charStmt->setUInt16(0, uint16(0x00000001 | 0x00000008)); // AT_LOGIN_RENAME | AT_LOGIN_CUSTOMIZE equivalent
+        charStmt->setUInt32(1, guid);
+        CharacterDatabase.Execute(charStmt);
         
         TC_LOG_WARN("module.playerbot", 
             "Disabled excess character {} from bot account {}",
@@ -329,13 +330,13 @@ void BotAccountMgr::AutoFixCharacterLimitViolations()
 {
     TC_LOG_INFO("module.playerbot", "Auto-fixing character limit violations...");
     
-    QueryResult result = PlayerbotDatabase.Query(
-        "SELECT c.account, COUNT(*) as char_count "
+    std::string query = "SELECT c.account, COUNT(*) as char_count "
         "FROM characters c "
         "INNER JOIN playerbot_accounts pa ON c.account = pa.account_id "
         "WHERE pa.is_bot = 1 "
         "GROUP BY c.account "
-        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT));
+        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT);
+    QueryResult result = PlayerbotDatabase.Query(query.c_str());
     
     if (!result)
         return;
@@ -414,24 +415,28 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& username)
 {
     // Generate a secure password
     std::string password = "BotPass" + std::to_string(urand(10000, 99999));
-    
-    // Create account using AccountMgr
-    AccountOpResult result = AccountMgr().CreateAccount(username, password, "");
-    
+
+    // Create email-style battlenet account name
+    std::string bnetAccountName = username + "@playerbot.local";
+
+    // Create Battlenet account with linked game account
+    std::string gameAccountName;
+    AccountOpResult result = Battlenet::AccountMgr::CreateBattlenetAccount(bnetAccountName, password, true, &gameAccountName);
+
     if (result != AccountOpResult::AOR_OK)
     {
-        TC_LOG_ERROR("module.playerbot", 
-            "Failed to create bot account '{}': {}", 
-            username, uint32(result));
+        TC_LOG_ERROR("module.playerbot",
+            "Failed to create bot battlenet account '{}': {}",
+            bnetAccountName, uint32(result));
         return 0;
     }
-    
-    // Get the created account ID
-    uint32 accountId = AccountMgr::GetId(username);
+
+    // Get the created game account ID (this is what we need for characters)
+    uint32 accountId = AccountMgr::GetId(gameAccountName);
     if (!accountId)
     {
-        TC_LOG_ERROR("module.playerbot", 
-            "Failed to get ID for newly created bot account '{}'", username);
+        TC_LOG_ERROR("module.playerbot",
+            "Failed to get ID for newly created bot game account '{}'", gameAccountName);
         return 0;
     }
     

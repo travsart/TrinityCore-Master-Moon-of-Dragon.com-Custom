@@ -12,11 +12,7 @@
 
 PlayerbotDatabaseWorkerPool PlayerbotDatabase;
 
-PlayerbotDatabaseConnection::PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
-{
-}
-
-PlayerbotDatabaseConnection::PlayerbotDatabaseConnection(ProducerConsumerQueue<SQLOperation<PlayerbotDatabaseConnection>*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo)
+PlayerbotDatabaseConnection::PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags) : MySQLConnection(connInfo, connectionFlags)
 {
 }
 

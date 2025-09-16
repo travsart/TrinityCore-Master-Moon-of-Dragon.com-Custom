@@ -12,7 +12,6 @@
 
 #include "DatabaseWorkerPool.h"
 #include "MySQLConnection.h"
-#include "SQLOperation.h"
 
 enum PlayerbotDatabaseStatements : uint32
 {
@@ -71,9 +70,8 @@ class TC_DATABASE_API PlayerbotDatabaseConnection : public MySQLConnection
 public:
     typedef PlayerbotDatabaseStatements Statements;
 
-    //- Constructors for sync and async connections
-    PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo);
-    PlayerbotDatabaseConnection(ProducerConsumerQueue<SQLOperation<PlayerbotDatabaseConnection>*>* q, MySQLConnectionInfo& connInfo);
+    //- Constructor
+    PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags);
     ~PlayerbotDatabaseConnection();
 
     //- Loads database type specific prepared statements
