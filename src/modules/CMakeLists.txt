@@ -8,17 +8,9 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-add_subdirectory(genrev)
-add_subdirectory(common)
+# TrinityCore Optional Modules
 
-if(SERVERS)
-  add_subdirectory(server)
-endif(SERVERS)
-
-if(TOOLS)
-  add_subdirectory(tools)
-endif(TOOLS)
-
+# Only include modules if they are enabled
 if(BUILD_PLAYERBOT)
-  add_subdirectory(modules)
+    add_subdirectory(Playerbot)
 endif(BUILD_PLAYERBOT)

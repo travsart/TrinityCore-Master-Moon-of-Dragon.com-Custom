@@ -1,0 +1,251 @@
+#
+# TrinityCore Playerbot Module Configuration
+#
+# This file contains all configuration options for the optional TrinityCore Playerbot module.
+# The playerbot system provides AI-controlled player characters to create a populated
+# game world for single-player or small server experiences.
+#
+# IMPORTANT: This file is completely separate from worldserver.conf
+# Changes here do not affect core TrinityCore functionality.
+#
+
+###################################################################################################
+# PLAYERBOT MODULE CORE SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.Enable
+#        Description: Enable or disable the entire playerbot system
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.Enable = 0
+
+#
+#    Playerbot.MaxBotsPerAccount
+#        Description: Maximum number of bot characters per account
+#        Default:     10
+#        Range:       1-50
+#        Note:        Higher values may impact performance
+#
+
+Playerbot.MaxBotsPerAccount = 10
+
+#
+#    Playerbot.MaxTotalBots
+#        Description: Maximum total number of bots on the server
+#        Default:     100
+#        Range:       1-1000
+#        Note:        Actual limit depends on server hardware
+#
+
+Playerbot.MaxTotalBots = 100
+
+###################################################################################################
+# PLAYERBOT AI BEHAVIOR SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.UpdateInterval
+#        Description: Time in milliseconds between AI decision updates
+#        Default:     1000 (1 second)
+#        Range:       100-5000
+#        Note:        Lower values = more responsive AI, higher CPU usage
+#
+
+Playerbot.UpdateInterval = 1000
+
+#
+#    Playerbot.AIDecisionTimeLimit
+#        Description: Maximum time in milliseconds for AI decision making
+#        Default:     50
+#        Range:       10-500
+#        Note:        Prevents AI from blocking server updates
+#
+
+Playerbot.AIDecisionTimeLimit = 50
+
+#
+#    Playerbot.DefaultStrategy
+#        Description: Default AI strategy for new bots
+#        Default:     "default"
+#        Options:     "default", "passive", "aggressive", "helper"
+#
+
+Playerbot.DefaultStrategy = "default"
+
+###################################################################################################
+# PLAYERBOT ACCOUNT MANAGEMENT
+###################################################################################################
+
+#
+#    Playerbot.AutoCreateAccounts
+#        Description: Automatically create bot accounts on server start
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.AutoCreateAccounts = 0
+
+#
+#    Playerbot.AccountPrefix
+#        Description: Prefix for automatically created bot account names
+#        Default:     "bot"
+#        Note:        Accounts will be named: bot1, bot2, bot3, etc.
+#
+
+Playerbot.AccountPrefix = "bot"
+
+#
+#    Playerbot.AutoCreateCharacters
+#        Description: Automatically create bot characters on server start
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.AutoCreateCharacters = 0
+
+###################################################################################################
+# PLAYERBOT SPAWNING AND LIFECYCLE
+###################################################################################################
+
+#
+#    Playerbot.AutoLogin
+#        Description: Automatically log in bots when server starts
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.AutoLogin = 0
+
+#
+#    Playerbot.LoginDelay
+#        Description: Delay in seconds between bot logins (prevents spam)
+#        Default:     5
+#        Range:       1-60
+#
+
+Playerbot.LoginDelay = 5
+
+#
+#    Playerbot.RandomLogout
+#        Description: Allow bots to randomly log out/in for realism
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.RandomLogout = 0
+
+###################################################################################################
+# PLAYERBOT PERFORMANCE SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.EnablePerformanceMonitoring
+#        Description: Monitor and log performance metrics
+#        Default:     1 (enabled)
+#                     0 (disabled)
+#
+
+Playerbot.EnablePerformanceMonitoring = 1
+
+#
+#    Playerbot.PerformanceLogInterval
+#        Description: Interval in seconds between performance log entries
+#        Default:     300 (5 minutes)
+#        Range:       60-3600
+#
+
+Playerbot.PerformanceLogInterval = 300
+
+#
+#    Playerbot.MaxMemoryPerBot
+#        Description: Maximum memory usage per bot in MB (warning threshold)
+#        Default:     10
+#        Range:       1-100
+#
+
+Playerbot.MaxMemoryPerBot = 10
+
+###################################################################################################
+# PLAYERBOT DATABASE SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.DatabaseType
+#        Description: Database backend for bot data
+#        Default:     "character"
+#        Options:     "character" (use existing character DB)
+#                     "separate" (use separate playerbot DB - future)
+#
+
+Playerbot.DatabaseType = "character"
+
+###################################################################################################
+# PLAYERBOT LOGGING SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.LogLevel
+#        Description: Logging level for playerbot system
+#        Default:     2 (INFO)
+#        Options:     0 (DISABLED), 1 (ERROR), 2 (WARN), 3 (INFO), 4 (DEBUG)
+#
+
+Playerbot.LogLevel = 2
+
+#
+#    Playerbot.LogAIDecisions
+#        Description: Log AI decision making process (verbose)
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#        Note:        Only enable for debugging - generates large logs
+#
+
+Playerbot.LogAIDecisions = 0
+
+###################################################################################################
+# PLAYERBOT SOCIAL FEATURES
+###################################################################################################
+
+#
+#    Playerbot.EnableGuilds
+#        Description: Allow bots to create and join guilds
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.EnableGuilds = 0
+
+#
+#    Playerbot.EnableChat
+#        Description: Allow bots to participate in chat
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#
+
+Playerbot.EnableChat = 0
+
+#
+#    Playerbot.EnableGrouping
+#        Description: Allow bots to form groups with players and other bots
+#        Default:     1 (enabled)
+#                     0 (disabled)
+#
+
+Playerbot.EnableGrouping = 1
+
+###################################################################################################
+# EXPERIMENTAL FEATURES (Use with caution)
+###################################################################################################
+
+#
+#    Playerbot.ExperimentalFeatures
+#        Description: Enable experimental and unstable features
+#        Default:     0 (disabled)
+#                     1 (enabled)
+#        Warning:     May cause server instability
+#
+
+Playerbot.ExperimentalFeatures = 0
