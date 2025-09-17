@@ -52,6 +52,9 @@
 #include "WorldSocket.h"
 #include "WorldSocketMgr.h"
 #include "Util.h"
+#ifdef PLAYERBOT_ENABLED
+#include "modules/Playerbot/PlayerbotModule.h"
+#endif
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 #include <boost/asio/signal_set.hpp>
@@ -355,6 +358,15 @@ int main(int argc, char** argv)
     if (!sWorld->SetInitialWorldSettings())
         return 1;
 
+#ifdef PLAYERBOT_ENABLED
+    // Initialize Playerbot Module after world is set up
+    if (!PlayerbotModule::Initialize())
+    {
+        TC_LOG_ERROR("server.worldserver", "Failed to initialize Playerbot Module");
+        // Continue startup even if playerbot fails to initialize
+    }
+#endif
+
     auto instanceLockMgrHandle = Trinity::make_unique_ptr_with_deleter<&InstanceLockMgr::Unload>(&sInstanceLockMgr);
 
     auto terrainMgrHandle = Trinity::make_unique_ptr_with_deleter<&TerrainMgr::UnloadAll>(&sTerrainMgr);
@@ -453,6 +465,11 @@ int main(int argc, char** argv)
     sLog->SetSynchronous();
 
     sScriptMgr->OnShutdown();
+
+#ifdef PLAYERBOT_ENABLED
+    // Shutdown Playerbot Module
+    PlayerbotModule::Shutdown();
+#endif
 
     // set server offline
     LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag | {} WHERE id = '{}'", Trinity::Legacy::REALM_FLAG_OFFLINE, realmId);

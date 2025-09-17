@@ -14,6 +14,7 @@
 #include "Account/BotAccountMgr.h"
 #include "Character/BotNameMgr.h"
 #include "Database/PlayerbotDatabase.h"
+#include "Lifecycle/BotLifecycleMgr.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -80,6 +81,15 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
+    // Initialize Bot Lifecycle Manager
+    TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");
+    if (!BotLifecycleMgr::instance()->Initialize())
+    {
+        _lastError = "Failed to initialize Bot Lifecycle Manager";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
     // Register hooks with TrinityCore
     RegisterHooks();
 
@@ -106,10 +116,14 @@ void PlayerbotModule::Shutdown()
 
     if (_enabled)
     {
+        // Shutdown Bot Lifecycle Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
+        BotLifecycleMgr::instance()->Shutdown();
+
         // Shutdown Bot Name Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
         sBotNameMgr->Shutdown();
-        
+
         // Shutdown Bot Account Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
         sBotAccountMgr->Shutdown();
