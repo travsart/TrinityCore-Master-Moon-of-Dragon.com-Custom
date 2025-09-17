@@ -65,6 +65,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
+
+    # Phase 2: Bot Lifecycle Management System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
 
     # Database systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
@@ -108,6 +114,13 @@ source_group("Character" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
+)
+
+source_group("Lifecycle" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
 )
 
 # Create the playerbot library
@@ -133,6 +146,7 @@ target_include_directories(playerbot
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
+        ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PLAYERBOT_INCLUDE_DIRS}
 )

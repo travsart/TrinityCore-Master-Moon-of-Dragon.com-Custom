@@ -85,14 +85,16 @@ set(CMAKE_REQUIRED_LIBRARIES TBB::tbb)
 set(CMAKE_REQUIRED_INCLUDES ${TBB_INCLUDE_DIR})
 
 check_cxx_source_compiles("
-    #include <tbb/task_arena.h>
     #include <tbb/concurrent_queue.h>
+    #include <tbb/concurrent_vector.h>
     #include <tbb/parallel_for.h>
-    #include <tbb/concurrent_hash_map.h>
+    #include <tbb/blocked_range.h>
+    #include <tbb/task_group.h>
     int main() {
-        tbb::task_arena arena;
         tbb::concurrent_queue<int> queue;
-        tbb::parallel_for(0, 100, [](int){});
+        tbb::concurrent_vector<int> vec;
+        tbb::task_group group;
+        tbb::parallel_for(tbb::blocked_range<int>(0, 100), [](tbb::blocked_range<int> const&){});
         return 0;
     }
 " TBB_COMPONENTS_AVAILABLE)
