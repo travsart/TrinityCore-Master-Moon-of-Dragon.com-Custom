@@ -22,15 +22,9 @@ message(STATUS "=== Building TrinityCore Playerbot Enterprise Module ===")
 include(${CMAKE_SOURCE_DIR}/cmake/modules/FindPlayerbotDependencies.cmake)
 
 # Verify all enterprise dependencies are available
-if(NOT PLAYERBOT_TBB_FOUND OR NOT PLAYERBOT_PHMAP_FOUND OR
-   NOT PLAYERBOT_BOOST_FOUND OR NOT PLAYERBOT_MYSQL_FOUND)
-    message(FATAL_ERROR "Playerbot enterprise dependencies not satisfied. Install required dependencies:
-    - Intel TBB 2021.5+
-    - Parallel Hashmap 1.3.8+
-    - Boost 1.74.0+
-    - MySQL 8.0.33+
-    See .claude/PHASE1/DEPENDENCY_VERIFICATION.md for installation instructions.")
-endif()
+# Note: Dependencies are validated in FindPlayerbotDependencies.cmake
+# The validation script will fail fast if any critical dependencies are missing
+message(STATUS "Enterprise dependencies validated by FindPlayerbotDependencies.cmake")
 
 message(STATUS "✅ All enterprise dependencies validated")
 message(STATUS "Playerbot module: ENABLED with enterprise optimizations")
