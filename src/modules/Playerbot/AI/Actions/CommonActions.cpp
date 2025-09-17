@@ -225,7 +225,7 @@ ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
         return nullptr;
 
     // Priority: Current target if valid
-    if (Unit* currentTarget = bot->GetSelectedUnit())
+    if (::Unit* currentTarget = bot->GetSelectedUnit())
     {
         if (currentTarget->IsAlive() && bot->IsValidAttackTarget(currentTarget))
             return currentTarget;
@@ -259,7 +259,7 @@ bool HealAction::IsUseful(BotAI* ai) const
         return true;
 
     // Check group members
-    Unit* healTarget = GetLowestHealthAlly(ai, 40.0f);
+    ::Unit* healTarget = GetLowestHealthAlly(ai, 40.0f);
     return healTarget && healTarget->GetHealthPct() < 80.0f;
 }
 
@@ -299,7 +299,7 @@ ActionResult HealAction::Execute(BotAI* ai, ActionContext const& context)
         return bot;
 
     // Find ally with lowest health
-    Unit* ally = GetLowestHealthAlly(ai, 40.0f);
+    ::Unit* ally = GetLowestHealthAlly(ai, 40.0f);
     if (ally && ally->GetHealthPct() < 80.0f)
         return ally;
 

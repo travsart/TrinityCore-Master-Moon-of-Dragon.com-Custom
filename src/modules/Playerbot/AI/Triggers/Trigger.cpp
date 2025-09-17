@@ -12,6 +12,7 @@
 #include "BotAI.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Object.h"
 #include "QuestDef.h"
 #include "ObjectMgr.h"
 #include "Log.h"

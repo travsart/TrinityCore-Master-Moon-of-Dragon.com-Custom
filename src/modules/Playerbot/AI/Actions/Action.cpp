@@ -369,7 +369,7 @@ ActionResult SpellAction::Execute(BotAI* ai, ActionContext const& context)
     if (!IsPossible(ai))
         return ActionResult::IMPOSSIBLE;
 
-    Unit* target = context.target ? context.target->ToUnit() : nullptr;
+    ::Unit* target = context.target ? context.target->ToUnit() : nullptr;
 
     if (DoCast(ai, _spellId, target))
     {

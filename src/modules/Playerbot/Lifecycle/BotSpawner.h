@@ -123,6 +123,7 @@ public:
     void SpawnToPopulationTarget();
     void UpdatePopulationTargets();
     void DespawnBot(ObjectGuid guid, bool forced = false);
+    bool DespawnBot(ObjectGuid guid, std::string const& reason);
     void DespawnAllBots();
 
     // Zone management
@@ -145,6 +146,9 @@ public:
     bool CanSpawnMore() const;
     bool CanSpawnInZone(uint32 zoneId) const;
     bool CanSpawnOnMap(uint32 mapId) const;
+
+    // Runtime control
+    void SetEnabled(bool enabled) { _enabled = enabled; }
 
 private:
     BotSpawner() = default;
@@ -181,6 +185,9 @@ private:
     // Timing
     uint32 _lastPopulationUpdate = 0;
     uint32 _lastTargetCalculation = 0;
+
+    // Runtime state
+    std::atomic<bool> _enabled{true};
 
     static constexpr uint32 POPULATION_UPDATE_INTERVAL = 10000; // 10 seconds
     static constexpr uint32 TARGET_CALCULATION_INTERVAL = 60000; // 1 minute

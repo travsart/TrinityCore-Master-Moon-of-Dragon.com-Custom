@@ -1,0 +1,429 @@
+/*
+ * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ */
+
+#include "ActionPriority.h"
+#include "SpellMgr.h"
+#include "SpellInfo.h"
+#include "Log.h"
+#include <algorithm>
+
+namespace Playerbot
+{
+
+ActionPriorityQueue::ActionPriorityQueue() : _size(0)
+{
+}
+
+void ActionPriorityQueue::AddAction(uint32 spellId, ActionPriority priority, float score, ::Unit* target)
+{
+    if (!spellId)
+        return;
+
+    PrioritizedAction action(spellId, priority, score, target);
+
+    if (IsActionValid(action))
+    {
+        _queue.push(action);
+        _size.fetch_add(1);
+
+        TC_LOG_DEBUG("playerbot.actionqueue", "Added action: spell={}, priority={}, score={:.2f}",
+                     spellId, static_cast<uint8>(priority), score);
+    }
+}
+
+bool ActionPriorityQueue::GetNextAction(PrioritizedAction& action)
+{
+    if (_queue.try_pop(action))
+    {
+        _size.fetch_sub(1);
+
+        // Validate the action is still relevant
+        if (action.IsValid())
+        {
+            TC_LOG_DEBUG("playerbot.actionqueue", "Retrieved action: spell={}, priority={}, score={:.2f}",
+                         action.spellId, static_cast<uint8>(action.priority), action.score);
+            return true;
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot.actionqueue", "Discarded stale action: spell={}", action.spellId);
+            // Try next action
+            return GetNextAction(action);
+        }
+    }
+
+    return false;
+}
+
+bool ActionPriorityQueue::PeekNextAction(PrioritizedAction& action) const
+{
+    // TBB doesn't have try_peek, so we'll implement a workaround
+    PrioritizedAction tempAction;
+    if (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(tempAction))
+    {
+        action = tempAction;
+        // Put it back
+        const_cast<ActionPriorityQueue*>(this)->_queue.push(tempAction);
+        return tempAction.IsValid();
+    }
+    return false;
+}
+
+bool ActionPriorityQueue::HasActions() const
+{
+    return _size.load() > 0;
+}
+
+size_t ActionPriorityQueue::Size() const
+{
+    return _size.load();
+}
+
+void ActionPriorityQueue::Clear()
+{
+    PrioritizedAction dummy;
+    while (_queue.try_pop(dummy))
+    {
+        _size.fetch_sub(1);
+    }
+
+    TC_LOG_DEBUG("playerbot.actionqueue", "Cleared action queue");
+}
+
+void ActionPriorityQueue::CleanupOldActions(uint32 maxAgeMs)
+{
+    std::vector<PrioritizedAction> validActions;
+    PrioritizedAction action;
+
+    // Extract all actions and filter valid ones
+    while (_queue.try_pop(action))
+    {
+        _size.fetch_sub(1);
+        if (action.IsValid(maxAgeMs))
+        {
+            validActions.push_back(action);
+        }
+    }
+
+    // Re-add valid actions
+    for (const auto& validAction : validActions)
+    {
+        _queue.push(validAction);
+        _size.fetch_add(1);
+    }
+
+    TC_LOG_DEBUG("playerbot.actionqueue", "Cleaned up action queue: {} valid actions remaining", validActions.size());
+}
+
+void ActionPriorityQueue::AddActions(const std::vector<PrioritizedAction>& actions)
+{
+    for (const auto& action : actions)
+    {
+        if (IsActionValid(action))
+        {
+            _queue.push(action);
+            _size.fetch_add(1);
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot.actionqueue", "Added {} actions to queue", actions.size());
+}
+
+std::vector<PrioritizedAction> ActionPriorityQueue::GetActionsByPriority(ActionPriority priority) const
+{
+    std::vector<PrioritizedAction> result;
+    std::vector<PrioritizedAction> allActions;
+    PrioritizedAction action;
+
+    // Extract all actions
+    while (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(action))
+    {
+        const_cast<ActionPriorityQueue*>(this)->_size.fetch_sub(1);
+        allActions.push_back(action);
+
+        if (action.priority == priority && action.IsValid())
+        {
+            result.push_back(action);
+        }
+    }
+
+    // Re-add all actions
+    for (const auto& act : allActions)
+    {
+        const_cast<ActionPriorityQueue*>(this)->_queue.push(act);
+        const_cast<ActionPriorityQueue*>(this)->_size.fetch_add(1);
+    }
+
+    return result;
+}
+
+bool ActionPriorityQueue::ContainsSpell(uint32 spellId) const
+{
+    std::vector<PrioritizedAction> allActions;
+    PrioritizedAction action;
+    bool found = false;
+
+    // Extract all actions and check for spell
+    while (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(action))
+    {
+        const_cast<ActionPriorityQueue*>(this)->_size.fetch_sub(1);
+        allActions.push_back(action);
+
+        if (action.spellId == spellId && action.IsValid())
+        {
+            found = true;
+        }
+    }
+
+    // Re-add all actions
+    for (const auto& act : allActions)
+    {
+        const_cast<ActionPriorityQueue*>(this)->_queue.push(act);
+        const_cast<ActionPriorityQueue*>(this)->_size.fetch_add(1);
+    }
+
+    return found;
+}
+
+bool ActionPriorityQueue::IsActionValid(const PrioritizedAction& action) const
+{
+    // Check spell exists
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(action.spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    // Check target validity if specified
+    if (action.target && !action.target->IsInWorld())
+        return false;
+
+    return true;
+}
+
+// ActionPriorityHelper implementation
+
+PrioritizedAction ActionPriorityHelper::CreateEmergencyHeal(uint32 spellId, ::Unit* target, float healthPct)
+{
+    float score = 100.0f - healthPct; // Lower health = higher score
+    score *= GetHealthPriorityMultiplier(healthPct);
+
+    return PrioritizedAction(spellId, ActionPriority::EMERGENCY, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateEmergencyDefensive(uint32 spellId, float threatLevel)
+{
+    float score = threatLevel * 100.0f;
+
+    return PrioritizedAction(spellId, ActionPriority::EMERGENCY, score);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateEmergencyEscape(uint32 spellId, ::Unit* target)
+{
+    float score = 100.0f; // High priority for escape abilities
+
+    return PrioritizedAction(spellId, ActionPriority::EMERGENCY, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateInterrupt(uint32 spellId, ::Unit* target, uint32 enemySpellId)
+{
+    float score = CalculateInterruptScore(target, enemySpellId);
+
+    return PrioritizedAction(spellId, ActionPriority::INTERRUPT, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateBurst(uint32 spellId, ::Unit* target, float damageModifier)
+{
+    float score = CalculateDamageScore(target, spellId) * damageModifier;
+
+    return PrioritizedAction(spellId, ActionPriority::BURST, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateRotation(uint32 spellId, ::Unit* target, float rotationPriority)
+{
+    float score = rotationPriority;
+
+    return PrioritizedAction(spellId, ActionPriority::ROTATION, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateBuff(uint32 spellId, ::Unit* target, uint32 remainingDuration)
+{
+    float score = CalculateBuffScore(target, spellId);
+
+    // Higher priority if buff is about to expire
+    if (remainingDuration < 30000) // Less than 30 seconds
+    {
+        score += (30000 - remainingDuration) / 1000.0f;
+    }
+
+    return PrioritizedAction(spellId, ActionPriority::BUFF, score, target);
+}
+
+PrioritizedAction ActionPriorityHelper::CreateMovement(uint32 spellId, ::Unit* target, float distance)
+{
+    float score = GetDistancePriorityMultiplier(distance);
+
+    return PrioritizedAction(spellId, ActionPriority::MOVEMENT, score, target);
+}
+
+float ActionPriorityHelper::CalculateHealScore(::Unit* target)
+{
+    if (!target)
+        return 0.0f;
+
+    float healthPct = target->GetHealthPct();
+    float score = 100.0f - healthPct;
+
+    // Multiply by health priority curve
+    score *= GetHealthPriorityMultiplier(healthPct);
+
+    return score;
+}
+
+float ActionPriorityHelper::CalculateDamageScore(::Unit* target, uint32 spellId)
+{
+    if (!target)
+        return 0.0f;
+
+    float score = 50.0f; // Base damage score
+
+    // Consider target's health - prioritize low health targets
+    float healthPct = target->GetHealthPct();
+    if (healthPct < 35.0f)
+    {
+        score += (35.0f - healthPct) * 2.0f; // Execute range bonus
+    }
+
+    // Consider spell power/effectiveness
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (spellInfo)
+    {
+        // Higher score for higher damage spells (approximation)
+        if (spellInfo->GetMaxRange() > 5.0f) // Ranged spell
+            score += 10.0f;
+
+        if (spellInfo->RecoveryTime > 10000) // Long cooldown = powerful
+            score += 20.0f;
+    }
+
+    return score;
+}
+
+float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId)
+{
+    if (!target)
+        return 0.0f;
+
+    float score = 30.0f; // Base buff score
+
+    // Check if target already has this buff
+    if (target->HasAura(spellId))
+    {
+        score = 5.0f; // Lower priority for refreshing existing buffs
+    }
+
+    return score;
+}
+
+float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemySpellId)
+{
+    if (!target)
+        return 0.0f;
+
+    float score = 80.0f; // Base interrupt score
+
+    // TODO: Could analyze enemy spell to determine interrupt priority
+    // For now, all interrupts are high priority
+
+    return score;
+}
+
+float ActionPriorityHelper::GetHealthPriorityMultiplier(float healthPct)
+{
+    if (healthPct < 10.0f)
+        return 10.0f; // Critical
+    else if (healthPct < 30.0f)
+        return 3.0f;  // Very low
+    else if (healthPct < 50.0f)
+        return 2.0f;  // Low
+    else if (healthPct < 80.0f)
+        return 1.5f;  // Medium
+    else
+        return 1.0f;  // High
+}
+
+float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
+{
+    if (!unit)
+        return 1.0f;
+
+    // TODO: Implement threat calculation based on unit's role and current threat
+    return 1.0f;
+}
+
+float ActionPriorityHelper::GetDistancePriorityMultiplier(float distance)
+{
+    if (distance > 40.0f)
+        return 5.0f;  // Very far
+    else if (distance > 20.0f)
+        return 3.0f;  // Far
+    else if (distance > 10.0f)
+        return 2.0f;  // Medium
+    else
+        return 1.0f;  // Close
+}
+
+// ActionPool implementation
+
+ActionPool& ActionPool::Instance()
+{
+    static ActionPool instance;
+    return instance;
+}
+
+std::unique_ptr<PrioritizedAction> ActionPool::Acquire()
+{
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    if (!_pool.empty())
+    {
+        auto action = std::move(_pool.back());
+        _pool.pop_back();
+        return action;
+    }
+
+    return std::make_unique<PrioritizedAction>();
+}
+
+void ActionPool::Release(std::unique_ptr<PrioritizedAction> action)
+{
+    if (!action)
+        return;
+
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    if (_pool.size() < MAX_POOL_SIZE)
+    {
+        // Reset the action
+        *action = PrioritizedAction();
+        _pool.push_back(std::move(action));
+    }
+    // If pool is full, just let the unique_ptr destroy the object
+}
+
+void ActionPool::Cleanup()
+{
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    // Keep only half the pool size to free up memory
+    if (_pool.size() > MAX_POOL_SIZE / 2)
+    {
+        _pool.resize(MAX_POOL_SIZE / 2);
+    }
+}
+
+} // namespace Playerbot

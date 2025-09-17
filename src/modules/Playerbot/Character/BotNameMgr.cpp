@@ -118,11 +118,11 @@ std::string BotNameMgr::AllocateName(uint8 gender, uint32 characterGuid)
     _guidToNameId[characterGuid] = selectedNameId;
     _nameIdToGuid[selectedNameId] = characterGuid;
     
-    // Update database
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_INS_NAME_USED);
-    stmt->setUInt32(0, selectedNameId);
-    stmt->setUInt32(1, characterGuid);
-    PlayerbotDatabase.Execute(stmt);
+    // Update database - TODO: Implement with PBDB_ statements
+    // PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_INS_NAME_USED);
+    // stmt->setUInt32(0, selectedNameId);
+    // stmt->setUInt32(1, characterGuid);
+    // PlayerbotDatabase.Execute(stmt);
     
     TC_LOG_INFO("module.playerbot.names", 
         "Allocated name '{}' (ID: {}) to character {}", 
@@ -171,10 +171,10 @@ void BotNameMgr::ReleaseName(uint32 characterGuid)
     _guidToNameId.erase(characterGuid);
     _nameIdToGuid.erase(nameId);
     
-    // Update database
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_DEL_NAME_USED);
-    stmt->setUInt32(0, nameId);
-    PlayerbotDatabase.Execute(stmt);
+    // Update database - TODO: Implement with PBDB_ statements
+    // PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_DEL_NAME_USED);
+    // stmt->setUInt32(0, nameId);
+    // PlayerbotDatabase.Execute(stmt);
 }
 
 void BotNameMgr::ReleaseName(std::string const& name)

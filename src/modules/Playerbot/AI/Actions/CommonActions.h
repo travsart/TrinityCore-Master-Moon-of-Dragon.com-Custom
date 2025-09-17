@@ -36,7 +36,7 @@ public:
     ActionResult Execute(BotAI* ai, ActionContext const& context) override;
 
 protected:
-    Unit* GetFollowTarget(BotAI* ai) const;
+    ::Unit* GetFollowTarget(BotAI* ai) const;
     float GetFollowDistance() const;
     float GetFollowAngle() const;
 };
@@ -54,7 +54,7 @@ public:
     float GetRange() const override;
 
 protected:
-    Unit* GetAttackTarget(BotAI* ai) const;
+    ::Unit* GetAttackTarget(BotAI* ai) const;
 };
 
 // Heal action
@@ -67,7 +67,7 @@ public:
     ActionResult Execute(BotAI* ai, ActionContext const& context) override;
 
 protected:
-    Unit* GetHealTarget(BotAI* ai) const;
+    ::Unit* GetHealTarget(BotAI* ai) const;
 };
 
 // Buff action
@@ -80,7 +80,7 @@ public:
     ActionResult Execute(BotAI* ai, ActionContext const& context) override;
 
 protected:
-    Unit* GetBuffTarget(BotAI* ai) const;
+    ::Unit* GetBuffTarget(BotAI* ai) const;
 };
 
 } // namespace Playerbot
