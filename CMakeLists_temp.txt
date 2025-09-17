@@ -73,16 +73,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
 
     # Database systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
 )
 
 # Group sources for IDE organization
@@ -106,10 +100,6 @@ source_group("Session" FILES
 source_group("Database" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
 )
 
 source_group("AI" FILES
@@ -133,8 +123,6 @@ source_group("Character" FILES
 source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.h
 )
