@@ -10,7 +10,10 @@
 #include "BotLifecycleMgr.h"
 #include "BotScheduler.h"
 #include "BotSpawner.h"
+
+using namespace Playerbot;
 #include "PlayerbotDatabaseStatements.h"
+#include "PlayerbotDatabase.h"
 #include "PlayerbotMigrationMgr.h"
 #include "Log.h"
 #include "Timer.h"
@@ -47,15 +50,15 @@ bool BotLifecycleMgr::Initialize()
         return false;
     }
 
-    // Initialize components
-    _scheduler = std::make_unique<BotScheduler>();
+    // Initialize components (use singleton instances)
+    _scheduler = BotScheduler::instance();
     if (!_scheduler->Initialize())
     {
         LIFECYCLE_LOG_ERROR("Failed to initialize BotScheduler");
         return false;
     }
 
-    _spawner = std::make_unique<BotSpawner>();
+    _spawner = BotSpawner::instance();
     if (!_spawner->Initialize())
     {
         LIFECYCLE_LOG_ERROR("Failed to initialize BotSpawner");
@@ -91,17 +94,17 @@ void BotLifecycleMgr::Shutdown()
     // Wait for all tasks to complete
     _taskGroup.wait();
 
-    // Shutdown components
+    // Shutdown components (but don't destroy singletons)
     if (_spawner)
     {
         _spawner->Shutdown();
-        _spawner.reset();
+        _spawner = nullptr;
     }
 
     if (_scheduler)
     {
         _scheduler->Shutdown();
-        _scheduler.reset();
+        _scheduler = nullptr;
     }
 
     // Log final statistics
@@ -297,10 +300,9 @@ void BotLifecycleMgr::OnBotLoginRequested(ObjectGuid guid, std::string const& pa
     }
 
     // Create spawn request
-    BotSpawner::SpawnRequest request;
-    request.botGuid = guid;
-    request.priority = BotSpawner::Priority::NORMAL;
-    request.reason = "Scheduled login";
+    SpawnRequest request;
+    request.type = SpawnRequest::RANDOM;
+    request.characterGuid = guid;
 
     // Submit to spawner
     bool success = _spawner->SpawnBot(request);
@@ -379,7 +381,7 @@ void BotLifecycleMgr::CoordinateSchedulerAndSpawner()
         return;
 
     // Get bots ready for login from scheduler
-    std::vector<BotScheduler::ScheduledAction> loginActions = _scheduler->GetBotsReadyForLogin(10); // Limit to 10 per cycle
+    std::vector<ScheduledAction> loginActions = _scheduler->GetBotsReadyForLogin(10); // Limit to 10 per cycle
 
     // Process login requests
     for (auto const& action : loginActions)
@@ -395,7 +397,7 @@ void BotLifecycleMgr::CoordinateSchedulerAndSpawner()
     }
 
     // Get bots ready for logout from scheduler
-    std::vector<BotScheduler::ScheduledAction> logoutActions = _scheduler->GetBotsReadyForLogout(10);
+    std::vector<ScheduledAction> logoutActions = _scheduler->GetBotsReadyForLogout(10);
 
     // Process logout requests
     for (auto const& action : logoutActions)
@@ -418,8 +420,10 @@ void BotLifecycleMgr::UpdateZonePopulations()
     // This would query current bot positions and update zone population counts
     // For now, we'll implement basic population tracking
 
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_SEL_TOTAL_POPULATION);
-    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+    // TODO: Implement proper database access when PBDB statements are ready
+    /*
+    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_SEL_TOTAL_POPULATION);
+    PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
 
     if (result)
     {
@@ -431,6 +435,7 @@ void BotLifecycleMgr::UpdateZonePopulations()
 
         LIFECYCLE_LOG_DEBUG("Current population: {} / {} target", totalBots, targetTotal);
     }
+    */
 }
 
 void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
@@ -460,22 +465,24 @@ void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
             break;
     }
 
-    // Insert event into database
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_INS_LIFECYCLE_EVENT);
-    stmt->Set(0, category.c_str());
-    stmt->Set(1, type.c_str());
-    stmt->Set(2, "INFO");
-    stmt->Set(3, "BotLifecycleMgr");
-    stmt->Set(4, eventInfo.botGuid.IsEmpty() ? 0 : eventInfo.botGuid.GetCounter());
-    stmt->Set(5, eventInfo.accountId);
-    stmt->Set(6, eventInfo.data.c_str());
-    stmt->Set(7, nullptr); // JSON details - could be expanded
-    stmt->Set(8, eventInfo.processingTimeMs);
-    stmt->Set(9, static_cast<float>(_metrics.memoryUsageMB.load()));
-    stmt->Set(10, _metrics.activeBots.load());
-    stmt->Set(11, eventInfo.correlationId.empty() ? nullptr : eventInfo.correlationId.c_str());
+    // TODO: Insert event into database when PBDB statements are ready
+    /*
+    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_INS_LIFECYCLE_EVENT);
+    stmt->SetData(0, category.c_str());
+    stmt->SetData(1, type.c_str());
+    stmt->SetData(2, "INFO");
+    stmt->SetData(3, "BotLifecycleMgr");
+    stmt->SetData(4, eventInfo.botGuid.IsEmpty() ? 0 : eventInfo.botGuid.GetCounter());
+    stmt->SetData(5, eventInfo.accountId);
+    stmt->SetData(6, eventInfo.data.c_str());
+    stmt->SetData(7, nullptr); // JSON details - could be expanded
+    stmt->SetData(8, eventInfo.processingTimeMs);
+    stmt->SetData(9, static_cast<float>(_metrics.memoryUsageMB.load()));
+    stmt->SetData(10, _metrics.activeBots.load());
+    stmt->SetData(11, eventInfo.correlationId.empty() ? nullptr : eventInfo.correlationId.c_str());
 
-    CharacterDatabase.Execute(stmt);
+    PlayerbotDatabase.Execute(stmt);
+    */
 }
 
 void BotLifecycleMgr::UpdatePerformanceMetrics()
@@ -595,15 +602,18 @@ void BotLifecycleMgr::RunMaintenance()
 
 void BotLifecycleMgr::CleanupOldEvents()
 {
+    // TODO: Cleanup database events when PBDB statements are ready
+    /*
     // Clean up events older than 7 days
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_EVENTS);
-    stmt->Set(0, uint32(7 * 24 * 60 * 60)); // 7 days in seconds
-    CharacterDatabase.Execute(stmt);
+    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_EVENTS);
+    stmt->SetData(0, uint32(7 * 24 * 60 * 60)); // 7 days in seconds
+    PlayerbotDatabase.Execute(stmt);
 
     // Clean up spawn logs older than 30 days
-    stmt = CharacterDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_SPAWN_LOGS);
-    stmt->Set(0, uint32(30 * 24 * 60 * 60)); // 30 days in seconds
-    CharacterDatabase.Execute(stmt);
+    stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_SPAWN_LOGS);
+    stmt->SetData(0, uint32(30 * 24 * 60 * 60)); // 30 days in seconds
+    PlayerbotDatabase.Execute(stmt);
+    */
 }
 
 void BotLifecycleMgr::OptimizePerformance()

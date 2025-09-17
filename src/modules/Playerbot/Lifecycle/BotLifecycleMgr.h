@@ -23,8 +23,11 @@
 #include <chrono>
 #include <functional>
 // Forward declarations
-class BotScheduler;
-class BotSpawner;
+namespace Playerbot
+{
+    class BotScheduler;
+    class BotSpawner;
+}
 
 struct LifecycleEventInfo
 {
@@ -137,9 +140,9 @@ private:
     BotLifecycleMgr() = default;
     ~BotLifecycleMgr() = default;
 
-    // Core components
-    std::unique_ptr<BotScheduler> _scheduler;
-    std::unique_ptr<BotSpawner> _spawner;
+    // Core components (singleton references)
+    Playerbot::BotScheduler* _scheduler;
+    Playerbot::BotSpawner* _spawner;
 
     // Event processing
     tbb::concurrent_queue<LifecycleEventInfo> _eventQueue;
