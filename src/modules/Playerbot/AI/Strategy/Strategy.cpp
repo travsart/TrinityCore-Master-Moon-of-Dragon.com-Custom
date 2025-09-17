@@ -11,6 +11,9 @@
 #include "BotAI.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Group.h"
+#include "Map.h"
+#include "ObjectMgr.h"
 #include "QuestDef.h"
 
 namespace Playerbot
@@ -133,7 +136,7 @@ bool CombatStrategy::ShouldFlee(BotAI* ai) const
     return false;
 }
 
-Unit* CombatStrategy::SelectTarget(BotAI* ai) const
+::Unit* CombatStrategy::SelectTarget(BotAI* ai) const
 {
     if (!ai)
         return nullptr;
@@ -143,18 +146,18 @@ Unit* CombatStrategy::SelectTarget(BotAI* ai) const
         return nullptr;
 
     // Priority: Current target if valid
-    if (Unit* currentTarget = bot->GetSelectedUnit())
+    if (::Unit* currentTarget = bot->GetSelectedUnit())
     {
         if (currentTarget->IsAlive() && bot->IsValidAttackTarget(currentTarget))
             return currentTarget;
     }
 
     // Find nearest hostile target
-    Unit* nearestEnemy = nullptr;
+    ::Unit* nearestEnemy = nullptr;
     float nearestDistance = 30.0f; // Max combat range
 
     auto const& attackers = bot->getAttackers();
-    for (Unit* attacker : attackers)
+    for (::Unit* attacker : attackers)
     {
         if (!attacker || !attacker->IsAlive())
             continue;
@@ -233,7 +236,7 @@ Quest const* QuestStrategy::SelectQuest(BotAI* ai) const
             {
                 if (!bot->CanCompleteQuest(questId))
                 {
-                    uint32 reward = quest->GetRewOrReqMoney() + quest->XPValue(bot);
+                    uint32 reward = quest->GetRewMoneyDifficulty() + quest->XPValue(bot);
                     if (reward > bestReward)
                     {
                         bestReward = reward;
@@ -253,7 +256,7 @@ bool QuestStrategy::ShouldAbandonQuest(Quest const* quest) const
         return false;
 
     // Don't abandon important quests
-    if (quest->HasFlag(QUEST_FLAGS_IMPORTANT))
+    if (quest->HasFlag(QUEST_FLAGS_WELL_KNOWN))
         return false;
 
     // Could add logic for abandoning old/low-reward quests
@@ -288,13 +291,30 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
             relevance.socialRelevance += group->GetMembersCount() * 10.0f;
         }
 
-        // Check for nearby players
-        std::list<Player*> nearbyPlayers;
-        Trinity::AnyPlayerInObjectRangeCheck checker(bot, 30.0f);
-        Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(bot, nearbyPlayers, checker);
-        Cell::VisitWorldObjects(bot, searcher, 30.0f);
+        // Check for nearby players using TrinityCore's Map API
+        Map* map = bot->GetMap();
+        if (map)
+        {
+            uint32 nearbyPlayerCount = 0;
+            float maxRange = 30.0f; // 30 yard detection range
 
-        relevance.socialRelevance += nearbyPlayers.size() * 5.0f;
+            // Iterate through all players on the map
+            Map::PlayerList const& players = map->GetPlayers();
+            for (Map::PlayerList::const_iterator iter = players.begin(); iter != players.end(); ++iter)
+            {
+                Player* player = iter->GetSource();
+                if (player && player != bot && player->IsInWorld())
+                {
+                    // Check if player is within range
+                    if (bot->GetDistance(player) <= maxRange)
+                    {
+                        ++nearbyPlayerCount;
+                    }
+                }
+            }
+
+            relevance.socialRelevance += nearbyPlayerCount * 5.0f;
+        }
     }
 
     return relevance.GetOverallRelevance();

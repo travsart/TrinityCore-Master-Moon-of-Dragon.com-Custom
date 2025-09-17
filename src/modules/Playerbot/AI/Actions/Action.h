@@ -19,14 +19,16 @@
 #include <unordered_map>
 #include <functional>
 
+// Forward declarations for TrinityCore types
+class WorldObject;
+class Unit;
+class Player;
+
 namespace Playerbot
 {
 
 // Forward declarations
 class BotAI;
-class WorldObject;
-class Unit;
-class Player;
 
 // Action result
 enum class ActionResult
@@ -101,16 +103,16 @@ public:
 
 protected:
     // Helper methods for derived classes
-    bool CanCast(BotAI* ai, uint32 spellId, Unit* target = nullptr) const;
-    bool DoCast(BotAI* ai, uint32 spellId, Unit* target = nullptr);
+    bool CanCast(BotAI* ai, uint32 spellId, ::Unit* target = nullptr) const;
+    bool DoCast(BotAI* ai, uint32 spellId, ::Unit* target = nullptr);
     bool DoMove(BotAI* ai, float x, float y, float z);
     bool DoSay(BotAI* ai, std::string const& text);
     bool DoEmote(BotAI* ai, uint32 emoteId);
-    bool UseItem(BotAI* ai, uint32 itemId, Unit* target = nullptr);
+    bool UseItem(BotAI* ai, uint32 itemId, ::Unit* target = nullptr);
 
     // Target selection helpers
-    Unit* GetNearestEnemy(BotAI* ai, float range = 30.0f) const;
-    Unit* GetLowestHealthAlly(BotAI* ai, float range = 40.0f) const;
+    ::Unit* GetNearestEnemy(BotAI* ai, float range = 30.0f) const;
+    ::Unit* GetLowestHealthAlly(BotAI* ai, float range = 40.0f) const;
     Player* GetNearestPlayer(BotAI* ai, float range = 100.0f) const;
 
 protected:

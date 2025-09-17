@@ -18,6 +18,11 @@
 #include <unordered_map>
 #include <functional>
 
+// Forward declarations for TrinityCore types
+class Unit;
+class Player;
+class Quest;
+
 namespace Playerbot
 {
 
@@ -26,9 +31,6 @@ class BotAI;
 class Action;
 class Trigger;
 class Value;
-class Unit;
-class Player;
-class Quest;
 
 // Strategy relevance score
 struct StrategyRelevance
@@ -108,7 +110,7 @@ public:
 
     // Combat-specific methods
     virtual bool ShouldFlee(BotAI* ai) const;
-    virtual Unit* SelectTarget(BotAI* ai) const;
+    virtual ::Unit* SelectTarget(BotAI* ai) const;
     virtual float GetThreatModifier() const { return 1.0f; }
 };
 

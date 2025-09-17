@@ -12,6 +12,9 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Player.h"
+#include "Actions/Action.h"
+#include "Triggers/Trigger.h"
+#include "Strategy/Strategy.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -25,11 +28,7 @@ namespace Playerbot
 {
 
 // Forward declarations
-class Strategy;
-class Action;
-class Trigger;
 class Value;
-struct TriggerResult;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -169,18 +168,18 @@ public:
     // Target management
     void SetTarget(ObjectGuid guid) { _currentTarget = guid; }
     ObjectGuid GetTarget() const { return _currentTarget; }
-    Unit* GetTargetUnit() const;
+    ::Unit* GetTargetUnit() const;
 
     // Movement control
     void MoveTo(float x, float y, float z);
-    void Follow(Unit* target, float distance = 5.0f);
+    void Follow(::Unit* target, float distance = 5.0f);
     void StopMovement();
     bool IsMoving() const;
 
     // Communication
     void Say(std::string const& text);
     void Whisper(std::string const& text, Player* target);
-    void Emote(uint32 emoteId);
+    void PlayEmote(uint32 emoteId);
 
     // Enhanced performance metrics
     struct EnhancedMetrics
@@ -212,7 +211,6 @@ protected:
     virtual void UpdateValuesInternal(uint32 diff);
 
     // Enhanced strategy evaluation
-    void EvaluateStrategies();
     Strategy* SelectBestStrategy();
 
     // Enhanced action selection

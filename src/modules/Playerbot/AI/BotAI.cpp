@@ -14,9 +14,12 @@
 #include "Values/Value.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Group.h"
 #include "ObjectAccessor.h"
 #include "MotionMaster.h"
 #include "Chat.h"
+#include "SharedDefines.h"
+#include "Opcodes.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -41,7 +44,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _state.lastStateChange = std::chrono::steady_clock::now();
     _performanceData.lastUpdate = std::chrono::steady_clock::now();
 
-    TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetName());
+    TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot ? _bot->GetGUID().ToString() : "null");
 }
 
 void BotAI::UpdateAI(uint32 diff)
@@ -344,7 +347,7 @@ void BotAI::SetState(AIState::Type newState, std::string const& data)
         _state.stateCounter++;
 
         TC_LOG_DEBUG("playerbots.ai", "Bot {} state changed from {} to {} ({})",
-                     _bot ? _bot->GetName() : "null", oldState, newState, data);
+                     _bot ? _bot->GetGUID().ToString() : "null", static_cast<int>(oldState), static_cast<int>(newState), data);
     }
 }
 
@@ -457,7 +460,7 @@ void BotAI::ProcessTriggers()
         {
             if (trigger && trigger->IsActive(this))
             {
-                std::string actionName = trigger->GetAction();
+                std::string actionName = trigger->GetActionName();
                 if (!actionName.empty() && IsActionPossible(actionName))
                 {
                     ExecuteAction(actionName);
@@ -676,7 +679,7 @@ void BotAI::UpdateValues()
     }
 }
 
-Unit* BotAI::GetTargetUnit() const
+::Unit* BotAI::GetTargetUnit() const
 {
     if (_currentTarget.IsEmpty())
         return nullptr;
@@ -693,12 +696,12 @@ void BotAI::MoveTo(float x, float y, float z)
     SetAIState(BotAIState::TRAVELLING);
 }
 
-void BotAI::Follow(Unit* target, float distance)
+void BotAI::Follow(::Unit* target, float distance)
 {
     if (!_bot || !target)
         return;
 
-    _bot->GetMotionMaster()->MoveFollow(target, distance, M_PI_F / 2);
+    _bot->GetMotionMaster()->MoveFollow(target, distance, float(M_PI) / 2.0f);
     SetAIState(BotAIState::FOLLOWING);
 }
 
@@ -735,12 +738,15 @@ void BotAI::Whisper(std::string const& text, Player* target)
     _bot->Whisper(text, LANG_UNIVERSAL, target);
 }
 
-void BotAI::Emote(uint32 emoteId)
+void BotAI::PlayEmote(uint32 emoteId)
 {
     if (!_bot)
         return;
 
-    _bot->HandleEmoteCommand(emoteId);
+    // Use the emoteId as Emote enum value
+    // TrinityCore's HandleEmoteCommand expects Emote enum
+    Emote emote = static_cast<Emote>(emoteId);
+    _bot->HandleEmoteCommand(emote);
 }
 
 // Enhanced internal update methods

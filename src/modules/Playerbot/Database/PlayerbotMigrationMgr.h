@@ -124,11 +124,11 @@ private:
         PlayerbotMigrationMgr::instance()->RegisterMigration(migration); \
     } while(0)
 
-#define MIGRATION_LOG_INFO(version, message) \
-    TC_LOG_INFO("playerbots.migration", "[Migration {}] {}", version, message)
+#define MIGRATION_LOG_INFO(version, message, ...) \
+    TC_LOG_INFO("playerbots.migration", "[Migration {}] " message, version, ##__VA_ARGS__)
 
-#define MIGRATION_LOG_ERROR(version, message) \
-    TC_LOG_ERROR("playerbots.migration", "[Migration {}] ERROR: {}", version, message)
+#define MIGRATION_LOG_ERROR(version, message, ...) \
+    TC_LOG_ERROR("playerbots.migration", "[Migration {}] ERROR: " message, version, ##__VA_ARGS__)
 
-#define MIGRATION_LOG_WARN(version, message) \
-    TC_LOG_WARN("playerbots.migration", "[Migration {}] WARNING: {}", version, message)
+#define MIGRATION_LOG_WARN(version, message, ...) \
+    TC_LOG_WARN("playerbots.migration", "[Migration {}] WARNING: " message, version, ##__VA_ARGS__)
