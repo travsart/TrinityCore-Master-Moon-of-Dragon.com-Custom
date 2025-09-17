@@ -12,12 +12,16 @@
 #include "Player.h"
 #include "Unit.h"
 #include "Object.h"
+#include "Item.h"
+#include "Group.h"
 #include "MotionMaster.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Spell.h"
 #include "Log.h"
 #include "Chat.h"
+#include "GridNotifiers.h"
+#include "CellImpl.h"
 
 namespace Playerbot
 {
@@ -173,12 +177,13 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     if (!item)
         return false;
 
-    // Use the item
-    bot->UseItem(item->GetBagSlot(), item->GetSlot(), true);
+    // Use the item with simplified approach for now
+    // TODO: Implement proper SpellCastTargets when needed
+    bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
     return true;
 }
 
-Unit* Action::GetNearestEnemy(BotAI* ai, float range) const
+::Unit* Action::GetNearestEnemy(BotAI* ai, float range) const
 {
     if (!ai)
         return nullptr;
@@ -187,16 +192,16 @@ Unit* Action::GetNearestEnemy(BotAI* ai, float range) const
     if (!bot)
         return nullptr;
 
-    Unit* nearestEnemy = nullptr;
+    ::Unit* nearestEnemy = nullptr;
     float nearestDistance = range;
 
     // Search for nearest hostile unit
-    std::list<Unit*> targets;
+    std::list<::Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(bot, bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, checker);
     Cell::VisitAllObjects(bot, searcher, range);
 
-    for (Unit* unit : targets)
+    for (::Unit* unit : targets)
     {
         if (!unit || !unit->IsAlive())
             continue;
@@ -212,7 +217,7 @@ Unit* Action::GetNearestEnemy(BotAI* ai, float range) const
     return nearestEnemy;
 }
 
-Unit* Action::GetLowestHealthAlly(BotAI* ai, float range) const
+::Unit* Action::GetLowestHealthAlly(BotAI* ai, float range) const
 {
     if (!ai)
         return nullptr;
@@ -221,15 +226,15 @@ Unit* Action::GetLowestHealthAlly(BotAI* ai, float range) const
     if (!bot)
         return nullptr;
 
-    Unit* lowestHealthAlly = nullptr;
+    ::Unit* lowestHealthAlly = nullptr;
     float lowestHealthPct = 100.0f;
 
     // Check group members first
     if (Group* group = bot->GetGroup())
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member == bot || !member->IsAlive())
                     continue;
@@ -262,21 +267,23 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
     Player* nearestPlayer = nullptr;
     float nearestDistance = range;
 
-    std::list<Player*> players;
-    Trinity::AnyPlayerInObjectRangeCheck checker(bot, range);
-    Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(bot, players, checker);
-    Cell::VisitWorldObjects(bot, searcher, range);
-
-    for (Player* player : players)
+    // Use Map API to find nearby players
+    Map* map = bot->GetMap();
+    if (map)
     {
-        if (player == bot)
-            continue;
-
-        float distance = bot->GetDistance(player);
-        if (distance < nearestDistance)
+        Map::PlayerList const& players = map->GetPlayers();
+        for (Map::PlayerList::const_iterator iter = players.begin(); iter != players.end(); ++iter)
         {
-            nearestDistance = distance;
-            nearestPlayer = player;
+            Player* player = iter->GetSource();
+            if (!player || player == bot || !player->IsInWorld())
+                continue;
+
+            float distance = bot->GetDistance(player);
+            if (distance <= range && distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestPlayer = player;
+            }
         }
     }
 

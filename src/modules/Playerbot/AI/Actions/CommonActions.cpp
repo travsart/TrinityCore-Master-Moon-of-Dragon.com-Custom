@@ -14,6 +14,7 @@
 #include "MotionMaster.h"
 #include "Group.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -89,14 +90,14 @@ bool FollowAction::IsUseful(BotAI* ai) const
         return false;
 
     // Find group leader or nearest group member
-    Unit* followTarget = GetFollowTarget(ai);
+    ::Unit* followTarget = GetFollowTarget(ai);
     return followTarget != nullptr;
 }
 
 ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
 {
     Player* bot = ai->GetBot();
-    Unit* target = GetFollowTarget(ai);
+    ::Unit* target = GetFollowTarget(ai);
 
     if (!bot || !target)
         return ActionResult::FAILED;
@@ -113,7 +114,7 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
     return ActionResult::SUCCESS;
 }
 
-Unit* FollowAction::GetFollowTarget(BotAI* ai) const
+::Unit* FollowAction::GetFollowTarget(BotAI* ai) const
 {
     if (!ai)
         return nullptr;
@@ -127,19 +128,19 @@ Unit* FollowAction::GetFollowTarget(BotAI* ai) const
         return nullptr;
 
     // Try to follow group leader first
-    if (Player* leader = group->GetLeader())
+    if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
     {
         if (leader != bot && leader->IsInWorld())
             return leader;
     }
 
     // Find nearest group member
-    Unit* nearestMember = nullptr;
+    ::Unit* nearestMember = nullptr;
     float nearestDistance = 100.0f;
 
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference const& ref : group->GetMembers())
     {
-        if (Player* member = ref->GetSource())
+        if (Player* member = ref.GetSource())
         {
             if (member == bot || !member->IsInWorld())
                 continue;
@@ -185,14 +186,14 @@ bool AttackAction::IsUseful(BotAI* ai) const
     if (!CombatAction::IsUseful(ai))
         return false;
 
-    Unit* target = GetAttackTarget(ai);
+    ::Unit* target = GetAttackTarget(ai);
     return target && target->IsAlive() && target->IsHostileTo(ai->GetBot());
 }
 
 ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
 {
     Player* bot = ai->GetBot();
-    Unit* target = context.target ? context.target->ToUnit() : GetAttackTarget(ai);
+    ::Unit* target = context.target ? context.target->ToUnit() : GetAttackTarget(ai);
 
     if (!bot || !target)
         return ActionResult::FAILED;
@@ -214,7 +215,7 @@ ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
     return ActionResult::SUCCESS;
 }
 
-Unit* AttackAction::GetAttackTarget(BotAI* ai) const
+::Unit* AttackAction::GetAttackTarget(BotAI* ai) const
 {
     if (!ai)
         return nullptr;
@@ -268,7 +269,7 @@ ActionResult HealAction::Execute(BotAI* ai, ActionContext const& context)
     if (!bot)
         return ActionResult::FAILED;
 
-    Unit* target = context.target ? context.target->ToUnit() : GetHealTarget(ai);
+    ::Unit* target = context.target ? context.target->ToUnit() : GetHealTarget(ai);
     if (!target)
         return ActionResult::FAILED;
 
@@ -284,7 +285,7 @@ ActionResult HealAction::Execute(BotAI* ai, ActionContext const& context)
     return ActionResult::FAILED;
 }
 
-Unit* HealAction::GetHealTarget(BotAI* ai) const
+::Unit* HealAction::GetHealTarget(BotAI* ai) const
 {
     if (!ai)
         return nullptr;
@@ -331,9 +332,9 @@ bool BuffAction::IsUseful(BotAI* ai) const
     Group* group = bot->GetGroup();
     if (group)
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
                     bot->GetDistance(member) <= 40.0f &&
@@ -354,7 +355,7 @@ ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& context)
     if (!bot)
         return ActionResult::FAILED;
 
-    Unit* target = GetBuffTarget(ai);
+    ::Unit* target = GetBuffTarget(ai);
     if (!target)
         return ActionResult::FAILED;
 
@@ -370,7 +371,7 @@ ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& context)
     return ActionResult::FAILED;
 }
 
-Unit* BuffAction::GetBuffTarget(BotAI* ai) const
+::Unit* BuffAction::GetBuffTarget(BotAI* ai) const
 {
     if (!ai)
         return nullptr;
@@ -387,9 +388,9 @@ Unit* BuffAction::GetBuffTarget(BotAI* ai) const
     Group* group = bot->GetGroup();
     if (group)
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
                     bot->GetDistance(member) <= 40.0f &&
