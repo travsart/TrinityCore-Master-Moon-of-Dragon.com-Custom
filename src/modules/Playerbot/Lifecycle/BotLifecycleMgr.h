@@ -10,9 +10,11 @@
 #pragma once
 
 #include "Define.h"
-#include "BotScheduler.h"
-#include "BotSpawner.h"
+// Forward declaration - BotScheduler.h included in .cpp
+// Forward declaration - BotSpawner.h included in .cpp
 #include "DatabaseEnv.h"
+#include "ObjectGuid.h"
+#include <shared_mutex>
 #include <tbb/concurrent_queue.h>
 #include <tbb/task_group.h>
 #include <memory>
@@ -20,6 +22,9 @@
 #include <thread>
 #include <chrono>
 #include <functional>
+// Forward declarations
+class BotScheduler;
+class BotSpawner;
 
 struct LifecycleEventInfo
 {
@@ -87,7 +92,7 @@ public:
         uint32 totalProcessingTimeThisSecond = 0;
     };
 
-    PerformanceMetrics GetPerformanceMetrics() const { return _metrics; }
+    PerformanceMetrics const& GetPerformanceMetrics() const { return _metrics; }
     void LogPerformanceReport();
 
     // Configuration and control

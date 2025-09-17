@@ -53,8 +53,27 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotDatabasePool.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotDatabasePool.h
 
-    # AI system (minimal for Phase 1)
+    # AI system (AI Framework implementation)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+
+    # AI Strategy System
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
+
+    # AI Action System
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.h
+
+    # AI Trigger System
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.h
+
+    # AI Value System
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
 
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
@@ -113,7 +132,30 @@ source_group("Database" FILES
 )
 
 source_group("AI" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+)
+
+source_group("AI\\Strategy" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
+)
+
+source_group("AI\\Actions" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.h
+)
+
+source_group("AI\\Triggers" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.h
+)
+
+source_group("AI\\Values" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
 )
 
 source_group("Account" FILES
@@ -159,6 +201,10 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Session
         ${CMAKE_CURRENT_SOURCE_DIR}/Database
         ${CMAKE_CURRENT_SOURCE_DIR}/AI
+        ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy
+        ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions
+        ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers
+        ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
