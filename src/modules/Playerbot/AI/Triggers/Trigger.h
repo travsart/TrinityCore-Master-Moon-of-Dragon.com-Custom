@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Action.h"  // For ActionContext definition
 #include <memory>
 #include <string>
 #include <functional>
@@ -23,11 +24,7 @@ namespace Playerbot
 
 // Forward declarations
 class BotAI;
-class Action;
 class Unit;
-
-// Action context forward declaration
-struct ActionContext;
 
 // Trigger types
 enum class TriggerType
@@ -167,7 +164,7 @@ public:
 
 protected:
     float _distance;
-    Unit* _referenceUnit = nullptr;
+    ::Unit* _referenceUnit = nullptr;
 };
 
 // Quest trigger

@@ -52,6 +52,23 @@ struct ScheduleEntry
     }
 };
 
+// Scheduled action for lifecycle management
+struct ScheduledAction
+{
+    ObjectGuid botGuid;
+    ScheduleEntry::Action action;
+    std::chrono::system_clock::time_point when;
+    std::string patternName;
+    uint32 data1 = 0;
+    uint32 data2 = 0;
+
+    ScheduledAction() = default;
+    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, std::chrono::system_clock::time_point time)
+        : botGuid(guid), action(act), when(time) {}
+    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, std::chrono::system_clock::time_point time, std::string const& pattern)
+        : botGuid(guid), action(act), when(time), patternName(pattern) {}
+};
+
 // Activity pattern for realistic bot behavior
 struct ActivityPattern
 {
@@ -188,6 +205,13 @@ public:
     // Statistics and monitoring
     SchedulerStats const& GetStats() const { return _stats; }
     void ResetStats();
+
+    // Lifecycle management interface
+    std::vector<ScheduledAction> GetBotsReadyForLogin(uint32 maxCount = 10);
+    std::vector<ScheduledAction> GetBotsReadyForLogout(uint32 maxCount = 10);
+    void OnBotLoggedIn(ObjectGuid guid);
+    void OnBotLoginFailed(ObjectGuid guid, std::string const& reason = "");
+    void SetEnabled(bool enabled) { _enabled = enabled; }
     void UpdateScheduleDatabase();
 
     // Admin and debug commands
@@ -240,6 +264,9 @@ private:
 
     // High-performance priority queue for scheduled actions
     tbb::concurrent_priority_queue<ScheduleEntry> _scheduleQueue;
+
+    // Runtime state
+    std::atomic<bool> _enabled{true};
 
     // Timing and update management
     std::chrono::steady_clock::time_point _lastUpdate;

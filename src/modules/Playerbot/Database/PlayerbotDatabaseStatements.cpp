@@ -9,7 +9,7 @@
 
 #include "PlayerbotDatabaseStatements.h"
 
-char const* const PlayerbotDatabase::statements[MAX_PLAYERBOTDATABASE_STATEMENTS] =
+char const* const PlayerbotDB::statements[MAX_PLAYERBOTDATABASE_STATEMENTS] =
 {
     // Activity Patterns (PBDB_SEL_PATTERN_*)
     /* PBDB_SEL_PATTERN_BY_NAME */
@@ -303,7 +303,7 @@ char const* const PlayerbotDatabase::statements[MAX_PLAYERBOTDATABASE_STATEMENTS
     "FROM v_recent_lifecycle_events LIMIT 100"
 };
 
-void PlayerbotDatabase::LoadStatements()
+void PlayerbotDB::LoadStatements()
 {
     // This function would be called during database initialization
     // to prepare all the statements for optimal execution

@@ -19,7 +19,7 @@
 class TC_DATABASE_API PlayerbotDatabaseConnection : public MySQLConnection
 {
 public:
-    typedef PlayerbotDatabaseStatements Statements;
+    using Statements = PlayerbotDatabaseStatements;
 
     //- Constructor
     PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags);

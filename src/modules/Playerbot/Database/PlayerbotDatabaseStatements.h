@@ -88,7 +88,7 @@ enum PlayerbotDatabaseStatements : uint32
     MAX_PLAYERBOTDATABASE_STATEMENTS
 };
 
-namespace PlayerbotDatabase
+namespace PlayerbotDB
 {
     void LoadStatements();
     extern char const* const statements[MAX_PLAYERBOTDATABASE_STATEMENTS];
