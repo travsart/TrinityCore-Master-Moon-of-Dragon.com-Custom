@@ -61,13 +61,17 @@ Playerbot.UpdateInterval = 1000
 #        Default:     "Bot"
 #
 #    Playerbot.AutoCreateAccounts
-#        Description: Automatically create bot accounts on server start
+#        Description: Enables/disables automatic creation of bot accounts
+#                     0 - Manual account management only
+#                     1 - Automatically create accounts based on configuration
 #        Default:     0
 #
 #    Playerbot.AccountsToCreate
-#        Description: Number of bot accounts to create automatically
-#        Default:     10
-#        Range:       1-100
+#        Description: Number of bot accounts to create
+#                     If greater than (Playerbot.MaxBotsTotal / 10), this value is used
+#                     Otherwise, accounts = Playerbot.MaxBotsTotal / 10
+#        Default:     0 (Use calculated value)
+#        Range:       0-500
 #
 ###################################################################################################
 
@@ -77,7 +81,7 @@ Playerbot.StrictCharacterLimit = 1
 Playerbot.AutoFixCharacterLimit = 0
 Playerbot.BotAccountPrefix = "Bot"
 Playerbot.AutoCreateAccounts = 0
-Playerbot.AccountsToCreate = 10
+Playerbot.AccountsToCreate = 0
 
 ###################################################################################################
 # CHARACTER CREATION

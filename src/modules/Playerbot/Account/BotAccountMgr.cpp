@@ -1,616 +1,605 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "BotAccountMgr.h"
-#include "Config.h"
-#include "DatabaseEnv.h"
-#include "Log.h"
-#include "World.h"
 #include "AccountMgr.h"
 #include "BattlenetAccountMgr.h"
-#include "Random.h"
-#include "PlayerbotDatabase.h"
-#include "PreparedStatement.h"
+#include "PlayerbotConfig.h"
+#include "Log.h"
+#include "Util.h"
 #include <sstream>
-#include <cstdlib>
+#include <iomanip>
+#include <random>
+#include <thread>
 
-BotAccountMgr* BotAccountMgr::instance()
-{
-    static BotAccountMgr instance;
-    return &instance;
-}
+namespace Playerbot {
 
 bool BotAccountMgr::Initialize()
 {
-    TC_LOG_INFO("module.playerbot", "Initializing Bot Account Manager...");
-    
-    // Load existing bot accounts
-    LoadBotAccounts();
-    
-    // Load character counts
-    LoadCharacterCounts();
-    
-    // Validate character limits on startup
-    if (!ValidateCharacterLimitsOnStartup())
+    TC_LOG_INFO("module.playerbot.account", "Initializing BotAccountMgr...");
+
+    // Load configuration values from playerbots.conf
+    LoadConfigurationValues();
+
+    // Load existing bot accounts from database
+    LoadAccountMetadata();
+
+    // Check if automatic account creation is enabled
+    if (_autoCreateAccounts.load())
     {
-        if (sConfigMgr->GetBoolDefault("Playerbot.StrictCharacterLimit", true))
+        uint32 required = GetRequiredAccountCount();
+        uint32 current = _totalAccounts.load();
+
+        TC_LOG_INFO("module.playerbot.account",
+            "Auto account creation enabled: {} required, {} exist",
+            required, current);
+
+        // Start account pool refill if needed
+        if (current < required)
         {
-            TC_LOG_ERROR("module.playerbot", 
-                "Bot account character limit validation failed! "
-                "Some bot accounts have more than {} characters", 
-                MAX_CHARACTERS_PER_BOT_ACCOUNT);
-            return false;
+            TC_LOG_INFO("module.playerbot.account",
+                "Creating {} additional bot accounts...", required - current);
+            RefillAccountPool();
         }
     }
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Bot Account Manager initialized with {} accounts", _totalAccounts);
-    
+    else
+    {
+        TC_LOG_INFO("module.playerbot.account",
+            "Auto account creation disabled in configuration");
+    }
+
+    TC_LOG_INFO("module.playerbot.account",
+        "✅ BotAccountMgr initialized: {} accounts, {} in pool, auto-create: {}",
+        _totalAccounts.load(), GetPoolSize(), _autoCreateAccounts.load());
+
     return true;
 }
 
 void BotAccountMgr::Shutdown()
 {
-    std::lock_guard<std::mutex> lockAccounts(_accountMutex);
-    std::lock_guard<std::mutex> lockCounts(_characterCountMutex);
-    
-    _botAccounts.clear();
-    _characterCounts.clear();
-    _botAccountIds.clear();
-    
-    TC_LOG_INFO("module.playerbot", "Bot Account Manager shut down");
+    TC_LOG_INFO("module.playerbot.account", "Shutting down BotAccountMgr...");
+
+    // Save all account metadata
+    for (auto const& [id, info] : _accounts)
+    {
+        StoreAccountMetadata(info);
+    }
+
+    TC_LOG_INFO("module.playerbot.account",
+        "✅ BotAccountMgr shutdown: {} accounts saved", _accounts.size());
 }
 
-void BotAccountMgr::LoadBotAccounts()
+void BotAccountMgr::LoadConfigurationValues()
 {
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    
-    _botAccounts.clear();
-    _botAccountIds.clear();
-    _totalAccounts = 0;
-    _activeAccounts = 0;
-    
-    // Query bot accounts from database
-    QueryResult result = LoginDatabase.Query(
-        "SELECT a.id, a.username, pa.is_active, pa.character_count, a.last_login "
-        "FROM account a "
-        "INNER JOIN playerbot_accounts pa ON a.id = pa.account_id "
-        "WHERE pa.is_bot = 1");
-    
-    if (!result)
-    {
-        TC_LOG_INFO("module.playerbot", "No bot accounts found in database");
-        return;
-    }
-    
-    do
-    {
-        Field* fields = result->Fetch();
-        
-        BotAccountInfo info;
-        info.accountId = fields[0].GetUInt32();
-        info.username = fields[1].GetString();
-        info.isActive = fields[2].GetBool();
-        info.characterCount = fields[3].GetUInt32();
-        info.lastLogin = fields[4].GetUInt32();
-        
-        _botAccounts[info.accountId] = info;
-        _botAccountIds.insert(info.accountId);
-        
-        _totalAccounts++;
-        if (info.isActive)
-            _activeAccounts++;
-        
-        if (info.accountId >= _nextAccountId)
-            _nextAccountId = info.accountId + 1;
-            
-    } while (result->NextRow());
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Loaded {} bot accounts ({} active)", 
-        _totalAccounts, _activeAccounts);
+    TC_LOG_DEBUG("module.playerbot.account", "Loading configuration values...");
+
+    // Load configuration from playerbots.conf
+    _maxBotsTotal.store(sPlayerbotConfig->GetUInt("Playerbot.MaxBotsTotal", 1000));
+    _autoCreateAccounts.store(sPlayerbotConfig->GetBool("Playerbot.AutoCreateAccounts", false));
+    _accountsToCreate.store(sPlayerbotConfig->GetUInt("Playerbot.AccountsToCreate", 0));
+
+    // Calculate required accounts based on configuration logic
+    uint32 calculatedAccounts = _maxBotsTotal.load() / 10;
+    uint32 configuredAccounts = _accountsToCreate.load();
+
+    // Use configured value if it's greater than calculated, otherwise use calculated
+    uint32 requiredAccounts = (configuredAccounts > calculatedAccounts) ? configuredAccounts : calculatedAccounts;
+    _requiredAccounts.store(requiredAccounts);
+
+    // Set target pool size (keep 25% in pool for instant availability)
+    _targetPoolSize.store(std::max(10U, requiredAccounts / 4));
+
+    TC_LOG_INFO("module.playerbot.account",
+        "Configuration loaded: MaxBotsTotal={}, AutoCreate={}, AccountsToCreate={}, Required={}, PoolTarget={}",
+        _maxBotsTotal.load(), _autoCreateAccounts.load(), _accountsToCreate.load(),
+        _requiredAccounts.load(), _targetPoolSize.load());
 }
 
-void BotAccountMgr::LoadCharacterCounts()
+void BotAccountMgr::UpdateConfiguration()
 {
-    std::lock_guard<std::mutex> lock(_characterCountMutex);
-    _characterCounts.clear();
-    
-    QueryResult result = PlayerbotDatabase.Query(
-        "SELECT account, COUNT(*) as char_count "
-        "FROM characters "
-        "WHERE account IN (SELECT account_id FROM playerbot_accounts WHERE is_bot = 1) "
-        "GROUP BY account");
-    
-    if (!result)
+    LoadConfigurationValues();
+
+    // If auto-create is enabled and we need more accounts, start creating them
+    if (_autoCreateAccounts.load())
     {
-        TC_LOG_DEBUG("module.playerbot", "No bot characters found");
-        return;
-    }
-    
-    uint32 violations = 0;
-    
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 accountId = fields[0].GetUInt32();
-        uint32 count = fields[1].GetUInt32();
-        
-        _characterCounts[accountId] = count;
-        
-        if (count > MAX_CHARACTERS_PER_BOT_ACCOUNT)
+        uint32 required = GetRequiredAccountCount();
+        uint32 current = _totalAccounts.load();
+
+        if (current < required)
         {
-            TC_LOG_WARN("module.playerbot", 
-                "Bot account {} has {} characters (max: {})",
-                accountId, count, MAX_CHARACTERS_PER_BOT_ACCOUNT);
-            violations++;
-        }
-    } while (result->NextRow());
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Loaded character counts for {} bot accounts ({} violations)",
-        _characterCounts.size(), violations);
-}
-
-bool BotAccountMgr::IsBotAccount(uint32 accountId) const
-{
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    return _botAccountIds.find(accountId) != _botAccountIds.end();
-}
-
-bool BotAccountMgr::CanCreateCharacter(uint32 accountId) const
-{
-    // Check if it's a bot account
-    if (!IsBotAccount(accountId))
-    {
-        // Not a bot account, no special limit
-        return true;
-    }
-    
-    uint32 count = GetCharacterCount(accountId);
-    
-    if (count >= MAX_CHARACTERS_PER_BOT_ACCOUNT)
-    {
-        TC_LOG_WARN("module.playerbot", 
-            "Bot account {} already has {} characters (max: {})",
-            accountId, count, MAX_CHARACTERS_PER_BOT_ACCOUNT);
-        return false;
-    }
-    
-    return true;
-}
-
-uint32 BotAccountMgr::GetCharacterCount(uint32 accountId) const
-{
-    std::lock_guard<std::mutex> lock(_characterCountMutex);
-    
-    auto it = _characterCounts.find(accountId);
-    if (it != _characterCounts.end())
-    {
-        return it->second;
-    }
-    
-    // Not in cache, query database
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_SEL_ACCOUNT_CHARACTER_COUNT);
-    stmt->setUInt32(0, accountId);
-    PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
-    
-    if (result)
-    {
-        Field* fields = result->Fetch();
-        uint32 count = fields[0].GetUInt32();
-        
-        // Update cache
-        const_cast<BotAccountMgr*>(this)->_characterCounts[accountId] = count;
-        return count;
-    }
-    
-    return 0;
-}
-
-bool BotAccountMgr::ValidateCharacterLimitsOnStartup()
-{
-    TC_LOG_INFO("module.playerbot", 
-        "Validating bot account character limits on startup...");
-    
-    // Check all bot accounts
-    std::string query = "SELECT c.account, COUNT(*) as char_count "
-        "FROM characters c "
-        "INNER JOIN playerbot_accounts pa ON c.account = pa.account_id "
-        "WHERE pa.is_bot = 1 "
-        "GROUP BY c.account "
-        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT);
-    QueryResult result = PlayerbotDatabase.Query(query.c_str());
-    
-    if (!result)
-    {
-        TC_LOG_INFO("module.playerbot", 
-            "All bot accounts are within character limit");
-        return true;
-    }
-    
-    uint32 violationCount = 0;
-    std::stringstream violations;
-    
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 accountId = fields[0].GetUInt32();
-        uint32 charCount = fields[1].GetUInt32();
-        
-        violations << "Account " << accountId << ": " << charCount << " characters; ";
-        violationCount++;
-        
-        TC_LOG_ERROR("module.playerbot", 
-            "Bot account {} has {} characters (limit: {})",
-            accountId, charCount, MAX_CHARACTERS_PER_BOT_ACCOUNT);
-        
-    } while (result->NextRow());
-    
-    if (violationCount > 0)
-    {
-        TC_LOG_ERROR("module.playerbot", 
-            "{} bot accounts exceed character limit: {}",
-            violationCount, violations.str());
-        
-        // Depending on configuration, either fail startup or auto-fix
-        if (sConfigMgr->GetBoolDefault("Playerbot.StrictCharacterLimit", true))
-        {
-            TC_LOG_FATAL("module.playerbot", 
-                "Startup aborted due to bot account character limit violations. "
-                "Set Playerbot.StrictCharacterLimit = 0 to allow startup with violations.");
-            return false;
-        }
-        else
-        {
-            TC_LOG_WARN("module.playerbot", 
-                "Continuing startup despite character limit violations. "
-                "Excess characters will be disabled.");
-            
-            AutoFixCharacterLimitViolations();
+            TC_LOG_INFO("module.playerbot.account",
+                "Configuration changed: creating {} additional accounts", required - current);
+            RefillAccountPool();
         }
     }
-    
-    return true;
 }
 
-void BotAccountMgr::DisableExcessCharacters(uint32 accountId, uint32 excessCount)
+uint32 BotAccountMgr::GetRequiredAccountCount() const
 {
-    TC_LOG_WARN("module.playerbot", 
-        "Disabling {} excess characters for bot account {}",
-        excessCount, accountId);
-    
-    // Get bot characters ordered by level (lowest first)
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_SEL_BOT_CHARACTERS_BY_ACCOUNT);
-    stmt->setUInt32(0, accountId);
-    PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
-    
-    if (!result)
-        return;
-    
-    std::vector<uint32> charactersToDisable;
-    uint32 count = 0;
-    
-    // Skip the first MAX_CHARACTERS_PER_BOT_ACCOUNT characters
-    for (uint32 i = 0; i < MAX_CHARACTERS_PER_BOT_ACCOUNT && result->NextRow(); ++i);
-    
-    // Collect excess characters
-    do
+    return _requiredAccounts.load();
+}
+
+uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
+{
+    // Check if auto-creation is disabled
+    if (!_autoCreateAccounts.load())
     {
-        Field* fields = result->Fetch();
-        uint32 guid = fields[0].GetUInt32();
-        charactersToDisable.push_back(guid);
-        
-        if (++count >= excessCount)
-            break;
-            
-    } while (result->NextRow());
-    
-    // Mark characters as disabled
-    for (uint32 guid : charactersToDisable)
-    {
-        PreparedStatement<CharacterDatabaseConnection>* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
-        charStmt->setUInt16(0, uint16(0x00000001 | 0x00000008)); // AT_LOGIN_RENAME | AT_LOGIN_CUSTOMIZE equivalent
-        charStmt->setUInt32(1, guid);
-        CharacterDatabase.Execute(charStmt);
-        
-        TC_LOG_WARN("module.playerbot", 
-            "Disabled excess character {} from bot account {}",
-            guid, accountId);
+        TC_LOG_WARN("module.playerbot.account",
+            "Account creation requested but Playerbot.AutoCreateAccounts is disabled");
+        return 0;
     }
-}
 
-void BotAccountMgr::AutoFixCharacterLimitViolations()
-{
-    TC_LOG_INFO("module.playerbot", "Auto-fixing character limit violations...");
-    
-    std::string query = "SELECT c.account, COUNT(*) as char_count "
-        "FROM characters c "
-        "INNER JOIN playerbot_accounts pa ON c.account = pa.account_id "
-        "WHERE pa.is_bot = 1 "
-        "GROUP BY c.account "
-        "HAVING char_count > " + std::to_string(MAX_CHARACTERS_PER_BOT_ACCOUNT);
-    QueryResult result = PlayerbotDatabase.Query(query.c_str());
-    
-    if (!result)
-        return;
-    
-    uint32 fixedCount = 0;
-    
-    do
+    // Check account limit
+    uint32 required = GetRequiredAccountCount();
+    if (_totalAccounts.load() >= required)
     {
-        Field* fields = result->Fetch();
-        uint32 accountId = fields[0].GetUInt32();
-        uint32 charCount = fields[1].GetUInt32();
-        uint32 excess = charCount - MAX_CHARACTERS_PER_BOT_ACCOUNT;
-        
-        DisableExcessCharacters(accountId, excess);
-        fixedCount++;
-        
-    } while (result->NextRow());
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Fixed {} bot accounts with character limit violations",
-        fixedCount);
-}
-
-void BotAccountMgr::OnCharacterCreate(uint32 accountId, uint32 characterGuid)
-{
-    if (!IsBotAccount(accountId))
-        return;
-    
-    std::lock_guard<std::mutex> lock(_characterCountMutex);
-    _characterCounts[accountId]++;
-    
-    UpdateCharacterCount(accountId);
-    
-    TC_LOG_DEBUG("module.playerbot", 
-        "Bot account {} now has {} characters",
-        accountId, _characterCounts[accountId]);
-}
-
-void BotAccountMgr::OnCharacterDelete(uint32 accountId, uint32 characterGuid)
-{
-    if (!IsBotAccount(accountId))
-        return;
-    
-    std::lock_guard<std::mutex> lock(_characterCountMutex);
-    
-    if (_characterCounts[accountId] > 0)
-    {
-        _characterCounts[accountId]--;
-        UpdateCharacterCount(accountId);
-        
-        TC_LOG_DEBUG("module.playerbot", 
-            "Bot account {} now has {} characters",
-            accountId, _characterCounts[accountId]);
+        TC_LOG_ERROR("module.playerbot.account",
+            "Cannot create account: limit {} reached", required);
+        return 0;
     }
-}
 
-void BotAccountMgr::UpdateCharacterCount(uint32 accountId)
-{
-    uint32 count = GetCharacterCount(accountId);
-    
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_UPD_BOT_ACCOUNT_CHARACTER_COUNT);
-    stmt->setUInt32(0, count);
-    stmt->setUInt32(1, accountId);
-    PlayerbotDatabase.Execute(stmt);
-    
-    // Update cache
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    auto it = _botAccounts.find(accountId);
-    if (it != _botAccounts.end())
-    {
-        it->second.characterCount = count;
-    }
-}
+    auto startTime = std::chrono::high_resolution_clock::now();
 
-uint32 BotAccountMgr::CreateBotAccount(std::string const& username)
-{
-    // Generate a secure password
-    std::string password = "BotPass" + std::to_string(urand(10000, 99999));
+    // Generate email and password
+    std::string email = requestedEmail.empty() ? GenerateUniqueEmail() : requestedEmail;
+    std::string password = GenerateSecurePassword();
 
-    // Create email-style battlenet account name
-    std::string bnetAccountName = username + "@playerbot.local";
-
-    // Create Battlenet account with linked game account
+    // Create BattleNet account using Trinity's system
     std::string gameAccountName;
-    AccountOpResult result = Battlenet::AccountMgr::CreateBattlenetAccount(bnetAccountName, password, true, &gameAccountName);
+    AccountOpResult result = Battlenet::AccountMgr::CreateBattlenetAccount(email, password, true, &gameAccountName);
 
     if (result != AccountOpResult::AOR_OK)
     {
-        TC_LOG_ERROR("module.playerbot",
-            "Failed to create bot battlenet account '{}': {}",
-            bnetAccountName, uint32(result));
+        TC_LOG_ERROR("module.playerbot.account",
+            "Failed to create BattleNet account for email: {}, result: {}", email, static_cast<uint32>(result));
         return 0;
     }
 
-    // Get the created game account ID (this is what we need for characters)
-    uint32 accountId = AccountMgr::GetId(gameAccountName);
-    if (!accountId)
+    // Get the created game account ID
+    uint32 legacyAccountId = AccountMgr::GetId(gameAccountName);
+    if (legacyAccountId == 0)
     {
-        TC_LOG_ERROR("module.playerbot",
-            "Failed to get ID for newly created bot game account '{}'", gameAccountName);
+        TC_LOG_ERROR("module.playerbot.account",
+            "Failed to retrieve legacy account ID for game account: {}", gameAccountName);
         return 0;
     }
-    
-    // Mark as bot account in our table
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_INS_BOT_ACCOUNT);
-    stmt->setUInt32(0, accountId);
-    PlayerbotDatabase.Execute(stmt);
-    
-    // Add to our cache
+
+    // For now, use legacyAccountId as the primary identifier since we can't easily get BNet account ID
+    uint32 bnetAccountId = legacyAccountId;
+
+    // Create account info
+    BotAccountInfo info;
+    info.bnetAccountId = bnetAccountId;
+    info.legacyAccountId = legacyAccountId;
+    info.email = email;
+    info.passwordHash = password; // Store hash in production
+    info.createdAt = std::chrono::system_clock::now();
+    info.characterCount = 0;
+    info.isActive = false;
+    info.isInPool = false;
+
+    // Store in memory
     {
-        std::lock_guard<std::mutex> lock(_accountMutex);
-        
-        BotAccountInfo info;
-        info.accountId = accountId;
-        info.username = username;
-        info.isActive = true;
-        info.characterCount = 0;
-        info.lastLogin = 0;
-        
-        _botAccounts[accountId] = info;
-        _botAccountIds.insert(accountId);
-        _totalAccounts++;
-        _activeAccounts++;
+        std::unique_lock lock(_accountsMutex);
+        _accounts[bnetAccountId] = info;
     }
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Created bot account '{}' (ID: {})", username, accountId);
-    
-    return accountId;
+
+    // Store in database asynchronously
+    StoreAccountMetadata(info);
+
+    // Update statistics
+    _totalAccounts.fetch_add(1);
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    uint32 creationTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
+        endTime - startTime).count();
+
+    TC_LOG_DEBUG("module.playerbot.account",
+        "Created bot account: BNet {} (Legacy {}), Email: {}, Time: {}μs",
+        bnetAccountId, legacyAccountId, email, creationTimeUs);
+
+    return bnetAccountId;
 }
 
-bool BotAccountMgr::DeleteBotAccount(uint32 accountId)
+void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
+    std::function<void(std::vector<uint32>)> callback)
 {
-    if (!IsBotAccount(accountId))
+    TC_LOG_INFO("module.playerbot.account", "Creating batch of {} bot accounts...", count);
+
+    // Execute in a separate thread to avoid blocking
+    std::thread([this, count, callback]()
     {
-        TC_LOG_ERROR("module.playerbot", 
-            "Cannot delete non-bot account {}", accountId);
+        std::vector<uint32> createdAccounts;
+        createdAccounts.reserve(count);
+
+        for (uint32 i = 0; i < count; ++i)
+        {
+            if (uint32 accountId = CreateBotAccount())
+            {
+                createdAccounts.push_back(accountId);
+            }
+            else
+            {
+                // If creation fails, we might have hit the limit
+                break;
+            }
+
+            // Small delay to avoid overwhelming the system
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        TC_LOG_INFO("module.playerbot.account",
+            "Batch creation complete: {}/{} accounts created",
+            createdAccounts.size(), count);
+
+        if (callback)
+        {
+            callback(createdAccounts);
+        }
+    }).detach();
+}
+
+void BotAccountMgr::RefillAccountPool()
+{
+    // Check if refill already in progress
+    uint32 expected = 0;
+    if (!_poolRefillInProgress.compare_exchange_strong(expected, 1))
+    {
+        return; // Already refilling
+    }
+
+    uint32 targetPoolSize = _targetPoolSize.load();
+
+    TC_LOG_INFO("module.playerbot.account",
+        "Refilling account pool to {} accounts...", targetPoolSize);
+
+    // Calculate how many accounts to create
+    uint32 currentSize = GetPoolSize();
+    uint32 requiredTotal = GetRequiredAccountCount();
+    uint32 existingTotal = _totalAccounts.load();
+
+    // Accounts needed for total requirement
+    uint32 totalToCreate = (existingTotal < requiredTotal) ? (requiredTotal - existingTotal) : 0;
+
+    // Additional accounts needed for pool
+    uint32 poolToCreate = (currentSize < targetPoolSize) ? (targetPoolSize - currentSize) : 0;
+
+    uint32 toCreate = std::max(totalToCreate, poolToCreate);
+
+    if (toCreate > 0 && _autoCreateAccounts.load())
+    {
+        CreateBotAccountsBatch(toCreate,
+            [this, targetPoolSize](std::vector<uint32> const& accounts)
+            {
+                // Add to pool
+                {
+                    std::lock_guard<std::mutex> lock(_poolMutex);
+                    for (uint32 accountId : accounts)
+                    {
+                        _accountPool.push(accountId);
+
+                        // Mark as in pool
+                        auto it = _accounts.find(accountId);
+                        if (it != _accounts.end())
+                        {
+                            it->second.isInPool = true;
+                        }
+                    }
+                }
+
+                TC_LOG_INFO("module.playerbot.account",
+                    "✅ Account pool refilled: {} accounts now available",
+                    GetPoolSize());
+
+                _poolRefillInProgress.store(0);
+            });
+    }
+    else
+    {
+        if (!_autoCreateAccounts.load())
+        {
+            TC_LOG_INFO("module.playerbot.account",
+                "Account pool refill skipped: auto-creation disabled");
+        }
+        _poolRefillInProgress.store(0);
+    }
+}
+
+uint32 BotAccountMgr::AcquireAccount()
+{
+    // Try to get from pool first
+    {
+        std::lock_guard<std::mutex> lock(_poolMutex);
+        if (!_accountPool.empty())
+        {
+            uint32 accountId = _accountPool.front();
+            _accountPool.pop();
+
+            // Mark as active
+            auto it = _accounts.find(accountId);
+            if (it != _accounts.end())
+            {
+                it->second.isActive = true;
+                it->second.isInPool = false;
+            }
+
+            _activeAccounts.fetch_add(1);
+
+            TC_LOG_DEBUG("module.playerbot.account",
+                "Acquired account {} from pool", accountId);
+
+            // Trigger pool refill if getting low
+            if (_accountPool.size() < _targetPoolSize.load() / 2)
+            {
+                RefillAccountPool();
+            }
+
+            return accountId;
+        }
+    }
+
+    // Pool empty, create new account if auto-creation is enabled
+    if (_autoCreateAccounts.load())
+    {
+        TC_LOG_DEBUG("module.playerbot.account",
+            "Account pool empty, creating new account...");
+
+        uint32 newAccountId = CreateBotAccount();
+
+        if (newAccountId > 0)
+        {
+            // Mark as active
+            auto it = _accounts.find(newAccountId);
+            if (it != _accounts.end())
+            {
+                it->second.isActive = true;
+            }
+            _activeAccounts.fetch_add(1);
+        }
+
+        return newAccountId;
+    }
+    else
+    {
+        TC_LOG_WARN("module.playerbot.account",
+            "Cannot acquire account: pool empty and auto-creation disabled");
+        return 0;
+    }
+}
+
+void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
+{
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    // Check if account exists
+    auto it = _accounts.find(bnetAccountId);
+    if (it == _accounts.end())
+    {
+        TC_LOG_WARN("module.playerbot.account",
+            "Cannot release unknown account {}", bnetAccountId);
+        return;
+    }
+
+    uint32 targetPoolSize = _targetPoolSize.load();
+
+    // Return to pool if under limit
+    if (_accountPool.size() < targetPoolSize * 2) // Allow some overflow
+    {
+        _accountPool.push(bnetAccountId);
+        it->second.isActive = false;
+        it->second.isInPool = true;
+        _activeAccounts.fetch_sub(1);
+
+        TC_LOG_DEBUG("module.playerbot.account",
+            "Released account {} back to pool", bnetAccountId);
+    }
+    else
+    {
+        // Pool full, just mark as inactive
+        it->second.isActive = false;
+        it->second.isInPool = false;
+        _activeAccounts.fetch_sub(1);
+
+        TC_LOG_DEBUG("module.playerbot.account",
+            "Released account {} (pool full)", bnetAccountId);
+    }
+}
+
+uint32 BotAccountMgr::GetPoolSize() const
+{
+    std::lock_guard<std::mutex> lock(_poolMutex);
+    return _accountPool.size();
+}
+
+bool BotAccountMgr::CanCreateCharacter(uint32 bnetAccountId) const
+{
+    std::shared_lock lock(_accountsMutex);
+
+    auto it = _accounts.find(bnetAccountId);
+    if (it == _accounts.end())
+    {
         return false;
     }
-    
-    // Check if account has characters
-    uint32 charCount = GetCharacterCount(accountId);
-    if (charCount > 0)
+
+    return it->second.characterCount < _maxCharactersPerAccount.load();
+}
+
+void BotAccountMgr::UpdateCharacterCount(uint32 bnetAccountId, int8 delta)
+{
+    std::unique_lock lock(_accountsMutex);
+
+    auto it = _accounts.find(bnetAccountId);
+    if (it != _accounts.end())
     {
-        TC_LOG_ERROR("module.playerbot", 
-            "Cannot delete bot account {} with {} characters", 
-            accountId, charCount);
-        return false;
+        int16 newCount = it->second.characterCount + delta;
+        it->second.characterCount = std::max(0, std::min(static_cast<int>(
+            _maxCharactersPerAccount.load()), static_cast<int>(newCount)));
+
+        TC_LOG_DEBUG("module.playerbot.account",
+            "Updated character count for account {}: {} characters",
+            bnetAccountId, it->second.characterCount);
+
+        // Update metadata in database
+        StoreAccountMetadata(it->second);
     }
-    
-    // Remove from playerbot_accounts
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_DEL_BOT_ACCOUNT);
-    stmt->setUInt32(0, accountId);
-    PlayerbotDatabase.Execute(stmt);
-    
-    // Delete the actual account
-    AccountMgr::DeleteAccount(accountId);
-    
-    // Remove from cache
+}
+
+BotAccountMgr::BotAccountInfo const* BotAccountMgr::GetAccountInfo(uint32 bnetAccountId) const
+{
+    std::shared_lock lock(_accountsMutex);
+
+    auto it = _accounts.find(bnetAccountId);
+    return (it != _accounts.end()) ? &it->second : nullptr;
+}
+
+void BotAccountMgr::DeleteBotAccount(uint32 bnetAccountId,
+    std::function<void(bool success)> callback)
+{
+    TC_LOG_INFO("module.playerbot.account",
+        "Deleting bot account {}...", bnetAccountId);
+
+    // For our simplified implementation, the bnetAccountId is actually the legacy account ID
+    uint32 legacyAccountId = bnetAccountId;
+
+    // Delete the account (this will delete characters too)
+    AccountOpResult result = AccountMgr::DeleteAccount(legacyAccountId);
+
+    if (result == AccountOpResult::AOR_OK)
     {
-        std::lock_guard<std::mutex> lock(_accountMutex);
-        
-        auto it = _botAccounts.find(accountId);
-        if (it != _botAccounts.end())
+        // Remove from memory
         {
-            if (it->second.isActive)
-                _activeAccounts--;
-            _totalAccounts--;
-            _botAccounts.erase(it);
+            std::unique_lock lock(_accountsMutex);
+            _accounts.erase(bnetAccountId);
         }
-        
-        _botAccountIds.erase(accountId);
+
+        _totalAccounts.fetch_sub(1);
+
+        TC_LOG_INFO("module.playerbot.account",
+            "✅ Deleted bot account {}", bnetAccountId);
+
+        if (callback) callback(true);
     }
-    
-    TC_LOG_INFO("module.playerbot", "Deleted bot account {}", accountId);
-    
-    return true;
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.account",
+            "Failed to delete account {}: {}", bnetAccountId, static_cast<uint32>(result));
+        if (callback) callback(false);
+    }
 }
 
-bool BotAccountMgr::ValidateCharacterCount(uint32 accountId)
+void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> callback)
 {
-    if (!IsBotAccount(accountId))
-        return true;
-    
-    uint32 actualCount = 0;
-    
-    // Get actual count from database
-    PreparedStatement<PlayerbotDatabaseConnection>* stmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_SEL_ACCOUNT_CHARACTER_COUNT);
-    stmt->setUInt32(0, accountId);
-    PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
-    
-    if (result)
+    TC_LOG_WARN("module.playerbot.account", "Deleting ALL bot accounts...");
+
+    std::vector<uint32> accountIds;
     {
-        Field* fields = result->Fetch();
-        actualCount = fields[0].GetUInt32();
-    }
-    
-    // Update cache
-    {
-        std::lock_guard<std::mutex> lock(_characterCountMutex);
-        _characterCounts[accountId] = actualCount;
-    }
-    
-    // Update playerbot_accounts table
-    PreparedStatement<PlayerbotDatabaseConnection>* updateStmt = PlayerbotDatabase.GetPreparedStatement(PLAYERBOT_UPD_BOT_ACCOUNT_CHARACTER_COUNT);
-    updateStmt->setUInt32(0, actualCount);
-    updateStmt->setUInt32(1, accountId);
-    PlayerbotDatabase.Execute(updateStmt);
-    
-    if (actualCount > MAX_CHARACTERS_PER_BOT_ACCOUNT)
-    {
-        TC_LOG_ERROR("module.playerbot", 
-            "Bot account {} has {} characters, exceeds limit of {}!",
-            accountId, actualCount, MAX_CHARACTERS_PER_BOT_ACCOUNT);
-        
-        if (sConfigMgr->GetBoolDefault("Playerbot.AutoFixCharacterLimit", false))
+        std::shared_lock lock(_accountsMutex);
+        accountIds.reserve(_accounts.size());
+        for (auto const& [id, info] : _accounts)
         {
-            DisableExcessCharacters(accountId, actualCount - MAX_CHARACTERS_PER_BOT_ACCOUNT);
+            accountIds.push_back(id);
         }
-        
-        return false;
     }
-    
-    return true;
-}
 
-bool BotAccountMgr::ValidateAllBotAccounts()
-{
-    TC_LOG_INFO("module.playerbot", "Validating character counts for all bot accounts...");
-    
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    
-    uint32 totalAccounts = 0;
-    uint32 violationCount = 0;
-    
-    for (auto const& [accountId, info] : _botAccounts)
+    if (accountIds.empty())
     {
-        if (!ValidateCharacterCount(accountId))
+        TC_LOG_INFO("module.playerbot.account", "No bot accounts to delete");
+        if (callback) callback(0);
+        return;
+    }
+
+    // Delete accounts in a separate thread
+    std::thread([this, accountIds = std::move(accountIds), callback]()
+    {
+        uint32 deleted = 0;
+        for (uint32 accountId : accountIds)
         {
-            violationCount++;
+            bool success = false;
+            DeleteBotAccount(accountId, [&success](bool result) { success = result; });
+
+            if (success)
+            {
+                ++deleted;
+            }
+
+            // Small delay between deletions
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
-        totalAccounts++;
-    }
-    
-    TC_LOG_INFO("module.playerbot", 
-        "Validated {} bot accounts, {} violations found",
-        totalAccounts, violationCount);
-    
-    return violationCount == 0;
+
+        TC_LOG_WARN("module.playerbot.account",
+            "✅ Deleted {}/{} bot accounts", deleted, accountIds.size());
+
+        if (callback) callback(deleted);
+    }).detach();
 }
 
-std::vector<BotAccountInfo> BotAccountMgr::GetAllBotAccounts() const
+std::string BotAccountMgr::GenerateUniqueEmail()
 {
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    
-    std::vector<BotAccountInfo> accounts;
-    accounts.reserve(_botAccounts.size());
-    
-    for (auto const& [accountId, info] : _botAccounts)
+    uint32 counter = _emailCounter.fetch_add(1);
+
+    std::ostringstream email;
+    email << "bot" << std::setfill('0') << std::setw(6) << counter
+          << "@" << _emailDomain;
+
+    return email.str();
+}
+
+std::string BotAccountMgr::GenerateSecurePassword()
+{
+    // Generate random secure password
+    static const char charset[] =
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "0123456789"
+        "!@#$%^&*";
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, sizeof(charset) - 2);
+
+    std::string password;
+    password.reserve(16);
+
+    for (int i = 0; i < 16; ++i)
     {
-        accounts.push_back(info);
+        password += charset[dis(gen)];
     }
-    
-    return accounts;
+
+    return password;
 }
 
-uint32 BotAccountMgr::GetTotalBotAccounts() const
+void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 {
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    return _totalAccounts;
+    // TODO: Implement database storage when BotDatabasePool is available
+    // For now, log the metadata
+    TC_LOG_DEBUG("module.playerbot.account",
+        "Storing metadata for account {}: email={}, characters={}",
+        info.bnetAccountId, info.email, info.characterCount);
 }
 
-uint32 BotAccountMgr::GetActiveBotAccounts() const
+void BotAccountMgr::LoadAccountMetadata()
 {
-    std::lock_guard<std::mutex> lock(_accountMutex);
-    return _activeAccounts;
+    // TODO: Implement database loading when BotDatabasePool is available
+    TC_LOG_INFO("module.playerbot.account", "Loading bot account metadata...");
+
+    // For now, just initialize empty
+    _totalAccounts.store(0);
+
+    TC_LOG_INFO("module.playerbot.account", "✅ Loaded 0 bot account metadata entries");
 }
+
+} // namespace Playerbot

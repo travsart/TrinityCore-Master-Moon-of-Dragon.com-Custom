@@ -16,6 +16,12 @@ BotAccountMgr
 
 ## Step-by-Step Implementation
 
+### Variables from configuzation file
+From playerbot.conf use variables:
+1. Playerbot.MaxBotsTotal : This determines the number of needed Accounts to be created ( Playerbot.MaxBotsTotal / 10 = Number of Bot Accounts )
+2. Playerbot.AutoCreateAccounts : Enables / Disables the automatic creation of Bot Accounts
+3. Playerbot.AccountsToCreate : If  Playerbot.AccountsToCreate > (Playerbot.MaxBotsTotal / 10) use this value, else use calculated number from 1. 
+
 ### Step 1: Create BotAccountMgr Header
 **File:** `src/modules/Playerbot/Account/BotAccountMgr.h`
 **Time:** 2 hours

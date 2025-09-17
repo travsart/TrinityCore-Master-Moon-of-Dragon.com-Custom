@@ -76,29 +76,29 @@ public:
     // === ASYNC QUERY OPERATIONS ===
 
     // Async query execution with callback
-    void ExecuteAsync(PreparedStatement* stmt,
+    void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
                      std::function<void(PreparedQueryResult)> callback,
                      uint32 timeoutMs = 30000);
 
     // Fire-and-forget async execution (no result needed)
-    void ExecuteAsyncNoResult(PreparedStatement* stmt,
+    void ExecuteAsyncNoResult(CharacterDatabasePreparedStatement* stmt,
                              uint32 timeoutMs = 30000);
 
     // Async batch operations
-    void ExecuteBatchAsync(std::vector<PreparedStatement*> const& statements,
+    void ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
                           std::function<void(std::vector<PreparedQueryResult>)> callback,
                           uint32 timeoutMs = 30000);
 
     // === SYNCHRONOUS QUERY OPERATIONS ===
 
     // Synchronous query for immediate results (use sparingly)
-    PreparedQueryResult ExecuteSync(PreparedStatement* stmt,
+    PreparedQueryResult ExecuteSync(CharacterDatabasePreparedStatement* stmt,
                                    uint32 timeoutMs = 10000);
 
     // === PREPARED STATEMENT MANAGEMENT ===
 
     // Get prepared statement by ID
-    PreparedStatement* GetPreparedStatement(uint32 stmtId);
+    CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId);
 
     // Cache prepared statement for reuse
     void CachePreparedStatement(uint32 stmtId, std::string const& sql);
@@ -155,7 +155,7 @@ private:
     };
 
     struct QueryRequest {
-        PreparedStatement* statement;
+        CharacterDatabasePreparedStatement* statement;
         std::function<void(PreparedQueryResult)> callback;
         std::chrono::steady_clock::time_point submitTime;
         uint32 timeoutMs;
@@ -253,7 +253,7 @@ private:
     // Caching implementation
     void CleanupExpiredCache();
     void EvictLeastRecentlyUsed();
-    std::string GenerateCacheKey(PreparedStatement const* stmt) const;
+    std::string GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const;
 
     // Metrics and monitoring
     void UpdateMetrics();

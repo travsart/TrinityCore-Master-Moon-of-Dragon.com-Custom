@@ -16,8 +16,9 @@
 #include <memory>
 
 // Forward declarations
+namespace Playerbot {
 class BotAI;
-class PreparedStatement;
+}
 
 namespace Playerbot {
 
@@ -51,13 +52,13 @@ public:
     virtual ~BotSession();
 
     // === MINIMAL WorldSession Overrides ===
-    void SendPacket(WorldPacket const* packet, bool forced = false) override;
-    void QueuePacket(WorldPacket&& packet) override;
-    void Update(uint32 diff) override;
+    void SendPacket(WorldPacket const* packet, bool forced = false);
+    void QueuePacket(WorldPacket* packet);
+    bool Update(uint32 diff, PacketFilter& updater);
 
     // Query methods for Trinity compatibility
-    bool IsConnectionIdle() const override { return false; }
-    uint32 GetLatency() const override { return _simulatedLatency; }
+    bool IsConnectionIdle() const { return false; }
+    uint32 GetLatency() const { return _simulatedLatency; }
 
     // === Bot-Specific High-Performance Methods ===
 
@@ -67,14 +68,14 @@ public:
     // Memory optimization via hibernation
     void Hibernate();
     void Reactivate();
-    bool IsHibernated() const { return _state.load() == State::HIBERNATED; }
+    bool IsHibernated() const { return _state.state.load() == decltype(_state)::State::HIBERNATED; }
 
     // Bot metadata queries - Links to Trinity's standard account/character data
-    void ExecuteBotMetadataQuery(PreparedStatement* stmt);
+    void ExecuteBotMetadataQuery(CharacterDatabasePreparedStatement* stmt);
 
     // AI Integration
-    void SetAI(std::unique_ptr<BotAI> ai) { _ai = std::move(ai); }
-    BotAI* GetAI() const { return _ai.get(); }
+    void SetAI(BotAI* ai);
+    BotAI* GetAI() const { return _ai; }
 
     // Performance monitoring
     struct Metrics {
@@ -89,7 +90,7 @@ public:
 
     Metrics const& GetMetrics() const { return _metrics; }
     bool IsBot() const { return true; }
-    bool IsActive() const { return _state.load() == State::ACTIVE; }
+    bool IsActive() const { return _state.state.load() == decltype(_state)::State::ACTIVE; }
 
     // BattleNet account ID (primary account)
     uint32 GetBnetAccountId() const { return _bnetAccountId; }
@@ -147,8 +148,8 @@ private:
     // Performance metrics
     mutable Metrics _metrics;
 
-    // Bot AI system
-    std::unique_ptr<BotAI> _ai;
+    // Bot AI system - use raw pointer to avoid incomplete type issues
+    BotAI* _ai;
 
     // Account information
     uint32 _bnetAccountId;

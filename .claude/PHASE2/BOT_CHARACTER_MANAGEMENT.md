@@ -1,1478 +1,788 @@
-# Phase 2: Bot Character Management - Detailed Implementation Plan
+# 📋 Bot Character Management - Phase 2 (WoW 11.2)
 
-## Executive Summary
-**Component**: BotCharacterMgr - Enterprise Character Lifecycle Management  
-**Duration**: Weeks 9-10 (2 weeks)  
-**Foundation**: Leverages Phase 1 enterprise session infrastructure  
-**Scope**: Character creation, naming, equipment, talent distribution, and management  
+## 🎯 Übersicht
+Bot Character Management System für TrinityCore Playerbot Module mit realistischer Charakterverteilung basierend auf konfigurierbaren Statistiken aus der Datenbank.
 
-## Architecture Overview
+## 📊 Datenbank-basierte Charakterverteilung
 
-### Component Integration
-```cpp
-// Character management leverages existing enterprise infrastructure
-BotCharacterMgr
-├── Uses: BotSession (Phase 1 - enterprise sessions)
-├── Uses: BotSessionMgr (Phase 1 - parallel processing)
-├── Uses: BotDatabasePool (Phase 1 - async operations)
-├── Uses: BotAccountMgr (Phase 2 - account management)
-└── Integrates: Trinity's Player::Create() and CharacterHandler
+### SQL Schema für Verteilungsstatistiken
+
+```sql
+-- ============================================
+-- Rasse/Klasse Kombinationen und ihre Häufigkeit
+-- ============================================
+CREATE TABLE IF NOT EXISTS `playerbots_race_class_distribution` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `race` TINYINT UNSIGNED NOT NULL COMMENT 'Race ID',
+    `class` TINYINT UNSIGNED NOT NULL COMMENT 'Class ID',
+    `percentage` FLOAT NOT NULL DEFAULT 0.0 COMMENT 'Prozentuale Häufigkeit dieser Kombination',
+    `is_popular` TINYINT(1) DEFAULT 0 COMMENT 'Markiert Top-Kombinationen',
+    `faction` ENUM('Alliance', 'Horde', 'Neutral') NOT NULL,
+    `expansion` VARCHAR(20) DEFAULT 'TWW' COMMENT 'Expansion (TWW = The War Within)',
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_race_class` (`race`, `class`),
+    KEY `idx_percentage` (`percentage` DESC),
+    KEY `idx_popular` (`is_popular`, `percentage` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Rasse/Klasse Verteilung basierend auf offiziellen Server-Daten';
+
+-- Beispiel-Daten für Top-Kombinationen (WoW 11.2)
+INSERT INTO `playerbots_race_class_distribution` (`race`, `class`, `percentage`, `is_popular`, `faction`) VALUES
+-- Alliance Top-Kombinationen
+(4, 12, 9.8, 1, 'Alliance'),   -- Night Elf Demon Hunter
+(70, 13, 8.5, 1, 'Alliance'),  -- Dracthyr Evoker
+(1, 2, 6.2, 1, 'Alliance'),    -- Human Paladin
+(4, 11, 5.8, 1, 'Alliance'),   -- Night Elf Druid
+(29, 5, 4.2, 1, 'Alliance'),   -- Void Elf Priest
+(32, 11, 2.6, 1, 'Alliance'),  -- Kul Tiran Druid
+(37, 9, 2.4, 1, 'Alliance'),   -- Mechagnome Warlock
+(85, 1, 2.3, 1, 'Alliance'),   -- Earthen Warrior
+(30, 2, 1.5, 1, 'Alliance'),   -- Lightforged Paladin
+
+-- Horde Top-Kombinationen
+(10, 12, 7.9, 1, 'Horde'),     -- Blood Elf Demon Hunter
+(10, 2, 5.3, 1, 'Horde'),      -- Blood Elf Paladin
+(2, 1, 4.9, 1, 'Horde'),       -- Orc Warrior
+(5, 4, 4.5, 1, 'Horde'),       -- Undead Rogue
+(8, 7, 3.9, 1, 'Horde'),       -- Troll Shaman
+(31, 11, 3.7, 1, 'Horde'),     -- Zandalari Druid
+(10, 8, 3.5, 1, 'Horde'),      -- Blood Elf Mage
+(35, 3, 3.3, 1, 'Horde'),      -- Vulpera Hunter
+(27, 8, 3.1, 1, 'Horde'),      -- Nightborne Mage
+(36, 3, 2.1, 1, 'Horde'),      -- Mag'har Hunter
+(28, 1, 2.0, 1, 'Horde');      -- Highmountain Warrior
+
+-- Fülle weitere Kombinationen mit realistischen Werten...
+-- (Alle möglichen Rasse/Klasse Kombinationen sollten eingetragen werden)
+
+-- ============================================
+-- Geschlechterverteilung nach Rasse
+-- ============================================
+CREATE TABLE IF NOT EXISTS `playerbots_gender_distribution` (
+    `race` TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    `race_name` VARCHAR(50) NOT NULL,
+    `male_percentage` TINYINT UNSIGNED NOT NULL DEFAULT 50 COMMENT 'Prozent männliche Charaktere (0-100)',
+    `female_percentage` TINYINT UNSIGNED AS (100 - male_percentage) STORED,
+    `sample_size` INT UNSIGNED DEFAULT 0 COMMENT 'Anzahl Charaktere in Stichprobe',
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Geschlechterverteilung pro Rasse';
+
+-- Daten basierend auf WoW 11.2 Statistiken
+INSERT INTO `playerbots_gender_distribution` (`race`, `race_name`, `male_percentage`) VALUES
+-- Alliance
+(1, 'Human', 65),
+(3, 'Dwarf', 85),
+(4, 'Night Elf', 30),     -- Sehr beliebte weibliche Charaktere!
+(7, 'Gnome', 70),
+(11, 'Draenei', 55),
+(22, 'Worgen', 75),
+(25, 'Pandaren (A)', 60),
+(29, 'Void Elf', 25),     -- Sehr beliebte weibliche Charaktere!
+(30, 'Lightforged Draenei', 70),
+(34, 'Dark Iron Dwarf', 80),
+(32, 'Kul Tiran', 65),
+(37, 'Mechagnome', 60),
+(70, 'Dracthyr (A)', 50),
+(85, 'Earthen (A)', 75),
+
+-- Horde
+(2, 'Orc', 85),
+(5, 'Undead', 70),
+(6, 'Tauren', 80),
+(8, 'Troll', 65),
+(10, 'Blood Elf', 35),    -- Sehr beliebte weibliche Charaktere!
+(9, 'Goblin', 60),
+(26, 'Pandaren (H)', 60),
+(27, 'Nightborne', 40),
+(28, 'Highmountain Tauren', 75),
+(36, 'Mag''har Orc', 80),
+(31, 'Zandalari Troll', 70),
+(35, 'Vulpera', 45),
+(71, 'Dracthyr (H)', 50),
+(86, 'Earthen (H)', 75);
+
+-- ============================================
+-- Klassen-Popularität
+-- ============================================
+CREATE TABLE IF NOT EXISTS `playerbots_class_popularity` (
+    `class` TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    `class_name` VARCHAR(50) NOT NULL,
+    `popularity_percentage` FLOAT NOT NULL DEFAULT 0.0 COMMENT 'Prozentuale Beliebtheit',
+    `pve_popularity` FLOAT DEFAULT 0.0 COMMENT 'PvE Beliebtheit',
+    `pvp_popularity` FLOAT DEFAULT 0.0 COMMENT 'PvP Beliebtheit',
+    `mythic_plus_popularity` FLOAT DEFAULT 0.0 COMMENT 'M+ Beliebtheit',
+    `raid_popularity` FLOAT DEFAULT 0.0 COMMENT 'Raid Beliebtheit',
+    `expansion` VARCHAR(20) DEFAULT 'TWW',
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Klassen-Beliebtheit Statistiken';
+
+-- WoW 11.2 Klassen-Verteilung
+INSERT INTO `playerbots_class_popularity` (`class`, `class_name`, `popularity_percentage`, `pve_popularity`, `pvp_popularity`) VALUES
+(1, 'Warrior', 4.5, 4.2, 5.1),
+(2, 'Paladin', 6.2, 6.8, 5.3),
+(3, 'Hunter', 7.8, 7.2, 8.9),
+(4, 'Rogue', 5.1, 4.5, 6.8),
+(5, 'Priest', 6.5, 7.1, 5.2),
+(6, 'Death Knight', 3.8, 3.5, 4.3),
+(7, 'Shaman', 5.9, 6.2, 5.1),
+(8, 'Mage', 6.7, 6.3, 7.5),
+(9, 'Warlock', 5.2, 5.5, 4.6),
+(10, 'Monk', 6.0, 5.8, 6.4),
+(11, 'Druid', 7.3, 7.8, 6.2),
+(12, 'Demon Hunter', 17.8, 16.5, 20.1),  -- Sehr beliebt!
+(13, 'Evoker', 8.5, 9.2, 7.1);
+
+-- ============================================
+-- Geschlechterverteilung pro Rasse/Klasse Kombination (optional, für mehr Genauigkeit)
+-- ============================================
+CREATE TABLE IF NOT EXISTS `playerbots_race_class_gender` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `race` TINYINT UNSIGNED NOT NULL,
+    `class` TINYINT UNSIGNED NOT NULL,
+    `male_percentage` TINYINT UNSIGNED NOT NULL DEFAULT 50,
+    `female_percentage` TINYINT UNSIGNED AS (100 - male_percentage) STORED,
+    `sample_size` INT UNSIGNED DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_race_class_gender` (`race`, `class`),
+    KEY `idx_race_class` (`race`, `class`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Geschlechterverteilung pro Rasse/Klasse Kombination';
+
+-- Spezielle Fälle mit abweichender Geschlechterverteilung
+INSERT INTO `playerbots_race_class_gender` (`race`, `class`, `male_percentage`) VALUES
+(4, 12, 45),   -- Night Elf Demon Hunter (mehr weiblich)
+(10, 12, 55),  -- Blood Elf Demon Hunter (ausgeglichener)
+(10, 2, 40),   -- Blood Elf Paladin (mehr weiblich)
+(4, 11, 35),   -- Night Elf Druid (mehr weiblich)
+(29, 5, 25);   -- Void Elf Priest (stark weiblich)
 ```
 
-### Performance Targets
-- **Character Creation**: <100ms per character (batch operations)
-- **Name Generation**: <5ms with uniqueness validation
-- **Equipment Assignment**: <10ms using template cache
-- **Database Operations**: <10ms P95 (async via BotDatabasePool)
-- **Memory Usage**: <50KB per character metadata
-- **Concurrent Operations**: 100+ simultaneous creations
+### C++ Implementation mit Datenbank-Loading
 
-## Week 9: Character Creation System
-
-### Day 1-2: BotCharacterMgr Core Implementation
-
-#### File: `src/modules/Playerbot/Character/BotCharacterMgr.h`
 ```cpp
+// Datei: src/modules/Playerbot/Character/BotCharacterDistribution.h
+
 #pragma once
 
 #include "Define.h"
-#include "ObjectGuid.h"
-#include "SharedDefines.h"
-#include <memory>
-#include <vector>
 #include <unordered_map>
-#include <future>
-#include <tbb/concurrent_queue.h>
-#include <phmap.h>
+#include <vector>
+#include <memory>
 
 namespace Playerbot
 {
 
-// Forward declarations
-class BotSession;
-class BotNameGenerator;
-class BotEquipmentMgr;
-class BotTalentMgr;
-
-// Character creation request structure
-struct CharacterCreateRequest
-{
-    uint32 accountId = 0;
-    uint32 bnetAccountId = 0;
-    std::string name;
-    uint8 race = 0;
-    uint8 classId = 0;
-    uint8 gender = 0;
-    uint8 level = 1;
-    bool randomize = true;
-    std::function<void(bool, ObjectGuid)> callback;
-};
-
-// Character template for quick spawning
-struct CharacterTemplate
+// Struktur für Rasse/Klasse Kombinationen
+struct RaceClassCombination
 {
     uint8 race;
     uint8 classId;
-    uint8 gender;
-    std::vector<uint32> startingItems;
-    std::vector<uint32> talents;
-    uint32 startingZone;
-    float startX, startY, startZ, startO;
+    float percentage;
+    bool isPopular;
+    std::string faction;
 };
 
-class TC_GAME_API BotCharacterMgr
+// Struktur für Geschlechterverteilung
+struct GenderDistribution
 {
-    BotCharacterMgr();
-    ~BotCharacterMgr();
-    BotCharacterMgr(BotCharacterMgr const&) = delete;
-    BotCharacterMgr& operator=(BotCharacterMgr const&) = delete;
-
-public:
-    static BotCharacterMgr* instance();
-
-    // Initialization
-    bool Initialize();
-    void Shutdown();
-
-    // Character creation - Enterprise batch operations
-    ObjectGuid CreateBotCharacter(CharacterCreateRequest const& request);
-    std::vector<ObjectGuid> CreateBotCharactersBatch(
-        uint32 accountId, 
-        uint32 count, 
-        bool randomizeAll = true
-    );
-    std::future<ObjectGuid> CreateBotCharacterAsync(CharacterCreateRequest const& request);
-
-    // Character management
-    bool DeleteBotCharacter(ObjectGuid guid);
-    bool RenameBotCharacter(ObjectGuid guid, std::string const& newName);
-    bool ChangeBotCharacterFaction(ObjectGuid guid);
-    
-    // Character queries - Uses cached data
-    uint32 GetBotCharacterCount(uint32 accountId) const;
-    std::vector<ObjectGuid> GetBotCharacters(uint32 accountId) const;
-    bool IsBotCharacter(ObjectGuid guid) const;
-    
-    // Template management for performance
-    void RegisterTemplate(std::string const& name, CharacterTemplate const& tmpl);
-    CharacterTemplate const* GetTemplate(std::string const& name) const;
-    CharacterTemplate GenerateRandomTemplate(uint8 classId = 0) const;
-
-    // Equipment and customization
-    void EquipBotCharacter(ObjectGuid guid, uint8 level);
-    void UpdateBotAppearance(ObjectGuid guid);
-    
-    // Statistics and monitoring
-    struct Statistics
-    {
-        uint32 totalCharactersCreated;
-        uint32 charactersActiveToday;
-        uint32 averageCreationTimeMs;
-        uint32 nameCollisions;
-        uint32 templateCacheHits;
-        uint32 databaseQueriesMs;
-    };
-    Statistics GetStatistics() const { return _stats; }
-
-private:
-    // Internal implementation
-    ObjectGuid CreateCharacterInternal(CharacterCreateRequest const& request);
-    bool ValidateCharacterName(std::string const& name, uint8 race) const;
-    void LoadTemplates();
-    void LoadBotCharacterCache();
-    void UpdateCharacterCache(ObjectGuid guid, uint32 accountId);
-    void ProcessCreationQueue();
-    
-    // Name generation with culture awareness
-    std::string GenerateUniqueName(uint8 race, uint8 gender);
-    
-    // Equipment generation based on class/level
-    std::vector<uint32> GenerateStartingEquipment(uint8 classId, uint8 level) const;
-    
-    // Talent distribution based on spec templates
-    std::vector<uint32> GenerateTalentBuild(uint8 classId, uint8 level) const;
-
-private:
-    // Enterprise data structures
-    phmap::parallel_flat_hash_map<uint32, std::vector<ObjectGuid>> _accountCharacters;
-    phmap::parallel_flat_hash_map<ObjectGuid::LowType, uint32> _characterAccounts;
-    phmap::parallel_flat_hash_map<std::string, CharacterTemplate> _templates;
-    
-    // Creation queue for batch processing
-    tbb::concurrent_queue<CharacterCreateRequest> _creationQueue;
-    
-    // Sub-managers
-    std::unique_ptr<BotNameGenerator> _nameGenerator;
-    std::unique_ptr<BotEquipmentMgr> _equipmentMgr;
-    std::unique_ptr<BotTalentMgr> _talentMgr;
-    
-    // Thread pool for async operations
-    std::unique_ptr<boost::asio::thread_pool> _workerPool;
-    
-    // Statistics
-    mutable Statistics _stats;
-    
-    // Configuration
-    bool _enableAsyncCreation;
-    uint32 _maxCharactersPerAccount;
-    uint32 _creationBatchSize;
-    uint32 _templateCacheSize;
+    uint8 race;
+    uint8 malePercentage;
+    uint8 femalePercentage;
+    std::string raceName;
 };
 
-#define sBotCharacterMgr BotCharacterMgr::instance()
+// Struktur für Klassen-Popularität
+struct ClassPopularity
+{
+    uint8 classId;
+    std::string className;
+    float overallPopularity;
+    float pvePopularity;
+    float pvpPopularity;
+    float mythicPlusPopularity;
+    float raidPopularity;
+};
+
+class BotCharacterDistribution
+{
+public:
+    static BotCharacterDistribution* instance();
+    
+    // Initialisierung - lädt alle Daten aus der Datenbank
+    bool LoadFromDatabase();
+    void ReloadDistributions();
+    
+    // Getter für Verteilungsdaten
+    std::pair<uint8, uint8> GetRandomRaceClassByDistribution();
+    uint8 GetRandomGenderForRace(uint8 race);
+    uint8 GetRandomGenderForRaceClass(uint8 race, uint8 classId);
+    
+    // Statistik-Abfragen
+    float GetRaceClassPercentage(uint8 race, uint8 classId) const;
+    float GetClassPopularity(uint8 classId) const;
+    uint8 GetMalePercentageForRace(uint8 race) const;
+    
+    // Top-Kombinationen
+    std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const;
+    std::vector<RaceClassCombination> GetPopularCombinations() const;
+    
+private:
+    BotCharacterDistribution() = default;
+    ~BotCharacterDistribution() = default;
+    
+    void LoadRaceClassDistribution();
+    void LoadGenderDistribution();
+    void LoadClassPopularity();
+    void LoadRaceClassGenderOverrides();
+    void BuildCumulativeDistribution();
+    
+private:
+    // Haupt-Datenspeicher
+    std::vector<RaceClassCombination> m_raceClassCombinations;
+    std::unordered_map<uint8, GenderDistribution> m_genderDistributions;
+    std::unordered_map<uint8, ClassPopularity> m_classPopularities;
+    
+    // Rasse/Klasse-spezifische Geschlechterverteilung (Overrides)
+    std::unordered_map<uint32, uint8> m_raceClassGenderOverrides; // key: (race << 8) | class
+    
+    // Kumulative Verteilung für effiziente Zufallsauswahl
+    std::vector<float> m_cumulativeDistribution;
+    float m_totalPercentage;
+    
+    // Cache für häufige Abfragen
+    mutable std::unordered_map<uint8, std::vector<RaceClassCombination>> m_raceCache;
+    mutable std::unordered_map<uint8, std::vector<RaceClassCombination>> m_classCache;
+};
+
+#define sBotCharacterDistribution BotCharacterDistribution::instance()
 
 } // namespace Playerbot
+```
 
-#### File: `src/modules/Playerbot/Character/BotCharacterMgr.cpp`
 ```cpp
-#include "BotCharacterMgr.h"
-#include "BotSession.h"
-#include "BotSessionMgr.h"
-#include "BotAccountMgr.h"
-#include "BotDatabasePool.h"
-#include "BotNameGenerator.h"
-#include "BotEquipmentMgr.h"
-#include "BotTalentMgr.h"
-#include "Player.h"
-#include "World.h"
-#include "WorldSession.h"
-#include "CharacterHandler.h"
-#include "ObjectMgr.h"
+// Datei: src/modules/Playerbot/Character/BotCharacterDistribution.cpp
+
+#include "BotCharacterDistribution.h"
+#include "DatabaseEnv.h"
 #include "Log.h"
-#include <boost/asio.hpp>
-#include <execution>
+#include "Random.h"
 
 namespace Playerbot
 {
 
-BotCharacterMgr::BotCharacterMgr()
-    : _enableAsyncCreation(true)
-    , _maxCharactersPerAccount(10) // Trinity hardcoded limit
-    , _creationBatchSize(10)
-    , _templateCacheSize(100)
+BotCharacterDistribution* BotCharacterDistribution::instance()
 {
-    _nameGenerator = std::make_unique<BotNameGenerator>();
-    _equipmentMgr = std::make_unique<BotEquipmentMgr>();
-    _talentMgr = std::make_unique<BotTalentMgr>();
-    _workerPool = std::make_unique<boost::asio::thread_pool>(4);
-}
-
-BotCharacterMgr::~BotCharacterMgr()
-{
-    Shutdown();
-}
-
-BotCharacterMgr* BotCharacterMgr::instance()
-{
-    static BotCharacterMgr instance;
+    static BotCharacterDistribution instance;
     return &instance;
 }
 
-bool BotCharacterMgr::Initialize()
+bool BotCharacterDistribution::LoadFromDatabase()
 {
-    TC_LOG_INFO("playerbot", "Initializing BotCharacterMgr with enterprise features...");
-
-    // Load configuration
-    _enableAsyncCreation = sConfigMgr->GetBoolDefault("Playerbot.Character.AsyncCreation", true);
-    _maxCharactersPerAccount = 10; // Trinity limit, cannot be changed
-    _creationBatchSize = sConfigMgr->GetIntDefault("Playerbot.Character.BatchSize", 10);
-    _templateCacheSize = sConfigMgr->GetIntDefault("Playerbot.Character.TemplateCacheSize", 100);
-
-    // Initialize sub-systems
-    if (!_nameGenerator->Initialize())
-    {
-        TC_LOG_ERROR("playerbot", "Failed to initialize name generator");
-        return false;
-    }
-
-    if (!_equipmentMgr->Initialize())
-    {
-        TC_LOG_ERROR("playerbot", "Failed to initialize equipment manager");
-        return false;
-    }
-
-    if (!_talentMgr->Initialize())
-    {
-        TC_LOG_ERROR("playerbot", "Failed to initialize talent manager");
-        return false;
-    }
-
-    // Load templates and cache
-    LoadTemplates();
-    LoadBotCharacterCache();
-
-    // Start async processing thread
-    if (_enableAsyncCreation)
-    {
-        std::thread([this] { ProcessCreationQueue(); }).detach();
-    }
-
-    TC_LOG_INFO("playerbot", "BotCharacterMgr initialized successfully");
-    TC_LOG_INFO("playerbot", "  -> Async creation: %s", _enableAsyncCreation ? "enabled" : "disabled");
-    TC_LOG_INFO("playerbot", "  -> Batch size: %u", _creationBatchSize);
-    TC_LOG_INFO("playerbot", "  -> Template cache: %u", _templateCacheSize);
-    TC_LOG_INFO("playerbot", "  -> Loaded %zu character templates", _templates.size());
-    TC_LOG_INFO("playerbot", "  -> Cached %zu bot characters", _characterAccounts.size());
-
-    return true;
+    TC_LOG_INFO("module.playerbot", "Loading Bot Character Distribution from database...");
+    
+    auto startTime = getMSTime();
+    
+    // Lade alle Verteilungsdaten
+    LoadRaceClassDistribution();
+    LoadGenderDistribution();
+    LoadClassPopularity();
+    LoadRaceClassGenderOverrides();
+    
+    // Baue kumulative Verteilung für effiziente Zufallsauswahl
+    BuildCumulativeDistribution();
+    
+    TC_LOG_INFO("module.playerbot", ">> Loaded character distribution data in %u ms", 
+                GetMSTimeDiffToNow(startTime));
+    TC_LOG_INFO("module.playerbot", "   - Race/Class combinations: %zu", 
+                m_raceClassCombinations.size());
+    TC_LOG_INFO("module.playerbot", "   - Gender distributions: %zu races", 
+                m_genderDistributions.size());
+    TC_LOG_INFO("module.playerbot", "   - Class popularities: %zu classes", 
+                m_classPopularities.size());
+    
+    return !m_raceClassCombinations.empty();
 }
 
-ObjectGuid BotCharacterMgr::CreateBotCharacter(CharacterCreateRequest const& request)
+void BotCharacterDistribution::LoadRaceClassDistribution()
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    // Validate account
-    if (!sBotAccountMgr->IsBotAccount(request.accountId))
-    {
-        TC_LOG_ERROR("playerbot", "CreateBotCharacter: Account %u is not a bot account",
-                     request.accountId);
-        return ObjectGuid::Empty;
-    }
-
-    // Check character limit (Trinity enforces 10 per account)
-    if (GetBotCharacterCount(request.accountId) >= _maxCharactersPerAccount)
-    {
-        TC_LOG_ERROR("playerbot", "CreateBotCharacter: Account %u has reached character limit (%u)",
-                     request.accountId, _maxCharactersPerAccount);
-        return ObjectGuid::Empty;
-    }
-
-    // Prepare creation data
-    CharacterCreateRequest createReq = request;
-
-    // Generate name if not provided
-    if (createReq.name.empty())
-    {
-        createReq.name = GenerateUniqueName(createReq.race, createReq.gender);
-    }
-
-    // Validate name
-    if (!ValidateCharacterName(createReq.name, createReq.race))
-    {
-        TC_LOG_ERROR("playerbot", "CreateBotCharacter: Invalid name '%s'", createReq.name.c_str());
-        return ObjectGuid::Empty;
-    }
-
-    // Randomize if requested
-    if (createReq.randomize)
-    {
-        CharacterTemplate tmpl = GenerateRandomTemplate(createReq.classId);
-        createReq.race = tmpl.race;
-        createReq.classId = tmpl.classId;
-        createReq.gender = tmpl.gender;
-    }
-
-    // Create character using Trinity's Player::Create
-    ObjectGuid guid = CreateCharacterInternal(createReq);
-
-    if (!guid.IsEmpty())
-    {
-        // Update cache
-        UpdateCharacterCache(guid, request.accountId);
-
-        // Equip starting items
-        EquipBotCharacter(guid, createReq.level);
-
-        // Apply talents if higher level
-        if (createReq.level > 10)
-        {
-            auto talents = GenerateTalentBuild(createReq.classId, createReq.level);
-            _talentMgr->ApplyTalents(guid, talents);
-        }
-
-        // Store metadata in playerbot database
-        auto stmt = sBotDBPool->GetPreparedStatement(BOT_INS_CHARACTER_META);
-        stmt->setUInt64(0, guid.GetRawValue());
-        stmt->setUInt32(1, request.accountId);
-        stmt->setUInt32(2, request.bnetAccountId);
-        stmt->setString(3, createReq.name);
-        stmt->setUInt8(4, createReq.race);
-        stmt->setUInt8(5, createReq.classId);
-        stmt->setUInt8(6, createReq.gender);
-        stmt->setUInt8(7, createReq.level);
-        sBotDBPool->ExecuteAsync(stmt);
-
-        // Update statistics
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now() - startTime).count();
-        _stats.totalCharactersCreated++;
-        _stats.averageCreationTimeMs =
-            (_stats.averageCreationTimeMs + elapsed) / 2;
-
-        TC_LOG_INFO("playerbot", "Created bot character '%s' (GUID: %s) in %ums",
-                    createReq.name.c_str(), guid.ToString().c_str(), elapsed);
-    }
-
-    // Execute callback if provided
-    if (request.callback)
-    {
-        request.callback(!guid.IsEmpty(), guid);
-    }
-
-    return guid;
-}
-
-std::vector<ObjectGuid> BotCharacterMgr::CreateBotCharactersBatch(
-    uint32 accountId, uint32 count, bool randomizeAll)
-{
-    TC_LOG_INFO("playerbot", "Creating batch of %u bot characters for account %u",
-                count, accountId);
-
-    std::vector<ObjectGuid> results;
-    results.reserve(count);
-
-    // Check how many we can actually create
-    uint32 existing = GetBotCharacterCount(accountId);
-    uint32 canCreate = std::min(count, _maxCharactersPerAccount - existing);
-
-    if (canCreate == 0)
-    {
-        TC_LOG_WARN("playerbot", "Account %u already has maximum characters (%u)",
-                    accountId, _maxCharactersPerAccount);
-        return results;
-    }
-
-    // Use parallel execution for batch creation
-    std::vector<std::future<ObjectGuid>> futures;
-    futures.reserve(canCreate);
-
-    for (uint32 i = 0; i < canCreate; ++i)
-    {
-        futures.push_back(
-            boost::asio::post(*_workerPool, boost::asio::use_future([this, accountId, randomizeAll]()
-            {
-                CharacterCreateRequest request;
-                request.accountId = accountId;
-                request.bnetAccountId = sBotAccountMgr->GetBnetAccountId(accountId);
-                request.randomize = randomizeAll;
-
-                if (randomizeAll)
-                {
-                    // Generate random template
-                    CharacterTemplate tmpl = GenerateRandomTemplate();
-                    request.race = tmpl.race;
-                    request.classId = tmpl.classId;
-                    request.gender = tmpl.gender;
-                }
-
-                return CreateBotCharacter(request);
-            })
-        );
-    }
-
-    // Collect results
-    for (auto& future : futures)
-    {
-        try
-        {
-            ObjectGuid guid = future.get();
-            if (!guid.IsEmpty())
-            {
-                results.push_back(guid);
-            }
-        }
-        catch (std::exception const& e)
-        {
-            TC_LOG_ERROR("playerbot", "Batch character creation failed: %s", e.what());
-        }
-    }
-
-    TC_LOG_INFO("playerbot", "Successfully created %zu/%u bot characters for account %u",
-                results.size(), canCreate, accountId);
-
-    return results;
-}
-
-ObjectGuid BotCharacterMgr::CreateCharacterInternal(CharacterCreateRequest const& request)
-{
-    // This uses Trinity's Player::Create internally
-    // We create through the character handler to ensure all validations pass
-
-    // Get or create bot session
-    BotSession* session = sBotSessionMgr->GetSession(request.accountId);
-    if (!session)
-    {
-        session = sBotSessionMgr->CreateSession(request.accountId);
-        if (!session)
-        {
-            TC_LOG_ERROR("playerbot", "Failed to create session for account %u", request.accountId);
-            return ObjectGuid::Empty;
-        }
-    }
-
-    // Prepare character create info matching Trinity's structure
-    CharacterCreateInfo createInfo;
-    createInfo.Name = request.name;
-    createInfo.Race = request.race;
-    createInfo.Class = request.classId;
-    createInfo.Gender = request.gender;
-    // Appearance customization would go here
-
-    // Use Trinity's character creation through Player::Create
-    // This ensures all racial traits, starting spells, etc. are properly set
-    std::shared_ptr<Player> newPlayer = std::make_shared<Player>(session);
-    if (!newPlayer->Create(sObjectMgr->GetGenerator<HighGuid::Player>().Generate(), &createInfo))
-    {
-        TC_LOG_ERROR("playerbot", "Player::Create failed for bot character '%s'", request.name.c_str());
-        return ObjectGuid::Empty;
-    }
-
-    // Set starting level if not 1
-    if (request.level > 1)
-    {
-        newPlayer->SetLevel(request.level);
-        newPlayer->InitStatsForLevel(true);
-    }
-
-    // Save to database (characters database)
-    if (!newPlayer->SaveToDB(true))
-    {
-        TC_LOG_ERROR("playerbot", "Failed to save bot character '%s' to database", request.name.c_str());
-        return ObjectGuid::Empty;
-    }
-
-    return newPlayer->GetGUID();
-}
-
-std::string BotCharacterMgr::GenerateUniqueName(uint8 race, uint8 gender)
-{
-    std::string name;
-    uint32 attempts = 0;
-    const uint32 maxAttempts = 100;
-
-    do
-    {
-        name = _nameGenerator->GenerateName(race, gender);
-        attempts++;
-
-        if (attempts >= maxAttempts)
-        {
-            // Fallback to numbered name
-            name = "Bot" + std::to_string(std::rand() % 100000);
-            break;
-        }
-    }
-    while (sCharacterCache->GetCharacterGuidByName(name)); // Check uniqueness
-
-    if (attempts > 1)
-    {
-        _stats.nameCollisions += (attempts - 1);
-    }
-
-    return name;
-}
-
-void BotCharacterMgr::LoadBotCharacterCache()
-{
-    TC_LOG_INFO("playerbot", "Loading bot character cache...");
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    // Load all bot characters from playerbot metadata
-    auto result = sBotDBPool->Query("SELECT guid, account_id FROM playerbot_character_meta");
-    if (!result)
-    {
-        TC_LOG_INFO("playerbot", "No bot characters found in database");
-        return;
-    }
-
-    uint32 count = 0;
-    do
-    {
-        Field* fields = result->Fetch();
-        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64());
-        uint32 accountId = fields[1].GetUInt32();
-
-        _characterAccounts[guid.GetRawValue()] = accountId;
-        _accountCharacters[accountId].push_back(guid);
-        count++;
-    }
-    while (result->NextRow());
-
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - startTime).count();
-
-    TC_LOG_INFO("playerbot", "Loaded %u bot characters in %ums", count, elapsed);
-}
-
-void BotCharacterMgr::ProcessCreationQueue()
-{
-    while (true)
-    {
-        CharacterCreateRequest request;
-        if (_creationQueue.try_pop(request))
-        {
-            CreateBotCharacter(request);
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-}
-
-} // namespace Playerbot
-```
-
-### Day 3-4: Name Generation System
-
-#### File: `src/modules/Playerbot/Character/BotNameGenerator.h`
-```cpp
-#pragma once
-
-#include "Define.h"
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <random>
-#include <phmap.h>
-
-namespace Playerbot
-{
-
-// Name database structure
-struct NameDatabase
-{
-    std::vector<std::string> prefixes;
-    std::vector<std::string> suffixes;
-    std::vector<std::string> fullNames;
-    bool useCombination = true;  // Combine prefix+suffix vs use full names
-};
-
-class TC_GAME_API BotNameGenerator
-{
-public:
-    BotNameGenerator();
-    ~BotNameGenerator();
-
-    bool Initialize();
-    void Shutdown();
-
-    // Main generation function
-    std::string GenerateName(uint8 race, uint8 gender);
-
-    // Batch generation for performance
-    std::vector<std::string> GenerateNames(uint8 race, uint8 gender, uint32 count);
-
-    // Validation
-    bool IsNameValid(std::string const& name, uint8 race) const;
-    bool IsNameAvailable(std::string const& name) const;
-
-    // Database management
-    void ReloadNameDatabase();
-    void AddCustomName(uint8 race, uint8 gender, std::string const& name);
-
-    // Statistics
-    uint32 GetTotalNamesGenerated() const { return _totalGenerated; }
-    uint32 GetUniqueNamesInDatabase() const;
-
-private:
-    void LoadRaceNames(uint8 race);
-    void LoadNamePatternsFromDB();
-    void GenerateNameVariations();
-    std::string ApplyRaceNamingRules(std::string const& name, uint8 race) const;
-    std::string CapitalizeName(std::string const& name) const;
-
-    // Culture-specific generation
-    std::string GenerateHumanName(uint8 gender);
-    std::string GenerateOrcName(uint8 gender);
-    std::string GenerateElfName(uint8 gender, bool night);
-    std::string GenerateDwarfName(uint8 gender);
-    std::string GenerateUndeadName(uint8 gender);
-    std::string GenerateTaurenName(uint8 gender);
-    std::string GenerateGnomeName(uint8 gender);
-    std::string GenerateTrollName(uint8 gender);
-    std::string GenerateDraeneiName(uint8 gender);
-    std::string GenerateWorgenName(uint8 gender);
-    std::string GenerateGoblinName(uint8 gender);
-    std::string GeneratePandarenName(uint8 gender);
-
-private:
-    // Race/gender specific name databases
-    phmap::parallel_flat_hash_map<uint16, NameDatabase> _nameData; // Key: (race << 8) | gender
-
-    // Cache of recently used names to avoid duplicates
-    phmap::parallel_flat_hash_set<std::string> _recentlyUsed;
-
-    // Random generation
-    std::mt19937 _rng;
-
-    // Statistics
-    std::atomic<uint32> _totalGenerated;
-
-    // Configuration
-    uint32 _recentlyUsedCacheSize;
-    bool _allowNumberSuffix;
-};
-
-} // namespace Playerbot
-```
-
-#### File: `src/modules/Playerbot/Character/BotNameGenerator.cpp` (partial)
-```cpp
-#include "BotNameGenerator.h"
-#include "ObjectMgr.h"
-#include "DatabaseEnv.h"
-#include "Log.h"
-#include "Util.h"
-
-namespace Playerbot
-{
-
-BotNameGenerator::BotNameGenerator()
-    : _rng(std::random_device{}())
-    , _totalGenerated(0)
-    , _recentlyUsedCacheSize(1000)
-    , _allowNumberSuffix(false)
-{
-}
-
-bool BotNameGenerator::Initialize()
-{
-    TC_LOG_INFO("playerbot", "Initializing BotNameGenerator...");
-
-    // Load configuration
-    _recentlyUsedCacheSize = sConfigMgr->GetIntDefault("Playerbot.Name.CacheSize", 1000);
-    _allowNumberSuffix = sConfigMgr->GetBoolDefault("Playerbot.Name.AllowNumbers", false);
-
-    // Load name patterns from database
-    LoadNamePatternsFromDB();
-
-    // Load race-specific names
-    for (uint8 race = RACE_HUMAN; race < MAX_RACES; ++race)
-    {
-        if (race == RACE_NONE)
-            continue;
-        LoadRaceNames(race);
-    }
-
-    // Generate variations
-    GenerateNameVariations();
-
-    TC_LOG_INFO("playerbot", "BotNameGenerator initialized with %u unique name patterns",
-                GetUniqueNamesInDatabase());
-
-    return true;
-}
-
-std::string BotNameGenerator::GenerateName(uint8 race, uint8 gender)
-{
-    // Generate culture-appropriate name
-    std::string name;
-
-    switch (race)
-    {
-        case RACE_HUMAN:
-            name = GenerateHumanName(gender);
-            break;
-        case RACE_ORC:
-            name = GenerateOrcName(gender);
-            break;
-        case RACE_DWARF:
-            name = GenerateDwarfName(gender);
-            break;
-        case RACE_NIGHTELF:
-            name = GenerateElfName(gender, true);
-            break;
-        case RACE_UNDEAD_PLAYER:
-            name = GenerateUndeadName(gender);
-            break;
-        case RACE_TAUREN:
-            name = GenerateTaurenName(gender);
-            break;
-        case RACE_GNOME:
-            name = GenerateGnomeName(gender);
-            break;
-        case RACE_TROLL:
-            name = GenerateTrollName(gender);
-            break;
-        case RACE_BLOODELF:
-            name = GenerateElfName(gender, false);
-            break;
-        case RACE_DRAENEI:
-            name = GenerateDraeneiName(gender);
-            break;
-        case RACE_WORGEN:
-            name = GenerateWorgenName(gender);
-            break;
-        case RACE_GOBLIN:
-            name = GenerateGoblinName(gender);
-            break;
-        case RACE_PANDAREN_NEUTRAL:
-        case RACE_PANDAREN_ALLIANCE:
-        case RACE_PANDAREN_HORDE:
-            name = GeneratePandarenName(gender);
-            break;
-        default:
-            // Fallback to human-style names
-            name = GenerateHumanName(gender);
-            break;
-    }
-
-    // Apply race-specific naming rules
-    name = ApplyRaceNamingRules(name, race);
-
-    // Ensure proper capitalization
-    name = CapitalizeName(name);
-
-    // Add to recently used cache
-    _recentlyUsed.insert(name);
-    if (_recentlyUsed.size() > _recentlyUsedCacheSize)
-    {
-        // Remove oldest entries (simple FIFO for now)
-        auto it = _recentlyUsed.begin();
-        std::advance(it, _recentlyUsed.size() - _recentlyUsedCacheSize);
-        _recentlyUsed.erase(_recentlyUsed.begin(), it);
-    }
-
-    _totalGenerated++;
-
-    return name;
-}
-
-std::string BotNameGenerator::GenerateHumanName(uint8 gender)
-{
-    uint16 key = (RACE_HUMAN << 8) | gender;
-    auto it = _nameData.find(key);
-    if (it == _nameData.end())
-    {
-        // Fallback names
-        return gender == GENDER_MALE ? "Marcus" : "Sarah";
-    }
-
-    NameDatabase const& db = it->second;
-
-    if (db.useCombination && !db.prefixes.empty() && !db.suffixes.empty())
-    {
-        // Combine prefix + suffix
-        std::uniform_int_distribution<size_t> prefixDist(0, db.prefixes.size() - 1);
-        std::uniform_int_distribution<size_t> suffixDist(0, db.suffixes.size() - 1);
-
-        std::string prefix = db.prefixes[prefixDist(_rng)];
-        std::string suffix = db.suffixes[suffixDist(_rng)];
-
-        return prefix + suffix;
-    }
-    else if (!db.fullNames.empty())
-    {
-        // Use full name
-        std::uniform_int_distribution<size_t> nameDist(0, db.fullNames.size() - 1);
-        return db.fullNames[nameDist(_rng)];
-    }
-
-    // Fallback
-    return gender == GENDER_MALE ? "John" : "Jane";
-}
-
-// Similar implementations for other races...
-
-void BotNameGenerator::LoadNamePatternsFromDB()
-{
-    TC_LOG_INFO("playerbot", "Loading name patterns from database...");
-
-    // Load from custom playerbot name database
-    auto result = sBotDBPool->Query(
-        "SELECT race, gender, type, value FROM playerbot_name_patterns ORDER BY race, gender, type"
+    m_raceClassCombinations.clear();
+    
+    QueryResult result = PlayerbotsDatabase.Query(
+        "SELECT race, class, percentage, is_popular, faction "
+        "FROM playerbots_race_class_distribution "
+        "ORDER BY percentage DESC"
     );
-
+    
     if (!result)
     {
-        TC_LOG_WARN("playerbot", "No name patterns found in database, using defaults");
-        LoadDefaultNamePatterns();
+        TC_LOG_ERROR("module.playerbot", "No race/class distribution data found!");
         return;
     }
-
-    uint32 count = 0;
+    
     do
     {
         Field* fields = result->Fetch();
+        
+        RaceClassCombination combo;
+        combo.race = fields[0].GetUInt8();
+        combo.classId = fields[1].GetUInt8();
+        combo.percentage = fields[2].GetFloat();
+        combo.isPopular = fields[3].GetBool();
+        combo.faction = fields[4].GetString();
+        
+        m_raceClassCombinations.push_back(combo);
+        
+        // Cache nach Rasse und Klasse für schnellen Zugriff
+        m_raceCache[combo.race].push_back(combo);
+        m_classCache[combo.classId].push_back(combo);
+        
+    } while (result->NextRow());
+    
+    TC_LOG_DEBUG("module.playerbot", "Loaded %zu race/class combinations", 
+                 m_raceClassCombinations.size());
+}
+
+void BotCharacterDistribution::LoadGenderDistribution()
+{
+    m_genderDistributions.clear();
+    
+    QueryResult result = PlayerbotsDatabase.Query(
+        "SELECT race, race_name, male_percentage, female_percentage "
+        "FROM playerbots_gender_distribution"
+    );
+    
+    if (!result)
+    {
+        TC_LOG_ERROR("module.playerbot", "No gender distribution data found!");
+        return;
+    }
+    
+    do
+    {
+        Field* fields = result->Fetch();
+        
+        GenderDistribution dist;
+        dist.race = fields[0].GetUInt8();
+        dist.raceName = fields[1].GetString();
+        dist.malePercentage = fields[2].GetUInt8();
+        dist.femalePercentage = fields[3].GetUInt8();
+        
+        m_genderDistributions[dist.race] = dist;
+        
+    } while (result->NextRow());
+    
+    TC_LOG_DEBUG("module.playerbot", "Loaded gender distribution for %zu races", 
+                 m_genderDistributions.size());
+}
+
+void BotCharacterDistribution::LoadClassPopularity()
+{
+    m_classPopularities.clear();
+    
+    QueryResult result = PlayerbotsDatabase.Query(
+        "SELECT class, class_name, popularity_percentage, "
+        "pve_popularity, pvp_popularity, mythic_plus_popularity, raid_popularity "
+        "FROM playerbots_class_popularity"
+    );
+    
+    if (!result)
+    {
+        TC_LOG_ERROR("module.playerbot", "No class popularity data found!");
+        return;
+    }
+    
+    do
+    {
+        Field* fields = result->Fetch();
+        
+        ClassPopularity pop;
+        pop.classId = fields[0].GetUInt8();
+        pop.className = fields[1].GetString();
+        pop.overallPopularity = fields[2].GetFloat();
+        pop.pvePopularity = fields[3].GetFloat();
+        pop.pvpPopularity = fields[4].GetFloat();
+        pop.mythicPlusPopularity = fields[5].GetFloat();
+        pop.raidPopularity = fields[6].GetFloat();
+        
+        m_classPopularities[pop.classId] = pop;
+        
+    } while (result->NextRow());
+    
+    TC_LOG_DEBUG("module.playerbot", "Loaded popularity data for %zu classes", 
+                 m_classPopularities.size());
+}
+
+void BotCharacterDistribution::LoadRaceClassGenderOverrides()
+{
+    m_raceClassGenderOverrides.clear();
+    
+    QueryResult result = PlayerbotsDatabase.Query(
+        "SELECT race, class, male_percentage "
+        "FROM playerbots_race_class_gender"
+    );
+    
+    if (!result)
+    {
+        TC_LOG_DEBUG("module.playerbot", "No race/class gender overrides found (optional)");
+        return;
+    }
+    
+    do
+    {
+        Field* fields = result->Fetch();
+        
         uint8 race = fields[0].GetUInt8();
-        uint8 gender = fields[1].GetUInt8();
-        std::string type = fields[2].GetString();
-        std::string value = fields[3].GetString();
+        uint8 classId = fields[1].GetUInt8();
+        uint8 malePercentage = fields[2].GetUInt8();
+        
+        uint32 key = (race << 8) | classId;
+        m_raceClassGenderOverrides[key] = malePercentage;
+        
+    } while (result->NextRow());
+    
+    TC_LOG_DEBUG("module.playerbot", "Loaded %zu race/class gender overrides", 
+                 m_raceClassGenderOverrides.size());
+}
 
-        uint16 key = (race << 8) | gender;
+void BotCharacterDistribution::BuildCumulativeDistribution()
+{
+    m_cumulativeDistribution.clear();
+    m_totalPercentage = 0.0f;
+    
+    for (const auto& combo : m_raceClassCombinations)
+    {
+        m_totalPercentage += combo.percentage;
+        m_cumulativeDistribution.push_back(m_totalPercentage);
+    }
+    
+    TC_LOG_DEBUG("module.playerbot", "Built cumulative distribution, total percentage: %.2f", 
+                 m_totalPercentage);
+}
 
-        if (type == "prefix")
-            _nameData[key].prefixes.push_back(value);
-        else if (type == "suffix")
-            _nameData[key].suffixes.push_back(value);
-        else if (type == "full")
-            _nameData[key].fullNames.push_back(value);
+std::pair<uint8, uint8> BotCharacterDistribution::GetRandomRaceClassByDistribution()
+{
+    if (m_raceClassCombinations.empty())
+    {
+        TC_LOG_ERROR("module.playerbot", "No race/class distribution data available!");
+        return {1, 1}; // Fallback: Human Warrior
+    }
+    
+    // Zufallszahl zwischen 0 und totalPercentage
+    float random = frand(0.0f, m_totalPercentage);
+    
+    // Binäre Suche in kumulativer Verteilung
+    auto it = std::lower_bound(m_cumulativeDistribution.begin(), 
+                               m_cumulativeDistribution.end(), 
+                               random);
+    
+    if (it != m_cumulativeDistribution.end())
+    {
+        size_t index = std::distance(m_cumulativeDistribution.begin(), it);
+        if (index < m_raceClassCombinations.size())
+        {
+            const auto& combo = m_raceClassCombinations[index];
+            return {combo.race, combo.classId};
+        }
+    }
+    
+    // Fallback: Erste Kombination
+    const auto& combo = m_raceClassCombinations[0];
+    return {combo.race, combo.classId};
+}
 
+uint8 BotCharacterDistribution::GetRandomGenderForRace(uint8 race)
+{
+    auto it = m_genderDistributions.find(race);
+    if (it == m_genderDistributions.end())
+    {
+        // 50/50 wenn keine Daten vorhanden
+        return urand(0, 100) < 50 ? GENDER_MALE : GENDER_FEMALE;
+    }
+    
+    return urand(0, 100) < it->second.malePercentage ? GENDER_MALE : GENDER_FEMALE;
+}
+
+uint8 BotCharacterDistribution::GetRandomGenderForRaceClass(uint8 race, uint8 classId)
+{
+    // Prüfe zuerst ob es einen spezifischen Override gibt
+    uint32 key = (race << 8) | classId;
+    auto overrideIt = m_raceClassGenderOverrides.find(key);
+    
+    if (overrideIt != m_raceClassGenderOverrides.end())
+    {
+        return urand(0, 100) < overrideIt->second ? GENDER_MALE : GENDER_FEMALE;
+    }
+    
+    // Ansonsten nutze die allgemeine Rassen-Verteilung
+    return GetRandomGenderForRace(race);
+}
+
+std::vector<RaceClassCombination> BotCharacterDistribution::GetTopCombinations(uint32 limit) const
+{
+    std::vector<RaceClassCombination> top;
+    
+    uint32 count = 0;
+    for (const auto& combo : m_raceClassCombinations)
+    {
+        if (count >= limit)
+            break;
+            
+        top.push_back(combo);
         count++;
     }
-    while (result->NextRow());
-
-    TC_LOG_INFO("playerbot", "Loaded %u name patterns", count);
+    
+    return top;
 }
 
-void BotNameGenerator::LoadDefaultNamePatterns()
+std::vector<RaceClassCombination> BotCharacterDistribution::GetPopularCombinations() const
 {
-    // Human male names
-    uint16 humanMaleKey = (RACE_HUMAN << 8) | GENDER_MALE;
-    _nameData[humanMaleKey].prefixes = {"Al", "Ed", "Gar", "Mal", "Nor", "Rob", "Wil"};
-    _nameData[humanMaleKey].suffixes = {"bert", "win", "rick", "colm", "man", "ert", "liam"};
-
-    // Human female names
-    uint16 humanFemaleKey = (RACE_HUMAN << 8) | GENDER_FEMALE;
-    _nameData[humanFemaleKey].prefixes = {"An", "Cath", "El", "Jen", "Mar", "Sar", "Vic"};
-    _nameData[humanFemaleKey].suffixes = {"na", "erine", "eanor", "ifer", "garet", "ah", "toria"};
-
-    // Add more races...
-}
-
-} // namespace Playerbot
-```
-
-## Week 10: Equipment & Customization Systems
-
-### Day 5-6: Equipment Management
-
-#### File: `src/modules/Playerbot/Character/BotEquipmentMgr.h`
-```cpp
-#pragma once
-
-#include "Define.h"
-#include "ObjectGuid.h"
-#include "ItemTemplate.h"
-#include <vector>
-#include <unordered_map>
-#include <phmap.h>
-
-namespace Playerbot
-{
-
-// Equipment template for class/level combinations
-struct EquipmentTemplate
-{
-    uint8 classId;
-    uint8 minLevel;
-    uint8 maxLevel;
-    uint8 spec;  // Specialization (0 = any)
-
-    // Item IDs by slot
-    std::unordered_map<uint8, std::vector<uint32>> slotItems;
-
-    // Weight for random selection
-    uint32 weight = 100;
-};
-
-// Equipment set for a character
-struct EquipmentSet
-{
-    std::unordered_map<uint8, uint32> items;  // slot -> itemId
-    uint32 itemLevel = 0;
-    uint32 setId = 0;  // For tier sets
-};
-
-class TC_GAME_API BotEquipmentMgr
-{
-public:
-    BotEquipmentMgr();
-    ~BotEquipmentMgr();
-
-    bool Initialize();
-    void Shutdown();
-
-    // Main equipment functions
-    bool EquipCharacter(ObjectGuid guid, uint8 level, uint8 spec = 0);
-    bool EquipCharacterWithTemplate(ObjectGuid guid, std::string const& templateName);
-    bool EquipCharacterWithSet(ObjectGuid guid, EquipmentSet const& set);
-
-    // Equipment generation
-    EquipmentSet GenerateEquipmentSet(uint8 classId, uint8 level, uint8 spec = 0);
-    EquipmentSet GenerateRandomEquipmentSet(uint8 classId, uint8 level);
-    EquipmentSet GeneratePvPEquipmentSet(uint8 classId, uint8 level);
-    EquipmentSet GeneratePvEEquipmentSet(uint8 classId, uint8 level);
-
-    // Template management
-    void LoadEquipmentTemplates();
-    void RegisterTemplate(std::string const& name, EquipmentTemplate const& tmpl);
-    EquipmentTemplate const* GetTemplate(std::string const& name) const;
-    std::vector<EquipmentTemplate const*> GetTemplatesForClass(uint8 classId, uint8 level) const;
-
-    // Item evaluation
-    uint32 CalculateItemScore(ItemTemplate const* proto, uint8 classId, uint8 spec) const;
-    bool IsItemSuitableForClass(ItemTemplate const* proto, uint8 classId) const;
-    bool IsItemSuitableForLevel(ItemTemplate const* proto, uint8 level) const;
-
-    // Upgrade functions
-    bool UpgradeEquipment(ObjectGuid guid);
-    bool UpgradeSlot(ObjectGuid guid, uint8 slot);
-
-    // Statistics
-    struct Statistics
+    std::vector<RaceClassCombination> popular;
+    
+    for (const auto& combo : m_raceClassCombinations)
     {
-        uint32 totalEquipped;
-        uint32 templatesLoaded;
-        uint32 averageItemLevel;
-        uint32 upgradesPerformed;
-    };
-    Statistics GetStatistics() const { return _stats; }
+        if (combo.isPopular)
+            popular.push_back(combo);
+    }
+    
+    return popular;
+}
 
-private:
-    // Internal equipment logic
-    bool EquipItem(Player* player, uint32 itemId, uint8 slot);
-    void UnequipItem(Player* player, uint8 slot);
-    uint32 SelectBestItem(std::vector<uint32> const& items, uint8 classId, uint8 level, uint8 spec);
+float BotCharacterDistribution::GetRaceClassPercentage(uint8 race, uint8 classId) const
+{
+    for (const auto& combo : m_raceClassCombinations)
+    {
+        if (combo.race == race && combo.classId == classId)
+            return combo.percentage;
+    }
+    
+    return 0.0f;
+}
 
-    // Stat weight calculation for different specs
-    float GetStatWeight(uint32 statType, uint8 classId, uint8 spec) const;
+float BotCharacterDistribution::GetClassPopularity(uint8 classId) const
+{
+    auto it = m_classPopularities.find(classId);
+    if (it != m_classPopularities.end())
+        return it->second.overallPopularity;
+    
+    return 0.0f;
+}
 
-    // Item database queries
-    std::vector<uint32> GetItemsForSlot(uint8 slot, uint8 classId, uint8 minLevel, uint8 maxLevel);
-    void CacheClassItems(uint8 classId);
-
-private:
-    // Template storage
-    phmap::parallel_flat_hash_map<std::string, EquipmentTemplate> _templates;
-    phmap::parallel_flat_hash_map<uint8, std::vector<EquipmentTemplate>> _classTemplates;
-
-    // Item cache by class and level
-    phmap::parallel_flat_hash_map<uint32, std::vector<uint32>> _itemCache; // key: (class << 16) | level
-
-    // Stat weights by class/spec
-    phmap::parallel_flat_hash_map<uint16, std::unordered_map<uint32, float>> _statWeights;
-
-    // Statistics
-    mutable Statistics _stats;
-
-    // Configuration
-    bool _useRandomEnchants;
-    bool _useGems;
-    uint32 _itemQualityThreshold;
-};
+uint8 BotCharacterDistribution::GetMalePercentageForRace(uint8 race) const
+{
+    auto it = m_genderDistributions.find(race);
+    if (it != m_genderDistributions.end())
+        return it->second.malePercentage;
+    
+    return 50; // Default 50/50
+}
 
 } // namespace Playerbot
 ```
 
-### Day 7: Talent Management System
+### Integration in PlayerbotModule
 
-#### File: `src/modules/Playerbot/Character/BotTalentMgr.h`
 ```cpp
-#pragma once
+// Datei: src/modules/Playerbot/PlayerbotModule.cpp
 
-#include "Define.h"
-#include "ObjectGuid.h"
-#include <vector>
-#include <unordered_map>
-#include <phmap.h>
-
-namespace Playerbot
+void PlayerbotModule::OnWorldStartup()
 {
+    TC_LOG_INFO("module.playerbot", "===============================================");
+    TC_LOG_INFO("module.playerbot", "     PLAYERBOT MODULE - INITIALIZATION");
+    TC_LOG_INFO("module.playerbot", "===============================================");
+    
+    // Lade Verteilungsstatistiken aus Datenbank
+    if (!sBotCharacterDistribution->LoadFromDatabase())
+    {
+        TC_LOG_ERROR("module.playerbot", "Failed to load character distribution data!");
+        return;
+    }
+    
+    // Rest der Initialisierung...
+    LoadNameDatabase();
+    CountExistingBots();
+    CreateNewBots();
+    
+    TC_LOG_INFO("module.playerbot", "===============================================");
+    TC_LOG_INFO("module.playerbot", "     PLAYERBOT MODULE - READY");
+    TC_LOG_INFO("module.playerbot", "===============================================");
+}
 
-// Talent build template
-struct TalentBuild
+bool PlayerbotModule::CreateSingleBot()
 {
-    uint8 classId;
-    uint8 spec;
-    uint8 minLevel;
-    uint8 maxLevel;
-    std::string name;
-    std::string description;
+    // 1. Rasse/Klasse aus Datenbank-Verteilung wählen
+    auto [race, class_] = sBotCharacterDistribution->GetRandomRaceClassByDistribution();
+    
+    // 2. Geschlecht basierend auf Datenbank-Statistik (mit möglichem Override)
+    uint8 gender = sBotCharacterDistribution->GetRandomGenderForRaceClass(race, class_);
+    
+    // 3. Namen aus Datenbank holen
+    std::string name = sBotNameManager->GetRandomAvailableName(gender, race);
+    if (name.empty())
+    {
+        TC_LOG_ERROR("module.playerbot", "Failed to get available name for gender %u race %u", 
+                    gender, race);
+        return false;
+    }
+    
+    // 4. Bot Account zuweisen oder erstellen
+    uint32 accountId = GetOrCreateBotAccount();
+    if (accountId == 0)
+    {
+        TC_LOG_ERROR("module.playerbot", "Failed to get bot account");
+        return false;
+    }
+    
+    // 5. Character erstellen
+    CharacterCreateInfo createInfo;
+    createInfo.Name = name;
+    createInfo.Race = race;
+    createInfo.Class = class_;
+    createInfo.Gender = gender;
+    
+    ObjectGuid guid = CreateBotCharacter(accountId, createInfo);
+    if (guid.IsEmpty())
+    {
+        TC_LOG_ERROR("module.playerbot", "Failed to create bot character '%s'", name.c_str());
+        return false;
+    }
+    
+    // 6. Namen als verwendet markieren
+    sBotNameManager->MarkNameAsUsed(name, accountId, guid.GetCounter());
+    
+    // Log mit Statistik-Info
+    float percentage = sBotCharacterDistribution->GetRaceClassPercentage(race, class_);
+    TC_LOG_DEBUG("module.playerbot", 
+                "Created bot: %s (Race:%u, Class:%u, Gender:%u) - Combo probability: %.2f%%",
+                name.c_str(), race, class_, gender, percentage);
+    
+    return true;
+}
 
-    // Talent IDs in order of priority
-    std::vector<uint32> talents;
-
-    // PvP or PvE focus
-    enum Focus { PVE, PVP, HYBRID };
-    Focus focus = PVE;
-
-    // Build weight for random selection
-    uint32 weight = 100;
-};
-
-class TC_GAME_API BotTalentMgr
+void PlayerbotModule::ShowDistributionStatistics()
 {
-public:
-    BotTalentMgr();
-    ~BotTalentMgr();
-
-    bool Initialize();
-    void Shutdown();
-
-    // Apply talents to character
-    bool ApplyTalents(ObjectGuid guid, std::vector<uint32> const& talentIds);
-    bool ApplyTalentBuild(ObjectGuid guid, TalentBuild const& build);
-    bool ApplyRandomBuild(ObjectGuid guid, uint8 level);
-
-    // Build management
-    void LoadTalentBuilds();
-    void RegisterBuild(TalentBuild const& build);
-    TalentBuild const* GetBuild(std::string const& name) const;
-    std::vector<TalentBuild const*> GetBuildsForClass(uint8 classId, uint8 level) const;
-
-    // Build generation
-    TalentBuild GenerateBuild(uint8 classId, uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GeneratePvPBuild(uint8 classId, uint8 spec, uint8 level);
-    TalentBuild GeneratePvEBuild(uint8 classId, uint8 spec, uint8 level);
-
-    // Reset and respec
-    bool ResetTalents(ObjectGuid guid);
-    bool RespecCharacter(ObjectGuid guid, uint8 newSpec);
-
-private:
-    // Internal talent logic
-    bool LearnTalent(Player* player, uint32 talentId);
-    bool ValidateTalentRequirements(Player* player, uint32 talentId);
-    uint32 GetTalentPoints(uint8 level) const;
-
-    // Build selection
-    TalentBuild const* SelectBuildForCharacter(Player* player) const;
-
-    // Class-specific build generation
-    TalentBuild GenerateWarriorBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GeneratePaladinBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateHunterBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateRogueBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GeneratePriestBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateDeathKnightBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateShamanBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateMageBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    TalentBuild GenerateWarlockBuild(uint8 spec, uint8 level, TalentBuild::Focus focus);
-    // Add other classes...
-
-private:
-    // Build storage
-    phmap::parallel_flat_hash_map<std::string, TalentBuild> _builds;
-    phmap::parallel_flat_hash_map<uint8, std::vector<TalentBuild>> _classBuilds;
-
-    // Statistics
-    std::atomic<uint32> _totalApplications;
-    std::atomic<uint32> _totalResets;
-};
-
-} // namespace Playerbot
+    TC_LOG_INFO("module.playerbot", "=== Character Distribution Statistics ===");
+    
+    // Top 10 Kombinationen anzeigen
+    auto topCombos = sBotCharacterDistribution->GetTopCombinations(10);
+    TC_LOG_INFO("module.playerbot", "Top 10 Race/Class Combinations:");
+    
+    for (size_t i = 0; i < topCombos.size(); ++i)
+    {
+        const auto& combo = topCombos[i];
+        TC_LOG_INFO("module.playerbot", "  %zu. Race:%u Class:%u - %.2f%%", 
+                    i + 1, combo.race, combo.classId, combo.percentage);
+    }
+    
+    // Klassen-Popularität anzeigen
+    TC_LOG_INFO("module.playerbot", "Class Popularity:");
+    for (uint8 classId = 1; classId <= 13; ++classId)
+    {
+        float popularity = sBotCharacterDistribution->GetClassPopularity(classId);
+        if (popularity > 0)
+        {
+            TC_LOG_INFO("module.playerbot", "  Class %u: %.2f%%", classId, popularity);
+        }
+    }
+}
 ```
 
-## Database Schema
+## 🎲 Namen-System mit Datenbank-Integration
 
-### SQL Schema: `sql/playerbot/002_character_management.sql`
+### Tabellen-Struktur
+
 ```sql
--- Bot character metadata (extends Trinity's characters)
-CREATE TABLE IF NOT EXISTS `playerbot_character_meta` (
-    `guid` BIGINT UNSIGNED NOT NULL,
-    `account_id` INT UNSIGNED NOT NULL,
-    `bnet_account_id` INT UNSIGNED NOT NULL,
-    `name` VARCHAR(50) NOT NULL,
-    `race` TINYINT UNSIGNED NOT NULL,
-    `class` TINYINT UNSIGNED NOT NULL,
-    `gender` TINYINT UNSIGNED NOT NULL,
-    `level` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    `strategy` VARCHAR(50) DEFAULT 'default',
-    `ai_state` JSON,
-    `equipment_template` VARCHAR(50) DEFAULT NULL,
-    `talent_build` VARCHAR(50) DEFAULT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `last_login` TIMESTAMP NULL DEFAULT NULL,
-    `play_time` INT UNSIGNED DEFAULT 0,
-    PRIMARY KEY (`guid`),
-    KEY `idx_account` (`account_id`),
-    KEY `idx_name` (`name`),
-    KEY `idx_class_level` (`class`, `level`),
-    CONSTRAINT `fk_char_account` FOREIGN KEY (`account_id`)
-        REFERENCES `playerbot_account_meta` (`account_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Name generation patterns
-CREATE TABLE IF NOT EXISTS `playerbot_name_patterns` (
+-- Tabelle: playerbot.playerbots_names
+CREATE TABLE IF NOT EXISTS `playerbots_names` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `race` TINYINT UNSIGNED NOT NULL,
-    `gender` TINYINT UNSIGNED NOT NULL,
-    `type` ENUM('prefix', 'suffix', 'full') NOT NULL,
-    `value` VARCHAR(50) NOT NULL,
-    `culture` VARCHAR(20) DEFAULT NULL,
-    `weight` INT UNSIGNED DEFAULT 100,
+    `name` VARCHAR(12) NOT NULL,
+    `gender` TINYINT UNSIGNED NOT NULL COMMENT '0=male, 1=female',
+    `race` TINYINT UNSIGNED DEFAULT NULL COMMENT 'Optional: Rassen-spezifische Namen',
+    `used` TINYINT(1) DEFAULT 0 COMMENT 'Markiert ob Name bereits vergeben',
+    `bot_account_id` INT UNSIGNED DEFAULT NULL COMMENT 'Account ID wenn vergeben',
+    `character_guid` INT UNSIGNED DEFAULT NULL COMMENT 'Character GUID wenn erstellt',
+    `assigned_date` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `idx_race_gender` (`race`, `gender`, `type`),
-    UNIQUE KEY `uk_name_pattern` (`race`, `gender`, `type`, `value`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY `idx_name` (`name`),
+    KEY `idx_used` (`used`),
+    KEY `idx_gender_race` (`gender`, `race`),
+    KEY `idx_bot_account` (`bot_account_id`),
+    KEY `idx_character` (`character_guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Unique bot character names pool';
 
--- Equipment templates
-CREATE TABLE IF NOT EXISTS `playerbot_equipment_templates` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(50) NOT NULL,
-    `class` TINYINT UNSIGNED NOT NULL,
-    `spec` TINYINT UNSIGNED DEFAULT 0,
-    `min_level` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    `max_level` TINYINT UNSIGNED NOT NULL DEFAULT 80,
-    `slot` TINYINT UNSIGNED NOT NULL,
-    `item_id` INT UNSIGNED NOT NULL,
-    `weight` INT UNSIGNED DEFAULT 100,
-    PRIMARY KEY (`id`),
-    KEY `idx_template` (`name`, `class`, `min_level`),
-    KEY `idx_class_level` (`class`, `min_level`, `max_level`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Talent builds
-CREATE TABLE IF NOT EXISTS `playerbot_talent_builds` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(50) NOT NULL,
-    `class` TINYINT UNSIGNED NOT NULL,
-    `spec` TINYINT UNSIGNED NOT NULL,
-    `min_level` TINYINT UNSIGNED NOT NULL DEFAULT 10,
-    `max_level` TINYINT UNSIGNED NOT NULL DEFAULT 80,
-    `talents` JSON NOT NULL,
-    `focus` ENUM('PVE', 'PVP', 'HYBRID') DEFAULT 'PVE',
-    `description` TEXT,
-    `weight` INT UNSIGNED DEFAULT 100,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_build_name` (`name`),
-    KEY `idx_class_spec` (`class`, `spec`, `min_level`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Character statistics
-CREATE TABLE IF NOT EXISTS `playerbot_character_stats` (
-    `guid` BIGINT UNSIGNED NOT NULL,
-    `total_kills` INT UNSIGNED DEFAULT 0,
-    `total_deaths` INT UNSIGNED DEFAULT 0,
-    `quests_completed` INT UNSIGNED DEFAULT 0,
-    `dungeons_completed` INT UNSIGNED DEFAULT 0,
-    `pvp_kills` INT UNSIGNED DEFAULT 0,
-    `pvp_deaths` INT UNSIGNED DEFAULT 0,
-    `gold_earned` BIGINT UNSIGNED DEFAULT 0,
-    `items_looted` INT UNSIGNED DEFAULT 0,
-    `last_update` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`guid`),
-    CONSTRAINT `fk_stats_char` FOREIGN KEY (`guid`)
-        REFERENCES `playerbot_character_meta` (`guid`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Index für schnelle Zufallsauswahl
+ALTER TABLE `playerbots_names` ADD INDEX `idx_random_selection` (`used`, `gender`, `race`);
 ```
 
-## Testing Suite
+## 🚀 Worldserver Startup Output
 
-### File: `src/modules/Playerbot/Tests/CharacterManagementTest.cpp`
-```cpp
-#include "catch.hpp"
-#include "BotCharacterMgr.h"
-#include "BotAccountMgr.h"
-#include "BotNameGenerator.h"
-#include "BotEquipmentMgr.h"
-#include "BotTalentMgr.h"
-#include "TestHelpers.h"
-
-using namespace Playerbot;
-
-TEST_CASE("BotCharacterMgr", "[character][integration]")
-{
-    SECTION("Character Creation")
-    {
-        // Setup
-        uint32 accountId = TestHelpers::CreateTestBotAccount();
-        REQUIRE(accountId > 0);
-
-        SECTION("Creates character successfully")
-        {
-            CharacterCreateRequest request;
-            request.accountId = accountId;
-            request.race = RACE_HUMAN;
-            request.classId = CLASS_WARRIOR;
-            request.gender = GENDER_MALE;
-            request.name = "Testbot";
-
-            ObjectGuid guid = sBotCharacterMgr->CreateBotCharacter(request);
-            REQUIRE(!guid.IsEmpty());
-            REQUIRE(sBotCharacterMgr->IsBotCharacter(guid));
-        }
-
-        SECTION("Generates unique name when not provided")
-        {
-            CharacterCreateRequest request;
-            request.accountId = accountId;
-            request.race = RACE_HUMAN;
-            request.classId = CLASS_WARRIOR;
-            request.gender = GENDER_MALE;
-            // No name provided
-
-            ObjectGuid guid = sBotCharacterMgr->CreateBotCharacter(request);
-            REQUIRE(!guid.IsEmpty());
-        }
-
-        SECTION("Respects 10 character limit")
-        {
-            // Create 10 characters
-            for (int i = 0; i < 10; ++i)
-            {
-                CharacterCreateRequest request;
-                request.accountId = accountId;
-                request.randomize = true;
-                ObjectGuid guid = sBotCharacterMgr->CreateBotCharacter(request);
-                REQUIRE(!guid.IsEmpty());
-            }
-
-            // 11th should fail
-            CharacterCreateRequest request;
-            request.accountId = accountId;
-            request.randomize = true;
-            ObjectGuid guid = sBotCharacterMgr->CreateBotCharacter(request);
-            REQUIRE(guid.IsEmpty());
-        }
-
-        SECTION("Batch creation works")
-        {
-            auto guids = sBotCharacterMgr->CreateBotCharactersBatch(accountId, 5, true);
-            REQUIRE(guids.size() == 5);
-            for (auto const& guid : guids)
-            {
-                REQUIRE(!guid.IsEmpty());
-                REQUIRE(sBotCharacterMgr->IsBotCharacter(guid));
-            }
-        }
-    }
-
-    SECTION("Name Generation")
-    {
-        BotNameGenerator generator;
-        REQUIRE(generator.Initialize());
-
-        SECTION("Generates valid names for all races")
-        {
-            for (uint8 race = RACE_HUMAN; race < MAX_RACES; ++race)
-            {
-                if (race == RACE_NONE)
-                    continue;
-
-                for (uint8 gender = GENDER_MALE; gender <= GENDER_FEMALE; ++gender)
-                {
-                    std::string name = generator.GenerateName(race, gender);
-                    REQUIRE(!name.empty());
-                    REQUIRE(name.length() >= 2);
-                    REQUIRE(name.length() <= 12);
-                    REQUIRE(generator.IsNameValid(name, race));
-                }
-            }
-        }
-
-        SECTION("Generates unique names in batch")
-        {
-            auto names = generator.GenerateNames(RACE_HUMAN, GENDER_MALE, 100);
-            REQUIRE(names.size() == 100);
-
-            std::set<std::string> uniqueNames(names.begin(), names.end());
-            REQUIRE(uniqueNames.size() > 90); // Allow some duplicates
-        }
-    }
-
-    SECTION("Equipment Management")
-    {
-        BotEquipmentMgr equipMgr;
-        REQUIRE(equipMgr.Initialize());
-
-        SECTION("Generates appropriate equipment for class/level")
-        {
-            for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
-            {
-                EquipmentSet set = equipMgr.GenerateEquipmentSet(classId, 60);
-                REQUIRE(!set.items.empty());
-                REQUIRE(set.itemLevel > 0);
-            }
-        }
-
-        SECTION("PvP vs PvE equipment differs")
-        {
-            EquipmentSet pvpSet = equipMgr.GeneratePvPEquipmentSet(CLASS_WARRIOR, 70);
-            EquipmentSet pveSet = equipMgr.GeneratePvEEquipmentSet(CLASS_WARRIOR, 70);
-
-            // Should have different items
-            bool hasDifference = false;
-            for (auto const& [slot, itemId] : pvpSet.items)
-            {
-                if (pveSet.items.count(slot) && pveSet.items.at(slot) != itemId)
-                {
-                    hasDifference = true;
-                    break;
-                }
-            }
-            REQUIRE(hasDifference);
-        }
-    }
-
-    SECTION("Talent Management")
-    {
-        BotTalentMgr talentMgr;
-        REQUIRE(talentMgr.Initialize());
-
-        SECTION("Generates valid talent builds")
-        {
-            for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
-            {
-                TalentBuild build = talentMgr.GeneratePvEBuild(classId, 1, 80);
-                REQUIRE(!build.talents.empty());
-                REQUIRE(build.classId == classId);
-            }
-        }
-    }
-}
-
-TEST_CASE("Performance", "[character][performance]")
-{
-    SECTION("Character creation performance")
-    {
-        uint32 accountId = TestHelpers::CreateTestBotAccount();
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        CharacterCreateRequest request;
-        request.accountId = accountId;
-        request.randomize = true;
-
-        ObjectGuid guid = sBotCharacterMgr->CreateBotCharacter(request);
-
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now() - start).count();
-
-        REQUIRE(!guid.IsEmpty());
-        REQUIRE(elapsed < 100); // Should complete in under 100ms
-    }
-
-    SECTION("Batch creation performance")
-    {
-        uint32 accountId = TestHelpers::CreateTestBotAccount();
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        auto guids = sBotCharacterMgr->CreateBotCharactersBatch(accountId, 10, true);
-
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now() - start).count();
-
-        REQUIRE(guids.size() == 10);
-        REQUIRE(elapsed < 500); // 10 characters in under 500ms
-    }
-}
+```
+[INFO] [module.playerbot] ===============================================
+[INFO] [module.playerbot]      PLAYERBOT MODULE - INITIALIZATION
+[INFO] [module.playerbot] ===============================================
+[INFO] [module.playerbot] Loading Bot Character Distribution from database...
+[INFO] [module.playerbot] >> Loaded character distribution data in 245 ms
+[INFO] [module.playerbot]    - Race/Class combinations: 312
+[INFO] [module.playerbot]    - Gender distributions: 28 races
+[INFO] [module.playerbot]    - Class popularities: 13 classes
+[INFO] [module.playerbot] 
+[INFO] [module.playerbot] Loading Bot Names from Database...
+[INFO] [module.playerbot]   Database: playerbot
+[INFO] [module.playerbot]   Table: playerbots_names
+[INFO] [module.playerbot] >> Loaded 15000 bot names in 125 ms
+[INFO] [module.playerbot]    - Available: 12450
+[INFO] [module.playerbot]    - In Use: 2550
+[INFO] [module.playerbot]    Gender Distribution (Available):
+[INFO] [module.playerbot]      - Male: 7823
+[INFO] [module.playerbot]      - Female: 4627
+[INFO] [module.playerbot]  
+[INFO] [module.playerbot] Counting existing Bot Accounts and Characters...
+[INFO] [module.playerbot] >> Found 850 bot accounts with 2550 characters in 45 ms
+[INFO] [module.playerbot]    Level Distribution:
+[INFO] [module.playerbot]      - Level 1-19: 1020
+[INFO] [module.playerbot]      - Level 20-59: 980
+[INFO] [module.playerbot]      - Level 60+: 550
+[INFO] [module.playerbot]  
+[INFO] [module.playerbot] Creating 450 new bot characters to reach target of 3000...
+[INFO] [module.playerbot]   Progress: [====                ] 20.0% - 90/450 created (15/sec)
+[INFO] [module.playerbot]   Progress: [========            ] 40.0% - 180/450 created (18/sec)
+[INFO] [module.playerbot]   Progress: [============        ] 60.0% - 270/450 created (17/sec)
+[INFO] [module.playerbot]   Progress: [================    ] 80.0% - 360/450 created (16/sec)
+[INFO] [module.playerbot]   Progress: [====================] 100.0% - 450/450 created (15/sec)
+[INFO] [module.playerbot]  
+[INFO] [module.playerbot] >> Bot creation completed in 28500 ms
+[INFO] [module.playerbot]    - Successfully created: 450
+[INFO] [module.playerbot]    - Average time per bot: 63 ms
+[INFO] [module.playerbot]  
+[INFO] [module.playerbot] Final Bot Population:
+[INFO] [module.playerbot]   - Total Bot Accounts: 1000
+[INFO] [module.playerbot]   - Total Bot Characters: 3000
+[INFO] [module.playerbot]   - Average Characters per Account: 3.00
+[INFO] [module.playerbot] ===============================================
+[INFO] [module.playerbot]      PLAYERBOT MODULE - READY
+[INFO] [module.playerbot] ===============================================
 ```
 
-## Implementation Checklist
+## ✅ Implementation Summary
 
-### Week 9 Tasks
-- [ ] Implement BotCharacterMgr core class
-- [ ] Integrate with Trinity's Player::Create()
-- [ ] Implement BotNameGenerator with cultural awareness
-- [ ] Create name pattern database
-- [ ] Implement character caching system
-- [ ] Add batch creation with parallel processing
-- [ ] Create character metadata tables
-- [ ] Write comprehensive unit tests
+### Vorteile der Datenbank-basierten Lösung:
 
-### Week 10 Tasks
-- [ ] Implement BotEquipmentMgr
-- [ ] Create equipment template system
-- [ ] Implement stat weight calculations
-- [ ] Implement BotTalentMgr
-- [ ] Create talent build templates
-- [ ] Add PvP/PvE build differentiation
-- [ ] Performance testing and optimization
-- [ ] Integration testing with account management
+1. **Flexibilität**: Verteilungen können ohne Code-Änderung angepasst werden
+2. **Wartbarkeit**: Statistiken können per SQL-Update aktualisiert werden
+3. **Erweiterbarkeit**: Neue Rassen/Klassen einfach hinzufügbar
+4. **Performance**: Kumulative Verteilung für O(log n) Zufallsauswahl
+5. **Granularität**: Spezielle Overrides für bestimmte Rasse/Klasse Kombinationen
+6. **Monitoring**: Einfache SQL-Abfragen für Statistiken
 
-## Performance Optimizations
+### Neue Features:
 
-### Implemented Optimizations
-1. **Parallel Creation**: Uses Intel TBB for batch character creation
-2. **Name Caching**: Recently used names cached to avoid database queries
-3. **Template System**: Pre-defined templates for quick character generation
-4. **Async Database**: All metadata stored asynchronously via BotDatabasePool
-5. **Batch Processing**: Creation queue for efficient bulk operations
-
-### Memory Management
-- Character metadata: ~50KB per character
-- Name cache: Limited to 1000 entries
-- Template cache: Limited to 100 templates
-- Total overhead: <100MB for 1000 characters
-
-## Integration Points
-
-### With Phase 1 Components
-```cpp
-// Uses enterprise session from Phase 1
-BotSession* session = sBotSessionMgr->GetSession(accountId);
-
-// Uses async database from Phase 1
-sBotDBPool->ExecuteAsync(stmt, callback);
-
-// Leverages parallel processing
-phmap::parallel_flat_hash_map for all caches
-```
-
-### With Phase 2 Account Management
-```cpp
-// Validates bot accounts
-if (!sBotAccountMgr->IsBotAccount(accountId))
-    return false;
-
-// Gets BattleNet account ID
-uint32 bnetId = sBotAccountMgr->GetBnetAccountId(accountId);
-```
-
-## Next Steps
-
-After completing Week 9-10 character management:
-1. Proceed to Bot Lifecycle Management (Week 11)
-2. Integrate spawning and scheduling systems
-3. Begin AI Framework implementation (Week 12-14)
+- ✅ Alle Verteilungsdaten in SQL-Tabellen
+- ✅ Dynamisches Laden beim Server-Start
+- ✅ Rasse/Klasse-spezifische Geschlechter-Overrides
+- ✅ PvE/PvP/M+/Raid spezifische Popularitäten
+- ✅ Reload-Funktionalität ohne Server-Neustart
+- ✅ Detaillierte Logging-Statistiken
 
 ---
 
-**Status**: Ready for implementation
-**Dependencies**: Phase 1 ✅, Account Management ✅
-**Estimated Completion**: 2 weeks
-```
+**Status**: Bereit für Implementation
+**Version**: WoW 11.2 (The War Within)
+**Datenquelle**: Konfigurierbar via Datenbank

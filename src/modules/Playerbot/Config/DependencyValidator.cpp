@@ -20,8 +20,8 @@
 #include <boost/asio/version.hpp>
 #include <boost/asio/io_context.hpp>
 
-// MySQL Headers
-#include <mysql.h>
+// MySQL Headers (use Trinity's database wrapper)
+#include "DatabaseEnv.h"
 
 // Standard headers
 #include <chrono>

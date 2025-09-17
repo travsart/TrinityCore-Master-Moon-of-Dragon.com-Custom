@@ -193,9 +193,18 @@ private:
     void DeallocateSession(BotSession* session);
     void PreallocateSessionPool();
 
+    // Session list management
+    void AddToActiveList(BotSession* session);
+    void RemoveFromActiveList(BotSession* session);
+    void RemoveFromHibernatedList(BotSession* session);
+    void MoveToActiveList(BotSession* session);
+    void MoveToHibernatedList(BotSession* session);
+
     // Batch processing optimization
     void UpdateSessionBatches(uint32 diff);
     void ProcessBatchParallel(std::span<BotSession*> batch, uint32 diff);
+    void ProcessSessionBatchDirect(tbb::concurrent_vector<BotSession*> const& sessions,
+                                 size_t startIndex, size_t count, uint32 diff);
 
     // Memory management
     void UpdateHibernationCandidates();
@@ -207,11 +216,7 @@ private:
     void ResetMetrics();
     void AggregateSessionMetrics();
 
-    // Thread safety helpers
-    void AddToActiveList(BotSession* session);
-    void RemoveFromActiveList(BotSession* session);
-    void MoveToHibernatedList(BotSession* session);
-    void MoveToActiveList(BotSession* session);
+    // Thread safety helpers - removed duplicate declarations
 
     // Performance validation
     void ValidatePerformanceTargets() const;

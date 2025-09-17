@@ -297,8 +297,7 @@ void BotSessionMgr::UpdateSessionBatches(uint32 diff)
 
     if (batchCount == 1) {
         // Single batch - process directly
-        std::span<BotSession*> batch(_activeSessions.data(), activeCount);
-        ProcessSessionBatch(batch, diff);
+        ProcessSessionBatchDirect(_activeSessions, 0, activeCount, diff);
     } else {
         // Multiple batches - process in parallel
         tbb::parallel_for(tbb::blocked_range<size_t>(0, batchCount),
@@ -308,8 +307,7 @@ void BotSessionMgr::UpdateSessionBatches(uint32 diff)
                     size_t endIdx = std::min(startIdx + _batchSize, activeCount);
 
                     if (startIdx < endIdx) {
-                        std::span<BotSession*> batch(_activeSessions.data() + startIdx, endIdx - startIdx);
-                        ProcessSessionBatch(batch, diff);
+                        ProcessSessionBatchDirect(_activeSessions, startIdx, endIdx, diff);
                     }
                 }
             });
@@ -323,7 +321,9 @@ void BotSessionMgr::ProcessSessionBatch(std::span<BotSession*> batch, uint32 dif
     // Process sessions in batch for optimal cache usage
     for (BotSession* session : batch) {
         if (session && session->IsActive()) {
-            session->Update(diff);
+            // Create packet filter with session context
+            WorldSessionFilter filter(session);
+            session->Update(diff, filter);
         }
     }
 
@@ -337,6 +337,37 @@ void BotSessionMgr::ProcessSessionBatch(std::span<BotSession*> batch, uint32 dif
         if (timePerSessionUs > 500) { // 500μs per session target
             TC_LOG_DEBUG("module.playerbot.session",
                 "Batch processing: {}μs per session (target: 500μs)", timePerSessionUs);
+        }
+    }
+}
+
+void BotSessionMgr::ProcessSessionBatchDirect(tbb::concurrent_vector<BotSession*> const& sessions,
+                                            size_t startIndex, size_t count, uint32 diff)
+{
+    auto batchStartTime = std::chrono::high_resolution_clock::now();
+
+    // Process sessions in batch directly from concurrent_vector
+    size_t endIndex = std::min(startIndex + count, sessions.size());
+    for (size_t i = startIndex; i < endIndex; ++i) {
+        BotSession* session = sessions[i];
+        if (session && session->IsActive()) {
+            // Create packet filter with session context
+            WorldSessionFilter filter(session);
+            session->Update(diff, filter);
+        }
+    }
+
+    auto batchEndTime = std::chrono::high_resolution_clock::now();
+    uint32 batchTimeUs = static_cast<uint32>(
+        std::chrono::duration_cast<std::chrono::microseconds>(batchEndTime - batchStartTime).count());
+
+    // Verify batch processing performance
+    size_t processedCount = endIndex - startIndex;
+    if (processedCount > 0) {
+        uint32 timePerSessionUs = batchTimeUs / static_cast<uint32>(processedCount);
+        if (timePerSessionUs > 500) { // 500μs per session target
+            TC_LOG_DEBUG("module.playerbot.session",
+                "Direct batch processing: {}μs per session (target: 500μs)", timePerSessionUs);
         }
     }
 }
@@ -356,7 +387,9 @@ void BotSessionMgr::HibernateInactiveSessions()
             // Note: This would need access to session's last activity time
             // For now, let the session decide internally
             if (session->IsActive()) {
-                session->Update(0); // Let session check hibernation internally
+                // Create packet filter with session context
+                WorldSessionFilter filter(session);
+                session->Update(0, filter); // Let session check hibernation internally
             }
         }
 
@@ -419,29 +452,18 @@ void BotSessionMgr::DefragmentMemory()
 
 void BotSessionMgr::CollectGarbage()
 {
-    // Clean up any null pointers in session vectors
-    size_t activeCleanedCount = 0;
-    size_t hibernatedCleanedCount = 0;
+    // Clean up any null pointers in session vectors using CompactSessionVectors
+    // This is more efficient for TBB concurrent_vector than iterator-based erase
+    size_t activeCountBefore = _activeSessions.size();
+    size_t hibernatedCountBefore = _hibernatedSessions.size();
 
-    // Clean active sessions vector
-    for (auto it = _activeSessions.begin(); it != _activeSessions.end();) {
-        if (*it == nullptr) {
-            it = _activeSessions.erase(it);
-            ++activeCleanedCount;
-        } else {
-            ++it;
-        }
-    }
+    CompactSessionVectors();
 
-    // Clean hibernated sessions vector
-    for (auto it = _hibernatedSessions.begin(); it != _hibernatedSessions.end();) {
-        if (*it == nullptr) {
-            it = _hibernatedSessions.erase(it);
-            ++hibernatedCleanedCount;
-        } else {
-            ++it;
-        }
-    }
+    size_t activeCountAfter = _activeSessions.size();
+    size_t hibernatedCountAfter = _hibernatedSessions.size();
+
+    size_t activeCleanedCount = activeCountBefore - activeCountAfter;
+    size_t hibernatedCleanedCount = hibernatedCountBefore - hibernatedCountAfter;
 
     if (activeCleanedCount > 0 || hibernatedCleanedCount > 0) {
         TC_LOG_DEBUG("module.playerbot.session",
@@ -524,9 +546,10 @@ void BotSessionMgr::AddToActiveList(BotSession* session)
 
 void BotSessionMgr::RemoveFromActiveList(BotSession* session)
 {
-    for (auto it = _activeSessions.begin(); it != _activeSessions.end(); ++it) {
-        if (*it == session) {
-            _activeSessions.erase(it);
+    // TBB concurrent_vector doesn't have erase, so we mark as nullptr and compact later
+    for (size_t i = 0; i < _activeSessions.size(); ++i) {
+        if (_activeSessions[i] == session) {
+            _activeSessions[i] = nullptr;
             break;
         }
     }
@@ -550,9 +573,10 @@ void BotSessionMgr::MoveToActiveList(BotSession* session)
 
 void BotSessionMgr::RemoveFromHibernatedList(BotSession* session)
 {
-    for (auto it = _hibernatedSessions.begin(); it != _hibernatedSessions.end(); ++it) {
-        if (*it == session) {
-            _hibernatedSessions.erase(it);
+    // TBB concurrent_vector doesn't have erase, so we mark as nullptr and compact later
+    for (size_t i = 0; i < _hibernatedSessions.size(); ++i) {
+        if (_hibernatedSessions[i] == session) {
+            _hibernatedSessions[i] = nullptr;
             break;
         }
     }
@@ -596,7 +620,17 @@ void BotSessionMgr::CompactSessionVectors()
 {
     // Remove null entries from vectors to improve cache performance
     auto removeNulls = [](auto& vec) {
-        vec.erase(std::remove(vec.begin(), vec.end(), nullptr), vec.end());
+        // TBB concurrent_vector compaction - copy non-null elements
+        std::remove_reference_t<decltype(vec)> temp;
+        for (auto* session : vec) {
+            if (session != nullptr) {
+                temp.push_back(session);
+            }
+        }
+        vec.clear();
+        for (auto* session : temp) {
+            vec.push_back(session);
+        }
     };
 
     removeNulls(_activeSessions);

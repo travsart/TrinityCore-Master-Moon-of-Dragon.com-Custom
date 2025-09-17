@@ -83,7 +83,7 @@ void BotDatabasePool::Shutdown()
     TC_LOG_INFO("module.playerbot.database", "✅ BotDatabasePool shutdown complete");
 }
 
-void BotDatabasePool::ExecuteAsync(PreparedStatement* stmt,
+void BotDatabasePool::ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
                                   std::function<void(PreparedQueryResult)> callback,
                                   uint32 timeoutMs)
 {
@@ -126,12 +126,12 @@ void BotDatabasePool::ExecuteAsync(PreparedStatement* stmt,
     }
 }
 
-void BotDatabasePool::ExecuteAsyncNoResult(PreparedStatement* stmt, uint32 timeoutMs)
+void BotDatabasePool::ExecuteAsyncNoResult(CharacterDatabasePreparedStatement* stmt, uint32 timeoutMs)
 {
     ExecuteAsync(stmt, nullptr, timeoutMs);
 }
 
-void BotDatabasePool::ExecuteBatchAsync(std::vector<PreparedStatement*> const& statements,
+void BotDatabasePool::ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
                                        std::function<void(std::vector<PreparedQueryResult>)> callback,
                                        uint32 timeoutMs)
 {
@@ -158,7 +158,7 @@ void BotDatabasePool::ExecuteBatchAsync(std::vector<PreparedStatement*> const& s
     }
 }
 
-PreparedQueryResult BotDatabasePool::ExecuteSync(PreparedStatement* stmt, uint32 timeoutMs)
+PreparedQueryResult BotDatabasePool::ExecuteSync(CharacterDatabasePreparedStatement* stmt, uint32 timeoutMs)
 {
     if (!stmt) {
         TC_LOG_ERROR("module.playerbot.database", "Cannot execute null statement");
@@ -220,12 +220,12 @@ PreparedQueryResult BotDatabasePool::ExecuteSync(PreparedStatement* stmt, uint32
     return result;
 }
 
-PreparedStatement* BotDatabasePool::GetPreparedStatement(uint32 stmtId)
+CharacterDatabasePreparedStatement* BotDatabasePool::GetPreparedStatement(uint32 stmtId)
 {
     auto it = _preparedStatements.find(stmtId);
     if (it != _preparedStatements.end()) {
         // Create new PreparedStatement from cached SQL
-        return new PreparedStatement(stmtId, it->second);
+        return CharacterDatabase.GetPreparedStatement(static_cast<CharacterDatabaseStatements>(stmtId));
     }
 
     TC_LOG_WARN("module.playerbot.database",
@@ -486,7 +486,10 @@ void BotDatabasePool::ExecuteQueryRequest(QueryRequest const& request)
         auto& connectionInfo = _connections[connectionIndex];
         if (connectionInfo && connectionInfo->connection) {
             // Execute query
-            result = connectionInfo->connection->Query(request.statement);
+            PreparedResultSet* rawResult = connectionInfo->connection->Query(request.statement);
+            if (rawResult) {
+                result = std::shared_ptr<PreparedResultSet>(rawResult);
+            }
             connectionInfo->queryCount++;
 
             // Cache the result if successful
@@ -543,7 +546,7 @@ void BotDatabasePool::EvictLeastRecentlyUsed()
     _resultCache.erase(oldestIt);
 }
 
-std::string BotDatabasePool::GenerateCacheKey(PreparedStatement const* stmt) const
+std::string BotDatabasePool::GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const
 {
     if (!stmt) return "";
 
