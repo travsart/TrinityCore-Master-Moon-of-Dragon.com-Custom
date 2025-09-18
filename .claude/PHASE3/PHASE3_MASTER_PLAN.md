@@ -136,6 +136,13 @@ Phase 3 focuses on implementing sophisticated class-specific AI behaviors and in
 | 3D.9 | Guild Integration | Guild chat and activities | [SOCIAL_SYSTEMS.md](SOCIAL_SYSTEMS.md) |
 | 3D.10 | Integration Tests | Full system integration testing | [TESTING_FRAMEWORK.md](TESTING_FRAMEWORK.md) |
 
+### Backlog
+| Task ID | Component | Description | Documentation |
+|---------|-----------|-------------|---------------|
+| 3B.8 | Spec Tuning | Fine-tune all specializations - enhance spec with quality and completeness | [PLAYERBOT_CLASS_STATUS.md](PLAYERBOT_CLASS_STATUS.md)
+| 3B.9 | PvP Adaptations | PvP-specific strategies | [COMBAT_ROTATIONS.md](COMBAT_ROTATIONS.md) |
+| 3B.10 | Performance Tests | Benchmark all class AIs | [PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md) |
+
 ## Performance Requirements
 
 ### Per-Bot Performance Targets
