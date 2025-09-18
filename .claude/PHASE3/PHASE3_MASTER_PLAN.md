@@ -22,6 +22,7 @@ Phase 3 focuses on implementing sophisticated class-specific AI behaviors and in
 - **ALWAYS evaluate dbc, db2 and sql information** - No need to do work twice and to avoid redundancy
 - **ALWAYS maintain performance** - <0.1% CPU per bot, <10MB memory
 - **ALWAYS test thoroughly** - Unit tests for every component
+- **ALWAYS aim for quality and completeness**
 
 ## Development Timeline
 
