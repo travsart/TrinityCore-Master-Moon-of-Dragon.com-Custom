@@ -103,99 +103,38 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Priest-specific data
-    PriestSpec _specialization;
-    PriestRole _currentRole;
+    // Specialization system
+    PriestSpec _currentSpec;
+    std::unique_ptr<PriestSpecialization> _specialization;
+
+    // Performance tracking
     uint32 _manaSpent;
     uint32 _healingDone;
     uint32 _damageDealt;
     uint32 _playersHealed;
     uint32 _damagePrevented;
 
-    // Healing management
-    std::priority_queue<HealTarget> _healingQueue;
-    std::unordered_map<ObjectGuid, uint32> _recentHeals;
-    std::unordered_map<ObjectGuid, uint32> _hotTimers;
-    uint32 _lastGroupScan;
-    uint32 _lastTriage;
-    float _groupAverageHealth;
-
-    // Shadow priest tracking
-    uint32 _shadowOrbStacks;
-    uint32 _mindBlastCooldown;
-    bool _shadowformActive;
-    uint32 _dotRefreshTimer;
-    std::unordered_map<ObjectGuid, uint32> _shadowWordPainTimers;
-    std::unordered_map<ObjectGuid, uint32> _vampiricTouchTimers;
-    std::unordered_map<ObjectGuid, uint32> _devouringPlagueTimers;
-
-    // Discipline priest tracking
-    uint32 _powerWordShieldCharges;
-    uint32 _penanceStacks;
-    std::unordered_map<ObjectGuid, uint32> _shieldTimers;
-    std::unordered_map<ObjectGuid, uint32> _atonementTimers;
-
-    // Utility tracking
+    // Shared utility tracking
     uint32 _lastDispel;
     uint32 _lastFearWard;
     uint32 _lastPsychicScream;
     uint32 _lastInnerFire;
     std::unordered_map<ObjectGuid, uint32> _mindControlTargets;
 
-    // Rotation methods by specialization
-    void UpdateHolyRotation(::Unit* target);
-    void UpdateDisciplineRotation(::Unit* target);
-    void UpdateShadowRotation(::Unit* target);
+    // Specialization management
+    void InitializeSpecialization();
+    void UpdateSpecialization();
+    PriestSpec DetectCurrentSpecialization();
+    void SwitchSpecialization(PriestSpec newSpec);
 
-    // Healing system
-    void UpdateHealingSystem();
-    void ScanForHealTargets();
-    void PrioritizeHealing();
-    void ExecuteHealing();
-    HealTarget AnalyzeHealTarget(::Unit* target);
-    HealPriority CalculateHealPriority(::Unit* target);
-    uint32 GetOptimalHealSpell(const HealTarget& healTarget);
-    void CastHealingSpell(uint32 spellId, ::Unit* target);
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
 
-    // Triage and emergency healing
-    void PerformTriage();
-    void HandleEmergencyHealing();
-    bool IsEmergencyHealing();
-    void PrioritizeEmergencyTargets();
-
-    // Group healing
-    void UpdateGroupHealing();
-    void CastGroupHeal();
-    void ManageHealOverTime();
-    void OptimizeGroupHealEfficiency();
-
-    // Buff and utility management
+    // Shared priest utilities
     void UpdatePriestBuffs();
     void CastInnerFire();
-    void CastDivineFavor();
-    void CastSpiritOfRedemption();
     void UpdateFortitudeBuffs();
     void CastPowerWordFortitude();
-    void CastPrayerOfFortitude();
-
-    // Discipline priest abilities
-    void UseDisciplineAbilities(::Unit* target);
-    void CastPowerWordShield(::Unit* target);
-    void CastPenance(::Unit* target);
-    void ManageAtonement();
-    void UpdateShields();
-
-    // Shadow priest abilities
-    void UseShadowAbilities(::Unit* target);
-    void CastShadowWordPain(::Unit* target);
-    void CastVampiricTouch(::Unit* target);
-    void CastDevouringPlague(::Unit* target);
-    void CastMindBlast(::Unit* target);
-    void CastMindFlay(::Unit* target);
-    void ManageShadowOrbs();
-    void UpdateDoTs();
-    void EnterShadowform();
-    void ExitShadowform();
 
     // Mana management
     bool HasEnoughMana(uint32 amount);
