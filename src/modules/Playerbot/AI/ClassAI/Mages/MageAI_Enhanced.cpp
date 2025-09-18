@@ -8,20 +8,303 @@
  */
 
 #include "MageAI.h"
-#include "Unit.h"
+#include "ArcaneSpecialization_Enhanced.h"
+#include "FireSpecialization_Enhanced.h"
+#include "FrostSpecialization_Enhanced.h"
 #include "Player.h"
-#include "Spell.h"
-#include "SpellAuras.h"
 #include "SpellMgr.h"
-#include "SpellInfo.h"
-#include "ObjectAccessor.h"
-#include "Group.h"
 #include "Log.h"
-#include <algorithm>
-#include <numeric>
 
 namespace Playerbot
 {
+
+MageAI::MageAI(Player* bot) : ClassAI(bot), _currentSpec(MageSpec::ARCANE)
+{
+    InitializeSpecialization();
+
+    // Initialize combat systems
+    _threatManager = std::make_unique<ThreatManager>(bot);
+    _targetSelector = std::make_unique<TargetSelector>(bot);
+    _positionManager = std::make_unique<PositionManager>(bot);
+    _interruptManager = std::make_unique<InterruptManager>(bot);
+
+    // Reset performance tracking
+    _combatMetrics.Reset();
+
+    TC_LOG_DEBUG("playerbots", "MageAI initialized for player {} with specialization {}",
+                 bot->GetName(), static_cast<uint32>(_currentSpec));
+}
+
+void MageAI::UpdateRotation(::Unit* target)
+{
+    if (!target || !_specialization)
+        return;
+
+    // Update advanced combat logic
+    UpdateAdvancedCombatLogic(target);
+
+    // Update specialization-specific rotation
+    _specialization->UpdateRotation(target);
+
+    // Handle crowd control situations
+    UseCrowdControl(target);
+
+    // Update positioning
+    UpdateMagePositioning();
+
+    // Handle emergency situations
+    if (IsInCriticalDanger())
+        HandleEmergencySituation();
+
+    // Optimize casting sequence
+    OptimizeCastingSequence(target);
+}
+
+void MageAI::UpdateBuffs()
+{
+    if (!_specialization)
+        return;
+
+    // Update specialization buffs
+    _specialization->UpdateBuffs();
+
+    // Update general mage buffs
+    UpdateMageBuffs();
+
+    // Handle armor spells
+    UpdateArmorSpells();
+
+    // Cast Arcane Intellect if needed
+    CastArcaneIntellect();
+}
+
+void MageAI::UpdateCooldowns(uint32 diff)
+{
+    if (!_specialization)
+        return;
+
+    // Update specialization cooldowns
+    _specialization->UpdateCooldowns(diff);
+
+    // Update performance metrics
+    UpdatePerformanceMetrics(diff);
+
+    // Update combat systems
+    if (_threatManager)
+        _threatManager->Update(diff);
+    if (_interruptManager)
+        _interruptManager->Update(diff);
+}
+
+bool MageAI::CanUseAbility(uint32 spellId)
+{
+    if (!_specialization)
+        return false;
+
+    // Check specialization-specific restrictions
+    if (!_specialization->CanUseAbility(spellId))
+        return false;
+
+    // Check if we have enough mana
+    if (!HasEnoughResource(spellId))
+        return false;
+
+    // Check if we're not silenced or interrupted
+    if (_bot->HasUnitState(UNIT_STATE_SILENCED))
+        return false;
+
+    return true;
+}
+
+void MageAI::OnCombatStart(::Unit* target)
+{
+    if (!_specialization || !target)
+        return;
+
+    TC_LOG_DEBUG("playerbots", "MageAI combat started for player {} against {}",
+                 _bot->GetName(), target->GetName());
+
+    // Reset combat metrics
+    _combatMetrics.Reset();
+
+    // Notify specialization
+    _specialization->OnCombatStart(target);
+
+    // Apply defensive buffs
+    UseBarrierSpells();
+
+    // Summon Water Elemental if Frost
+    if (_currentSpec == MageSpec::FROST)
+    {
+        if (auto frostSpec = dynamic_cast<FrostSpecialization_Enhanced*>(_specialization.get()))
+        {
+            frostSpec->ExecuteSummonWaterElemental();
+        }
+    }
+
+    // Initialize threat management
+    if (_threatManager)
+        _threatManager->OnCombatStart(target);
+}
+
+void MageAI::OnCombatEnd()
+{
+    if (!_specialization)
+        return;
+
+    TC_LOG_DEBUG("playerbots", "MageAI combat ended for player {}", _bot->GetName());
+
+    // Notify specialization
+    _specialization->OnCombatEnd();
+
+    // Analyze combat effectiveness
+    AnalyzeCastingEffectiveness();
+
+    // Update spell priorities based on performance
+    OptimizeSpellPriorities();
+
+    // Reset positioning
+    if (_positionManager)
+        _positionManager->OnCombatEnd();
+}
+
+bool MageAI::HasEnoughResource(uint32 spellId)
+{
+    if (!_specialization)
+        return false;
+
+    return _specialization->HasEnoughResource(spellId);
+}
+
+void MageAI::ConsumeResource(uint32 spellId)
+{
+    if (!_specialization)
+        return;
+
+    _specialization->ConsumeResource(spellId);
+
+    // Track mana spending
+    uint32 manaCost = CalculateSpellManaCost(spellId, _bot);
+    _manaSpent += manaCost;
+    _combatMetrics.totalManaSpent += manaCost;
+}
+
+Position MageAI::GetOptimalPosition(::Unit* target)
+{
+    if (!_specialization || !target)
+        return _bot->GetPosition();
+
+    // Get specialization-specific optimal position
+    Position specPosition = _specialization->GetOptimalPosition(target);
+
+    // Adjust for threat and safety
+    if (_positionManager)
+    {
+        return _positionManager->OptimizePosition(specPosition, target);
+    }
+
+    return specPosition;
+}
+
+float MageAI::GetOptimalRange(::Unit* target)
+{
+    if (!_specialization || !target)
+        return OPTIMAL_CASTING_RANGE;
+
+    float specRange = _specialization->GetOptimalRange(target);
+
+    // Adjust for threat level
+    if (HasTooMuchThreat())
+        specRange = std::max(specRange, KITING_RANGE);
+
+    return specRange;
+}
+
+void MageAI::InitializeSpecialization()
+{
+    if (!_bot)
+        return;
+
+    // Detect current specialization
+    _currentSpec = DetectCurrentSpecialization();
+
+    // Create appropriate specialization instance
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            _specialization = std::make_unique<ArcaneSpecialization_Enhanced>(_bot);
+            TC_LOG_DEBUG("playerbots", "Initialized Arcane specialization for {}", _bot->GetName());
+            break;
+
+        case MageSpec::FIRE:
+            _specialization = std::make_unique<FireSpecialization_Enhanced>(_bot);
+            TC_LOG_DEBUG("playerbots", "Initialized Fire specialization for {}", _bot->GetName());
+            break;
+
+        case MageSpec::FROST:
+            _specialization = std::make_unique<FrostSpecialization_Enhanced>(_bot);
+            TC_LOG_DEBUG("playerbots", "Initialized Frost specialization for {}", _bot->GetName());
+            break;
+
+        default:
+            TC_LOG_ERROR("playerbots", "Unknown mage specialization for player {}: {}",
+                         _bot->GetName(), static_cast<uint32>(_currentSpec));
+            _specialization = std::make_unique<ArcaneSpecialization_Enhanced>(_bot);
+            break;
+    }
+
+    if (!_specialization)
+    {
+        TC_LOG_ERROR("playerbots", "Failed to initialize mage specialization for player {}", _bot->GetName());
+        return;
+    }
+
+    TC_LOG_INFO("playerbots", "Successfully initialized Mage AI for player {} with {} specialization",
+                _bot->GetName(),
+                _currentSpec == MageSpec::ARCANE ? "Arcane" :
+                _currentSpec == MageSpec::FIRE ? "Fire" : "Frost");
+}
+
+MageSpec MageAI::DetectCurrentSpecialization()
+{
+    if (!_bot)
+        return MageSpec::ARCANE;
+
+    // Count talent points in each tree
+    uint32 arcanePoints = 0;
+    uint32 firePoints = 0;
+    uint32 frostPoints = 0;
+
+    // Iterate through talent trees
+    for (uint32 i = 0; i < MAX_TALENT_TABS; ++i)
+    {
+        for (uint32 j = 0; j < MAX_TALENT_RANK; ++j)
+        {
+            if (PlayerTalentMap::iterator itr = _bot->GetTalentMap(PLAYER_TALENT_SPEC_ACTIVE)->find(i * MAX_TALENT_RANK + j);
+                itr != _bot->GetTalentMap(PLAYER_TALENT_SPEC_ACTIVE)->end())
+            {
+                TalentEntry const* talentInfo = sTalentStore.LookupEntry(itr->second->talentId);
+                if (!talentInfo)
+                    continue;
+
+                switch (talentInfo->TalentTab)
+                {
+                    case 0: arcanePoints += itr->second->currentRank; break;
+                    case 1: firePoints += itr->second->currentRank; break;
+                    case 2: frostPoints += itr->second->currentRank; break;
+                }
+            }
+        }
+    }
+
+    // Determine specialization based on highest talent investment
+    if (arcanePoints >= firePoints && arcanePoints >= frostPoints)
+        return MageSpec::ARCANE;
+    else if (firePoints >= frostPoints)
+        return MageSpec::FIRE;
+    else
+        return MageSpec::FROST;
+}
 
 // Enhanced methods implementation for MageAI
 
