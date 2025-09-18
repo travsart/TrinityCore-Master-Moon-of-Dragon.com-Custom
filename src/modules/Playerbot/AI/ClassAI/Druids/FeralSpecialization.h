@@ -11,6 +11,11 @@
 
 #include "DruidSpecialization.h"
 #include <map>
+#include <atomic>
+#include <chrono>
+#include <unordered_map>
+#include <queue>
+#include <mutex>
 
 namespace Playerbot
 {
@@ -111,16 +116,22 @@ private:
         POUNCE = 9005
     };
 
-    // Combo point system
-    ComboPointInfo _comboPoints;
-    uint32 _lastComboPointGenerated;
-    uint32 _lastComboPointSpent;
+    // Enhanced combo point system
+    std::atomic<uint32> _comboPoints{0};
+    std::atomic<uint32> _lastComboPointGenerated{0};
+    std::atomic<uint32> _lastComboPointSpent{0};
+    std::atomic<bool> _clearcastingProc{false};
+    std::atomic<uint32> _predatoryStrikesProc{0};
+    std::atomic<bool> _bloodInTheWaterProc{false};
 
-    // Energy system
-    uint32 _energy;
-    uint32 _maxEnergy;
-    uint32 _lastEnergyRegen;
-    uint32 _energyRegenRate;
+    // Enhanced energy system
+    std::atomic<uint32> _energy{100};
+    std::atomic<uint32> _maxEnergy{100};
+    std::atomic<uint32> _lastEnergyRegen{0};
+    std::atomic<uint32> _energyRegenRate{10};
+    std::atomic<float> _energyRegenModifier{1.0f};
+    std::atomic<bool> _berserkActive{false};
+    std::atomic<uint32> _berserkEndTime{0};
 
     // Feral buffs and debuffs
     uint32 _tigersFuryReady;
@@ -135,13 +146,88 @@ private:
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
 
-    // Performance tracking
-    uint32 _totalMeleeDamage;
-    uint32 _comboPointsGenerated;
-    uint32 _comboPointsSpent;
-    uint32 _energySpent;
+    // Performance metrics
+    struct FeralMetrics {
+        std::atomic<uint32> totalMeleeDamage{0};
+        std::atomic<uint32> comboPointsGenerated{0};
+        std::atomic<uint32> comboPointsSpent{0};
+        std::atomic<uint32> energySpent{0};
+        std::atomic<uint32> shredCrits{0};
+        std::atomic<uint32> ripTicks{0};
+        std::atomic<uint32> ferociosBiteDamage{0};
+        std::atomic<uint32> tigersFuryUses{0};
+        std::atomic<float> energyEfficiency{0.0f};
+        std::atomic<float> comboPointEfficiency{0.0f};
+        std::atomic<float> savageRoarUptime{0.0f};
+        std::atomic<float> ripUptime{0.0f};
+        std::chrono::steady_clock::time_point combatStartTime;
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalMeleeDamage = 0; comboPointsGenerated = 0; comboPointsSpent = 0;
+            energySpent = 0; shredCrits = 0; ripTicks = 0; ferociosBiteDamage = 0;
+            tigersFuryUses = 0; energyEfficiency = 0.0f; comboPointEfficiency = 0.0f;
+            savageRoarUptime = 0.0f; ripUptime = 0.0f;
+            combatStartTime = std::chrono::steady_clock::now();
+            lastUpdate = combatStartTime;
+        }
+    } _feralMetrics;
 
-    // Constants
+    // Advanced combo point tracking
+    struct ComboPointManager {
+        std::atomic<uint32> currentPoints{0};
+        std::queue<uint32> pointHistory;
+        mutable std::mutex historyMutex;
+        std::atomic<uint32> wasted{0};
+        std::atomic<uint32> optimal{0};
+        void AddPoint() {
+            uint32 current = currentPoints.load();
+            if (current < COMBO_POINTS_MAX) {
+                currentPoints++;
+                optimal++;
+                std::lock_guard<std::mutex> lock(historyMutex);
+                pointHistory.push(getMSTime());
+                if (pointHistory.size() > 10) // Keep last 10
+                    pointHistory.pop();
+            } else {
+                wasted++;
+            }
+        }
+        void SpendPoints(uint32 amount) {
+            currentPoints = 0; // All points spent
+        }
+        uint32 GetPoints() const { return currentPoints.load(); }
+        float GetEfficiency() const {
+            uint32 total = optimal.load() + wasted.load();
+            return total > 0 ? (float)optimal.load() / total : 1.0f;
+        }
+    } _comboPointManager;
+
+    // Advanced Feral mechanics
+    void OptimizeComboPointGeneration();
+    void ManageEnergyEfficiently();
+    void OptimizeFinisherTiming();
+    void HandleFeralProcs();
+    void ManageBerserkTiming();
+    void OptimizePositioningFeral();
+    void HandleStealthOpportunities();
+    void ManageFeralCooldowns();
+    void OptimizeBleedManagement();
+    void HandleClearcastingProc();
+    void ManagePredatoryStrikes();
+    void OptimizeSavageRoarUptime();
+    void HandleBloodInTheWater();
+    void OptimizeFerociosBite();
+    void ManageFeralRotationPriority();
+    void HandleMultiTargetFeral();
+    void OptimizeEnergyPrediction();
+    void ManageFeralBuffs();
+    void OptimizeCatFormUptime();
+    void HandleFeralInterrupts();
+    float CalculateFeralDPS();
+    bool ShouldPoolEnergy();
+    uint32 PredictEnergyInTime(uint32 milliseconds);
+
+    // Enhanced constants
     static constexpr float MELEE_RANGE = 5.0f;
     static constexpr uint32 COMBO_POINTS_MAX = 5;
     static constexpr uint32 ENERGY_MAX = 100;
@@ -150,6 +236,23 @@ private:
     static constexpr uint32 SAVAGE_ROAR_DURATION = 34000; // 34 seconds at max combo points
     static constexpr uint32 RAKE_DURATION = 15000; // 15 seconds
     static constexpr uint32 RIP_DURATION = 22000; // 22 seconds at max combo points
+    static constexpr uint32 BERSERK = 50334; // Add missing spell IDs
+    static constexpr uint32 BERSERK_DURATION = 15000; // 15 seconds
+    static constexpr uint32 CLEARCASTING = 135700; // Clearcasting proc
+    static constexpr uint32 PREDATORY_STRIKES = 16972;
+    static constexpr uint32 BLOOD_IN_THE_WATER = 80318;
+    static constexpr uint32 SHRED_ENERGY_COST = 60;
+    static constexpr uint32 MANGLE_ENERGY_COST = 45;
+    static constexpr uint32 RAKE_ENERGY_COST = 35;
+    static constexpr uint32 RIP_ENERGY_COST = 30;
+    static constexpr uint32 FEROCIOUS_BITE_ENERGY_COST = 25;
+    static constexpr uint32 SAVAGE_ROAR_ENERGY_COST = 25;
+    static constexpr uint32 TIGERS_FURY_ENERGY_COST = 0;
+    static constexpr float ENERGY_POOLING_THRESHOLD = 80.0f;
+    static constexpr float OPTIMAL_COMBO_POINT_USAGE = 4.5f; // 4-5 points
+    static constexpr uint32 PROWL_ENERGY_BONUS = 60;
+    static constexpr float BEHIND_TARGET_BONUS = 1.5f; // 50% more damage from behind
+    static constexpr uint32 STEALTH_OPPORTUNITY_WINDOW = 6000; // 6 seconds
 };
 
 } // namespace Playerbot

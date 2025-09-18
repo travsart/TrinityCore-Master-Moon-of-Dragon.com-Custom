@@ -13,6 +13,10 @@
 #include <map>
 #include <vector>
 #include <queue>
+#include <atomic>
+#include <chrono>
+#include <unordered_map>
+#include <mutex>
 
 namespace Playerbot
 {
@@ -171,14 +175,18 @@ private:
     std::unordered_map<ObjectGuid, uint32> _regrowthTimers;
     std::unordered_map<ObjectGuid, uint32> _lifebloomStacks;
 
-    // Tree of Life form tracking
-    uint32 _treeOfLifeRemaining;
-    bool _inTreeForm;
-    uint32 _lastTreeFormShift;
+    // Enhanced Tree of Life form tracking
+    std::atomic<uint32> _treeOfLifeRemaining{0};
+    std::atomic<bool> _inTreeForm{false};
+    std::atomic<uint32> _lastTreeFormShift{0};
+    std::atomic<bool> _treeFormOptimal{false};
+    std::atomic<uint32> _treeFormCooldown{0};
 
-    // Nature's Swiftness tracking
-    uint32 _naturesSwiftnessReady;
-    uint32 _lastNaturesSwiftness;
+    // Enhanced Nature's Swiftness tracking
+    std::atomic<uint32> _naturesSwiftnessReady{0};
+    std::atomic<uint32> _lastNaturesSwiftness{0};
+    std::atomic<bool> _emergencySwiftnessReady{true};
+    std::atomic<bool> _swiftnessOnCooldown{false};
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
@@ -197,12 +205,156 @@ private:
     bool _emergencyMode;
     uint32 _emergencyStartTime;
 
-    // Performance tracking
-    uint32 _totalHealingDone;
-    uint32 _overhealingDone;
-    uint32 _manaSpent;
+    // Performance metrics
+    struct RestorationMetrics {
+        std::atomic<uint32> totalHealingDone{0};
+        std::atomic<uint32> overhealingDone{0};
+        std::atomic<uint32> manaSpent{0};
+        std::atomic<uint32> healingTouchCasts{0};
+        std::atomic<uint32> regrowthCasts{0};
+        std::atomic<uint32> rejuvenationCasts{0};
+        std::atomic<uint32> lifebloomApplications{0};
+        std::atomic<uint32> swiftmendCasts{0};
+        std::atomic<uint32> innervatesUsed{0};
+        std::atomic<float> healingEfficiency{0.0f};
+        std::atomic<float> hotUptime{0.0f};
+        std::atomic<float> emergencyResponseTime{0.0f};
+        std::atomic<float> manaEfficiency{0.0f};
+        std::chrono::steady_clock::time_point combatStartTime;
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalHealingDone = 0; overhealingDone = 0; manaSpent = 0;
+            healingTouchCasts = 0; regrowthCasts = 0; rejuvenationCasts = 0;
+            lifebloomApplications = 0; swiftmendCasts = 0; innervatesUsed = 0;
+            healingEfficiency = 0.0f; hotUptime = 0.0f; emergencyResponseTime = 0.0f;
+            manaEfficiency = 0.0f;
+            combatStartTime = std::chrono::steady_clock::now();
+            lastUpdate = combatStartTime;
+        }
+    } _restorationMetrics;
 
-    // Constants
+    // Advanced healing prediction system
+    struct HealingPredictor {
+        std::unordered_map<uint64, std::queue<float>> damageHistory;
+        std::unordered_map<uint64, float> predictedDamage;
+        mutable std::mutex predictionMutex;
+        void RecordDamage(uint64 unitGuid, float damage) {
+            std::lock_guard<std::mutex> lock(predictionMutex);
+            auto& history = damageHistory[unitGuid];
+            history.push(damage);
+            if (history.size() > 5) // Keep last 5 damage events
+                history.pop();
+            UpdatePrediction(unitGuid);
+        }
+        void UpdatePrediction(uint64 unitGuid) {
+            auto& history = damageHistory[unitGuid];
+            if (history.empty()) return;
+            float avgDamage = 0.0f;
+            auto temp = history;
+            int count = 0;
+            while (!temp.empty() && count < 3) {
+                avgDamage += temp.back();
+                temp.pop();
+                count++;
+            }
+            predictedDamage[unitGuid] = count > 0 ? avgDamage / count : 0.0f;
+        }
+        float GetPredictedDamage(uint64 unitGuid) const {
+            std::lock_guard<std::mutex> lock(predictionMutex);
+            auto it = predictedDamage.find(unitGuid);
+            return it != predictedDamage.end() ? it->second : 0.0f;
+        }
+    } _healingPredictor;
+
+    // HoT optimization system
+    struct HoTOptimizer {
+        std::unordered_map<uint64, uint32> rejuvenationExpiry;
+        std::unordered_map<uint64, uint32> regrowthExpiry;
+        std::unordered_map<uint64, uint32> lifebloomStacks;
+        std::unordered_map<uint64, uint32> lifebloomExpiry;
+        mutable std::mutex hotMutex;
+        void UpdateHoT(uint64 unitGuid, uint32 spellId, uint32 duration, uint32 stacks = 1) {
+            std::lock_guard<std::mutex> lock(hotMutex);
+            uint32 expiry = getMSTime() + duration;
+            switch (spellId) {
+                case REJUVENATION:
+                    rejuvenationExpiry[unitGuid] = expiry;
+                    break;
+                case REGROWTH:
+                    regrowthExpiry[unitGuid] = expiry;
+                    break;
+                case LIFEBLOOM:
+                    lifebloomExpiry[unitGuid] = expiry;
+                    lifebloomStacks[unitGuid] = stacks;
+                    break;
+            }
+        }
+        bool HasHoT(uint64 unitGuid, uint32 spellId) const {
+            std::lock_guard<std::mutex> lock(hotMutex);
+            uint32 currentTime = getMSTime();
+            switch (spellId) {
+                case REJUVENATION:
+                    return rejuvenationExpiry.count(unitGuid) && rejuvenationExpiry.at(unitGuid) > currentTime;
+                case REGROWTH:
+                    return regrowthExpiry.count(unitGuid) && regrowthExpiry.at(unitGuid) > currentTime;
+                case LIFEBLOOM:
+                    return lifebloomExpiry.count(unitGuid) && lifebloomExpiry.at(unitGuid) > currentTime;
+            }
+            return false;
+        }
+        uint32 GetTimeRemaining(uint64 unitGuid, uint32 spellId) const {
+            std::lock_guard<std::mutex> lock(hotMutex);
+            uint32 currentTime = getMSTime();
+            uint32 expiry = 0;
+            switch (spellId) {
+                case REJUVENATION:
+                    if (rejuvenationExpiry.count(unitGuid))
+                        expiry = rejuvenationExpiry.at(unitGuid);
+                    break;
+                case REGROWTH:
+                    if (regrowthExpiry.count(unitGuid))
+                        expiry = regrowthExpiry.at(unitGuid);
+                    break;
+                case LIFEBLOOM:
+                    if (lifebloomExpiry.count(unitGuid))
+                        expiry = lifebloomExpiry.at(unitGuid);
+                    break;
+            }
+            return expiry > currentTime ? expiry - currentTime : 0;
+        }
+        uint32 GetLifebloomStacks(uint64 unitGuid) const {
+            std::lock_guard<std::mutex> lock(hotMutex);
+            auto it = lifebloomStacks.find(unitGuid);
+            return it != lifebloomStacks.end() ? it->second : 0;
+        }
+    } _hotOptimizer;
+
+    // Advanced Restoration mechanics
+    void OptimizeHealingRotation();
+    void ManageHealingPriorities();
+    void OptimizeHoTApplication();
+    void HandleEmergencyHealing();
+    void ManageTreeOfLifeForm();
+    void OptimizeNaturesSwiftness();
+    void HandleGroupHealingOptimization();
+    void ManageManaEfficiency();
+    void OptimizeSwiftmendTiming();
+    void HandleLifebloomStacking();
+    void ManageRestorationCooldowns();
+    void OptimizeTranquilityTiming();
+    void HandleInnervateOptimization();
+    void PredictHealingNeeds();
+    void ManageOverhealingReduction();
+    void OptimizeHealingOutput();
+    void HandleDispelling();
+    void ManageHealingThroughput();
+    void OptimizeResourceAllocation();
+    void HandleRaidHealingPatterns();
+    float CalculateHealingEfficiency();
+    uint32 PredictRequiredHealing(::Unit* target);
+    bool ShouldPreemptiveHeal(::Unit* target);
+
+    // Enhanced constants
     static constexpr float OPTIMAL_HEALING_RANGE = 40.0f;
     static constexpr uint32 TREE_OF_LIFE_DURATION = 25000; // 25 seconds
     static constexpr uint32 NATURES_SWIFTNESS_COOLDOWN = 60000; // 1 minute
@@ -211,10 +363,21 @@ private:
     static constexpr float REGROWTH_THRESHOLD = 50.0f;
     static constexpr float HEALING_TOUCH_THRESHOLD = 70.0f;
     static constexpr uint32 LIFEBLOOM_MAX_STACKS = 3;
+    static constexpr uint32 REJUVENATION = 774; // Add missing spell IDs
+    static constexpr uint32 LIFEBLOOM = 33763;
     static constexpr uint32 REJUVENATION_DURATION = 12000; // 12 seconds
     static constexpr uint32 REGROWTH_DURATION = 21000; // 21 seconds
     static constexpr uint32 LIFEBLOOM_DURATION = 7000; // 7 seconds
     static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f;
+    static constexpr float OVERHEALING_THRESHOLD = 0.15f; // 15% overheal tolerance
+    static constexpr uint32 HEALING_PREDICTION_WINDOW = 3000; // 3 seconds
+    static constexpr float HOT_PANDEMIC_THRESHOLD = 0.3f; // 30% for pandemic
+    static constexpr uint32 EMERGENCY_RESPONSE_TARGET = 1500; // 1.5 seconds
+    static constexpr float TREE_FORM_EFFICIENCY_THRESHOLD = 0.8f;
+    static constexpr uint32 SWIFTMEND_OPTIMAL_HEALTH = 40; // 40% health
+    static constexpr float MANA_EFFICIENCY_TARGET = 2.0f; // 2 healing per mana
+    static constexpr uint32 GROUP_HEALING_THRESHOLD = 3; // 3+ injured members
+    static constexpr float LIFEBLOOM_BLOOM_THRESHOLD = 0.4f; // Let it bloom at 40%
 };
 
 } // namespace Playerbot
