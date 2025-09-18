@@ -76,8 +76,13 @@ private:
     bool HasLivingBomb(::Unit* target);
     uint32 GetIgniteTimeRemaining(::Unit* target);
 
-    // AoE and multi-target
-    void HandleAoERotation();
+    // Enhanced AoE and multi-target
+    void HandleAoERotation(const std::vector<::Unit*>& targets);
+    void OptimizeFlamestrikePlacement(const std::vector<::Unit*>& targets);
+    void HandleDragonBreathTiming(const std::vector<::Unit*>& targets);
+    void ManageAoEIgnites(const std::vector<::Unit*>& targets);
+    void SpreadLivingBombs(const std::vector<::Unit*>& targets);
+    Position CalculateOptimalFlamestrikePosition(const std::vector<::Unit*>& targets);
     std::vector<::Unit*> GetNearbyEnemies(float range = 8.0f);
     bool ShouldUseAoE();
     void CastMeteor();
@@ -115,16 +120,100 @@ private:
         CRITICAL_MASS = 117216
     };
 
-    // State tracking
-    bool _hasHotStreak;
-    bool _hasHeatingUp;
+    // Enhanced state tracking
+    std::atomic<bool> _hasHotStreak{false};
+    std::atomic<bool> _hasHeatingUp{false};
     uint32 _lastCritTime;
     uint32 _combustionEndTime;
-    bool _inCombustion;
+    std::atomic<bool> _inCombustion{false};
+    uint32 _lastPyroblastTime;
+    uint32 _consecutiveCrits;
+    bool _combustionPrepped;
 
-    // DoT tracking per target
-    std::map<uint64, uint32> _igniteTimers;
-    std::map<uint64, uint32> _livingBombTimers;
+    // Advanced combustion mechanics
+    void OptimizeCombustionPhase(::Unit* target);
+    void PrepareCombustionSetup(::Unit* target);
+    void ExecuteCombustionRotation(::Unit* target);
+    void HandleCombustionEmergency();
+    bool IsOptimalCombustionTime();
+    uint32 CalculateOptimalCombustionDuration();
+    void StackIgniteForCombustion(::Unit* target);
+
+    // Crit fishing and optimization
+    void OptimizeCritFishing();
+    void HandleHotStreakProc();
+    void HandleHeatingUpProc();
+    void ChainPyroblasts(::Unit* target);
+    void OptimizeFireBlastTiming();
+
+    // DoT and burn management
+    void OptimizeIgniteStacking(::Unit* target);
+    void ManageLivingBombSpread(const std::vector<::Unit*>& targets);
+    void HandleIgniteSnapshot(::Unit* target);
+    void UpdateIgniteTracking();
+
+    // Performance metrics
+    struct FireMetrics {
+        std::atomic<uint32> totalPyroblasts{0};
+        std::atomic<uint32> instantPyroblasts{0};
+        std::atomic<uint32> hotStreakProcs{0};
+        std::atomic<uint32> heatingUpProcs{0};
+        std::atomic<uint32> combustionCasts{0};
+        std::atomic<uint32> criticalHits{0};
+        std::atomic<float> averageCritRate{0.0f};
+        std::atomic<float> combustionEfficiency{0.0f};
+        std::atomic<float> igniteUptime{0.0f};
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalPyroblasts = 0; instantPyroblasts = 0; hotStreakProcs = 0;
+            heatingUpProcs = 0; combustionCasts = 0; criticalHits = 0;
+            averageCritRate = 0.0f; combustionEfficiency = 0.0f; igniteUptime = 0.0f;
+            lastUpdate = std::chrono::steady_clock::now();
+        }
+    } _fireMetrics;
+
+    // Combustion state tracking
+    struct CombustionState {
+        bool inCombustion{false};
+        uint32 combustionStartTime{0};
+        uint32 igniteStacksAtStart{0};
+        uint32 damageDealtDuringCombustion{0};
+        std::vector<::Unit*> combustionTargets;
+        void Reset() {
+            inCombustion = false; combustionStartTime = 0;
+            igniteStacksAtStart = 0; damageDealtDuringCombustion = 0;
+            combustionTargets.clear();
+        }
+    } _combustionState;
+
+    // Enhanced DoT tracking system
+    struct DotTracker {
+        std::unordered_map<ObjectGuid, uint32> igniteExpireTimes;
+        std::unordered_map<ObjectGuid, uint32> livingBombExpireTimes;
+        std::unordered_map<ObjectGuid, uint32> igniteStacks;
+        void UpdateIgnite(ObjectGuid guid, uint32 duration, uint32 stacks) {
+            igniteExpireTimes[guid] = getMSTime() + duration;
+            igniteStacks[guid] = stacks;
+        }
+        void UpdateLivingBomb(ObjectGuid guid, uint32 duration) {
+            livingBombExpireTimes[guid] = getMSTime() + duration;
+        }
+        bool HasIgnite(ObjectGuid guid) const {
+            auto it = igniteExpireTimes.find(guid);
+            return it != igniteExpireTimes.end() && it->second > getMSTime();
+        }
+        bool HasLivingBomb(ObjectGuid guid) const {
+            auto it = livingBombExpireTimes.find(guid);
+            return it != livingBombExpireTimes.end() && it->second > getMSTime();
+        }
+        uint32 GetIgniteStacks(ObjectGuid guid) const {
+            auto it = igniteStacks.find(guid);
+            return it != igniteStacks.end() ? it->second : 0;
+        }
+    } _dotTracker;
+
+    std::map<uint64, uint32> _igniteTimers; // Legacy support
+    std::map<uint64, uint32> _livingBombTimers; // Legacy support
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
@@ -139,15 +228,25 @@ private:
     std::vector<uint64> _nearbyEnemies;
     uint32 _lastEnemyScan;
 
-    // Constants
-    static constexpr uint32 HOT_STREAK_DURATION = 10000; // 10 seconds
+    // Enhanced constants
+    static constexpr uint32 HOT_STREAK_DURATION = 15000; // 15 seconds (enhanced)
     static constexpr uint32 HEATING_UP_DURATION = 10000; // 10 seconds
-    static constexpr uint32 COMBUSTION_DURATION = 12000; // 12 seconds
-    static constexpr uint32 IGNITE_DURATION = 9000; // 9 seconds
+    static constexpr uint32 COMBUSTION_DURATION = 10000; // 10 seconds (optimized)
+    static constexpr uint32 IGNITE_DURATION = 8000; // 8 seconds
     static constexpr uint32 LIVING_BOMB_DURATION = 12000; // 12 seconds
     static constexpr float AOE_THRESHOLD = 3.0f; // Use AoE with 3+ targets
     static constexpr float SCORCH_RANGE = 40.0f;
     static constexpr float FLAMESTRIKE_RANGE = 8.0f;
+    static constexpr float CRIT_THRESHOLD = 0.6f; // 60% crit rate target
+    static constexpr float COMBUSTION_CRIT_THRESHOLD = 0.8f; // 80% for combustion
+    static constexpr float OPTIMAL_IGNITE_STACKS = 3.0f; // Optimal ignite stacks
+    static constexpr uint32 MAX_IGNITE_STACKS = 5; // Maximum ignite stacks
+    static constexpr uint32 PYROBLAST_CAST_TIME = 4500; // 4.5 seconds
+    static constexpr uint32 FIREBALL_CAST_TIME = 3500; // 3.5 seconds
+    static constexpr float COMBUSTION_SETUP_TIME = 5000; // 5 seconds setup
+    static constexpr uint32 SCORCH_STACKS_MAX = 5; // Maximum scorch stacks
+    static constexpr uint32 FIRE_BLAST_CHARGES = 3; // Maximum Fire Blast charges
+    static constexpr uint32 PHOENIX_FLAMES_CHARGES = 3; // Maximum Phoenix Flames charges
 };
 
 } // namespace Playerbot

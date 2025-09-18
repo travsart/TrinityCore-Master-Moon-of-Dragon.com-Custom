@@ -12,9 +12,15 @@
 #include "ClassAI.h"
 #include "MageSpecialization.h"
 #include "Position.h"
+#include "ThreatManager.h"
+#include "TargetSelector.h"
+#include "PositionManager.h"
+#include "InterruptManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <atomic>
+#include <chrono>
 
 namespace Playerbot
 {
@@ -65,13 +71,22 @@ private:
     std::unique_ptr<MageSpecialization> _specialization;
 
     // Performance tracking
-    uint32 _manaSpent;
-    uint32 _damageDealt;
-    uint32 _spellsCast;
-    uint32 _interruptedCasts;
+    std::atomic<uint32> _manaSpent{0};
+    std::atomic<uint32> _damageDealt{0};
+    std::atomic<uint32> _spellsCast{0};
+    std::atomic<uint32> _interruptedCasts{0};
+    std::atomic<uint32> _criticalHits{0};
+    std::atomic<uint32> _successfulPolymorphs{0};
+    std::atomic<uint32> _successfulCounterspells{0};
     uint32 _lastPolymorph;
     uint32 _lastCounterspell;
     uint32 _lastBlink;
+
+    // Combat system integration
+    std::unique_ptr<ThreatManager> _threatManager;
+    std::unique_ptr<TargetSelector> _targetSelector;
+    std::unique_ptr<PositionManager> _positionManager;
+    std::unique_ptr<InterruptManager> _interruptManager;
 
     // Shared utility tracking
     std::unordered_map<ObjectGuid, uint32> _polymorphTargets;
@@ -150,11 +165,33 @@ private:
     // Delegation to specialization
     void DelegateToSpecialization(::Unit* target);
 
-    // Spell effectiveness tracking
+    // Advanced spell effectiveness tracking
     void RecordSpellCast(uint32 spellId, ::Unit* target);
     void RecordSpellHit(uint32 spellId, ::Unit* target, uint32 damage);
     void RecordSpellCrit(uint32 spellId, ::Unit* target, uint32 damage);
+    void RecordSpellResist(uint32 spellId, ::Unit* target);
+    void RecordInterruptAttempt(uint32 spellId, ::Unit* target, bool success);
     void AnalyzeCastingEffectiveness();
+    float CalculateSpellEfficiency(uint32 spellId);
+    void OptimizeSpellPriorities();
+
+    // Combat metrics and analytics
+    struct CombatMetrics {
+        std::atomic<uint32> totalDamage{0};
+        std::atomic<uint32> totalHealing{0};
+        std::atomic<uint32> totalManaSpent{0};
+        std::atomic<float> averageCastTime{0.0f};
+        std::atomic<float> criticalHitRate{0.0f};
+        std::atomic<float> interruptSuccessRate{0.0f};
+        std::chrono::steady_clock::time_point combatStartTime;
+        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        void Reset() {
+            totalDamage = 0; totalHealing = 0; totalManaSpent = 0;
+            averageCastTime = 0.0f; criticalHitRate = 0.0f; interruptSuccessRate = 0.0f;
+            combatStartTime = std::chrono::steady_clock::now();
+            lastMetricsUpdate = combatStartTime;
+        }
+    } _combatMetrics;
 
     // Helper methods
     bool IsChanneling();
@@ -174,10 +211,34 @@ private:
     bool HasTooMuchThreat();
     void ReduceThreat();
 
-    // Emergency responses
+    // Advanced emergency responses
     void HandleEmergencySituation();
     bool IsInCriticalDanger();
     void UseEmergencyEscape();
+    void HandleMultipleEnemies(const std::vector<::Unit*>& enemies);
+    void HandleLowManaEmergency();
+    void HandleHighThreatSituation();
+    void ExecuteEmergencyTeleport();
+
+    // Advanced combat AI
+    void UpdateAdvancedCombatLogic(::Unit* target);
+    void OptimizeCastingSequence(::Unit* target);
+    void ManageResourceEfficiency();
+    void HandleCombatPhaseTransitions();
+    ::Unit* SelectOptimalTarget(const std::vector<::Unit*>& enemies);
+    void ExecuteAdvancedRotation(::Unit* target);
+
+    // Spell school mastery
+    void UpdateSchoolMastery();
+    float GetSchoolMasteryBonus(MageSchool school);
+    void AdaptToTargetResistances(::Unit* target);
+    MageSchool GetMostEffectiveSchool(::Unit* target);
+
+    // Predictive casting
+    void PredictEnemyMovement(::Unit* target);
+    void PrecastSpells(::Unit* target);
+    void HandleMovingTargets(::Unit* target);
+    void OptimizeInstantCasts();
 
     // Performance optimization
     void UpdatePerformanceMetrics(uint32 diff);

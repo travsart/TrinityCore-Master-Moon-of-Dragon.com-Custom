@@ -18,6 +18,16 @@
 #include "SpellInfo.h"
 #include "Map.h"
 #include "Log.h"
+#include "Unit.h"
+#include "Player.h"
+#include "Spell.h"
+#include "SpellAuras.h"
+#include "ObjectAccessor.h"
+#include "Group.h"
+#include "Pet.h"
+#include "Item.h"
+#include <algorithm>
+#include <numeric>
 
 namespace Playerbot
 {
@@ -49,12 +59,29 @@ const std::unordered_map<uint32, MageSchool> MageAI::_spellSchools = {
     {FROST_NOVA, MageSchool::FROST}
 };
 
-MageAI::MageAI(Player* bot) : ClassAI(bot), _manaSpent(0), _damageDealt(0),
-    _spellsCast(0), _interruptedCasts(0), _lastPolymorph(0), _lastCounterspell(0),
-    _lastBlink(0), _lastManaShield(0), _lastIceBarrier(0)
+MageAI::MageAI(Player* bot) : ClassAI(bot), _lastPolymorph(0), _lastCounterspell(0),
+    _lastBlink(0), _lastManaShield(0), _lastIceBarrier(0),
+    _threatManager(std::make_unique<ThreatManager>(bot)),
+    _targetSelector(std::make_unique<TargetSelector>(bot)),
+    _positionManager(std::make_unique<PositionManager>(bot)),
+    _interruptManager(std::make_unique<InterruptManager>(bot))
 {
     InitializeSpecialization();
-    TC_LOG_DEBUG("playerbot.mage", "MageAI initialized for {} with specialization {}",
+
+    // Initialize combat metrics
+    _combatMetrics.Reset();
+
+    // Initialize combat systems
+    if (_threatManager)
+        _threatManager->Initialize();
+    if (_targetSelector)
+        _targetSelector->Initialize();
+    if (_positionManager)
+        _positionManager->Initialize();
+    if (_interruptManager)
+        _interruptManager->Initialize();
+
+    TC_LOG_DEBUG("playerbot.mage", "MageAI initialized for {} with specialization {} and combat systems",
                  GetBot()->GetName(), static_cast<uint32>(_currentSpec));
 }
 
@@ -63,8 +90,23 @@ void MageAI::UpdateRotation(::Unit* target)
     if (!target)
         return;
 
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     // Update specialization if needed
     UpdateSpecialization();
+
+    // Update combat systems
+    if (_threatManager)
+        _threatManager->UpdateThreatAnalysis();
+    if (_positionManager)
+        _positionManager->UpdatePosition(PositionManager::MovementContext{target, GetBot()});
+    if (_interruptManager)
+        _interruptManager->UpdateInterruptSystem(100);
+
+    // Advanced target selection
+    ::Unit* optimalTarget = SelectOptimalTarget(GetNearbyEnemies(30.0f));
+    if (optimalTarget && optimalTarget != target)
+        target = optimalTarget;
 
     // Update positioning first
     UpdateMagePositioning();
@@ -72,6 +114,9 @@ void MageAI::UpdateRotation(::Unit* target)
     // Check if we can cast (not moving, not silenced, etc.)
     if (!CanCastSpell())
         return;
+
+    // Advanced combat logic
+    UpdateAdvancedCombatLogic(target);
 
     // Use crowd control if needed
     UseCrowdControl(target);
@@ -85,6 +130,19 @@ void MageAI::UpdateRotation(::Unit* target)
     {
         UseAoEAbilities(nearbyEnemies);
     }
+    else if (nearbyEnemies.size() > 3)
+    {
+        HandleMultipleEnemies(nearbyEnemies);
+    }
+
+    // Update performance metrics
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+
+    // Update average cast time tracking
+    float currentAvg = _combatMetrics.averageCastTime.load();
+    float newAvg = (currentAvg * 0.9f) + (duration.count() * 0.1f);
+    _combatMetrics.averageCastTime.store(newAvg);
 }
 
 void MageAI::UpdateBuffs()

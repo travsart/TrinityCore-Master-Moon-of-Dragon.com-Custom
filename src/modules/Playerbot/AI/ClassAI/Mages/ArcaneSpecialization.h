@@ -11,6 +11,10 @@
 
 #include "MageSpecialization.h"
 #include <map>
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include "ThreatManager.h"
 
 namespace Playerbot
 {
@@ -93,13 +97,55 @@ private:
         ARCANE_CHARGES = 36032
     };
 
-    // State tracking
-    uint32 _arcaneBlastStacks;
+    // Enhanced state tracking
+    std::atomic<uint32> _arcaneBlastStacks{0};
     uint32 _lastArcaneSpellTime;
-    bool _inBurnPhase;
-    bool _inConservePhase;
+    std::atomic<bool> _inBurnPhase{false};
+    std::atomic<bool> _inConservePhase{true};
     uint32 _burnPhaseStartTime;
     uint32 _conservePhaseStartTime;
+    std::chrono::steady_clock::time_point _phaseStartTime;
+
+    // Advanced mechanics
+    void UpdateArcaneOrb();
+    void ManageArcaneChargeOptimization();
+    void HandleArcaneIntellectBuff();
+    void OptimizeArcaneMissilesTiming();
+    bool ShouldDelayArcaneBlast();
+    void HandleManaAdeptProc();
+    void UpdateTimeWarpEffects();
+
+    // Burn phase optimization
+    void OptimizeBurnPhaseRotation(::Unit* target);
+    void CalculateOptimalBurnDuration();
+    bool ShouldExtendBurnPhase();
+    void HandleBurnPhaseEmergency();
+
+    // Conserve phase optimization
+    void OptimizeConservePhaseRotation(::Unit* target);
+    void HandleManaRegeneration();
+    bool ShouldTransitionToBurn();
+
+    // Advanced cooldown management
+    void OptimizeCooldownUsage();
+    bool ShouldHoldCooldownsForBurn();
+    void HandleCooldownSynergy();
+
+    // Performance metrics
+    struct ArcaneMetrics {
+        std::atomic<uint32> totalArcaneBlasts{0};
+        std::atomic<uint32> fourStackBlasts{0};
+        std::atomic<uint32> wasted Charges{0};
+        std::atomic<float> averageCharges{0.0f};
+        std::atomic<float> burnPhaseEfficiency{0.0f};
+        std::atomic<float> manaEfficiency{0.0f};
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalArcaneBlasts = 0; fourStackBlasts = 0; wastedCharges = 0;
+            averageCharges = 0.0f; burnPhaseEfficiency = 0.0f; manaEfficiency = 0.0f;
+            lastUpdate = std::chrono::steady_clock::now();
+        }
+    } _metrics;
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
@@ -109,13 +155,19 @@ private:
     uint32 _lastBuffCheck;
     uint32 _lastRotationUpdate;
 
-    // Constants
+    // Enhanced constants
     static constexpr uint32 ARCANE_BLAST_MAX_STACKS = 4;
-    static constexpr uint32 BURN_PHASE_DURATION = 15000; // 15 seconds
-    static constexpr uint32 CONSERVE_PHASE_DURATION = 30000; // 30 seconds
-    static constexpr float BURN_PHASE_MANA_THRESHOLD = 0.8f;
-    static constexpr float CONSERVE_PHASE_MANA_THRESHOLD = 0.4f;
-    static constexpr float MANA_GEM_THRESHOLD = 0.2f;
+    static constexpr uint32 OPTIMAL_BURN_DURATION = 12000; // 12 seconds optimal
+    static constexpr uint32 MAX_BURN_DURATION = 18000; // 18 seconds maximum
+    static constexpr uint32 MIN_CONSERVE_DURATION = 15000; // 15 seconds minimum
+    static constexpr float BURN_ENTRY_THRESHOLD = 0.85f; // 85% mana to start burn
+    static constexpr float BURN_EXIT_THRESHOLD = 0.25f; // 25% mana to exit burn
+    static constexpr float CONSERVE_EXIT_THRESHOLD = 0.80f; // 80% mana to exit conserve
+    static constexpr float MANA_GEM_THRESHOLD = 0.15f; // 15% mana for gem usage
+    static constexpr float ARCANE_ORB_EFFICIENCY = 1.2f; // Orb efficiency modifier
+    static constexpr uint32 ARCANE_CHARGE_DURATION = 10000; // 10 seconds
+    static constexpr float MISSILE_PROC_PRIORITY = 1.5f; // Clearcasting priority
+    static constexpr uint32 TIME_WARP_DURATION = 40000; // 40 seconds
 };
 
 } // namespace Playerbot
