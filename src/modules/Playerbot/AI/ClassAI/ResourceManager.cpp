@@ -79,21 +79,18 @@ bool ResourceManager::HasEnoughResource(uint32 spellId)
     if (!spellInfo)
         return false;
 
-    // Check each power type the spell might use
-    for (uint32 i = 0; i < MAX_SPELL_POWERS; ++i)
+    // Check the spell's power type
+    Powers powerType = spellInfo->GetPowerIndex();
+    if (powerType == POWER_UNKNOWN)
+        return true; // No resource cost
+
+    uint32 cost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+
+    if (cost > 0)
     {
-        if (spellInfo->PowerType != POWER_MANA && i > 0)
-            break; // Most spells only use one power type
-
-        Powers powerType = spellInfo->PowerType;
-        uint32 cost = spellInfo->ManaCost + spellInfo->ManaCostPercentage * _bot->GetMaxPower(powerType) / 100;
-
-        if (cost > 0)
-        {
-            ResourceType resourceType = GetResourceTypeForPower(powerType);
-            if (!HasEnoughResource(resourceType, cost))
-                return false;
-        }
+        ResourceType resourceType = GetResourceTypeForPower(powerType);
+        if (!HasEnoughResource(resourceType, cost))
+            return false;
     }
 
     return true;
