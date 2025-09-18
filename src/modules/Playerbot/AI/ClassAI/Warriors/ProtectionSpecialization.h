@@ -12,6 +12,10 @@
 #include "WarriorSpecialization.h"
 #include <map>
 #include <queue>
+#include <atomic>
+#include <chrono>
+#include <unordered_map>
+#include <mutex>
 
 namespace Playerbot
 {
@@ -173,17 +177,43 @@ private:
         SHIELD_BASH = 72
     };
 
-    // State tracking
-    uint32 _lastTaunt;
-    uint32 _lastShieldBlock;
-    uint32 _lastShieldWall;
-    uint32 _shieldBlockCharges;
-    bool _hasShieldEquipped;
+    // Enhanced state tracking
+    std::atomic<uint32> _lastTaunt{0};
+    std::atomic<uint32> _lastShieldBlock{0};
+    std::atomic<uint32> _lastShieldWall{0};
+    std::atomic<uint32> _shieldBlockCharges{0};
+    std::atomic<bool> _hasShieldEquipped{false};
+    std::atomic<bool> _revengeReady{false};
+    std::atomic<bool> _shieldSlamReady{false};
+    std::atomic<uint32> _devastateStacks{0};
+    std::atomic<bool> _inDefensiveStance{true};
+
+    // Performance metrics
+    struct ProtectionMetrics {
+        std::atomic<uint32> totalTaunts{0};
+        std::atomic<uint32> shieldSlamsLanded{0};
+        std::atomic<uint32> revengeProcs{0};
+        std::atomic<uint32> threatEvents{0};
+        std::atomic<uint32> emergencyActivations{0};
+        std::atomic<float> averageThreatGeneration{0.0f};
+        std::atomic<float> damageReduction{0.0f};
+        std::atomic<float> shieldBlockUptime{0.0f};
+        std::chrono::steady_clock::time_point combatStartTime;
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalTaunts = 0; shieldSlamsLanded = 0; revengeProcs = 0;
+            threatEvents = 0; emergencyActivations = 0;
+            averageThreatGeneration = 0.0f; damageReduction = 0.0f; shieldBlockUptime = 0.0f;
+            combatStartTime = std::chrono::steady_clock::now();
+            lastUpdate = combatStartTime;
+        }
+    } _protectionMetrics;
 
     // Threat tracking per target
-    std::map<uint64, float> _threatLevels;
-    std::map<uint64, uint32> _sunderArmorStacks;
+    std::unordered_map<uint64, float> _threatLevels;
+    std::unordered_map<uint64, uint32> _sunderArmorStacks;
     std::priority_queue<ThreatTarget> _threatQueue;
+    mutable std::shared_mutex _threatMutex;
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
@@ -198,13 +228,68 @@ private:
     // Multi-target tracking
     std::vector<uint64> _controlledTargets;
     std::vector<uint64> _looseTargets;
-    uint32 _lastTargetScan;
+    std::atomic<uint32> _lastTargetScan{0};
 
     // Emergency state
-    bool _emergencyMode;
-    uint32 _emergencyStartTime;
+    std::atomic<bool> _emergencyMode{false};
+    std::atomic<uint32> _emergencyStartTime{0};
 
-    // Constants
+    // Threat prediction system
+    struct ThreatPredictor {
+        std::unordered_map<uint64, std::queue<float>> threatHistory;
+        void RecordThreat(uint64 targetGuid, float threat) {
+            auto& history = threatHistory[targetGuid];
+            history.push(threat);
+            if (history.size() > 10) // Keep last 10 readings
+                history.pop();
+        }
+        float PredictThreatLoss(uint64 targetGuid) const {
+            auto it = threatHistory.find(targetGuid);
+            if (it == threatHistory.end() || it->second.size() < 3)
+                return 0.0f;
+            // Simple trend analysis
+            const auto& history = it->second;
+            auto temp = history;
+            float sum = 0.0f;
+            int count = 0;
+            while (!temp.empty() && count < 3) {
+                sum += temp.back();
+                temp.pop();
+                count++;
+            }
+            return sum / count;
+        }
+    } _threatPredictor;
+
+    // Advanced Protection mechanics
+    void OptimizeShieldBlock();
+    void ManageThreatRotation(::Unit* target);
+    void OptimizeDefensiveCooldowns();
+    void HandleTankSwap();
+    void OptimizePositionForTanking(::Unit* target);
+    void ExecuteEmergencyProtocol();
+    void HandleMultiTargetThreat();
+    void OptimizeRevengeTiming();
+    void ManageShieldMasteryStacks();
+    void OptimizeThreatGeneration(::Unit* target);
+    void HandleCriticalThreat(::Unit* target);
+    void OptimizeSunderArmorApplication();
+    void ManageDefensiveStanceOptimally();
+    void HandleGroupProtection();
+    void OptimizeTauntTiming();
+    void ManageThreatCapRotation();
+    void HandleSpellReflectionTiming();
+    void OptimizeShieldSlamTiming(::Unit* target);
+    void ManageAggroRadius();
+    float CalculateThreatPerSecond();
+    void PredictThreatLoss(::Unit* target);
+    void OptimizeResourceForTanking();
+    void HandleTankingRotationPriority(::Unit* target);
+    void ManageCrowdControlBreaking();
+    void OptimizeInterruptRotation(::Unit* target);
+    void HandleBossSpecificMechanics(::Unit* target);
+
+    // Enhanced constants
     static constexpr uint32 SUNDER_ARMOR_DURATION = 30000; // 30 seconds
     static constexpr uint32 MAX_SUNDER_STACKS = 5;
     static constexpr uint32 SHIELD_BLOCK_DURATION = 10000; // 10 seconds
@@ -214,6 +299,22 @@ private:
     static constexpr uint32 SHIELD_SLAM_RAGE_COST = 20;
     static constexpr uint32 REVENGE_RAGE_COST = 5;
     static constexpr uint32 DEVASTATE_RAGE_COST = 15;
+    static constexpr uint32 THUNDER_CLAP_RAGE_COST = 20;
+    static constexpr uint32 CONCUSSION_BLOW_RAGE_COST = 25;
+    static constexpr float OPTIMAL_THREAT_LEAD = 130.0f; // 30% threat lead
+    static constexpr float CRITICAL_THREAT_THRESHOLD = 90.0f;
+    static constexpr uint32 SHIELD_BLOCK_CHARGES = 2;
+    static constexpr uint32 MAX_TARGETS_FOR_AOE = 3;
+    static constexpr float TANK_POSITION_TOLERANCE = 2.0f;
+    static constexpr uint32 THREAT_UPDATE_INTERVAL = 500; // 0.5 seconds
+    static constexpr float SHIELD_SLAM_THREAT_MULTIPLIER = 1.75f;
+    static constexpr float REVENGE_THREAT_MULTIPLIER = 1.5f;
+    static constexpr float DEVASTATE_THREAT_MULTIPLIER = 1.0f;
+    static constexpr uint32 EMERGENCY_COOLDOWN_THRESHOLD = 3000; // 3 seconds
+    static constexpr float BOSS_THREAT_MULTIPLIER = 1.3f;
+    static constexpr uint32 SPELL_REFLECT_WINDOW = 2000; // 2 seconds
+    static constexpr float MULTI_TARGET_THREAT_THRESHOLD = 50.0f;
+    static constexpr uint32 TAUNT_MISS_RETRY_DELAY = 1500; // 1.5 seconds
 };
 
 } // namespace Playerbot

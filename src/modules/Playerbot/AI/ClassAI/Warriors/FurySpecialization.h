@@ -127,13 +127,81 @@ private:
         TITANS_GRIP = 46917
     };
 
-    // State tracking
-    bool _isEnraged;
+    // Enhanced state tracking
+    std::atomic<bool> _isEnraged{false};
     uint32 _enrageEndTime;
-    uint32 _flurryStacks;
-    bool _flurryProc;
+    std::atomic<uint32> _flurryStacks{0};
+    std::atomic<bool> _flurryProc{false};
+    std::atomic<uint32> _rampageStacks{0};
     uint32 _lastBerserkerRage;
     uint32 _lastBloodthirst;
+    uint32 _lastRampage;
+    uint32 _lastEnrageTrigger;
+    uint32 _enrageCount;
+    bool _bloodthirstCritReady;
+
+    // Performance metrics
+    struct FuryMetrics {
+        std::atomic<uint32> totalEnrageTime{0};
+        std::atomic<uint32> bloodthirstCrits{0};
+        std::atomic<uint32> rampageExecutions{0};
+        std::atomic<uint32> whirlwindHits{0};
+        std::atomic<float> averageEnrageUptime{0.0f};
+        std::atomic<float> dualWieldEfficiency{0.0f};
+        std::atomic<float> attackSpeedBonus{0.0f};
+        std::chrono::steady_clock::time_point combatStartTime;
+        std::chrono::steady_clock::time_point lastUpdate;
+        void Reset() {
+            totalEnrageTime = 0; bloodthirstCrits = 0; rampageExecutions = 0;
+            whirlwindHits = 0; averageEnrageUptime = 0.0f; dualWieldEfficiency = 0.0f;
+            attackSpeedBonus = 0.0f;
+            combatStartTime = std::chrono::steady_clock::now();
+            lastUpdate = combatStartTime;
+        }
+    } _furyMetrics;
+
+    // Rampage tracking system
+    struct RampageTracker {
+        std::queue<uint32> stackBuildTimes;
+        uint32 lastRampageTime{0};
+        uint32 totalStacks{0};
+        void AddStack() {
+            stackBuildTimes.push(getMSTime());
+            totalStacks++;
+            if (stackBuildTimes.size() > 5) // Max 5 stacks
+                stackBuildTimes.pop();
+        }
+        uint32 GetStackCount() const {
+            return static_cast<uint32>(stackBuildTimes.size());
+        }
+        bool HasMaxStacks() const {
+            return stackBuildTimes.size() >= 4; // 4 stacks for Rampage
+        }
+        void ConsumeStacks() {
+            while (!stackBuildTimes.empty())
+                stackBuildTimes.pop();
+            lastRampageTime = getMSTime();
+        }
+    } _rampageTracker;
+
+    // Advanced Fury mechanics
+    void OptimizeRampageStacks(::Unit* target);
+    void ManageEnrageUptime();
+    void OptimizeDualWieldAttackSpeed();
+    void HandleFuryProcs();
+    void OptimizeFuryRotation(::Unit* target);
+    void ExecuteEnragePhase(::Unit* target);
+    void HandleRampageMechanics(::Unit* target);
+    void OptimizeExecutePhaseFury(::Unit* target);
+    void ManageRageEfficiencyFury();
+    void OptimizeOffhandTiming();
+    void HandleDualWieldPenalties();
+    void MaximizeAttackSpeed();
+    float CalculateDualWieldEfficiency();
+    void OptimizeEnrageTiming();
+    void ExtendEnrageDuration();
+    void HandleEnrageProcs();
+    void ManageEnrageCooldowns();
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;
@@ -152,16 +220,26 @@ private:
     uint32 _lastRageOptimization;
     float _averageRageGeneration;
 
-    // Constants
-    static constexpr uint32 ENRAGE_DURATION = 8000; // 8 seconds
+    // Enhanced constants
+    static constexpr uint32 ENRAGE_DURATION = 4000; // 4 seconds base
+    static constexpr uint32 ENRAGE_EXTENDED_DURATION = 8000; // 8 seconds with talents
     static constexpr uint32 FLURRY_DURATION = 15000; // 15 seconds
     static constexpr uint32 MAX_FLURRY_STACKS = 3;
+    static constexpr uint32 RAMPAGE_STACK_REQUIREMENT = 4; // 4 stacks needed
+    static constexpr uint32 RAMPAGE_COOLDOWN = 1500; // 1.5 seconds
     static constexpr float EXECUTE_HEALTH_THRESHOLD = 20.0f;
     static constexpr uint32 BLOODTHIRST_RAGE_COST = 30;
     static constexpr uint32 RAMPAGE_RAGE_COST = 85;
-    static constexpr uint32 RAGING_BLOW_RAGE_COST = 25;
+    static constexpr uint32 RAGING_BLOW_RAGE_COST = 20;
+    static constexpr uint32 WHIRLWIND_RAGE_COST = 30;
     static constexpr float OPTIMAL_RAGE_THRESHOLD = 60.0f;
     static constexpr float RAGE_DUMP_THRESHOLD = 90.0f;
+    static constexpr float DUAL_WIELD_PENALTY = 0.19f; // 19% miss chance penalty
+    static constexpr float DUAL_WIELD_SPEED_BONUS = 0.5f; // 50% speed bonus
+    static constexpr float ENRAGE_DAMAGE_BONUS = 0.25f; // 25% damage bonus
+    static constexpr uint32 FURY_PROC_WINDOW = 6000; // 6 seconds
+    static constexpr float RAMPAGE_CRIT_BONUS = 0.1f; // 10% crit per stack
+    static constexpr uint32 MAX_RAMPAGE_STACKS = 5; // Maximum rampage stacks
 };
 
 } // namespace Playerbot
