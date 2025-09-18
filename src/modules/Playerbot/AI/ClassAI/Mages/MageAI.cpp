@@ -8,6 +8,9 @@
  */
 
 #include "MageAI.h"
+#include "ArcaneSpecialization.h"
+#include "FireSpecialization.h"
+#include "FrostSpecialization.h"
 #include "ActionPriority.h"
 #include "CooldownManager.h"
 #include "ResourceManager.h"
@@ -48,20 +51,20 @@ const std::unordered_map<uint32, MageSchool> MageAI::_spellSchools = {
 
 MageAI::MageAI(Player* bot) : ClassAI(bot), _manaSpent(0), _damageDealt(0),
     _spellsCast(0), _interruptedCasts(0), _lastPolymorph(0), _lastCounterspell(0),
-    _lastBlink(0), _arcaneCharges(0), _arcaneOrbCharges(0), _arcaneBlastStacks(0),
-    _lastArcanePower(0), _combustionStacks(0), _pyroblastProcs(0), _hotStreakAvailable(false),
-    _lastCombustion(0), _frostboltCounter(0), _icicleStacks(0), _frozenOrbCharges(0),
-    _lastIcyVeins(0), _wintersChill(false), _lastManaShield(0), _lastIceBarrier(0)
+    _lastBlink(0), _lastManaShield(0), _lastIceBarrier(0)
 {
-    _specialization = DetectSpecialization();
+    InitializeSpecialization();
     TC_LOG_DEBUG("playerbot.mage", "MageAI initialized for {} with specialization {}",
-                 GetBot()->GetName(), static_cast<uint32>(_specialization));
+                 GetBot()->GetName(), static_cast<uint32>(_currentSpec));
 }
 
 void MageAI::UpdateRotation(::Unit* target)
 {
     if (!target)
         return;
+
+    // Update specialization if needed
+    UpdateSpecialization();
 
     // Update positioning first
     UpdateMagePositioning();
@@ -73,19 +76,8 @@ void MageAI::UpdateRotation(::Unit* target)
     // Use crowd control if needed
     UseCrowdControl(target);
 
-    // Execute rotation based on specialization
-    switch (_specialization)
-    {
-        case MageSpec::ARCANE:
-            UpdateArcaneRotation(target);
-            break;
-        case MageSpec::FIRE:
-            UpdateFireRotation(target);
-            break;
-        case MageSpec::FROST:
-            UpdateFrostRotation(target);
-            break;
-    }
+    // Delegate to current specialization
+    DelegateToSpecialization(target);
 
     // Check for AoE opportunities
     std::vector<::Unit*> nearbyEnemies = GetNearbyEnemies(10.0f);

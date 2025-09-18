@@ -10,20 +10,19 @@
 #pragma once
 
 #include "ClassAI.h"
+#include "MageSpecialization.h"
 #include "Position.h"
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 namespace Playerbot
 {
 
-// Mage specializations
-enum class MageSpec : uint8
-{
-    ARCANE = 0,
-    FIRE = 1,
-    FROST = 2
-};
+// Forward declarations
+class ArcaneSpecialization;
+class FireSpecialization;
+class FrostSpecialization;
 
 // Mage schools for spell priorities
 enum class MageSchool : uint8
@@ -61,8 +60,11 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Mage-specific data
-    MageSpec _specialization;
+    // Specialization system
+    MageSpec _currentSpec;
+    std::unique_ptr<MageSpecialization> _specialization;
+
+    // Performance tracking
     uint32 _manaSpent;
     uint32 _damageDealt;
     uint32 _spellsCast;
@@ -71,35 +73,17 @@ private:
     uint32 _lastCounterspell;
     uint32 _lastBlink;
 
-    // Arcane specialization tracking
-    uint32 _arcaneCharges;
-    uint32 _arcaneOrbCharges;
-    uint32 _arcaneBlastStacks;
-    uint32 _lastArcanePower;
-
-    // Fire specialization tracking
-    uint32 _combustionStacks;
-    uint32 _pyroblastProcs;
-    bool _hotStreakAvailable;
-    uint32 _lastCombustion;
-
-    // Frost specialization tracking
-    uint32 _frostboltCounter;
-    uint32 _icicleStacks;
-    uint32 _frozenOrbCharges;
-    uint32 _lastIcyVeins;
-    bool _wintersChill;
-
-    // Crowd control and utility tracking
+    // Shared utility tracking
     std::unordered_map<ObjectGuid, uint32> _polymorphTargets;
     std::unordered_map<ObjectGuid, uint32> _slowTargets;
     uint32 _lastManaShield;
     uint32 _lastIceBarrier;
 
-    // Rotation methods by specialization
-    void UpdateArcaneRotation(::Unit* target);
-    void UpdateFireRotation(::Unit* target);
-    void UpdateFrostRotation(::Unit* target);
+    // Specialization management
+    void InitializeSpecialization();
+    void UpdateSpecialization();
+    MageSpec DetectCurrentSpecialization();
+    void SwitchSpecialization(MageSpec newSpec);
 
     // Mana management
     bool HasEnoughMana(uint32 amount);
@@ -163,18 +147,8 @@ private:
     bool ShouldInterrupt(::Unit* target);
     bool CanPolymorphSafely(::Unit* target);
 
-    // Specialization-specific mechanics
-    void ManageArcaneCharges();
-    void UpdateArcaneOrb();
-    void ManageArcaneBlast();
-
-    void ManageCombustion();
-    void UpdateHotStreak();
-    void ManagePyroblastProcs();
-
-    void ManageFrostbolt();
-    void UpdateIcicles();
-    void ManageWintersChill();
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
 
     // Spell effectiveness tracking
     void RecordSpellCast(uint32 spellId, ::Unit* target);
