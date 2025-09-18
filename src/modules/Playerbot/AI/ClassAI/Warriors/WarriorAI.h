@@ -10,28 +10,18 @@
 #pragma once
 
 #include "ClassAI.h"
+#include "WarriorSpecialization.h"
 #include "Position.h"
 #include <unordered_map>
+#include <memory>
 
 namespace Playerbot
 {
 
-// Warrior stances
-enum class WarriorStance : uint8
-{
-    NONE = 0,
-    BATTLE = 1,
-    DEFENSIVE = 2,
-    BERSERKER = 3
-};
-
-// Warrior specializations
-enum class WarriorSpec : uint8
-{
-    ARMS = 0,
-    FURY = 1,
-    PROTECTION = 2
-};
+// Forward declarations
+class ArmsSpecialization;
+class FurySpecialization;
+class ProtectionSpecialization;
 
 // Warrior AI implementation
 class TC_GAME_API WarriorAI : public ClassAI
@@ -60,101 +50,40 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Warrior-specific data
-    WarriorStance _currentStance;
-    WarriorSpec _specialization;
-    uint32 _lastStanceChange;
+    // Specialization system
+    WarriorSpec _currentSpec;
+    std::unique_ptr<WarriorSpecialization> _specialization;
+
+    // Performance tracking
     uint32 _rageSpent;
     uint32 _damageDealt;
+    uint32 _lastStanceChange;
 
-    // Ability tracking
+    // Shared utility tracking
     std::unordered_map<uint32, uint32> _abilityUsage;
     uint32 _lastBattleShout;
     uint32 _lastCommandingShout;
-
-    // Combat state
     bool _needsIntercept;
     bool _needsCharge;
     ::Unit* _lastChargeTarget;
     uint32 _lastChargeTime;
 
-    // Rotation methods by specialization
-    void UpdateArmsRotation(::Unit* target);
-    void UpdateFuryRotation(::Unit* target);
-    void UpdateProtectionRotation(::Unit* target);
+    // Specialization management
+    void InitializeSpecialization();
+    void UpdateSpecialization();
+    WarriorSpec DetectCurrentSpecialization();
+    void SwitchSpecialization(WarriorSpec newSpec);
 
-    // Stance management
-    void UpdateStance();
-    bool ShouldSwitchStance(WarriorStance newStance);
-    void SwitchStance(WarriorStance stance);
-    WarriorStance GetOptimalStanceForSituation();
+    // Delegation to specialization
+    void DelegateToSpecialization(::Unit* target);
 
-    // Buff management
+    // Shared warrior utilities
     void UpdateWarriorBuffs();
     void CastBattleShout();
     void CastCommandingShout();
-    void UpdateWeaponBuffs();
-
-    // Rage management
-    bool HasEnoughRage(uint32 amount);
-    uint32 GetRage();
-    uint32 GetMaxRage();
-    float GetRagePercent();
-    void OptimizeRageUsage();
-
-    // Combat abilities
     void UseChargeAbilities(::Unit* target);
-    void UseShockwave(::Unit* target);
-    void UseIntercept(::Unit* target);
-    void UseCharge(::Unit* target);
-    void UseHeroicLeap(::Unit* target);
-
-    // Defensive abilities
-    void UseDefensiveCooldowns();
-    void UseShieldWall();
-    void UseLastStand();
-    void UseShieldBlock();
-    void UseSpellReflection();
-
-    // Offensive abilities
-    void UseOffensiveCooldowns();
-    void UseRecklessness();
-    void UseBladestorm();
-    void UseAvatar();
-    void UseColossusSmash(::Unit* target);
-
-    // Utility abilities
-    void UseUtilityAbilities(::Unit* target);
-    void UsePummel(::Unit* target);
-    void UseDisarm(::Unit* target);
-    void UseSunderArmor(::Unit* target);
-
-    // Threat management (for Protection)
-    void ManageThreat();
-    void UseThunderClap();
-    void UseShoutThreat();
-    void UseTaunt(::Unit* target);
-
-    // Multi-target abilities
-    void UseAOEAbilities(const std::vector<::Unit*>& enemies);
-    void UseWhirlwind();
-    void UseCleave();
-
-    // Helper methods
     bool IsInMeleeRange(::Unit* target) const;
     bool CanCharge(::Unit* target) const;
-    bool CanIntercept(::Unit* target) const;
-    std::vector<::Unit*> GetNearbyEnemies(float range = 8.0f);
-    uint32 GetEnemyCount(float range = 8.0f);
-
-    // Specialization detection
-    WarriorSpec DetectSpecialization();
-    bool HasTalent(uint32 talentId);
-
-    // Stance utilities
-    bool IsInStance(WarriorStance stance);
-    uint32 GetStanceSpellId(WarriorStance stance);
-    bool CanUseInStance(uint32 spellId, WarriorStance stance);
 
     // Target evaluation
     bool IsValidTarget(::Unit* target);
