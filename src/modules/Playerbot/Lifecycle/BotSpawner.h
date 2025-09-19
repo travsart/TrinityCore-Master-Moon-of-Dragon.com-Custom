@@ -163,6 +163,9 @@ private:
     ObjectGuid SelectCharacterForSpawn(SpawnRequest const& request);
     std::vector<ObjectGuid> GetAvailableCharacters(uint32 accountId, SpawnRequest const& request);
 
+    // Character creation
+    ObjectGuid CreateBotCharacter(uint32 accountId);
+
     // Population calculations
     void CalculateZoneTargets();
     uint32 CalculateTargetBotCount(ZonePopulation const& zone) const;

@@ -15,12 +15,16 @@
 #include "BotAccountMgr.h"
 #include "PlayerbotConfig.h"
 #include "PlayerbotDatabase.h"
+#include "BotCharacterDistribution.h"
+#include "BotNameMgr.h"
 #include "Log.h"
 #include "World.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Random.h"
+#include "CharacterPackets.h"
+#include "DatabaseEnv.h"
 #include <algorithm>
 #include <chrono>
 
@@ -305,9 +309,55 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 {
     std::vector<ObjectGuid> availableCharacters;
 
-    // This would need to query the character database for characters on this account
-    // For now, return empty vector as placeholder
-    // TODO: Implement character database queries with filtering
+    // Query existing characters on this account
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    stmt->setUInt32(0, accountId);
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            ObjectGuid characterGuid(HighGuid::Player, fields[0].GetUInt64());
+            uint8 level = fields[1].GetUInt8();
+            uint8 race = fields[2].GetUInt8();
+            uint8 classId = fields[3].GetUInt8();
+
+            // Apply filters if specified
+            bool matches = true;
+            if (request.minLevel > 0 && level < request.minLevel) matches = false;
+            if (request.maxLevel > 0 && level > request.maxLevel) matches = false;
+            if (request.raceFilter > 0 && race != request.raceFilter) matches = false;
+            if (request.classFilter > 0 && classId != request.classFilter) matches = false;
+
+            if (matches)
+            {
+                availableCharacters.push_back(characterGuid);
+            }
+        } while (result->NextRow());
+    }
+
+    // If no characters found and AutoCreateCharacters is enabled, create one
+    if (availableCharacters.empty() && sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false))
+    {
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "No characters found for account {}, attempting to create new character", accountId);
+
+        ObjectGuid newCharacterGuid = CreateBotCharacter(accountId);
+        if (!newCharacterGuid.IsEmpty())
+        {
+            availableCharacters.push_back(newCharacterGuid);
+            TC_LOG_INFO("module.playerbot.spawner",
+                "Successfully created new bot character {} for account {}",
+                newCharacterGuid.ToString(), accountId);
+        }
+        else
+        {
+            TC_LOG_WARN("module.playerbot.spawner",
+                "Failed to create character for account {}", accountId);
+        }
+    }
 
     return availableCharacters;
 }
@@ -552,6 +602,126 @@ bool BotSpawner::DespawnBot(ObjectGuid guid, std::string const& reason)
 
     TC_LOG_INFO("module.playerbot.spawner", "Bot {} despawned successfully ({})", guid.ToString(), reason);
     return true;
+}
+
+ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
+{
+    TC_LOG_DEBUG("module.playerbot.spawner", "Creating new bot character for account {}", accountId);
+
+    try
+    {
+        // Get race/class distribution
+        auto [race, classId] = sBotCharacterDistribution->GetRandomRaceClassByDistribution();
+        if (race == RACE_NONE || classId == CLASS_NONE)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get valid race/class for bot character creation");
+            return ObjectGuid::Empty;
+        }
+
+        // Get gender (simplified - random between male/female)
+        uint8 gender = urand(0, 1) ? GENDER_MALE : GENDER_FEMALE;
+
+        // Get a unique name
+        std::string name = sBotNameMgr->AllocateName(gender, 0);
+        if (name.empty())
+        {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to allocate name for bot character creation");
+            return ObjectGuid::Empty;
+        }
+
+        // Create character info structure
+        auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+        createInfo->Name = name;
+        createInfo->Race = race;
+        createInfo->Class = classId;
+        createInfo->Sex = gender;
+
+        // Set default customizations (simplified - using basic appearance)
+        // These would normally be randomized based on the race
+        createInfo->Customizations.clear();
+
+        // Get the starting level from config
+        uint8 startLevel = sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
+
+        // Check if this race/class combination is valid
+        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(classId);
+        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
+
+        if (!classEntry || !raceEntry)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Invalid race ({}) or class ({}) for bot character creation", race, classId);
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
+        }
+
+        // Create a temporary session for character creation
+        std::shared_ptr<Player> newChar(new Player(nullptr), [](Player* ptr)
+        {
+            if (ptr)
+            {
+                ptr->CleanupsBeforeDelete();
+                delete ptr;
+            }
+        });
+
+        newChar->GetMotionMaster()->Initialize();
+
+        // Generate character GUID
+        ObjectGuid characterGuid = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
+
+        if (!newChar->Create(characterGuid, createInfo.get()))
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Failed to create Player object for bot character (Race: {}, Class: {})", race, classId);
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
+        }
+
+        // Set account ID
+        newChar->SetAccountId(accountId);
+
+        // Set starting level if different from 1
+        if (startLevel > 1)
+        {
+            newChar->SetLevel(startLevel);
+        }
+
+        newChar->setCinematic(1); // Skip intro cinematics for bots
+        newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
+
+        // Save to database
+        CharacterDatabaseTransaction characterTransaction = CharacterDatabase.BeginTransaction();
+        LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();
+
+        newChar->SaveToDB(loginTransaction, characterTransaction, true);
+
+        // Update character count for account
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_REP_REALM_CHARACTERS);
+        stmt->setUInt32(0, 1); // Increment by 1
+        stmt->setUInt32(1, accountId);
+        stmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
+        loginTransaction->Append(stmt);
+
+        // Commit transactions
+        CharacterDatabase.CommitTransaction(characterTransaction);
+        LoginDatabase.CommitTransaction(loginTransaction);
+
+        // Register name as used
+        sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
+
+        TC_LOG_INFO("module.playerbot.spawner",
+            "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",
+            name, characterGuid.ToString(), uint32(race), uint32(classId), uint32(startLevel), accountId);
+
+        return characterGuid;
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "Exception during bot character creation for account {}: {}", accountId, e.what());
+        return ObjectGuid::Empty;
+    }
 }
 
 } // namespace Playerbot
