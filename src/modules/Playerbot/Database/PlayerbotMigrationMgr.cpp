@@ -36,6 +36,35 @@ PlayerbotMigrationMgr::PlayerbotMigrationMgr()
     _currentVersion = "000";
 }
 
+std::string PlayerbotMigrationMgr::GetMigrationPath()
+{
+    // Try multiple paths in order of preference:
+    // 1. Current working directory (development)
+    // 2. Installed configuration directory (production)
+    // 3. Module source directory (fallback)
+
+    std::vector<std::string> searchPaths = {
+        "sql/migrations/",                               // Development path
+        "../etc/sql/migrations/",                        // Installed path relative to bin
+        "../../etc/sql/migrations/",                     // Alternative installed path
+        "src/modules/Playerbot/sql/migrations/",         // Source directory
+        "../src/modules/Playerbot/sql/migrations/"       // Alternative source directory
+    };
+
+    for (auto const& path : searchPaths)
+    {
+        if (std::filesystem::exists(path) && std::filesystem::is_directory(path))
+        {
+            TC_LOG_DEBUG("playerbots.migration", "Using migration path: {}", path);
+            return path;
+        }
+    }
+
+    // Fallback to default path
+    TC_LOG_WARN("playerbots.migration", "No migration directory found, using default: {}", MIGRATION_PATH);
+    return MIGRATION_PATH;
+}
+
 PlayerbotMigrationMgr* PlayerbotMigrationMgr::instance()
 {
     static PlayerbotMigrationMgr instance;
@@ -154,7 +183,7 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
 
 bool PlayerbotMigrationMgr::LoadMigrationFiles()
 {
-    std::filesystem::path migrationDir = std::filesystem::path(MIGRATION_PATH);
+    std::filesystem::path migrationDir = std::filesystem::path(GetMigrationPath());
 
     if (!std::filesystem::exists(migrationDir))
     {
@@ -254,7 +283,7 @@ bool PlayerbotMigrationMgr::ApplyMigrations()
     _discoveredMigrations = DiscoverMigrationFiles();
     if (_discoveredMigrations.empty())
     {
-        TC_LOG_INFO("playerbots.migration", "No migration files found in {}", MIGRATION_PATH);
+        TC_LOG_INFO("playerbots.migration", "No migration files found in {}", GetMigrationPath());
         return true;
     }
 
@@ -668,7 +697,7 @@ bool PlayerbotMigrationMgr::ApplyInitialSchema()
 {
     TC_LOG_INFO("playerbots.migration", "Applying initial schema from SQL file...");
 
-    std::string sqlFile = std::string(MIGRATION_PATH) + "001_initial_schema.sql";
+    std::string sqlFile = GetMigrationPath() + "001_initial_schema.sql";
     if (!ExecuteSQLFile(sqlFile))
     {
         TC_LOG_ERROR("playerbots.migration", "Failed to execute initial schema SQL file: {}", sqlFile);
@@ -701,7 +730,7 @@ bool PlayerbotMigrationMgr::ApplyAccountEnhancements()
 {
     TC_LOG_INFO("playerbots.migration", "Applying account management enhancements from SQL file...");
 
-    std::string sqlFile = std::string(MIGRATION_PATH) + "002_account_management.sql";
+    std::string sqlFile = GetMigrationPath() + "002_account_management.sql";
     if (!ExecuteSQLFile(sqlFile))
     {
         TC_LOG_ERROR("playerbots.migration", "Failed to execute account management SQL file: {}", sqlFile);
@@ -723,7 +752,7 @@ bool PlayerbotMigrationMgr::ApplyLifecycleManagement()
 {
     TC_LOG_INFO("playerbots.migration", "Applying lifecycle management system from SQL file...");
 
-    std::string sqlFile = std::string(MIGRATION_PATH) + "003_lifecycle_management.sql";
+    std::string sqlFile = GetMigrationPath() + "003_lifecycle_management.sql";
     if (!ExecuteSQLFile(sqlFile))
     {
         TC_LOG_ERROR("playerbots.migration", "Failed to execute lifecycle management SQL file: {}", sqlFile);
@@ -745,7 +774,7 @@ bool PlayerbotMigrationMgr::ApplyCharacterDistribution()
 {
     TC_LOG_INFO("playerbots.migration", "Applying character distribution system from SQL file...");
 
-    std::string sqlFile = std::string(MIGRATION_PATH) + "004_character_distribution.sql";
+    std::string sqlFile = GetMigrationPath() + "004_character_distribution.sql";
     if (!ExecuteSQLFile(sqlFile))
     {
         TC_LOG_ERROR("playerbots.migration", "Failed to execute character distribution SQL file: {}", sqlFile);
@@ -773,12 +802,13 @@ std::vector<PlayerbotMigrationMgr::MigrationFile> PlayerbotMigrationMgr::Discove
 
     try
     {
-        std::filesystem::path migrationDir(MIGRATION_PATH);
+        std::string migrationPath = GetMigrationPath();
+        std::filesystem::path migrationDir(migrationPath);
 
         // Check if migration directory exists
         if (!std::filesystem::exists(migrationDir) || !std::filesystem::is_directory(migrationDir))
         {
-            TC_LOG_WARN("playerbots.migration", "Migration directory {} does not exist", MIGRATION_PATH);
+            TC_LOG_WARN("playerbots.migration", "Migration directory {} does not exist", migrationPath);
             return migrations;
         }
 
@@ -815,7 +845,7 @@ std::vector<PlayerbotMigrationMgr::MigrationFile> PlayerbotMigrationMgr::Discove
             return CompareVersions(a.version, b.version) < 0;
         });
 
-        TC_LOG_INFO("playerbots.migration", "Discovered {} migration files in {}", migrations.size(), MIGRATION_PATH);
+        TC_LOG_INFO("playerbots.migration", "Discovered {} migration files in {}", migrations.size(), migrationPath);
     }
     catch (std::filesystem::filesystem_error const& ex)
     {

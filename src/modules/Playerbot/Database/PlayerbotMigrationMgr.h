@@ -130,10 +130,13 @@ private:
     std::string _currentVersion;
     bool _initialized = false;
 
-    // Migration file paths
+    // Migration file paths - will be resolved at runtime
     static constexpr char const* MIGRATION_PATH = "sql/migrations/";
     static constexpr char const* BACKUP_PATH = "sql/backups/";
     static constexpr char const* MIGRATION_TABLE = "playerbot_migrations";
+
+    // Helper method to get migration directory path
+    static std::string GetMigrationPath();
 
     // File storage for discovered migrations
     std::vector<MigrationFile> _discoveredMigrations;

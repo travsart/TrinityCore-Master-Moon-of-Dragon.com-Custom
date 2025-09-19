@@ -293,9 +293,29 @@ if(CONF_DIR)
     install(FILES conf/playerbots.conf.dist DESTINATION ${CONF_DIR}/modules)
 endif()
 
-# Install SQL files
+# Install SQL migration files and structure
+if(CONF_DIR)
+    # Create sql/migrations directory in installation
+    install(DIRECTORY DESTINATION ${CONF_DIR}/sql)
+    install(DIRECTORY DESTINATION ${CONF_DIR}/sql/migrations)
+
+    # Install all migration files
+    install(FILES
+        sql/migrations/001_initial_schema.sql
+        sql/migrations/002_account_management.sql
+        sql/migrations/003_lifecycle_management.sql
+        sql/migrations/004_character_distribution.sql
+        sql/migrations/005_initial_data.sql
+        sql/migrations/006_bot_names.sql
+        DESTINATION ${CONF_DIR}/sql/migrations
+    )
+
+    message(STATUS "Playerbot migration files will be installed to: ${CONF_DIR}/sql/migrations/")
+endif()
+
+# Legacy SQL installation (deprecated - keeping for compatibility)
 if(SQL_DIR)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/sql/playerbot/ DESTINATION ${SQL_DIR}/playerbot)
+    install(DIRECTORY sql/ DESTINATION ${SQL_DIR}/playerbot)
 endif()
 
 # Add to game library dependencies
