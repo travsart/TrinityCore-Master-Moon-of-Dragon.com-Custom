@@ -20,6 +20,7 @@
 #include "PlayerbotConfig.h"
 #include "Log.h"
 #include "Util.h"
+#include "StringFormat.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -267,12 +268,12 @@ void PlayerbotConfig::SetupPlayerbotLogging(int32 logLevel, std::string const& l
     // Create playerbot-specific file appender
     // Format: Type,Level,Flags,File
     // Type 2 = File appender, Flags 1 = Include timestamp
-    std::string appenderConfig = Trinity::StringFormat("2,%d,1,%s", logLevel, logFile.c_str());
+    std::string appenderConfig = Trinity::StringFormat("2,{},1,{}", logLevel, logFile);
     sLog->CreateAppenderFromConfigLine("Appender.Playerbot", appenderConfig);
 
     // Create main playerbot logger
     // Format: Level,Appender1 Appender2 ...
-    std::string loggerConfig = Trinity::StringFormat("%d,Console Playerbot", logLevel);
+    std::string loggerConfig = Trinity::StringFormat("{},Console Playerbot", logLevel);
     sLog->CreateLoggerFromConfigLine("Logger.module.playerbot", loggerConfig);
 
     // Create specialized sub-loggers
@@ -287,7 +288,7 @@ void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
     if (GetBool("Playerbot.Log.AIDecisions", false))
     {
         int32 aiLogLevel = std::max(baseLevel, 4); // Force debug level for AI decisions
-        std::string aiLoggerConfig = Trinity::StringFormat("%d,Playerbot", aiLogLevel);
+        std::string aiLoggerConfig = Trinity::StringFormat("{},Playerbot", aiLogLevel);
         sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.ai", aiLoggerConfig);
         TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created AI decision logger (level {})", aiLogLevel);
     }
@@ -295,7 +296,7 @@ void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
     // Performance metrics logging
     if (GetBool("Playerbot.Log.PerformanceMetrics", false))
     {
-        std::string perfLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+        std::string perfLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
         sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.performance", perfLoggerConfig);
         TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created performance metrics logger");
     }
@@ -304,7 +305,7 @@ void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
     if (GetBool("Playerbot.Log.DatabaseQueries", false))
     {
         int32 dbLogLevel = std::max(baseLevel, 4); // Force debug level for database queries
-        std::string dbLoggerConfig = Trinity::StringFormat("%d,Playerbot", dbLogLevel);
+        std::string dbLoggerConfig = Trinity::StringFormat("{},Playerbot", dbLogLevel);
         sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.database", dbLoggerConfig);
         TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created database query logger (level {})", dbLogLevel);
     }
@@ -313,17 +314,17 @@ void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
     if (GetBool("Playerbot.Log.CharacterActions", false))
     {
         int32 charLogLevel = std::max(baseLevel, 4); // Force debug level for character actions
-        std::string charLoggerConfig = Trinity::StringFormat("%d,Playerbot", charLogLevel);
+        std::string charLoggerConfig = Trinity::StringFormat("{},Playerbot", charLogLevel);
         sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.character", charLoggerConfig);
         TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created character action logger (level {})", charLogLevel);
     }
 
     // Account management logging
-    std::string accountLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+    std::string accountLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
     sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.account", accountLoggerConfig);
 
     // Name management logging
-    std::string nameLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+    std::string nameLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
     sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.names", nameLoggerConfig);
 
     TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created {} specialized loggers",
