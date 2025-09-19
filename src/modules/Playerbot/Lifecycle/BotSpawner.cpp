@@ -324,7 +324,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
         do
         {
             Field* fields = result->Fetch();
-            ObjectGuid characterGuid(HighGuid::Player, fields[0].GetUInt64());
+            ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64());
 
             // TODO: Add level/race/class filtering when we have a proper query
             // For now, accept all characters on the account
@@ -616,7 +616,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         uint8 gender = urand(0, 1) ? GENDER_MALE : GENDER_FEMALE;
 
         // Generate character GUID first
-        ObjectGuid characterGuid = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
+        ObjectGuid::LowType guidLow = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
+        ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
 
         // Get a unique name with the proper GUID
         std::string name = sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
@@ -673,7 +674,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         newChar->GetMotionMaster()->Initialize();
 
-        if (!newChar->Create(characterGuid, createInfo.get()))
+        if (!newChar->Create(guidLow, createInfo.get()))
         {
             TC_LOG_ERROR("module.playerbot.spawner",
                 "Failed to create Player object for bot character (Race: {}, Class: {})", race, classId);
