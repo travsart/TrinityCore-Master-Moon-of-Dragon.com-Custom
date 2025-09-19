@@ -233,7 +233,7 @@ DELETE FROM `playerbots_names`;
 
 -- Insert a basic set of names for initial testing
 -- In production, this would be much larger (thousands of names)
-INSERT INTO `playerbots_names` (`name`, `gender`, `race_mask`) VALUES
+INSERT ignore INTO `playerbots_names` (`name`, `gender`, `race_mask`) VALUES
 -- Male names (gender = 0)
 ('Theron', 0, 0), ('Anduin', 0, 1), ('Varian', 0, 1), ('Arthas', 0, 1), ('Tyrande', 0, 0),
 ('Thrall', 0, 2), ('Garrosh', 0, 2), ('Gromash', 0, 2), ('Durotan', 0, 2), ('Orgrim', 0, 2),

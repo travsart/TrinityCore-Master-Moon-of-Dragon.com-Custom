@@ -9,6 +9,7 @@
 
 #include "PlayerbotMigrationMgr.h"
 #include "PlayerbotDatabaseStatements.h"
+#include "PlayerbotDatabase.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "Timer.h"
@@ -17,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <regex>
 #include <chrono>
 
 // Define migration sequence
@@ -24,8 +26,15 @@ std::vector<std::string> const PlayerbotMigrationMgr::MIGRATION_SEQUENCE =
 {
     "001",  // Initial schema
     "002",  // Account management
-    "003"   // Lifecycle management
+    "003",  // Lifecycle management
+    "004"   // Character distribution
 };
+
+PlayerbotMigrationMgr::PlayerbotMigrationMgr()
+{
+    _initialized = false;
+    _currentVersion = "000";
+}
 
 PlayerbotMigrationMgr* PlayerbotMigrationMgr::instance()
 {
@@ -54,6 +63,9 @@ bool PlayerbotMigrationMgr::Initialize()
         return false;
     }
 
+    // Register built-in migrations
+    RegisterBuiltInMigrations();
+
     // Load migration files from filesystem
     if (!LoadMigrationFiles())
     {
@@ -71,20 +83,21 @@ bool PlayerbotMigrationMgr::Initialize()
     _currentVersion = GetCurrentVersion();
 
     _initialized = true;
-    TC_LOG_INFO("playerbots.migration", "Migration Manager initialized. Current version: {}", _currentVersion);
+    TC_LOG_INFO("playerbots.migration", "Migration Manager initialized successfully. Current version: {}", _currentVersion);
 
     return true;
 }
 
 bool PlayerbotMigrationMgr::CreateMigrationTable()
 {
+    // Create migration table only if it doesn't exist (don't drop existing data!)
     std::string createTableSQL = R"(
         CREATE TABLE IF NOT EXISTS `)" + std::string(MIGRATION_TABLE) + R"(` (
             `version` VARCHAR(20) NOT NULL,
             `description` VARCHAR(255) NOT NULL,
             `applied_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             `checksum` VARCHAR(64) NULL,
-            `execution_time_ms` INT UNSIGNED NULL,
+            `execution_time_ms` INT UNSIGNED NULL DEFAULT 0,
             PRIMARY KEY (`version`),
             INDEX `idx_applied` (`applied_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -98,7 +111,7 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
 {
     std::string query = "SELECT version, description, checksum, execution_time_ms FROM " + std::string(MIGRATION_TABLE) + " ORDER BY applied_at";
 
-    QueryResult result = CharacterDatabase.Query(query.c_str());
+    QueryResult result = sPlayerbotDatabase->Query(query);
     if (!result)
         return true; // No migrations applied yet, which is valid
 
@@ -111,6 +124,12 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
         std::string description = fields[1].GetString();
         std::string checksum = fields[2].GetString();
         uint32 executionTime = fields[3].GetUInt32();
+
+        // Skip empty or invalid migration records
+        if (version.empty()) {
+            TC_LOG_WARN("playerbots.migration", "Skipping empty migration version");
+            continue;
+        }
 
         _appliedMigrations.push_back(version);
 
@@ -231,51 +250,83 @@ bool PlayerbotMigrationMgr::ApplyMigrations()
     if (!_initialized && !Initialize())
         return false;
 
-    std::vector<std::string> pendingMigrations = GetPendingMigrations();
+    // Discover all migration files (TrinityCore pattern)
+    _discoveredMigrations = DiscoverMigrationFiles();
+    if (_discoveredMigrations.empty())
+    {
+        TC_LOG_INFO("playerbots.migration", "No migration files found in {}", MIGRATION_PATH);
+        return true;
+    }
 
-    if (pendingMigrations.empty())
+    // Count pending migrations
+    size_t pendingCount = 0;
+    for (auto const& migration : _discoveredMigrations)
+    {
+        if (!migration.isApplied)
+            ++pendingCount;
+    }
+
+    if (pendingCount == 0)
     {
         TC_LOG_INFO("playerbots.migration", "No pending migrations to apply");
         return true;
     }
 
-    TC_LOG_INFO("playerbots.migration", "Applying {} pending migrations", pendingMigrations.size());
+    TC_LOG_INFO("playerbots.migration", "Applying {} pending migrations (discovered {} total files)", pendingCount, _discoveredMigrations.size());
 
-    bool success = true;
-    for (std::string const& version : pendingMigrations)
+    // Apply pending migrations in order
+    for (auto const& migration : _discoveredMigrations)
     {
-        if (!ApplyMigration(version))
+        if (!migration.isApplied)
         {
-            MIGRATION_LOG_ERROR(version, "Failed to apply migration");
-            success = false;
-            break; // Stop on first failure
+            if (!ApplyMigrationFile(migration))
+            {
+                TC_LOG_ERROR("playerbots.migration", "Failed to apply migration file {}", migration.filename);
+                return false;
+            }
         }
     }
 
-    return success;
+    TC_LOG_INFO("playerbots.migration", "All pending migrations applied successfully");
+    return true;
 }
 
 bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
 {
+    printf("[DEBUG] ApplyMigration() called for version: %s\n", version.c_str());
+    fflush(stdout);
+
     if (!_initialized)
+    {
+        printf("[DEBUG] Migration manager not initialized!\n");
+        fflush(stdout);
         return false;
+    }
 
     if (IsMigrationApplied(version))
     {
         MIGRATION_LOG_WARN(version, "Migration already applied");
+        printf("[DEBUG] Migration %s already applied\n", version.c_str());
+        fflush(stdout);
         return true;
     }
 
+    printf("[DEBUG] Looking up migration %s in registry\n", version.c_str());
+    fflush(stdout);
     auto it = _migrations.find(version);
     if (it == _migrations.end())
     {
         MIGRATION_LOG_ERROR(version, "Migration not registered");
+        printf("[DEBUG] Migration %s not registered!\n", version.c_str());
+        fflush(stdout);
         return false;
     }
 
     MigrationInfo& migration = it->second;
 
     MIGRATION_LOG_INFO(version, "Applying migration: {}", migration.description);
+    printf("[DEBUG] Starting to apply migration %s: %s\n", version.c_str(), migration.description.c_str());
+    fflush(stdout);
 
     auto startTime = std::chrono::high_resolution_clock::now();
     bool success = false;
@@ -283,19 +334,27 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
     // Try to execute registered function first
     if (migration.upgradeFunction)
     {
+        printf("[DEBUG] Migration %s has upgrade function, calling it now...\n", version.c_str());
+        fflush(stdout);
         try
         {
             success = migration.upgradeFunction();
+            printf("[DEBUG] Migration %s upgrade function completed with result: %s\n", version.c_str(), success ? "SUCCESS" : "FAILURE");
+            fflush(stdout);
         }
         catch (std::exception const& ex)
         {
             MIGRATION_LOG_ERROR(version, "Exception during migration function: {}", ex.what());
+            printf("[DEBUG] EXCEPTION in migration %s: %s\n", version.c_str(), ex.what());
+            fflush(stdout);
             success = false;
         }
     }
     // Otherwise try to execute SQL file
     else if (!migration.filename.empty())
     {
+        printf("[DEBUG] Migration %s has SQL file, executing it\n", version.c_str());
+        fflush(stdout);
         success = ExecuteSQLFile(migration.filename);
     }
     else
@@ -309,12 +368,18 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
 
     if (success)
     {
+        printf("[DEBUG] Migration %s succeeded, recording in database...\n", version.c_str());
+        fflush(stdout);
         // Record successful migration
         if (!RecordMigration(version, migration.description, executionTime, migration.checksum))
         {
             MIGRATION_LOG_ERROR(version, "Failed to record migration in database");
+            printf("[DEBUG] FAILED to record migration %s in database\n", version.c_str());
+            fflush(stdout);
             return false;
         }
+        printf("[DEBUG] Migration %s recorded successfully\n", version.c_str());
+        fflush(stdout);
 
         migration.isApplied = true;
         migration.executionTimeMs = executionTime;
@@ -325,6 +390,8 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
             _currentVersion = version;
 
         LogMigrationSuccess(version, executionTime);
+        printf("[DEBUG] Migration %s completed successfully, returning true\n", version.c_str());
+        fflush(stdout);
     }
     else
     {
@@ -385,7 +452,7 @@ bool PlayerbotMigrationMgr::ExecuteSQLStatement(std::string const& sql)
 {
     try
     {
-        CharacterDatabase.Execute(sql.c_str());
+        sPlayerbotDatabase->Execute(sql);
         return true;
     }
     catch (std::exception const& ex)
@@ -406,14 +473,32 @@ bool PlayerbotMigrationMgr::RecordMigration(std::string const& version, std::str
 
 std::vector<std::string> PlayerbotMigrationMgr::GetPendingMigrations()
 {
+    printf("[DEBUG] GetPendingMigrations() called\n");
+    fflush(stdout);
     std::vector<std::string> pending;
+
+    printf("[DEBUG] MIGRATION_SEQUENCE size: %zu\n", MIGRATION_SEQUENCE.size());
+    fflush(stdout);
 
     for (std::string const& version : MIGRATION_SEQUENCE)
     {
+        printf("[DEBUG] Checking migration version: %s\n", version.c_str());
+        fflush(stdout);
         if (!IsMigrationApplied(version))
+        {
+            printf("[DEBUG] Migration %s is pending\n", version.c_str());
+            fflush(stdout);
             pending.push_back(version);
+        }
+        else
+        {
+            printf("[DEBUG] Migration %s is already applied\n", version.c_str());
+            fflush(stdout);
+        }
     }
 
+    printf("[DEBUG] GetPendingMigrations() returning %zu pending migrations\n", pending.size());
+    fflush(stdout);
     return pending;
 }
 
@@ -429,13 +514,26 @@ bool PlayerbotMigrationMgr::IsMigrationApplied(std::string const& version)
 
 int PlayerbotMigrationMgr::CompareVersions(std::string const& version1, std::string const& version2)
 {
-    // Simple numeric comparison for versions like "001", "002", "003"
-    int v1 = std::stoi(version1);
-    int v2 = std::stoi(version2);
+    // Handle empty versions (treat as "000")
+    if (version1.empty() && version2.empty()) return 0;
+    if (version1.empty()) return -1;  // Empty comes before any version
+    if (version2.empty()) return 1;   // Any version comes after empty
 
-    if (v1 < v2) return -1;
-    if (v1 > v2) return 1;
-    return 0;
+    try {
+        // Simple numeric comparison for versions like "001", "002", "003"
+        int v1 = std::stoi(version1);
+        int v2 = std::stoi(version2);
+
+        if (v1 < v2) return -1;
+        if (v1 > v2) return 1;
+        return 0;
+    }
+    catch (std::exception const& e) {
+        printf("[DEBUG] ERROR in CompareVersions: v1='%s', v2='%s', exception: %s\n", version1.c_str(), version2.c_str(), e.what());
+        fflush(stdout);
+        // Fallback to string comparison if numeric conversion fails
+        return version1.compare(version2);
+    }
 }
 
 std::string PlayerbotMigrationMgr::CalculateFileChecksum(std::string const& filepath)
@@ -501,4 +599,293 @@ void PlayerbotMigrationMgr::PrintMigrationStatus()
         }
         TC_LOG_INFO("playerbots.migration", "Pending migrations: {}", pendingList);
     }
+}
+
+void PlayerbotMigrationMgr::RegisterBuiltInMigrations()
+{
+    TC_LOG_INFO("playerbots.migration", "Registering built-in migrations...");
+
+    // Migration 001: Initial schema - create all basic tables
+    {
+        MigrationInfo migration;
+        migration.version = "001";
+        migration.description = "Initial Playerbot schema - create core tables";
+        migration.upgradeFunction = [this]() -> bool {
+            return ApplyInitialSchema();
+        };
+        migration.downgradeFunction = [this]() -> bool {
+            return DropAllTables();
+        };
+        RegisterMigration(migration);
+    }
+
+    // Migration 002: Account management enhancements
+    {
+        MigrationInfo migration;
+        migration.version = "002";
+        migration.description = "Account management system enhancements";
+        migration.upgradeFunction = [this]() -> bool {
+            return ApplyAccountEnhancements();
+        };
+        migration.downgradeFunction = [this]() -> bool {
+            return DropAccountEnhancements();
+        };
+        RegisterMigration(migration);
+    }
+
+    // Migration 003: Lifecycle management
+    {
+        MigrationInfo migration;
+        migration.version = "003";
+        migration.description = "Bot lifecycle management system";
+        migration.upgradeFunction = [this]() -> bool {
+            return ApplyLifecycleManagement();
+        };
+        migration.downgradeFunction = [this]() -> bool {
+            return DropLifecycleManagement();
+        };
+        RegisterMigration(migration);
+    }
+
+    // Migration 004: Character distribution
+    {
+        MigrationInfo migration;
+        migration.version = "004";
+        migration.description = "Character distribution system";
+        migration.upgradeFunction = [this]() -> bool {
+            return ApplyCharacterDistribution();
+        };
+        migration.downgradeFunction = [this]() -> bool {
+            return DropCharacterDistribution();
+        };
+        RegisterMigration(migration);
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Registered {} built-in migrations", _migrations.size());
+}
+
+bool PlayerbotMigrationMgr::ApplyInitialSchema()
+{
+    TC_LOG_INFO("playerbots.migration", "Applying initial schema from SQL file...");
+
+    std::string sqlFile = std::string(MIGRATION_PATH) + "001_initial_schema.sql";
+    if (!ExecuteSQLFile(sqlFile))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to execute initial schema SQL file: {}", sqlFile);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Initial schema applied successfully from SQL file");
+    return true;
+}
+
+bool PlayerbotMigrationMgr::DropAllTables()
+{
+    TC_LOG_INFO("playerbots.migration", "Dropping all playerbot tables...");
+
+    std::vector<std::string> dropStatements = {
+        "DROP TABLE IF EXISTS `playerbots_names_used`",
+        "DROP TABLE IF EXISTS `playerbots_names`",
+        "DROP TABLE IF EXISTS `playerbot_activity_patterns`"
+    };
+
+    for (const auto& sql : dropStatements)
+    {
+        ExecuteSQLStatement(sql); // Don't fail on drop errors
+    }
+
+    return true;
+}
+
+bool PlayerbotMigrationMgr::ApplyAccountEnhancements()
+{
+    TC_LOG_INFO("playerbots.migration", "Applying account management enhancements from SQL file...");
+
+    std::string sqlFile = std::string(MIGRATION_PATH) + "002_account_management.sql";
+    if (!ExecuteSQLFile(sqlFile))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to execute account management SQL file: {}", sqlFile);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Account management enhancement migration completed successfully");
+    return true;
+}
+
+bool PlayerbotMigrationMgr::DropAccountEnhancements()
+{
+    TC_LOG_INFO("playerbots.migration", "Dropping account management enhancements...");
+    // Placeholder for future rollback
+    return true;
+}
+
+bool PlayerbotMigrationMgr::ApplyLifecycleManagement()
+{
+    TC_LOG_INFO("playerbots.migration", "Applying lifecycle management system from SQL file...");
+
+    std::string sqlFile = std::string(MIGRATION_PATH) + "003_lifecycle_management.sql";
+    if (!ExecuteSQLFile(sqlFile))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to execute lifecycle management SQL file: {}", sqlFile);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Lifecycle management system migration completed successfully");
+    return true;
+}
+
+bool PlayerbotMigrationMgr::DropLifecycleManagement()
+{
+    TC_LOG_INFO("playerbots.migration", "Dropping lifecycle management system...");
+    // Placeholder for future rollback
+    return true;
+}
+
+bool PlayerbotMigrationMgr::ApplyCharacterDistribution()
+{
+    TC_LOG_INFO("playerbots.migration", "Applying character distribution system from SQL file...");
+
+    std::string sqlFile = std::string(MIGRATION_PATH) + "004_character_distribution.sql";
+    if (!ExecuteSQLFile(sqlFile))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to execute character distribution SQL file: {}", sqlFile);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Character distribution system migration completed successfully");
+    return true;
+}
+
+bool PlayerbotMigrationMgr::DropCharacterDistribution()
+{
+    TC_LOG_INFO("playerbots.migration", "Dropping character distribution system...");
+    // Placeholder for future rollback
+    return true;
+}
+
+// ============================================================================
+// File-based Migration Discovery (TrinityCore Pattern)
+// ============================================================================
+
+std::vector<PlayerbotMigrationMgr::MigrationFile> PlayerbotMigrationMgr::DiscoverMigrationFiles()
+{
+    std::vector<MigrationFile> migrations;
+
+    try
+    {
+        std::filesystem::path migrationDir(MIGRATION_PATH);
+
+        // Check if migration directory exists
+        if (!std::filesystem::exists(migrationDir) || !std::filesystem::is_directory(migrationDir))
+        {
+            TC_LOG_WARN("playerbots.migration", "Migration directory {} does not exist", MIGRATION_PATH);
+            return migrations;
+        }
+
+        // Scan directory for .sql files
+        for (auto const& entry : std::filesystem::directory_iterator(migrationDir))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".sql")
+            {
+                std::string filename = entry.path().filename().string();
+                std::string version = ExtractVersionFromFilename(filename);
+
+                if (version.empty())
+                {
+                    TC_LOG_WARN("playerbots.migration", "Skipping file {} - could not extract version number", filename);
+                    continue;
+                }
+
+                MigrationFile migration;
+                migration.filename = filename;
+                migration.fullPath = entry.path().string();
+                migration.version = version;
+                migration.description = ExtractDescriptionFromFilename(filename);
+                migration.isApplied = IsMigrationApplied(version);
+
+                migrations.push_back(migration);
+
+                TC_LOG_DEBUG("playerbots.migration", "Discovered migration file: {} (version: {}, applied: {})",
+                    filename, version, migration.isApplied ? "yes" : "no");
+            }
+        }
+
+        // Sort by version number for proper order
+        std::sort(migrations.begin(), migrations.end(), [this](MigrationFile const& a, MigrationFile const& b) {
+            return CompareVersions(a.version, b.version) < 0;
+        });
+
+        TC_LOG_INFO("playerbots.migration", "Discovered {} migration files in {}", migrations.size(), MIGRATION_PATH);
+    }
+    catch (std::filesystem::filesystem_error const& ex)
+    {
+        TC_LOG_ERROR("playerbots.migration", "Filesystem error while discovering migration files: {}", ex.what());
+    }
+
+    return migrations;
+}
+
+std::string PlayerbotMigrationMgr::ExtractVersionFromFilename(std::string const& filename)
+{
+    // Pattern: XXX_description.sql (e.g., "001_initial_schema.sql" -> "001")
+    std::regex versionRegex(R"(^(\d{3})_.*\.sql$)");
+    std::smatch match;
+
+    if (std::regex_match(filename, match, versionRegex))
+    {
+        return match[1].str();
+    }
+
+    return "";
+}
+
+std::string PlayerbotMigrationMgr::ExtractDescriptionFromFilename(std::string const& filename)
+{
+    // Pattern: XXX_description.sql (e.g., "001_initial_schema.sql" -> "Initial schema")
+    std::regex descRegex(R"(^\d{3}_(.*)\.sql$)");
+    std::smatch match;
+
+    if (std::regex_match(filename, match, descRegex))
+    {
+        std::string desc = match[1].str();
+        // Replace underscores with spaces and capitalize
+        std::replace(desc.begin(), desc.end(), '_', ' ');
+        if (!desc.empty())
+            desc[0] = std::toupper(desc[0]);
+        return desc;
+    }
+
+    return "Unknown migration";
+}
+
+bool PlayerbotMigrationMgr::ApplyMigrationFile(MigrationFile const& migration)
+{
+    TC_LOG_INFO("playerbots.migration", "Applying migration file: {} ({})", migration.filename, migration.description);
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // Execute the SQL file
+    if (!ExecuteSQLFile(migration.fullPath))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to execute migration file: {}", migration.fullPath);
+        return false;
+    }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    // Calculate file checksum for integrity
+    std::string checksum = CalculateFileChecksum(migration.fullPath);
+
+    // Record successful migration
+    if (!RecordMigration(migration.version, migration.description, static_cast<uint32>(duration.count()), checksum))
+    {
+        TC_LOG_ERROR("playerbots.migration", "Failed to record migration {} in database", migration.version);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbots.migration", "Migration {} applied successfully in {}ms",
+        migration.version, duration.count());
+
+    return true;
 }

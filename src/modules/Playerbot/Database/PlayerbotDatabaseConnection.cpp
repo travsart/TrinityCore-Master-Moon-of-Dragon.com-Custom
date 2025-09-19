@@ -8,6 +8,7 @@
  */
 
 #include "PlayerbotDatabaseConnection.h"
+#include "PlayerbotResultSet.h"
 #include "Log.h"
 #include "DatabaseEnv.h"
 #include "Field.h"
@@ -127,17 +128,27 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
         }
     }
 
-    // Create a simple ResultSet wrapper
-    // This is a simplified implementation - in a full implementation you'd create
-    // a proper ResultSet that implements the QueryResult interface
+    // Create a proper ResultSet from our MySQL result
+    if (result)
+    {
+        // Create our custom PlayerbotResultSet that properly wraps the MySQL result
+        try
+        {
+            auto resultSet = std::make_shared<PlayerbotResultSet>(result);
+            TC_LOG_DEBUG("module.playerbot.database",
+                "PlayerbotDatabaseConnection: Query returned {} rows", resultSet->GetRowCount());
+            return resultSet;
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.database",
+                "PlayerbotDatabaseConnection: Failed to create ResultSet: {}", e.what());
+            mysql_free_result(result);
+            return nullptr;
+        }
+    }
 
-    // For now, we'll use the Character database connection to create a compatible result
-    // This is a temporary workaround until we implement the full QueryResult wrapper
-
-    mysql_free_result(result);
-
-    // Use CharacterDatabase as a fallback for now
-    return CharacterDatabase.Query(sql.c_str());
+    return nullptr;
 }
 
 bool PlayerbotDatabaseConnection::Execute(std::string const& sql)

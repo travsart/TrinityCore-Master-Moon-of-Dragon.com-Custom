@@ -78,13 +78,39 @@ public:
     void PrintMigrationStatus();
 
 private:
-    PlayerbotMigrationMgr() = default;
+    PlayerbotMigrationMgr();
     ~PlayerbotMigrationMgr() = default;
 
     // Internal migration management
     bool LoadMigrationsFromDatabase();
     bool LoadMigrationFiles();
     bool ValidateMigrationIntegrity();
+
+    // File-based migration discovery (TrinityCore pattern)
+    struct MigrationFile
+    {
+        std::string filename;
+        std::string fullPath;
+        std::string version;
+        std::string description;
+        bool isApplied = false;
+    };
+
+    std::vector<MigrationFile> DiscoverMigrationFiles();
+    std::string ExtractVersionFromFilename(std::string const& filename);
+    std::string ExtractDescriptionFromFilename(std::string const& filename);
+    bool ApplyMigrationFile(MigrationFile const& migration);
+
+    // Legacy built-in migration support (deprecated)
+    void RegisterBuiltInMigrations();
+    bool ApplyInitialSchema();
+    bool DropAllTables();
+    bool ApplyAccountEnhancements();
+    bool DropAccountEnhancements();
+    bool ApplyLifecycleManagement();
+    bool DropLifecycleManagement();
+    bool ApplyCharacterDistribution();
+    bool DropCharacterDistribution();
 
     // Database operations
     bool RecordMigration(std::string const& version, std::string const& description, uint32 executionTimeMs = 0, std::string const& checksum = "");
@@ -109,7 +135,10 @@ private:
     static constexpr char const* BACKUP_PATH = "sql/backups/";
     static constexpr char const* MIGRATION_TABLE = "playerbot_migrations";
 
-    // Supported migration versions (in order)
+    // File storage for discovered migrations
+    std::vector<MigrationFile> _discoveredMigrations;
+
+    // Legacy: Supported migration versions (deprecated - now auto-discovered)
     static std::vector<std::string> const MIGRATION_SEQUENCE;
 };
 

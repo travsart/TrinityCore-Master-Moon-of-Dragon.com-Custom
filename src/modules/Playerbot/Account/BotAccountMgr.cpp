@@ -19,6 +19,7 @@
 #include "AccountMgr.h"
 #include "BattlenetAccountMgr.h"
 #include "PlayerbotConfig.h"
+#include "DatabaseEnv.h"
 #include "Log.h"
 #include "Util.h"
 #include <sstream>
@@ -30,6 +31,7 @@ namespace Playerbot {
 
 bool BotAccountMgr::Initialize()
 {
+    TC_LOG_INFO("server.loading", "=== BOTACCOUNTMGR INITIALIZE START ===");
     TC_LOG_INFO("module.playerbot.account", "Initializing BotAccountMgr...");
 
     // Load configuration values from playerbots.conf
@@ -154,18 +156,74 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    // Generate email and password
-    std::string email = requestedEmail.empty() ? GenerateUniqueEmail() : requestedEmail;
+    // Generate email and password with retry logic for duplicates
+    std::string email;
     std::string password = GenerateSecurePassword();
-
-    // Create BattleNet account using Trinity's system
     std::string gameAccountName;
-    AccountOpResult result = Battlenet::AccountMgr::CreateBattlenetAccount(email, password, true, &gameAccountName);
+    AccountOpResult result;
+
+    // Try up to 100 different email addresses to find a unique one
+    const uint32 maxRetries = 100;
+    uint32 baseCounter = _emailCounter.load(); // Get current counter value
+    for (uint32 attempt = 0; attempt < maxRetries; ++attempt)
+    {
+        if (requestedEmail.empty())
+        {
+            // Generate email with base counter + attempt number
+            std::ostringstream emailStream;
+            emailStream << "bot" << std::setfill('0') << std::setw(6) << (baseCounter + attempt + 1)
+                       << "@" << _emailDomain;
+            email = emailStream.str();
+            TC_LOG_DEBUG("module.playerbot.account", "=== TRYING EMAIL: {} (base: {}, attempt: {}) ===",
+                        email, baseCounter, attempt);
+        }
+        else
+        {
+            email = requestedEmail;
+        }
+
+        // Create BattleNet account using Trinity's system
+        result = Battlenet::AccountMgr::CreateBattlenetAccount(email, password, true, &gameAccountName);
+
+        if (result == AccountOpResult::AOR_OK)
+        {
+            // Success! Update the email counter to reflect this account creation
+            if (requestedEmail.empty())
+            {
+                _emailCounter.store(baseCounter + attempt + 1);
+            }
+            break;
+        }
+        else if (result == AccountOpResult::AOR_NAME_ALREADY_EXIST)
+        {
+            // Account already exists, try next email (only if we're auto-generating)
+            if (!requestedEmail.empty())
+            {
+                // User requested specific email that already exists
+                TC_LOG_ERROR("module.playerbot.account",
+                    "Requested email {} already exists", requestedEmail);
+                return 0;
+            }
+
+            TC_LOG_DEBUG("module.playerbot.account",
+                "Email {} already exists, trying next number (attempt {}/{})",
+                email, attempt + 1, maxRetries);
+            continue;
+        }
+        else
+        {
+            // Other error (password too long, etc.)
+            TC_LOG_ERROR("module.playerbot.account",
+                "Failed to create BattleNet account for email: {}, result: {}", email, static_cast<uint32>(result));
+            return 0;
+        }
+    }
 
     if (result != AccountOpResult::AOR_OK)
     {
         TC_LOG_ERROR("module.playerbot.account",
-            "Failed to create BattleNet account for email: {}, result: {}", email, static_cast<uint32>(result));
+            "Failed to create unique BattleNet account after {} attempts, last result: {}",
+            maxRetries, static_cast<uint32>(result));
         return 0;
     }
 
@@ -555,6 +613,8 @@ std::string BotAccountMgr::GenerateUniqueEmail()
     email << "bot" << std::setfill('0') << std::setw(6) << counter
           << "@" << _emailDomain;
 
+    TC_LOG_INFO("server.loading", "=== GENERATING EMAIL: {} (counter was: {}) ===", email.str(), counter);
+
     return email.str();
 }
 
@@ -593,13 +653,80 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 
 void BotAccountMgr::LoadAccountMetadata()
 {
-    // TODO: Implement database loading when BotDatabasePool is available
+    TC_LOG_INFO("server.loading", "=== LOADING BOT ACCOUNT METADATA ===");
     TC_LOG_INFO("module.playerbot.account", "Loading bot account metadata...");
 
-    // For now, just initialize empty
-    _totalAccounts.store(0);
+    // Query existing BattleNet accounts to find bot accounts
+    // We'll look for accounts with emails matching our bot pattern: bot######@playerbot.local
 
-    TC_LOG_INFO("module.playerbot.account", "✅ Loaded 0 bot account metadata entries");
+    uint32 loadedAccounts = 0;
+    uint32 highestBotNumber = 0;
+
+    try
+    {
+        // Query BattleNet account table for existing bot accounts
+        QueryResult result = LoginDatabase.Query(
+            "SELECT id, email FROM battlenet_accounts WHERE email LIKE 'bot%@playerbot.local' ORDER BY email");
+
+        if (result)
+        {
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 bnetAccountId = fields[0].GetUInt32();
+                std::string email = fields[1].GetString();
+
+                // Extract bot number from email (e.g., "bot000001@playerbot.local" -> 1)
+                size_t botPos = email.find("bot");
+                size_t atPos = email.find("@");
+
+                if (botPos != std::string::npos && atPos != std::string::npos && botPos == 0)
+                {
+                    std::string numberStr = email.substr(3, atPos - 3); // Extract number part
+                    try
+                    {
+                        uint32 botNumber = std::stoul(numberStr);
+                        highestBotNumber = std::max(highestBotNumber, botNumber);
+
+                        // Create basic account info (we can expand this later)
+                        BotAccountInfo info;
+                        info.bnetAccountId = bnetAccountId;
+                        info.legacyAccountId = bnetAccountId; // Simplified mapping for now
+                        info.email = email;
+                        info.characterCount = 0; // Could query this later
+                        info.isActive = false;
+                        info.isInPool = false;
+                        info.createdAt = std::chrono::system_clock::now(); // Placeholder
+
+                        _accounts[bnetAccountId] = info;
+                        loadedAccounts++;
+                    }
+                    catch (const std::exception& e)
+                    {
+                        TC_LOG_WARN("module.playerbot.account",
+                            "Failed to parse bot number from email {}: {}", email, e.what());
+                    }
+                }
+            } while (result->NextRow());
+        }
+
+        // Set the email counter to start after the highest existing bot number
+        _emailCounter.store(highestBotNumber + 1);
+        _totalAccounts.store(loadedAccounts);
+
+        TC_LOG_INFO("module.playerbot.account",
+            "✅ Loaded {} bot account metadata entries, highest bot number: {}, next counter: {}",
+            loadedAccounts, highestBotNumber, _emailCounter.load());
+    }
+    catch (const std::exception& e)
+    {
+        TC_LOG_ERROR("module.playerbot.account",
+            "Failed to load bot account metadata: {}", e.what());
+
+        // Fallback: Set counter to 1 if we can't load existing accounts
+        _emailCounter.store(1);
+        _totalAccounts.store(0);
+    }
 }
 
 } // namespace Playerbot

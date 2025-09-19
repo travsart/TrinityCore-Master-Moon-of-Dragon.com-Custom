@@ -100,6 +100,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotResultSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotResultSet.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
@@ -129,10 +131,12 @@ source_group("Database" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotResultSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotResultSet.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
 )
 
 source_group("AI" FILES

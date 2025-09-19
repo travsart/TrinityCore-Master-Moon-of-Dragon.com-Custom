@@ -36,19 +36,8 @@ bool BotLifecycleMgr::Initialize()
     _lastUpdate = _startTime;
     _lastMaintenance = _startTime;
 
-    // Initialize database migration manager
-    if (!PlayerbotMigrationMgr::instance()->Initialize())
-    {
-        LIFECYCLE_LOG_ERROR("Failed to initialize database migration manager");
-        return false;
-    }
-
-    // Apply any pending migrations
-    if (!PlayerbotMigrationMgr::instance()->ApplyMigrations())
-    {
-        LIFECYCLE_LOG_ERROR("Failed to apply database migrations");
-        return false;
-    }
+    // Note: Migration manager is initialized earlier in PlayerbotModule
+    // to ensure database schema is ready before any component accesses it
 
     // Initialize components (use singleton instances)
     _scheduler = BotScheduler::instance();

@@ -14,6 +14,7 @@
 #include "Account/BotAccountMgr.h"
 #include "Character/BotNameMgr.h"
 #include "Database/PlayerbotDatabase.h"
+#include "Database/PlayerbotMigrationMgr.h"
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Log.h"
 #include "GitRevision.h"
@@ -60,6 +61,23 @@ bool PlayerbotModule::Initialize()
     if (!InitializeDatabase())
     {
         _lastError = "Failed to initialize Playerbot Database";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    // Initialize Migration Manager FIRST (before any database access)
+    TC_LOG_INFO("server.loading", "Initializing Database Migration Manager...");
+    if (!PlayerbotMigrationMgr::instance()->Initialize())
+    {
+        _lastError = "Failed to initialize Migration Manager";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
+    // Apply pending migrations
+    if (!PlayerbotMigrationMgr::instance()->ApplyMigrations())
+    {
+        _lastError = "Failed to apply database migrations";
         TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
         return false;
     }
@@ -236,15 +254,17 @@ void PlayerbotModule::InitializeLogging()
 
 bool PlayerbotModule::InitializeDatabase()
 {
-    // Get database connection string from configuration
-    std::string dbString = sPlayerbotConfig->GetString("Playerbot.Database.Info", "");
-    if (dbString.empty())
-    {
-        TC_LOG_ERROR("server.loading", "Playerbot Database: Connection string not specified in playerbots.conf");
-        return false;
-    }
+    // Get individual database settings from configuration
+    std::string host = sPlayerbotConfig->GetString("Playerbot.Database.Host", "127.0.0.1");
+    uint32 port = sPlayerbotConfig->GetInt("Playerbot.Database.Port", 3306);
+    std::string user = sPlayerbotConfig->GetString("Playerbot.Database.User", "trinity");
+    std::string password = sPlayerbotConfig->GetString("Playerbot.Database.Password", "trinity");
+    std::string database = sPlayerbotConfig->GetString("Playerbot.Database.Name", "characters");
 
-    TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to database");
+    // Construct connection string in format: hostname;port;username;password;database
+    std::string dbString = Trinity::StringFormat("{};{};{};{};{}", host, port, user, password, database);
+
+    TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to {}:{}/{}", host, port, database);
 
     // Initialize database connection using our custom manager
     if (!sPlayerbotDatabase->Initialize(dbString))
