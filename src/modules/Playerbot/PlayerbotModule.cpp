@@ -55,6 +55,15 @@ bool PlayerbotModule::Initialize()
     // Initialize logging
     InitializeLogging();
 
+    // Initialize Playerbot Database
+    TC_LOG_INFO("server.loading", "Initializing Playerbot Database...");
+    if (!InitializeDatabase())
+    {
+        _lastError = "Failed to initialize Playerbot Database";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
     // Initialize Bot Account Manager
     TC_LOG_INFO("server.loading", "Initializing Bot Account Manager...");
     if (!sBotAccountMgr->Initialize())
@@ -127,6 +136,10 @@ void PlayerbotModule::Shutdown()
         // Shutdown Bot Account Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
         sBotAccountMgr->Shutdown();
+
+        // Shutdown Playerbot Database
+        TC_LOG_INFO("server.loading", "Shutting down Playerbot Database...");
+        ShutdownDatabase();
     }
 
     // Mark as shutdown
@@ -209,7 +222,7 @@ void PlayerbotModule::InitializeLogging()
 {
     // Initialize specialized logging channels for playerbot
     // These use TrinityCore's existing logging system with module-specific categories
-    
+
     // Log categories are configured in Logger.conf:
     // - module.playerbot (general module logging)
     // - module.playerbot.ai (AI decision logging)
@@ -217,8 +230,38 @@ void PlayerbotModule::InitializeLogging()
     // - module.playerbot.account (account management)
     // - module.playerbot.character (character management)
     // - module.playerbot.names (name allocation)
-    
+
     TC_LOG_DEBUG("module.playerbot", "Playerbot logging initialized");
+}
+
+bool PlayerbotModule::InitializeDatabase()
+{
+    // Get database connection string from configuration
+    std::string dbString = sPlayerbotConfig->GetString("Playerbot.Database.Info", "");
+    if (dbString.empty())
+    {
+        TC_LOG_ERROR("server.loading", "Playerbot Database: Connection string not specified in playerbots.conf");
+        return false;
+    }
+
+    TC_LOG_INFO("server.loading", "Playerbot Database: Connecting to database");
+
+    // Initialize database connection using our custom manager
+    if (!sPlayerbotDatabase->Initialize(dbString))
+    {
+        TC_LOG_ERROR("server.loading", "Playerbot Database: Failed to initialize connection");
+        return false;
+    }
+
+    TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected");
+    return true;
+}
+
+void PlayerbotModule::ShutdownDatabase()
+{
+    TC_LOG_DEBUG("module.playerbot", "Closing Playerbot Database connection");
+    sPlayerbotDatabase->Close();
+    TC_LOG_DEBUG("module.playerbot", "Playerbot Database connection closed");
 }
 
 #endif // PLAYERBOT_ENABLED

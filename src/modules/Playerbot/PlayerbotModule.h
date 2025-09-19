@@ -127,6 +127,24 @@ private:
      */
     static void InitializeLogging();
 
+    /**
+     * @brief Initialize Playerbot Database connection
+     * @return true if database initialization successful, false otherwise
+     *
+     * Initializes the separate PlayerbotDatabase connection using
+     * configuration from playerbots.conf. This provides isolated
+     * database access for all playerbot-related data.
+     */
+    static bool InitializeDatabase();
+
+    /**
+     * @brief Shutdown Playerbot Database connection
+     *
+     * Cleanly closes the PlayerbotDatabase connection and
+     * releases all associated resources.
+     */
+    static void ShutdownDatabase();
+
     // Module state
     static bool _initialized;
     static bool _enabled;

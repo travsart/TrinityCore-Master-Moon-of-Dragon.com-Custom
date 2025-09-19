@@ -11,7 +11,7 @@
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "CharacterCache.h"
-#include "PlayerbotDatabase.h"
+#include "Database/PlayerbotDatabase.h"
 #include "PreparedStatement.h"
 #include <random>
 #include <algorithm>
@@ -270,12 +270,12 @@ void BotNameMgr::ReloadNames()
 
 void BotNameMgr::LoadNamesFromDatabase()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT name_id, name, gender FROM playerbots_names");
-    
+
     if (!result)
     {
-        TC_LOG_ERROR("module.playerbot.names", 
+        TC_LOG_ERROR("module.playerbot.names",
             "No names found in playerbots_names table!");
         return;
     }
@@ -311,9 +311,9 @@ void BotNameMgr::LoadNamesFromDatabase()
 
 void BotNameMgr::LoadUsedNames()
 {
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT name_id, character_guid FROM playerbots_names_used");
-    
+
     if (!result)
     {
         TC_LOG_DEBUG("module.playerbot.names", "No used names found");

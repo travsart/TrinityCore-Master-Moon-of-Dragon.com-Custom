@@ -98,6 +98,8 @@ set(PLAYERBOT_SOURCES
     # Database systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
@@ -125,6 +127,8 @@ source_group("Session" FILES
 source_group("Database" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
@@ -205,6 +209,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
+        ${MYSQL_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
@@ -225,6 +230,8 @@ target_link_libraries(playerbot
         # Enterprise dependencies
         ${PLAYERBOT_LIBRARIES}
         playerbot-dependencies
+        # MySQL libraries for database connection
+        ${MYSQL_LIBRARY}
 )
 
 # Platform-specific libraries for enterprise dependencies

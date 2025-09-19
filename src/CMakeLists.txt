@@ -18,7 +18,3 @@ endif(SERVERS)
 if(TOOLS)
   add_subdirectory(tools)
 endif(TOOLS)
-
-if(BUILD_PLAYERBOT)
-  add_subdirectory(modules)
-endif(BUILD_PLAYERBOT)

@@ -101,8 +101,13 @@ struct BotScheduleState
     std::chrono::system_clock::time_point nextLogin;
     std::chrono::system_clock::time_point nextLogout;
     std::chrono::system_clock::time_point lastActivity;
+    std::chrono::system_clock::time_point lastLogin;
+    std::chrono::system_clock::time_point currentSessionStart;
+    std::chrono::system_clock::time_point nextRetry;
     uint32 totalSessions = 0;
     uint32 totalPlaytime = 0;           // Total seconds played
+    uint32 consecutiveFailures = 0;
+    std::string lastFailureReason;
     bool isScheduled = false;
     bool isActive = false;
 };

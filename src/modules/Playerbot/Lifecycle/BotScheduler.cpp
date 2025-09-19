@@ -623,4 +623,143 @@ bool BotScheduler::IsBotActive(ObjectGuid guid) const
     return it != _botSchedules.end() && it->second.isActive;
 }
 
+std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
+{
+    std::vector<ScheduledAction> actions;
+    actions.reserve(maxCount);
+
+    auto now = std::chrono::system_clock::now();
+    uint32 count = 0;
+
+    for (auto& [guid, schedule] : _botSchedules)
+    {
+        if (count >= maxCount)
+            break;
+
+        if (!schedule.isScheduled || schedule.isActive)
+            continue;
+
+        // Check if bot is ready for login
+        if (schedule.nextLogin <= now && !schedule.nextLogin.time_since_epoch().count() == 0)
+        {
+            ScheduledAction action;
+            action.action = ScheduleEntry::LOGIN;
+            action.botGuid = guid;
+            action.when = schedule.nextLogin;
+            action.patternName = schedule.patternName;
+
+            actions.push_back(action);
+            count++;
+        }
+    }
+
+    // Sort by scheduled time (earliest first)
+    std::sort(actions.begin(), actions.end(),
+        [](const ScheduledAction& a, const ScheduledAction& b) {
+            return a.when < b.when;
+        });
+
+    return actions;
+}
+
+std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogout(uint32 maxCount)
+{
+    std::vector<ScheduledAction> actions;
+    actions.reserve(maxCount);
+
+    auto now = std::chrono::system_clock::now();
+    uint32 count = 0;
+
+    for (auto& [guid, schedule] : _botSchedules)
+    {
+        if (count >= maxCount)
+            break;
+
+        if (!schedule.isScheduled || !schedule.isActive)
+            continue;
+
+        // Check if bot is ready for logout
+        if (schedule.nextLogout <= now && !schedule.nextLogout.time_since_epoch().count() == 0)
+        {
+            ScheduledAction action;
+            action.action = ScheduleEntry::LOGOUT;
+            action.botGuid = guid;
+            action.when = schedule.nextLogout;
+            action.patternName = schedule.patternName;
+
+            actions.push_back(action);
+            count++;
+        }
+    }
+
+    // Sort by scheduled time (earliest first)
+    std::sort(actions.begin(), actions.end(),
+        [](const ScheduledAction& a, const ScheduledAction& b) {
+            return a.when < b.when;
+        });
+
+    return actions;
+}
+
+void BotScheduler::OnBotLoggedIn(ObjectGuid guid)
+{
+    auto it = _botSchedules.find(guid);
+    if (it == _botSchedules.end())
+        return;
+
+    auto& schedule = it->second;
+    schedule.isActive = true;
+    schedule.lastLogin = std::chrono::system_clock::now();
+    schedule.currentSessionStart = schedule.lastLogin;
+    schedule.totalSessions++;
+
+    // Clear next login time and calculate next logout
+    schedule.nextLogin = std::chrono::system_clock::time_point{};
+
+    // Calculate session duration based on pattern
+    if (auto patternIt = _activityPatterns.find(schedule.patternName); patternIt != _activityPatterns.end())
+    {
+        auto& pattern = patternIt->second;
+        uint32 sessionDuration = urand(pattern.minSessionDuration, pattern.maxSessionDuration);
+        schedule.nextLogout = schedule.lastLogin + std::chrono::seconds(sessionDuration);
+    }
+    else
+    {
+        // Default 1-2 hour session
+        uint32 sessionDuration = urand(3600, 7200);
+        schedule.nextLogout = schedule.lastLogin + std::chrono::seconds(sessionDuration);
+    }
+
+    // Save to database
+    SaveBotSchedule(schedule);
+
+    TC_LOG_DEBUG("module.playerbot.scheduler", "Bot {} logged in, next logout: {}",
+        guid.ToString(), std::chrono::duration_cast<std::chrono::seconds>(
+            schedule.nextLogout.time_since_epoch()).count());
+}
+
+void BotScheduler::OnBotLoginFailed(ObjectGuid guid, std::string const& reason)
+{
+    auto it = _botSchedules.find(guid);
+    if (it == _botSchedules.end())
+        return;
+
+    auto& schedule = it->second;
+    schedule.consecutiveFailures++;
+    schedule.lastFailureReason = reason;
+
+    // Exponential backoff for retry
+    uint32 retryDelay = std::min(300u * (1u << std::min(schedule.consecutiveFailures, 8u)), 3600u); // Max 1 hour
+    schedule.nextRetry = std::chrono::system_clock::now() + std::chrono::seconds(retryDelay);
+
+    // Don't retry immediately, wait for retry time
+    schedule.nextLogin = schedule.nextRetry;
+
+    // Save to database
+    SaveBotSchedule(schedule);
+
+    TC_LOG_WARN("module.playerbot.scheduler", "Bot {} login failed ({}), retry in {} seconds",
+        guid.ToString(), reason, retryDelay);
+}
+
 } // namespace Playerbot

@@ -14,4 +14,10 @@ add_subdirectory(shared)
 add_subdirectory(bnetserver)
 add_subdirectory(game)
 add_subdirectory(scripts)
+
+# Add modules after game library but before worldserver
+if(BUILD_PLAYERBOT)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/src/modules modules)
+endif()
+
 add_subdirectory(worldserver)

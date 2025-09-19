@@ -10,33 +10,62 @@
 #ifndef PLAYERBOT_DATABASE_H
 #define PLAYERBOT_DATABASE_H
 
-#include "DatabaseWorkerPool.h"
-#include "MySQLConnection.h"
-#include "PlayerbotDatabaseStatements.h"
+#include "PlayerbotDatabaseConnection.h"
+#include "Define.h"
+#include <memory>
 
-// Enum is defined in PlayerbotDatabaseStatements.h
-
-class TC_DATABASE_API PlayerbotDatabaseConnection : public MySQLConnection
+/**
+ * @class PlayerbotDatabaseManager
+ * @brief Singleton manager for playerbot database operations
+ *
+ * This class provides a simplified interface for playerbot database access
+ * that doesn't rely on complex template instantiation. It manages the
+ * connection lifecycle and provides basic query operations.
+ */
+class TC_DATABASE_API PlayerbotDatabaseManager
 {
 public:
-    using Statements = PlayerbotDatabaseStatements;
+    static PlayerbotDatabaseManager* instance();
 
-    //- Constructor
-    PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags);
-    ~PlayerbotDatabaseConnection();
+    /**
+     * @brief Initialize the database connection
+     * @param connectionInfo Database connection string
+     * @return true if initialization successful, false otherwise
+     */
+    bool Initialize(std::string const& connectionInfo);
 
-    //- Loads database type specific prepared statements
-    void DoPrepareStatements() override;
+    /**
+     * @brief Close the database connection
+     */
+    void Close();
+
+    /**
+     * @brief Execute a query and return results
+     * @param sql SQL query string
+     * @return QueryResult shared pointer, null if query failed
+     */
+    QueryResult Query(std::string const& sql);
+
+    /**
+     * @brief Execute a statement without returning results
+     * @param sql SQL statement string
+     * @return true if execution successful, false otherwise
+     */
+    bool Execute(std::string const& sql);
+
+    /**
+     * @brief Check if database is connected and operational
+     * @return true if connected, false otherwise
+     */
+    bool IsConnected() const;
+
+private:
+    PlayerbotDatabaseManager() = default;
+    ~PlayerbotDatabaseManager() = default;
+
+    std::unique_ptr<PlayerbotDatabaseConnection> _connection;
 };
 
-typedef DatabaseWorkerPool<PlayerbotDatabaseConnection> PlayerbotDatabaseWorkerPool;
-
-enum PlayerbotDatabaseWorker
-{
-    PLAYERBOT_DB_ASYNC,
-    PLAYERBOT_DB_SYNCH
-};
-
-extern TC_DATABASE_API PlayerbotDatabaseWorkerPool PlayerbotDatabase;
+#define sPlayerbotDatabase PlayerbotDatabaseManager::instance()
 
 #endif // PLAYERBOT_DATABASE_H

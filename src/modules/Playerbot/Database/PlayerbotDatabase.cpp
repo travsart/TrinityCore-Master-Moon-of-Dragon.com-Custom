@@ -8,32 +8,71 @@
  */
 
 #include "PlayerbotDatabase.h"
-#include "MySQLPreparedStatement.h"
+#include "Log.h"
 
-PlayerbotDatabaseWorkerPool PlayerbotDatabase;
-
-PlayerbotDatabaseConnection::PlayerbotDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags) : MySQLConnection(connInfo, connectionFlags)
+PlayerbotDatabaseManager* PlayerbotDatabaseManager::instance()
 {
+    static PlayerbotDatabaseManager instance;
+    return &instance;
 }
 
-PlayerbotDatabaseConnection::~PlayerbotDatabaseConnection()
+bool PlayerbotDatabaseManager::Initialize(std::string const& connectionInfo)
 {
-}
+    TC_LOG_DEBUG("module.playerbot.database", "PlayerbotDatabaseManager: Initializing connection");
 
-void PlayerbotDatabaseConnection::DoPrepareStatements()
-{
-    if (!m_reconnecting)
-        m_stmts.resize(MAX_PLAYERBOTDATABASE_STATEMENTS);
-
-    // Use the statements defined in PlayerbotDatabaseStatements.h
-    // This function will be called during database initialization
-    // Individual prepared statements are loaded from the statements array
-
-    // Prepare all statements from the PlayerbotDB namespace
-    for (size_t i = 0; i < MAX_PLAYERBOTDATABASE_STATEMENTS; ++i)
+    if (_connection && _connection->IsConnected())
     {
-        PrepareStatement(static_cast<PlayerbotDatabaseStatements>(i),
-                        PlayerbotDB::statements[i],
-                        CONNECTION_SYNCH);
+        TC_LOG_WARN("module.playerbot.database", "PlayerbotDatabaseManager: Already initialized");
+        return true;
     }
+
+    _connection = std::make_unique<PlayerbotDatabaseConnection>();
+
+    if (!_connection->Initialize(connectionInfo))
+    {
+        TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseManager: Failed to initialize connection: {}",
+                    _connection->GetLastError());
+        _connection.reset();
+        return false;
+    }
+
+    TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseManager: Successfully initialized");
+    return true;
+}
+
+void PlayerbotDatabaseManager::Close()
+{
+    if (_connection)
+    {
+        TC_LOG_DEBUG("module.playerbot.database", "PlayerbotDatabaseManager: Closing connection");
+        _connection->Close();
+        _connection.reset();
+    }
+}
+
+QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
+{
+    if (!_connection)
+    {
+        TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseManager: No connection available for query");
+        return nullptr;
+    }
+
+    return _connection->Query(sql);
+}
+
+bool PlayerbotDatabaseManager::Execute(std::string const& sql)
+{
+    if (!_connection)
+    {
+        TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseManager: No connection available for execute");
+        return false;
+    }
+
+    return _connection->Execute(sql);
+}
+
+bool PlayerbotDatabaseManager::IsConnected() const
+{
+    return _connection && _connection->IsConnected();
 }

@@ -46,6 +46,15 @@ target_link_libraries(worldserver
     readline
     gsoap)
 
+# Link playerbot module if enabled
+if(BUILD_PLAYERBOT)
+  target_link_libraries(worldserver PRIVATE playerbot)
+  target_compile_definitions(worldserver PRIVATE PLAYERBOT_ENABLED=1)
+  target_include_directories(worldserver PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/modules/Playerbot)
+endif()
+
 CollectIncludeDirectories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   PUBLIC_INCLUDES

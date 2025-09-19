@@ -525,4 +525,33 @@ void BotSpawner::ResetStats()
     TC_LOG_INFO("module.playerbot.spawner", "Spawn statistics reset");
 }
 
+bool BotSpawner::DespawnBot(ObjectGuid guid, std::string const& reason)
+{
+    TC_LOG_DEBUG("module.playerbot.spawner", "Despawning bot {} with reason: {}", guid.ToString(), reason);
+
+    {
+        std::lock_guard<std::mutex> lock(_botMutex);
+        auto it = _activeBots.find(guid);
+        if (it == _activeBots.end())
+        {
+            TC_LOG_WARN("module.playerbot.spawner", "Attempted to despawn bot {} but it was not found in active bots", guid.ToString());
+            return false;
+        }
+
+        _activeBots.erase(it);
+    }
+
+    // Call the existing forced despawn method
+    DespawnBot(guid, true);
+
+    // Log the reason for despawn
+    TC_LOG_INFO("module.playerbot.spawner", "Bot {} despawned with reason: {}", guid.ToString(), reason);
+
+    _stats.totalDespawned.fetch_add(1);
+    _stats.currentlyActive.store(_activeBots.size());
+
+    TC_LOG_INFO("module.playerbot.spawner", "Bot {} despawned successfully ({})", guid.ToString(), reason);
+    return true;
+}
+
 } // namespace Playerbot
