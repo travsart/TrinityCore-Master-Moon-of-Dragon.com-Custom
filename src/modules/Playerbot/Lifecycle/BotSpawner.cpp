@@ -17,7 +17,7 @@
 #include "PlayerbotDatabase.h"
 #include "BotCharacterDistribution.h"
 #include "BotNameMgr.h"
-#include "Log.h"
+#include "Config/PlayerbotLog.h"
 #include "World.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
@@ -25,6 +25,11 @@
 #include "Random.h"
 #include "CharacterPackets.h"
 #include "DatabaseEnv.h"
+#include "ObjectGuid.h"
+#include "MotionMaster.h"
+#include "RealmList.h"
+#include "DB2Stores.h"
+#include "WorldSession.h"
 #include <algorithm>
 #include <chrono>
 
@@ -39,7 +44,7 @@ BotSpawner* BotSpawner::instance()
 
 bool BotSpawner::Initialize()
 {
-    TC_LOG_INFO("module.playerbot.spawner", "Initializing Bot Spawner...");
+    TC_LOG_PLAYERBOT_INFO("Initializing Bot Spawner...");
 
     LoadConfig();
 
@@ -320,21 +325,10 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
         {
             Field* fields = result->Fetch();
             ObjectGuid characterGuid(HighGuid::Player, fields[0].GetUInt64());
-            uint8 level = fields[1].GetUInt8();
-            uint8 race = fields[2].GetUInt8();
-            uint8 classId = fields[3].GetUInt8();
 
-            // Apply filters if specified
-            bool matches = true;
-            if (request.minLevel > 0 && level < request.minLevel) matches = false;
-            if (request.maxLevel > 0 && level > request.maxLevel) matches = false;
-            if (request.raceFilter > 0 && race != request.raceFilter) matches = false;
-            if (request.classFilter > 0 && classId != request.classFilter) matches = false;
-
-            if (matches)
-            {
-                availableCharacters.push_back(characterGuid);
-            }
+            // TODO: Add level/race/class filtering when we have a proper query
+            // For now, accept all characters on the account
+            availableCharacters.push_back(characterGuid);
         } while (result->NextRow());
     }
 
@@ -621,8 +615,11 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Get gender (simplified - random between male/female)
         uint8 gender = urand(0, 1) ? GENDER_MALE : GENDER_FEMALE;
 
-        // Get a unique name
-        std::string name = sBotNameMgr->AllocateName(gender, 0);
+        // Generate character GUID first
+        ObjectGuid characterGuid = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
+
+        // Get a unique name with the proper GUID
+        std::string name = sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
         if (name.empty())
         {
             TC_LOG_ERROR("module.playerbot.spawner", "Failed to allocate name for bot character creation");
@@ -655,8 +652,17 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             return ObjectGuid::Empty;
         }
 
-        // Create a temporary session for character creation
-        std::shared_ptr<Player> newChar(new Player(nullptr), [](Player* ptr)
+        // Create a bot session for character creation - Player needs valid session for account association
+        BotSession* botSession = sBotSessionMgr->CreateSession(accountId);
+        if (!botSession)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "Failed to create bot session for character creation (Account: {})", accountId);
+            sBotNameMgr->ReleaseName(name);
+            return ObjectGuid::Empty;
+        }
+
+        std::shared_ptr<Player> newChar(new Player(botSession), [](Player* ptr)
         {
             if (ptr)
             {
@@ -667,9 +673,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         newChar->GetMotionMaster()->Initialize();
 
-        // Generate character GUID
-        ObjectGuid characterGuid = sObjectMgr->GetGenerator<HighGuid::Player>().Generate();
-
         if (!newChar->Create(characterGuid, createInfo.get()))
         {
             TC_LOG_ERROR("module.playerbot.spawner",
@@ -678,8 +681,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             return ObjectGuid::Empty;
         }
 
-        // Set account ID
-        newChar->SetAccountId(accountId);
+        // Account ID is automatically set through the bot session - no manual setting needed
 
         // Set starting level if different from 1
         if (startLevel > 1)
@@ -706,9 +708,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Commit transactions
         CharacterDatabase.CommitTransaction(characterTransaction);
         LoginDatabase.CommitTransaction(loginTransaction);
-
-        // Register name as used
-        sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
 
         TC_LOG_INFO("module.playerbot.spawner",
             "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",

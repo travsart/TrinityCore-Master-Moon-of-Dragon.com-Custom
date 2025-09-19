@@ -17,7 +17,8 @@
 
 #include "BotCharacterDistribution.h"
 #include "DatabaseEnv.h"
-#include "Log.h"
+#include "Database/PlayerbotDatabase.h"
+#include "Config/PlayerbotLog.h"
 #include "Random.h"
 #include "Timer.h"
 #include <algorithm>
@@ -33,7 +34,7 @@ BotCharacterDistribution* BotCharacterDistribution::instance()
 
 bool BotCharacterDistribution::LoadFromDatabase()
 {
-    TC_LOG_INFO("module.playerbot.character", "Loading Bot Character Distribution from database...");
+    TC_LOG_PLAYERBOT_CHAR_INFO("Loading Bot Character Distribution from database...");
 
     auto startTime = getMSTime();
 
@@ -48,14 +49,14 @@ bool BotCharacterDistribution::LoadFromDatabase()
 
     m_loaded = !m_raceClassCombinations.empty();
 
-    TC_LOG_INFO("module.playerbot.character", ">> Loaded character distribution data in {} ms",
-                GetMSTimeDiffToNow(startTime));
-    TC_LOG_INFO("module.playerbot.character", "   - Race/Class combinations: {}",
-                m_raceClassCombinations.size());
-    TC_LOG_INFO("module.playerbot.character", "   - Gender distributions: {} races",
-                m_genderDistributions.size());
-    TC_LOG_INFO("module.playerbot.character", "   - Class popularities: {} classes",
-                m_classPopularities.size());
+    TC_LOG_PLAYERBOT_CHAR_INFO(">> Loaded character distribution data in {} ms",
+                               GetMSTimeDiffToNow(startTime));
+    TC_LOG_PLAYERBOT_CHAR_INFO("   - Race/Class combinations: {}",
+                               m_raceClassCombinations.size());
+    TC_LOG_PLAYERBOT_CHAR_INFO("   - Gender distributions: {} races",
+                               m_genderDistributions.size());
+    TC_LOG_PLAYERBOT_CHAR_INFO("   - Class popularities: {} classes",
+                               m_classPopularities.size());
 
     return m_loaded;
 }
@@ -85,7 +86,7 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
     m_raceCache.clear();
     m_classCache.clear();
 
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT race, class, percentage, is_popular, faction "
         "FROM playerbots_race_class_distribution "
         "ORDER BY percentage DESC"
@@ -93,7 +94,7 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
 
     if (!result)
     {
-        TC_LOG_ERROR("module.playerbot.character", "No race/class distribution data found!");
+        TC_LOG_PLAYERBOT_CHAR_ERROR("No race/class distribution data found!");
         return;
     }
 
@@ -116,15 +117,15 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
 
     } while (result->NextRow());
 
-    TC_LOG_DEBUG("module.playerbot.character", "Loaded {} race/class combinations",
-                 m_raceClassCombinations.size());
+    TC_LOG_PLAYERBOT_CHAR_DEBUG("Loaded {} race/class combinations",
+                                m_raceClassCombinations.size());
 }
 
 void BotCharacterDistribution::LoadGenderDistribution()
 {
     m_genderDistributions.clear();
 
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT race, race_name, male_percentage, female_percentage "
         "FROM playerbots_gender_distribution"
     );
@@ -157,7 +158,7 @@ void BotCharacterDistribution::LoadClassPopularity()
 {
     m_classPopularities.clear();
 
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT class, class_name, popularity_percentage, "
         "pve_popularity, pvp_popularity, mythic_plus_popularity, raid_popularity "
         "FROM playerbots_class_popularity"
@@ -194,7 +195,7 @@ void BotCharacterDistribution::LoadRaceClassGenderOverrides()
 {
     m_raceClassGenderOverrides.clear();
 
-    QueryResult result = CharacterDatabase.Query(
+    QueryResult result = sPlayerbotDatabase->Query(
         "SELECT race, class, male_percentage "
         "FROM playerbots_race_class_gender"
     );

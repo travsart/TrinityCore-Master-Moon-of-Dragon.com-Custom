@@ -13,9 +13,10 @@
 #include "Config/PlayerbotConfig.h"
 #include "Account/BotAccountMgr.h"
 #include "Character/BotNameMgr.h"
+#include "Character/BotCharacterDistribution.h"
 #include "Database/PlayerbotDatabase.h"
 #include "Database/PlayerbotMigrationMgr.h"
-#include "Lifecycle/BotLifecycleMgr.h"
+// #include "Lifecycle/BotLifecycleMgr.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -108,15 +109,24 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
-    // Initialize Bot Lifecycle Manager
-    TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");
-    if (!BotLifecycleMgr::instance()->Initialize())
+    // Initialize Bot Character Distribution
+    TC_LOG_INFO("server.loading", "Initializing Bot Character Distribution...");
+    if (!sBotCharacterDistribution->LoadFromDatabase())
     {
-        _lastError = "Failed to initialize Bot Lifecycle Manager";
+        _lastError = "Failed to initialize Bot Character Distribution";
         TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
         return false;
     }
 
+    // Initialize Bot Lifecycle Manager
+    //     TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");
+    //     if (!BotLifecycleMgr::instance()->Initialize())
+    //     {
+    //         _lastError = "Failed to initialize Bot Lifecycle Manager";
+    //         TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+    //         return false;
+    //     }
+    // 
     // Register hooks with TrinityCore
     RegisterHooks();
 
@@ -125,8 +135,10 @@ bool PlayerbotModule::Initialize()
 
     TC_LOG_INFO("server.loading", "Playerbot Module: Successfully initialized (Version {})", GetVersion());
     TC_LOG_INFO("server.loading", "  - {} bot accounts loaded", sBotAccountMgr->GetTotalBotAccounts());
-    TC_LOG_INFO("server.loading", "  - {} names available ({} used)", 
+    TC_LOG_INFO("server.loading", "  - {} names available ({} used)",
         sBotNameMgr->GetTotalNameCount(), sBotNameMgr->GetUsedNameCount());
+    TC_LOG_INFO("server.loading", "  - {} character combinations loaded",
+        sBotCharacterDistribution->GetTotalCombinations());
     
     return true;
 }
@@ -144,9 +156,9 @@ void PlayerbotModule::Shutdown()
     if (_enabled)
     {
         // Shutdown Bot Lifecycle Manager
-        TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
-        BotLifecycleMgr::instance()->Shutdown();
-
+        //         TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
+        //         BotLifecycleMgr::instance()->Shutdown();
+        // 
         // Shutdown Bot Name Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
         sBotNameMgr->Shutdown();
@@ -238,18 +250,12 @@ bool PlayerbotModule::ValidateConfig()
 
 void PlayerbotModule::InitializeLogging()
 {
-    // Initialize specialized logging channels for playerbot
-    // These use TrinityCore's existing logging system with module-specific categories
+    TC_LOG_INFO("server.loading", "Initializing Playerbot logging system...");
 
-    // Log categories are configured in Logger.conf:
-    // - module.playerbot (general module logging)
-    // - module.playerbot.ai (AI decision logging)
-    // - module.playerbot.performance (performance metrics)
-    // - module.playerbot.account (account management)
-    // - module.playerbot.character (character management)
-    // - module.playerbot.names (name allocation)
+    // Initialize TrinityCore logging integration via config system
+    sPlayerbotConfig->InitializeLogging();
 
-    TC_LOG_DEBUG("module.playerbot", "Playerbot logging initialized");
+    TC_LOG_INFO("server.loading", "Playerbot logging system initialized successfully");
 }
 
 bool PlayerbotModule::InitializeDatabase()

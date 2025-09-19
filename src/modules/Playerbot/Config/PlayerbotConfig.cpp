@@ -241,4 +241,96 @@ bool PlayerbotConfig::ValidateConfiguration()
     return valid;
 }
 
+void PlayerbotConfig::InitializeLogging()
+{
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Initializing logging system...");
+
+    // Get log level from configuration
+    int32 logLevel = GetInt("Playerbot.Log.Level", 3);
+    std::string logFile = GetString("Playerbot.Log.File", "Playerbot.log");
+
+    // Validate log level
+    if (logLevel < 0 || logLevel > 5)
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid log level {}. Using default level 3.", logLevel);
+        logLevel = 3;
+    }
+
+    // Setup playerbot logging
+    SetupPlayerbotLogging(logLevel, logFile);
+
+    TC_LOG_INFO("server.loading", "PlayerbotConfig: Logging system initialized - Level: {}, File: {}", logLevel, logFile);
+}
+
+void PlayerbotConfig::SetupPlayerbotLogging(int32 logLevel, std::string const& logFile)
+{
+    // Create playerbot-specific file appender
+    // Format: Type,Level,Flags,File
+    // Type 2 = File appender, Flags 1 = Include timestamp
+    std::string appenderConfig = Trinity::StringFormat("2,%d,1,%s", logLevel, logFile.c_str());
+    sLog->CreateAppenderFromConfigLine("Appender.Playerbot", appenderConfig);
+
+    // Create main playerbot logger
+    // Format: Level,Appender1 Appender2 ...
+    std::string loggerConfig = Trinity::StringFormat("%d,Console Playerbot", logLevel);
+    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot", loggerConfig);
+
+    // Create specialized sub-loggers
+    CreateSpecializedLoggers(logLevel);
+
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created logging appender and loggers");
+}
+
+void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
+{
+    // AI decision logging
+    if (GetBool("Playerbot.Log.AIDecisions", false))
+    {
+        int32 aiLogLevel = std::max(baseLevel, 4); // Force debug level for AI decisions
+        std::string aiLoggerConfig = Trinity::StringFormat("%d,Playerbot", aiLogLevel);
+        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.ai", aiLoggerConfig);
+        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created AI decision logger (level {})", aiLogLevel);
+    }
+
+    // Performance metrics logging
+    if (GetBool("Playerbot.Log.PerformanceMetrics", false))
+    {
+        std::string perfLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.performance", perfLoggerConfig);
+        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created performance metrics logger");
+    }
+
+    // Database query logging
+    if (GetBool("Playerbot.Log.DatabaseQueries", false))
+    {
+        int32 dbLogLevel = std::max(baseLevel, 4); // Force debug level for database queries
+        std::string dbLoggerConfig = Trinity::StringFormat("%d,Playerbot", dbLogLevel);
+        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.database", dbLoggerConfig);
+        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created database query logger (level {})", dbLogLevel);
+    }
+
+    // Character action logging
+    if (GetBool("Playerbot.Log.CharacterActions", false))
+    {
+        int32 charLogLevel = std::max(baseLevel, 4); // Force debug level for character actions
+        std::string charLoggerConfig = Trinity::StringFormat("%d,Playerbot", charLogLevel);
+        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.character", charLoggerConfig);
+        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created character action logger (level {})", charLogLevel);
+    }
+
+    // Account management logging
+    std::string accountLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.account", accountLoggerConfig);
+
+    // Name management logging
+    std::string nameLoggerConfig = Trinity::StringFormat("%d,Playerbot", baseLevel);
+    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.names", nameLoggerConfig);
+
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created {} specialized loggers",
+                 2 + (GetBool("Playerbot.Log.AIDecisions", false) ? 1 : 0) +
+                     (GetBool("Playerbot.Log.PerformanceMetrics", false) ? 1 : 0) +
+                     (GetBool("Playerbot.Log.DatabaseQueries", false) ? 1 : 0) +
+                     (GetBool("Playerbot.Log.CharacterActions", false) ? 1 : 0));
+}
+
 #endif // PLAYERBOT_ENABLED

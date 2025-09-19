@@ -38,6 +38,8 @@ set(PLAYERBOT_SOURCES
     # Configuration system (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
     # Temporarily disabled: DependencyValidator (needs MySQL headers fix)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.h
@@ -117,6 +119,8 @@ source_group("" FILES
 source_group("Config" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
 )
 
 source_group("Session" FILES

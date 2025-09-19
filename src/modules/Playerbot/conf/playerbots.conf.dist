@@ -87,8 +87,8 @@ Playerbot.AccountsToCreate = 0
 # CHARACTER CREATION
 #
 #    Playerbot.AutoCreateCharacters
-#        Description: Automatically create bot characters
-#        Default:     0
+#        Description: Automatically create bot characters when bot accounts have no characters
+#        Default:     1
 #
 #    Playerbot.RandomBotLevel.Min
 #        Description: Minimum level for randomly created bots
@@ -126,7 +126,7 @@ Playerbot.AccountsToCreate = 0
 #
 ###################################################################################################
 
-Playerbot.AutoCreateCharacters = 0
+Playerbot.AutoCreateCharacters = 1
 Playerbot.RandomBotLevel.Min = 1
 Playerbot.RandomBotLevel.Max = 60
 Playerbot.StartingGear = 2

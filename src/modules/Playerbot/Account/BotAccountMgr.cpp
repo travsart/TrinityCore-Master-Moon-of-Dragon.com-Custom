@@ -26,6 +26,8 @@
 #include <iomanip>
 #include <random>
 #include <thread>
+#include <algorithm>
+#include <cctype>
 
 namespace Playerbot {
 
@@ -657,7 +659,8 @@ void BotAccountMgr::LoadAccountMetadata()
     TC_LOG_INFO("module.playerbot.account", "Loading bot account metadata...");
 
     // Query existing BattleNet accounts to find bot accounts
-    // We'll look for accounts with emails matching our bot pattern: bot######@playerbot.local
+    // Bot accounts are identified by email patterns in battlenet_accounts table
+    // Based on investigation: bot accounts have emails like "1#1@playerbot.local", "2#1@playerbot.local", etc.
 
     uint32 loadedAccounts = 0;
     uint32 highestBotNumber = 0;
@@ -665,47 +668,105 @@ void BotAccountMgr::LoadAccountMetadata()
     try
     {
         // Query BattleNet account table for existing bot accounts
+        // Look for emails with pattern like "#@playerbot.local" or "bot%@playerbot.local"
+        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: EXECUTING QUERY TO FIND BOT ACCOUNTS ===");
+
         QueryResult result = LoginDatabase.Query(
-            "SELECT id, email FROM battlenet_accounts WHERE email LIKE 'bot%@playerbot.local' ORDER BY email");
+            "SELECT ba.id, ba.email, a.id as legacy_account_id "
+            "FROM battlenet_accounts ba "
+            "LEFT JOIN account a ON a.battlenet_account = ba.id "
+            "WHERE ba.email LIKE '%#%' OR ba.email LIKE '%@playerbot.local' "
+            "ORDER BY ba.email");
+
+        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Query executed, result: {} ===", result ? "SUCCESS" : "NULL");
 
         if (result)
         {
+            TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Found results, processing rows ===");
             do
             {
                 Field* fields = result->Fetch();
                 uint32 bnetAccountId = fields[0].GetUInt32();
                 std::string email = fields[1].GetString();
+                uint32 legacyAccountId = fields[2].GetUInt32();
 
-                // Extract bot number from email (e.g., "bot000001@playerbot.local" -> 1)
-                size_t botPos = email.find("bot");
-                size_t atPos = email.find("@");
+                TC_LOG_ERROR("server.loading",
+                    "=== CLAUDE DEBUG: Row - BNet ID={}, Email={}, Legacy ID={} ===",
+                    bnetAccountId, email, legacyAccountId);
 
-                if (botPos != std::string::npos && atPos != std::string::npos && botPos == 0)
+                // Try to extract bot number from different email patterns
+                uint32 botNumber = 0;
+                bool isValidBotAccount = false;
+
+                // Convert email to lowercase for case-insensitive matching
+                std::string emailLower = email;
+                std::transform(emailLower.begin(), emailLower.end(), emailLower.begin(), ::tolower);
+
+                // Pattern 1: "bot######@playerbot.local"
+                if (emailLower.find("bot") == 0 && emailLower.find("@playerbot.local") != std::string::npos)
                 {
-                    std::string numberStr = email.substr(3, atPos - 3); // Extract number part
+                    size_t atPos = emailLower.find("@");
+                    std::string numberStr = emailLower.substr(3, atPos - 3);
                     try
                     {
-                        uint32 botNumber = std::stoul(numberStr);
-                        highestBotNumber = std::max(highestBotNumber, botNumber);
-
-                        // Create basic account info (we can expand this later)
-                        BotAccountInfo info;
-                        info.bnetAccountId = bnetAccountId;
-                        info.legacyAccountId = bnetAccountId; // Simplified mapping for now
-                        info.email = email;
-                        info.characterCount = 0; // Could query this later
-                        info.isActive = false;
-                        info.isInPool = false;
-                        info.createdAt = std::chrono::system_clock::now(); // Placeholder
-
-                        _accounts[bnetAccountId] = info;
-                        loadedAccounts++;
+                        botNumber = std::stoul(numberStr);
+                        isValidBotAccount = true;
                     }
-                    catch (const std::exception& e)
+                    catch (...) { /* ignore */ }
+                }
+                // Pattern 2: "X#1@playerbot.local" or similar patterns
+                else if (emailLower.find("#") != std::string::npos && emailLower.find("@") != std::string::npos)
+                {
+                    size_t hashPos = emailLower.find("#");
+                    size_t atPos = emailLower.find("@");
+
+                    if (hashPos < atPos)
                     {
-                        TC_LOG_WARN("module.playerbot.account",
-                            "Failed to parse bot number from email {}: {}", email, e.what());
+                        std::string beforeHash = emailLower.substr(0, hashPos);
+                        try
+                        {
+                            botNumber = std::stoul(beforeHash);
+                            isValidBotAccount = true;
+                        }
+                        catch (...) { /* ignore */ }
                     }
+                }
+                // Pattern 3: Any email containing "playerbot" domain
+                else if (emailLower.find("@playerbot.local") != std::string::npos)
+                {
+                    // For accounts with playerbot domain but unknown pattern,
+                    // assign sequential numbers starting from current counter
+                    botNumber = highestBotNumber + loadedAccounts + 1;
+                    isValidBotAccount = true;
+                }
+
+                TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Pattern matching - botNumber={}, isValid={} ===", botNumber, isValidBotAccount);
+
+                if (isValidBotAccount)
+                {
+                    highestBotNumber = std::max(highestBotNumber, botNumber);
+
+                    // Create basic account info
+                    BotAccountInfo info;
+                    info.bnetAccountId = bnetAccountId;
+                    info.legacyAccountId = legacyAccountId;
+                    info.email = email;
+                    info.characterCount = 0; // Could query this later
+                    info.isActive = false;
+                    info.isInPool = false;
+                    info.createdAt = std::chrono::system_clock::now(); // Placeholder
+
+                    _accounts[bnetAccountId] = info;
+                    loadedAccounts++;
+
+                    TC_LOG_ERROR("server.loading",
+                        "=== CLAUDE DEBUG: LOADED bot account: BNet {}, Email: {}, Legacy: {}, Bot#: {} ===",
+                        bnetAccountId, email, legacyAccountId, botNumber);
+                }
+                else
+                {
+                    TC_LOG_ERROR("server.loading",
+                        "=== CLAUDE DEBUG: SKIPPED non-bot account: Email={} ===", email);
                 }
             } while (result->NextRow());
         }

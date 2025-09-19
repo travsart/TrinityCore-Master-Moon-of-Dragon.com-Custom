@@ -121,6 +121,29 @@ public:
      */
     std::string GetLastError() const { return _lastError; }
 
+    /**
+     * @brief Initialize the playerbot logging system
+     *
+     * Sets up TrinityCore logging integration with:
+     * - Separate Playerbot.log file
+     * - Configurable log levels from playerbots.conf
+     * - Specialized logging categories for different subsystems
+     */
+    void InitializeLogging();
+
+    /**
+     * @brief Setup playerbot-specific logging configuration
+     * @param logLevel Base log level for all playerbot loggers
+     * @param logFile Path to the playerbot log file
+     */
+    void SetupPlayerbotLogging(int32 logLevel, std::string const& logFile);
+
+    /**
+     * @brief Create specialized loggers for different subsystems
+     * @param baseLevel Base log level to use for specialized loggers
+     */
+    void CreateSpecializedLoggers(int32 baseLevel);
+
 private:
     PlayerbotConfig() = default;
     ~PlayerbotConfig() = default;
