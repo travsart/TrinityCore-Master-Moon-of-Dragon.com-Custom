@@ -28,6 +28,7 @@
 #include "DatabaseLoader.h"
 #include "DeadlineTimer.h"
 #include "GitRevision.h"
+#include "Modules/ModuleManager.h"
 #include "InstanceLockMgr.h"
 #include "IoContext.h"
 #include "IpNetwork.h"
@@ -438,6 +439,9 @@ int main(int argc, char** argv)
     }
 
     sScriptMgr->OnStartup();
+
+    // Initialize registered modules
+    ModuleManager::CallOnStartup();
 
     TC_LOG_INFO("server.worldserver", "{} (worldserver-daemon) ready...", GitRevision::GetFullVersion());
 

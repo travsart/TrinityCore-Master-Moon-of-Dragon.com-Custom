@@ -34,6 +34,8 @@ set(PLAYERBOT_SOURCES
     # Module entry point
     ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModuleAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModuleAdapter.h
 
     # Configuration system (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
@@ -108,12 +110,18 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
+
+    # Script integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
 )
 
 # Group sources for IDE organization
 source_group("" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModule.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModuleAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotModuleAdapter.h
 )
 
 source_group("Config" FILES
@@ -193,6 +201,11 @@ source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.h
 )
 
+source_group("Scripts" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+)
+
 # Create the playerbot library
 add_library(playerbot ${PLAYERBOT_SOURCES})
 
@@ -222,6 +235,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
         ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle
+        ${CMAKE_CURRENT_SOURCE_DIR}/Scripts
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PLAYERBOT_INCLUDE_DIRS}
 )

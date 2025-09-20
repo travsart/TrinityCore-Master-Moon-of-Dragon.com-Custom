@@ -74,6 +74,7 @@
 #include "MapManager.h"
 #include "MapUtils.h"
 #include "Metric.h"
+#include "Modules/ModuleManager.h"
 #include "MiscPackets.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -2429,6 +2430,11 @@ void World::Update(uint32 diff)
     {
         TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update world scripts"));
         sScriptMgr->OnWorldUpdate(diff);
+    }
+
+    {
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update modules"));
+        ModuleManager::CallOnUpdate(diff);
     }
 
     {

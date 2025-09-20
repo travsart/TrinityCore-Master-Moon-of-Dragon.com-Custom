@@ -16,7 +16,9 @@
 #include "Character/BotCharacterDistribution.h"
 #include "Database/PlayerbotDatabase.h"
 #include "Database/PlayerbotMigrationMgr.h"
+#include "Lifecycle/BotSpawner.h"
 // #include "Lifecycle/BotLifecycleMgr.h"
+#include "PlayerbotModuleAdapter.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -118,6 +120,15 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
+    // Initialize Bot Spawner
+    TC_LOG_INFO("server.loading", "Initializing Bot Spawner...");
+    if (!Playerbot::sBotSpawner->Initialize())
+    {
+        _lastError = "Failed to initialize Bot Spawner";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+
     // Initialize Bot Lifecycle Manager
     //     TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");
     //     if (!BotLifecycleMgr::instance()->Initialize())
@@ -197,16 +208,24 @@ std::string PlayerbotModule::GetBuildInfo()
 
 void PlayerbotModule::RegisterHooks()
 {
-    // TODO: Register event hooks with TrinityCore when needed
-    // Examples:
-    // - Player login/logout events
-    // - World update cycles
-    // - Configuration reload events
+    // Register with ModuleManager for reliable lifecycle management
+    TC_LOG_INFO("server.loading", "Registering Playerbot with ModuleManager...");
+    Playerbot::PlayerbotModuleAdapter::RegisterWithModuleManager();
+    TC_LOG_INFO("server.loading", "Playerbot successfully registered with ModuleManager");
 }
 
 void PlayerbotModule::UnregisterHooks()
 {
     // TODO: Unregister event hooks
+}
+
+void PlayerbotModule::OnWorldUpdate(uint32 diff)
+{
+    if (!_enabled || !_initialized)
+        return;
+
+    // Update BotSpawner for automatic character creation and management
+    Playerbot::sBotSpawner->Update(diff);
 }
 
 bool PlayerbotModule::ValidateConfig()
@@ -280,6 +299,15 @@ bool PlayerbotModule::InitializeDatabase()
     }
 
     TC_LOG_INFO("server.loading", "Playerbot Database: Successfully connected");
+
+    // Validate database schema
+    TC_LOG_INFO("server.loading", "Validating Playerbot Database Schema...");
+    if (!sPlayerbotDatabase->ValidateSchema())
+    {
+        TC_LOG_WARN("server.loading", "Playerbot Database: Schema validation failed - some features may not work correctly");
+        TC_LOG_WARN("server.loading", "Consider running database migrations or checking table structures");
+    }
+
     return true;
 }
 
