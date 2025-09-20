@@ -11,8 +11,8 @@
 #include "Modules/ModuleManager.h"
 #include "Log.h"
 #include "Config/PlayerbotConfig.h"
+#include "PlayerbotModule.h"
 #include "Lifecycle/BotSpawner.h"
-#include "Session/BotSessionMgr.h"
 
 namespace Playerbot
 {
@@ -41,7 +41,7 @@ void PlayerbotModuleAdapter::RegisterWithModuleManager()
 
 void PlayerbotModuleAdapter::OnModuleStartup()
 {
-    TC_LOG_INFO("module.playerbot", "=== PlayerbotModuleAdapter::OnModuleStartup() CALLED ===");
+    TC_LOG_ERROR("server.loading", "=== PlayerbotModuleAdapter::OnModuleStartup() CALLED ===");
 
     // Check if playerbot is enabled
     if (!sPlayerbotConfig)
@@ -57,17 +57,26 @@ void PlayerbotModuleAdapter::OnModuleStartup()
         return;
     }
 
-    TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Playerbot enabled - initializing systems");
+    TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Playerbot enabled - initializing bot spawning systems");
 
     try
     {
         // Initialize bot systems now that everything is ready
         // This timing ensures the world is fully loaded and module is initialized
 
-        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Starting bot spawning systems");
+        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Initializing Bot Spawner...");
+
+        // Initialize Bot Spawner (moved from PlayerbotModule::Initialize for proper timing)
+        if (!Playerbot::sBotSpawner->Initialize())
+        {
+            TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Failed to initialize Bot Spawner");
+            return;
+        }
+
+        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Bot Spawner initialized successfully");
 
         s_initialized = true;
-        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Startup completed successfully");
+        TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Startup completed successfully - bot spawning active");
     }
     catch (std::exception const& e)
     {
@@ -87,22 +96,13 @@ void PlayerbotModuleAdapter::OnModuleUpdate(uint32 diff)
     static uint32 logCounter = 0;
     if (++logCounter % 100 == 0) // Log every 100 updates
     {
-        TC_LOG_DEBUG("module.playerbot", "PlayerbotModuleAdapter::OnModuleUpdate() #{}", logCounter);
+        TC_LOG_ERROR("server.loading", "PlayerbotModuleAdapter::OnModuleUpdate() #{}", logCounter);
     }
 
     try
     {
-        // Update BotSpawner for population management and character creation
-        if (sBotSpawner)
-        {
-            sBotSpawner->Update(diff);
-        }
-
-        // Update BotSessionMgr for active bot management
-        if (sBotSessionMgr)
-        {
-            sBotSessionMgr->UpdateAllSessions(diff);
-        }
+        // Delegate to the main PlayerbotModule OnWorldUpdate which handles all the systems
+        PlayerbotModule::OnWorldUpdate(diff);
     }
     catch (std::exception const& e)
     {
@@ -119,12 +119,9 @@ void PlayerbotModuleAdapter::OnModuleShutdown()
 
     try
     {
-        // Ensure clean shutdown of all bot systems
-        if (sBotSpawner)
-        {
-            TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Despawning all active bots");
-            sBotSpawner->DespawnAllBots();
-        }
+        // Delegate to main PlayerbotModule shutdown which handles all systems
+        // Note: We don't call PlayerbotModule::Shutdown() here because it's called
+        // separately during server shutdown. This is just for ModuleManager cleanup.
 
         s_initialized = false;
         TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Shutdown completed");

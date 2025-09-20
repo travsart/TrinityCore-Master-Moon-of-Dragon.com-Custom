@@ -20,8 +20,9 @@
 #include <atomic>
 #include <mutex>
 #include <shared_mutex>
-#include <tbb/concurrent_priority_queue.h>
-#include <tbb/concurrent_unordered_map.h>
+#include <queue>
+#include <unordered_map>
+#include <mutex>
 
 namespace Playerbot
 {
@@ -263,12 +264,13 @@ private:
     mutable std::shared_mutex _patternMutex;
     std::unordered_map<std::string, ActivityPattern> _activityPatterns;
 
-    // Thread-safe bot schedule state storage
+    // Thread-safe bot schedule state storage (TBB removed)
     mutable std::shared_mutex _scheduleMutex;
-    tbb::concurrent_unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
+    std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
-    // High-performance priority queue for scheduled actions
-    tbb::concurrent_priority_queue<ScheduleEntry> _scheduleQueue;
+    // Priority queue for scheduled actions (TBB removed)
+    std::priority_queue<ScheduleEntry> _scheduleQueue;
+    mutable std::mutex _scheduleQueueMutex;
 
     // Runtime state
     std::atomic<bool> _enabled{true};

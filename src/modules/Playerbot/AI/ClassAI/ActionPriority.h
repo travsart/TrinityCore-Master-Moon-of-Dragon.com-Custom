@@ -11,7 +11,8 @@
 
 #include "Define.h"
 #include "Unit.h"
-#include <tbb/concurrent_priority_queue.h>
+#include <queue>
+#include <mutex>
 #include <memory>
 #include <vector>
 
@@ -103,7 +104,8 @@ public:
     bool ContainsSpell(uint32 spellId) const;
 
 private:
-    mutable tbb::concurrent_priority_queue<PrioritizedAction> _queue;
+    mutable std::priority_queue<PrioritizedAction> _queue;
+    mutable std::mutex _queueMutex;
     mutable std::atomic<size_t> _size{0};
 
     // Internal helper to validate action

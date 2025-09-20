@@ -80,8 +80,8 @@ void BotLifecycleMgr::Shutdown()
         _workerThread.reset();
     }
 
-    // Wait for all tasks to complete
-    _taskGroup.wait();
+    // TBB task_group removed - no background tasks to wait for in simplified version
+    // _taskGroup.wait();
 
     // Shutdown components (but don't destroy singletons)
     if (_spawner)
@@ -187,7 +187,17 @@ void BotLifecycleMgr::ProcessEventQueue()
     uint32 processedCount = 0;
     const uint32 maxEventsPerCycle = 50; // Prevent processing all events in one cycle
 
-    while (_eventQueue.try_pop(eventInfo) && processedCount < maxEventsPerCycle)
+    // Replace TBB try_pop with std::queue + mutex
+    while (processedCount < maxEventsPerCycle)
+    {
+        std::lock_guard<std::mutex> lock(_eventQueueMutex);
+        if (_eventQueue.empty())
+            break;
+
+        eventInfo = _eventQueue.front();
+        _eventQueue.pop();
+    } // End of lock scope
+
     {
         auto startTime = std::chrono::high_resolution_clock::now();
 

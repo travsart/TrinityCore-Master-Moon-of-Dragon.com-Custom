@@ -655,6 +655,9 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 
 void BotAccountMgr::LoadAccountMetadata()
 {
+    printf("=== CLAUDE DEBUG: LoadAccountMetadata() ENTERED ===\n");
+    fflush(stdout);
+
     TC_LOG_INFO("server.loading", "=== LOADING BOT ACCOUNT METADATA ===");
     TC_LOG_INFO("module.playerbot.account", "Loading bot account metadata...");
 
@@ -759,8 +762,19 @@ void BotAccountMgr::LoadAccountMetadata()
                     _accounts[bnetAccountId] = info;
                     loadedAccounts++;
 
+                    // CRITICAL FIX: Add loaded accounts to the account pool so they can be acquired
+                    {
+                        std::lock_guard<std::mutex> lock(_poolMutex);
+                        _accountPool.push(legacyAccountId);  // Use legacy account ID for the pool
+                        _accounts[bnetAccountId].isInPool = true;  // Mark as in pool
+                    }
+
+                    printf("=== CLAUDE DEBUG: LOADED bot account: BNet %u, Email: %s, Legacy: %u, Bot#: %u - ADDED TO POOL ===\n",
+                           bnetAccountId, email.c_str(), legacyAccountId, botNumber);
+                    fflush(stdout);
+
                     TC_LOG_ERROR("server.loading",
-                        "=== CLAUDE DEBUG: LOADED bot account: BNet {}, Email: {}, Legacy: {}, Bot#: {} ===",
+                        "=== CLAUDE DEBUG: LOADED bot account: BNet {}, Email: {}, Legacy: {}, Bot#: {} - ADDED TO POOL ===",
                         bnetAccountId, email, legacyAccountId, botNumber);
                 }
                 else
@@ -774,6 +788,10 @@ void BotAccountMgr::LoadAccountMetadata()
         // Set the email counter to start after the highest existing bot number
         _emailCounter.store(highestBotNumber + 1);
         _totalAccounts.store(loadedAccounts);
+
+        printf("=== CLAUDE DEBUG: LoadAccountMetadata() COMPLETE - Loaded %u accounts, pool size %zu ===\n",
+               loadedAccounts, _accountPool.size());
+        fflush(stdout);
 
         TC_LOG_INFO("module.playerbot.account",
             "✅ Loaded {} bot account metadata entries, highest bot number: {}, next counter: {}",

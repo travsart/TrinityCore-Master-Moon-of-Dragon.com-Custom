@@ -65,11 +65,13 @@ void BotScheduler::Shutdown()
 
     _botSchedules.clear();
 
-    // Clear the schedule queue
-    ScheduleEntry entry;
-    while (_scheduleQueue.try_pop(entry))
+    // Clear the schedule queue (TBB -> std::priority_queue)
     {
-        // Just drain the queue
+        std::lock_guard<std::mutex> lock(_scheduleQueueMutex);
+        while (!_scheduleQueue.empty())
+        {
+            _scheduleQueue.pop();
+        }
     }
 
     TC_LOG_INFO("module.playerbot.scheduler", "Bot Scheduler shutdown complete");
@@ -401,9 +403,20 @@ void BotScheduler::ProcessSchedule()
     auto now = std::chrono::system_clock::now();
     uint32 actionsProcessed = 0;
 
-    ScheduleEntry entry;
-    while (_scheduleQueue.try_pop(entry) && actionsProcessed < MAX_ACTIONS_PER_UPDATE)
+    // Replace TBB try_pop with std::priority_queue + mutex
+    while (actionsProcessed < MAX_ACTIONS_PER_UPDATE)
     {
+        ScheduleEntry entry;
+        {
+            std::lock_guard<std::mutex> lock(_scheduleQueueMutex);
+            if (_scheduleQueue.empty())
+                break;
+
+            entry = _scheduleQueue.top();
+            _scheduleQueue.pop();
+        } // End of lock scope
+
+        // Process the entry
         if (entry.executeTime <= now)
         {
             ExecuteScheduledAction(entry);

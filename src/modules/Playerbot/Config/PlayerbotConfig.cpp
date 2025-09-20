@@ -34,18 +34,23 @@ PlayerbotConfig* PlayerbotConfig::instance()
 
 bool PlayerbotConfig::Initialize()
 {
+    printf("=== PLAYERBOT CONFIG DEBUG: Initialize() started ===\n");
     _loaded = false;
     _lastError.clear();
 
     // Find configuration file
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call FindConfigFile() ===\n");
     _configPath = FindConfigFile();
+    printf("=== PLAYERBOT CONFIG DEBUG: FindConfigFile() returned, checking if empty ===\n");
     if (_configPath.empty())
     {
         _lastError = "Could not find playerbots.conf file";
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: {}", _lastError);
+        printf("=== PLAYERBOT CONFIG DEBUG: Config file not found, returning false ===\n");
         return false;
     }
 
+    printf("=== PLAYERBOT CONFIG DEBUG: Config file found, about to call LoadConfigFile() ===\n");
     // Load configuration
     if (!LoadConfigFile(_configPath))
     {
@@ -54,6 +59,7 @@ bool PlayerbotConfig::Initialize()
         return false;
     }
 
+    printf("=== PLAYERBOT CONFIG DEBUG: LoadConfigFile completed, about to call ValidateConfiguration() ===\n");
     // Validate configuration
     if (!ValidateConfiguration())
     {
@@ -62,8 +68,11 @@ bool PlayerbotConfig::Initialize()
         return false;
     }
 
+    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() succeeded, setting _loaded = true ===\n");
     _loaded = true;
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call TC_LOG_INFO ===\n");
     TC_LOG_INFO("server.loading", "PlayerbotConfig: Successfully loaded from {}", _configPath);
+    printf("=== PLAYERBOT CONFIG DEBUG: Initialize() about to return true ===\n");
     return true;
 }
 
@@ -178,13 +187,30 @@ std::string PlayerbotConfig::FindConfigFile() const
 
 bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
 {
+    printf("=== PLAYERBOT CONFIG DEBUG: LoadConfigFile() entered with path: %s ===\n", filePath.c_str());
+
+    printf("=== PLAYERBOT CONFIG DEBUG: About to open ifstream ===\n");
     std::ifstream file(filePath);
+    printf("=== PLAYERBOT CONFIG DEBUG: ifstream created, checking if open ===\n");
+
     if (!file.is_open())
+    {
+        printf("=== PLAYERBOT CONFIG DEBUG: File failed to open, returning false ===\n");
         return false;
+    }
+
+    printf("=== PLAYERBOT CONFIG DEBUG: File opened successfully, starting line reading loop ===\n");
 
     std::string line;
+    int lineCount = 0;
     while (std::getline(file, line))
     {
+        lineCount++;
+        if (lineCount <= 5) // Log first 5 lines to avoid spam
+        {
+            printf("=== PLAYERBOT CONFIG DEBUG: Read line %d: %s ===\n", lineCount, line.c_str());
+        }
+
         // Skip empty lines and comments
         if (line.empty() || line[0] == '#')
             continue;
@@ -206,26 +232,37 @@ bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
 
         // Store the value
         _configValues[key] = value;
+
+        if (lineCount <= 5) // Log first 5 config entries
+        {
+            printf("=== PLAYERBOT CONFIG DEBUG: Stored config [%s] = [%s] ===\n", key.c_str(), value.c_str());
+        }
     }
 
+    printf("=== PLAYERBOT CONFIG DEBUG: Finished reading %d lines, returning true ===\n", lineCount);
     return true;
 }
 
 bool PlayerbotConfig::ValidateConfiguration()
 {
+    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() entered ===\n");
 
     // Validate critical settings
     bool valid = true;
 
     // Check bot limits
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call GetUInt for MaxBotsPerAccount ===\n");
     uint32 maxBots = GetUInt("Playerbot.MaxBotsPerAccount", 10);
+    printf("=== PLAYERBOT CONFIG DEBUG: GetUInt returned: %u ===\n", maxBots);
     if (maxBots > 50)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.MaxBotsPerAccount ({}) exceeds recommended limit (50)", maxBots);
     }
 
     // Check update intervals
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call GetUInt for UpdateInterval ===\n");
     uint32 updateInterval = GetUInt("Playerbot.UpdateInterval", 1000);
+    printf("=== PLAYERBOT CONFIG DEBUG: GetUInt UpdateInterval returned: %u ===\n", updateInterval);
     if (updateInterval < 100)
     {
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.UpdateInterval ({}) is too low (minimum 100ms)", updateInterval);
@@ -239,12 +276,15 @@ bool PlayerbotConfig::ValidateConfiguration()
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.AIDecisionTimeLimit ({}) is very high (recommended <100ms)", aiTimeLimit);
     }
 
+    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() about to return: %s ===\n", valid ? "true" : "false");
     return valid;
 }
 
 void PlayerbotConfig::InitializeLogging()
 {
     TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Initializing logging system...");
+
+    printf("=== PLAYERBOT DEBUG: Temporarily disabling custom logging setup to fix initialization ===\n");
 
     // Get log level from configuration
     int32 logLevel = GetInt("Playerbot.Log.Level", 3);
@@ -257,10 +297,11 @@ void PlayerbotConfig::InitializeLogging()
         logLevel = 3;
     }
 
-    // Setup playerbot logging
-    SetupPlayerbotLogging(logLevel, logFile);
+    // TEMPORARILY DISABLED: Setup playerbot logging
+    // SetupPlayerbotLogging(logLevel, logFile);
+    printf("=== PLAYERBOT DEBUG: Skipped SetupPlayerbotLogging() call ===\n");
 
-    TC_LOG_INFO("server.loading", "PlayerbotConfig: Logging system initialized - Level: {}, File: {}", logLevel, logFile);
+    TC_LOG_INFO("server.loading", "PlayerbotConfig: Logging system initialized - Level: {}, File: {} (custom logging disabled)", logLevel, logFile);
 }
 
 void PlayerbotConfig::SetupPlayerbotLogging(int32 logLevel, std::string const& logFile)

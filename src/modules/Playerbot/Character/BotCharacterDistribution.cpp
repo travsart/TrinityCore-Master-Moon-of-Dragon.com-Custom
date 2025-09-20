@@ -34,6 +34,7 @@ BotCharacterDistribution* BotCharacterDistribution::instance()
 
 bool BotCharacterDistribution::LoadFromDatabase()
 {
+    TC_LOG_INFO("server.loading", "BotCharacterDistribution::LoadFromDatabase() - ENTRY POINT");
     TC_LOG_PLAYERBOT_CHAR_INFO("Loading Bot Character Distribution from database...");
 
     auto startTime = getMSTime();
@@ -82,15 +83,24 @@ void BotCharacterDistribution::ReloadDistributions()
 
 void BotCharacterDistribution::LoadRaceClassDistribution()
 {
+    TC_LOG_INFO("server.loading", "LoadRaceClassDistribution() - ENTRY POINT");
     m_raceClassCombinations.clear();
     m_raceCache.clear();
     m_classCache.clear();
 
+    TC_LOG_INFO("server.loading", "Checking sPlayerbotDatabase pointer: {}", (void*)sPlayerbotDatabase);
+    if (!sPlayerbotDatabase) {
+        TC_LOG_ERROR("server.loading", "sPlayerbotDatabase is NULL!");
+        return;
+    }
+    TC_LOG_INFO("server.loading", "About to execute query: SELECT race_id, class_id, distribution_weight, enabled FROM playerbots_race_class_distribution WHERE enabled = 1 ORDER BY distribution_weight DESC");
     QueryResult result = sPlayerbotDatabase->Query(
-        "SELECT race, class, percentage, is_popular, faction "
+        "SELECT race_id, class_id, distribution_weight, enabled "
         "FROM playerbots_race_class_distribution "
-        "ORDER BY percentage DESC"
+        "WHERE enabled = 1 "
+        "ORDER BY distribution_weight DESC"
     );
+    TC_LOG_INFO("server.loading", "Query result pointer: {}", (void*)result.get());
 
     if (!result)
     {
@@ -105,9 +115,9 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
         RaceClassCombination combo;
         combo.race = fields[0].GetUInt8();
         combo.classId = fields[1].GetUInt8();
-        combo.percentage = fields[2].GetFloat();
-        combo.isPopular = fields[3].GetBool();
-        combo.faction = fields[4].GetString();
+        combo.percentage = fields[2].GetFloat(); // distribution_weight
+        combo.isPopular = fields[3].GetBool();  // enabled
+        combo.faction = ""; // Not available in this table
 
         m_raceClassCombinations.push_back(combo);
 
@@ -117,7 +127,7 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
 
     } while (result->NextRow());
 
-    TC_LOG_PLAYERBOT_CHAR_DEBUG("Loaded {} race/class combinations",
+    TC_LOG_PLAYERBOT_CHAR_INFO("Loaded {} race/class combinations",
                                 m_raceClassCombinations.size());
 }
 
@@ -126,7 +136,7 @@ void BotCharacterDistribution::LoadGenderDistribution()
     m_genderDistributions.clear();
 
     QueryResult result = sPlayerbotDatabase->Query(
-        "SELECT race, race_name, male_percentage, female_percentage "
+        "SELECT race_id, male_percentage, female_percentage "
         "FROM playerbots_gender_distribution"
     );
 
@@ -142,15 +152,15 @@ void BotCharacterDistribution::LoadGenderDistribution()
 
         GenderDistribution dist;
         dist.race = fields[0].GetUInt8();
-        dist.raceName = fields[1].GetString();
-        dist.malePercentage = fields[2].GetUInt8();
-        dist.femalePercentage = fields[3].GetUInt8();
+        dist.raceName = ""; // Not available in this table
+        dist.malePercentage = static_cast<uint8>(fields[1].GetFloat());
+        dist.femalePercentage = static_cast<uint8>(fields[2].GetFloat());
 
         m_genderDistributions[dist.race] = dist;
 
     } while (result->NextRow());
 
-    TC_LOG_DEBUG("module.playerbot.character", "Loaded gender distribution for {} races",
+    TC_LOG_INFO("module.playerbot.character", "Loaded gender distribution for {} races",
                  m_genderDistributions.size());
 }
 
@@ -159,9 +169,9 @@ void BotCharacterDistribution::LoadClassPopularity()
     m_classPopularities.clear();
 
     QueryResult result = sPlayerbotDatabase->Query(
-        "SELECT class, class_name, popularity_percentage, "
-        "pve_popularity, pvp_popularity, mythic_plus_popularity, raid_popularity "
-        "FROM playerbots_class_popularity"
+        "SELECT class_id, class_name, popularity_weight, min_level, max_level "
+        "FROM playerbots_class_popularity "
+        "WHERE enabled = 1"
     );
 
     if (!result)
@@ -177,17 +187,17 @@ void BotCharacterDistribution::LoadClassPopularity()
         ClassPopularity pop;
         pop.classId = fields[0].GetUInt8();
         pop.className = fields[1].GetString();
-        pop.overallPopularity = fields[2].GetFloat();
-        pop.pvePopularity = fields[3].GetFloat();
-        pop.pvpPopularity = fields[4].GetFloat();
-        pop.mythicPlusPopularity = fields[5].GetFloat();
-        pop.raidPopularity = fields[6].GetFloat();
+        pop.overallPopularity = fields[2].GetFloat(); // popularity_weight
+        pop.pvePopularity = 0.0f; // Not available in this table
+        pop.pvpPopularity = 0.0f; // Not available in this table
+        pop.mythicPlusPopularity = 0.0f; // Not available in this table
+        pop.raidPopularity = 0.0f; // Not available in this table
 
         m_classPopularities[pop.classId] = pop;
 
     } while (result->NextRow());
 
-    TC_LOG_DEBUG("module.playerbot.character", "Loaded popularity data for {} classes",
+    TC_LOG_INFO("module.playerbot.character", "Loaded popularity data for {} classes",
                  m_classPopularities.size());
 }
 
@@ -196,30 +206,39 @@ void BotCharacterDistribution::LoadRaceClassGenderOverrides()
     m_raceClassGenderOverrides.clear();
 
     QueryResult result = sPlayerbotDatabase->Query(
-        "SELECT race, class, male_percentage "
-        "FROM playerbots_race_class_gender"
+        "SELECT race_id, class_id, gender, preference_weight "
+        "FROM playerbots_race_class_gender "
+        "WHERE enabled = 1"
     );
 
     if (!result)
     {
-        TC_LOG_DEBUG("module.playerbot.character", "No race/class gender overrides found (optional)");
+        TC_LOG_INFO("module.playerbot.character", "No race/class gender overrides found (optional)");
         return;
     }
 
+    // TODO: Implement proper processing for gender preference weights
+    // Current table structure stores individual gender preferences, not male percentages
+    // For now, skip loading gender overrides to get basic functionality working
+
+    /*
     do
     {
         Field* fields = result->Fetch();
 
         uint8 race = fields[0].GetUInt8();
         uint8 classId = fields[1].GetUInt8();
-        uint8 malePercentage = fields[2].GetUInt8();
+        uint8 gender = fields[2].GetUInt8();
+        float preferenceWeight = fields[3].GetFloat();
 
-        uint32 key = (race << 8) | classId;
-        m_raceClassGenderOverrides[key] = malePercentage;
+        // TODO: Convert preference weights to male percentages
+        // uint32 key = (race << 8) | classId;
+        // m_raceClassGenderOverrides[key] = calculatedMalePercentage;
 
     } while (result->NextRow());
+    */
 
-    TC_LOG_DEBUG("module.playerbot.character", "Loaded {} race/class gender overrides",
+    TC_LOG_INFO("module.playerbot.character", "Loaded {} race/class gender overrides",
                  m_raceClassGenderOverrides.size());
 }
 
@@ -234,7 +253,7 @@ void BotCharacterDistribution::BuildCumulativeDistribution()
         m_cumulativeDistribution.push_back(m_totalPercentage);
     }
 
-    TC_LOG_DEBUG("module.playerbot.character", "Built cumulative distribution, total percentage: {:.2f}",
+    TC_LOG_INFO("module.playerbot.character", "Built cumulative distribution, total percentage: {:.2f}",
                  m_totalPercentage);
 }
 

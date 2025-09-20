@@ -339,7 +339,10 @@ endif()
 # Add to game library dependencies
 if(TARGET game)
     target_link_libraries(game PRIVATE playerbot)
-    target_compile_definitions(game PRIVATE WITH_PLAYERBOTS)
+    target_compile_definitions(game PRIVATE
+        WITH_PLAYERBOTS
+        PLAYERBOT_ENABLED=1
+    )
 endif()
 
 # Enterprise dependency verification test (temporarily disabled)

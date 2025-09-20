@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <mutex>
-#include <tbb/concurrent_queue.h>
+#include <queue>
 
 namespace Playerbot
 {
@@ -128,6 +128,7 @@ public:
 
     // Zone management
     void UpdateZonePopulation(uint32 zoneId, uint32 mapId);
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId);
     ZonePopulation GetZonePopulation(uint32 zoneId) const;
     std::vector<ZonePopulation> GetAllZonePopulations() const;
 
@@ -151,7 +152,7 @@ public:
     void SetEnabled(bool enabled) { _enabled = enabled; }
 
 private:
-    BotSpawner() = default;
+    BotSpawner();  // Explicit constructor for debugging
     ~BotSpawner() = default;
 
     // Internal spawning
@@ -164,6 +165,7 @@ private:
     std::vector<ObjectGuid> GetAvailableCharacters(uint32 accountId, SpawnRequest const& request);
 
     // Character creation
+    ObjectGuid CreateCharacterForAccount(uint32 accountId, SpawnRequest const& request);
     ObjectGuid CreateBotCharacter(uint32 accountId);
 
     // Population calculations
@@ -182,7 +184,8 @@ private:
     std::unordered_map<uint32, std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
     // Async spawning queue
-    tbb::concurrent_queue<SpawnRequest> _spawnQueue;
+    std::queue<SpawnRequest> _spawnQueue;
+    mutable std::mutex _spawnQueueMutex;
     std::atomic<bool> _processingQueue{false};
 
     // Timing

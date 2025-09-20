@@ -98,9 +98,12 @@ void PlayerbotDatabaseConnection::Close()
 
 QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
 {
+    TC_LOG_INFO("server.loading", "PlayerbotDatabaseConnection::Query: Executing SQL: {}", sql);
+
     if (!_connected || !_mysqlHandle)
     {
         SetError("Not connected to database");
+        TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseConnection::Query: Not connected to database");
         return nullptr;
     }
 
@@ -108,25 +111,57 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
 
     if (mysql_query(mysql, sql.c_str()))
     {
-        SetError(Trinity::StringFormat("Query failed: {}", mysql_error(mysql)));
+        uint32 errorCode = mysql_errno(mysql);
+        std::string error = Trinity::StringFormat("Query failed [Error {}]: {}", errorCode, mysql_error(mysql));
+        SetError(error);
+        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseConnection::Query: {}", error);
+
+        // Log specific schema-related errors
+        if (errorCode == 1054) // ER_BAD_FIELD_ERROR - Unknown column
+        {
+            TC_LOG_ERROR("server.loading", "SCHEMA MISMATCH: Column does not exist in table. SQL: {}", sql);
+        }
+        else if (errorCode == 1146) // ER_NO_SUCH_TABLE - Table doesn't exist
+        {
+            TC_LOG_ERROR("server.loading", "SCHEMA MISMATCH: Table does not exist. SQL: {}", sql);
+        }
+        else if (errorCode == 1064) // ER_PARSE_ERROR - SQL syntax error
+        {
+            TC_LOG_ERROR("server.loading", "SQL SYNTAX ERROR: Check query syntax. SQL: {}", sql);
+        }
+
         return nullptr;
     }
 
     MYSQL_RES* result = mysql_store_result(mysql);
+    TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseConnection::Query: mysql_store_result returned: {}",
+                 result ? "valid result" : "nullptr");
+
     if (!result)
     {
+        uint32 fieldCount = mysql_field_count(mysql);
+        TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseConnection::Query: mysql_field_count: {}", fieldCount);
+
         // Check if it was a query that should return results
-        if (mysql_field_count(mysql) > 0)
+        if (fieldCount > 0)
         {
-            SetError(Trinity::StringFormat("Failed to store result: {}", mysql_error(mysql)));
+            std::string error = Trinity::StringFormat("Failed to store result: {}", mysql_error(mysql));
+            SetError(error);
+            TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseConnection::Query: {}", error);
             return nullptr;
         }
         else
         {
             // Query didn't return results (INSERT, UPDATE, DELETE, etc.)
+            TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseConnection::Query: Non-SELECT query completed successfully");
             return nullptr;
         }
     }
+
+    // Even if we have a result, it might be empty (0 rows)
+    // This is still a valid result set, just with no data
+    uint32 rowCount = mysql_num_rows(result);
+    TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseConnection::Query: Result has {} rows", rowCount);
 
     // Create a proper ResultSet from our MySQL result
     if (result)
@@ -135,7 +170,7 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
         try
         {
             auto resultSet = std::make_shared<PlayerbotResultSet>(result);
-            TC_LOG_DEBUG("module.playerbot.database",
+            TC_LOG_INFO("module.playerbot.database",
                 "PlayerbotDatabaseConnection: Query returned {} rows", resultSet->GetRowCount());
             return resultSet;
         }
@@ -148,6 +183,7 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
         }
     }
 
+    TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseConnection::Query: Unexpected end of function");
     return nullptr;
 }
 

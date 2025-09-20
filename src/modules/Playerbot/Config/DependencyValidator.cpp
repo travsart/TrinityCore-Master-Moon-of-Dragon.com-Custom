@@ -3,11 +3,15 @@
 #include "Log.h"
 
 // Intel TBB Headers
-#include <tbb/version.h>
-#include <tbb/task_arena.h>
-#include <tbb/concurrent_queue.h>
-#include <tbb/parallel_for.h>
-#include <tbb/concurrent_hash_map.h>
+// TBB includes removed - Playerbot now uses std:: threading primitives
+// #include <tbb/version.h>
+// #include <tbb/task_arena.h>
+// #include <tbb/concurrent_queue.h>
+// #include <tbb/parallel_for.h>
+// #include <tbb/concurrent_hash_map.h>
+#include <thread>
+#include <queue>
+#include <mutex>
 
 // Parallel Hashmap Headers
 #include <parallel_hashmap/phmap.h>
@@ -109,6 +113,11 @@ bool DependencyValidator::ValidateTBB()
 
 bool DependencyValidator::TestTBBConcurrency()
 {
+    // TBB REMOVED - Playerbot now uses std:: threading primitives
+    TC_LOG_INFO("module.playerbot.dependencies", "TBB dependency removed - using standard C++ threading");
+    return true;
+
+    /*
     try {
         // Test task_arena
         tbb::task_arena arena(4);
@@ -172,6 +181,7 @@ bool DependencyValidator::TestTBBConcurrency()
         TC_LOG_ERROR("module.playerbot.dependencies", "TBB concurrency test exception: {}", e.what());
         return false;
     }
+    */
 }
 
 bool DependencyValidator::ValidatePhmap()

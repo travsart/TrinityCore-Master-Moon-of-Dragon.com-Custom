@@ -218,6 +218,14 @@ target_include_directories(scripts
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Add Playerbot support if enabled
+if(BUILD_PLAYERBOT)
+  target_compile_definitions(scripts PRIVATE PLAYERBOT_ENABLED=1)
+  target_include_directories(scripts PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/modules/Playerbot
+    ${CMAKE_SOURCE_DIR}/src/modules/Playerbot/Scripts)
+endif()
+
 set_target_properties(scripts
   PROPERTIES
     COMPILE_WARNING_AS_ERROR ${WITH_WARNINGS_AS_ERRORS}

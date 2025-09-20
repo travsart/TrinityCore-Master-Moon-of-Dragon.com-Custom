@@ -59,6 +59,12 @@ public:
      */
     bool IsConnected() const;
 
+    /**
+     * @brief Validate database schema matches expected structure
+     * @return true if schema is valid, false otherwise
+     */
+    bool ValidateSchema();
+
 private:
     PlayerbotDatabaseManager() = default;
     ~PlayerbotDatabaseManager() = default;

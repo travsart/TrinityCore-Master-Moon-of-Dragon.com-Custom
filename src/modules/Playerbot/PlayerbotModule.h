@@ -87,6 +87,17 @@ public:
      */
     static std::string GetBuildInfo();
 
+    /**
+     * @brief Update all bot systems
+     * @param diff Time difference since last update in milliseconds
+     *
+     * Called periodically by ModuleManager to:
+     * - Update BotSpawner population targets
+     * - Process spawn/despawn requests
+     * - Maintain bot populations in zones
+     */
+    static void OnWorldUpdate(uint32 diff);
+
 private:
     /**
      * @brief Register hooks with TrinityCore event system

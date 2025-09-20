@@ -15,8 +15,8 @@
 #include "DatabaseEnv.h"
 #include "ObjectGuid.h"
 #include <shared_mutex>
-#include <tbb/concurrent_queue.h>
-#include <tbb/task_group.h>
+#include <queue>
+#include <mutex>
 #include <memory>
 #include <atomic>
 #include <thread>
@@ -144,9 +144,9 @@ private:
     Playerbot::BotScheduler* _scheduler;
     Playerbot::BotSpawner* _spawner;
 
-    // Event processing
-    tbb::concurrent_queue<LifecycleEventInfo> _eventQueue;
-    tbb::task_group _taskGroup;
+    // Event processing (TBB removed - using std:: equivalents)
+    std::queue<LifecycleEventInfo> _eventQueue;
+    mutable std::mutex _eventQueueMutex;
 
     // Thread management
     std::unique_ptr<std::thread> _workerThread;
