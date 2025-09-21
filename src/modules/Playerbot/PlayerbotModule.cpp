@@ -273,9 +273,6 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     }
 
     // Update BotSpawner for automatic character creation and management
-    // RE-ENABLED: Fixed TC_LOG calls that were causing crash
-    printf("=== PLAYERBOT DEBUG: About to call sBotSpawner->Update() (TC_LOG fixed) ===\n");
-    fflush(stdout);
     Playerbot::sBotSpawner->Update(diff);
 
     if (logCounter % 1000 == 0)
@@ -335,6 +332,17 @@ void PlayerbotModule::InitializeLogging()
     // Initialize TrinityCore logging integration via config system
     printf("=== PLAYERBOT DEBUG: About to call sPlayerbotConfig->InitializeLogging() ===\n");
     fflush(stdout);
+
+    // Check if sPlayerbotConfig is valid
+    if (!sPlayerbotConfig)
+    {
+        printf("=== PLAYERBOT DEBUG: sPlayerbotConfig is NULL! ===\n");
+        fflush(stdout);
+        return;
+    }
+    printf("=== PLAYERBOT DEBUG: sPlayerbotConfig is valid, calling InitializeLogging() ===\n");
+    fflush(stdout);
+
     sPlayerbotConfig->InitializeLogging();
     printf("=== PLAYERBOT DEBUG: sPlayerbotConfig->InitializeLogging() completed ===\n");
     fflush(stdout);

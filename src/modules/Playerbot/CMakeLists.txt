@@ -42,6 +42,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ModuleLogManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ModuleLogManager.h
     # Temporarily disabled: DependencyValidator (needs MySQL headers fix)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.h

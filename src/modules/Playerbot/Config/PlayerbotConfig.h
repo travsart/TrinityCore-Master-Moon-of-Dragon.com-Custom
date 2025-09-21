@@ -21,6 +21,7 @@
 #ifdef PLAYERBOT_ENABLED
 
 #include "Define.h"
+#include "ModuleLogManager.h"
 #include <map>
 #include <string>
 

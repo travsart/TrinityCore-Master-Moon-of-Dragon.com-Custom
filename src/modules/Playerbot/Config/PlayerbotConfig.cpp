@@ -282,26 +282,57 @@ bool PlayerbotConfig::ValidateConfiguration()
 
 void PlayerbotConfig::InitializeLogging()
 {
-    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Initializing logging system...");
+    printf("=== PLAYERBOT CONFIG DEBUG: InitializeLogging() FUNCTION ENTRY ===\n");
 
-    printf("=== PLAYERBOT DEBUG: Temporarily disabling custom logging setup to fix initialization ===\n");
+    // Skip this TC_LOG_DEBUG call that might be causing issues
+    // TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Initializing new Module Logging system...");
 
-    // Get log level from configuration
-    int32 logLevel = GetInt("Playerbot.Log.Level", 3);
-    std::string logFile = GetString("Playerbot.Log.File", "Playerbot.log");
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call sModuleLogManager->RegisterModule() ===\n");
 
-    // Validate log level
-    if (logLevel < 0 || logLevel > 5)
+    // Check if ModuleLogManager singleton is available
+    auto* mgr = Playerbot::ModuleLogManager::instance();
+    if (!mgr)
     {
-        TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid log level {}. Using default level 3.", logLevel);
-        logLevel = 3;
+        printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is NULL! ===\n");
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: ModuleLogManager singleton is NULL");
+        return;
+    }
+    printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is valid ===\n");
+
+    // Register Playerbot module with the new ModuleLogManager
+    if (!mgr->RegisterModule("playerbot", 3, "Playerbot.log"))
+    {
+        printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() FAILED ===\n");
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to register module with ModuleLogManager");
+        return;
     }
 
-    // TEMPORARILY DISABLED: Setup playerbot logging
-    // SetupPlayerbotLogging(logLevel, logFile);
-    printf("=== PLAYERBOT DEBUG: Skipped SetupPlayerbotLogging() call ===\n");
+    printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() SUCCESS, about to call InitializeModuleLogging() ===\n");
 
-    TC_LOG_INFO("server.loading", "PlayerbotConfig: Logging system initialized - Level: {}, File: {} (custom logging disabled)", logLevel, logFile);
+    // Initialize module logging
+    if (!mgr->InitializeModuleLogging("playerbot"))
+    {
+        printf("=== PLAYERBOT CONFIG DEBUG: InitializeModuleLogging() FAILED ===\n");
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to initialize module logging");
+        return;
+    }
+
+    printf("=== PLAYERBOT CONFIG DEBUG: InitializeModuleLogging() SUCCESS ===\n");
+
+    TC_LOG_INFO("server.loading", "PlayerbotConfig: New Module Logging system initialized successfully");
+
+    // SIMPLE TEST: Write directly to file to prove the concept
+    std::ofstream testFile("M:/Wplayerbot/Playerbot.log", std::ios::app);
+    if (testFile.is_open()) {
+        testFile << "SIMPLE TEST: This message was written directly to the file!" << std::endl;
+        testFile.close();
+    }
+
+    // Test the new logging system with direct TC_LOG calls
+    TC_LOG_INFO("module.playerbot", "DIRECT TEST: Module logging system is now active!");
+    TC_LOG_ERROR("module.playerbot", "DIRECT TEST: Error level test message");
+
+    printf("=== PLAYERBOT CONFIG DEBUG: InitializeLogging() COMPLETED ===\n");
 }
 
 void PlayerbotConfig::SetupPlayerbotLogging(int32 logLevel, std::string const& logFile)
