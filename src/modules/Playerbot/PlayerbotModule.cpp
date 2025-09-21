@@ -20,6 +20,7 @@
 // #include "Lifecycle/BotLifecycleMgr.h"
 #include "Session/BotSessionMgr.h"
 #include "PlayerbotModuleAdapter.h"
+#include "Update/ModuleUpdateManager.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -178,6 +179,16 @@ bool PlayerbotModule::Initialize()
     printf("=== PLAYERBOT DEBUG: RegisterHooks() completed successfully ===\n");
     fflush(stdout);
 
+    // Register with the shared ModuleUpdateManager for world updates
+    printf("=== PLAYERBOT DEBUG: About to register with ModuleUpdateManager ===\n");
+    if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
+    {
+        _lastError = "Failed to register with ModuleUpdateManager";
+        printf("=== PLAYERBOT DEBUG: ModuleUpdateManager registration FAILED ===\n");
+        return false;
+    }
+    printf("=== PLAYERBOT DEBUG: ModuleUpdateManager registration SUCCESS ===\n");
+
     _initialized = true;
     _enabled = true;
 
@@ -197,6 +208,10 @@ void PlayerbotModule::Shutdown()
 
     // Unregister hooks
     UnregisterHooks();
+
+    // Unregister from ModuleUpdateManager
+    sModuleUpdateManager->UnregisterModule("playerbot");
+    TC_LOG_DEBUG("server.loading", "Unregistered playerbot from ModuleUpdateManager");
 
     if (_enabled)
     {
