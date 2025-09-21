@@ -8,13 +8,12 @@
  */
 
 #include "ModuleLogManager.h"
-#include "PlayerbotConfig.h"
 #include "Config.h"
 #include "Log.h"
 #include "StringFormat.h"
 #include <mutex>
 
-namespace Playerbot
+namespace Trinity
 {
 
 ModuleLogManager* ModuleLogManager::instance()
@@ -139,6 +138,27 @@ void ModuleLogManager::LogModuleMessage(std::string const& moduleName, uint8 lev
     }
 }
 
+bool ModuleLogManager::SetModuleConfig(std::string const& moduleName, uint8 logLevel, std::string const& logFileName)
+{
+    std::lock_guard<std::mutex> lock(_loggerMutex);
+
+    auto it = _moduleLoggers.find(moduleName);
+    if (it == _moduleLoggers.end())
+    {
+        TC_LOG_ERROR("server.loading", "ModuleLogManager: Cannot set config for unregistered module '{}'", moduleName);
+        return false;
+    }
+
+    auto& info = *it->second;
+    info.logLevel = logLevel;
+    if (!logFileName.empty())
+        info.logFileName = logFileName;
+
+    TC_LOG_DEBUG("server.loading", "ModuleLogManager: Updated config for module '{}' - Level: {}, File: '{}'",
+                 moduleName, info.logLevel, info.logFileName);
+    return true;
+}
+
 void ModuleLogManager::Shutdown()
 {
     std::lock_guard<std::mutex> lock(_loggerMutex);
@@ -244,38 +264,11 @@ bool ModuleLogManager::CreateModuleLogger(ModuleLogInfo& info)
 
 void ModuleLogManager::LoadModuleConfig(std::string const& moduleName, ModuleLogInfo& info)
 {
-    // For Playerbot module, load from playerbots.conf
-    // For other modules, they would load from their own config files
-    if (moduleName == "playerbot")
-    {
-        // Use PlayerbotConfig to get logging settings from playerbots.conf
-        if (sPlayerbotConfig)
-        {
-            uint8 configLevel = sPlayerbotConfig->GetInt("Playerbot.Log.Level", info.logLevel);
-            if (configLevel <= 5)
-            {
-                info.logLevel = configLevel;
-                TC_LOG_DEBUG("server.loading", "ModuleLogManager: Loaded log level {} for module '{}' from playerbots.conf",
-                             configLevel, moduleName);
-            }
+    // Generic module configuration loading
+    // Modules can override this by calling SetModuleLogLevel and SetModuleLogFile
+    // or by providing a module-specific config loader
 
-            std::string configFile = sPlayerbotConfig->GetString("Playerbot.Log.File", info.logFileName);
-            if (!configFile.empty())
-            {
-                info.logFileName = configFile;
-                TC_LOG_DEBUG("server.loading", "ModuleLogManager: Loaded log file '{}' for module '{}' from playerbots.conf",
-                             info.logFileName, moduleName);
-            }
-        }
-    }
-    else
-    {
-        // For other modules, they would implement their own config loading
-        // This could be extended to support a general module config interface
-        TC_LOG_DEBUG("server.loading", "ModuleLogManager: Using default config for module '{}' (no specific config loader)", moduleName);
-    }
-
-    TC_LOG_DEBUG("server.loading", "ModuleLogManager: Final config for module '{}' - Level: {}, File: '{}'",
+    TC_LOG_DEBUG("server.loading", "ModuleLogManager: Using default config for module '{}' - Level: {}, File: '{}'",
                  moduleName, info.logLevel, info.logFileName);
 }
 
@@ -293,4 +286,4 @@ std::pair<std::string, std::string> ModuleLogManager::GenerateLoggerNames(std::s
     return std::make_pair(loggerName, appenderName);
 }
 
-} // namespace Playerbot
+} // namespace Trinity

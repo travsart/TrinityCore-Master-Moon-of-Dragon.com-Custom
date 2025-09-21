@@ -10,7 +10,13 @@
 
 # TrinityCore Optional Modules
 
-# Only include modules if they are enabled
+# Always include Common module for shared infrastructure
+add_subdirectory(Common)
+
+# Test module to demonstrate shared API access
+add_subdirectory(TestModule)
+
+# Only include specific modules if they are enabled
 if(BUILD_PLAYERBOT)
     add_subdirectory(Playerbot)
 endif(BUILD_PLAYERBOT)

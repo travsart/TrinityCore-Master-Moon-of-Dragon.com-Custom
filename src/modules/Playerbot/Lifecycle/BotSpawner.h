@@ -163,6 +163,7 @@ private:
     // Character selection
     ObjectGuid SelectCharacterForSpawn(SpawnRequest const& request);
     std::vector<ObjectGuid> GetAvailableCharacters(uint32 accountId, SpawnRequest const& request);
+    uint32 GetAccountIdFromCharacter(ObjectGuid characterGuid);
 
     // Character creation
     ObjectGuid CreateCharacterForAccount(uint32 accountId, SpawnRequest const& request);

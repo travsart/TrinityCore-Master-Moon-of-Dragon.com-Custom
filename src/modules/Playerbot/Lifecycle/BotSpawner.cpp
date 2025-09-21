@@ -131,9 +131,7 @@ void BotSpawner::Update(uint32 diff)
 
     if (queueHasItems)
     {
-        printf("=== PLAYERBOT DEBUG: Queue has items, processing=%s ===\n",
-               _processingQueue.load() ? "true" : "false");
-        fflush(stdout);
+        // Queue processing debug removed to reduce log spam
     }
 
     if (!_processingQueue.load() && queueHasItems)
@@ -277,7 +275,7 @@ uint32 BotSpawner::SpawnBots(std::vector<SpawnRequest> const& requests)
 
 bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 {
-    printf("=== PLAYERBOT DEBUG: SpawnBotInternal ENTERED for zone %u, account %u ===\n", request.zoneId, request.accountId);
+    printf("=== PLAYERBOT DEBUG: SpawnBotInternal ENTERED for zone %u, account %u (WITH ACCOUNT FIX) ===\n", request.zoneId, request.accountId);
     fflush(stdout);
 
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -305,8 +303,23 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
         fflush(stdout);
     }
 
+    // Get the actual account ID from the character
+    uint32 actualAccountId = GetAccountIdFromCharacter(characterGuid);
+    if (actualAccountId == 0)
+    {
+        printf("=== PLAYERBOT DEBUG: Failed to get account ID for character %s ===\n", characterGuid.ToString().c_str());
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "Failed to get account ID for character {}", characterGuid.ToString());
+        _stats.failedSpawns.fetch_add(1);
+        if (request.callback)
+            request.callback(false, ObjectGuid::Empty);
+        return false;
+    }
+
+    printf("=== PLAYERBOT DEBUG: Using account ID %u for character %s ===\n", actualAccountId, characterGuid.ToString().c_str());
+
     // Create bot session
-    if (!CreateBotSession(request.accountId, characterGuid))
+    if (!CreateBotSession(actualAccountId, characterGuid))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "Failed to create bot session for character {}", characterGuid.ToString());
@@ -518,6 +531,31 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     }
 
     return availableCharacters;
+}
+
+uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid)
+{
+    if (characterGuid.IsEmpty())
+        return 0;
+
+    // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO
+    // This query returns: totaltime, level, money, account, race, class, map, zone, gender, health, playerFlags
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_PINFO);
+    stmt->setUInt64(0, characterGuid.GetCounter());
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        uint32 accountId = fields[3].GetUInt32(); // account is the 4th field (index 3)
+        printf("=== PLAYERBOT DEBUG: GetAccountIdFromCharacter(%s) = %u ===\n",
+               characterGuid.ToString().c_str(), accountId);
+        return accountId;
+    }
+
+    printf("=== PLAYERBOT DEBUG: GetAccountIdFromCharacter(%s) = 0 (not found) ===\n",
+           characterGuid.ToString().c_str());
+    return 0;
 }
 
 void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)

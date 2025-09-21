@@ -16,7 +16,7 @@
 #include <memory>
 #include <mutex>
 
-namespace Playerbot
+namespace Trinity
 {
 
 /**
@@ -80,6 +80,14 @@ public:
     void LogModuleMessage(std::string const& moduleName, uint8 level, std::string const& message);
 
     /**
+     * @brief Set module-specific configuration after registration
+     * @param moduleName Name of the module
+     * @param logLevel Log level override
+     * @param logFileName Log file name override
+     */
+    bool SetModuleConfig(std::string const& moduleName, uint8 logLevel, std::string const& logFileName);
+
+    /**
      * @brief Shutdown logging for all registered modules
      */
     void Shutdown();
@@ -128,7 +136,7 @@ private:
 // Convenience macros for module logging
 #define TC_LOG_MODULE_FATAL(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_FATAL(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
@@ -136,7 +144,7 @@ private:
 
 #define TC_LOG_MODULE_ERROR(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_ERROR(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
@@ -144,7 +152,7 @@ private:
 
 #define TC_LOG_MODULE_WARN(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_WARN(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
@@ -152,7 +160,7 @@ private:
 
 #define TC_LOG_MODULE_INFO(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_INFO(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
@@ -160,7 +168,7 @@ private:
 
 #define TC_LOG_MODULE_DEBUG(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_DEBUG(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
@@ -168,13 +176,13 @@ private:
 
 #define TC_LOG_MODULE_TRACE(module, format, ...) \
     do { \
-        if (Playerbot::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
+        if (Trinity::ModuleLogManager::instance()->IsModuleInitialized(module)) { \
             std::string loggerName = std::string("module.") + module; \
             TC_LOG_TRACE(loggerName.c_str(), format, ##__VA_ARGS__); \
         } \
     } while (0)
 
 // Singleton access
-#define sModuleLogManager Playerbot::ModuleLogManager::instance()
+#define sModuleLogManager Trinity::ModuleLogManager::instance()
 
-} // namespace Playerbot
+} // namespace Trinity

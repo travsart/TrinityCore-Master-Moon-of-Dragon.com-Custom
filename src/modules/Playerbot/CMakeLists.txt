@@ -42,8 +42,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ModuleLogManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ModuleLogManager.h
     # Temporarily disabled: DependencyValidator (needs MySQL headers fix)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.h
@@ -232,6 +230,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
+        ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
@@ -250,6 +249,8 @@ target_link_libraries(playerbot
         shared
         database
         common
+        # Shared module libraries
+        modules-common
     PRIVATE
         # Enterprise dependencies
         ${PLAYERBOT_LIBRARIES}

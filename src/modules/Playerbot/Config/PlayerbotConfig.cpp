@@ -290,7 +290,7 @@ void PlayerbotConfig::InitializeLogging()
     printf("=== PLAYERBOT CONFIG DEBUG: About to call sModuleLogManager->RegisterModule() ===\n");
 
     // Check if ModuleLogManager singleton is available
-    auto* mgr = Playerbot::ModuleLogManager::instance();
+    auto* mgr = sModuleLogManager;
     if (!mgr)
     {
         printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is NULL! ===\n");
@@ -300,14 +300,30 @@ void PlayerbotConfig::InitializeLogging()
     printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is valid ===\n");
 
     // Register Playerbot module with the new ModuleLogManager
-    if (!mgr->RegisterModule("playerbot", 3, "Playerbot.log"))
+    if (!mgr->RegisterModule("playerbot", 4, "Playerbot.log"))
     {
         printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() FAILED ===\n");
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to register module with ModuleLogManager");
         return;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() SUCCESS, about to call InitializeModuleLogging() ===\n");
+    printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() SUCCESS ===\n");
+
+    // Apply Playerbot-specific configuration if loaded
+    if (_loaded)
+    {
+        uint8 configLevel = GetUInt("Playerbot.Log.Level", 4);
+        std::string configFile = GetString("Playerbot.Log.File", "Playerbot.log");
+
+        if (configLevel <= 5)
+        {
+            mgr->SetModuleConfig("playerbot", configLevel, configFile);
+            printf("=== PLAYERBOT CONFIG DEBUG: Applied config - Level: %d, File: %s ===\n",
+                   configLevel, configFile.c_str());
+        }
+    }
+
+    printf("=== PLAYERBOT CONFIG DEBUG: About to call InitializeModuleLogging() ===\n");
 
     // Initialize module logging
     if (!mgr->InitializeModuleLogging("playerbot"))
