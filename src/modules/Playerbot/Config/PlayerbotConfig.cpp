@@ -34,23 +34,18 @@ PlayerbotConfig* PlayerbotConfig::instance()
 
 bool PlayerbotConfig::Initialize()
 {
-    printf("=== PLAYERBOT CONFIG DEBUG: Initialize() started ===\n");
     _loaded = false;
     _lastError.clear();
 
     // Find configuration file
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call FindConfigFile() ===\n");
     _configPath = FindConfigFile();
-    printf("=== PLAYERBOT CONFIG DEBUG: FindConfigFile() returned, checking if empty ===\n");
     if (_configPath.empty())
     {
         _lastError = "Could not find playerbots.conf file";
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: {}", _lastError);
-        printf("=== PLAYERBOT CONFIG DEBUG: Config file not found, returning false ===\n");
         return false;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: Config file found, about to call LoadConfigFile() ===\n");
     // Load configuration
     if (!LoadConfigFile(_configPath))
     {
@@ -59,7 +54,6 @@ bool PlayerbotConfig::Initialize()
         return false;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: LoadConfigFile completed, about to call ValidateConfiguration() ===\n");
     // Validate configuration
     if (!ValidateConfiguration())
     {
@@ -68,21 +62,22 @@ bool PlayerbotConfig::Initialize()
         return false;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() succeeded, setting _loaded = true ===\n");
     _loaded = true;
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call TC_LOG_INFO ===\n");
     TC_LOG_INFO("server.loading", "PlayerbotConfig: Successfully loaded from {}", _configPath);
-    printf("=== PLAYERBOT CONFIG DEBUG: Initialize() about to return true ===\n");
     return true;
 }
 
 bool PlayerbotConfig::Reload()
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     if (_configPath.empty())
     {
         _lastError = "Configuration not initialized";
         return false;
     }
+
+    // Invalidate cache during reload
+    _cache.isValid = false;
 
     _configValues.clear();
     if (!LoadConfigFile(_configPath))
@@ -105,6 +100,7 @@ bool PlayerbotConfig::Reload()
 
 bool PlayerbotConfig::GetBool(std::string const& key, bool defaultValue) const
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     auto it = _configValues.find(key);
     if (it == _configValues.end())
         return defaultValue;
@@ -116,45 +112,67 @@ bool PlayerbotConfig::GetBool(std::string const& key, bool defaultValue) const
 
 int32 PlayerbotConfig::GetInt(std::string const& key, int32 defaultValue) const
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     auto it = _configValues.find(key);
     if (it == _configValues.end())
         return defaultValue;
 
     try {
         return std::stoi(it->second);
-    } catch (...) {
+    } catch (const std::invalid_argument& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid integer value '{}' for key '{}', using default {}",
+                    it->second, key, defaultValue);
+        return defaultValue;
+    } catch (const std::out_of_range& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Integer value '{}' for key '{}' out of range, using default {}",
+                    it->second, key, defaultValue);
         return defaultValue;
     }
 }
 
 uint32 PlayerbotConfig::GetUInt(std::string const& key, uint32 defaultValue) const
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     auto it = _configValues.find(key);
     if (it == _configValues.end())
         return defaultValue;
 
     try {
         return static_cast<uint32>(std::stoul(it->second));
-    } catch (...) {
+    } catch (const std::invalid_argument& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid unsigned integer value '{}' for key '{}', using default {}",
+                    it->second, key, defaultValue);
+        return defaultValue;
+    } catch (const std::out_of_range& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Unsigned integer value '{}' for key '{}' out of range, using default {}",
+                    it->second, key, defaultValue);
         return defaultValue;
     }
 }
 
 float PlayerbotConfig::GetFloat(std::string const& key, float defaultValue) const
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     auto it = _configValues.find(key);
     if (it == _configValues.end())
         return defaultValue;
 
     try {
         return std::stof(it->second);
-    } catch (...) {
+    } catch (const std::invalid_argument& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Invalid float value '{}' for key '{}', using default {}",
+                    it->second, key, defaultValue);
+        return defaultValue;
+    } catch (const std::out_of_range& e) {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Float value '{}' for key '{}' out of range, using default {}",
+                    it->second, key, defaultValue);
         return defaultValue;
     }
 }
 
 std::string PlayerbotConfig::GetString(std::string const& key, std::string const& defaultValue) const
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     auto it = _configValues.find(key);
     if (it == _configValues.end())
         return defaultValue;
@@ -187,127 +205,225 @@ std::string PlayerbotConfig::FindConfigFile() const
 
 bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
 {
-    printf("=== PLAYERBOT CONFIG DEBUG: LoadConfigFile() entered with path: %s ===\n", filePath.c_str());
-
-    printf("=== PLAYERBOT CONFIG DEBUG: About to open ifstream ===\n");
+    // RAII file management - automatically closes on scope exit
     std::ifstream file(filePath);
-    printf("=== PLAYERBOT CONFIG DEBUG: ifstream created, checking if open ===\n");
 
     if (!file.is_open())
     {
-        printf("=== PLAYERBOT CONFIG DEBUG: File failed to open, returning false ===\n");
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to open configuration file: {}", filePath);
         return false;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: File opened successfully, starting line reading loop ===\n");
+    // Check if file is readable
+    if (!file.good())
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Configuration file is not readable: {}", filePath);
+        return false;
+    }
 
     std::string line;
     int lineCount = 0;
-    while (std::getline(file, line))
-    {
-        lineCount++;
-        if (lineCount <= 5) // Log first 5 lines to avoid spam
+
+    try {
+        while (std::getline(file, line))
         {
-            printf("=== PLAYERBOT CONFIG DEBUG: Read line %d: %s ===\n", lineCount, line.c_str());
-        }
+            lineCount++;
 
-        // Skip empty lines and comments
-        if (line.empty() || line[0] == '#')
-            continue;
+            // Skip empty lines and comments
+            if (line.empty() || line[0] == '#')
+                continue;
 
-        // Find the = separator
-        size_t pos = line.find('=');
-        if (pos == std::string::npos)
-            continue;
+            // Find the = separator
+            size_t pos = line.find('=');
+            if (pos == std::string::npos)
+            {
+                TC_LOG_WARN("server.loading", "PlayerbotConfig: Malformed line {} in {}: missing '=' separator",
+                           lineCount, filePath);
+                continue;
+            }
 
-        // Extract key and value
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos + 1);
+            // Extract key and value
+            std::string key = line.substr(0, pos);
+            std::string value = line.substr(pos + 1);
 
-        // Trim whitespace
-        key.erase(key.find_last_not_of(" \t") + 1);
-        key.erase(0, key.find_first_not_of(" \t"));
-        value.erase(value.find_last_not_of(" \t") + 1);
-        value.erase(0, value.find_first_not_of(" \t"));
+            // Trim whitespace
+            key.erase(key.find_last_not_of(" \t") + 1);
+            key.erase(0, key.find_first_not_of(" \t"));
+            value.erase(value.find_last_not_of(" \t") + 1);
+            value.erase(0, value.find_first_not_of(" \t"));
 
-        // Store the value
-        _configValues[key] = value;
+            // Validate key is not empty
+            if (key.empty())
+            {
+                TC_LOG_WARN("server.loading", "PlayerbotConfig: Empty key on line {} in {}", lineCount, filePath);
+                continue;
+            }
 
-        if (lineCount <= 5) // Log first 5 config entries
-        {
-            printf("=== PLAYERBOT CONFIG DEBUG: Stored config [%s] = [%s] ===\n", key.c_str(), value.c_str());
+            // Store the value
+            _configValues[key] = value;
         }
     }
+    catch (const std::exception& e)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Exception while reading {}: {}", filePath, e.what());
+        return false;
+    }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: Finished reading %d lines, returning true ===\n", lineCount);
+    // File automatically closed by RAII destructor
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Successfully loaded {} configuration entries from {}",
+                 _configValues.size(), filePath);
     return true;
 }
 
 bool PlayerbotConfig::ValidateConfiguration()
 {
-    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() entered ===\n");
-
     // Validate critical settings
     bool valid = true;
 
+    // Validate core playerbot settings
+    if (!ValidateBotLimits()) valid = false;
+    if (!ValidateTimingSettings()) valid = false;
+    if (!ValidateLoggingSettings()) valid = false;
+    if (!ValidateDatabaseSettings()) valid = false;
+
+    // Refresh performance cache after validation
+    if (valid)
+    {
+        RefreshCache();
+    }
+
+    return valid;
+}
+
+bool PlayerbotConfig::ValidateBotLimits()
+{
+    bool valid = true;
+
     // Check bot limits
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call GetUInt for MaxBotsPerAccount ===\n");
     uint32 maxBots = GetUInt("Playerbot.MaxBotsPerAccount", 10);
-    printf("=== PLAYERBOT CONFIG DEBUG: GetUInt returned: %u ===\n", maxBots);
-    if (maxBots > 50)
+    if (maxBots == 0)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.MaxBotsPerAccount cannot be 0");
+        valid = false;
+    }
+    else if (maxBots > 100)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.MaxBotsPerAccount ({}) exceeds maximum limit (100)", maxBots);
+        valid = false;
+    }
+    else if (maxBots > 50)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.MaxBotsPerAccount ({}) exceeds recommended limit (50)", maxBots);
     }
 
-    // Check update intervals
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call GetUInt for UpdateInterval ===\n");
-    uint32 updateInterval = GetUInt("Playerbot.UpdateInterval", 1000);
-    printf("=== PLAYERBOT CONFIG DEBUG: GetUInt UpdateInterval returned: %u ===\n", updateInterval);
-    if (updateInterval < 100)
+    // Check global bot limits
+    uint32 globalMaxBots = GetUInt("Playerbot.GlobalMaxBots", 1000);
+    if (globalMaxBots < maxBots)
     {
-        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.UpdateInterval ({}) is too low (minimum 100ms)", updateInterval);
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.GlobalMaxBots ({}) must be >= Playerbot.MaxBotsPerAccount ({})",
+                     globalMaxBots, maxBots);
         valid = false;
+    }
+
+    return valid;
+}
+
+bool PlayerbotConfig::ValidateTimingSettings()
+{
+    bool valid = true;
+
+    // Check update intervals
+    uint32 updateInterval = GetUInt("Playerbot.UpdateInterval", 1000);
+    if (updateInterval < 50)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.UpdateInterval ({}) is too low (minimum 50ms)", updateInterval);
+        valid = false;
+    }
+    else if (updateInterval < 100)
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.UpdateInterval ({}) is very low (recommended >=100ms)", updateInterval);
     }
 
     // Check AI decision time limits
     uint32 aiTimeLimit = GetUInt("Playerbot.AIDecisionTimeLimit", 50);
-    if (aiTimeLimit > 1000)
+    if (aiTimeLimit == 0)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.AIDecisionTimeLimit cannot be 0");
+        valid = false;
+    }
+    else if (aiTimeLimit > 1000)
     {
         TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.AIDecisionTimeLimit ({}) is very high (recommended <100ms)", aiTimeLimit);
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: ValidateConfiguration() about to return: %s ===\n", valid ? "true" : "false");
+    // Check login delay settings
+    uint32 loginDelay = GetUInt("Playerbot.LoginDelay", 1000);
+    if (loginDelay > 60000)
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.LoginDelay ({}) is very high (>60s)", loginDelay);
+    }
+
+    return valid;
+}
+
+bool PlayerbotConfig::ValidateLoggingSettings()
+{
+    bool valid = true;
+
+    // Check log level
+    uint32 logLevel = GetUInt("Playerbot.Log.Level", 4);
+    if (logLevel > 6)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.Log.Level ({}) exceeds maximum (6)", logLevel);
+        valid = false;
+    }
+
+    // Validate log file path
+    std::string logFile = GetString("Playerbot.Log.File", "Playerbot.log");
+    if (logFile.empty())
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.Log.File cannot be empty");
+        valid = false;
+    }
+
+    return valid;
+}
+
+bool PlayerbotConfig::ValidateDatabaseSettings()
+{
+    bool valid = true;
+
+    // Check database connection timeout
+    uint32 dbTimeout = GetUInt("Playerbot.Database.Timeout", 30);
+    if (dbTimeout == 0)
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Playerbot.Database.Timeout cannot be 0");
+        valid = false;
+    }
+    else if (dbTimeout > 300)
+    {
+        TC_LOG_WARN("server.loading", "PlayerbotConfig: Playerbot.Database.Timeout ({}) is very high (>5min)", dbTimeout);
+    }
+
     return valid;
 }
 
 void PlayerbotConfig::InitializeLogging()
 {
-    printf("=== PLAYERBOT CONFIG DEBUG: InitializeLogging() FUNCTION ENTRY ===\n");
-
-    // Skip this TC_LOG_DEBUG call that might be causing issues
-    // TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Initializing new Module Logging system...");
-
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call sModuleLogManager->RegisterModule() ===\n");
-
     // Check if ModuleLogManager singleton is available
     auto* mgr = sModuleLogManager;
     if (!mgr)
     {
-        printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is NULL! ===\n");
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: ModuleLogManager singleton is NULL");
         return;
     }
-    printf("=== PLAYERBOT CONFIG DEBUG: ModuleLogManager singleton is valid ===\n");
 
     // Register Playerbot module with the new ModuleLogManager
     if (!mgr->RegisterModule("playerbot", 4, "Playerbot.log"))
     {
-        printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() FAILED ===\n");
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to register module with ModuleLogManager");
         return;
     }
-
-    printf("=== PLAYERBOT CONFIG DEBUG: RegisterModule() SUCCESS ===\n");
 
     // Apply Playerbot-specific configuration if loaded
     if (_loaded)
@@ -318,108 +434,89 @@ void PlayerbotConfig::InitializeLogging()
         if (configLevel <= 5)
         {
             mgr->SetModuleConfig("playerbot", configLevel, configFile);
-            printf("=== PLAYERBOT CONFIG DEBUG: Applied config - Level: %d, File: %s ===\n",
-                   configLevel, configFile.c_str());
         }
     }
-
-    printf("=== PLAYERBOT CONFIG DEBUG: About to call InitializeModuleLogging() ===\n");
 
     // Initialize module logging
     if (!mgr->InitializeModuleLogging("playerbot"))
     {
-        printf("=== PLAYERBOT CONFIG DEBUG: InitializeModuleLogging() FAILED ===\n");
         TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to initialize module logging");
         return;
     }
 
-    printf("=== PLAYERBOT CONFIG DEBUG: InitializeModuleLogging() SUCCESS ===\n");
-
     TC_LOG_INFO("server.loading", "PlayerbotConfig: New Module Logging system initialized successfully");
 
-    // SIMPLE TEST: Write directly to file to prove the concept
-    std::ofstream testFile("M:/Wplayerbot/Playerbot.log", std::ios::app);
-    if (testFile.is_open()) {
-        testFile << "SIMPLE TEST: This message was written directly to the file!" << std::endl;
-        testFile.close();
-    }
-
     // Test the new logging system with direct TC_LOG calls
-    TC_LOG_INFO("module.playerbot", "DIRECT TEST: Module logging system is now active!");
-    TC_LOG_ERROR("module.playerbot", "DIRECT TEST: Error level test message");
-
-    printf("=== PLAYERBOT CONFIG DEBUG: InitializeLogging() COMPLETED ===\n");
+    TC_LOG_INFO("module.playerbot", "Module logging system is now active");
+    TC_LOG_ERROR("module.playerbot", "Error level test message");
 }
 
-void PlayerbotConfig::SetupPlayerbotLogging(int32 logLevel, std::string const& logFile)
+void PlayerbotConfig::RefreshCache()
 {
-    // Create playerbot-specific file appender
-    // Format: Type,Level,Flags,File
-    // Type 2 = File appender, Flags 1 = Include timestamp
-    std::string appenderConfig = Trinity::StringFormat("2,{},1,{}", logLevel, logFile);
-    sLog->CreateAppenderFromConfigLine("Appender.Playerbot", appenderConfig);
+    std::lock_guard<std::mutex> lock(_configMutex);
 
-    // Create main playerbot logger
-    // Format: Level,Appender1 Appender2 ...
-    std::string loggerConfig = Trinity::StringFormat("{},Console Playerbot", logLevel);
-    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot", loggerConfig);
+    // Update cache with frequently accessed values
+    _cache.maxBotsPerAccount = GetUInt("Playerbot.MaxBotsPerAccount", 10);
+    _cache.globalMaxBots = GetUInt("Playerbot.GlobalMaxBots", 1000);
+    _cache.updateInterval = GetUInt("Playerbot.UpdateInterval", 1000);
+    _cache.aiDecisionTimeLimit = GetUInt("Playerbot.AIDecisionTimeLimit", 50);
+    _cache.loginDelay = GetUInt("Playerbot.LoginDelay", 1000);
+    _cache.logLevel = GetUInt("Playerbot.Log.Level", 4);
+    _cache.logFile = GetString("Playerbot.Log.File", "Playerbot.log");
+    _cache.databaseTimeout = GetUInt("Playerbot.Database.Timeout", 30);
 
-    // Create specialized sub-loggers
-    CreateSpecializedLoggers(logLevel);
+    _cache.isValid = true;
 
-    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created logging appender and loggers");
+    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Performance cache refreshed with {} values", 8);
 }
 
-void PlayerbotConfig::CreateSpecializedLoggers(int32 baseLevel)
+// Template specializations for GetCached
+template<>
+uint32 PlayerbotConfig::GetCached(std::string const& key, uint32 defaultValue) const
 {
-    // AI decision logging
-    if (GetBool("Playerbot.Log.AIDecisions", false))
+    std::lock_guard<std::mutex> lock(_configMutex);
+    _metrics.configLookups++;
+
+    if (!_cache.isValid)
     {
-        int32 aiLogLevel = std::max(baseLevel, 4); // Force debug level for AI decisions
-        std::string aiLoggerConfig = Trinity::StringFormat("{},Playerbot", aiLogLevel);
-        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.ai", aiLoggerConfig);
-        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created AI decision logger (level {})", aiLogLevel);
+        _metrics.cacheMisses++;
+        // Fallback to normal lookup if cache is invalid
+        return GetUInt(key, defaultValue);
     }
 
-    // Performance metrics logging
-    if (GetBool("Playerbot.Log.PerformanceMetrics", false))
+    // Fast cache lookup for frequently accessed values
+    if (key == "Playerbot.MaxBotsPerAccount") { _metrics.cacheHits++; return _cache.maxBotsPerAccount; }
+    if (key == "Playerbot.GlobalMaxBots") { _metrics.cacheHits++; return _cache.globalMaxBots; }
+    if (key == "Playerbot.UpdateInterval") { _metrics.cacheHits++; return _cache.updateInterval; }
+    if (key == "Playerbot.AIDecisionTimeLimit") { _metrics.cacheHits++; return _cache.aiDecisionTimeLimit; }
+    if (key == "Playerbot.LoginDelay") { _metrics.cacheHits++; return _cache.loginDelay; }
+    if (key == "Playerbot.Log.Level") { _metrics.cacheHits++; return _cache.logLevel; }
+    if (key == "Playerbot.Database.Timeout") { _metrics.cacheHits++; return _cache.databaseTimeout; }
+
+    // Fallback to normal lookup for non-cached values
+    _metrics.cacheMisses++;
+    return GetUInt(key, defaultValue);
+}
+
+template<>
+std::string PlayerbotConfig::GetCached(std::string const& key, std::string defaultValue) const
+{
+    std::lock_guard<std::mutex> lock(_configMutex);
+
+    if (!_cache.isValid)
     {
-        std::string perfLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
-        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.performance", perfLoggerConfig);
-        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created performance metrics logger");
+        return GetString(key, defaultValue);
     }
 
-    // Database query logging
-    if (GetBool("Playerbot.Log.DatabaseQueries", false))
-    {
-        int32 dbLogLevel = std::max(baseLevel, 4); // Force debug level for database queries
-        std::string dbLoggerConfig = Trinity::StringFormat("{},Playerbot", dbLogLevel);
-        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.database", dbLoggerConfig);
-        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created database query logger (level {})", dbLogLevel);
-    }
+    if (key == "Playerbot.Log.File") return _cache.logFile;
 
-    // Character action logging
-    if (GetBool("Playerbot.Log.CharacterActions", false))
-    {
-        int32 charLogLevel = std::max(baseLevel, 4); // Force debug level for character actions
-        std::string charLoggerConfig = Trinity::StringFormat("{},Playerbot", charLogLevel);
-        sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.character", charLoggerConfig);
-        TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created character action logger (level {})", charLogLevel);
-    }
+    return GetString(key, defaultValue);
+}
 
-    // Account management logging
-    std::string accountLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
-    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.account", accountLoggerConfig);
-
-    // Name management logging
-    std::string nameLoggerConfig = Trinity::StringFormat("{},Playerbot", baseLevel);
-    sLog->CreateLoggerFromConfigLine("Logger.module.playerbot.names", nameLoggerConfig);
-
-    TC_LOG_DEBUG("server.loading", "PlayerbotConfig: Created {} specialized loggers",
-                 2 + (GetBool("Playerbot.Log.AIDecisions", false) ? 1 : 0) +
-                     (GetBool("Playerbot.Log.PerformanceMetrics", false) ? 1 : 0) +
-                     (GetBool("Playerbot.Log.DatabaseQueries", false) ? 1 : 0) +
-                     (GetBool("Playerbot.Log.CharacterActions", false) ? 1 : 0));
+PlayerbotConfig::PerformanceMetrics PlayerbotConfig::GetPerformanceMetrics() const
+{
+    std::lock_guard<std::mutex> lock(_configMutex);
+    return _metrics;
 }
 
 #endif // PLAYERBOT_ENABLED

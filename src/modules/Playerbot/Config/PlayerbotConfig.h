@@ -24,6 +24,7 @@
 #include "Logging/ModuleLogManager.h"
 #include <map>
 #include <string>
+#include <mutex>
 
 /**
  * @class PlayerbotConfig
@@ -133,17 +134,31 @@ public:
     void InitializeLogging();
 
     /**
-     * @brief Setup playerbot-specific logging configuration
-     * @param logLevel Base log level for all playerbot loggers
-     * @param logFile Path to the playerbot log file
+     * @brief Get cached configuration value for performance-critical access
+     * @param key Configuration key
+     * @param defaultValue Default value if not cached
+     * @return Cached value or fallback to normal lookup
      */
-    void SetupPlayerbotLogging(int32 logLevel, std::string const& logFile);
+    template<typename T>
+    T GetCached(std::string const& key, T defaultValue) const;
 
     /**
-     * @brief Create specialized loggers for different subsystems
-     * @param baseLevel Base log level to use for specialized loggers
+     * @brief Refresh configuration cache for frequently accessed values
      */
-    void CreateSpecializedLoggers(int32 baseLevel);
+    void RefreshCache();
+
+    /**
+     * @brief Get performance metrics for monitoring
+     * @return Performance statistics
+     */
+    struct PerformanceMetrics {
+        uint64 configLookups = 0;
+        uint64 cacheHits = 0;
+        uint64 cacheMisses = 0;
+        uint32 cacheHitRate() const { return configLookups > 0 ? (cacheHits * 100) / configLookups : 0; }
+    };
+    PerformanceMetrics GetPerformanceMetrics() const;
+
 
 private:
     PlayerbotConfig() = default;
@@ -172,11 +187,62 @@ private:
      */
     bool ValidateConfiguration();
 
+    /**
+     * @brief Validate bot limit settings
+     * @return true if valid, false otherwise
+     */
+    bool ValidateBotLimits();
+
+    /**
+     * @brief Validate timing and interval settings
+     * @return true if valid, false otherwise
+     */
+    bool ValidateTimingSettings();
+
+    /**
+     * @brief Validate logging configuration
+     * @return true if valid, false otherwise
+     */
+    bool ValidateLoggingSettings();
+
+    /**
+     * @brief Validate database settings
+     * @return true if valid, false otherwise
+     */
+    bool ValidateDatabaseSettings();
+
     // Configuration state
     std::map<std::string, std::string> _configValues;
     std::string _configPath;
     std::string _lastError;
     bool _loaded = false;
+    mutable std::mutex _configMutex;
+
+    // Performance: Configuration caching for frequently accessed values
+    struct ConfigCache {
+        // Bot limits (accessed during every bot spawn)
+        uint32 maxBotsPerAccount = 10;
+        uint32 globalMaxBots = 1000;
+
+        // Timing settings (accessed during every update cycle)
+        uint32 updateInterval = 1000;
+        uint32 aiDecisionTimeLimit = 50;
+        uint32 loginDelay = 1000;
+
+        // Logging settings (accessed during log operations)
+        uint32 logLevel = 4;
+        std::string logFile = "Playerbot.log";
+
+        // Database settings (accessed during DB operations)
+        uint32 databaseTimeout = 30;
+
+        // Cache validity
+        bool isValid = false;
+    };
+    mutable ConfigCache _cache;
+
+    // Performance monitoring
+    mutable PerformanceMetrics _metrics;
 
     // Default configuration filename
     static constexpr const char* CONFIG_FILENAME = "playerbots.conf";
