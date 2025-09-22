@@ -106,6 +106,14 @@ void PlayerbotCharacterDBInterface::Shutdown()
 
 CharacterDatabasePreparedStatement* PlayerbotCharacterDBInterface::GetPreparedStatement(CharacterDatabaseStatements statementId)
 {
+    // Check if interface is initialized
+    if (!_initialized.load())
+    {
+        TC_LOG_ERROR("module.playerbot.database", "Interface not initialized or shutting down");
+        _metrics.errors.fetch_add(1);
+        return nullptr;
+    }
+
     // Validate statement ID
     if (statementId >= MAX_CHARACTERDATABASE_STATEMENTS)
     {
@@ -144,6 +152,15 @@ void PlayerbotCharacterDBInterface::ExecuteAsync(CharacterDatabasePreparedStatem
                                                 uint32 timeoutMs)
 {
     (void)timeoutMs; // Parameter reserved for future timeout implementation
+
+    // Check if interface is initialized
+    if (!_initialized.load())
+    {
+        TC_LOG_ERROR("module.playerbot.database", "Interface not initialized or shutting down");
+        if (callback) callback(nullptr);
+        _metrics.errors.fetch_add(1);
+        return;
+    }
 
     if (!stmt)
     {

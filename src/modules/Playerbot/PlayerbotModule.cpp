@@ -15,6 +15,7 @@
 #include "Character/BotNameMgr.h"
 #include "Character/BotCharacterDistribution.h"
 #include "Database/PlayerbotDatabase.h"
+#include "Database/PlayerbotCharacterDBInterface.h"
 #include "Database/PlayerbotMigrationMgr.h"
 #include "Lifecycle/BotSpawner.h"
 // #include "Lifecycle/BotLifecycleMgr.h"
@@ -65,6 +66,14 @@ bool PlayerbotModule::Initialize()
     if (!InitializeDatabase())
     {
         _lastError = "Failed to initialize Playerbot Database";
+        return false;
+    }
+
+    // Initialize Character Database Interface
+    if (!sPlayerbotCharDB->Initialize())
+    {
+        _lastError = "Failed to initialize Character Database Interface";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
         return false;
     }
 
@@ -174,6 +183,10 @@ void PlayerbotModule::Shutdown()
         // Shutdown Bot Account Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
         sBotAccountMgr->Shutdown();
+
+        // Shutdown Character Database Interface
+        TC_LOG_INFO("server.loading", "Shutting down Character Database Interface...");
+        sPlayerbotCharDB->Shutdown();
 
         // Shutdown Playerbot Database
         TC_LOG_INFO("server.loading", "Shutting down Playerbot Database...");
