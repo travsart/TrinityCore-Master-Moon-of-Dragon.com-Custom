@@ -116,7 +116,20 @@ void BotSpawner::Update(uint32 /*diff*/)
 {
     // Removed debug pollution for production readiness
     if (!_enabled.load())
+    {
+        TC_LOG_DEBUG("module.playerbot.spawner", "BotSpawner::Update - Not enabled, returning");
         return;
+    }
+
+    static uint32 updateCounter = 0;
+    ++updateCounter;
+
+    if (updateCounter % 10000 == 0) // Log every 10k updates
+    {
+        TC_LOG_INFO("module.playerbot.spawner",
+            "BotSpawner::Update #{} - enabled: {}, active bots: {}, can spawn more: {}",
+            updateCounter, _enabled.load(), GetActiveBotCount(), CanSpawnMore());
+    }
 
     uint32 currentTime = getMSTime();
 
@@ -188,11 +201,21 @@ void BotSpawner::Update(uint32 /*diff*/)
     {
         if (_config.enableDynamicSpawning)
         {
-            TC_LOG_TRACE("module.playerbot.spawner", "Recalculating zone targets and spawning to population targets");
+            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
             CalculateZoneTargets();
             SpawnToPopulationTarget();
+            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Completed spawn cycle");
+        }
+        else
+        {
+            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Dynamic spawning disabled, skipping spawn cycle");
         }
         _lastTargetCalculation = currentTime;
+    }
+    else if (updateCounter % 10000 == 0)
+    {
+        uint32 timeLeft = TARGET_CALCULATION_INTERVAL - (currentTime - _lastTargetCalculation);
+        TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: {} ms until next spawn cycle", timeLeft);
     }
 }
 
