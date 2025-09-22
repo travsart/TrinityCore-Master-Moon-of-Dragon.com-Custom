@@ -13,6 +13,9 @@
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
 #include "Lifecycle/BotPopulationManager.h"
+#include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
+#include "LoginDatabase.h"
 #include <memory>
 #include <vector>
 #include <atomic>
@@ -157,6 +160,10 @@ private:
     // Population calculations
     void CalculateZoneTargets();
     uint32 CalculateTargetBotCount(ZonePopulation const& zone) const;
+
+    // Database safety - prevent statement index corruption and memory corruption
+    CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName) const;
+    LoginDatabasePreparedStatement* GetSafeLoginPreparedStatement(LoginDatabaseStatements statementId, const char* statementName) const;
 
     // Internal data
     SpawnConfig _config;

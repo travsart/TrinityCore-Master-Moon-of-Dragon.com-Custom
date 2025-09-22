@@ -194,6 +194,42 @@ void BotSpawner::Update(uint32 /*diff*/)
     }
 }
 
+CharacterDatabasePreparedStatement* BotSpawner::GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName) const
+{
+    // CRITICAL FIX: Add comprehensive statement index validation to prevent assertion failure m_mStmt
+    if (statementId >= MAX_CHARACTERDATABASE_STATEMENTS) {
+        TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafePreparedStatement: Invalid statement index {} >= {} for {}",
+                     static_cast<uint32>(statementId), MAX_CHARACTERDATABASE_STATEMENTS, statementName);
+        return nullptr;
+    }
+
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(statementId);
+    if (!stmt) {
+        TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafePreparedStatement: Failed to get prepared statement {} (index: {})",
+                     statementName, static_cast<uint32>(statementId));
+        return nullptr;
+    }
+    return stmt;
+}
+
+LoginDatabasePreparedStatement* BotSpawner::GetSafeLoginPreparedStatement(LoginDatabaseStatements statementId, const char* statementName) const
+{
+    // CRITICAL FIX: Add comprehensive statement index validation to prevent assertion failure m_mStmt for LoginDatabase
+    if (statementId >= MAX_LOGINDATABASE_STATEMENTS) {
+        TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafeLoginPreparedStatement: Invalid statement index {} >= {} for {}",
+                     static_cast<uint32>(statementId), MAX_LOGINDATABASE_STATEMENTS, statementName);
+        return nullptr;
+    }
+
+    LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(statementId);
+    if (!stmt) {
+        TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafeLoginPreparedStatement: Failed to get prepared statement {} (index: {})",
+                     statementName, static_cast<uint32>(statementId));
+        return nullptr;
+    }
+    return stmt;
+}
+
 void BotSpawner::LoadConfig()
 {
     _config.maxBotsTotal = sPlayerbotConfig->GetInt("Playerbot.Spawn.MaxTotal", 500);
@@ -477,17 +513,9 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 {
     std::vector<ObjectGuid> availableCharacters;
 
-    // ASYNC DATABASE QUERY for 5000 bot scalability - use safe statement access
-    if (CHAR_SEL_CHARS_BY_ACCOUNT_ID >= MAX_CHARACTERDATABASE_STATEMENTS) {
-        TC_LOG_ERROR("module.playerbot.spawner", "Invalid statement index CHAR_SEL_CHARS_BY_ACCOUNT_ID: {} >= {}",
-                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID), MAX_CHARACTERDATABASE_STATEMENTS);
-        return availableCharacters;
-    }
-
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    // ASYNC DATABASE QUERY for 5000 bot scalability - use safe statement access to prevent memory corruption
+    CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID, "CHAR_SEL_CHARS_BY_ACCOUNT_ID");
     if (!stmt) {
-        TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHARS_BY_ACCOUNT_ID (index: {})",
-                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
         return availableCharacters;
     }
     stmt->setUInt32(0, accountId);
@@ -542,18 +570,9 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 
 void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, std::function<void(std::vector<ObjectGuid>)> callback)
 {
-    // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking - use safe statement access
-    if (CHAR_SEL_CHARS_BY_ACCOUNT_ID >= MAX_CHARACTERDATABASE_STATEMENTS) {
-        TC_LOG_ERROR("module.playerbot.spawner", "Invalid async statement index CHAR_SEL_CHARS_BY_ACCOUNT_ID: {} >= {}",
-                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID), MAX_CHARACTERDATABASE_STATEMENTS);
-        callback(std::vector<ObjectGuid>());
-        return;
-    }
-
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking - use safe statement access to prevent memory corruption
+    CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID, "CHAR_SEL_CHARS_BY_ACCOUNT_ID");
     if (!stmt) {
-        TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHARS_BY_ACCOUNT_ID (index: {}) for async query",
-                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
         callback(std::vector<ObjectGuid>());
         return;
     }
@@ -701,18 +720,10 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
 
     try
     {
-        // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO - use safe statement access
+        // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO - use safe statement access to prevent memory corruption
         // This query returns: totaltime, level, money, account, race, class, map, zone, gender, health, playerFlags
-        if (CHAR_SEL_CHAR_PINFO >= MAX_CHARACTERDATABASE_STATEMENTS) {
-            TC_LOG_ERROR("module.playerbot.spawner", "Invalid statement index CHAR_SEL_CHAR_PINFO: {} >= {}",
-                         static_cast<uint32>(CHAR_SEL_CHAR_PINFO), MAX_CHARACTERDATABASE_STATEMENTS);
-            return 0;
-        }
-
-        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_PINFO);
+        CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHAR_PINFO, "CHAR_SEL_CHAR_PINFO");
         if (!stmt) {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHAR_PINFO (index: {})",
-                         static_cast<uint32>(CHAR_SEL_CHAR_PINFO));
             return 0;
         }
         stmt->setUInt64(0, characterGuid.GetCounter());
@@ -1179,11 +1190,10 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         newChar->SaveToDB(loginTransaction, characterTransaction, true);
         TC_LOG_TRACE("module.playerbot.spawner", "SaveToDB() completed");
 
-        // Update character count for account - with safe statement access
+        // Update character count for account - with safe statement access to prevent memory corruption
         TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
-        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_REP_REALM_CHARACTERS);
+        LoginDatabasePreparedStatement* stmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
         if (!stmt) {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement LOGIN_REP_REALM_CHARACTERS");
             return ObjectGuid::Empty;
         }
         stmt->setUInt32(0, 1); // Increment by 1
