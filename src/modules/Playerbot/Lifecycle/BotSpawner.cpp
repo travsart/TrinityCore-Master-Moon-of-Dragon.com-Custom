@@ -27,6 +27,7 @@
 #include "CharacterPackets.h"
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
+#include "Database/PlayerbotCharacterDBInterface.h"
 #include "ObjectGuid.h"
 #include "MotionMaster.h"
 #include "RealmList.h"
@@ -34,6 +35,7 @@
 #include "WorldSession.h"
 #include <algorithm>
 #include <chrono>
+#include <unordered_set>
 
 namespace Playerbot
 {
@@ -203,7 +205,13 @@ CharacterDatabasePreparedStatement* BotSpawner::GetSafePreparedStatement(Charact
         return nullptr;
     }
 
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(statementId);
+    // CRITICAL FIX: All statements should be properly prepared by Trinity's DoPrepareStatements()
+    TC_LOG_DEBUG("module.playerbot.spawner",
+        "Accessing statement {} ({}) - ensuring Trinity connection preparation worked",
+        static_cast<uint32>(statementId), statementName);
+
+    // Use PlayerbotCharacterDBInterface for safe statement access with sync/async routing
+    CharacterDatabasePreparedStatement* stmt = sPlayerbotCharDB->GetPreparedStatement(statementId);
     if (!stmt) {
         TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafePreparedStatement: Failed to get prepared statement {} (index: {})",
                      statementName, static_cast<uint32>(statementId));
@@ -522,7 +530,8 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 
     try
     {
-        PreparedQueryResult result = CharacterDatabase.Query(stmt);
+        // Use PlayerbotCharacterDBInterface for safe synchronous execution
+        PreparedQueryResult result = sPlayerbotCharDB->ExecuteSync(stmt);
         if (result)
         {
             availableCharacters.reserve(result->GetRowCount());
@@ -621,8 +630,12 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
         callback(std::move(availableCharacters));
     };
 
-    // Async query with connection pooling for high throughput
-    CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(std::move(queryCallback));
+    // Use PlayerbotCharacterDBInterface for safe async execution with automatic sync/async routing
+    TC_LOG_INFO("module.playerbot.spawner",
+        "🔍 About to execute AsyncQuery for CHAR_SEL_CHARS_BY_ACCOUNT_ID (statement {}) on playerbot_characters database through PlayerbotCharacterDBInterface",
+        static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
+
+    sPlayerbotCharDB->ExecuteAsync(stmt, std::move(queryCallback));
 }
 
 void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, size_t index, SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
@@ -727,7 +740,8 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
             return 0;
         }
         stmt->setUInt64(0, characterGuid.GetCounter());
-        PreparedQueryResult result = CharacterDatabase.Query(stmt);
+        // Use PlayerbotCharacterDBInterface for safe synchronous execution
+        PreparedQueryResult result = sPlayerbotCharDB->ExecuteSync(stmt);
 
         if (result)
         {
@@ -1184,7 +1198,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         // Save to database
         TC_LOG_TRACE("module.playerbot.spawner", "Saving character to database");
-        CharacterDatabaseTransaction characterTransaction = CharacterDatabase.BeginTransaction();
+        // Use PlayerbotCharacterDBInterface for safe transaction handling
+        CharacterDatabaseTransaction characterTransaction = sPlayerbotCharDB->BeginTransaction();
         LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();
 
         newChar->SaveToDB(loginTransaction, characterTransaction, true);
@@ -1205,7 +1220,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         TC_LOG_TRACE("module.playerbot.spawner", "Committing database transactions");
         try
         {
-            CharacterDatabase.CommitTransaction(characterTransaction);
+            // Use PlayerbotCharacterDBInterface for safe transaction commit
+            sPlayerbotCharDB->CommitTransaction(characterTransaction);
             LoginDatabase.CommitTransaction(loginTransaction);
             TC_LOG_TRACE("module.playerbot.spawner", "Database transactions committed successfully");
         }

@@ -12,11 +12,13 @@
 #include "QueryCallback.h"
 #include "CharacterPackets.h"
 #include "CharacterDatabase.h"
+#include "Database/PlayerbotCharacterDBInterface.h"
 #include "World.h"
 #include "Map.h"
 #include "MapManager.h"
 #include "AI/BotAI.h"
 #include <condition_variable>
+#include <unordered_set>
 
 // Simplified LoginQueryHolder for bot sessions - no bloated prepared statement spam
 class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
@@ -45,7 +47,8 @@ public:
             return false;
         }
 
-        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
+        // Use PlayerbotCharacterDBInterface for safe statement access
+        CharacterDatabasePreparedStatement* stmt = sPlayerbotCharDB->GetPreparedStatement(CHAR_SEL_CHARACTER);
         if (!stmt) {
             TC_LOG_ERROR("module.playerbot", "BotLoginQueryHolder: Failed to get CHAR_SEL_CHARACTER (index: {})",
                         static_cast<uint32>(CHAR_SEL_CHARACTER));
@@ -103,7 +106,12 @@ CharacterDatabasePreparedStatement* BotSession::GetSafePreparedStatement(Charact
         return nullptr;
     }
 
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(statementId);
+    // Use PlayerbotCharacterDBInterface for safe statement access with automatic routing
+    TC_LOG_DEBUG("module.playerbot.session",
+        "Accessing statement {} ({}) through PlayerbotCharacterDBInterface",
+        static_cast<uint32>(statementId), statementName);
+
+    CharacterDatabasePreparedStatement* stmt = sPlayerbotCharDB->GetPreparedStatement(statementId);
     if (!stmt) {
         TC_LOG_ERROR("module.playerbot", "BotSession::GetSafePreparedStatement: Failed to get prepared statement {} (index: {})",
                      statementName, static_cast<uint32>(statementId));
@@ -227,7 +235,9 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
             return false;
         }
         stmt->setUInt64(0, characterGuid.GetCounter());
-        PreparedQueryResult accountResult = CharacterDatabase.Query(stmt);
+
+        // Use PlayerbotCharacterDBInterface for safe execution with automatic routing
+        PreparedQueryResult accountResult = sPlayerbotCharDB->ExecuteSync(stmt);
 
         if (!accountResult)
         {
@@ -265,7 +275,7 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
         }
         onlineStmt->setUInt32(0, 1);
         onlineStmt->setUInt64(1, characterGuid.GetCounter());
-        CharacterDatabase.Execute(onlineStmt);
+        sPlayerbotCharDB->ExecuteAsync(onlineStmt);
 
         // Create and assign BotAI to take control of the character
         auto botAI = BotAIFactory::instance()->CreateAI(GetPlayer());
@@ -391,8 +401,10 @@ void BotSession::StartAsyncLogin(ObjectGuid characterGuid)
             }
         };
 
-        // Execute the async query with proper session-based callback to prevent statement corruption
-        CharacterDatabase.AsyncQuery(accountStmt).WithPreparedCallback(std::move(callback));
+        // Use PlayerbotCharacterDBInterface for safe async execution with automatic sync/async routing
+        TC_LOG_INFO("module.playerbot.session",
+            "About to execute AsyncQuery for statement on playerbot_characters database through PlayerbotCharacterDBInterface");
+        sPlayerbotCharDB->ExecuteAsync(accountStmt, std::move(callback));
 
     }
     catch (std::exception const& e)
@@ -442,7 +454,7 @@ void BotSession::CompleteAsyncLogin(Player* player, ObjectGuid characterGuid)
         }
         onlineStmt->setUInt32(0, 1);
         onlineStmt->setUInt64(1, characterGuid.GetCounter());
-        CharacterDatabase.Execute(onlineStmt);
+        sPlayerbotCharDB->ExecuteAsync(onlineStmt);
 
         // Create and assign BotAI for character control
         auto botAI = BotAIFactory::instance()->CreateAI(player);

@@ -123,6 +123,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
 
     # Database systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotCharacterDBInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotCharacterDBInterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp
@@ -156,6 +158,8 @@ source_group("Config" FILES
 
 
 source_group("Database" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotCharacterDBInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotCharacterDBInterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseConnection.cpp

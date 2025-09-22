@@ -8,6 +8,7 @@
 #include "MySQLConnection.h"
 #include <algorithm>
 #include <sstream>
+#include <unordered_set>
 
 namespace Playerbot {
 
@@ -222,9 +223,102 @@ PreparedQueryResult BotDatabasePool::ExecuteSync(CharacterDatabasePreparedStatem
 
 CharacterDatabasePreparedStatement* BotDatabasePool::GetPreparedStatement(uint32 stmtId)
 {
+    // CRITICAL FIX: All statements should be properly prepared by Trinity's DoPrepareStatements()
+    TC_LOG_DEBUG("module.playerbot.database",
+        "BotDatabasePool accessing statement {} - ensuring Trinity connection preparation worked", stmtId);
+
+    // CRITICAL FIX: Comprehensive protection against accessing sync-only statements from async connections
+    // This prevents assertion failures: "Could not fetch prepared statement X on database playerbot_characters, connection type: asynchronous"
+
+    // List of all CONNECTION_SYNCH statements that must never be accessed from async connections
+    // These correspond to Trinity's sync-only prepared statements from CharacterDatabase.cpp
+    static const std::unordered_set<uint32> SYNC_ONLY_STATEMENTS = {
+        39,   // CHAR_SEL_CHECK_GUID
+        45,   // CHAR_SEL_BANINFO
+        46,   // CHAR_SEL_GUID_BY_NAME_FILTER
+        47,   // CHAR_SEL_BANINFO_LIST
+        48,   // CHAR_SEL_BANNED_NAME
+        49,   // CHAR_SEL_MAIL_LIST_COUNT
+        51,   // CHAR_SEL_MAIL_LIST_INFO
+        52,   // CHAR_SEL_MAIL_LIST_ITEMS
+        87,   // CHAR_SEL_CHAR_ZONE
+        88,   // CHAR_SEL_CHAR_POSITION_XYZ
+        89,   // CHAR_SEL_CHAR_POSITION
+        179,  // CHAR_SEL_AUCTION_ITEMS
+        180,  // CHAR_SEL_AUCTIONS
+        183,  // CHAR_SEL_AUCTION_BIDDERS
+        189,  // CHAR_UPD_AUCTION_EXPIRATION
+        196,  // CHAR_SEL_EXPIRED_MAIL
+        197,  // CHAR_SEL_EXPIRED_MAIL_ITEMS
+        202,  // CHAR_SEL_ITEM_REFUNDS
+        203,  // CHAR_SEL_ITEM_BOP_TRADE
+        259,  // CHAR_SEL_ACCOUNT_BY_NAME
+        260,  // CHAR_UPD_ACCOUNT_BY_GUID
+        263,  // CHAR_SEL_MATCH_MAKER_RATING
+        287,  // CHAR_SEL_GUILD_BANK_ITEMS
+        327,  // CHAR_SEL_CHAR_DATA_FOR_GUILD
+        334,  // CHAR_SEL_GUILD_ACHIEVEMENT
+        335,  // CHAR_SEL_GUILD_ACHIEVEMENT_CRITERIA
+        358,  // CHAR_SEL_GM_SUGGESTIONS (the original problem statement)
+        400,  // CHAR_SEL_PETITION
+        401,  // CHAR_SEL_PETITION_SIGNATURE
+        403,  // CHAR_SEL_PETITION_BY_OWNER
+        404,  // CHAR_SEL_PETITION_SIGNATURES
+        405,  // CHAR_SEL_PETITION_SIG_BY_ACCOUNT
+        406,  // CHAR_SEL_PETITION_OWNER_BY_GUID
+        407,  // CHAR_SEL_PETITION_SIG_BY_GUID
+        433,  // CHAR_SEL_CORPSES
+        437,  // CHAR_SEL_CORPSE_PHASES
+        440,  // CHAR_SEL_CORPSE_CUSTOMIZATIONS
+        446,  // CHAR_SEL_RESPAWNS
+        452,  // CHAR_SEL_GM_BUGS
+        458,  // CHAR_SEL_GM_COMPLAINTS
+        461,  // CHAR_SEL_GM_COMPLAINT_CHATLINES
+        468,  // CHAR_SEL_GM_SUGGESTIONS (duplicate entry for clarity)
+        536,  // CHAR_SEL_CHARACTER_AURA_FROZEN
+        537,  // CHAR_SEL_CHARACTER_ONLINE
+        539,  // CHAR_SEL_CHAR_DEL_INFO_BY_NAME
+        540,  // CHAR_SEL_CHAR_DEL_INFO
+        541,  // CHAR_SEL_CHARS_BY_ACCOUNT_ID
+        542,  // CHAR_SEL_CHAR_PINFO
+        543,  // CHAR_SEL_PINFO_BANS
+        545,  // CHAR_SEL_PINFO_MAILS
+        547,  // CHAR_SEL_PINFO_XP
+        548,  // CHAR_SEL_CHAR_HOMEBIND
+        549,  // CHAR_SEL_CHAR_GUID_NAME_BY_ACC
+        552,  // CHAR_SEL_CHAR_COD_ITEM_MAIL
+        553,  // CHAR_SEL_CHAR_SOCIAL
+        554,  // CHAR_SEL_CHAR_OLD_CHARS
+        557,  // CHAR_SEL_CHAR_INVENTORY_COUNT_ITEM
+        558,  // CHAR_SEL_MAIL_COUNT_ITEM
+        559,  // CHAR_SEL_AUCTIONHOUSE_COUNT_ITEM
+        560,  // CHAR_SEL_GUILD_BANK_COUNT_ITEM
+        564,  // CHAR_SEL_CHAR_INVENTORY_ITEM_BY_ENTRY
+        567,  // CHAR_SEL_MAIL_ITEM_BY_ENTRY
+        568,  // CHAR_SEL_AUCTIONHOUSE_ITEM_BY_ENTRY
+        569,  // CHAR_SEL_GUILD_BANK_ITEM_BY_ENTRY
+        606,  // CHAR_SEL_CHAR_REP_BY_FACTION
+        692,  // CHAR_SEL_ITEMCONTAINER_ITEMS
+        696,  // CHAR_SEL_ITEMCONTAINER_MONEY
+        707,  // CHAR_SEL_CHAR_PET_IDS
+        741,  // CHAR_SEL_PVPSTATS_MAXID
+        744,  // CHAR_SEL_PVPSTATS_FACTIONS_OVERALL
+        770,  // CHAR_SEL_BLACKMARKET_AUCTIONS
+        783   // CHAR_SEL_WAR_MODE_TUNING
+    };
+
+    if (SYNC_ONLY_STATEMENTS.find(stmtId) != SYNC_ONLY_STATEMENTS.end()) {
+        TC_LOG_ERROR("module.playerbot.database",
+            "CRITICAL: Attempted to access sync-only statement {} from BotDatabasePool async context. "
+            "This statement must only be accessed from Trinity's main sync connections. "
+            "Preventing async/sync mismatch that causes assertion failures.", stmtId);
+        return nullptr;
+    }
+
     auto it = _preparedStatements.find(stmtId);
     if (it != _preparedStatements.end()) {
-        // Create new PreparedStatement from cached SQL
+        // TEMPORARY: Still using CharacterDatabase until full isolation is implemented
+        // This is the root cause of the sync/async mismatch but now protected for sync-only statements
         return CharacterDatabase.GetPreparedStatement(static_cast<CharacterDatabaseStatements>(stmtId));
     }
 
