@@ -71,6 +71,12 @@ public:
     bool Initialize();
     void Shutdown();
 
+    // Update method (call from main thread)
+    void Update(uint32 diff);
+
+    // Thread-safe callback processing (call from main thread)
+    void ProcessPendingCallbacks();
+
     // === ACCOUNT CREATION ===
 
     /**
@@ -180,6 +186,9 @@ private:
     // Configuration loading
     void LoadConfigurationValues();
 
+    // Thread-safe callback queuing
+    void QueueCallback(std::function<void()> callback);
+
     // === DATA MEMBERS ===
 
     // Account storage with parallel hashmap for performance
@@ -220,6 +229,15 @@ private:
 
     // Thread safety
     mutable std::shared_mutex _accountsMutex;
+
+    // Callback processing for thread-safe operations
+    struct PendingCallback
+    {
+        std::function<void()> callback;
+        std::chrono::steady_clock::time_point submitTime;
+    };
+    std::queue<PendingCallback> _pendingCallbacks;
+    mutable std::mutex _callbackMutex;
 };
 
 } // namespace Playerbot

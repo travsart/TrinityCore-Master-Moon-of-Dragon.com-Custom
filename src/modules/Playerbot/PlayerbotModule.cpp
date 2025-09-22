@@ -233,6 +233,8 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     if (!_enabled || !_initialized)
         return;
 
+    // Update BotAccountMgr for thread-safe callback processing
+    Playerbot::sBotAccountMgr->Update(diff);
 
     // Update BotSpawner for automatic character creation and management
     Playerbot::sBotSpawner->Update(diff);

@@ -87,6 +87,57 @@ void BotAccountMgr::Shutdown()
         "✅ BotAccountMgr shutdown: {} accounts saved", _accounts.size());
 }
 
+void BotAccountMgr::ProcessPendingCallbacks()
+{
+    // Process pending callbacks from worker threads on main thread
+    constexpr uint32 MAX_CALLBACKS_PER_UPDATE = 5;
+    uint32 processed = 0;
+
+    while (processed < MAX_CALLBACKS_PER_UPDATE)
+    {
+        std::function<void()> callback;
+
+        // Extract callback from queue
+        {
+            std::lock_guard<std::mutex> lock(_callbackMutex);
+            if (_pendingCallbacks.empty())
+                break;
+
+            callback = std::move(_pendingCallbacks.front().callback);
+            _pendingCallbacks.pop();
+        }
+
+        // Execute callback on main thread
+        try
+        {
+            callback();
+            ++processed;
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.account",
+                "Callback execution failed: {}", e.what());
+        }
+    }
+}
+
+void BotAccountMgr::QueueCallback(std::function<void()> callback)
+{
+    std::lock_guard<std::mutex> lock(_callbackMutex);
+
+    PendingCallback pending;
+    pending.callback = std::move(callback);
+    pending.submitTime = std::chrono::steady_clock::now();
+
+    _pendingCallbacks.push(std::move(pending));
+}
+
+void BotAccountMgr::Update(uint32 /*diff*/)
+{
+    // Process callbacks from worker threads on main thread
+    ProcessPendingCallbacks();
+}
+
 void BotAccountMgr::LoadConfigurationValues()
 {
     TC_LOG_DEBUG("module.playerbot.account", "Loading configuration values...");
@@ -308,7 +359,11 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
 
         if (callback)
         {
-            callback(createdAccounts);
+            // Queue callback for main thread execution to prevent deadlocks
+            QueueCallback([callback, createdAccounts]()
+            {
+                callback(createdAccounts);
+            });
         }
     }).detach();
 }

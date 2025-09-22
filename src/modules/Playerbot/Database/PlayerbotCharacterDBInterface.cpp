@@ -300,18 +300,17 @@ bool PlayerbotCharacterDBInterface::ExecuteDirectSQL(std::string const& sql)
 
 bool PlayerbotCharacterDBInterface::IsAsyncContext() const
 {
-    std::lock_guard<std::mutex> lock(_threadMutex);
-
     std::thread::id currentThread = std::this_thread::get_id();
 
-    // Check if we're in main thread
+    // Check if we're in main thread (no lock needed - _mainThreadId is set once and never changes)
     if (currentThread == _mainThreadId)
     {
         return false;
     }
 
-    // Check if we're in a known async worker thread
-    return _asyncThreadIds.find(currentThread) != _asyncThreadIds.end();
+    // For simplicity and deadlock prevention, assume any non-main thread is async
+    // This is safer than maintaining a lock-protected set of async thread IDs
+    return true;
 }
 
 bool PlayerbotCharacterDBInterface::IsSyncOnlyStatement(uint32 statementId) const
@@ -397,34 +396,54 @@ void PlayerbotCharacterDBInterface::ExecuteSyncFromAsync(CharacterDatabasePrepar
 
 void PlayerbotCharacterDBInterface::ProcessSyncQueue()
 {
-    std::unique_lock<std::mutex> lock(_syncQueueMutex);
+    // Process queue in batches to prevent recursive deadlocks
+    constexpr uint32 MAX_BATCH_SIZE = 10;
 
-    while (!_syncQueue.empty())
+    for (uint32 batch = 0; batch < MAX_BATCH_SIZE; ++batch)
     {
-        auto request = _syncQueue.front();
-        _syncQueue.pop();
+        std::shared_ptr<SyncRequest> request = nullptr;
 
-        lock.unlock();
-
-        // Execute on main thread
-        PreparedQueryResult result = CharacterDatabase.Query(request->statement);
-
-        // Call callback if provided
-        if (request->callback)
+        // Extract one request at a time
         {
-            request->callback(result);
+            std::lock_guard<std::mutex> lock(_syncQueueMutex);
+            if (_syncQueue.empty())
+                break;
+
+            request = _syncQueue.front();
+            _syncQueue.pop();
         }
 
-        // Mark as completed
-        request->completed = true;
-
-        // Signal completion if waiting
-        if (request->completionSignal)
+        // Execute outside of any lock to prevent deadlocks
+        try
         {
-            request->completionSignal->notify_one();
-        }
+            PreparedQueryResult result = CharacterDatabase.Query(request->statement);
 
-        lock.lock();
+            // Call callback if provided (also outside of locks)
+            if (request->callback)
+            {
+                request->callback(result);
+            }
+
+            // Mark as completed
+            request->completed = true;
+
+            // Signal completion if waiting
+            if (request->completionSignal)
+            {
+                request->completionSignal->notify_one();
+            }
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.database", "ProcessSyncQueue failed: {}", e.what());
+
+            // Mark as completed even on error to prevent hanging
+            request->completed = true;
+            if (request->completionSignal)
+            {
+                request->completionSignal->notify_one();
+            }
+        }
     }
 }
 
