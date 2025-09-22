@@ -234,7 +234,7 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
         return;
 
     // Update BotAccountMgr for thread-safe callback processing
-    Playerbot::sBotAccountMgr->Update(diff);
+    sBotAccountMgr->Update(diff);
 
     // Update BotSpawner for automatic character creation and management
     Playerbot::sBotSpawner->Update(diff);
