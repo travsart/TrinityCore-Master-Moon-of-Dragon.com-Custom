@@ -99,6 +99,29 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
 
+    # Phase 2: Refactored Architecture Components
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
+
+    # Phase 2: Enhanced Session Management
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
+
+    # Phase 2: Interface Definitions (header-only)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotPerformance.h
+
+    # Phase 2: Adapter Pattern Implementation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
+
     # Database systems
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.h
@@ -131,12 +154,6 @@ source_group("Config" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
 )
 
-source_group("Session" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
-)
 
 source_group("Database" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabase.cpp
@@ -199,6 +216,34 @@ source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
+)
+
+source_group("Session" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
+)
+
+source_group("Interfaces" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotPerformance.h
+)
+
+source_group("Adapters" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
 )
 
 source_group("Scripts" FILES
@@ -230,6 +275,8 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
+        ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
     PRIVATE

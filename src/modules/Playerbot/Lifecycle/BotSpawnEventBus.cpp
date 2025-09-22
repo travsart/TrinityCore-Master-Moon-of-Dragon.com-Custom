@@ -59,7 +59,7 @@ void BotSpawnEventBus::Shutdown()
     ProcessEvents();
 
     // Log final stats
-    auto stats = GetStats();
+    auto const& stats = GetStats();
     TC_LOG_INFO("module.playerbot.events",
         "Final Event Statistics - Published: {}, Processed: {}, Dropped: {}, Avg Processing: {:.2f}μs",
         stats.eventsPublished.load(), stats.eventsProcessed.load(),

@@ -77,8 +77,9 @@ bool ModuleLogManager::InitializeModuleLogging(std::string const& moduleName)
     auto& info = *it->second;
     if (info.initialized)
     {
-        TC_LOG_DEBUG("server.loading", "ModuleLogManager: Module '{}' already initialized", moduleName);
-        return true;
+        printf("=== MODULE LOG DEBUG: Module '%s' already initialized, re-initializing with updated config ===\n", moduleName.c_str());
+        // Mark as not initialized so we can recreate with new settings
+        info.initialized = false;
     }
 
     // Load configuration from worldserver.conf
@@ -187,21 +188,16 @@ bool ModuleLogManager::CreateModuleLogger(ModuleLogInfo& info)
         std::string preferredAppenderName = "ModulePlayerbot";
         printf("=== MODULE LOG DEBUG: Checking if existing appender '%s' exists ===\n", preferredAppenderName.c_str());
 
-        // For playerbot module, we'll use the existing ModulePlayerbot appender if it exists
-        // This avoids conflicts and leverages existing configuration
-        if (info.name == "playerbot") {
-            info.appenderName = preferredAppenderName;
-            printf("=== MODULE LOG DEBUG: Using existing appender '%s' for playerbot module ===\n", info.appenderName.c_str());
-        } else {
-            // For other modules, create new appender as before
-            std::string appenderConfig = Trinity::StringFormat("2,0,1,{}", info.logFileName);
-            printf("=== MODULE LOG DEBUG: appenderConfig = '%s' ===\n", appenderConfig.c_str());
+        // For playerbot module, create a NEW appender for the Playerbot.log file
+        // The existing ModulePlayerbot appender in worldserver.conf goes to Playerbot1.log
+        // We need our own appender for Playerbot.log (from playerbots.conf)
+        std::string appenderConfig = Trinity::StringFormat("2,0,1,{}", info.logFileName);
+        printf("=== MODULE LOG DEBUG: appenderConfig = '%s' ===\n", appenderConfig.c_str());
 
-            std::string fullAppenderName = "Appender." + info.appenderName;
-            printf("=== MODULE LOG DEBUG: About to call CreateAppenderFromConfigLine with '%s' ===\n", fullAppenderName.c_str());
-            sLog->CreateAppenderFromConfigLine(fullAppenderName, appenderConfig);
-            printf("=== MODULE LOG DEBUG: CreateAppenderFromConfigLine SUCCESS ===\n");
-        }
+        std::string fullAppenderName = "Appender." + info.appenderName;
+        printf("=== MODULE LOG DEBUG: About to call CreateAppenderFromConfigLine with '%s' ===\n", fullAppenderName.c_str());
+        sLog->CreateAppenderFromConfigLine(fullAppenderName, appenderConfig);
+        printf("=== MODULE LOG DEBUG: CreateAppenderFromConfigLine SUCCESS ===\n");
 
         // Check if logger already exists from worldserver.conf
         Logger const* existingLogger = sLog->GetEnabledLogger(info.loggerName, LOG_LEVEL_TRACE);
@@ -264,11 +260,20 @@ bool ModuleLogManager::CreateModuleLogger(ModuleLogInfo& info)
 
 void ModuleLogManager::LoadModuleConfig(std::string const& moduleName, ModuleLogInfo& info)
 {
-    // Generic module configuration loading
-    // Modules can override this by calling SetModuleLogLevel and SetModuleLogFile
-    // or by providing a module-specific config loader
+    printf("=== MODULE LOG DEBUG: LoadModuleConfig() entered for '%s' ===\n", moduleName.c_str());
 
-    TC_LOG_DEBUG("server.loading", "ModuleLogManager: Using default config for module '{}' - Level: {}, File: '{}'",
+    // For playerbot module, try to get config from PlayerbotConfig if it's loaded
+    if (moduleName == "playerbot") {
+        printf("=== MODULE LOG DEBUG: This is playerbot module, trying to get config from PlayerbotConfig ===\n");
+
+        // Try to get PlayerbotConfig instance (may not be loaded yet)
+        // If PlayerbotConfig is loaded, it will call SetModuleConfig later
+        // For now, we use the default values passed during registration
+        printf("=== MODULE LOG DEBUG: Using registration defaults - Level: %d, File: '%s' ===\n",
+               (int)info.logLevel, info.logFileName.c_str());
+    }
+
+    TC_LOG_DEBUG("server.loading", "ModuleLogManager: Using config for module '{}' - Level: {}, File: '{}'",
                  moduleName, info.logLevel, info.logFileName);
 }
 

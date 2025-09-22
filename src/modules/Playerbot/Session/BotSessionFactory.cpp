@@ -9,11 +9,12 @@
 
 #include "BotSessionFactory.h"
 #include "BotSession.h"
-#include "BotSpawner.h"
+#include "Lifecycle/BotSpawner.h"
 #include "Logging/Log.h"
 #include "WorldSession.h"
 #include "AccountMgr.h"
 #include "CharacterCache.h"
+#include "Player.h"
 #include <chrono>
 
 namespace Playerbot
@@ -43,7 +44,7 @@ void BotSessionFactory::Shutdown()
 {
     TC_LOG_INFO("module.playerbot.session.factory", "Shutting down BotSessionFactory");
 
-    auto stats = GetStats();
+    auto const& stats = GetStats();
     TC_LOG_INFO("module.playerbot.session.factory",
         "Final Factory Statistics - Created: {}, Success Rate: {:.1f}%, Avg Time: {}μs",
         stats.sessionsCreated.load(), stats.GetSuccessRate(), stats.avgCreationTimeUs.load());
@@ -168,8 +169,8 @@ bool BotSessionFactory::ConfigureSession(std::shared_ptr<BotSession> session, Sp
         // Apply specific configurations based on character data
         if (Player* player = session->GetPlayer())
         {
-            ApplyClassSpecificConfiguration(session, player->getClass());
-            ApplyLevelConfiguration(session, player->getLevel());
+            ApplyClassSpecificConfiguration(session, player->GetClass());
+            ApplyLevelConfiguration(session, player->GetLevel());
         }
 
         ApplyZoneConfiguration(session, request.zoneId);
@@ -239,7 +240,7 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateFromTemplate(std::string co
 std::shared_ptr<BotSession> BotSessionFactory::CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid)
 {
     // Create the BotSession instance
-    auto session = std::make_shared<BotSession>(accountId, characterGuid);
+    auto session = std::make_shared<BotSession>(accountId);
 
     // Basic session initialization would go here
     // This is a simplified implementation - in reality would need:
@@ -310,7 +311,11 @@ void BotSessionFactory::ApplyZoneConfiguration(std::shared_ptr<BotSession> sessi
 
 bool BotSessionFactory::ValidateAccountAccess(uint32 accountId) const
 {
-    return AccountMgr::GetId(AccountMgr::GetUsername(accountId)) == accountId;
+    std::string accountName;
+    if (!AccountMgr::GetName(accountId, accountName))
+        return false;
+
+    return AccountMgr::GetId(accountName) == accountId;
 }
 
 bool BotSessionFactory::ValidateCharacterData(ObjectGuid characterGuid) const
@@ -346,7 +351,7 @@ void BotSessionFactory::LoadDefaultTemplates()
     TC_LOG_DEBUG("module.playerbot.session.factory", "Loaded {} default templates", 1);
 }
 
-SessionTemplate const* BotSessionFactory::GetTemplate(std::string const& templateName) const
+BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(std::string const& templateName) const
 {
     std::lock_guard<std::mutex> lock(_templateMutex);
 

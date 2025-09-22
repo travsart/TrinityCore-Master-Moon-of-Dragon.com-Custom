@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
 #include <memory>
 #include <functional>
 
@@ -23,7 +24,6 @@ class BotPerformanceMonitor;
 class BotPopulationManager;
 class BotCharacterSelector;
 class BotSessionFactory;
-struct SpawnRequest;
 
 /**
  * @class BotSpawnOrchestrator
@@ -71,6 +71,10 @@ public:
     uint32 GetActiveBotCount(uint32 zoneId) const;
     bool CanSpawnMore() const;
     bool CanSpawnInZone(uint32 zoneId) const;
+
+    // Configuration
+    void SetMaxBots(uint32 maxBots);
+    void SetBotToPlayerRatio(float ratio);
 
     // Component access for advanced usage
     BotResourcePool* GetResourcePool() const { return _resourcePool.get(); }

@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -22,7 +23,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-struct SpawnRequest;
 class BotSession;
 
 /**
@@ -170,6 +170,11 @@ public:
         std::atomic<uint64> eventsDropped{0};
         std::atomic<uint64> totalProcessingTimeUs{0};
         std::atomic<uint32> queuedEvents{0};
+
+        // Delete copy constructor and assignment operator for atomic members
+        EventStats() = default;
+        EventStats(EventStats const&) = delete;
+        EventStats& operator=(EventStats const&) = delete;
 
         float GetAverageProcessingTimeUs() const {
             uint64 processed = eventsProcessed.load();

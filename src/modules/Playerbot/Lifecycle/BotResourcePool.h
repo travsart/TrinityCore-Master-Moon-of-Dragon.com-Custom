@@ -50,10 +50,13 @@ public:
     // Pool lifecycle
     bool Initialize(uint32 initialPoolSize = 100);
     void Shutdown();
+    void Update(uint32 diff);
 
     // Session pool management
     std::shared_ptr<BotSession> AcquireSession(uint32 accountId);
     void ReleaseSession(std::shared_ptr<BotSession> session);
+    void ReturnSession(ObjectGuid botGuid);
+    void AddSession(std::shared_ptr<BotSession> session);
 
     // Pool statistics for monitoring
     struct PoolStats
@@ -89,6 +92,11 @@ public:
 
     uint32 GetActiveSessionCount() const { return _stats.sessionsActive.load(); }
     uint32 GetPooledSessionCount() const { return _stats.sessionsPooled.load(); }
+
+    // Additional methods needed by BotSpawnOrchestrator
+    void CleanupIdleSessions();
+    uint32 GetAvailableSessionCount() const;
+    bool CanAllocateSession() const;
 
 private:
     // Session pool management

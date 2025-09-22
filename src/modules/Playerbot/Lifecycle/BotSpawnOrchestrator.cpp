@@ -15,7 +15,9 @@
 #include "BotSessionFactory.h"
 #include "BotSpawnEventBus.h"
 #include "BotSpawner.h"
+#include "Session/BotSession.h"
 #include "Logging/Log.h"
+#include "Player.h"
 
 namespace Playerbot
 {
@@ -293,7 +295,7 @@ void BotSpawnOrchestrator::ProcessSpawnRequest(SpawnRequest const& request)
 {
     // Publish spawn request event to start async workflow
     sBotSpawnEventBus->PublishSpawnRequest(request,
-        [this](bool success, ObjectGuid characterGuid) {
+        [this, request](bool success, ObjectGuid characterGuid) {
             if (success && !characterGuid.IsEmpty())
             {
                 // Character selection completed successfully
@@ -392,6 +394,20 @@ bool BotSpawnOrchestrator::AttemptSpawnRecovery(SpawnRequest const& request)
     }
 
     return false;
+}
+
+// === CONFIGURATION ===
+
+void BotSpawnOrchestrator::SetMaxBots(uint32 maxBots)
+{
+    if (_populationManager)
+        _populationManager->SetMaxBots(maxBots);
+}
+
+void BotSpawnOrchestrator::SetBotToPlayerRatio(float ratio)
+{
+    if (_populationManager)
+        _populationManager->SetBotToPlayerRatio(ratio);
 }
 
 } // namespace Playerbot

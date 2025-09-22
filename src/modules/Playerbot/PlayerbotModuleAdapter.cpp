@@ -94,7 +94,7 @@ void PlayerbotModuleAdapter::OnModuleUpdate(uint32 diff)
         return;
 
     static uint32 logCounter = 0;
-    if (++logCounter % 100 == 0) // Log every 100 updates
+    if (++logCounter % 100000 == 0) // Log every 100k updates
     {
         TC_LOG_ERROR("server.loading", "PlayerbotModuleAdapter::OnModuleUpdate() #{}", logCounter);
     }

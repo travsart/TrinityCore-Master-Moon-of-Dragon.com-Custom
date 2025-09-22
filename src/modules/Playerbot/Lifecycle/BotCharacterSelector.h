@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
 #include <vector>
 #include <functional>
 #include <memory>
@@ -19,9 +20,6 @@
 
 namespace Playerbot
 {
-
-// Forward declarations
-struct SpawnRequest;
 
 /**
  * @class BotCharacterSelector

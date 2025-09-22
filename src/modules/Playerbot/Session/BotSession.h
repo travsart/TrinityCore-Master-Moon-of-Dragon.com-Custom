@@ -7,6 +7,7 @@
 
 #include "WorldSession.h"
 #include "Define.h"
+#include "DatabaseEnv.h"
 #include <atomic>
 #include <memory>
 #include <queue>
@@ -55,6 +56,9 @@ public:
     void CompleteAsyncLogin(Player* player, ObjectGuid characterGuid);
 
 private:
+    // Helper methods for safe database access
+    CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
+
     // Async login state for scalability with thread safety
     struct AsyncLoginState
     {

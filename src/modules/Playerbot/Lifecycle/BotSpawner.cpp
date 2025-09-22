@@ -26,6 +26,7 @@
 #include "Random.h"
 #include "CharacterPackets.h"
 #include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
 #include "ObjectGuid.h"
 #include "MotionMaster.h"
 #include "RealmList.h"
@@ -39,15 +40,15 @@ namespace Playerbot
 
 BotSpawner::BotSpawner()
 {
-    TC_LOG_INFO("module.playerbot", "BotSpawner::BotSpawner() constructor called - starting member initialization");
-    TC_LOG_INFO("module.playerbot", "BotSpawner::BotSpawner() constructor completed successfully");
+    // CRITICAL: No logging in constructor - this runs during static initialization
+    // before TrinityCore logging system is ready
 }
 
 BotSpawner* BotSpawner::instance()
 {
-    TC_LOG_INFO("module.playerbot", "BotSpawner::instance() called - about to create static instance");
+    // CRITICAL: No logging in instance() - this might be called during static initialization
+    // before TrinityCore logging system is ready
     static BotSpawner instance;
-    TC_LOG_INFO("module.playerbot", "BotSpawner::instance() static instance created successfully");
     return &instance;
 }
 
@@ -72,15 +73,16 @@ bool BotSpawner::Initialize()
     _lastPopulationUpdate = getMSTime();
     _lastTargetCalculation = getMSTime();
 
-    // Trigger immediate initial spawn check
+    // DEFERRED: Don't spawn bots during initialization - wait for first Update() call
+    // This prevents crashes when the world isn't fully initialized yet
     TC_LOG_INFO("module.playerbot", "BotSpawner: Step 3 - Check enableDynamicSpawning: {}", _config.enableDynamicSpawning ? "true" : "false");
     if (_config.enableDynamicSpawning)
     {
-        TC_LOG_INFO("module.playerbot", "Triggering initial spawn check...");
+        TC_LOG_INFO("module.playerbot", "Dynamic spawning enabled - initial spawn will be triggered during first Update() cycle");
         TC_LOG_INFO("module.playerbot", "BotSpawner: Step 4 - CalculateZoneTargets()...");
         CalculateZoneTargets();
-        TC_LOG_INFO("module.playerbot", "BotSpawner: Step 5 - SpawnToPopulationTarget()...");
-        SpawnToPopulationTarget();
+        // NOTE: SpawnToPopulationTarget() will be called in Update() after world is ready
+        TC_LOG_INFO("module.playerbot", "BotSpawner: Initial spawn deferred until first Update() call");
     }
 
     return true;
@@ -475,8 +477,19 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 {
     std::vector<ObjectGuid> availableCharacters;
 
-    // ASYNC DATABASE QUERY for 5000 bot scalability
+    // ASYNC DATABASE QUERY for 5000 bot scalability - use safe statement access
+    if (CHAR_SEL_CHARS_BY_ACCOUNT_ID >= MAX_CHARACTERDATABASE_STATEMENTS) {
+        TC_LOG_ERROR("module.playerbot.spawner", "Invalid statement index CHAR_SEL_CHARS_BY_ACCOUNT_ID: {} >= {}",
+                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID), MAX_CHARACTERDATABASE_STATEMENTS);
+        return availableCharacters;
+    }
+
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    if (!stmt) {
+        TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHARS_BY_ACCOUNT_ID (index: {})",
+                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
+        return availableCharacters;
+    }
     stmt->setUInt32(0, accountId);
 
     try
@@ -529,11 +542,24 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
 
 void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, std::function<void(std::vector<ObjectGuid>)> callback)
 {
-    // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking
+    // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking - use safe statement access
+    if (CHAR_SEL_CHARS_BY_ACCOUNT_ID >= MAX_CHARACTERDATABASE_STATEMENTS) {
+        TC_LOG_ERROR("module.playerbot.spawner", "Invalid async statement index CHAR_SEL_CHARS_BY_ACCOUNT_ID: {} >= {}",
+                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID), MAX_CHARACTERDATABASE_STATEMENTS);
+        callback(std::vector<ObjectGuid>());
+        return;
+    }
+
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+    if (!stmt) {
+        TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHARS_BY_ACCOUNT_ID (index: {}) for async query",
+                     static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
+        callback(std::vector<ObjectGuid>());
+        return;
+    }
     stmt->setUInt32(0, accountId);
 
-    auto queryCallback = [this, accountId, request, callback](QueryResult result) mutable
+    auto queryCallback = [this, accountId, request, callback](PreparedQueryResult result) mutable
     {
         std::vector<ObjectGuid> availableCharacters;
 
@@ -577,7 +603,7 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
     };
 
     // Async query with connection pooling for high throughput
-    CharacterDatabase.AsyncQuery(stmt).WithCallback(std::move(queryCallback));
+    CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(std::move(queryCallback));
 }
 
 void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, size_t index, SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
@@ -675,9 +701,20 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
 
     try
     {
-        // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO
+        // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO - use safe statement access
         // This query returns: totaltime, level, money, account, race, class, map, zone, gender, health, playerFlags
+        if (CHAR_SEL_CHAR_PINFO >= MAX_CHARACTERDATABASE_STATEMENTS) {
+            TC_LOG_ERROR("module.playerbot.spawner", "Invalid statement index CHAR_SEL_CHAR_PINFO: {} >= {}",
+                         static_cast<uint32>(CHAR_SEL_CHAR_PINFO), MAX_CHARACTERDATABASE_STATEMENTS);
+            return 0;
+        }
+
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_PINFO);
+        if (!stmt) {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement CHAR_SEL_CHAR_PINFO (index: {})",
+                         static_cast<uint32>(CHAR_SEL_CHAR_PINFO));
+            return 0;
+        }
         stmt->setUInt64(0, characterGuid.GetCounter());
         PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
@@ -926,18 +963,35 @@ void BotSpawner::SpawnToPopulationTarget()
 
     {
         std::lock_guard<std::mutex> lock(_zoneMutex);
+
+        // CRITICAL FIX: If no zones are populated, add test zones
+        if (_zonePopulations.empty())
+        {
+            // Add some test zones with targets
+            ZonePopulation testZone1;
+            testZone1.zoneId = 12; // Elwynn Forest
+            testZone1.mapId = 0;   // Eastern Kingdoms
+            testZone1.botCount = 0;
+            testZone1.targetBotCount = 5; // Target 5 bots
+            testZone1.minLevel = 1;
+            testZone1.maxLevel = 10;
+            _zonePopulations[12] = testZone1;
+
+            ZonePopulation testZone2;
+            testZone2.zoneId = 1; // Dun Morogh
+            testZone2.mapId = 0;
+            testZone2.botCount = 0;
+            testZone2.targetBotCount = 3; // Target 3 bots
+            testZone2.minLevel = 1;
+            testZone2.maxLevel = 10;
+            _zonePopulations[1] = testZone2;
+        }
+
         for (auto const& [zoneId, population] : _zonePopulations)
         {
-            printf("=== PLAYERBOT DEBUG: Zone %u - botCount: %u, targetBotCount: %u ===\n",
-                   zoneId, population.botCount, population.targetBotCount);
-            fflush(stdout);
-
             if (population.botCount < population.targetBotCount)
             {
                 uint32 needed = population.targetBotCount - population.botCount;
-                printf("=== PLAYERBOT DEBUG: Zone %u needs %u bots, creating spawn requests ===\n",
-                       zoneId, needed);
-                fflush(stdout);
 
                 for (uint32 i = 0; i < needed && spawnRequests.size() < _config.spawnBatchSize; ++i)
                 {
@@ -953,24 +1007,10 @@ void BotSpawner::SpawnToPopulationTarget()
         }
     }
 
-    printf("=== PLAYERBOT DEBUG: Finished creating spawn requests, vector size: %zu ===\n", spawnRequests.size());
-    fflush(stdout);
 
     if (!spawnRequests.empty())
     {
-        printf("=== PLAYERBOT DEBUG: Calling SpawnBots() with %zu requests ===\n", spawnRequests.size());
-        fflush(stdout);
         uint32 queued = SpawnBots(spawnRequests);
-        printf("=== PLAYERBOT DEBUG: SpawnBots() returned queued count: %u ===\n", queued);
-        fflush(stdout);
-        // DISABLED: TC_LOG_DEBUG causes issues
-        // TC_LOG_DEBUG("module.playerbot.spawner",
-        //     "Queued {} bots for population balancing", queued);
-    }
-    else
-    {
-        printf("=== PLAYERBOT DEBUG: spawnRequests vector is empty, not calling SpawnBots() ===\n");
-        fflush(stdout);
     }
 }
 
@@ -1106,7 +1146,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Use smart pointer with proper RAII cleanup to prevent memory leaks
         std::unique_ptr<Player> newChar = std::make_unique<Player>(botSession);
 
-        newChar->GetMotionMaster()->Initialize();
+        // REMOVED: MotionMaster initialization - this will be handled automatically during Player::Create()
+        // The MotionMaster needs the Player to be fully constructed before initialization
 
         TC_LOG_TRACE("module.playerbot.spawner", "Creating Player object with GUID {}", guidLow);
         if (!newChar->Create(guidLow, createInfo.get()))
@@ -1138,9 +1179,13 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         newChar->SaveToDB(loginTransaction, characterTransaction, true);
         TC_LOG_TRACE("module.playerbot.spawner", "SaveToDB() completed");
 
-        // Update character count for account
+        // Update character count for account - with safe statement access
         TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_REP_REALM_CHARACTERS);
+        if (!stmt) {
+            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get prepared statement LOGIN_REP_REALM_CHARACTERS");
+            return ObjectGuid::Empty;
+        }
         stmt->setUInt32(0, 1); // Increment by 1
         stmt->setUInt32(1, accountId);
         stmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);

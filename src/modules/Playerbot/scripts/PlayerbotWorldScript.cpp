@@ -66,7 +66,7 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
     }
 
     static uint32 logCounter = 0;
-    if (++logCounter % 100 == 0) // Log every 100 updates (about every 1.6 seconds)
+    if (++logCounter % 100000 == 0) // Log every 100k updates (about every 27 minutes)
     {
         TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript::OnUpdate called - Update #{}", logCounter);
     }

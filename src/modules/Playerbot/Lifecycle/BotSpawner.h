@@ -11,6 +11,8 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
+#include "Lifecycle/BotPopulationManager.h"
 #include <memory>
 #include <vector>
 #include <atomic>
@@ -27,25 +29,6 @@ namespace Playerbot
 class BotSession;
 class BotScheduler;
 
-// Spawn request structure
-struct SpawnRequest
-{
-    enum Type { RANDOM, SPECIFIC_CHARACTER, SPECIFIC_ZONE, GROUP_MEMBER };
-
-    Type type = RANDOM;
-    uint32 accountId = 0;
-    ObjectGuid characterGuid;
-    uint32 zoneId = 0;
-    uint32 mapId = 0;
-    uint8 minLevel = 0;
-    uint8 maxLevel = 0;
-    uint8 classFilter = 0;
-    uint8 raceFilter = 0;
-
-    // Callback on spawn completion
-    std::function<void(bool success, ObjectGuid guid)> callback;
-};
-
 // Spawn configuration
 struct SpawnConfig
 {
@@ -59,19 +42,7 @@ struct SpawnConfig
     float botToPlayerRatio = 2.0f;
 };
 
-// Zone population data
-struct ZonePopulation
-{
-    uint32 zoneId;
-    uint32 mapId;
-    uint32 playerCount;
-    uint32 botCount;
-    uint32 targetBotCount;
-    uint8 minLevel;
-    uint8 maxLevel;
-    float botDensity;
-    std::chrono::system_clock::time_point lastUpdate;
-};
+// ZonePopulation defined in BotPopulationManager.h
 
 // Spawn statistics
 struct SpawnStats
@@ -150,6 +121,16 @@ public:
 
     // Runtime control
     void SetEnabled(bool enabled) { _enabled = enabled; }
+    bool IsEnabled() const { return _enabled.load(); }
+
+    // Configuration methods
+    void SetMaxBots(uint32 maxBots) { _config.maxBotsTotal = maxBots; }
+    void SetBotToPlayerRatio(float ratio) { _config.botToPlayerRatio = ratio; }
+
+    // Allow adapter access to constructor
+    friend class std::unique_ptr<BotSpawner>;
+    friend std::unique_ptr<BotSpawner> std::make_unique<BotSpawner>();
+    friend class std::default_delete<BotSpawner>;
 
 private:
     BotSpawner();  // Explicit constructor for debugging

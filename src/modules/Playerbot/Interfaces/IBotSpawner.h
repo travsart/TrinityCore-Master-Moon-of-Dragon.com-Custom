@@ -11,15 +11,13 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
 #include <functional>
 #include <vector>
 #include <memory>
 
 namespace Playerbot
 {
-
-// Forward declarations
-struct SpawnRequest;
 
 /**
  * @interface IBotSpawner

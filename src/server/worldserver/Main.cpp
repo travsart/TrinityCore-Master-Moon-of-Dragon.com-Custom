@@ -359,20 +359,13 @@ int main(int argc, char** argv)
     if (!sWorld->SetInitialWorldSettings())
         return 1;
 
-    TC_LOG_ERROR("server.worldserver", "=== UNCONDITIONAL DEBUG: This message should ALWAYS appear ===");
-    printf("=== UNCONDITIONAL DEBUG: This message should ALWAYS appear ===\n");
-    fflush(stdout);
-    printf("=== MAIN DEBUG: About to check PLAYERBOT_ENABLED ===\n");
 #ifdef PLAYERBOT_ENABLED
-    printf("=== MAIN DEBUG: PLAYERBOT_ENABLED is defined, calling Initialize ===\n");
     // Initialize Playerbot Module after world is set up
     if (!PlayerbotModule::Initialize())
     {
         TC_LOG_ERROR("server.worldserver", "Failed to initialize Playerbot Module");
         // Continue startup even if playerbot fails to initialize
     }
-#else
-    printf("=== MAIN DEBUG: PLAYERBOT_ENABLED is NOT defined ===\n");
 #endif
 
     auto instanceLockMgrHandle = Trinity::make_unique_ptr_with_deleter<&InstanceLockMgr::Unload>(&sInstanceLockMgr);

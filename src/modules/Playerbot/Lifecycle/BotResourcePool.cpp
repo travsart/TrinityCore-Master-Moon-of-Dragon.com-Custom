@@ -6,6 +6,7 @@
 #include "BotSession.h"
 #include "Config/PlayerbotConfig.h"
 #include "Logging/Log.h"
+#include "Player.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -72,6 +73,17 @@ void BotResourcePool::Shutdown()
 
     // Reset stats
     ResetStats();
+}
+
+void BotResourcePool::Update(uint32 /*diff*/)
+{
+    // Periodic cleanup and maintenance
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastCleanup).count() > CLEANUP_INTERVAL_MS)
+    {
+        CleanupExpiredSessions();
+        _lastCleanup = now;
+    }
 }
 
 void BotResourcePool::PreallocateSessions(uint32 count)
@@ -252,6 +264,64 @@ void BotResourcePool::ResetStats()
     _stats.sessionsPooled.store(0);
     _stats.poolHits.store(0);
     _stats.poolMisses.store(0);
+}
+
+void BotResourcePool::CleanupIdleSessions()
+{
+    // Delegate to existing cleanup method
+    CleanupExpiredSessions();
+}
+
+uint32 BotResourcePool::GetAvailableSessionCount() const
+{
+    return GetPooledSessionCount();
+}
+
+bool BotResourcePool::CanAllocateSession() const
+{
+    uint32 activeCount = GetActiveSessionCount();
+    uint32 pooledCount = GetPooledSessionCount();
+
+    // Can allocate if we have pooled sessions or are under max limit
+    return pooledCount > 0 || activeCount < _maxPoolSize;
+}
+
+void BotResourcePool::ReturnSession(ObjectGuid botGuid)
+{
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    // Find the session by bot GUID and return it to pool
+    for (auto it = _activeSessions.begin(); it != _activeSessions.end(); ++it)
+    {
+        auto session = *it;
+        if (session && session->GetPlayer() && session->GetPlayer()->GetGUID() == botGuid)
+        {
+            _activeSessions.erase(it);
+            _stats.sessionsActive.fetch_sub(1);
+
+            // Return to pool if reusable and we have space
+            if (_sessionPool.size() < _maxPoolSize && IsSessionReusable(session))
+            {
+                _sessionPool.push(session);
+                _stats.sessionsPooled.fetch_add(1);
+            }
+            break;
+        }
+    }
+}
+
+void BotResourcePool::AddSession(std::shared_ptr<BotSession> session)
+{
+    if (!session)
+        return;
+
+    std::lock_guard<std::mutex> lock(_poolMutex);
+
+    _activeSessions.insert(session);
+    _stats.sessionsActive.fetch_add(1);
+
+    TC_LOG_TRACE("module.playerbot.pool",
+        "Added session to active pool (total active: {})", _stats.sessionsActive.load());
 }
 
 } // namespace Playerbot

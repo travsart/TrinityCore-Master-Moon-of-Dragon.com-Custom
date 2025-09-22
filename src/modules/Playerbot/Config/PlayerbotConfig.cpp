@@ -425,23 +425,35 @@ void PlayerbotConfig::InitializeLogging()
         return;
     }
 
-    // Apply Playerbot-specific configuration if loaded
+    // Initialize module logging FIRST with defaults
+    if (!mgr->InitializeModuleLogging("playerbot"))
+    {
+        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to initialize module logging");
+        return;
+    }
+
+    // Apply Playerbot-specific configuration if loaded, and RE-INITIALIZE
     if (_loaded)
     {
         uint8 configLevel = GetUInt("Playerbot.Log.Level", 4);
         std::string configFile = GetString("Playerbot.Log.File", "Playerbot.log");
 
+        printf("=== PLAYERBOT CONFIG DEBUG: Applying config - Level: %d, File: '%s' ===\n",
+               (int)configLevel, configFile.c_str());
+
         if (configLevel <= 5)
         {
+            // Update the configuration
             mgr->SetModuleConfig("playerbot", configLevel, configFile);
-        }
-    }
 
-    // Initialize module logging
-    if (!mgr->InitializeModuleLogging("playerbot"))
-    {
-        TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to initialize module logging");
-        return;
+            // Re-initialize with the new config (this should recreate the logger with correct settings)
+            printf("=== PLAYERBOT CONFIG DEBUG: Re-initializing module logging with updated config ===\n");
+            if (!mgr->InitializeModuleLogging("playerbot"))
+            {
+                TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to re-initialize module logging with updated config");
+                return;
+            }
+        }
     }
 
     TC_LOG_INFO("server.loading", "PlayerbotConfig: New Module Logging system initialized successfully");
@@ -449,21 +461,49 @@ void PlayerbotConfig::InitializeLogging()
     // Test the new logging system with direct TC_LOG calls
     TC_LOG_INFO("module.playerbot", "Module logging system is now active");
     TC_LOG_ERROR("module.playerbot", "Error level test message");
+
+    // Test the ModuleLogManager's direct logging method that should route to Playerbot.log
+    mgr->LogModuleMessage("playerbot", 1, "LOGGING TEST: ModuleLogManager is working!");
+
+    // Test direct TC_LOG call to our created logger
+    TC_LOG_ERROR("module.playerbot.file", "LOGGING TEST: Direct TC_LOG to module.playerbot.file logger is working!");
+
+    // Also test a simple write to verify the file is writable
+    std::ofstream testFile("Playerbot_DirectTest.log");
+    if (testFile.is_open()) {
+        testFile << "DIRECT FILE TEST: This proves file writing works" << std::endl;
+        testFile.close();
+    }
 }
 
 void PlayerbotConfig::RefreshCache()
 {
     std::lock_guard<std::mutex> lock(_configMutex);
 
-    // Update cache with frequently accessed values
-    _cache.maxBotsPerAccount = GetUInt("Playerbot.MaxBotsPerAccount", 10);
-    _cache.globalMaxBots = GetUInt("Playerbot.GlobalMaxBots", 1000);
-    _cache.updateInterval = GetUInt("Playerbot.UpdateInterval", 1000);
-    _cache.aiDecisionTimeLimit = GetUInt("Playerbot.AIDecisionTimeLimit", 50);
-    _cache.loginDelay = GetUInt("Playerbot.LoginDelay", 1000);
-    _cache.logLevel = GetUInt("Playerbot.Log.Level", 4);
-    _cache.logFile = GetString("Playerbot.Log.File", "Playerbot.log");
-    _cache.databaseTimeout = GetUInt("Playerbot.Database.Timeout", 30);
+    // Update cache with frequently accessed values - DIRECT ACCESS to avoid recursive mutex lock
+    auto it = _configValues.find("Playerbot.MaxBotsPerAccount");
+    _cache.maxBotsPerAccount = (it != _configValues.end()) ? std::stoul(it->second) : 10;
+
+    it = _configValues.find("Playerbot.GlobalMaxBots");
+    _cache.globalMaxBots = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+
+    it = _configValues.find("Playerbot.UpdateInterval");
+    _cache.updateInterval = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+
+    it = _configValues.find("Playerbot.AIDecisionTimeLimit");
+    _cache.aiDecisionTimeLimit = (it != _configValues.end()) ? std::stoul(it->second) : 50;
+
+    it = _configValues.find("Playerbot.LoginDelay");
+    _cache.loginDelay = (it != _configValues.end()) ? std::stoul(it->second) : 1000;
+
+    it = _configValues.find("Playerbot.Log.Level");
+    _cache.logLevel = (it != _configValues.end()) ? std::stoul(it->second) : 4;
+
+    it = _configValues.find("Playerbot.Log.File");
+    _cache.logFile = (it != _configValues.end()) ? it->second : "Playerbot.log";
+
+    it = _configValues.find("Playerbot.Database.Timeout");
+    _cache.databaseTimeout = (it != _configValues.end()) ? std::stoul(it->second) : 30;
 
     _cache.isValid = true;
 

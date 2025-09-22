@@ -91,6 +91,7 @@ public:
     void SetBotToPlayerRatio(float ratio) { _botToPlayerRatio = ratio; }
     void SetMaxBotsPerZone(uint32 maxBots) { _maxBotsPerZone = maxBots; }
     void SetMaxBotsPerMap(uint32 maxBots) { _maxBotsPerMap = maxBots; }
+    void SetMaxBots(uint32 maxBots) { _maxBotsPerZone = maxBots; }
 
     float GetBotToPlayerRatio() const { return _botToPlayerRatio; }
 

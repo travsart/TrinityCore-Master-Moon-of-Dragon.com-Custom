@@ -12,23 +12,15 @@ namespace Playerbot {
 
 bool BotSessionMgr::Initialize()
 {
-    printf("=== PLAYERBOT DEBUG: BotSessionMgr::Initialize() - simple version ===\n");
-    fflush(stdout);
 
     if (_initialized.load()) {
-        printf("=== PLAYERBOT DEBUG: BotSessionMgr already initialized ===\n");
-        fflush(stdout);
         return true;
     }
 
-    printf("=== PLAYERBOT DEBUG: Setting initialized and enabled flags ===\n");
-    fflush(stdout);
 
     _initialized.store(true);
     _enabled.store(true);
 
-    printf("=== PLAYERBOT DEBUG: BotSessionMgr initialized successfully (simple version) ===\n");
-    fflush(stdout);
 
     return true;
 }
@@ -51,105 +43,71 @@ void BotSessionMgr::Shutdown()
 
 BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
 {
-    printf("=== PLAYERBOT DEBUG: BotSessionMgr::CreateSession() ENTERED for account %u (simple version) ===\n", bnetAccountId);
-    fflush(stdout);
 
     if (!_enabled.load() || !_initialized.load()) {
-        printf("=== PLAYERBOT DEBUG: BotSessionMgr not enabled or initialized ===\n");
-        fflush(stdout);
         return nullptr;
     }
 
     std::lock_guard<std::mutex> lock(_sessionsMutex);
 
-    printf("=== PLAYERBOT DEBUG: Acquired lock, checking if session already exists ===\n");
-    fflush(stdout);
 
     // Check if session already exists
     if (_sessions.find(bnetAccountId) != _sessions.end()) {
-        printf("=== PLAYERBOT DEBUG: Session for account %u already exists ===\n", bnetAccountId);
-        fflush(stdout);
         return nullptr;
     }
 
-    printf("=== PLAYERBOT DEBUG: About to create new BotSession object ===\n");
-    fflush(stdout);
 
     // Create new session
     try {
         auto session = std::make_unique<BotSession>(bnetAccountId);
         BotSession* sessionPtr = session.get();
 
-        printf("=== PLAYERBOT DEBUG: BotSession object created successfully ===\n");
-        fflush(stdout);
 
         // Store session
         _sessions[bnetAccountId] = std::move(session);
         _activeSessions.push_back(sessionPtr);
 
-        printf("=== PLAYERBOT DEBUG: Session stored in maps, returning success ===\n");
-        fflush(stdout);
 
         return sessionPtr;
     } catch (std::exception const& e) {
-        printf("=== PLAYERBOT DEBUG: Exception creating session: %s ===\n", e.what());
-        fflush(stdout);
         return nullptr;
     }
 }
 
 BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId, ObjectGuid characterGuid)
 {
-    printf("=== PLAYERBOT DEBUG: BotSessionMgr::CreateSession() with character GUID for account %u, character %s ===\n",
-           bnetAccountId, characterGuid.ToString().c_str());
-    fflush(stdout);
 
     // Create session first
     BotSession* session = CreateSession(bnetAccountId);
     if (!session)
     {
-        printf("=== PLAYERBOT DEBUG: Failed to create session for account %u ===\n", bnetAccountId);
-        fflush(stdout);
         return nullptr;
     }
 
     // Now login the character immediately
-    printf("=== PLAYERBOT DEBUG: Calling LoginCharacter(%s) on session ===\n", characterGuid.ToString().c_str());
-    fflush(stdout);
 
     if (!session->LoginCharacter(characterGuid))
     {
-        printf("=== PLAYERBOT DEBUG: LoginCharacter FAILED for character %s ===\n", characterGuid.ToString().c_str());
-        fflush(stdout);
         // Clean up the session if login failed
         ReleaseSession(bnetAccountId);
         return nullptr;
     }
 
-    printf("=== PLAYERBOT DEBUG: LoginCharacter SUCCESS for character %s ===\n", characterGuid.ToString().c_str());
-    fflush(stdout);
 
     return session;
 }
 
 BotSession* BotSessionMgr::CreateAsyncSession(uint32 bnetAccountId, ObjectGuid characterGuid)
 {
-    printf("=== PLAYERBOT DEBUG: BotSessionMgr::CreateAsyncSession() for account %u, character %s (ASYNC SCALABILITY) ===\n",
-           bnetAccountId, characterGuid.ToString().c_str());
-    fflush(stdout);
 
     // Create session first
     BotSession* session = CreateSession(bnetAccountId);
     if (!session)
     {
-        printf("=== PLAYERBOT DEBUG: Failed to create session for account %u ===\n", bnetAccountId);
-        fflush(stdout);
         return nullptr;
     }
 
     // Start async character login for 5000 bot scalability
-    printf("=== PLAYERBOT DEBUG: Starting async login for character %s (scalable for 5000 bots) ===\n", characterGuid.ToString().c_str());
-    fflush(stdout);
 
     session->StartAsyncLogin(characterGuid);
 

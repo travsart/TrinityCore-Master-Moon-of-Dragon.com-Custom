@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Lifecycle/SpawnRequest.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
@@ -21,7 +22,6 @@ namespace Playerbot
 
 // Forward declarations
 class BotSession;
-struct SpawnRequest;
 
 /**
  * @class BotSessionFactory
@@ -78,6 +78,11 @@ public:
         std::atomic<uint32> configurationFailures{0};
         std::atomic<uint64> avgCreationTimeUs{0};
         std::atomic<uint32> templatesUsed{0};
+
+        // Delete copy constructor and assignment operator for atomic members
+        FactoryStats() = default;
+        FactoryStats(FactoryStats const&) = delete;
+        FactoryStats& operator=(FactoryStats const&) = delete;
 
         float GetSuccessRate() const {
             uint32 total = sessionsCreated.load() + creationFailures.load();

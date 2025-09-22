@@ -93,10 +93,10 @@ BotPerformanceMonitor::PerformanceSnapshot BotPerformanceMonitor::GetSnapshot() 
     snapshot.avgCallbackLatency = _callbackLatency.GetAverageMs();
     snapshot.avgLockWaitTime = _lockWaitTime.GetAverageMs();
 
-    // Throughput metrics (atomic loads with reset)
-    uint32 requests = _spawnRequestsPerSecond.exchange(0);
-    uint32 successful = _successfulSpawnsPerSecond.exchange(0);
-    uint32 failed = _failedSpawnsPerSecond.exchange(0);
+    // Throughput metrics (atomic loads without reset in const method)
+    uint32 requests = _spawnRequestsPerSecond.load();
+    uint32 successful = _successfulSpawnsPerSecond.load();
+    uint32 failed = _failedSpawnsPerSecond.load();
 
     snapshot.spawnRequestsPerSec = requests;
     snapshot.successfulSpawnsPerSec = successful;
