@@ -11,6 +11,7 @@
 #include <memory>
 #include <queue>
 #include <mutex>
+#include <chrono>
 
 // Forward declarations
 namespace Playerbot {
@@ -45,6 +46,25 @@ public:
 
     // === Bot-Specific Methods ===
     void ProcessBotPackets();
+
+    // Character Login System
+    bool LoginCharacter(ObjectGuid characterGuid);
+
+    // Async login system for 5000 bot scalability
+    void StartAsyncLogin(ObjectGuid characterGuid);
+    void CompleteAsyncLogin(Player* player, ObjectGuid characterGuid);
+
+private:
+    // Async login state for scalability with thread safety
+    struct AsyncLoginState
+    {
+        std::mutex mutex;
+        ObjectGuid characterGuid;
+        Player* player = nullptr;
+        bool inProgress = false;
+        std::chrono::steady_clock::time_point startTime;
+    };
+    AsyncLoginState _asyncLogin;
 
     // AI Integration
     void SetAI(BotAI* ai) { _ai = ai; }

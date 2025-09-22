@@ -9,7 +9,6 @@
 #include "Player.h"
 #include "DatabaseEnv.h"
 #include "QueryHolder.h"
-#include "QueryCallback.h"
 #include "CharacterPackets.h"
 #include "World.h"
 #include "Map.h"
@@ -31,10 +30,16 @@ public:
 
     bool Initialize()
     {
+        printf("=== PLAYERBOT DEBUG: BotLoginQueryHolder::Initialize() ENTERED for GUID %s ===\n", m_guid.ToString().c_str());
+        fflush(stdout);
+
         SetSize(MAX_PLAYER_LOGIN_QUERY);
 
         bool res = true;
         ObjectGuid::LowType lowGuid = m_guid.GetCounter();
+
+        printf("=== PLAYERBOT DEBUG: lowGuid = %llu, starting query preparation ===\n", lowGuid);
+        fflush(stdout);
 
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
         stmt->setUInt64(0, lowGuid);
@@ -303,6 +308,9 @@ public:
         stmt->setUInt64(0, lowGuid);
         res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_BANK_TAB_SETTINGS, stmt);
 
+        printf("=== PLAYERBOT DEBUG: BotLoginQueryHolder::Initialize() RESULT: %s ===\n", res ? "SUCCESS" : "FAILED");
+        fflush(stdout);
+
         return res;
     }
 };
@@ -328,19 +336,34 @@ BotSession::BotSession(uint32 bnetAccountId)
     _bnetAccountId(bnetAccountId),
     _simulatedLatency(50)
 {
+    printf("=== PLAYERBOT DEBUG: BotSession constructor for account %u (simplified version) ===\n", bnetAccountId);
+    fflush(stdout);
+
     // Validate account IDs
     if (GetAccountId() == 0) {
+        printf("=== PLAYERBOT DEBUG: BotSession creation failed - invalid account ID ===\n");
+        fflush(stdout);
         return;
     }
+
+    printf("=== PLAYERBOT DEBUG: BotSession created successfully - BNet ID %u, Legacy ID %u ===\n",
+           _bnetAccountId, GetAccountId());
+    fflush(stdout);
 }
 
 BotSession::~BotSession()
 {
+    printf("=== PLAYERBOT DEBUG: BotSession destructor for account %u ===\n", GetAccountId());
+    fflush(stdout);
+
     // Clean up AI if present
     if (_ai) {
         delete _ai;
         _ai = nullptr;
     }
+
+    printf("=== PLAYERBOT DEBUG: BotSession destructor completed ===\n");
+    fflush(stdout);
 }
 
 void BotSession::SendPacket(WorldPacket const* packet, bool forced)
@@ -389,102 +412,123 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
 void BotSession::ProcessBotPackets()
 {
-    // Use batch processing with larger batch sizes for better performance under load
-    constexpr size_t BATCH_SIZE = 50; // Increased from 10 to reduce overhead
+    std::lock_guard<std::mutex> lock(_packetMutex);
 
-    // Batch process packets outside lock to minimize critical sections
-    std::vector<std::unique_ptr<WorldPacket>> incomingBatch;
-    incomingBatch.reserve(BATCH_SIZE);
+    // Process a few incoming packets
+    int processed = 0;
+    while (!_incomingPackets.empty() && processed < 10) {
+        auto packet = std::move(_incomingPackets.front());
+        _incomingPackets.pop();
 
-    // Extract batch of incoming packets under lock
-    {
-        std::lock_guard<std::mutex> lock(_packetMutex);
-
-        // Reserve space and extract up to BATCH_SIZE packets
-        size_t batchCount = std::min(_incomingPackets.size(), BATCH_SIZE);
-        for (size_t i = 0; i < batchCount; ++i) {
-            incomingBatch.emplace_back(std::move(_incomingPackets.front()));
-            _incomingPackets.pop();
-        }
-
-        // Clear outgoing packets (simulate processing) - also batched
-        size_t clearCount = std::min(_outgoingPackets.size(), BATCH_SIZE);
-        for (size_t i = 0; i < clearCount; ++i) {
-            _outgoingPackets.pop();
-        }
-    }
-
-    // Process the extracted batch outside of lock for better concurrency
-    for (auto& packet : incomingBatch) {
         try {
             // Process packet through WorldSession's standard queue system
             WorldSession::QueuePacket(packet.get());
+            processed++;
         }
         catch (std::exception const& e) {
-            // Log exception through ModuleLogManager
+            printf("=== PLAYERBOT DEBUG: Exception processing packet: %s ===\n", e.what());
+            fflush(stdout);
         }
+    }
+
+    // Clear some outgoing packets (simulate processing)
+    int cleared = 0;
+    while (!_outgoingPackets.empty() && cleared < 10) {
+        _outgoingPackets.pop();
+        cleared++;
     }
 }
 
 bool BotSession::LoginCharacter(ObjectGuid characterGuid)
 {
+    printf("=== PLAYERBOT DEBUG: LoginCharacter called for GUID %s ===\n", characterGuid.ToString().c_str());
+    fflush(stdout);
+
     // Validate inputs
     if (characterGuid.IsEmpty())
     {
+        printf("=== PLAYERBOT DEBUG: LoginCharacter failed - empty character GUID ===\n");
+        fflush(stdout);
         return false;
     }
 
     if (GetAccountId() == 0)
     {
+        printf("=== PLAYERBOT DEBUG: LoginCharacter failed - invalid account ID ===\n");
+        fflush(stdout);
         return false;
     }
 
     try
     {
-        // Create player and load directly from database (use smart pointer for safety)
-        std::unique_ptr<Player> newPlayer = std::make_unique<Player>(this);
+        printf("=== PLAYERBOT DEBUG: Direct character loading approach for account %u, character %s ===\n",
+               GetAccountId(), characterGuid.ToString().c_str());
+        fflush(stdout);
+
+        // Create player and load directly from database
+        Player* newPlayer = new Player(this);
         if (!newPlayer)
         {
+            printf("=== PLAYERBOT DEBUG: Failed to create Player object ===\n");
+            fflush(stdout);
             return false;
         }
 
-        // CRITICAL FIX: Use async pattern for scalability - avoid blocking main thread
-        // For synchronous login, we'll use the existing approach but note this should be async for 5000+ bots
-        // The StartAsyncLogin method provides the proper async implementation for high scalability
+        printf("=== PLAYERBOT DEBUG: Loading character from database ===\n");
+        fflush(stdout);
 
-        // Use prepared statement for security - avoid SQL injection vulnerabilities
-        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
-        stmt->setUInt64(0, characterGuid.GetCounter());
-        PreparedQueryResult accountResult = CharacterDatabase.Query(stmt);
+        // Use the same approach as TrinityCore's HandlePlayerLogin
+        // Create and execute LoginQueryHolder
+        printf("=== PLAYERBOT DEBUG: Creating and executing LoginQueryHolder using TrinityCore approach ===\n");
+        fflush(stdout);
 
-        if (!accountResult)
+        std::shared_ptr<BotLoginQueryHolder> holder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
+        if (!holder->Initialize())
         {
-            // unique_ptr automatically cleans up newPlayer
+            printf("=== PLAYERBOT DEBUG: LoginQueryHolder initialization failed ===\n");
+            fflush(stdout);
+            delete newPlayer;
             return false;
         }
 
-        Field* accountFields = accountResult->Fetch();
-        uint32 characterAccountId = accountFields[0].GetUInt32(); // Account is the only field returned
+        // Use simplified LoginQueryHolder for bots to avoid deadlock
+        printf("=== PLAYERBOT DEBUG: Creating minimal LoginQueryHolder for bot ===\n");
+        fflush(stdout);
 
-        // Create LoginQueryHolder with character's REAL account ID (this is the key fix!)
-        auto botHolder = std::make_shared<BotLoginQueryHolder>(characterAccountId, characterGuid);
+        // Create minimal LoginQueryHolder for character loading
+        auto botHolder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
         if (!botHolder->Initialize())
         {
-            // unique_ptr automatically cleans up newPlayer
+            printf("=== PLAYERBOT DEBUG: Failed to initialize BotLoginQueryHolder ===\n");
+            fflush(stdout);
+            delete newPlayer;
             return false;
         }
 
-        // Load character data using CORRECT account ID
-        bool loadResult = newPlayer->LoadFromDB(characterGuid, *botHolder);
+        // Load character data synchronously using LoadFromDB
+        printf("=== PLAYERBOT DEBUG: Calling LoadFromDB for character %s ===\n", characterGuid.ToString().c_str());
+        fflush(stdout);
 
-        if (!loadResult)
+        if (!newPlayer->LoadFromDB(characterGuid, *botHolder))
         {
-            // unique_ptr automatically cleans up newPlayer
+            printf("=== PLAYERBOT DEBUG: LoadFromDB failed for character %s ===\n", characterGuid.ToString().c_str());
+            fflush(stdout);
+            delete newPlayer;
             return false;
         }
 
-        // Set the player for this session (transfer ownership from unique_ptr to session)
-        SetPlayer(newPlayer.release());
+        printf("=== PLAYERBOT DEBUG: Character loaded successfully: %s, Level %u ===\n",
+               newPlayer->GetName().c_str(), newPlayer->GetLevel());
+        fflush(stdout);
+
+        printf("=== PLAYERBOT DEBUG: Character loaded successfully, setting as session player ===\n");
+        fflush(stdout);
+
+        // Set the player for this session
+        SetPlayer(newPlayer);
+
+        printf("=== PLAYERBOT DEBUG: Player set for session successfully ===\n");
+        fflush(stdout);
 
         // Set character as online
         CharacterDatabasePreparedStatement* onlineStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ONLINE);
@@ -493,192 +537,39 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
         CharacterDatabase.Execute(onlineStmt);
 
         // Create and assign BotAI to take control of the character
-        auto botAI = BotAIFactory::instance()->CreateAI(GetPlayer());
+        printf("=== PLAYERBOT DEBUG: Creating BotAI for character %s ===\n", newPlayer->GetName().c_str());
+        fflush(stdout);
+
+        auto botAI = BotAIFactory::instance()->CreateAI(newPlayer);
         if (botAI)
         {
             SetAI(botAI.release()); // Transfer ownership to BotSession
+            printf("=== PLAYERBOT DEBUG: BotAI successfully created and assigned ===\n");
+            fflush(stdout);
         }
+        else
+        {
+            printf("=== PLAYERBOT DEBUG: Warning - failed to create BotAI ===\n");
+            fflush(stdout);
+        }
+
+        printf("=== PLAYERBOT DEBUG: Character %s successfully logged into bot session for account %u with AI control ===\n",
+               newPlayer->GetName().c_str(), GetAccountId());
+        fflush(stdout);
 
         return true;
     }
     catch (std::exception const& e)
     {
+        printf("=== PLAYERBOT DEBUG: Exception during LoginCharacter: %s ===\n", e.what());
+        fflush(stdout);
         return false;
     }
     catch (...)
     {
+        printf("=== PLAYERBOT DEBUG: Unknown exception during LoginCharacter ===\n");
+        fflush(stdout);
         return false;
-    }
-}
-
-void BotSession::StartAsyncLogin(ObjectGuid characterGuid)
-{
-    // Check if async login already in progress (thread-safe)
-    {
-        std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-        if (_asyncLogin.inProgress)
-        {
-            return;
-        }
-        // Set async login state under lock
-        _asyncLogin.characterGuid = characterGuid;
-        _asyncLogin.inProgress = true;
-        _asyncLogin.startTime = std::chrono::steady_clock::now();
-        _asyncLogin.player = nullptr;
-    }
-
-    // Validate inputs
-    if (characterGuid.IsEmpty())
-    {
-        return;
-    }
-
-    try
-    {
-
-        // ASYNC PHASE 1: Get character's account ID asynchronously using prepared statement for security
-        CharacterDatabasePreparedStatement* accountStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
-        accountStmt->setUInt64(0, characterGuid.GetCounter());
-
-        // Use TrinityCore's async query system with proper session processor for 5000 bot scalability
-        GetQueryProcessor().AddCallback(CharacterDatabase.AsyncQuery(accountStmt)).WithCallback([this, characterGuid](QueryResult accountResult) {
-            if (!accountResult)
-            {
-                {
-                    std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-                    _asyncLogin.inProgress = false;
-                }
-                return;
-            }
-
-            Field* accountFields = accountResult->Fetch();
-            uint32 characterAccountId = accountFields[0].GetUInt32(); // account is field 0 when selecting only account
-
-            // ASYNC PHASE 2: Create player and start async LoadFromDB (using smart pointer for safety)
-            std::unique_ptr<Player> newPlayer = std::make_unique<Player>(this);
-            if (!newPlayer)
-            {
-                _asyncLogin.inProgress = false;
-                return;
-            }
-
-            // Create LoginQueryHolder with character's REAL account ID
-            auto botHolder = std::make_shared<BotLoginQueryHolder>(characterAccountId, characterGuid);
-            if (!botHolder->Initialize())
-            {
-                // unique_ptr automatically cleans up newPlayer
-                {
-                    std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-                    _asyncLogin.inProgress = false;
-                }
-                return;
-            }
-
-            // Start async LoadFromDB operation using TrinityCore's query holder pattern
-
-            // Use AddQueryHolderCallback pattern for async 60+ database queries (scalable for 5000 bots)
-            // Release from unique_ptr to avoid lambda copy constructor issues
-            Player* playerPtr = newPlayer.release();
-            AddQueryHolderCallback(CharacterDatabase.DelayQueryHolder(botHolder)).AfterComplete([this, playerPtr, characterGuid](SQLQueryHolderBase const& result) {
-                // This callback runs when all 60+ database queries complete
-
-                bool loadResult = playerPtr->LoadFromDB(characterGuid, static_cast<BotLoginQueryHolder const&>(result));
-                if (loadResult)
-                {
-                    {
-                        std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-                        _asyncLogin.player = playerPtr;
-                    }
-                    CompleteAsyncLogin(playerPtr, characterGuid);
-                }
-                else
-                {
-                    // Clean up player on failure
-                    delete playerPtr;
-                    {
-                        std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-                        _asyncLogin.inProgress = false;
-                    }
-                }
-            });
-        });
-
-    }
-    catch (std::exception const& e)
-    {
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-        }
-    }
-    catch (...)
-    {
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-        }
-    }
-}
-
-void BotSession::CompleteAsyncLogin(Player* player, ObjectGuid characterGuid)
-{
-    // Thread-safe check of async login state
-    {
-        std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-        if (!player || !_asyncLogin.inProgress)
-        {
-            return;
-        }
-    }
-
-    try
-    {
-        // Calculate async login time for performance monitoring (thread-safe access)
-        auto endTime = std::chrono::steady_clock::now();
-        std::chrono::milliseconds duration;
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - _asyncLogin.startTime);
-        }
-
-        // Set the player for this session
-        SetPlayer(player);
-
-        // Set character as online in database
-        CharacterDatabasePreparedStatement* onlineStmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ONLINE);
-        onlineStmt->setUInt32(0, 1);
-        onlineStmt->setUInt64(1, characterGuid.GetCounter());
-        CharacterDatabase.Execute(onlineStmt);
-
-        // Create and assign BotAI for character control
-        auto botAI = BotAIFactory::instance()->CreateAI(player);
-        if (botAI)
-        {
-            SetAI(botAI.release()); // Transfer ownership to BotSession
-        }
-
-        // Clear async login state (thread-safe)
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-            _asyncLogin.player = nullptr;
-            _asyncLogin.characterGuid = ObjectGuid::Empty;
-        }
-
-    }
-    catch (std::exception const& e)
-    {
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-        }
-    }
-    catch (...)
-    {
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-        }
     }
 }
 

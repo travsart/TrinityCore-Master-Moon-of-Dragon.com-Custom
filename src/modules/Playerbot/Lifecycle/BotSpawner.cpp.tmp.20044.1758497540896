@@ -12,7 +12,6 @@
 
 #include "BotSpawner.h"
 #include "BotSessionMgr.h"
-#include "BotResourcePool.h"
 #include "BotAccountMgr.h"
 #include "PlayerbotConfig.h"
 #include "PlayerbotDatabase.h"
@@ -108,7 +107,7 @@ void BotSpawner::Shutdown()
     TC_LOG_INFO("module.playerbot.spawner", "Bot Spawner shutdown complete");
 }
 
-void BotSpawner::Update(uint32 /*diff*/)
+void BotSpawner::Update(uint32 diff)
 {
     // Removed debug pollution for production readiness
     if (!_enabled.load())
@@ -249,53 +248,119 @@ uint32 BotSpawner::SpawnBots(std::vector<SpawnRequest> const& requests)
 
 bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "SpawnBotInternal called for zone {}, account {}", request.zoneId, request.accountId);
+    printf("=== PLAYERBOT DEBUG: SpawnBotInternal ENTERED for zone %u, account %u (WITH ACCOUNT FIX) ===\n", request.zoneId, request.accountId);
+    fflush(stdout);
 
     auto startTime = std::chrono::high_resolution_clock::now();
     _stats.spawnAttempts.fetch_add(1);
 
-    // Select character for spawning - ASYNC PATTERN for 5000 bot scalability
+    // Select character for spawning
     ObjectGuid characterGuid = request.characterGuid;
     if (characterGuid.IsEmpty())
     {
-        // ASYNC CHARACTER SELECTION - no blocking for 5000 bots
-        SelectCharacterForSpawnAsync(request, [this, request, startTime](ObjectGuid selectedGuid) {
-            if (selectedGuid.IsEmpty())
-            {
-                TC_LOG_WARN("module.playerbot.spawner",
-                    "No suitable character found for spawn request (type: {})", static_cast<int>(request.type));
-                _stats.failedSpawns.fetch_add(1);
-                if (request.callback)
-                    request.callback(false, ObjectGuid::Empty);
-                return;
-            }
+        printf("=== PLAYERBOT DEBUG: CharacterGuid is empty, calling SelectCharacterForSpawn ===\n");
+        fflush(stdout);
+        characterGuid = SelectCharacterForSpawn(request);
+        if (characterGuid.IsEmpty())
+        {
+            printf("=== PLAYERBOT DEBUG: SelectCharacterForSpawn FAILED - returning false ===\n");
+            fflush(stdout);
+            // TC_LOG_WARN("module.playerbot.spawner",
+            //     "No suitable character found for spawn request (type: {})", static_cast<int>(request.type));
+            _stats.failedSpawns.fetch_add(1);
+            if (request.callback)
+                request.callback(false, ObjectGuid::Empty);
+            return false;
+        }
+        printf("=== PLAYERBOT DEBUG: SelectCharacterForSpawn SUCCESS - got character %s ===\n", characterGuid.ToString().c_str());
+        fflush(stdout);
+    }
 
-            // Continue with spawn process asynchronously
-            ContinueSpawnWithCharacter(selectedGuid, request);
-        });
-        return true; // Return immediately - async operation continues in callback
-    }
-    else
+    // Get the actual account ID from the character
+    uint32 actualAccountId = GetAccountIdFromCharacter(characterGuid);
+    if (actualAccountId == 0)
     {
-        // Character already specified - continue directly
-        ContinueSpawnWithCharacter(characterGuid, request);
-        return true;
+        printf("=== PLAYERBOT DEBUG: Failed to get account ID for character %s ===\n", characterGuid.ToString().c_str());
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "Failed to get account ID for character {}", characterGuid.ToString());
+        _stats.failedSpawns.fetch_add(1);
+        if (request.callback)
+            request.callback(false, ObjectGuid::Empty);
+        return false;
     }
+
+    printf("=== PLAYERBOT DEBUG: Using account ID %u for character %s ===\n", actualAccountId, characterGuid.ToString().c_str());
+    printf("=== PLAYERBOT DEBUG: About to call CreateBotSession(%u, %s) ===\n", actualAccountId, characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    // Create bot session
+    if (!CreateBotSession(actualAccountId, characterGuid))
+    {
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "Failed to create bot session for character {}", characterGuid.ToString());
+        _stats.failedSpawns.fetch_add(1);
+        if (request.callback)
+            request.callback(false, ObjectGuid::Empty);
+        return false;
+    }
+
+    // Update tracking data
+    uint32 zoneId = request.zoneId;
+    if (zoneId == 0)
+    {
+        // Get zone from character data - simplified for now
+        zoneId = 1; // Default to first zone
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(_botMutex);
+        _activeBots[characterGuid] = zoneId;
+        _botsByZone[zoneId].push_back(characterGuid);
+    }
+
+    // Update statistics
+    _stats.totalSpawned.fetch_add(1);
+    uint32 currentActive = _stats.currentlyActive.fetch_add(1) + 1;
+    uint32 currentPeak = _stats.peakConcurrent.load();
+    while (currentActive > currentPeak && !_stats.peakConcurrent.compare_exchange_weak(currentPeak, currentActive))
+    {
+        // Retry until we successfully update the peak or find a higher value
+    }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    _stats.totalSpawnTime.fetch_add(duration.count());
+
+    TC_LOG_INFO("module.playerbot.spawner",
+        "Successfully spawned bot {} in zone {} (spawn time: {:.2f}ms)",
+        characterGuid.ToString(), zoneId, duration.count() / 1000.0f);
+
+    if (request.callback)
+        request.callback(true, characterGuid);
+
+    return true;
 }
 
 bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
+    printf("=== PLAYERBOT DEBUG: CreateBotSession called for account %u, character %s ===\n",
+           accountId, characterGuid.ToString().c_str());
+    fflush(stdout);
 
     // Use the BotSessionMgr to create a new bot session with ASYNC character login (prevents MySQL assertions)
     BotSession* session = sBotSessionMgr->CreateAsyncSession(accountId, characterGuid);
     if (!session)
     {
+        printf("=== PLAYERBOT DEBUG: Failed to create async bot session for account %u ===\n", accountId);
+        fflush(stdout);
         TC_LOG_ERROR("module.playerbot.spawner",
             "Failed to create async bot session for account {}", accountId);
         return false;
     }
 
+    printf("=== PLAYERBOT DEBUG: Character %s async login started for bot session (async for 5000 bot scalability) ===\n",
+           characterGuid.ToString().c_str());
+    fflush(stdout);
     TC_LOG_INFO("module.playerbot.spawner",
         "Successfully created bot session and started async login for character {} for account {}",
         characterGuid.ToString(), accountId);
@@ -367,108 +432,85 @@ bool BotSpawner::ValidateSpawnRequest(SpawnRequest const& request) const
 
 ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Selecting character for spawn request");
+    printf("=== PLAYERBOT DEBUG: SelectCharacterForSpawn ENTERED ===\n");
+    fflush(stdout);
 
     // Get available accounts if not specified
     std::vector<uint32> accounts;
     if (request.accountId != 0)
     {
-        TC_LOG_TRACE("module.playerbot.spawner", "Using specified account {}", request.accountId);
+        printf("=== PLAYERBOT DEBUG: Using specified account %u ===\n", request.accountId);
         accounts.push_back(request.accountId);
     }
     else
     {
+        printf("=== PLAYERBOT DEBUG: No account specified, calling AcquireAccount ===\n");
+        fflush(stdout);
         // Use AcquireAccount to get available accounts
         uint32 accountId = sBotAccountMgr->AcquireAccount();
         if (accountId != 0)
         {
-            TC_LOG_TRACE("module.playerbot.spawner", "Acquired account {} for bot spawning", accountId);
+            printf("=== PLAYERBOT DEBUG: AcquireAccount returned account %u ===\n", accountId);
             accounts.push_back(accountId);
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot.spawner", "No accounts available for bot spawning");
+            printf("=== PLAYERBOT DEBUG: AcquireAccount returned 0 - no accounts available ===\n");
         }
+        fflush(stdout);
     }
 
     if (accounts.empty())
     {
-        TC_LOG_WARN("module.playerbot.spawner", "No available accounts for bot spawning");
+        printf("=== PLAYERBOT DEBUG: No accounts available - returning empty GUID ===\n");
+        fflush(stdout);
+        // TC_LOG_WARN("module.playerbot.spawner", "No available accounts for bot spawning");
         return ObjectGuid::Empty;
     }
 
     // Try each account until we find a suitable character
     for (uint32 accountId : accounts)
     {
-        TC_LOG_TRACE("module.playerbot.spawner", "Checking account {} for characters", accountId);
+        printf("=== PLAYERBOT DEBUG: Checking account %u for characters ===\n", accountId);
+        fflush(stdout);
         std::vector<ObjectGuid> characters = GetAvailableCharacters(accountId, request);
         if (!characters.empty())
         {
-            TC_LOG_TRACE("module.playerbot.spawner", "Found {} existing characters for account {}", characters.size(), accountId);
+            printf("=== PLAYERBOT DEBUG: Found %zu existing characters for account %u ===\n", characters.size(), accountId);
+            fflush(stdout);
             // Pick a random character from available ones
             uint32 index = urand(0, characters.size() - 1);
             return characters[index];
         }
         else
         {
+            printf("=== PLAYERBOT DEBUG: No existing characters for account %u, calling CreateCharacterForAccount ===\n", accountId);
+            fflush(stdout);
             // No existing characters found - create a new one
-            TC_LOG_INFO("module.playerbot.spawner",
-                "No characters found for account {}, attempting to create new character", accountId);
+            // TC_LOG_INFO("module.playerbot.spawner",
+            //     "No characters found for account {}, attempting to create new character", accountId);
 
             ObjectGuid newCharacterGuid = CreateCharacterForAccount(accountId, request);
             if (!newCharacterGuid.IsEmpty())
             {
-                TC_LOG_INFO("module.playerbot.spawner",
-                    "Successfully created new character {} for account {}",
-                    newCharacterGuid.ToString(), accountId);
+                printf("=== PLAYERBOT DEBUG: CreateCharacterForAccount SUCCESS - created character %s ===\n", newCharacterGuid.ToString().c_str());
+                fflush(stdout);
+                // TC_LOG_INFO("module.playerbot.spawner",
+                //     "Successfully created new character {} for account {}",
+                //     newCharacterGuid.ToString(), accountId);
                 return newCharacterGuid;
             }
             else
             {
-                TC_LOG_WARN("module.playerbot.spawner",
-                    "Failed to create character for account {}", accountId);
+                printf("=== PLAYERBOT DEBUG: CreateCharacterForAccount FAILED for account %u ===\n", accountId);
+                fflush(stdout);
+                // TC_LOG_WARN("module.playerbot.spawner",
+                //     "Failed to create character for account {}", accountId);
             }
         }
     }
 
     return ObjectGuid::Empty;
-}
-
-void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
-{
-    TC_LOG_TRACE("module.playerbot.spawner", "Selecting character for spawn request asynchronously");
-
-    // Get available accounts if not specified
-    std::vector<uint32> accounts;
-    if (request.accountId != 0)
-    {
-        TC_LOG_TRACE("module.playerbot.spawner", "Using specified account {}", request.accountId);
-        accounts.push_back(request.accountId);
-    }
-    else
-    {
-        // Use AcquireAccount to get available accounts
-        uint32 accountId = sBotAccountMgr->AcquireAccount();
-        if (accountId != 0)
-        {
-            TC_LOG_TRACE("module.playerbot.spawner", "Acquired account {} for bot spawning", accountId);
-            accounts.push_back(accountId);
-        }
-        else
-        {
-            TC_LOG_DEBUG("module.playerbot.spawner", "No accounts available for bot spawning");
-        }
-    }
-
-    if (accounts.empty())
-    {
-        TC_LOG_WARN("module.playerbot.spawner", "No available accounts for bot spawning");
-        callback(ObjectGuid::Empty);
-        return;
-    }
-
-    // Start async recursive character selection for 5000 bot scalability
-    SelectCharacterAsyncRecursive(std::move(accounts), 0, request, std::move(callback));
 }
 
 std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, SpawnRequest const& request)
@@ -527,148 +569,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     return availableCharacters;
 }
 
-void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, std::function<void(std::vector<ObjectGuid>)> callback)
-{
-    // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
-    stmt->setUInt32(0, accountId);
-
-    auto queryCallback = [this, accountId, request, callback](QueryResult result) mutable
-    {
-        std::vector<ObjectGuid> availableCharacters;
-
-        try
-        {
-            if (result)
-            {
-                availableCharacters.reserve(result->GetRowCount());
-                do
-                {
-                    Field* fields = result->Fetch();
-                    ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64());
-                    availableCharacters.push_back(characterGuid);
-                } while (result->NextRow());
-            }
-        }
-        catch (std::exception const& e)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner",
-                "Database error while processing characters for account {}: {}", accountId, e.what());
-        }
-
-        // Handle auto-character creation if enabled and no characters found
-        if (availableCharacters.empty() && sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false))
-        {
-            TC_LOG_DEBUG("module.playerbot.spawner",
-                "No characters found for account {}, attempting to create new character", accountId);
-
-            ObjectGuid newCharacterGuid = CreateBotCharacter(accountId);
-            if (!newCharacterGuid.IsEmpty())
-            {
-                availableCharacters.push_back(newCharacterGuid);
-                TC_LOG_INFO("module.playerbot.spawner",
-                    "Successfully created new bot character {} for account {}",
-                    newCharacterGuid.ToString(), accountId);
-            }
-        }
-
-        // Always call callback with results (empty on error)
-        callback(std::move(availableCharacters));
-    };
-
-    // Async query with connection pooling for high throughput
-    CharacterDatabase.AsyncQuery(stmt).WithCallback(std::move(queryCallback));
-}
-
-void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, size_t index, SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
-{
-    if (index >= accounts.size())
-    {
-        // No more accounts to check
-        callback(ObjectGuid::Empty);
-        return;
-    }
-
-    uint32 accountId = accounts[index];
-    TC_LOG_TRACE("module.playerbot.spawner", "Async checking account {} for characters", accountId);
-
-    GetAvailableCharactersAsync(accountId, request, [this, accounts = std::move(accounts), index, request, callback](std::vector<ObjectGuid> characters) mutable
-    {
-        if (!characters.empty())
-        {
-            TC_LOG_TRACE("module.playerbot.spawner", "Found {} existing characters for account {}", characters.size(), accounts[index]);
-            // Pick a random character from available ones
-            uint32 charIndex = urand(0, characters.size() - 1);
-            callback(characters[charIndex]);
-        }
-        else
-        {
-            // Try next account
-            SelectCharacterAsyncRecursive(std::move(accounts), index + 1, request, callback);
-        }
-    });
-}
-
-void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnRequest const& request)
-{
-    // Get the actual account ID from the character
-    uint32 actualAccountId = GetAccountIdFromCharacter(characterGuid);
-    if (actualAccountId == 0)
-    {
-        TC_LOG_ERROR("module.playerbot.spawner",
-            "Failed to get account ID for character {}", characterGuid.ToString());
-        _stats.failedSpawns.fetch_add(1);
-        if (request.callback)
-            request.callback(false, ObjectGuid::Empty);
-        return;
-    }
-
-    TC_LOG_TRACE("module.playerbot.spawner", "Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
-
-    // Create bot session
-    if (!CreateBotSession(actualAccountId, characterGuid))
-    {
-        TC_LOG_ERROR("module.playerbot.spawner",
-            "Failed to create bot session for character {}", characterGuid.ToString());
-        _stats.failedSpawns.fetch_add(1);
-        if (request.callback)
-            request.callback(false, ObjectGuid::Empty);
-        return;
-    }
-
-    // Update tracking data
-    uint32 zoneId = request.zoneId;
-    if (zoneId == 0)
-    {
-        zoneId = 1; // Default to first zone
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(_botMutex);
-        _activeBots[characterGuid] = zoneId;
-        _botsByZone[zoneId].push_back(characterGuid);
-
-        // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_add(1, std::memory_order_release);
-    }
-
-    // Update statistics
-    _stats.totalSpawned.fetch_add(1);
-    uint32 currentActive = _stats.currentlyActive.fetch_add(1) + 1;
-    uint32 currentPeak = _stats.peakConcurrent.load();
-    while (currentActive > currentPeak && !_stats.peakConcurrent.compare_exchange_weak(currentPeak, currentActive))
-    {
-        // Retry until we successfully update the peak or find a higher value
-    }
-
-    TC_LOG_INFO("module.playerbot.spawner",
-        "Successfully spawned bot {} in zone {} (async)", characterGuid.ToString(), zoneId);
-
-    if (request.callback)
-        request.callback(true, characterGuid);
-}
-
-uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
+uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid)
 {
     if (characterGuid.IsEmpty())
         return 0;
@@ -685,7 +586,8 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
         {
             Field* fields = result->Fetch();
             uint32 accountId = fields[3].GetUInt32(); // account is the 4th field (index 3)
-            TC_LOG_TRACE("module.playerbot.spawner", "Character {} belongs to account {}", characterGuid.ToString(), accountId);
+            printf("=== PLAYERBOT DEBUG: GetAccountIdFromCharacter(%s) = %u ===\n",
+                   characterGuid.ToString().c_str(), accountId);
             return accountId;
         }
     }
@@ -695,7 +597,8 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
             "Database error while getting account ID for character {}: {}", characterGuid.ToString(), e.what());
     }
 
-    TC_LOG_DEBUG("module.playerbot.spawner", "Character {} not found in database", characterGuid.ToString());
+    printf("=== PLAYERBOT DEBUG: GetAccountIdFromCharacter(%s) = 0 (not found) ===\n",
+           characterGuid.ToString().c_str());
     return 0;
 }
 
@@ -717,9 +620,6 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
 
         zoneId = it->second;
         _activeBots.erase(it);
-
-        // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_sub(1, std::memory_order_release);
 
         // Remove from zone tracking
         auto zoneIt = _botsByZone.find(zoneId);
@@ -843,9 +743,8 @@ ZonePopulation BotSpawner::GetZonePopulation(uint32 zoneId) const
 
 uint32 BotSpawner::GetActiveBotCount() const
 {
-    // LOCK-FREE OPTIMIZATION: Use atomic counter for hot path
-    // This method is called thousands of times per second with 5000 bots
-    return _activeBotCount.load(std::memory_order_acquire);
+    std::lock_guard<std::mutex> lock(_botMutex);
+    return _activeBots.size();
 }
 
 uint32 BotSpawner::GetActiveBotCount(uint32 zoneId) const
@@ -900,8 +799,9 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
     {
         uint32 minimumBots = sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 3);
         baseTarget = std::max(baseTarget, minimumBots);
-        TC_LOG_TRACE("module.playerbot.spawner", "Zone {} - players: {}, ratio target: {}, minimum: {}, final target: {}",
+        printf("=== PLAYERBOT DEBUG: Zone %u - players: %u, ratio target: %u, minimum: %u, final target: %u ===\n",
                zone.zoneId, zone.playerCount, static_cast<uint32>(zone.playerCount * _config.botToPlayerRatio), minimumBots, baseTarget);
+        fflush(stdout);
     }
 
     // Apply zone caps
@@ -912,17 +812,28 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
 
 void BotSpawner::SpawnToPopulationTarget()
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "SpawnToPopulationTarget called, enableDynamicSpawning: {}", _config.enableDynamicSpawning);
+    printf("=== PLAYERBOT DEBUG: SpawnToPopulationTarget called, enableDynamicSpawning: %s ===\n",
+           _config.enableDynamicSpawning ? "true" : "false");
+    fflush(stdout);
+    // DISABLED: TC_LOG_INFO causes crash
+    // TC_LOG_INFO("module.playerbot.spawner", "SpawnToPopulationTarget called, enableDynamicSpawning: {}",
+    //            _config.enableDynamicSpawning ? "true" : "false");
 
     if (!_config.enableDynamicSpawning)
     {
-        TC_LOG_TRACE("module.playerbot.spawner", "Dynamic spawning disabled, skipping population target");
+        printf("=== PLAYERBOT DEBUG: Dynamic spawning disabled, skipping population target ===\n");
+        fflush(stdout);
+        // DISABLED: TC_LOG_WARN causes crash
+        // TC_LOG_WARN("module.playerbot.spawner", "Dynamic spawning disabled, skipping population target");
         return;
     }
 
     std::vector<SpawnRequest> spawnRequests;
 
-    TC_LOG_TRACE("module.playerbot.spawner", "Checking zone populations, total zones: {}", _zonePopulations.size());
+    printf("=== PLAYERBOT DEBUG: Checking zone populations, total zones: %zu ===\n", _zonePopulations.size());
+    fflush(stdout);
+    // DISABLED: TC_LOG_INFO causes crash
+    // TC_LOG_INFO("module.playerbot.spawner", "Checking zone populations, total zones: {}", _zonePopulations.size());
 
     {
         std::lock_guard<std::mutex> lock(_zoneMutex);
@@ -1038,18 +949,23 @@ ObjectGuid BotSpawner::CreateCharacterForAccount(uint32 accountId, SpawnRequest 
 
 ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot character for account {}", accountId);
+    printf("=== PLAYERBOT DEBUG: CreateBotCharacter ENTERED for account %u ===\n", accountId);
+    fflush(stdout);
 
     try
     {
         // Get race/class distribution
+        printf("=== PLAYERBOT DEBUG: Getting race/class distribution ===\n");
+        fflush(stdout);
         auto [race, classId] = sBotCharacterDistribution->GetRandomRaceClassByDistribution();
         if (race == RACE_NONE || classId == CLASS_NONE)
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to get valid race/class for bot character creation");
+            printf("=== PLAYERBOT DEBUG: Failed to get valid race/class for bot character creation ===\n");
+            fflush(stdout);
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Selected race {} and class {} for bot character", race, classId);
+        printf("=== PLAYERBOT DEBUG: Got race=%u, class=%u ===\n", race, classId);
+        fflush(stdout);
 
         // Get gender (simplified - random between male/female)
         uint8 gender = urand(0, 1) ? GENDER_MALE : GENDER_FEMALE;
@@ -1059,13 +975,17 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
 
         // Get a unique name with the proper GUID
+        printf("=== PLAYERBOT DEBUG: Allocating name for gender=%u, guid=%llu ===\n", gender, characterGuid.GetCounter());
+        fflush(stdout);
         std::string name = sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
         if (name.empty())
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to allocate name for bot character creation");
+            printf("=== PLAYERBOT DEBUG: Failed to allocate name for bot character creation ===\n");
+            fflush(stdout);
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Allocated name '{}' for bot character", name);
+        printf("=== PLAYERBOT DEBUG: Allocated name: %s ===\n", name.c_str());
+        fflush(stdout);
 
         // Create character info structure
         auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
@@ -1087,41 +1007,55 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         if (!classEntry || !raceEntry)
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Invalid race ({}) or class ({}) for bot character creation", race, classId);
+            printf("=== PLAYERBOT DEBUG: Invalid race (%u) or class (%u) for bot character creation ===\n", race, classId);
+            fflush(stdout);
             sBotNameMgr->ReleaseName(name);
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Race/class validation succeeded");
+        printf("=== PLAYERBOT DEBUG: Race/class validation succeeded ===\n");
+        fflush(stdout);
 
         // Create a bot session for character creation - Player needs valid session for account association
+        printf("=== PLAYERBOT DEBUG: About to create bot session for account %u ===\n", accountId);
+        fflush(stdout);
         BotSession* botSession = sBotSessionMgr->CreateSession(accountId);
         if (!botSession)
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create bot session for character creation (Account: {})", accountId);
+            printf("=== PLAYERBOT DEBUG: Failed to create bot session for character creation (Account: %u) ===\n", accountId);
+            fflush(stdout);
             sBotNameMgr->ReleaseName(name);
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Bot session created successfully for account {}", accountId);
+        printf("=== PLAYERBOT DEBUG: Bot session created successfully ===\n");
+        fflush(stdout);
 
+        printf("=== PLAYERBOT DEBUG: About to create Player object ===\n");
+        fflush(stdout);
         // Use smart pointer with proper RAII cleanup to prevent memory leaks
         std::unique_ptr<Player> newChar = std::make_unique<Player>(botSession);
 
+        printf("=== PLAYERBOT DEBUG: About to initialize MotionMaster ===\n");
+        fflush(stdout);
         newChar->GetMotionMaster()->Initialize();
 
-        TC_LOG_TRACE("module.playerbot.spawner", "Creating Player object with GUID {}", guidLow);
+        printf("=== PLAYERBOT DEBUG: About to call Player::Create() with guidLow=%u ===\n", guidLow);
+        fflush(stdout);
         if (!newChar->Create(guidLow, createInfo.get()))
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to create Player object for bot character (Race: {}, Class: {})", race, classId);
+            printf("=== PLAYERBOT DEBUG: Failed to create Player object for bot character (Race: %u, Class: %u) ===\n", race, classId);
+            fflush(stdout);
             sBotNameMgr->ReleaseName(name);
             // Cleanup will be handled automatically by unique_ptr
             return ObjectGuid::Empty;
         }
-        TC_LOG_TRACE("module.playerbot.spawner", "Player::Create() succeeded");
+        printf("=== PLAYERBOT DEBUG: Player::Create() succeeded ===\n");
+        fflush(stdout);
 
         // Account ID is automatically set through the bot session - no manual setting needed
 
         // Set starting level if different from 1
-        TC_LOG_TRACE("module.playerbot.spawner", "Setting character properties (level: {})", startLevel);
+        printf("=== PLAYERBOT DEBUG: Setting character properties (level=%u) ===\n", startLevel);
+        fflush(stdout);
         if (startLevel > 1)
         {
             newChar->SetLevel(startLevel);
@@ -1131,15 +1065,20 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
 
         // Save to database
-        TC_LOG_TRACE("module.playerbot.spawner", "Saving character to database");
+        printf("=== PLAYERBOT DEBUG: About to save character to database ===\n");
+        fflush(stdout);
         CharacterDatabaseTransaction characterTransaction = CharacterDatabase.BeginTransaction();
         LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();
 
+        printf("=== PLAYERBOT DEBUG: About to call SaveToDB() ===\n");
+        fflush(stdout);
         newChar->SaveToDB(loginTransaction, characterTransaction, true);
-        TC_LOG_TRACE("module.playerbot.spawner", "SaveToDB() completed");
+        printf("=== PLAYERBOT DEBUG: SaveToDB() completed ===\n");
+        fflush(stdout);
 
         // Update character count for account
-        TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
+        printf("=== PLAYERBOT DEBUG: About to update character count for account %u ===\n", accountId);
+        fflush(stdout);
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_REP_REALM_CHARACTERS);
         stmt->setUInt32(0, 1); // Increment by 1
         stmt->setUInt32(1, accountId);
@@ -1147,16 +1086,19 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         loginTransaction->Append(stmt);
 
         // Commit transactions with proper error handling
-        TC_LOG_TRACE("module.playerbot.spawner", "Committing database transactions");
+        printf("=== PLAYERBOT DEBUG: About to commit database transactions ===\n");
+        fflush(stdout);
         try
         {
             CharacterDatabase.CommitTransaction(characterTransaction);
             LoginDatabase.CommitTransaction(loginTransaction);
-            TC_LOG_TRACE("module.playerbot.spawner", "Database transactions committed successfully");
+            printf("=== PLAYERBOT DEBUG: Database transactions committed successfully ===\n");
+            fflush(stdout);
         }
         catch (std::exception const& e)
         {
-            TC_LOG_ERROR("module.playerbot.spawner", "Failed to commit transactions: {}", e.what());
+            printf("=== PLAYERBOT DEBUG: Failed to commit transactions: %s ===\n", e.what());
+            fflush(stdout);
             sBotNameMgr->ReleaseName(name);
             return ObjectGuid::Empty;
         }
@@ -1165,14 +1107,16 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         newChar->CleanupsBeforeDelete();
         newChar.reset(); // Explicit cleanup
 
-        TC_LOG_INFO("module.playerbot.spawner", "Successfully created bot character: {} ({}) - Race: {}, Class: {}, Level: {} for account {}",
-            name, characterGuid.ToString(), uint32(race), uint32(classId), uint32(startLevel), accountId);
+        printf("=== PLAYERBOT DEBUG: Successfully created bot character: %s (%s) - Race: %u, Class: %u, Level: %u for account %u ===\n",
+            name.c_str(), characterGuid.ToString().c_str(), uint32(race), uint32(classId), uint32(startLevel), accountId);
+        fflush(stdout);
 
         return characterGuid;
     }
     catch (std::exception const& e)
     {
-        TC_LOG_ERROR("module.playerbot.spawner", "Exception during bot character creation for account {}: {}", accountId, e.what());
+        printf("=== PLAYERBOT DEBUG: Exception during bot character creation for account %u: %s ===\n", accountId, e.what());
+        fflush(stdout);
         return ObjectGuid::Empty;
     }
 }

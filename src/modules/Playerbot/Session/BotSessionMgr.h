@@ -7,6 +7,7 @@
 
 #include "Define.h"
 #include "BotSession.h"
+#include "ObjectGuid.h"
 #include <unordered_map>
 #include <memory>
 #include <vector>
@@ -34,6 +35,8 @@ public:
 
     // Session management
     BotSession* CreateSession(uint32 bnetAccountId);
+    BotSession* CreateSession(uint32 bnetAccountId, ObjectGuid characterGuid);
+    BotSession* CreateAsyncSession(uint32 bnetAccountId, ObjectGuid characterGuid);
     void ReleaseSession(uint32 bnetAccountId);
     BotSession* GetSession(uint32 bnetAccountId) const;
 

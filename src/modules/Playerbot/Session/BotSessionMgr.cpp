@@ -5,6 +5,7 @@
 #include "BotSessionMgr.h"
 #include "BotSession.h"
 #include "Log.h"
+#include "ObjectGuid.h"
 #include <algorithm>
 
 namespace Playerbot {
@@ -97,6 +98,65 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
     }
 }
 
+BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId, ObjectGuid characterGuid)
+{
+    printf("=== PLAYERBOT DEBUG: BotSessionMgr::CreateSession() with character GUID for account %u, character %s ===\n",
+           bnetAccountId, characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    // Create session first
+    BotSession* session = CreateSession(bnetAccountId);
+    if (!session)
+    {
+        printf("=== PLAYERBOT DEBUG: Failed to create session for account %u ===\n", bnetAccountId);
+        fflush(stdout);
+        return nullptr;
+    }
+
+    // Now login the character immediately
+    printf("=== PLAYERBOT DEBUG: Calling LoginCharacter(%s) on session ===\n", characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    if (!session->LoginCharacter(characterGuid))
+    {
+        printf("=== PLAYERBOT DEBUG: LoginCharacter FAILED for character %s ===\n", characterGuid.ToString().c_str());
+        fflush(stdout);
+        // Clean up the session if login failed
+        ReleaseSession(bnetAccountId);
+        return nullptr;
+    }
+
+    printf("=== PLAYERBOT DEBUG: LoginCharacter SUCCESS for character %s ===\n", characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    return session;
+}
+
+BotSession* BotSessionMgr::CreateAsyncSession(uint32 bnetAccountId, ObjectGuid characterGuid)
+{
+    printf("=== PLAYERBOT DEBUG: BotSessionMgr::CreateAsyncSession() for account %u, character %s (ASYNC SCALABILITY) ===\n",
+           bnetAccountId, characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    // Create session first
+    BotSession* session = CreateSession(bnetAccountId);
+    if (!session)
+    {
+        printf("=== PLAYERBOT DEBUG: Failed to create session for account %u ===\n", bnetAccountId);
+        fflush(stdout);
+        return nullptr;
+    }
+
+    // Start async character login for 5000 bot scalability
+    printf("=== PLAYERBOT DEBUG: Starting async login for character %s (scalable for 5000 bots) ===\n", characterGuid.ToString().c_str());
+    fflush(stdout);
+
+    session->StartAsyncLogin(characterGuid);
+
+    // Return session immediately - login will complete asynchronously
+    return session;
+}
+
 void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 {
     std::lock_guard<std::mutex> lock(_sessionsMutex);
@@ -135,8 +195,9 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
 
     // Simple sequential update - no complex threading
     for (BotSession* session : _activeSessions) {
-        if (session && session->IsActive()) {
+        if (session) {
             // Session update would go here - for now just skip
+            // Note: Removed IsActive() check to avoid access issues
         }
     }
 }
