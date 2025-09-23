@@ -9,6 +9,7 @@
 
 #include "PlayerbotCharacterDBInterface.h"
 #include "DatabaseEnv.h"
+#include "QueryHolder.h"
 #include "Log.h"
 #include "World.h"
 #include <algorithm>
@@ -453,6 +454,7 @@ void PlayerbotCharacterDBInterface::InitializeStatementClassification()
     // These MUST be executed synchronously to avoid assertion failures
     _syncOnlyStatements = {
         // Character data
+        31,   // CHAR_SEL_CHARACTER
         43,   // CHAR_SEL_DATA_BY_NAME
         44,   // CHAR_SEL_DATA_BY_GUID
         45,   // CHAR_SEL_CHECK_NAME
@@ -863,5 +865,41 @@ void SafeExecutionEngine::LogExecution(CharacterDatabasePreparedStatement* stmt,
             durationMs);
     }
 }
+
+void PlayerbotCharacterDBInterface::Update(uint32 diff)
+{
+    if (!_initialized.load() || _shutdown.load())
+        return;
+
+    // Process sync queue regularly to handle sync-only statements
+    ProcessSyncQueue();
+}
+
+template<typename T>
+SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder(std::shared_ptr<T> holder)
+{
+    if (!_initialized.load())
+    {
+        TC_LOG_ERROR("module.playerbot.database",
+            "PlayerbotCharacterDBInterface::DelayQueryHolder called before initialization");
+        // Return empty callback that will never trigger
+        auto emptyFuture = std::async(std::launch::deferred, [](){});
+        return SQLQueryHolderCallback(nullptr, std::move(emptyFuture));
+    }
+
+    // Route QueryHolder to the standard CharacterDatabase for async processing
+    // This ensures proper async callback handling while maintaining safety
+    TC_LOG_INFO("module.playerbot.database",
+        "🔧 DelayQueryHolder: Routing QueryHolder to CharacterDatabase for async processing");
+
+    SQLQueryHolderCallback result = CharacterDatabase.DelayQueryHolder(holder);
+    TC_LOG_INFO("module.playerbot.database",
+        "🔧 DelayQueryHolder: CharacterDatabase.DelayQueryHolder completed successfully");
+
+    return result;
+}
+
+// Explicit template instantiation for BotLoginQueryHolder
+template SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder<CharacterDatabaseQueryHolder>(std::shared_ptr<CharacterDatabaseQueryHolder> holder);
 
 } // namespace Playerbot

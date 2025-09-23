@@ -239,8 +239,8 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateFromTemplate(std::string co
 
 std::shared_ptr<BotSession> BotSessionFactory::CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid)
 {
-    // Create the BotSession instance
-    auto session = std::make_shared<BotSession>(accountId);
+    // Create the BotSession instance using factory method
+    auto session = BotSession::Create(accountId);
 
     // Basic session initialization would go here
     // This is a simplified implementation - in reality would need:

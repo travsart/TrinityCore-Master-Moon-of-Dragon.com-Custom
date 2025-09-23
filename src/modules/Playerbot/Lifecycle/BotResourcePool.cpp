@@ -104,8 +104,8 @@ std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId
 {
     try
     {
-        // Create new BotSession with proper account ID
-        auto session = std::make_shared<BotSession>(accountId);
+        // Create new BotSession with proper account ID using factory method
+        auto session = BotSession::Create(accountId);
         _stats.sessionsCreated.fetch_add(1);
 
         TC_LOG_TRACE("module.playerbot.pool",

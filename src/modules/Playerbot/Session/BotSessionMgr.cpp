@@ -4,6 +4,7 @@
 
 #include "BotSessionMgr.h"
 #include "BotSession.h"
+#include "WorldSession.h"
 #include "Log.h"
 #include "ObjectGuid.h"
 #include <algorithm>
@@ -70,6 +71,8 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
 
         return sessionPtr;
     } catch (std::exception const& e) {
+        TC_LOG_ERROR("module.playerbot.session",
+            "Exception during session creation for account {}: {}", bnetAccountId, e.what());
         return nullptr;
     }
 }
@@ -149,13 +152,83 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         return;
     }
 
+    // DEBUG: Periodic update confirmation
+    static uint32 updateCounter = 0;
+    if (++updateCounter % 10000 == 0) {  // Every 10000 updates
+        TC_LOG_INFO("module.playerbot.session", "🔄 BotSessionMgr::UpdateAllSessions called {} times, {} sessions active",
+            updateCounter, _activeSessions.size());
+    }
+
     std::lock_guard<std::mutex> lock(_sessionsMutex);
 
-    // Simple sequential update - no complex threading
-    for (BotSession* session : _activeSessions) {
-        if (session) {
-            // Session update would go here - for now just skip
-            // Note: Removed IsActive() check to avoid access issues
+    // DEBUG: Log session update activity
+    if (!_activeSessions.empty()) {
+        TC_LOG_INFO("module.playerbot.session", "🔄 UpdateAllSessions: Processing {} active sessions", _activeSessions.size());
+    }
+
+    // Simple sequential update with async login state awareness
+    for (auto it = _activeSessions.begin(); it != _activeSessions.end();) {
+        BotSession* session = *it;
+
+        // Comprehensive null pointer checks
+        if (!session) {
+            TC_LOG_ERROR("module.playerbot.session", "Found null session in _activeSessions, removing");
+            it = _activeSessions.erase(it);
+            continue;
+        }
+
+        // Additional safety: verify session is still valid
+        try {
+            if (!session->IsActive()) {
+                TC_LOG_INFO("module.playerbot.session", "🔍 Session not active, skipping update");
+                ++it;
+                continue;
+            }
+
+            // Allow sessions in async login to be updated so callbacks can execute
+            if (session->IsAsyncLoginInProgress()) {
+                TC_LOG_INFO("module.playerbot.session", "🔍 Session in async login - updating to process callbacks");
+
+                try {
+                    TC_LOG_INFO("module.playerbot.session", "🔍 Creating WorldSessionFilter for async session");
+                    WorldSessionFilter asyncUpdater(session);
+                    TC_LOG_INFO("module.playerbot.session", "🔍 WorldSessionFilter created, calling session->Update()");
+                    session->Update(diff, asyncUpdater);
+                    TC_LOG_INFO("module.playerbot.session", "🔍 Session Update completed successfully");
+                } catch (std::exception const& e) {
+                    TC_LOG_ERROR("module.playerbot.session", "🔍 Exception in async session update: {}", e.what());
+                }
+
+                ++it;
+                continue;
+            }
+
+            // Ensure session has valid player before creating WorldSessionFilter
+            // WorldSessionFilter expects fully initialized session state
+            if (!session->GetPlayer()) {
+                TC_LOG_INFO("module.playerbot.session", "🔍 Session has no player yet, skipping update");
+                ++it;
+                continue;
+            }
+
+            // CRITICAL: Call Update to process async callbacks and AI
+            // Create WorldSessionFilter only for fully initialized sessions
+            WorldSessionFilter updater(session);
+            TC_LOG_INFO("module.playerbot.session", "🔄 Calling session->Update() for session with player");
+            session->Update(diff, updater);
+            ++it;
+        }
+        catch (std::exception const& e) {
+            TC_LOG_ERROR("module.playerbot.session",
+                "Exception during BotSession update for session {}: {}",
+                session ? "valid" : "null", e.what());
+            ++it;
+        }
+        catch (...) {
+            TC_LOG_ERROR("module.playerbot.session",
+                "Unknown exception during BotSession update for session {}",
+                session ? "valid" : "null");
+            ++it;
         }
     }
 }

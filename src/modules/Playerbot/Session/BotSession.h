@@ -6,13 +6,21 @@
 #define BOT_SESSION_H
 
 #include "WorldSession.h"
+#include "WorldSocket.h"
 #include "Define.h"
 #include "DatabaseEnv.h"
+#include "QueryHolder.h"
+#include "Socket.h"
 #include <atomic>
 #include <memory>
 #include <queue>
 #include <mutex>
 #include <chrono>
+
+// Forward declaration for bot socket stub
+namespace Playerbot {
+    class BotSocketStub;
+}
 
 // Forward declarations
 namespace Playerbot {
@@ -20,6 +28,23 @@ class BotAI;
 }
 
 namespace Playerbot {
+
+// BotLoginQueryHolder - simplified LoginQueryHolder for bot sessions following TrinityCore patterns
+class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
+{
+private:
+    uint32 m_accountId;
+    ObjectGuid m_guid;
+public:
+    BotLoginQueryHolder(uint32 accountId, ObjectGuid guid)
+        : m_accountId(accountId), m_guid(guid) { }
+    ObjectGuid GetGuid() const { return m_guid; }
+    uint32 GetAccountId() const { return m_accountId; }
+    bool Initialize();
+};
+
+// Forward declaration - implement in BotSession.cpp
+class BotSocket;
 
 /**
  * Simplified BotSession to eliminate TBB deadlock issues
@@ -34,6 +59,10 @@ class TC_GAME_API BotSession final : public WorldSession
 {
 public:
     explicit BotSession(uint32 bnetAccountId);
+
+    // Factory method to create BotSession with dummy socket
+    static std::shared_ptr<BotSession> Create(uint32 bnetAccountId);
+
     virtual ~BotSession();
 
     // === WorldSession Overrides ===
@@ -41,9 +70,17 @@ public:
     void QueuePacket(WorldPacket* packet);
     bool Update(uint32 diff, PacketFilter& updater);
 
+    // Override socket-related methods to handle socketless sessions
+    bool PlayerDisconnected() const;  // Always return false for bots
+
     // Query methods for Trinity compatibility
     bool IsConnectionIdle() const { return false; }
     uint32 GetLatency() const { return _simulatedLatency; }
+
+    // Socket safety overrides for bot sessions
+    bool HasSocket() const { return false; }
+    bool IsSocketOpen() const { return false; }
+    void CloseSocket() { /* No socket to close */ }
 
     // === Bot-Specific Methods ===
     void ProcessBotPackets();
@@ -53,7 +90,18 @@ public:
 
     // Async login system for 5000 bot scalability
     void StartAsyncLogin(ObjectGuid characterGuid);
+    void HandlePlayerLogin(BotLoginQueryHolder const& holder);
     void CompleteAsyncLogin(Player* player, ObjectGuid characterGuid);
+
+    // Bot identification
+    bool IsBot() const { return true; }
+    bool IsActive() const { return _active.load(); }
+
+    // Async login state checking for race condition prevention
+    bool IsAsyncLoginInProgress() const {
+        std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_asyncLogin.mutex));
+        return _asyncLogin.inProgress;
+    }
 
 private:
     // Helper methods for safe database access
@@ -73,10 +121,6 @@ private:
     // AI Integration
     void SetAI(BotAI* ai) { _ai = ai; }
     BotAI* GetAI() const { return _ai; }
-
-    // Bot identification
-    bool IsBot() const { return true; }
-    bool IsActive() const { return _active.load(); }
 
     // Account accessors
     uint32 GetBnetAccountId() const { return _bnetAccountId; }

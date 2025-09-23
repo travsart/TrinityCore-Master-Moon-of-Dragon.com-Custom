@@ -184,13 +184,13 @@ void PlayerbotModule::Shutdown()
         TC_LOG_INFO("server.loading", "Shutting down Bot Account Manager...");
         sBotAccountMgr->Shutdown();
 
-        // Shutdown Character Database Interface
-        TC_LOG_INFO("server.loading", "Shutting down Character Database Interface...");
-        sPlayerbotCharDB->Shutdown();
-
-        // Shutdown Playerbot Database
+        // Shutdown Playerbot Database first to stop all operations
         TC_LOG_INFO("server.loading", "Shutting down Playerbot Database...");
         ShutdownDatabase();
+
+        // Then shutdown Character Database Interface after operations complete
+        TC_LOG_INFO("server.loading", "Shutting down Character Database Interface...");
+        sPlayerbotCharDB->Shutdown();
     }
 
     // Mark as shutdown
@@ -238,6 +238,12 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
 
     // Update BotSpawner for automatic character creation and management
     Playerbot::sBotSpawner->Update(diff);
+
+    // Update BotSessionMgr for active bot session processing
+    sBotSessionMgr->UpdateAllSessions(diff);
+
+    // Update PlayerbotCharacterDBInterface to process sync queue
+    sPlayerbotCharDB->Update(diff);
 
 }
 

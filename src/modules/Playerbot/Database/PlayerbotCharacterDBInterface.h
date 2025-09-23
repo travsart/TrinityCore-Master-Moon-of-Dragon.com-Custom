@@ -14,6 +14,7 @@
 #include "DatabaseEnvFwd.h"
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
+#include "QueryHolder.h"
 #include <atomic>
 #include <unordered_set>
 #include <unordered_map>
@@ -45,6 +46,7 @@ namespace Playerbot
         // Initialization and shutdown
         bool Initialize();
         void Shutdown();
+        void Update(uint32 diff);
 
         // === Primary Interface Methods ===
 
@@ -64,6 +66,15 @@ namespace Playerbot
         void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
                          std::function<void(PreparedQueryResult)> callback = nullptr,
                          uint32 timeoutMs = 10000);
+
+        /**
+         * Execute QueryHolder asynchronously (for bot login systems)
+         * Routes to appropriate database connection based on context
+         * @param holder The query holder to execute
+         * @return Callback handle for async processing
+         */
+        template<typename T>
+        SQLQueryHolderCallback DelayQueryHolder(std::shared_ptr<T> holder);
 
         /**
          * Execute synchronous query with safety checks

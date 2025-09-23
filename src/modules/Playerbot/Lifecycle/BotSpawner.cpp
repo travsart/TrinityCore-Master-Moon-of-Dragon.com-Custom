@@ -354,19 +354,19 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 
 bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
-    TC_LOG_TRACE("module.playerbot.spawner", "Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
+    TC_LOG_INFO("module.playerbot.spawner", "🎮 Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
 
     // Use the BotSessionMgr to create a new bot session with ASYNC character login (prevents MySQL assertions)
     BotSession* session = sBotSessionMgr->CreateAsyncSession(accountId, characterGuid);
     if (!session)
     {
         TC_LOG_ERROR("module.playerbot.spawner",
-            "Failed to create async bot session for account {}", accountId);
+            "🎮 Failed to create async bot session for account {}", accountId);
         return false;
     }
 
     TC_LOG_INFO("module.playerbot.spawner",
-        "Successfully created bot session and started async login for character {} for account {}",
+        "🎮 Successfully created bot session and started async login for character {} for account {}",
         characterGuid.ToString(), accountId);
 
     return true;
@@ -612,6 +612,9 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
 
     auto queryCallback = [this, accountId, request, callback](PreparedQueryResult result) mutable
     {
+        TC_LOG_INFO("module.playerbot.spawner", "🔧 GetAvailableCharactersAsync callback for account {}, result: {}",
+            accountId, result ? "has data" : "null");
+
         std::vector<ObjectGuid> availableCharacters;
 
         try
@@ -619,12 +622,18 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
             if (result)
             {
                 availableCharacters.reserve(result->GetRowCount());
+                TC_LOG_INFO("module.playerbot.spawner", "🔧 Found {} characters for account {}", result->GetRowCount(), accountId);
                 do
                 {
                     Field* fields = result->Fetch();
                     ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64());
                     availableCharacters.push_back(characterGuid);
+                    TC_LOG_INFO("module.playerbot.spawner", "🔧 Character found: {}", characterGuid.ToString());
                 } while (result->NextRow());
+            }
+            else
+            {
+                TC_LOG_INFO("module.playerbot.spawner", "🔧 No characters found for account {}", accountId);
             }
         }
         catch (std::exception const& e)
@@ -677,13 +686,16 @@ void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, siz
     {
         if (!characters.empty())
         {
-            TC_LOG_TRACE("module.playerbot.spawner", "Found {} existing characters for account {}", characters.size(), accounts[index]);
+            TC_LOG_INFO("module.playerbot.spawner", "🎯 Found {} existing characters for account {}", characters.size(), accounts[index]);
             // Pick a random character from available ones
             uint32 charIndex = urand(0, characters.size() - 1);
-            callback(characters[charIndex]);
+            ObjectGuid selectedGuid = characters[charIndex];
+            TC_LOG_INFO("module.playerbot.spawner", "🎯 Selected character {} for spawning", selectedGuid.ToString());
+            callback(selectedGuid);
         }
         else
         {
+            TC_LOG_INFO("module.playerbot.spawner", "🎯 No characters found for account {}, trying next account", accounts[index]);
             // Try next account
             SelectCharacterAsyncRecursive(std::move(accounts), index + 1, request, callback);
         }
@@ -692,6 +704,8 @@ void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, siz
 
 void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnRequest const& request)
 {
+    TC_LOG_INFO("module.playerbot.spawner", "🚀 ContinueSpawnWithCharacter called for {}", characterGuid.ToString());
+
     // Get the actual account ID from the character
     uint32 actualAccountId = GetAccountIdFromCharacter(characterGuid);
     if (actualAccountId == 0)
@@ -704,7 +718,7 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
         return;
     }
 
-    TC_LOG_TRACE("module.playerbot.spawner", "Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
+    TC_LOG_INFO("module.playerbot.spawner", "🚀 Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
 
     // Create bot session
     if (!CreateBotSession(actualAccountId, characterGuid))
