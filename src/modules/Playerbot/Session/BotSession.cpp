@@ -429,47 +429,30 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     try {
         TC_LOG_DEBUG("module.playerbot.session", "BotSession::Update processing callbacks and AI for account {}", GetAccountId());
 
-        // CRITICAL FIX: Call parent WorldSession::Update() to process callbacks
-        // The PlayerDisconnected() override should prevent socket-related crashes
-        // but we still need the essential callback processing
+        // SAFE APPROACH: Skip dangerous parent Update, implement our own callback processing
+        // The parent WorldSession::Update() contains socket operations that cause ACCESS_VIOLATION
+        // Instead, we'll process essential functionality manually
 
-        // First, try calling the parent Update with protective overrides in place
-        try {
-            // Our overrides (PlayerDisconnected() = false, IsConnectionIdle() = false)
-            // should protect against socket ACCESS_VIOLATION crashes
-            bool parentResult = WorldSession::Update(diff, updater);
+        // Process bot-specific packets
+        ProcessBotPackets();
 
+        // CRITICAL: Process async login callbacks if needed
+        // This is the key functionality we need for async login completion
+        if (IsAsyncLoginInProgress()) {
             TC_LOG_DEBUG("module.playerbot.session",
-                "Parent WorldSession::Update completed successfully for account {}", GetAccountId());
+                "Bot session {} has async login in progress, attempting callback processing", GetAccountId());
 
-            // If parent update succeeded, we have processed callbacks!
-            // Now add our bot-specific processing
-            ProcessBotPackets();
-
-            // Update AI if available and player is valid
-            Player* player = GetPlayer();
-            if (_ai && player && player->IsInWorld()) {
-                _ai->Update(diff);
-            }
-
-            return parentResult;
+            // Call our safe callback processing method
+            ProcessBotQueryCallbacks();
         }
-        catch (std::exception const& e) {
-            // If parent Update still fails, fall back to safe mode
-            TC_LOG_WARN("module.playerbot.session",
-                "Parent WorldSession::Update failed for account {}, falling back to safe mode: {}",
-                GetAccountId(), e.what());
 
-            // Fallback: Process only bot-specific logic without callbacks
-            ProcessBotPackets();
-
-            Player* player = GetPlayer();
-            if (_ai && player && player->IsInWorld()) {
-                _ai->Update(diff);
-            }
-
-            return true; // Still return success for bot operation
+        // Update AI if available and player is valid
+        Player* player = GetPlayer();
+        if (_ai && player && player->IsInWorld()) {
+            _ai->Update(diff);
         }
+
+        return true; // Bot sessions always return success
     }
     catch (std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.session",
@@ -852,42 +835,28 @@ void BotSession::CompleteAsyncLogin(Player* player, ObjectGuid characterGuid)
 
 void BotSession::ProcessBotQueryCallbacks()
 {
-    // SAFE CALLBACK PROCESSING: Use TrinityCore's standard pattern
-    // We cannot access private WorldSession members directly, so we use a safe wrapper approach
+    // SAFE CALLBACK PROCESSING: Use TrinityCore's public QueryProcessor interface
+    // We can access the QueryProcessor through the public GetQueryProcessor() method
 
     try {
-        // SOLUTION: Use the parent class WorldSession through a safe wrapper pattern
-        // This technique allows us to call the private ProcessQueryCallbacks() method
-        // by creating a temporary access structure that respects C++ access rules
+        TC_LOG_DEBUG("module.playerbot.session",
+            "ProcessBotQueryCallbacks: Processing async callbacks for account {}", GetAccountId());
 
-        // Create a minimal struct that can access WorldSession internals safely
-        struct WorldSessionCallbackAccessor {
-            static void ProcessCallbacks(WorldSession* session) {
-                // Use the fact that we're in the same translation unit and have inherited access
-                // Call through the parent's protected/public interface
+        // BREAKTHROUGH: Use the public GetQueryProcessor() method to access callbacks
+        // This is the safe way to process async login callbacks without calling dangerous Update()
+        auto& queryProcessor = GetQueryProcessor();
+        queryProcessor.ProcessReadyCallbacks();
 
-                // ALTERNATIVE APPROACH: Since we can't access private members directly,
-                // we'll trigger callback processing through the session update cycle
-                // which will eventually call ProcessQueryCallbacks() in the parent Update
+        // Process async login callbacks which are essential for completing bot login
+        // The DelayQueryHolder() method routes callbacks to the main QueryProcessor
+        // so calling ProcessReadyCallbacks() should execute our async login callbacks
 
-                // For now, we'll document that this is where callback processing should happen
-                // The actual fix requires either:
-                // 1. Adding BotSession as friend to WorldSession (requires core modification)
-                // 2. Making ProcessQueryCallbacks protected (requires core modification)
-                // 3. Using the safe parent Update call (which we're already doing)
-
-                TC_LOG_DEBUG("module.playerbot.session",
-                    "BotSession callback processing deferred to parent WorldSession::Update cycle");
-            }
-        };
-
-        // For now, we document this as a placeholder for callback processing
-        WorldSessionCallbackAccessor::ProcessCallbacks(this);
-
-        TC_LOG_DEBUG("module.playerbot.session", "ProcessBotQueryCallbacks completed for account {}", GetAccountId());
+        TC_LOG_DEBUG("module.playerbot.session",
+            "ProcessBotQueryCallbacks: Callback processing completed for account {}", GetAccountId());
     }
     catch (std::exception const& e) {
-        TC_LOG_ERROR("module.playerbot.session", "Exception in ProcessBotQueryCallbacks for account {}: {}", GetAccountId(), e.what());
+        TC_LOG_ERROR("module.playerbot.session",
+            "Exception in ProcessBotQueryCallbacks for account {}: {}", GetAccountId(), e.what());
     }
 }
 

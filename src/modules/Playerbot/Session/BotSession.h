@@ -74,7 +74,7 @@ public:
     bool PlayerDisconnected() const;  // Always return false for bots
 
     // Query methods for Trinity compatibility
-    bool IsConnectionIdle() const override { return false; }
+    bool IsConnectionIdle() const { return false; }
     uint32 GetLatency() const { return _simulatedLatency; }
 
     // Socket safety overrides for bot sessions
