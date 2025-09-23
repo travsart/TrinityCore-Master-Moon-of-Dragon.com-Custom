@@ -781,16 +781,16 @@ void BotSession::CompleteAsyncLogin(Player* player, ObjectGuid characterGuid)
         TC_LOG_INFO("module.playerbot.session", "🎯 Sending initial packets after map...");
         player->SendInitialPacketsAfterAddToMap();
 
-        // Set character as online in database
+        // Set character as online in database (TrinityCore pattern)
         TC_LOG_INFO("module.playerbot.session", "🎯 Setting character as online in database...");
-        CharacterDatabasePreparedStatement* onlineStmt = GetSafePreparedStatement(CHAR_UPD_CHAR_ONLINE, "CHAR_UPD_CHAR_ONLINE");
-        if (!onlineStmt) {
-            TC_LOG_ERROR("module.playerbot.session", "🎯 Failed to get CHAR_UPD_CHAR_ONLINE statement");
-            return;
-        }
-        onlineStmt->setUInt32(0, 1);
-        onlineStmt->setUInt64(1, characterGuid.GetCounter());
-        sPlayerbotCharDB->ExecuteAsync(onlineStmt);
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ONLINE);
+        stmt->setUInt64(0, characterGuid.GetCounter());
+        CharacterDatabase.Execute(stmt);
+
+        // Set account as online in login database (TrinityCore pattern)
+        LoginDatabasePreparedStatement* loginStmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_ACCOUNT_ONLINE);
+        loginStmt->setUInt32(0, GetAccountId());
+        LoginDatabase.Execute(loginStmt);
 
         // Create and assign BotAI for character control
         TC_LOG_INFO("module.playerbot.session", "🎯 Creating BotAI...");

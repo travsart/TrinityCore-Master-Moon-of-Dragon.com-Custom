@@ -20,6 +20,7 @@
 #include "Lifecycle/BotSpawner.h"
 // #include "Lifecycle/BotLifecycleMgr.h"
 #include "Session/BotSessionMgr.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Log.h"
@@ -123,6 +124,13 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
+    // Initialize Bot World Session Manager (native TrinityCore login)
+    if (!sBotWorldSessionMgr->Initialize())
+    {
+        _lastError = "Failed to initialize Bot World Session Manager";
+        return false;
+    }
+
     // Initialize Bot Spawner
     if (!Playerbot::sBotSpawner->Initialize())
     {
@@ -176,6 +184,10 @@ void PlayerbotModule::Shutdown()
         //         TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
         //         BotLifecycleMgr::instance()->Shutdown();
         // 
+        // Shutdown Bot World Session Manager
+        TC_LOG_INFO("server.loading", "Shutting down Bot World Session Manager...");
+        sBotWorldSessionMgr->Shutdown();
+
         // Shutdown Bot Name Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
         sBotNameMgr->Shutdown();
@@ -251,8 +263,11 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     // Update BotSpawner for automatic character creation and management
     Playerbot::sBotSpawner->Update(diff);
 
-    // Update BotSessionMgr for active bot session processing
+    // Update BotSessionMgr for active bot session processing (legacy)
     sBotSessionMgr->UpdateAllSessions(diff);
+
+    // Update BotWorldSessionMgr for native TrinityCore login sessions
+    sBotWorldSessionMgr->UpdateSessions(diff);
 
     // Update PlayerbotCharacterDBInterface to process sync queue
     sPlayerbotCharDB->Update(diff);
@@ -358,8 +373,11 @@ void PlayerbotModule::TriggerBotCharacterLogins()
 
     TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
 
-    // Call the BotSessionMgr method to trigger logins
+    // Call the BotSessionMgr method to trigger logins (legacy approach)
     sBotSessionMgr->TriggerCharacterLoginForAllSessions();
+
+    // Call the BotWorldSessionMgr method to trigger native logins
+    sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
 
     TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Complete");
 }

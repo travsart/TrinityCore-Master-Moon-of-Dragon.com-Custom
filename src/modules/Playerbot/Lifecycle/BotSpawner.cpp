@@ -12,6 +12,7 @@
 
 #include "BotSpawner.h"
 #include "BotSessionMgr.h"
+#include "BotWorldSessionMgr.h"
 #include "BotResourcePool.h"
 #include "BotAccountMgr.h"
 #include "PlayerbotConfig.h"
@@ -356,13 +357,21 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
     TC_LOG_INFO("module.playerbot.spawner", "🎮 Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
 
-    // Use the BotSessionMgr to create a new bot session with ASYNC character login (prevents MySQL assertions)
+    // Use the BotSessionMgr to create a new bot session with ASYNC character login (legacy approach)
     BotSession* session = sBotSessionMgr->CreateAsyncSession(accountId, characterGuid);
     if (!session)
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "🎮 Failed to create async bot session for account {}", accountId);
         return false;
+    }
+
+    // ALSO use the new native TrinityCore login approach (mod-playerbots pattern)
+    if (!sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
+    {
+        TC_LOG_ERROR("module.playerbot.spawner",
+            "🎮 Failed to create native WorldSession for character {}", characterGuid.ToString());
+        // Continue with legacy approach - don't fail completely
     }
 
     TC_LOG_INFO("module.playerbot.spawner",
