@@ -74,7 +74,7 @@ public:
     bool PlayerDisconnected() const;  // Always return false for bots
 
     // Query methods for Trinity compatibility
-    bool IsConnectionIdle() const { return false; }
+    bool IsConnectionIdle() const override { return false; }
     uint32 GetLatency() const { return _simulatedLatency; }
 
     // Socket safety overrides for bot sessions
@@ -84,6 +84,9 @@ public:
 
     // === Bot-Specific Methods ===
     void ProcessBotPackets();
+
+    // Safe callback processing for async login
+    void ProcessBotQueryCallbacks();
 
     // Character Login System
     bool LoginCharacter(ObjectGuid characterGuid);
