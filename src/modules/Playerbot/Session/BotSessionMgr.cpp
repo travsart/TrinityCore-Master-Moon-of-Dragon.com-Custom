@@ -7,6 +7,8 @@
 #include "WorldSession.h"
 #include "Log.h"
 #include "ObjectGuid.h"
+#include "Player.h"
+#include "DatabaseEnv.h"
 #include <algorithm>
 
 namespace Playerbot {
@@ -237,6 +239,68 @@ uint32 BotSessionMgr::GetActiveSessionCount() const
 {
     std::lock_guard<std::mutex> lock(_sessionsMutex);
     return static_cast<uint32>(_activeSessions.size());
+}
+
+void BotSessionMgr::TriggerCharacterLoginForAllSessions()
+{
+    TC_LOG_INFO("module.playerbot.session", "🚀 TriggerCharacterLoginForAllSessions: Starting character login for sessions without players");
+
+    std::lock_guard<std::mutex> lock(_sessionsMutex);
+
+    uint32 sessionsFound = 0;
+    uint32 loginsTriggered = 0;
+
+    // Iterate through all active sessions
+    for (BotSession* session : _activeSessions)
+    {
+        if (!session) {
+            continue;
+        }
+
+        sessionsFound++;
+
+        // Check if session has no player (needs character login)
+        if (!session->GetPlayer())
+        {
+            TC_LOG_INFO("module.playerbot.session",
+                "🔑 Session for account {} has no player - looking up character for login",
+                session->GetAccountId());
+
+            // Query database to find a character for this account
+            CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID);
+            stmt->setUInt32(0, session->GetAccountId());
+            PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+            if (!result || result->GetRowCount() == 0)
+            {
+                TC_LOG_WARN("module.playerbot.session",
+                    "🔑 No characters found for account {}", session->GetAccountId());
+                continue;
+            }
+
+            // Get the first character
+            Field* fields = result->Fetch();
+            ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64()); // guid
+
+            TC_LOG_INFO("module.playerbot.session",
+                "🔑 Triggering StartAsyncLogin for account {} with character {}",
+                session->GetAccountId(), characterGuid.ToString());
+
+            // Trigger async login for this character
+            session->StartAsyncLogin(characterGuid);
+            loginsTriggered++;
+        }
+        else
+        {
+            TC_LOG_INFO("module.playerbot.session",
+                "✅ Session for account {} already has player {}",
+                session->GetAccountId(), session->GetPlayer()->GetName().c_str());
+        }
+    }
+
+    TC_LOG_INFO("module.playerbot.session",
+        "🚀 TriggerCharacterLoginForAllSessions: Complete - {} sessions found, {} logins triggered",
+        sessionsFound, loginsTriggered);
 }
 
 } // namespace Playerbot

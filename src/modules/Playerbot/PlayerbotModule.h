@@ -88,6 +88,15 @@ public:
     static std::string GetBuildInfo();
 
     /**
+     * @brief Trigger character login for all bot sessions without players
+     *
+     * Manually initiates StartAsyncLogin for existing bot sessions that have
+     * no associated Player objects. This is useful for completing login for
+     * sessions that were created but never properly logged in.
+     */
+    static void TriggerBotCharacterLogins();
+
+    /**
      * @brief Update all bot systems
      * @param diff Time difference since last update in milliseconds
      *

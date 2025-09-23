@@ -48,6 +48,9 @@ public:
     void SetEnabled(bool enabled) { _enabled.store(enabled); }
     uint32 GetActiveSessionCount() const;
 
+    // Character login management
+    void TriggerCharacterLoginForAllSessions();
+
 private:
     BotSessionMgr() = default;
     ~BotSessionMgr() = default;

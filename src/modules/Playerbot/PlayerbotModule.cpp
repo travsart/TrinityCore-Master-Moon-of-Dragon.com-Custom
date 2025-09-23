@@ -233,6 +233,18 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     if (!_enabled || !_initialized)
         return;
 
+    // One-time trigger to complete login for existing sessions
+    static bool loginTriggered = false;
+    static uint32 totalTime = 0;
+    totalTime += diff;
+
+    if (!loginTriggered && totalTime > 5000) // Wait 5 seconds after startup
+    {
+        TC_LOG_INFO("module.playerbot", "🔄 OnWorldUpdate: Auto-triggering character logins for existing sessions");
+        TriggerBotCharacterLogins();
+        loginTriggered = true;
+    }
+
     // Update BotAccountMgr for thread-safe callback processing
     sBotAccountMgr->Update(diff);
 
@@ -334,6 +346,22 @@ bool PlayerbotModule::InitializeDatabase()
     }
 
     return true;
+}
+
+void PlayerbotModule::TriggerBotCharacterLogins()
+{
+    if (!_enabled || !_initialized)
+    {
+        TC_LOG_WARN("module.playerbot", "TriggerBotCharacterLogins: Module not enabled or initialized");
+        return;
+    }
+
+    TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
+
+    // Call the BotSessionMgr method to trigger logins
+    sBotSessionMgr->TriggerCharacterLoginForAllSessions();
+
+    TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Complete");
 }
 
 void PlayerbotModule::ShutdownDatabase()
