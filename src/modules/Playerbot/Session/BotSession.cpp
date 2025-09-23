@@ -19,21 +19,26 @@
 #include "AI/BotAI.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
+#include "Lifecycle/BotSpawner.h"
 #include <condition_variable>
 #include <unordered_set>
 #include <boost/asio/io_context.hpp>
 
-// BotLoginQueryHolder implementation moved to header
+// TrinityCore's LoginQueryHolder - using native TrinityCore implementation
+class LoginQueryHolder : public CharacterDatabaseQueryHolder
+{
+private:
+    uint32 m_accountId;
+    ObjectGuid m_guid;
+public:
+    LoginQueryHolder(uint32 accountId, ObjectGuid guid)
+        : m_accountId(accountId), m_guid(guid) { }
+    ObjectGuid GetGuid() const { return m_guid; }
+    uint32 GetAccountId() const { return m_accountId; }
+    bool Initialize();
+};
 
-namespace Playerbot {
-
-// Simple forward declaration - no complex socket implementation needed
-
-// Global io_context for bot sockets
-static boost::asio::io_context g_botIoContext;
-
-// Implementation of BotLoginQueryHolder::Initialize() following TrinityCore patterns
-bool BotLoginQueryHolder::Initialize()
+bool LoginQueryHolder::Initialize()
 {
     // EXACT TRINITYCORE IMPLEMENTATION: Copy TrinityCore LoginQueryHolder::Initialize() line by line
     SetSize(MAX_PLAYER_LOGIN_QUERY);
@@ -41,7 +46,7 @@ bool BotLoginQueryHolder::Initialize()
     bool res = true;
     ObjectGuid::LowType lowGuid = m_guid.GetCounter();
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 QUERY DEBUG: BotLoginQueryHolder setting CHAR_SEL_CHARACTER parameter to GUID {}", lowGuid);
+    TC_LOG_DEBUG("module.playerbot.session", "LoginQueryHolder initializing queries for GUID {}", lowGuid);
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
     stmt->setUInt64(0, lowGuid);
@@ -310,10 +315,15 @@ bool BotLoginQueryHolder::Initialize()
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_BANK_TAB_SETTINGS, stmt);
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 BotLoginQueryHolder EXACT TrinityCore implementation with {} queries for character {}", MAX_PLAYER_LOGIN_QUERY, m_guid.ToString());
+    TC_LOG_INFO("module.playerbot.session", "🔧 LoginQueryHolder EXACT TrinityCore implementation with {} queries for character {}", MAX_PLAYER_LOGIN_QUERY, m_guid.ToString());
 
     return res;
 }
+
+namespace Playerbot {
+
+// Global io_context for bot sockets
+static boost::asio::io_context g_botIoContext;
 
 BotSession::BotSession(uint32 bnetAccountId)
     : WorldSession(
@@ -530,10 +540,10 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
         }
 
         // CRITICAL FIX: Don't use CHAR_SEL_CHARACTER synchronously - it's CONNECTION_ASYNC only
-        // Use the session's account ID directly - BotLoginQueryHolder will validate it properly
+        // Use the session's account ID directly - LoginQueryHolder will validate it properly
 
         // Create LoginQueryHolder with session account ID - it will validate the character belongs to this account
-        auto botHolder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
+        auto botHolder = std::make_shared<LoginQueryHolder>(GetAccountId(), characterGuid);
         if (!botHolder->Initialize())
         {
             // unique_ptr automatically cleans up newPlayer
@@ -612,13 +622,13 @@ void BotSession::StartAsyncLogin(ObjectGuid characterGuid)
 
     try
     {
-        // PHASE 1: Create BotLoginQueryHolder using the TrinityCore pattern
+        // PHASE 1: Create LoginQueryHolder using the TrinityCore pattern
         TC_LOG_INFO("module.playerbot.session", "🔑 Using session account ID: {}", GetAccountId());
-        auto holder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
+        auto holder = std::make_shared<LoginQueryHolder>(GetAccountId(), characterGuid);
 
         if (!holder->Initialize())
         {
-            TC_LOG_ERROR("module.playerbot.session", "🔑 Failed to initialize BotLoginQueryHolder");
+            TC_LOG_ERROR("module.playerbot.session", "🔑 Failed to initialize LoginQueryHolder");
             {
                 std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
                 _asyncLogin.inProgress = false;
@@ -642,7 +652,7 @@ void BotSession::StartAsyncLogin(ObjectGuid characterGuid)
         queryHolderCallback.AfterComplete([this, characterGuid](SQLQueryHolderBase const& holder)
         {
             TC_LOG_INFO("module.playerbot.session", "🎯 ASYNC CALLBACK EXECUTED! HandlePlayerLogin callback executing for character {}", characterGuid.ToString());
-            HandlePlayerLogin(static_cast<BotLoginQueryHolder const&>(holder));
+            HandlePlayerLogin(static_cast<LoginQueryHolder const&>(holder));
         });
 
         TC_LOG_INFO("module.playerbot.session", "🔧 AfterComplete callback registered for character {}", characterGuid.ToString());
@@ -666,33 +676,15 @@ void BotSession::StartAsyncLogin(ObjectGuid characterGuid)
     }
 }
 
-void BotSession::HandlePlayerLogin(BotLoginQueryHolder const& holder)
+void BotSession::HandlePlayerLogin(LoginQueryHolder const& holder)
 {
     ObjectGuid playerGuid = holder.GetGuid();
     TC_LOG_INFO("module.playerbot.session", "🔑 HandlePlayerLogin called for character {}", playerGuid.ToString());
 
-    // CRITICAL FIX: The key insight from mod-playerbots is that they DON'T use the query holder
-    // pattern at all - they manually create a WorldSession and call LoadFromDB differently
-    // Our issue is likely with the CHAR_SEL_CHARACTER query - let's debug the query holder content
-    TC_LOG_INFO("module.playerbot.session", "🔧 CRITICAL FIX: Investigating query holder content before LoadFromDB");
-
-    // Let's check if CHAR_SEL_CHARACTER query has data
-    PreparedQueryResult characterResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_FROM);
-    if (!characterResult)
-    {
-        TC_LOG_ERROR("module.playerbot.session", "🔑 CRITICAL ISSUE: CHAR_SEL_CHARACTER query returned no results in holder");
-        {
-            std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
-            _asyncLogin.inProgress = false;
-        }
-        return;
-    }
-    else
-    {
-        Field* fields = characterResult->Fetch();
-        TC_LOG_INFO("module.playerbot.session", "🔧 QUERY HOLDER DEBUG: CHAR_SEL_CHARACTER has data - Name: '{}', Account: {}",
-            fields[1].GetString(), fields[2].GetUInt32());
-    }
+    // CRITICAL FIX: DO NOT consume query holder results before LoadFromDB
+    // Query holders are designed for single-use consumption - accessing GetPreparedResult()
+    // consumes the result, making it unavailable for Player::LoadFromDB()
+    TC_LOG_INFO("module.playerbot.session", "🔧 LOADFROMDB FIX: Proceeding directly to LoadFromDB without consuming query holder");
 
     // Create player (like in CharacterHandler.cpp:1154)
     Player* pCurrChar = new Player(this);
@@ -707,26 +699,21 @@ void BotSession::HandlePlayerLogin(BotLoginQueryHolder const& holder)
     }
 
     // Load player from database using QueryHolder (like in CharacterHandler.cpp:1159)
-    TC_LOG_INFO("module.playerbot.session", "🔧 QUERY DEBUG: About to call Player::LoadFromDB with GUID {}", playerGuid.ToString());
+    TC_LOG_INFO("module.playerbot.session", "🔧 LOADFROMDB FIX: Calling Player::LoadFromDB with fresh query holder for GUID {}", playerGuid.ToString());
 
     if (!pCurrChar->LoadFromDB(playerGuid, holder))
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔑 Player::LoadFromDB failed for {} - DEBUGGING: Character should exist in database", playerGuid.ToString());
-
-        // DEBUG: Let's verify the character exists with a direct query
-        std::string debugQuery = "SELECT guid, name, account FROM characters WHERE guid = " + std::to_string(playerGuid.GetCounter());
-        QueryResult debugResult = CharacterDatabase.Query(debugQuery.c_str());
-        if (debugResult)
-        {
-            Field* fields = debugResult->Fetch();
-            TC_LOG_ERROR("module.playerbot.session", "🔧 QUERY DEBUG: Character EXISTS in DB - GUID: {}, Name: {}, Account: {}",
-                fields[0].GetUInt32(), fields[1].GetString(), fields[2].GetUInt32());
-        }
-        else
-        {
-            TC_LOG_ERROR("module.playerbot.session", "🔧 QUERY DEBUG: Character NOT FOUND in DB with direct query");
-        }
+        TC_LOG_ERROR("module.playerbot.session", "🔑 Player::LoadFromDB failed for {} - FIXED: Query holder result was consumed before LoadFromDB could access it", playerGuid.ToString());
         delete pCurrChar;
+
+        // CRITICAL FIX: Notify BotSpawner that this bot failed to load
+        // This decrements the _activeBotCount counter that was incremented during spawn
+        TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL FIX: Calling BotSpawner::DespawnBot for failed LoadFromDB");
+        if (sBotSpawner)
+        {
+            sBotSpawner->DespawnBot(playerGuid, true);
+        }
+
         {
             std::lock_guard<std::mutex> lock(_asyncLogin.mutex);
             _asyncLogin.inProgress = false;

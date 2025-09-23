@@ -29,19 +29,8 @@ class BotAI;
 
 namespace Playerbot {
 
-// BotLoginQueryHolder - simplified LoginQueryHolder for bot sessions following TrinityCore patterns
-class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
-{
-private:
-    uint32 m_accountId;
-    ObjectGuid m_guid;
-public:
-    BotLoginQueryHolder(uint32 accountId, ObjectGuid guid)
-        : m_accountId(accountId), m_guid(guid) { }
-    ObjectGuid GetGuid() const { return m_guid; }
-    uint32 GetAccountId() const { return m_accountId; }
-    bool Initialize();
-};
+// Forward declaration for TrinityCore's LoginQueryHolder
+class LoginQueryHolder;
 
 // Forward declaration - implement in BotSession.cpp
 class BotSocket;
@@ -93,7 +82,7 @@ public:
 
     // Async login system for 5000 bot scalability
     void StartAsyncLogin(ObjectGuid characterGuid);
-    void HandlePlayerLogin(BotLoginQueryHolder const& holder);
+    void HandlePlayerLogin(LoginQueryHolder const& holder);
     void CompleteAsyncLogin(Player* player, ObjectGuid characterGuid);
 
     // Bot identification
