@@ -55,10 +55,13 @@ namespace Trinity
 
     void ModuleUpdateManager::Update(uint32 diff)
     {
+
         std::lock_guard<std::mutex> lock(_modulesMutex);
+
 
         for (auto& [moduleName, info] : _registeredModules)
         {
+
             try
             {
                 auto startTime = std::chrono::high_resolution_clock::now();

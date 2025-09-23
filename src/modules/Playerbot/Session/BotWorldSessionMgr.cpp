@@ -3,35 +3,16 @@
  */
 
 #include "BotWorldSessionMgr.h"
-#include "WorldSession.h"
+#include "BotSession.h"
 #include "Player.h"
 #include "World.h"
 #include "DatabaseEnv.h"
 #include "CharacterCache.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
-#include "ScriptMgr.h"
+#include "WorldSession.h"
 
 namespace Playerbot {
-
-/**
- * Custom LoginQueryHolder for bot sessions (mod-playerbots pattern)
- */
-class BotLoginQueryHolder : public LoginQueryHolder
-{
-private:
-    uint32 _masterAccountId;
-    BotWorldSessionMgr* _sessionMgr;
-
-public:
-    BotLoginQueryHolder(BotWorldSessionMgr* sessionMgr, uint32 masterAccountId, uint32 accountId, ObjectGuid guid)
-        : LoginQueryHolder(accountId, guid), _masterAccountId(masterAccountId), _sessionMgr(sessionMgr)
-    {
-    }
-
-    uint32 GetMasterAccountId() const { return _masterAccountId; }
-    BotWorldSessionMgr* GetSessionMgr() const { return _sessionMgr; }
-};
 
 bool BotWorldSessionMgr::Initialize()
 {
@@ -106,85 +87,42 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 Adding bot {} using native TrinityCore login pattern", playerGuid.ToString());
+    TC_LOG_INFO("module.playerbot.session", "🔧 Adding bot {} using proven BotSession approach", playerGuid.ToString());
 
-    // Create LoginQueryHolder (mod-playerbots pattern)
-    std::shared_ptr<BotLoginQueryHolder> holder =
-        std::make_shared<BotLoginQueryHolder>(this, masterAccountId, accountId, playerGuid);
-
-    if (!holder->Initialize())
+    // CRITICAL FIX: Synchronize character cache with playerbot_characters database before login
+    if (!SynchronizeCharacterCache(playerGuid))
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to initialize LoginQueryHolder for {}", playerGuid.ToString());
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to synchronize character cache for {}", playerGuid.ToString());
         return false;
     }
 
     // Mark as loading
     _botsLoading.insert(playerGuid);
 
-    // Use TrinityCore's native async query pattern (exactly like mod-playerbots)
-    sWorld->AddQueryHolderCallback(CharacterDatabase.DelayQueryHolder(holder))
-        .AfterComplete([this, masterAccountId](SQLQueryHolderBase const& holder)
-        {
-            HandlePlayerBotLoginCallback(holder, masterAccountId);
-        });
-
-    TC_LOG_INFO("module.playerbot.session", "🔧 Bot login query scheduled for {}", playerGuid.ToString());
-    return true;
-}
-
-void BotWorldSessionMgr::HandlePlayerBotLoginCallback(SQLQueryHolderBase const& holder, uint32 masterAccountId)
-{
-    const BotLoginQueryHolder& botHolder = static_cast<const BotLoginQueryHolder&>(holder);
-    ObjectGuid playerGuid = botHolder.GetGuid();
-    uint32 botAccountId = botHolder.GetAccountId();
-
-    TC_LOG_INFO("module.playerbot.session", "🔧 Processing bot login callback for {}", playerGuid.ToString());
-
-    // Create real WorldSession (mod-playerbots pattern - no custom subclass!)
-    WorldSession* botSession = new WorldSession(botAccountId, "", 0x0, nullptr, SEC_PLAYER,
-        EXPANSION_DRAGONFLIGHT, time_t(0), sWorld->GetDefaultDbcLocale(), 0, false, false, 0, true);
-
+    // Use the proven BotSession that we know works
+    std::shared_ptr<BotSession> botSession = BotSession::Create(accountId);
     if (!botSession)
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to create WorldSession for bot {}", playerGuid.ToString());
-
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to create BotSession for {}", playerGuid.ToString());
         _botsLoading.erase(playerGuid);
-        return;
+        return false;
     }
 
-    // Use TrinityCore's native login method (THE KEY DIFFERENCE!)
-    TC_LOG_INFO("module.playerbot.session", "🔧 Calling HandlePlayerLoginFromDB for {}", playerGuid.ToString());
-    botSession->HandlePlayerLoginFromDB(static_cast<LoginQueryHolder const&>(botHolder));
+    // Store the session (cast to WorldSession* for compatibility)
+    _botSessions[playerGuid] = botSession.get();
 
-    Player* bot = botSession->GetPlayer();
-    if (!bot)
+    // Use the existing BotSession login character mechanism
+    if (!botSession->LoginCharacter(playerGuid))
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to load player from database for {}", playerGuid.ToString());
-        botSession->LogoutPlayer(true);
-        delete botSession;
-
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to login character {}", playerGuid.ToString());
+        _botSessions.erase(playerGuid);
         _botsLoading.erase(playerGuid);
-        return;
+        return false;
     }
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login successful: {} ({})",
-        bot->GetName(), playerGuid.ToString());
-
-    // Store session in our manager
-    {
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
-        _botSessions[playerGuid] = botSession;
-        _botsLoading.erase(playerGuid);
-    }
-
-    // At this point, TrinityCore has already:
-    // 1. Called AddPlayerToMap()
-    // 2. Set online=1 in database
-    // 3. Added to ObjectAccessor
-    // 4. Sent all required packets
-    // Everything should work automatically!
+    _botsLoading.erase(playerGuid);
+    TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login successful using proven BotSession: {}", playerGuid.ToString());
+    return true;
 }
 
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
@@ -227,7 +165,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     std::lock_guard<std::mutex> lock(_sessionsMutex);
 
-    // Update all bot sessions (like mod-playerbots)
+    // Update all bot sessions using their natural Update method
     for (auto it = _botSessions.begin(); it != _botSessions.end();)
     {
         WorldSession* session = it->second;
@@ -239,16 +177,30 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             if (session)
             {
                 session->LogoutPlayer(true);
-                delete session;
+                // Don't delete - BotSession manages its own lifetime via shared_ptr
             }
             it = _botSessions.erase(it);
             continue;
         }
 
-        // Process packets for this bot session
+        // BotSession handles its own update mechanism
         if (session)
         {
-            session->Update(diff, PacketFilter());
+            // Cast back to BotSession to use its update method with PacketFilter
+            BotSession* botSession = static_cast<BotSession*>(session);
+
+            // Create a proper PacketFilter for the bot session
+            class BotPacketFilter : public PacketFilter
+            {
+            public:
+                explicit BotPacketFilter(WorldSession* session) : PacketFilter(session) {}
+                virtual ~BotPacketFilter() override = default;
+
+                bool Process(WorldPacket* /*packet*/) override { return true; }
+                bool ProcessUnsafe() const override { return true; }
+            } filter(session);
+
+            botSession->Update(diff, filter);
         }
 
         ++it;
@@ -270,6 +222,50 @@ void BotWorldSessionMgr::TriggerCharacterLoginForAllSessions()
     // The native login approach doesn't need this trigger mechanism
     // But we can use it to spawn new bots if needed
     TC_LOG_INFO("module.playerbot.session", "🔧 Using native login - no manual triggering needed");
+}
+
+bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
+{
+    TC_LOG_DEBUG("module.playerbot.session", "🔧 Synchronizing character cache for {}", playerGuid.ToString());
+
+    // CRITICAL FIX: Use synchronous query instead of CHAR_SEL_CHARACTER (which is CONNECTION_ASYNC only)
+    // Create a simple synchronous query for just name and account
+    std::string query = "SELECT guid, name, account FROM characters WHERE guid = " + std::to_string(playerGuid.GetCounter());
+    QueryResult result = CharacterDatabase.Query(query.c_str());
+
+    if (!result)
+    {
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Character {} not found in characters table", playerGuid.ToString());
+        return false;
+    }
+
+    Field* fields = result->Fetch();
+    std::string dbName = fields[1].GetString();
+    uint32 dbAccountId = fields[2].GetUInt32();
+
+    // Get current cache data
+    std::string cacheName = "<unknown>";
+    uint32 cacheAccountId = sCharacterCache->GetCharacterAccountIdByGuid(playerGuid);
+    sCharacterCache->GetCharacterNameByGuid(playerGuid, cacheName);
+
+    TC_LOG_INFO("module.playerbot.session", "🔧 Cache sync: DB({}, {}) vs Cache({}, {}) for {}",
+                dbName, dbAccountId, cacheName, cacheAccountId, playerGuid.ToString());
+
+    // Update cache if different
+    if (dbName != cacheName)
+    {
+        TC_LOG_INFO("module.playerbot.session", "🔧 Updating character name cache: '{}' -> '{}'", cacheName, dbName);
+        sCharacterCache->UpdateCharacterData(playerGuid, dbName);
+    }
+
+    if (dbAccountId != cacheAccountId)
+    {
+        TC_LOG_INFO("module.playerbot.session", "🔧 Updating character account cache: {} -> {}", cacheAccountId, dbAccountId);
+        sCharacterCache->UpdateCharacterAccountId(playerGuid, dbAccountId);
+    }
+
+    TC_LOG_DEBUG("module.playerbot.session", "🔧 Character cache synchronized for {}", playerGuid.ToString());
+    return true;
 }
 
 } // namespace Playerbot

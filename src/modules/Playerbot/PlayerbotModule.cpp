@@ -33,6 +33,7 @@ std::string PlayerbotModule::_lastError = "";
 
 bool PlayerbotModule::Initialize()
 {
+    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: PlayerbotModule::Initialize() CALLED ===");
     TC_LOG_INFO("server.loading", "Initializing Playerbot Module...");
 
     // Load configuration first
@@ -125,7 +126,7 @@ bool PlayerbotModule::Initialize()
     }
 
     // Initialize Bot World Session Manager (native TrinityCore login)
-    if (!sBotWorldSessionMgr->Initialize())
+    if (!Playerbot::sBotWorldSessionMgr->Initialize())
     {
         _lastError = "Failed to initialize Bot World Session Manager";
         return false;
@@ -151,11 +152,14 @@ bool PlayerbotModule::Initialize()
     RegisterHooks();
 
     // Register with the shared ModuleUpdateManager for world updates
+    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: About to register with ModuleUpdateManager ===");
     if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
     {
         _lastError = "Failed to register with ModuleUpdateManager";
+        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: ModuleUpdateManager registration FAILED ===");
         return false;
     }
+    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: ModuleUpdateManager registration SUCCESS ===");
 
     _initialized = true;
     _enabled = true;
@@ -186,7 +190,7 @@ void PlayerbotModule::Shutdown()
         // 
         // Shutdown Bot World Session Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot World Session Manager...");
-        sBotWorldSessionMgr->Shutdown();
+        Playerbot::sBotWorldSessionMgr->Shutdown();
 
         // Shutdown Bot Name Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot Name Manager...");
@@ -241,9 +245,16 @@ void PlayerbotModule::UnregisterHooks()
 
 void PlayerbotModule::OnWorldUpdate(uint32 diff)
 {
+    static bool firstCall = true;
+    if (firstCall) {
+        TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: OnWorldUpdate FIRST CALL - diff={} ===", diff);
+        firstCall = false;
+    }
 
-    if (!_enabled || !_initialized)
+    if (!_enabled || !_initialized) {
+        TC_LOG_DEBUG("server.loading", "=== CLAUDE DEBUG: OnWorldUpdate skipped - enabled={} initialized={} ===", _enabled, _initialized);
         return;
+    }
 
     // One-time trigger to complete login for existing sessions
     static bool loginTriggered = false;
@@ -267,7 +278,7 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     sBotSessionMgr->UpdateAllSessions(diff);
 
     // Update BotWorldSessionMgr for native TrinityCore login sessions
-    sBotWorldSessionMgr->UpdateSessions(diff);
+    Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
 
     // Update PlayerbotCharacterDBInterface to process sync queue
     sPlayerbotCharDB->Update(diff);
@@ -377,7 +388,7 @@ void PlayerbotModule::TriggerBotCharacterLogins()
     sBotSessionMgr->TriggerCharacterLoginForAllSessions();
 
     // Call the BotWorldSessionMgr method to trigger native logins
-    sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
+    Playerbot::sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
 
     TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Complete");
 }

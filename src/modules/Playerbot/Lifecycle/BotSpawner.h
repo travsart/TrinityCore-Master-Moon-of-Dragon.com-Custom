@@ -196,7 +196,7 @@ private:
     std::atomic<bool> _enabled{true};
 
     static constexpr uint32 POPULATION_UPDATE_INTERVAL = 10000; // 10 seconds
-    static constexpr uint32 TARGET_CALCULATION_INTERVAL = 60000; // 1 minute
+    static constexpr uint32 TARGET_CALCULATION_INTERVAL = 5000; // 5 seconds for testing
 };
 
 #define sBotSpawner BotSpawner::instance()

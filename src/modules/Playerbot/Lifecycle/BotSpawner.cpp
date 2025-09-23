@@ -115,24 +115,40 @@ void BotSpawner::Shutdown()
 
 void BotSpawner::Update(uint32 /*diff*/)
 {
-    // Removed debug pollution for production readiness
     if (!_enabled.load())
-    {
-        TC_LOG_DEBUG("module.playerbot.spawner", "BotSpawner::Update - Not enabled, returning");
         return;
-    }
 
     static uint32 updateCounter = 0;
     ++updateCounter;
+    uint32 currentTime = getMSTime();
 
-    if (updateCounter % 10000 == 0) // Log every 10k updates
+    // DEBUG: Log update counter and timing every 1000 updates to diagnose timer issue
+    if (updateCounter % 1000 == 0) // Log every 1k updates for debugging
     {
+        printf("=== CRITICAL DEBUG: ENTERED 1000 update logging condition ===\n");
+        fflush(stdout);
+        uint32 timeSinceLastSpawn = currentTime - _lastTargetCalculation;
         TC_LOG_INFO("module.playerbot.spawner",
-            "BotSpawner::Update #{} - enabled: {}, active bots: {}, can spawn more: {}",
-            updateCounter, _enabled.load(), GetActiveBotCount(), CanSpawnMore());
+            "=== BotSpawner::Update #{} - enabled: {}, active bots: {}, can spawn more: {}, time since last spawn: {}ms, TARGET_INTERVAL: {}ms ===",
+            updateCounter, _enabled.load(), GetActiveBotCount(), CanSpawnMore(), timeSinceLastSpawn, TARGET_CALCULATION_INTERVAL);
     }
 
-    uint32 currentTime = getMSTime();
+    // Force a spawn cycle every 1000 updates for testing
+    if (updateCounter % 1000 == 0)
+    {
+        TC_LOG_INFO("module.playerbot.spawner", "=== FORCED SPAWN CYCLE TEST #{} ===", updateCounter);
+        if (_config.enableDynamicSpawning)
+        {
+            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
+            CalculateZoneTargets();
+            SpawnToPopulationTarget();
+            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Completed spawn cycle");
+        }
+        else
+        {
+            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Dynamic spawning disabled, enableDynamicSpawning = {}", _config.enableDynamicSpawning);
+        }
+    }
 
     // Process spawn queue (mutex-protected)
     bool queueHasItems = false;
@@ -366,8 +382,8 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
         return false;
     }
 
-    // ALSO use the new native TrinityCore login approach (mod-playerbots pattern)
-    if (!sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
+    // ALSO use the new native TrinityCore login approach (TrinityCore pattern)
+    if (!Playerbot::sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "🎮 Failed to create native WorldSession for character {}", characterGuid.ToString());

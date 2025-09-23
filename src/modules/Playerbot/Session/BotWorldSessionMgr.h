@@ -8,6 +8,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "QueryHolder.h"
+#include "DatabaseEnvFwd.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
@@ -16,6 +17,7 @@
 
 class WorldSession;
 class Player;
+class SQLQueryHolderBase;
 
 namespace Playerbot {
 
@@ -59,8 +61,11 @@ private:
     BotWorldSessionMgr(const BotWorldSessionMgr&) = delete;
     BotWorldSessionMgr& operator=(const BotWorldSessionMgr&) = delete;
 
-    // Native login callback (mod-playerbots pattern)
-    void HandlePlayerBotLoginCallback(SQLQueryHolderBase const& holder, uint32 masterAccountId);
+    // Native login callback (TrinityCore pattern)
+    void HandlePlayerBotLoginCallback(SQLQueryHolderBase const& holder, uint32 masterAccountId, ObjectGuid playerGuid);
+
+    // Character cache synchronization
+    bool SynchronizeCharacterCache(ObjectGuid playerGuid);
 
     // Session management
     std::unordered_map<ObjectGuid, WorldSession*> _botSessions;

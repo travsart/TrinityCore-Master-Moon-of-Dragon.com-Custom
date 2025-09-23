@@ -154,19 +154,9 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         return;
     }
 
-    // DEBUG: Periodic update confirmation
-    static uint32 updateCounter = 0;
-    if (++updateCounter % 10000 == 0) {  // Every 10000 updates
-        TC_LOG_INFO("module.playerbot.session", "🔄 BotSessionMgr::UpdateAllSessions called {} times, {} sessions active",
-            updateCounter, _activeSessions.size());
-    }
 
     std::lock_guard<std::mutex> lock(_sessionsMutex);
 
-    // DEBUG: Log session update activity
-    if (!_activeSessions.empty()) {
-        TC_LOG_INFO("module.playerbot.session", "🔄 UpdateAllSessions: Processing {} active sessions", _activeSessions.size());
-    }
 
     // Simple sequential update with async login state awareness
     for (auto it = _activeSessions.begin(); it != _activeSessions.end();) {
@@ -182,21 +172,16 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         // Additional safety: verify session is still valid
         try {
             if (!session->IsActive()) {
-                TC_LOG_INFO("module.playerbot.session", "🔍 Session not active, skipping update");
                 ++it;
                 continue;
             }
 
             // Allow sessions in async login to be updated so callbacks can execute
             if (session->IsAsyncLoginInProgress()) {
-                TC_LOG_INFO("module.playerbot.session", "🔍 Session in async login - updating to process callbacks");
 
                 try {
-                    TC_LOG_INFO("module.playerbot.session", "🔍 Creating WorldSessionFilter for async session");
                     WorldSessionFilter asyncUpdater(session);
-                    TC_LOG_INFO("module.playerbot.session", "🔍 WorldSessionFilter created, calling session->Update()");
                     session->Update(diff, asyncUpdater);
-                    TC_LOG_INFO("module.playerbot.session", "🔍 Session Update completed successfully");
                 } catch (std::exception const& e) {
                     TC_LOG_ERROR("module.playerbot.session", "🔍 Exception in async session update: {}", e.what());
                 }
@@ -208,7 +193,6 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
             // Ensure session has valid player before creating WorldSessionFilter
             // WorldSessionFilter expects fully initialized session state
             if (!session->GetPlayer()) {
-                TC_LOG_INFO("module.playerbot.session", "🔍 Session has no player yet, skipping update");
                 ++it;
                 continue;
             }
