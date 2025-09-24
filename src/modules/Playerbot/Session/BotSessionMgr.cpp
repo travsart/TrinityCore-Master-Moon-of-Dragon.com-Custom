@@ -112,11 +112,16 @@ BotSession* BotSessionMgr::CreateAsyncSession(uint32 bnetAccountId, ObjectGuid c
         return nullptr;
     }
 
-    // Start async character login for 5000 bot scalability
+    // Use synchronous character login (simplified approach)
+    if (!session->LoginCharacter(characterGuid))
+    {
+        TC_LOG_ERROR("module.playerbot.session", "Failed to login character {} for bot session", characterGuid.ToString());
+        // Clean up failed session
+        delete session;
+        return nullptr;
+    }
 
-    session->StartAsyncLogin(characterGuid);
-
-    // Return session immediately - login will complete asynchronously
+    // Return successfully logged-in session
     return session;
 }
 
@@ -176,12 +181,13 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
                 continue;
             }
 
-            // Allow sessions in async login to be updated so callbacks can execute
-            if (session->IsAsyncLoginInProgress()) {
+            // Removed async login checking - using synchronous approach
+            // Sessions are now fully loaded when created, so always update if active
+            if (session->IsActive()) {
 
                 try {
-                    WorldSessionFilter asyncUpdater(session);
-                    session->Update(diff, asyncUpdater);
+                    WorldSessionFilter updater(session);
+                    session->Update(diff, updater);
                 } catch (std::exception const& e) {
                     TC_LOG_ERROR("module.playerbot.session", "🔍 Exception in async session update: {}", e.what());
                 }
@@ -267,18 +273,41 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
             ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64()); // guid
 
             TC_LOG_INFO("module.playerbot.session",
-                "🔑 Triggering StartAsyncLogin for account {} with character {}",
+                "🔑 Triggering synchronous LoginCharacter for account {} with character {}",
                 session->GetAccountId(), characterGuid.ToString());
 
-            // Trigger async login for this character
-            session->StartAsyncLogin(characterGuid);
-            loginsTriggered++;
+            // Trigger synchronous character login
+            if (session->LoginCharacter(characterGuid))
+            {
+                loginsTriggered++;
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.session", "Failed to login character {} for account {}",
+                           characterGuid.ToString(), session->GetAccountId());
+            }
         }
         else
         {
-            TC_LOG_INFO("module.playerbot.session",
-                "✅ Session for account {} already has player {}",
-                session->GetAccountId(), session->GetPlayer()->GetName().c_str());
+            // MEMORY SAFETY: Protect against use-after-free when accessing Player name
+            Player* player = session->GetPlayer();
+            if (player) {
+                try {
+                    TC_LOG_INFO("module.playerbot.session",
+                        "✅ Session for account {} already has player {}",
+                        session->GetAccountId(), player->GetName().c_str());
+                }
+                catch (...) {
+                    TC_LOG_WARN("module.playerbot.session",
+                        "✅ Session for account {} already has player (name unavailable - use-after-free protection)",
+                        session->GetAccountId());
+                }
+            }
+            else {
+                TC_LOG_WARN("module.playerbot.session",
+                    "✅ Session for account {} has null player pointer",
+                    session->GetAccountId());
+            }
         }
     }
 

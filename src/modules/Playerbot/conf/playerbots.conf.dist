@@ -231,12 +231,64 @@ Playerbot.BotAI.Strategy = "default"
 #        Default:     10
 #        Range:       1-100
 #
+#    Playerbot.Spawn.MaxTotal
+#        Description: Maximum total bots that can be spawned
+#        Default:     500
+#        Range:       1-5000
+#
+#    Playerbot.Spawn.MaxPerZone
+#        Description: Maximum bots per zone
+#        Default:     50
+#        Range:       1-200
+#
+#    Playerbot.Spawn.MaxPerMap
+#        Description: Maximum bots per map
+#        Default:     200
+#        Range:       1-1000
+#
+#    Playerbot.Spawn.BatchSize
+#        Description: Number of bots to spawn at once
+#        Default:     10
+#        Range:       1-50
+#
+#    Playerbot.Spawn.DelayMs
+#        Description: Delay between spawning each bot (milliseconds)
+#        Default:     100
+#        Range:       10-5000
+#
+#    Playerbot.Spawn.Dynamic
+#        Description: Enable dynamic bot spawning based on player population
+#        Default:     1
+#
+#    Playerbot.Spawn.RespectCaps
+#        Description: Respect population caps when spawning
+#        Default:     1
+#
+#    Playerbot.Spawn.BotToPlayerRatio
+#        Description: Ratio of bots to players (e.g., 2.0 = 2 bots per player)
+#        Default:     2.0
+#        Range:       0.0-10.0
+#
+#    Playerbot.MinimumBotsPerZone
+#        Description: Minimum number of bots per zone even with no players
+#        Default:     3
+#        Range:       0-20
+#
 ###################################################################################################
 
 Playerbot.AutoLogin = 0
 Playerbot.LoginDelay = 5
 Playerbot.RandomLogout = 0
 Playerbot.LogoutChance = 10
+Playerbot.Spawn.MaxTotal = 500
+Playerbot.Spawn.MaxPerZone = 50
+Playerbot.Spawn.MaxPerMap = 200
+Playerbot.Spawn.BatchSize = 10
+Playerbot.Spawn.DelayMs = 100
+Playerbot.Spawn.Dynamic = 1
+Playerbot.Spawn.RespectCaps = 1
+Playerbot.Spawn.BotToPlayerRatio = 2.0
+Playerbot.MinimumBotsPerZone = 3
 
 ###################################################################################################
 # PERFORMANCE

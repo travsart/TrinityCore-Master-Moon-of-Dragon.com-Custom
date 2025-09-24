@@ -1,0 +1,803 @@
+/*
+ * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ */
+
+#include "BotSession.h"
+#include "AccountMgr.h"
+#include "Log.h"
+#include "WorldPacket.h"
+#include "Player.h"
+#include "DatabaseEnv.h"
+#include "QueryHolder.h"
+#include "QueryCallback.h"
+#include "CharacterPackets.h"
+#include "CharacterDatabase.h"
+#include "Database/PlayerbotCharacterDBInterface.h"
+#include "World.h"
+#include "Map.h"
+#include "MapManager.h"
+#include "AI/BotAI.h"
+#include "ObjectAccessor.h"
+#include "GameTime.h"
+#include "Lifecycle/BotSpawner.h"
+#include <condition_variable>
+#include <future>
+#include <unordered_set>
+#include <boost/asio/io_context.hpp>
+#include "Chat/Chat.h"
+#include "Database/QueryHolder.h"
+
+namespace Playerbot {
+
+// BotLoginQueryHolder::Initialize implementation
+bool BotSession::BotLoginQueryHolder::Initialize()
+{
+    bool res = true;
+    ObjectGuid::LowType lowGuid = m_guid.GetCounter();
+
+    TC_LOG_DEBUG("module.playerbot.session", "Initializing BotLoginQueryHolder with {} queries for character GUID {}",
+                 MAX_PLAYER_LOGIN_QUERY, lowGuid);
+
+    // Set the size first
+    SetSize(MAX_PLAYER_LOGIN_QUERY);
+
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_FROM, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_CUSTOMIZATIONS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CUSTOMIZATIONS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GROUP_MEMBER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GROUP, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_AURAS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AURAS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_AURA_EFFECTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AURA_EFFECTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_AURA_STORED_LOCATIONS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AURA_STORED_LOCATIONS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SPELL);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SPELLS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SPELL_FAVORITES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SPELL_FAVORITES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_OBJECTIVES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS_OBJECTIVES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_OBJECTIVES_CRITERIA);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS_OBJECTIVES_CRITERIA, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_OBJECTIVES_CRITERIA_PROGRESS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS_OBJECTIVES_CRITERIA_PROGRESS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_OBJECTIVES_SPAWN_TRACKING);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS_OBJECTIVES_SPAWN_TRACKING, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_DAILY);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_DAILY_QUEST_STATUS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_WEEKLY);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_WEEKLY_QUEST_STATUS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_MONTHLY);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MONTHLY_QUEST_STATUS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUS_SEASONAL);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SEASONAL_QUEST_STATUS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_REPUTATION);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_REPUTATION, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_INVENTORY);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_INVENTORY, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ITEM_INSTANCE_ARTIFACT);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ARTIFACTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ITEM_INSTANCE_AZERITE);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AZERITE, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ITEM_INSTANCE_AZERITE_MILESTONE_POWER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AZERITE_MILESTONE_POWERS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ITEM_INSTANCE_AZERITE_UNLOCKED_ESSENCE);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AZERITE_UNLOCKED_ESSENCES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ITEM_INSTANCE_AZERITE_EMPOWERED);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_AZERITE_EMPOWERED, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAILS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS_ARTIFACT);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS_ARTIFACT, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS_AZERITE);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS_AZERITE, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS_AZERITE_MILESTONE_POWER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS_AZERITE_MILESTONE_POWER, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS_AZERITE_UNLOCKED_ESSENCE);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS_AZERITE_UNLOCKED_ESSENCE, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAILITEMS_AZERITE_EMPOWERED);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_MAIL_ITEMS_AZERITE_EMPOWERED, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SOCIALLIST);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SOCIAL_LIST, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_HOMEBIND);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_HOME_BIND, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SPELLCOOLDOWNS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SPELL_COOLDOWNS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SPELL_CHARGES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SPELL_CHARGES, stmt);
+
+    // Handle conditional queries properly
+    if (sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
+    {
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_DECLINEDNAMES);
+        stmt->setUInt64(0, lowGuid);
+        res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_DECLINED_NAMES, stmt);
+    }
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUILD_MEMBER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GUILD, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_ARENAINFO);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ARENA_INFO, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_ACHIEVEMENTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ACHIEVEMENTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_CRITERIAPROGRESS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CRITERIA_PROGRESS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_EQUIPMENTSETS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_EQUIPMENT_SETS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_TRANSMOG_OUTFITS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRANSMOG_OUTFITS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_CUF_PROFILES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CUF_PROFILES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_BGDATA);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_BG_DATA, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GLYPHS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GLYPHS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_TALENTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TALENTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_PVP_TALENTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_PVP_TALENTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PLAYER_ACCOUNT_DATA);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ACCOUNT_DATA, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_SKILLS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_SKILLS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_RANDOMBG);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_RANDOM_BG, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_BANNED);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_BANNED, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_QUESTSTATUSREW);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_QUEST_STATUS_REW, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ACCOUNT_INSTANCELOCKTIMES);
+    stmt->setUInt32(0, m_accountId);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_INSTANCE_LOCK_TIMES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PLAYER_CURRENCY);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CURRENCY, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CORPSE_LOCATION);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CORPSE_LOCATION, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_PETS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_PET_SLOTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GARRISON);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GARRISON, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GARRISON_BLUEPRINTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GARRISON_BLUEPRINTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GARRISON_BUILDINGS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GARRISON_BUILDINGS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GARRISON_FOLLOWERS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GARRISON_FOLLOWERS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_GARRISON_FOLLOWER_ABILITIES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_GARRISON_FOLLOWER_ABILITIES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_TRAIT_ENTRIES);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRAIT_ENTRIES, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_TRAIT_CONFIGS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TRAIT_CONFIGS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PLAYER_DATA_ELEMENTS_CHARACTER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_DATA_ELEMENTS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PLAYER_DATA_FLAGS_CHARACTER);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_DATA_FLAGS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_BANK_TAB_SETTINGS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_BANK_TAB_SETTINGS, stmt);
+
+    TC_LOG_DEBUG("module.playerbot.session", "BotLoginQueryHolder::Initialize() completed with result: {}", res);
+    return res;
+}
+
+// Global io_context for bot sockets
+static boost::asio::io_context g_botIoContext;
+
+BotSession::BotSession(uint32 bnetAccountId)
+    : WorldSession(
+        bnetAccountId,                  // Use battlenet account as account ID for now
+        "",                            // Empty username (generated by Trinity)
+        bnetAccountId,                 // BattleNet account ID
+        nullptr,                       // No socket
+        SEC_PLAYER,                    // Security level
+        EXPANSION_LEVEL_CURRENT,       // Current expansion
+        0,                             // Mute time
+        "",                            // OS
+        Minutes(0),                    // Timezone
+        0,                             // Build
+        ClientBuild::VariantId{},      // Client build variant
+        LOCALE_enUS,                   // Locale
+        0,                             // Recruiter
+        false),                        // Is recruiter
+    _bnetAccountId(bnetAccountId),
+    _simulatedLatency(50)
+{
+    // CRITICAL FIX: Validate account IDs and ensure proper initialization
+    if (bnetAccountId == 0) {
+        TC_LOG_ERROR("module.playerbot.session", "BotSession constructor called with invalid account ID: {}", bnetAccountId);
+        _active.store(false);
+        return;
+    }
+
+    if (GetAccountId() == 0) {
+        TC_LOG_ERROR("module.playerbot.session", "BotSession GetAccountId() returned 0 after construction with ID: {}", bnetAccountId);
+        _active.store(false);
+        return;
+    }
+
+    // Initialize atomic values explicitly
+    _active.store(true);
+    _loginState.store(LoginState::NONE);
+
+    TC_LOG_INFO("module.playerbot.session", "🤖 BotSession constructor complete for account {} (GetAccountId: {})", bnetAccountId, GetAccountId());
+}
+
+// Factory method that creates BotSession with better socket handling
+std::shared_ptr<BotSession> BotSession::Create(uint32 bnetAccountId)
+{
+    TC_LOG_INFO("module.playerbot.session", "🏭 BotSession::Create() factory method called for account {}", bnetAccountId);
+
+    // Create BotSession using regular constructor
+    auto session = std::make_shared<BotSession>(bnetAccountId);
+
+    // TODO: In future, we could create a BotSocket here and use it to initialize the session
+    // For now, we rely on method overrides to handle the null socket case
+
+    return session;
+}
+
+// Override PlayerDisconnected to always return false for bot sessions
+bool BotSession::PlayerDisconnected() const
+{
+    // Bot sessions are never considered disconnected since they don't rely on network sockets
+    return false;
+}
+
+BotSession::~BotSession()
+{
+    // Clean up AI if present
+    if (_ai) {
+        delete _ai;
+        _ai = nullptr;
+    }
+}
+
+CharacterDatabasePreparedStatement* BotSession::GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName)
+{
+    // CRITICAL FIX: Add statement index validation before accessing to prevent assertion failure
+    if (statementId >= MAX_CHARACTERDATABASE_STATEMENTS) {
+        TC_LOG_ERROR("module.playerbot", "BotSession::GetSafePreparedStatement: Invalid statement index {} >= {} for {}",
+                     static_cast<uint32>(statementId), MAX_CHARACTERDATABASE_STATEMENTS, statementName);
+        return nullptr;
+    }
+
+    // Use CharacterDatabase directly for standard TrinityCore character operations
+    TC_LOG_DEBUG("module.playerbot.session",
+        "Getting prepared statement {} ({}) directly from CharacterDatabase",
+        static_cast<uint32>(statementId), statementName);
+
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(statementId);
+    if (!stmt) {
+        TC_LOG_ERROR("module.playerbot", "BotSession::GetSafePreparedStatement: Failed to get prepared statement {} (index: {})",
+                     statementName, static_cast<uint32>(statementId));
+        return nullptr;
+    }
+    return stmt;
+}
+
+void BotSession::SendPacket(WorldPacket const* packet, bool forced)
+{
+    if (!packet) return;
+
+    // Note: forced parameter is not used for bot sessions but required for interface
+    (void)forced;
+
+    // Simple packet handling - just store in outgoing queue
+    std::lock_guard<std::recursive_mutex> lock(_packetMutex);
+
+    // Create a copy of the packet
+    auto packetCopy = std::make_unique<WorldPacket>(*packet);
+    _outgoingPackets.push(std::move(packetCopy));
+}
+
+void BotSession::QueuePacket(WorldPacket* packet)
+{
+    if (!packet) return;
+
+    // Simple packet handling - just store in incoming queue
+    std::lock_guard<std::recursive_mutex> lock(_packetMutex);
+
+    // Create a copy of the packet
+    auto packetCopy = std::make_unique<WorldPacket>(*packet);
+    _incomingPackets.push(std::move(packetCopy));
+}
+
+bool BotSession::Update(uint32 diff, PacketFilter& updater)
+{
+    // CRITICAL FIX: Add comprehensive session validation
+    if (!_active.load()) {
+        return false;
+    }
+
+    // Validate session state before any operations
+    if (GetAccountId() == 0) {
+        TC_LOG_ERROR("module.playerbot.session", "BotSession::Update called with invalid account ID");
+        return false;
+    }
+
+    try {
+        TC_LOG_DEBUG("module.playerbot.session", "BotSession::Update processing callbacks and AI for account {}", GetAccountId());
+
+        // CRITICAL FIX: Process query callbacks WITHOUT calling WorldSession::Update
+        // WorldSession::Update tries to access socket methods which don't exist for bots
+        // Instead, we call our safe ProcessBotQueryCallbacks to handle async database queries
+
+        // CRITICAL FIX: Only process callbacks when we have active queries to avoid "_Already_retrieved" crashes
+        // Future.get() can only be called once - we track when queries are active to prevent duplicate processing
+        if (_hasActiveQueryCallbacks.load())
+        {
+            // Process async database query callbacks for bot login completion
+            // This replaces the unsafe WorldSession::Update call that crashed in debug builds
+            ProcessBotQueryCallbacks();
+        }
+
+        // Process pending async login if needed
+        if (_loginState.load() != LoginState::NONE && _loginState.load() != LoginState::LOGIN_COMPLETE)
+        {
+            ProcessPendingLogin();
+        }
+
+        // Process bot-specific packets
+        ProcessBotPackets();
+
+        // Update AI if available and player is valid
+        Player* player = GetPlayer();
+        if (_ai && player && player->IsInWorld() && _active.load()) {
+            try {
+                _ai->Update(diff);
+            }
+            catch (std::exception const& e) {
+                TC_LOG_ERROR("module.playerbot.session", "Exception in BotAI::Update for account {}: {}", GetAccountId(), e.what());
+                // Don't propagate AI exceptions to prevent session crashes
+            }
+            catch (...) {
+                TC_LOG_ERROR("module.playerbot.session", "Unknown exception in BotAI::Update for account {}", GetAccountId());
+            }
+        }
+
+        return true; // Bot sessions always return success
+    }
+    catch (std::exception const& e) {
+        TC_LOG_ERROR("module.playerbot.session",
+            "Exception in BotSession::Update for account {}: {}", GetAccountId(), e.what());
+        return false;
+    }
+    catch (...) {
+        TC_LOG_ERROR("module.playerbot.session",
+            "Unknown exception in BotSession::Update for account {}", GetAccountId());
+        return false;
+    }
+}
+
+void BotSession::ProcessBotPackets()
+{
+    // Use batch processing with larger batch sizes for better performance under load
+    constexpr size_t BATCH_SIZE = 50; // Increased from 10 to reduce overhead
+
+    // Batch process packets outside lock to minimize critical sections
+    std::vector<std::unique_ptr<WorldPacket>> incomingBatch;
+    incomingBatch.reserve(BATCH_SIZE);
+
+    // DEADLOCK FIX: Use try_lock with timeout to prevent world thread hanging
+    // Instead of blocking indefinitely, give up if we can't acquire the lock within a reasonable time
+    std::unique_lock<std::recursive_mutex> lock(_packetMutex, std::defer_lock);
+    if (!lock.try_lock_for(std::chrono::milliseconds(50))) // 50ms timeout
+    {
+        TC_LOG_WARN("module.playerbot.session", "BotSession::ProcessBotPackets - Failed to acquire _packetMutex within 50ms, skipping packet processing for account {}", GetAccountId());
+        return; // Skip packet processing this cycle to prevent deadlock
+    }
+
+    // Extract batch of incoming packets under lock
+    // RACE CONDITION FIX: Only use empty() check - no pre-calculated size
+    // Loop until either BATCH_SIZE reached or queue is empty
+    for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
+        incomingBatch.emplace_back(std::move(_incomingPackets.front()));
+        _incomingPackets.pop();
+    }
+
+    // Clear outgoing packets (simulate processing) - also use only empty() check
+    for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
+        _outgoingPackets.pop();
+    }
+
+    // Process the extracted batch outside of lock for better concurrency
+    for (auto& packet : incomingBatch) {
+        try {
+            // Process packet through WorldSession's standard queue system
+            WorldSession::QueuePacket(packet.get());
+        }
+        catch (std::exception const& e) {
+            // Log exception through ModuleLogManager
+        }
+    }
+}
+
+bool BotSession::LoginCharacter(ObjectGuid characterGuid)
+{
+    // Validate inputs
+    if (characterGuid.IsEmpty())
+    {
+        return false;
+    }
+
+    if (GetAccountId() == 0)
+    {
+        return false;
+    }
+
+    try
+    {
+        // Check if already logging in
+        LoginState expected = LoginState::NONE;
+        if (!_loginState.compare_exchange_strong(expected, LoginState::QUERY_PENDING))
+        {
+            TC_LOG_ERROR("module.playerbot.session", "BotSession: Already logging in (state: {})", static_cast<uint8>(_loginState.load()));
+            return false;
+        }
+
+        TC_LOG_INFO("module.playerbot.session", "Starting async login for character {}", characterGuid.ToString());
+
+        // Store login context
+        _pendingLoginGuid = characterGuid;
+        _loginStartTime = std::chrono::steady_clock::now();
+
+        // Create and initialize the query holder
+        _pendingLoginHolder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
+        if (!_pendingLoginHolder->Initialize())
+        {
+            TC_LOG_ERROR("module.playerbot.session", "Failed to initialize BotLoginQueryHolder for character {}", characterGuid.ToString());
+            _loginState.store(LoginState::LOGIN_FAILED);
+            return false;
+        }
+
+        TC_LOG_INFO("module.playerbot.session", "Executing async database queries for character {}", characterGuid.ToString());
+
+        // Set the flag to indicate we have active query callbacks that need processing
+        _hasActiveQueryCallbacks.store(true);
+
+        // Execute the queries asynchronously WITHOUT BLOCKING
+        // The callback will be processed during Update() via ProcessQueryCallbacks()
+        AddQueryHolderCallback(CharacterDatabase.DelayQueryHolder(_pendingLoginHolder))
+            .AfterComplete([this, characterGuid](SQLQueryHolderBase const& result)
+        {
+            try
+            {
+                TC_LOG_INFO("module.playerbot.session", "Query holder callback fired for character {}", characterGuid.ToString());
+
+                // Transition to QUERY_COMPLETE state
+                LoginState expected = LoginState::QUERY_PENDING;
+                if (!_loginState.compare_exchange_strong(expected, LoginState::QUERY_COMPLETE))
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "Unexpected login state during callback: {}", static_cast<uint8>(_loginState.load()));
+                    _loginState.store(LoginState::LOGIN_FAILED);
+                    return;
+                }
+
+                // Store the result for later processing in ProcessPendingLogin()
+                // We don't call HandleBotPlayerLogin here to avoid any potential deadlocks
+                TC_LOG_INFO("module.playerbot.session", "Query complete, ready for processing in Update cycle");
+            }
+            catch (std::exception const& e)
+            {
+                TC_LOG_ERROR("module.playerbot.session", "Exception in query callback: {}", e.what());
+                _loginState.store(LoginState::LOGIN_FAILED);
+            }
+
+            // Clear the query callback flag - queries are now processed (success or failure)
+            _hasActiveQueryCallbacks.store(false);
+        });
+
+        // Return immediately - login will complete asynchronously
+        // The caller should check IsLoginComplete() periodically
+        TC_LOG_INFO("module.playerbot.session", "Async login initiated for character {}, will complete in Update cycle", characterGuid.ToString());
+        return true; // Indicates login was started, not that it's complete
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.session", "Exception in LoginCharacter: {}", e.what());
+        _loginState.store(LoginState::LOGIN_FAILED);
+        _hasActiveQueryCallbacks.store(false); // Clear flag on error
+        return false;
+    }
+    catch (...)
+    {
+        TC_LOG_ERROR("module.playerbot.session", "Unknown exception in LoginCharacter");
+        _loginState.store(LoginState::LOGIN_FAILED);
+        _hasActiveQueryCallbacks.store(false); // Clear flag on error
+        return false;
+    }
+}
+
+void BotSession::ProcessPendingLogin()
+{
+    LoginState currentState = _loginState.load();
+
+    // Check for timeout
+    if (currentState == LoginState::QUERY_PENDING)
+    {
+        auto elapsed = std::chrono::steady_clock::now() - _loginStartTime;
+        if (elapsed > LOGIN_TIMEOUT)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "Login timeout for character {}", _pendingLoginGuid.ToString());
+            _loginState.store(LoginState::LOGIN_FAILED);
+            return;
+        }
+    }
+
+    // Process QUERY_COMPLETE state
+    if (currentState == LoginState::QUERY_COMPLETE)
+    {
+        // Transition to LOGIN_IN_PROGRESS
+        LoginState expected = LoginState::QUERY_COMPLETE;
+        if (!_loginState.compare_exchange_strong(expected, LoginState::LOGIN_IN_PROGRESS))
+        {
+            return; // State changed by another thread
+        }
+
+        TC_LOG_INFO("module.playerbot.session", "Processing login for character {}", _pendingLoginGuid.ToString());
+
+        try
+        {
+            // Cast to BotLoginQueryHolder and process
+            // CRITICAL FIX: Use proper shared_ptr access to avoid race conditions
+            std::shared_ptr<BotLoginQueryHolder> holderPtr = _pendingLoginHolder;
+            if (holderPtr)
+            {
+                BotLoginQueryHolder const& loginHolder = *holderPtr;
+                HandleBotPlayerLogin(loginHolder);
+
+                // Check if player was successfully loaded
+                if (!GetPlayer())
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "HandlePlayerLogin failed to create player for character {}", _pendingLoginGuid.ToString());
+                    _loginState.store(LoginState::LOGIN_FAILED);
+                    return;
+                }
+
+                TC_LOG_INFO("module.playerbot.session", "✅ Bot loading successful for character {}", _pendingLoginGuid.ToString());
+
+                // Create and assign BotAI to take control of the character
+                // CRITICAL FIX: Add null pointer protection for BotAIFactory
+                BotAIFactory* factory = BotAIFactory::instance();
+                if (factory && GetPlayer())
+                {
+                    auto botAI = factory->CreateAI(GetPlayer());
+                    if (botAI)
+                    {
+                        SetAI(botAI.release()); // Transfer ownership to BotSession
+                    }
+                    else
+                    {
+                        TC_LOG_ERROR("module.playerbot.session", "Failed to create BotAI for character {}", _pendingLoginGuid.ToString());
+                    }
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "BotAIFactory or Player is null during login for character {}", _pendingLoginGuid.ToString());
+                }
+
+                // Mark login as complete
+                _loginState.store(LoginState::LOGIN_COMPLETE);
+
+                // Clear pending data
+                _pendingLoginHolder.reset();
+                _pendingLoginGuid = ObjectGuid();
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.session", "No pending login holder for character {}", _pendingLoginGuid.ToString());
+                _loginState.store(LoginState::LOGIN_FAILED);
+            }
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "Exception in ProcessPendingLogin: {}", e.what());
+            _loginState.store(LoginState::LOGIN_FAILED);
+        }
+    }
+}
+
+// Bot-specific implementation of HandlePlayerLogin
+// Based on TrinityCore's WorldSession::HandlePlayerLogin but adapted for BotLoginQueryHolder
+void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
+{
+    ObjectGuid playerGuid = holder.GetGuid();
+
+    // CRITICAL FIX: Add session validation before Player creation
+    if (!IsActive() || !_active.load())
+    {
+        TC_LOG_ERROR("module.playerbot.session", "BotSession is not active during HandleBotPlayerLogin for character {}", playerGuid.ToString());
+        return;
+    }
+
+    Player* pCurrChar = new Player(this);
+    if (!pCurrChar)
+    {
+        TC_LOG_ERROR("module.playerbot.session", "Failed to create Player object for character {}", playerGuid.ToString());
+        return;
+    }
+
+    // for send server info and strings (config)
+    ChatHandler chH = ChatHandler(pCurrChar->GetSession());
+
+    // "GetAccountId() == db stored account id" checked in LoadFromDB (prevent login not own character using cheating tools)
+    // Cast to base class for compatibility with Player::LoadFromDB
+    CharacterDatabaseQueryHolder const& baseHolder = static_cast<CharacterDatabaseQueryHolder const&>(holder);
+
+    if (!pCurrChar->LoadFromDB(playerGuid, baseHolder))
+    {
+        SetPlayer(nullptr);
+        delete pCurrChar; // delete it manually
+        // m_playerLoading.Clear(); // Skip for bots - this is a private member
+        TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database", playerGuid.ToString());
+        return;
+    }
+
+    // Skip time sync for bots - they don't need client synchronization
+    // if (!_timeSyncClockDeltaQueue->empty())
+    // {
+    //     pCurrChar->SetPlayerLocalFlag(PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME);
+    //     pCurrChar->SetTransportServerTime(_timeSyncClockDelta);
+    // }
+
+    pCurrChar->SetVirtualPlayerRealm(GetVirtualRealmAddress());
+
+    // For bots, we may want to skip some client-specific data
+    // SendAccountDataTimes(ObjectGuid::Empty, GLOBAL_CACHE_MASK);
+    // SendTutorialsData();
+
+    // Skip motion master and packet initialization for bots
+    // pCurrChar->GetMotionMaster()->Initialize();
+    // pCurrChar->SendInitialPacketsBeforeAddToMap();
+
+    // Set the player for this session
+    SetPlayer(pCurrChar);
+
+    // Bot-specific initialization can go here
+    TC_LOG_INFO("module.playerbot.session", "Successfully loaded bot character {} for session", playerGuid.ToString());
+}
+
+// Safe callback processing for bot sessions (no socket access)
+void BotSession::ProcessBotQueryCallbacks()
+{
+    // Only process the query callbacks that we can safely access
+    // GetQueryProcessor() is public, so we can use it safely
+    // This avoids accessing private _transactionCallbacks and _queryHolderProcessor
+    // which is exactly what we need for bot async login processing
+    GetQueryProcessor().ProcessReadyCallbacks();
+}
+
+} // namespace Playerbot

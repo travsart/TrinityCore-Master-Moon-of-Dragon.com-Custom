@@ -15,8 +15,8 @@
 #include "Map.h"
 #include "ObjectMgr.h"
 #include "Log.h"
+#include "Random.h"
 #include <algorithm>
-#include <random>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -1204,13 +1204,9 @@ void CombatTestFramework::CleanupEnvironment(TestContext& context)
 
 Position CombatTestFramework::GenerateRandomPosition(const Position& center, float radius, float minDistance) const
 {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
-    std::uniform_real_distribution<float> radiusDist(minDistance, radius);
-
-    float angle = angleDist(gen);
-    float dist = radiusDist(gen);
+    // Use TrinityCore's thread-safe random functions instead of static generators
+    float angle = frand(0.0f, 2.0f * M_PI);
+    float dist = frand(minDistance, radius);
 
     float x = center.GetPositionX() + dist * std::cos(angle);
     float y = center.GetPositionY() + dist * std::sin(angle);

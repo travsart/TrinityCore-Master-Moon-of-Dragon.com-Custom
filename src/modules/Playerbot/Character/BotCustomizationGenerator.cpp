@@ -19,7 +19,6 @@ namespace Playerbot {
 std::unordered_map<uint64, std::vector<BotCustomizationGenerator::CustomizationOption>>
     BotCustomizationGenerator::_customizationCache;
 bool BotCustomizationGenerator::_initialized = false;
-std::mt19937 BotCustomizationGenerator::_randomEngine(std::chrono::steady_clock::now().time_since_epoch().count());
 
 void BotCustomizationGenerator::Initialize()
 {

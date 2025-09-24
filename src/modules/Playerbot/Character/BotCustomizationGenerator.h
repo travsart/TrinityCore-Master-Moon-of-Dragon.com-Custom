@@ -67,7 +67,6 @@ private:
     // Cache of valid customization options per race/gender
     static std::unordered_map<uint64, std::vector<CustomizationOption>> _customizationCache;
     static bool _initialized;
-    static std::mt19937 _randomEngine;
 
     /**
      * @brief Get cache key for race/gender combination

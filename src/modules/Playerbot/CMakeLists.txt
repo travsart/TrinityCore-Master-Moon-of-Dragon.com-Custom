@@ -339,28 +339,29 @@ if(WIN32)
     )
 endif()
 
-# Enterprise optimization flags
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "Enabling enterprise performance optimizations")
+# Enterprise optimization flags - only for Release builds
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Configuring enterprise performance optimizations")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(playerbot PRIVATE
-            -O3                    # Maximum optimization
-            -march=native          # Target current CPU
-            -mtune=native          # Tune for current CPU
-            -flto                  # Link-time optimization
-            -ffast-math            # Fast math for SIMD
-            -funroll-loops         # Loop unrolling
-            -ftree-vectorize       # Auto-vectorization
+            $<$<CONFIG:Release>:-O3>                    # Maximum optimization
+            $<$<CONFIG:Release>:-march=native>          # Target current CPU
+            $<$<CONFIG:Release>:-mtune=native>          # Tune for current CPU
+            $<$<CONFIG:Release>:-flto>                  # Link-time optimization
+            $<$<CONFIG:Release>:-ffast-math>            # Fast math for SIMD
+            $<$<CONFIG:Release>:-funroll-loops>         # Loop unrolling
+            $<$<CONFIG:Release>:-ftree-vectorize>       # Auto-vectorization
         )
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         target_compile_options(playerbot PRIVATE
-            /O2                    # Maximum optimization
-            /GL                    # Whole program optimization
-            /fp:fast               # Fast floating point
-            /arch:AVX2             # Enable AVX2 if available
+            $<$<CONFIG:Release>:/O2>                    # Maximum optimization (Release only)
+            $<$<CONFIG:Release>:/GL>                    # Whole program optimization (Release only)
+            $<$<CONFIG:Release>:/fp:fast>               # Fast floating point (Release only)
+            $<$<CONFIG:Release>:/arch:AVX2>             # Enable AVX2 if available (Release only)
         )
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+        # Apply link-time optimizations only for Release builds
+        target_link_options(playerbot PRIVATE $<$<CONFIG:Release>:/LTCG>)
     endif()
 endif()
 
