@@ -109,7 +109,11 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
 
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccountId, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time,
-    std::string os, Minutes timezoneOffset, uint32 build, ClientBuild::VariantId clientBuildVariant, LocaleConstant locale, uint32 recruiter, bool isARecruiter):
+    std::string os, Minutes timezoneOffset, uint32 build, ClientBuild::VariantId clientBuildVariant, LocaleConstant locale, uint32 recruiter, bool isARecruiter
+#ifdef BUILD_PLAYERBOT
+    , bool is_bot
+#endif
+    ):
     m_muteTime(mute_time),
     m_timeOutTime(0),
     AntiDOS(this),
@@ -151,6 +155,9 @@ WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccoun
     _calendarEventCreationCooldown(0),
     _battlePetMgr(std::make_unique<BattlePets::BattlePetMgr>(this)),
     _collectionMgr(std::make_unique<CollectionMgr>(this))
+#ifdef BUILD_PLAYERBOT
+    , _isBot(is_bot)
+#endif
 {
     if (sock)
     {
@@ -158,6 +165,12 @@ WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccoun
         ResetTimeOutTime(false);
         LoginDatabase.PExecute("UPDATE account SET online = 1 WHERE id = {};", GetAccountId());     // One-time query
     }
+#ifdef BUILD_PLAYERBOT
+    else if (is_bot)
+    {
+        m_Address = "bot";
+    }
+#endif
 
     m_Socket[CONNECTION_TYPE_REALM] = std::move(sock);
     _instanceConnectKey.Raw = UI64LIT(0);
@@ -175,7 +188,10 @@ WorldSession::~WorldSession()
     {
         if (m_Socket[i])
         {
-            m_Socket[i]->CloseSocket();
+#ifdef BUILD_PLAYERBOT
+            if (!IsBot())  // Bot sessions have nullptr sockets
+#endif
+                m_Socket[i]->CloseSocket();
             m_Socket[i].reset();
         }
     }
@@ -348,7 +364,12 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
     /// If necessary, kick the player because the client didn't send anything for too long
     /// (or they've been idling in character select)
     if (IsConnectionIdle() && !HasPermission(rbac::RBAC_PERM_IGNORE_IDLE_CONNECTION))
-        m_Socket[CONNECTION_TYPE_REALM]->CloseSocket();
+    {
+#ifdef BUILD_PLAYERBOT
+        if (m_Socket[CONNECTION_TYPE_REALM])  // Protect against null socket for bot sessions
+#endif
+            m_Socket[CONNECTION_TYPE_REALM]->CloseSocket();
+    }
 
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
@@ -536,12 +557,18 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
             {
                 if (m_Socket[CONNECTION_TYPE_REALM])
                 {
-                    m_Socket[CONNECTION_TYPE_REALM]->CloseSocket();
+#ifdef BUILD_PLAYERBOT
+                    if (!IsBot())  // Bot sessions have nullptr sockets
+#endif
+                        m_Socket[CONNECTION_TYPE_REALM]->CloseSocket();
                     m_Socket[CONNECTION_TYPE_REALM].reset();
                 }
                 if (m_Socket[CONNECTION_TYPE_INSTANCE])
                 {
-                    m_Socket[CONNECTION_TYPE_INSTANCE]->CloseSocket();
+#ifdef BUILD_PLAYERBOT
+                    if (!IsBot())  // Bot sessions have nullptr sockets
+#endif
+                        m_Socket[CONNECTION_TYPE_INSTANCE]->CloseSocket();
                     m_Socket[CONNECTION_TYPE_INSTANCE].reset();
                 }
             }
@@ -701,7 +728,10 @@ void WorldSession::LogoutPlayer(bool save)
 
     if (m_Socket[CONNECTION_TYPE_INSTANCE])
     {
-        m_Socket[CONNECTION_TYPE_INSTANCE]->CloseSocket();
+#ifdef BUILD_PLAYERBOT
+        if (!IsBot())  // Bot sessions have nullptr sockets
+#endif
+            m_Socket[CONNECTION_TYPE_INSTANCE]->CloseSocket();
         m_Socket[CONNECTION_TYPE_INSTANCE].reset();
     }
 
@@ -721,7 +751,10 @@ void WorldSession::KickPlayer(std::string const& reason)
     {
         if (m_Socket[i])
         {
-            m_Socket[i]->CloseSocket();
+#ifdef BUILD_PLAYERBOT
+            if (!IsBot())  // Bot sessions have nullptr sockets
+#endif
+                m_Socket[i]->CloseSocket();
             forceExit = true;
         }
     }
@@ -806,6 +839,10 @@ void WorldSession::ResetTimeOutTime(bool onlyActive)
 
 bool WorldSession::IsConnectionIdle() const
 {
+#ifdef BUILD_PLAYERBOT
+    if (IsBot())
+        return false;  // Bot sessions are never idle
+#endif
     return m_timeOutTime < GameTime::GetGameTime() && !m_inQueue;
 }
 
