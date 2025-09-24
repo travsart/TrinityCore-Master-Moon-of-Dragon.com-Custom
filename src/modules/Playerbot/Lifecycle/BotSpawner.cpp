@@ -118,6 +118,10 @@ void BotSpawner::Update(uint32 /*diff*/)
     if (!_enabled.load())
         return;
 
+    // CRITICAL SAFETY: Wrap update in try-catch to prevent crashes
+    try
+    {
+
     static uint32 updateCounter = 0;
     ++updateCounter;
     uint32 currentTime = getMSTime();
@@ -233,6 +237,20 @@ void BotSpawner::Update(uint32 /*diff*/)
     {
         uint32 timeLeft = TARGET_CALCULATION_INTERVAL - (currentTime - _lastTargetCalculation);
         TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: {} ms until next spawn cycle", timeLeft);
+    }
+
+    }
+    catch (std::exception const& ex)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner", "CRITICAL EXCEPTION in BotSpawner::Update: {}", ex.what());
+        TC_LOG_ERROR("module.playerbot.spawner", "Disabling spawner to prevent further crashes");
+        _enabled.store(false);
+    }
+    catch (...)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner", "CRITICAL UNKNOWN EXCEPTION in BotSpawner::Update");
+        TC_LOG_ERROR("module.playerbot.spawner", "Disabling spawner to prevent further crashes");
+        _enabled.store(false);
     }
 }
 
@@ -373,21 +391,22 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
     TC_LOG_INFO("module.playerbot.spawner", "🎮 Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
 
+    // DISABLED: Legacy BotSessionMgr creates invalid account IDs
     // Use the BotSessionMgr to create a new bot session with ASYNC character login (legacy approach)
-    BotSession* session = sBotSessionMgr->CreateAsyncSession(accountId, characterGuid);
-    if (!session)
-    {
-        TC_LOG_ERROR("module.playerbot.spawner",
-            "🎮 Failed to create async bot session for account {}", accountId);
-        return false;
-    }
+    // BotSession* session = sBotSessionMgr->CreateAsyncSession(accountId, characterGuid);
+    // if (!session)
+    // {
+    //     TC_LOG_ERROR("module.playerbot.spawner",
+    //         "🎮 Failed to create async bot session for account {}", accountId);
+    //     return false;
+    // }
 
-    // ALSO use the new native TrinityCore login approach (TrinityCore pattern)
+    // PRIMARY: Use the fixed native TrinityCore login approach with proper account IDs
     if (!Playerbot::sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "🎮 Failed to create native WorldSession for character {}", characterGuid.ToString());
-        // Continue with legacy approach - don't fail completely
+        return false; // Fail if the primary system fails
     }
 
     TC_LOG_INFO("module.playerbot.spawner",

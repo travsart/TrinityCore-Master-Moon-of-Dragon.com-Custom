@@ -79,11 +79,25 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    // Get account ID for this character
-    uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(playerGuid);
+    // Get account ID for this character from playerbot database directly
+    uint32 accountId = 0;
+
+    // Query playerbot_characters database directly since character cache won't find bot accounts
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_PINFO);
+    stmt->setUInt64(0, playerGuid.GetCounter());
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+    if (result)
+    {
+        // CHAR_SEL_CHAR_PINFO returns: totaltime, level, money, account, race, class, map, zone, gender, health, playerFlags
+        // Account is at index 3
+        accountId = (*result)[3].GetUInt32();
+        TC_LOG_DEBUG("module.playerbot.session", "🔧 Found account ID {} for character {}", accountId, playerGuid.ToString());
+    }
+
     if (!accountId)
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Could not find account for character {}", playerGuid.ToString());
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Could not find account for character {} in playerbot database", playerGuid.ToString());
         return false;
     }
 
@@ -111,18 +125,19 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     // Store the session (cast to WorldSession* for compatibility)
     _botSessions[playerGuid] = botSession.get();
 
-    // Use the existing BotSession login character mechanism
+    // Start the async login process
     if (!botSession->LoginCharacter(playerGuid))
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to login character {}", playerGuid.ToString());
+        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to initiate async login for character {}", playerGuid.ToString());
         _botSessions.erase(playerGuid);
         _botsLoading.erase(playerGuid);
         return false;
     }
 
-    _botsLoading.erase(playerGuid);
-    TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login successful using proven BotSession: {}", playerGuid.ToString());
-    return true;
+    // Note: Login is now async and will complete in the Update cycle
+    // The bot will be marked as loaded when LoginState becomes LOGIN_COMPLETE
+    TC_LOG_INFO("module.playerbot.session", "🔧 Async bot login initiated for: {}", playerGuid.ToString());
+    return true; // Return true to indicate login was started (not completed)
 }
 
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
@@ -169,15 +184,79 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     for (auto it = _botSessions.begin(); it != _botSessions.end();)
     {
         WorldSession* session = it->second;
+        ObjectGuid guid = it->first;
+
+        // CRITICAL SAFETY: Validate session type before casting
+        if (!session)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Null session found in bot sessions map for {}", guid.ToString());
+            it = _botSessions.erase(it);
+            continue;
+        }
+
+        // CRITICAL SAFETY: Use dynamic_cast to safely validate session type
+        BotSession* botSession = dynamic_cast<BotSession*>(session);
+        if (!botSession)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Invalid session type in bot sessions map for {}", guid.ToString());
+            // Don't delete - we don't know what type it actually is
+            it = _botSessions.erase(it);
+            continue;
+        }
+
+        // Check if login has completed or failed
+        if (_botsLoading.find(guid) != _botsLoading.end())
+        {
+            if (botSession->IsLoginComplete())
+            {
+                _botsLoading.erase(guid);
+                TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login completed for: {}", guid.ToString());
+            }
+            else if (botSession->IsLoginFailed())
+            {
+                TC_LOG_ERROR("module.playerbot.session", "🔧 Bot login failed for: {}", guid.ToString());
+                _botsLoading.erase(guid);
+
+                // CRITICAL SAFETY: Don't manually delete - BotSession manages its own lifetime
+                // Manual delete in multithreaded environment causes use-after-free
+                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Removing failed bot session without delete to prevent use-after-free");
+                it = _botSessions.erase(it);
+                continue;
+            }
+            // Still loading - let Update process continue
+        }
+
         Player* bot = session ? session->GetPlayer() : nullptr;
 
+        // Only process bots that have completed login
+        if (!botSession->IsLoginComplete())
+        {
+            // Create a proper PacketFilter for the bot session
+            class BotPacketFilter : public PacketFilter
+            {
+            public:
+                explicit BotPacketFilter(WorldSession* session) : PacketFilter(session) {}
+                virtual ~BotPacketFilter() override = default;
+
+                bool Process(WorldPacket* /*packet*/) override { return true; }
+                bool ProcessUnsafe() const override { return true; }
+            } filter(session);
+
+            // Let the session process its async login
+            botSession->Update(diff, filter);
+            ++it;
+            continue;
+        }
+
+        // Check if bot is still valid
         if (!bot || !bot->IsInWorld())
         {
             // Clean up disconnected bot
             if (session)
             {
+                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Bot {} disconnected, logging out safely", guid.ToString());
                 session->LogoutPlayer(true);
-                // Don't delete - BotSession manages its own lifetime via shared_ptr
+                // CRITICAL SAFETY: Don't delete - potential use-after-free in multithreaded environment
             }
             it = _botSessions.erase(it);
             continue;
@@ -186,9 +265,6 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // BotSession handles its own update mechanism
         if (session)
         {
-            // Cast back to BotSession to use its update method with PacketFilter
-            BotSession* botSession = static_cast<BotSession*>(session);
-
             // Create a proper PacketFilter for the bot session
             class BotPacketFilter : public PacketFilter
             {

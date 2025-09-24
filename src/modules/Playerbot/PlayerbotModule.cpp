@@ -256,6 +256,10 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
         return;
     }
 
+    // CRITICAL SAFETY: Wrap entire update in try-catch to prevent crashes
+    try
+    {
+
     // One-time trigger to complete login for existing sessions
     static bool loginTriggered = false;
     static uint32 totalTime = 0;
@@ -283,6 +287,19 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
     // Update PlayerbotCharacterDBInterface to process sync queue
     sPlayerbotCharDB->Update(diff);
 
+    }
+    catch (std::exception const& ex)
+    {
+        TC_LOG_ERROR("module.playerbot", "CRITICAL EXCEPTION in PlayerbotModule::OnWorldUpdate: {}", ex.what());
+        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
+        _enabled = false;
+    }
+    catch (...)
+    {
+        TC_LOG_ERROR("module.playerbot", "CRITICAL UNKNOWN EXCEPTION in PlayerbotModule::OnWorldUpdate");
+        TC_LOG_ERROR("module.playerbot", "Disabling playerbot to prevent further crashes");
+        _enabled = false;
+    }
 }
 
 bool PlayerbotModule::ValidateConfig()
