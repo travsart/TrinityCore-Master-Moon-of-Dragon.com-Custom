@@ -117,6 +117,10 @@ public:
     SpawnStats const& GetStats() const { return _stats; }
     void ResetStats();
 
+    // Player login detection
+    void OnPlayerLogin();
+    void CheckAndSpawnForPlayers();
+
     // Population caps
     bool CanSpawnMore() const;
     bool CanSpawnInZone(uint32 zoneId) const;
@@ -194,9 +198,11 @@ private:
 
     // Runtime state
     std::atomic<bool> _enabled{true};
+    std::atomic<bool> _firstPlayerSpawned{false};
+    std::atomic<uint32> _lastRealPlayerCount{0};
 
-    static constexpr uint32 POPULATION_UPDATE_INTERVAL = 10000; // 10 seconds
-    static constexpr uint32 TARGET_CALCULATION_INTERVAL = 5000; // 5 seconds for testing
+    static constexpr uint32 POPULATION_UPDATE_INTERVAL = 5000; // 5 seconds
+    static constexpr uint32 TARGET_CALCULATION_INTERVAL = 2000; // 2 seconds for faster response
 };
 
 #define sBotSpawner BotSpawner::instance()

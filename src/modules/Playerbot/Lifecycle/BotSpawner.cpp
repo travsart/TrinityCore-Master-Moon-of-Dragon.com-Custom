@@ -76,16 +76,19 @@ bool BotSpawner::Initialize()
     _lastPopulationUpdate = getMSTime();
     _lastTargetCalculation = getMSTime();
 
+    // Initialize the flag for first player login detection
+    _firstPlayerSpawned.store(false);
+
     // DEFERRED: Don't spawn bots during initialization - wait for first Update() call
     // This prevents crashes when the world isn't fully initialized yet
     TC_LOG_INFO("module.playerbot", "BotSpawner: Step 3 - Check enableDynamicSpawning: {}", _config.enableDynamicSpawning ? "true" : "false");
     if (_config.enableDynamicSpawning)
     {
-        TC_LOG_INFO("module.playerbot", "Dynamic spawning enabled - initial spawn will be triggered during first Update() cycle");
+        TC_LOG_INFO("module.playerbot", "Dynamic spawning enabled - bots will spawn when first player logs in");
         TC_LOG_INFO("module.playerbot", "BotSpawner: Step 4 - CalculateZoneTargets()...");
         CalculateZoneTargets();
-        // NOTE: SpawnToPopulationTarget() will be called in Update() after world is ready
-        TC_LOG_INFO("module.playerbot", "BotSpawner: Initial spawn deferred until first Update() call");
+        // NOTE: SpawnToPopulationTarget() will be called when first player is detected
+        TC_LOG_INFO("module.playerbot", "BotSpawner: Waiting for first player login to trigger spawning");
     }
 
     return true;
@@ -125,6 +128,9 @@ void BotSpawner::Update(uint32 /*diff*/)
     static uint32 updateCounter = 0;
     ++updateCounter;
     uint32 currentTime = getMSTime();
+
+    // Check for real players and trigger spawning if needed
+    CheckAndSpawnForPlayers();
 
     // DEBUG: Log update counter and timing every 1000 updates to diagnose timer issue
     if (updateCounter % 1000 == 0) // Log every 1k updates for debugging
@@ -923,12 +929,18 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
     uint32 playerCount = 0;
 
     // CRITICAL FIX: Actually count players in the zone
-    // For now, use a simple approach - if any players are online, assume they could be in any zone
-    uint32 activeSessions = sWorld->GetActiveSessionCount();
-    if (activeSessions > 0)
+    // Count real (non-bot) players
+    uint32 activeSessions = sWorld->GetActiveAndQueuedSessionCount();
+    uint32 botSessions = Playerbot::sBotWorldSessionMgr->GetBotCount();
+    uint32 realPlayerSessions = (activeSessions > botSessions) ? (activeSessions - botSessions) : 0;
+
+    if (realPlayerSessions > 0)
     {
-        // Distribute players across zones for testing (can be improved later with actual zone checking)
-        playerCount = std::max(1u, activeSessions); // At least 1 player per zone if anyone is online
+        // For now, assume players are distributed across starter zones
+        // This ensures bots spawn when real players are online
+        playerCount = std::max(1u, realPlayerSessions);
+        TC_LOG_DEBUG("module.playerbot.spawner", "Zone {} has {} real players (total sessions: {}, bot sessions: {})",
+                     zoneId, playerCount, activeSessions, botSessions);
     }
 
     // Count bots in this zone (get count first, before locking _zoneMutex)
@@ -1344,6 +1356,66 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         TC_LOG_ERROR("module.playerbot.spawner", "Exception during bot character creation for account {}: {}", accountId, e.what());
         return ObjectGuid::Empty;
     }
+}
+
+void BotSpawner::OnPlayerLogin()
+{
+    if (!_enabled.load() || !_config.enableDynamicSpawning)
+        return;
+
+    TC_LOG_INFO("module.playerbot.spawner", "🎮 Player logged in - triggering bot spawn check");
+
+    // Force immediate spawn check
+    CheckAndSpawnForPlayers();
+}
+
+void BotSpawner::CheckAndSpawnForPlayers()
+{
+    if (!_enabled.load() || !_config.enableDynamicSpawning)
+        return;
+
+    // Count real (non-bot) players
+    uint32 activeSessions = sWorld->GetActiveAndQueuedSessionCount();
+    uint32 botSessions = Playerbot::sBotWorldSessionMgr->GetBotCount();
+    uint32 realPlayerSessions = (activeSessions > botSessions) ? (activeSessions - botSessions) : 0;
+
+    // Check if we have real players but no bots spawned yet
+    if (realPlayerSessions > 0)
+    {
+        uint32 currentBotCount = GetActiveBotCount();
+        uint32 targetBotCount = static_cast<uint32>(realPlayerSessions * _config.botToPlayerRatio);
+
+        // Ensure minimum bots
+        uint32 minimumBots = sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 3);
+        targetBotCount = std::max(targetBotCount, minimumBots);
+
+        // Respect maximum limits
+        targetBotCount = std::min(targetBotCount, _config.maxBotsTotal);
+
+        if (currentBotCount < targetBotCount)
+        {
+            TC_LOG_INFO("module.playerbot.spawner",
+                "🎮 Real players detected! Players: {}, Current bots: {}, Target bots: {}",
+                realPlayerSessions, currentBotCount, targetBotCount);
+
+            // Mark that we've triggered spawning for the first player
+            if (!_firstPlayerSpawned.load() && realPlayerSessions > 0)
+            {
+                _firstPlayerSpawned.store(true);
+                TC_LOG_INFO("module.playerbot.spawner", "🎮 First player detected - initiating initial bot spawn");
+            }
+
+            // Update zone populations to trigger spawning
+            UpdatePopulationTargets();
+            CalculateZoneTargets();
+
+            // Spawn bots immediately
+            SpawnToPopulationTarget();
+        }
+    }
+
+    // Store the last known real player count
+    _lastRealPlayerCount.store(realPlayerSessions);
 }
 
 } // namespace Playerbot

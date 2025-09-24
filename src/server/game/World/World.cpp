@@ -110,6 +110,10 @@
 #include "WorldStateMgr.h"
 #include <zlib.h>
 
+#ifdef PLAYERBOT_ENABLED
+#include "Lifecycle/BotSpawner.h"
+#endif
+
 TC_GAME_API std::atomic<bool> World::m_stopEvent(false);
 TC_GAME_API uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
 
@@ -374,6 +378,17 @@ void World::AddSession_(WorldSession* s)
         delete s;                                           // session not added yet in session list, so not listed in queue
         return;
     }
+
+#ifdef PLAYERBOT_ENABLED
+    // Check if this is a real player session (not a bot)
+    // Bot accounts typically have IDs >= 100000
+    if (s->GetAccountId() < 100000)
+    {
+        // Real player logged in - trigger bot spawning
+        TC_LOG_INFO("server.worldserver", "Real player session added (account: {}), triggering bot spawn check", s->GetAccountId());
+        Playerbot::sBotSpawner->OnPlayerLogin();
+    }
+#endif
 
     // decrease session counts only at not reconnection case
     bool decrease_session = true;
