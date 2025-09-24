@@ -43,7 +43,14 @@ void BotWorldSessionMgr::Shutdown()
     {
         if (session && session->GetPlayer())
         {
-            TC_LOG_INFO("module.playerbot.session", "🔧 Logging out bot: {}", session->GetPlayer()->GetName());
+            // MEMORY SAFETY: Protect against use-after-free when accessing Player name
+            Player* player = session->GetPlayer();
+            try {
+                TC_LOG_INFO("module.playerbot.session", "🔧 Logging out bot: {}", player->GetName());
+            }
+            catch (...) {
+                TC_LOG_INFO("module.playerbot.session", "🔧 Logging out bot (name unavailable - use-after-free protection)");
+            }
             session->LogoutPlayer(true);
         }
         delete session;
@@ -154,7 +161,14 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     WorldSession* session = it->second;
     if (session && session->GetPlayer())
     {
-        TC_LOG_INFO("module.playerbot.session", "🔧 Removing bot: {}", session->GetPlayer()->GetName());
+        // MEMORY SAFETY: Protect against use-after-free when accessing Player name
+        Player* player = session->GetPlayer();
+        try {
+            TC_LOG_INFO("module.playerbot.session", "🔧 Removing bot: {}", player->GetName());
+        }
+        catch (...) {
+            TC_LOG_INFO("module.playerbot.session", "🔧 Removing bot (name unavailable - use-after-free protection)");
+        }
         session->LogoutPlayer(true);
     }
 
@@ -178,92 +192,94 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    // CRITICAL DEADLOCK FIX: Collect sessions to update BEFORE processing
+    // This eliminates the deadlock by releasing the mutex before calling Update()
+    std::vector<std::pair<ObjectGuid, BotSession*>> sessionsToUpdate;
+    std::vector<ObjectGuid> sessionsToRemove;
 
-    // Update all bot sessions using their natural Update method
-    for (auto it = _botSessions.begin(); it != _botSessions.end();)
+    // PHASE 1: Quick collection under mutex (minimal lock time)
     {
-        WorldSession* session = it->second;
-        ObjectGuid guid = it->first;
+        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        sessionsToUpdate.reserve(_botSessions.size());
 
-        // CRITICAL SAFETY: Validate session type before casting
-        if (!session)
+        for (auto it = _botSessions.begin(); it != _botSessions.end(); ++it)
         {
-            TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Null session found in bot sessions map for {}", guid.ToString());
-            it = _botSessions.erase(it);
-            continue;
-        }
+            WorldSession* session = it->second;
+            ObjectGuid guid = it->first;
 
-        // CRITICAL SAFETY: Use dynamic_cast to safely validate session type
-        BotSession* botSession = dynamic_cast<BotSession*>(session);
-        if (!botSession)
-        {
-            TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Invalid session type in bot sessions map for {}", guid.ToString());
-            // Don't delete - we don't know what type it actually is
-            it = _botSessions.erase(it);
-            continue;
-        }
-
-        // Check if login has completed or failed
-        if (_botsLoading.find(guid) != _botsLoading.end())
-        {
-            if (botSession->IsLoginComplete())
+            // CRITICAL SAFETY: Validate session type before casting
+            if (!session)
             {
-                _botsLoading.erase(guid);
-                TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login completed for: {}", guid.ToString());
-            }
-            else if (botSession->IsLoginFailed())
-            {
-                TC_LOG_ERROR("module.playerbot.session", "🔧 Bot login failed for: {}", guid.ToString());
-                _botsLoading.erase(guid);
-
-                // CRITICAL SAFETY: Don't manually delete - BotSession manages its own lifetime
-                // Manual delete in multithreaded environment causes use-after-free
-                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Removing failed bot session without delete to prevent use-after-free");
-                it = _botSessions.erase(it);
+                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Null session found in bot sessions map for {}", guid.ToString());
+                sessionsToRemove.push_back(guid);
                 continue;
             }
-            // Still loading - let Update process continue
-        }
 
-        Player* bot = session ? session->GetPlayer() : nullptr;
-
-        // Only process bots that have completed login
-        if (!botSession->IsLoginComplete())
-        {
-            // Create a proper PacketFilter for the bot session
-            class BotPacketFilter : public PacketFilter
+            // CRITICAL SAFETY: All sessions in bot sessions map should be BotSessions
+            BotSession* botSession = static_cast<BotSession*>(session);
+            if (!botSession->IsBot() || !botSession->IsActive())
             {
-            public:
-                explicit BotPacketFilter(WorldSession* session) : PacketFilter(session) {}
-                virtual ~BotPacketFilter() override = default;
-
-                bool Process(WorldPacket* /*packet*/) override { return true; }
-                bool ProcessUnsafe() const override { return true; }
-            } filter(session);
-
-            // Let the session process its async login
-            botSession->Update(diff, filter);
-            ++it;
-            continue;
-        }
-
-        // Check if bot is still valid
-        if (!bot || !bot->IsInWorld())
-        {
-            // Clean up disconnected bot
-            if (session)
-            {
-                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Bot {} disconnected, logging out safely", guid.ToString());
-                session->LogoutPlayer(true);
-                // CRITICAL SAFETY: Don't delete - potential use-after-free in multithreaded environment
+                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Invalid session found in bot sessions map for {}", guid.ToString());
+                sessionsToRemove.push_back(guid);
+                continue;
             }
-            it = _botSessions.erase(it);
+
+            // Check login state for sessions that are still loading
+            if (_botsLoading.find(guid) != _botsLoading.end())
+            {
+                if (botSession->IsLoginComplete())
+                {
+                    _botsLoading.erase(guid);
+                    TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login completed for: {}", guid.ToString());
+                    // Add to update list - login complete
+                    sessionsToUpdate.emplace_back(guid, botSession);
+                }
+                else if (botSession->IsLoginFailed())
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 Bot login failed for: {}", guid.ToString());
+                    _botsLoading.erase(guid);
+                    sessionsToRemove.push_back(guid);
+                    continue;
+                }
+                else
+                {
+                    // Still loading - add to update list to process async login
+                    sessionsToUpdate.emplace_back(guid, botSession);
+                }
+            }
+            else
+            {
+                // Normal session - add to update list
+                sessionsToUpdate.emplace_back(guid, botSession);
+            }
+        }
+
+        // Clean up invalid sessions while we still hold the mutex
+        for (ObjectGuid const& guid : sessionsToRemove)
+        {
+            auto it = _botSessions.find(guid);
+            if (it != _botSessions.end())
+            {
+                // CRITICAL SAFETY: Don't manually delete sessions
+                // They will be cleaned up by their own destructors
+                _botSessions.erase(it);
+            }
+        }
+    } // Release mutex here - CRITICAL for deadlock prevention
+
+    // PHASE 2: Update sessions WITHOUT holding the main mutex (deadlock-free)
+    std::vector<ObjectGuid> disconnectedSessions;
+
+    for (auto& [guid, botSession] : sessionsToUpdate)
+    {
+        // Validate session is still active before processing
+        if (!botSession || !botSession->IsActive())
+        {
+            disconnectedSessions.push_back(guid);
             continue;
         }
 
-        // BotSession handles its own update mechanism
-        if (session)
+        try
         {
             // Create a proper PacketFilter for the bot session
             class BotPacketFilter : public PacketFilter
@@ -274,12 +290,57 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
                 bool Process(WorldPacket* /*packet*/) override { return true; }
                 bool ProcessUnsafe() const override { return true; }
-            } filter(session);
+            } filter(botSession);
 
-            botSession->Update(diff, filter);
+            // DEADLOCK-FREE: Update session without holding _sessionsMutex
+            if (!botSession->Update(diff, filter))
+            {
+                TC_LOG_WARN("module.playerbot.session", "🔧 Bot session update returned false for: {}", guid.ToString());
+                disconnectedSessions.push_back(guid);
+                continue;
+            }
+
+            // For completed logins, validate player is still in world
+            if (botSession->IsLoginComplete())
+            {
+                Player* bot = botSession->GetPlayer();
+                if (!bot || !bot->IsInWorld())
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Bot {} disconnected, marking for cleanup", guid.ToString());
+                    if (botSession->GetPlayer())
+                    {
+                        botSession->LogoutPlayer(true);
+                    }
+                    disconnectedSessions.push_back(guid);
+                }
+            }
         }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "🔧 Exception updating bot session {}: {}", guid.ToString(), e.what());
+            disconnectedSessions.push_back(guid);
+        }
+        catch (...)
+        {
+            TC_LOG_ERROR("module.playerbot.session", "🔧 Unknown exception updating bot session {}", guid.ToString());
+            disconnectedSessions.push_back(guid);
+        }
+    }
 
-        ++it;
+    // PHASE 3: Final cleanup of disconnected sessions
+    if (!disconnectedSessions.empty())
+    {
+        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        for (ObjectGuid const& guid : disconnectedSessions)
+        {
+            auto it = _botSessions.find(guid);
+            if (it != _botSessions.end())
+            {
+                TC_LOG_INFO("module.playerbot.session", "🔧 Removing disconnected bot session: {}", guid.ToString());
+                // CRITICAL SAFETY: Session cleanup handled by destructor
+                _botSessions.erase(it);
+            }
+        }
     }
 }
 

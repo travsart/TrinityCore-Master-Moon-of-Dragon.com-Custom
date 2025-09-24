@@ -29,8 +29,8 @@ class BotAI;
 
 namespace Playerbot {
 
-// Forward declaration for TrinityCore's LoginQueryHolder
-class LoginQueryHolder;
+// Use TrinityCore's native LoginQueryHolder (defined in CharacterHandler.cpp)
+// No forward declaration needed - we'll include it in the .cpp file
 
 // Forward declaration - implement in BotSession.cpp
 class BotSocket;
@@ -74,41 +74,54 @@ public:
     // === Bot-Specific Methods ===
     void ProcessBotPackets();
 
-    // Safe callback processing for async login
-    void ProcessBotQueryCallbacks();
 
-    // Character Login System
+    // Character Login System (Async State Machine Pattern)
     bool LoginCharacter(ObjectGuid characterGuid);
 
-    // Async login system for 5000 bot scalability
-    void StartAsyncLogin(ObjectGuid characterGuid);
-    void HandlePlayerLogin(LoginQueryHolder const& holder);
-    void CompleteAsyncLogin(Player* player, ObjectGuid characterGuid);
+    // Async login state tracking
+    enum class LoginState : uint8
+    {
+        NONE,                   // Not logging in
+        QUERY_PENDING,          // Query submitted, waiting for callback
+        QUERY_COMPLETE,         // Query callback completed
+        LOGIN_IN_PROGRESS,      // HandleBotPlayerLogin in progress
+        LOGIN_COMPLETE,         // Login successful
+        LOGIN_FAILED            // Login failed
+    };
+
+    LoginState GetLoginState() const { return _loginState.load(); }
+    bool IsLoginComplete() const { return _loginState.load() == LoginState::LOGIN_COMPLETE; }
+    bool IsLoginFailed() const { return _loginState.load() == LoginState::LOGIN_FAILED; }
 
     // Bot identification
     bool IsBot() const { return true; }
     bool IsActive() const { return _active.load(); }
 
-    // Async login state checking for race condition prevention
-    bool IsAsyncLoginInProgress() const {
-        std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_asyncLogin.mutex));
-        return _asyncLogin.inProgress;
-    }
+    // Process pending async login operations
+    void ProcessPendingLogin();
 
 private:
+    // Bot-specific safe callback processing (no socket access)
+    void ProcessBotQueryCallbacks();
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
 
-    // Async login state for scalability with thread safety
-    struct AsyncLoginState
+    // Bot-specific login handling
+    class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
     {
-        std::mutex mutex;
-        ObjectGuid characterGuid;
-        Player* player = nullptr;
-        bool inProgress = false;
-        std::chrono::steady_clock::time_point startTime;
+    private:
+        uint32 m_accountId;
+        ObjectGuid m_guid;
+    public:
+        BotLoginQueryHolder(uint32 accountId, ObjectGuid guid)
+            : m_accountId(accountId), m_guid(guid) { }
+        ObjectGuid GetGuid() const { return m_guid; }
+        uint32 GetAccountId() const { return m_accountId; }
+        bool Initialize();
     };
-    AsyncLoginState _asyncLogin;
+    void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
+
+    // Removed AsyncLoginState - using synchronous approach
 
     // AI Integration
     void SetAI(BotAI* ai) { _ai = ai; }
@@ -122,10 +135,24 @@ private:
     // Simple packet queues - NO TBB, NO BOOST
     std::queue<std::unique_ptr<WorldPacket>> _incomingPackets;
     std::queue<std::unique_ptr<WorldPacket>> _outgoingPackets;
-    mutable std::mutex _packetMutex;
+    mutable std::recursive_timed_mutex _packetMutex;
 
     // Bot state
     std::atomic<bool> _active{true};
+    std::atomic<bool> _destroyed{false};
+
+    // DEADLOCK FIX: Lock-free packet processing flag
+    std::atomic<bool> _packetProcessing{false};
+
+    // Async login state machine
+    std::atomic<LoginState> _loginState{LoginState::NONE};
+    std::shared_ptr<BotLoginQueryHolder> _pendingLoginHolder;
+    ObjectGuid _pendingLoginGuid;
+    std::chrono::steady_clock::time_point _loginStartTime;
+    static constexpr auto LOGIN_TIMEOUT = std::chrono::seconds(30);
+
+    // Query callback lifecycle management
+    std::atomic<bool> _hasActiveQueryCallbacks{false};
 
     // Bot AI system
     BotAI* _ai{nullptr};

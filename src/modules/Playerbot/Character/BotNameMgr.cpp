@@ -13,6 +13,7 @@
 #include "CharacterCache.h"
 #include "Database/PlayerbotDatabase.h"
 #include "PreparedStatement.h"
+#include "Random.h"
 #include <random>
 #include <algorithm>
 
@@ -86,13 +87,11 @@ std::string BotNameMgr::AllocateName(uint8 gender, uint32 characterGuid)
         return "";
     }
     
-    // Pick a random available name
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<size_t> dis(0, availableNames->size() - 1);
-    
+    // Pick a random available name using TrinityCore's thread-safe random generator
+    size_t randomIndex = urand(0, availableNames->size() - 1);
+
     auto iter = availableNames->begin();
-    std::advance(iter, dis(gen));
+    std::advance(iter, randomIndex);
     uint32 selectedNameId = *iter;
     
     // Get the name entry

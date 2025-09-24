@@ -22,6 +22,7 @@
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "Util.h"
+#include "Random.h"
 #include <sstream>
 #include <iomanip>
 #include <random>
@@ -684,16 +685,14 @@ std::string BotAccountMgr::GenerateSecurePassword()
         "0123456789"
         "!@#$%^&*";
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, sizeof(charset) - 2);
-
     std::string password;
     password.reserve(16);
 
+    // Use TrinityCore's thread-safe random number generator
     for (int i = 0; i < 16; ++i)
     {
-        password += charset[dis(gen)];
+        uint32 randomIndex = urand(0, sizeof(charset) - 2);
+        password += charset[randomIndex];
     }
 
     return password;

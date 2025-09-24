@@ -372,10 +372,8 @@ private:
     std::atomic<uint64_t> _totalTestsRun{0};
     std::atomic<uint64_t> _totalBotsSpawned{0};
 
-    // Random number generation
-    mutable std::mutex _randomMutex;
-    std::mt19937 _randomGenerator;
-    std::uniform_int_distribution<uint32_t> _randomDistribution;
+    // Random number generation - Removed thread-unsafe std::mt19937
+    // Now using TrinityCore's thread-safe urand() and frand() functions
 
     // Constants
     static constexpr uint32_t MAX_CONCURRENT_BOTS = 5000;

@@ -41,8 +41,7 @@ bool BotLoadTester::Initialize()
 
     TC_LOG_INFO("playerbot", "BotLoadTester: Initializing load testing framework...");
 
-    // Initialize random number generator
-    _randomGenerator.seed(static_cast<uint32_t>(std::chrono::steady_clock::now().time_since_epoch().count()));
+    // Removed _randomGenerator initialization - now using TrinityCore's thread-safe random functions
 
     // Load test history
     LoadTestHistory();
@@ -535,8 +534,7 @@ void BotLoadTester::ExecuteIdleBehavior(uint32_t botGuid)
 void BotLoadTester::ExecuteRandomMovement(uint32_t botGuid)
 {
     // Simulate random movement with pathfinding
-    std::lock_guard<std::mutex> lock(_randomMutex);
-    uint32_t movementTime = _randomDistribution(_randomGenerator) % 2000 + 500; // 500-2500ms
+    uint32_t movementTime = urand(500, 2500); // 500-2500ms (thread-safe)
 
     sPerformanceMonitor.RecordMetric(MetricType::AI_DECISION_TIME, movementTime, botGuid, "Random movement");
     sPerformanceMonitor.RecordMetric(MetricType::MOVEMENT_UPDATE, movementTime / 2, botGuid);
@@ -545,8 +543,7 @@ void BotLoadTester::ExecuteRandomMovement(uint32_t botGuid)
 void BotLoadTester::ExecuteCombatTraining(uint32_t botGuid)
 {
     // Simulate combat against training dummies
-    std::lock_guard<std::mutex> lock(_randomMutex);
-    uint32_t combatTime = _randomDistribution(_randomGenerator) % 1500 + 200; // 200-1700ms
+    uint32_t combatTime = urand(200, 1700); // 200-1700ms (thread-safe)
 
     sPerformanceMonitor.RecordMetric(MetricType::AI_DECISION_TIME, combatTime, botGuid, "Combat training");
     sPerformanceMonitor.RecordMetric(MetricType::SPELL_CAST, combatTime / 3, botGuid);
@@ -589,8 +586,7 @@ void BotLoadTester::ExecuteRaidSimulation(uint32_t botGuid)
 void BotLoadTester::ExecutePvPBehavior(uint32_t botGuid)
 {
     // Simulate PvP combat with frequent target switching
-    std::lock_guard<std::mutex> lock(_randomMutex);
-    uint32_t pvpDecisionTime = _randomDistribution(_randomGenerator) % 800 + 300; // 300-1100ms
+    uint32_t pvpDecisionTime = urand(300, 1100); // 300-1100ms (thread-safe)
 
     sPerformanceMonitor.RecordMetric(MetricType::AI_DECISION_TIME, pvpDecisionTime, botGuid, "PvP combat");
 
@@ -628,8 +624,7 @@ void BotLoadTester::ExecuteGuildBehavior(uint32_t botGuid)
 void BotLoadTester::ExecuteMixedBehavior(uint32_t botGuid)
 {
     // Randomly execute different behaviors
-    std::lock_guard<std::mutex> lock(_randomMutex);
-    uint32_t behaviorType = _randomDistribution(_randomGenerator) % 8;
+    uint32_t behaviorType = urand(0, 7); // 0-7 (thread-safe)
 
     switch (behaviorType)
     {
