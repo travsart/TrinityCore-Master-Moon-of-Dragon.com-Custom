@@ -47,6 +47,20 @@ class BotSocket;
 class TC_GAME_API BotSession final : public WorldSession
 {
 public:
+    // Bot-specific login handling (forward declaration moved to public)
+    class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
+    {
+    private:
+        uint32 m_accountId;
+        ObjectGuid m_guid;
+    public:
+        BotLoginQueryHolder(uint32 accountId, ObjectGuid guid)
+            : m_accountId(accountId), m_guid(guid) { }
+        ObjectGuid GetGuid() const { return m_guid; }
+        uint32 GetAccountId() const { return m_accountId; }
+        bool Initialize();
+    };
+
     explicit BotSession(uint32 bnetAccountId);
 
     // Factory method to create BotSession with dummy socket
@@ -55,7 +69,7 @@ public:
     virtual ~BotSession();
 
     // === WorldSession Overrides ===
-    void SendPacket(WorldPacket const* packet, bool forced = false);
+    void SendPacket(WorldPacket const* packet, bool forced = false) override;
     void QueuePacket(WorldPacket* packet);
     bool Update(uint32 diff, PacketFilter& updater);
 
@@ -98,32 +112,14 @@ public:
     // Process pending async login operations
     void ProcessPendingLogin();
 
-    // SYNCHRONOUS character data loading method
-    bool LoadCharacterDataSynchronously(ObjectGuid characterGuid);
+    // Handle async login query holder callback
+    void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
 
 private:
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
 
-    // Bot-specific login handling
-    class BotLoginQueryHolder : public CharacterDatabaseQueryHolder
-    {
-    private:
-        uint32 m_accountId;
-        ObjectGuid m_guid;
-    public:
-        BotLoginQueryHolder(uint32 accountId, ObjectGuid guid)
-            : m_accountId(accountId), m_guid(guid) { }
-        ObjectGuid GetGuid() const { return m_guid; }
-        uint32 GetAccountId() const { return m_accountId; }
-        bool Initialize();
-    };
-    void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
-
-    // Synchronous login query holder
-    class SynchronousLoginQueryHolder;
-
-    // Removed AsyncLoginState - using synchronous approach
+    // Removed AsyncLoginState - using async approach now
 
     // AI Integration
     void SetAI(BotAI* ai) { _ai = ai; }
@@ -155,6 +151,9 @@ private:
     // Account information
     uint32 _bnetAccountId;
     uint32 _simulatedLatency{50};
+
+    // Player loading state for async operations
+    ObjectGuid m_playerLoading;
 
     // Deleted copy operations
     BotSession(BotSession const&) = delete;

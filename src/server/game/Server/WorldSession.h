@@ -54,6 +54,10 @@ class Unit;
 class Warden;
 class WorldPacket;
 class WorldSession;
+
+namespace Playerbot {
+    class BotSession;
+}
 class WorldSocket;
 struct AuctionPosting;
 struct BlackMarketTemplate;
@@ -968,7 +972,11 @@ class TC_GAME_API WorldSession
 {
     public:
         WorldSession(uint32 id, std::string&& name, uint32 battlenetAccountId, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time,
-            std::string os, Minutes timezoneOffset, uint32 build, ClientBuild::VariantId clientBuildVariant, LocaleConstant locale, uint32 recruiter, bool isARecruiter);
+            std::string os, Minutes timezoneOffset, uint32 build, ClientBuild::VariantId clientBuildVariant, LocaleConstant locale, uint32 recruiter, bool isARecruiter
+#ifdef BUILD_PLAYERBOT
+            , bool is_bot = false
+#endif
+            );
         ~WorldSession();
 
         bool PlayerLoading() const { return !m_playerLoading.IsEmpty(); }
@@ -979,7 +987,7 @@ class TC_GAME_API WorldSession
 
         bool IsAddonRegistered(std::string_view prefix) const;
 
-        void SendPacket(WorldPacket const* packet, bool forced = false);
+        virtual void SendPacket(WorldPacket const* packet, bool forced = false);
 
         void SendNotification(char const* format, ...) ATTR_PRINTF(2, 3);
         void SendNotification(uint32 stringId, ...);
@@ -1018,6 +1026,10 @@ class TC_GAME_API WorldSession
         std::string const& GetOS() const { return _os; }
         uint32 GetClientBuild() const { return _clientBuild; }
         ClientBuild::VariantId const& GetClientBuildVariant() const { return _clientBuildVariant; }
+
+#ifdef BUILD_PLAYERBOT
+        bool IsBot() const { return _isBot; }
+#endif
 
         bool CanAccessAlliedRaces() const;
         Warden* GetWarden() { return _warden.get(); }
@@ -1917,6 +1929,7 @@ class TC_GAME_API WorldSession
         AsyncCallbackProcessor<SQLQueryHolderCallback> _queryHolderProcessor;
 
     friend class World;
+    friend class Playerbot::BotSession;
     protected:
         class DosProtection
         {
@@ -2028,6 +2041,10 @@ class TC_GAME_API WorldSession
         std::unique_ptr<CollectionMgr> _collectionMgr;
 
         ConnectToKey _instanceConnectKey;
+
+#ifdef BUILD_PLAYERBOT
+        bool _isBot;
+#endif
 
         WorldSession(WorldSession const& right) = delete;
         WorldSession& operator=(WorldSession const& right) = delete;
