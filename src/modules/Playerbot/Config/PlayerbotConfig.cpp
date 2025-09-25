@@ -438,8 +438,8 @@ void PlayerbotConfig::InitializeLogging()
         uint8 configLevel = GetUInt("Playerbot.Log.Level", 4);
         std::string configFile = GetString("Playerbot.Log.File", "Playerbot.log");
 
-        printf("=== PLAYERBOT CONFIG DEBUG: Applying config - Level: %d, File: '%s' ===\n",
-               (int)configLevel, configFile.c_str());
+        TC_LOG_DEBUG("module.playerbot.config",
+               "Applying config - Level: {}, File: '{}'", (int)configLevel, configFile);
 
         if (configLevel <= 5)
         {
@@ -447,7 +447,7 @@ void PlayerbotConfig::InitializeLogging()
             mgr->SetModuleConfig("playerbot", configLevel, configFile);
 
             // Re-initialize with the new config (this should recreate the logger with correct settings)
-            printf("=== PLAYERBOT CONFIG DEBUG: Re-initializing module logging with updated config ===\n");
+            TC_LOG_DEBUG("module.playerbot.config", "Re-initializing module logging with updated config");
             if (!mgr->InitializeModuleLogging("playerbot"))
             {
                 TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to re-initialize module logging with updated config");

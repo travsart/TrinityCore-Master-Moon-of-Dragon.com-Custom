@@ -75,16 +75,14 @@ public:
     void ProcessBotPackets();
 
 
-    // Character Login System (Async State Machine Pattern)
+    // Character Login System (SYNCHRONOUS Pattern)
     bool LoginCharacter(ObjectGuid characterGuid);
 
-    // Async login state tracking
+    // Simplified login state tracking for synchronous operation
     enum class LoginState : uint8
     {
         NONE,                   // Not logging in
-        QUERY_PENDING,          // Query submitted, waiting for callback
-        QUERY_COMPLETE,         // Query callback completed
-        LOGIN_IN_PROGRESS,      // HandleBotPlayerLogin in progress
+        LOGIN_IN_PROGRESS,      // LoginCharacter() executing synchronously
         LOGIN_COMPLETE,         // Login successful
         LOGIN_FAILED            // Login failed
     };
@@ -100,9 +98,10 @@ public:
     // Process pending async login operations
     void ProcessPendingLogin();
 
+    // SYNCHRONOUS character data loading method
+    bool LoadCharacterDataSynchronously(ObjectGuid characterGuid);
+
 private:
-    // Bot-specific safe callback processing (no socket access)
-    void ProcessBotQueryCallbacks();
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
 
@@ -120,6 +119,9 @@ private:
         bool Initialize();
     };
     void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
+
+    // Synchronous login query holder
+    class SynchronousLoginQueryHolder;
 
     // Removed AsyncLoginState - using synchronous approach
 
@@ -144,15 +146,8 @@ private:
     // DEADLOCK FIX: Lock-free packet processing flag
     std::atomic<bool> _packetProcessing{false};
 
-    // Async login state machine
+    // Synchronous login state machine
     std::atomic<LoginState> _loginState{LoginState::NONE};
-    std::shared_ptr<BotLoginQueryHolder> _pendingLoginHolder;
-    ObjectGuid _pendingLoginGuid;
-    std::chrono::steady_clock::time_point _loginStartTime;
-    static constexpr auto LOGIN_TIMEOUT = std::chrono::seconds(30);
-
-    // Query callback lifecycle management
-    std::atomic<bool> _hasActiveQueryCallbacks{false};
 
     // Bot AI system
     BotAI* _ai{nullptr};

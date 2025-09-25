@@ -53,7 +53,6 @@ void BotWorldSessionMgr::Shutdown()
             }
             session->LogoutPlayer(true);
         }
-        delete session;
     }
 
     _botSessions.clear();
@@ -108,6 +107,17 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
+    // CRITICAL FIX: Check for existing sessions by account ID to prevent duplicates
+    for (auto const& [guid, session] : _botSessions)
+    {
+        if (session && session->GetAccountId() == accountId)
+        {
+            TC_LOG_WARN("module.playerbot.session", "🔧 DUPLICATE SESSION PREVENTION: Account {} already has an active bot session with character {}, rejecting new character {}",
+                accountId, guid.ToString(), playerGuid.ToString());
+            return false;
+        }
+    }
+
     TC_LOG_INFO("module.playerbot.session", "🔧 Adding bot {} using proven BotSession approach", playerGuid.ToString());
 
     // CRITICAL FIX: Synchronize character cache with playerbot_characters database before login
@@ -129,8 +139,8 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    // Store the session (cast to WorldSession* for compatibility)
-    _botSessions[playerGuid] = botSession.get();
+    // Store the shared_ptr to keep the session alive
+    _botSessions[playerGuid] = botSession;
 
     // Start the async login process
     if (!botSession->LoginCharacter(playerGuid))
@@ -158,7 +168,7 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
         return;
     }
 
-    WorldSession* session = it->second;
+    std::shared_ptr<BotSession> session = it->second;
     if (session && session->GetPlayer())
     {
         // MEMORY SAFETY: Protect against use-after-free when accessing Player name
@@ -172,7 +182,7 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
         session->LogoutPlayer(true);
     }
 
-    delete session;
+    // Remove from map - shared_ptr will automatically clean up when no more references exist
     _botSessions.erase(it);
 }
 
@@ -194,7 +204,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     // CRITICAL DEADLOCK FIX: Collect sessions to update BEFORE processing
     // This eliminates the deadlock by releasing the mutex before calling Update()
-    std::vector<std::pair<ObjectGuid, BotSession*>> sessionsToUpdate;
+    std::vector<std::pair<ObjectGuid, std::shared_ptr<BotSession>>> sessionsToUpdate;
     std::vector<ObjectGuid> sessionsToRemove;
 
     // PHASE 1: Quick collection under mutex (minimal lock time)
@@ -204,10 +214,10 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
         for (auto it = _botSessions.begin(); it != _botSessions.end(); ++it)
         {
-            WorldSession* session = it->second;
+            std::shared_ptr<BotSession> session = it->second;
             ObjectGuid guid = it->first;
 
-            // CRITICAL SAFETY: Validate session type before casting
+            // CRITICAL SAFETY: Validate shared_ptr
             if (!session)
             {
                 TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Null session found in bot sessions map for {}", guid.ToString());
@@ -216,10 +226,10 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             }
 
             // CRITICAL SAFETY: All sessions in bot sessions map should be BotSessions
-            BotSession* botSession = static_cast<BotSession*>(session);
-            if (!botSession->IsBot() || !botSession->IsActive())
+            // No need to cast since we already have shared_ptr<BotSession>
+            if (!session->IsBot())
             {
-                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Invalid session found in bot sessions map for {}", guid.ToString());
+                TC_LOG_ERROR("module.playerbot.session", "🔧 CRITICAL: Non-bot session found in bot sessions map for {}", guid.ToString());
                 sessionsToRemove.push_back(guid);
                 continue;
             }
@@ -227,14 +237,14 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             // Check login state for sessions that are still loading
             if (_botsLoading.find(guid) != _botsLoading.end())
             {
-                if (botSession->IsLoginComplete())
+                if (session->IsLoginComplete())
                 {
                     _botsLoading.erase(guid);
                     TC_LOG_INFO("module.playerbot.session", "🔧 ✅ Bot login completed for: {}", guid.ToString());
                     // Add to update list - login complete
-                    sessionsToUpdate.emplace_back(guid, botSession);
+                    sessionsToUpdate.emplace_back(guid, session);
                 }
-                else if (botSession->IsLoginFailed())
+                else if (session->IsLoginFailed())
                 {
                     TC_LOG_ERROR("module.playerbot.session", "🔧 Bot login failed for: {}", guid.ToString());
                     _botsLoading.erase(guid);
@@ -244,13 +254,13 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 else
                 {
                     // Still loading - add to update list to process async login
-                    sessionsToUpdate.emplace_back(guid, botSession);
+                    sessionsToUpdate.emplace_back(guid, session);
                 }
             }
             else
             {
                 // Normal session - add to update list
-                sessionsToUpdate.emplace_back(guid, botSession);
+                sessionsToUpdate.emplace_back(guid, session);
             }
         }
 
@@ -290,7 +300,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
                 bool Process(WorldPacket* /*packet*/) override { return true; }
                 bool ProcessUnsafe() const override { return true; }
-            } filter(botSession);
+            } filter(botSession.get());
 
             // DEADLOCK-FREE: Update session without holding _sessionsMutex
             if (!botSession->Update(diff, filter))

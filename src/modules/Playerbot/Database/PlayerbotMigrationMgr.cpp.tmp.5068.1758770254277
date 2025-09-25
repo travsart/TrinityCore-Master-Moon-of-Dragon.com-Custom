@@ -538,7 +538,8 @@ int PlayerbotMigrationMgr::CompareVersions(std::string const& version1, std::str
         return 0;
     }
     catch (std::exception const& e) {
-        TC_LOG_ERROR("module.playerbot.migration", "Error in CompareVersions: v1='{}', v2='{}', exception: {}", version1, version2, e.what());
+        printf("[DEBUG] ERROR in CompareVersions: v1='%s', v2='%s', exception: %s\n", version1.c_str(), version2.c_str(), e.what());
+        fflush(stdout);
         // Fallback to string comparison if numeric conversion fails
         return version1.compare(version2);
     }

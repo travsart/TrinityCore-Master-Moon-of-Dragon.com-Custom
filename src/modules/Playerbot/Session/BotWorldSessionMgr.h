@@ -20,6 +20,10 @@ class Player;
 class SQLQueryHolderBase;
 
 namespace Playerbot {
+    class BotSession;
+}
+
+namespace Playerbot {
 
 /**
  * Clean implementation using TrinityCore's native login pattern
@@ -68,7 +72,7 @@ private:
     bool SynchronizeCharacterCache(ObjectGuid playerGuid);
 
     // Session management
-    std::unordered_map<ObjectGuid, WorldSession*> _botSessions;
+    std::unordered_map<ObjectGuid, std::shared_ptr<BotSession>> _botSessions;
     std::unordered_set<ObjectGuid> _botsLoading;
 
     // Thread safety

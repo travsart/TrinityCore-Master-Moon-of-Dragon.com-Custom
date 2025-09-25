@@ -132,32 +132,13 @@ void BotSpawner::Update(uint32 /*diff*/)
     // Check for real players and trigger spawning if needed
     CheckAndSpawnForPlayers();
 
-    // DEBUG: Log update counter and timing every 1000 updates to diagnose timer issue
-    if (updateCounter % 1000 == 0) // Log every 1k updates for debugging
+    // Minimal debug logging every 50k updates to prevent spam
+    if (updateCounter % 50000 == 0) // Log every 50k updates for status monitoring
     {
-        printf("=== CRITICAL DEBUG: ENTERED 1000 update logging condition ===\n");
-        fflush(stdout);
         uint32 timeSinceLastSpawn = currentTime - _lastTargetCalculation;
-        TC_LOG_INFO("module.playerbot.spawner",
-            "=== BotSpawner::Update #{} - enabled: {}, active bots: {}, can spawn more: {}, time since last spawn: {}ms, TARGET_INTERVAL: {}ms ===",
-            updateCounter, _enabled.load(), GetActiveBotCount(), CanSpawnMore(), timeSinceLastSpawn, TARGET_CALCULATION_INTERVAL);
-    }
-
-    // Force a spawn cycle every 1000 updates for testing
-    if (updateCounter % 1000 == 0)
-    {
-        TC_LOG_INFO("module.playerbot.spawner", "=== FORCED SPAWN CYCLE TEST #{} ===", updateCounter);
-        if (_config.enableDynamicSpawning)
-        {
-            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
-            CalculateZoneTargets();
-            SpawnToPopulationTarget();
-            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Completed spawn cycle");
-        }
-        else
-        {
-            TC_LOG_INFO("module.playerbot.spawner", "*** FORCED SPAWNING CYCLE: Dynamic spawning disabled, enableDynamicSpawning = {}", _config.enableDynamicSpawning);
-        }
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "BotSpawner status #{} - active bots: {}, time since last calculation: {}ms",
+            updateCounter, GetActiveBotCount(), timeSinceLastSpawn);
     }
 
     // Process spawn queue (mutex-protected)
@@ -524,9 +505,11 @@ ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)
         if (!characters.empty())
         {
             TC_LOG_TRACE("module.playerbot.spawner", "Found {} existing characters for account {}", characters.size(), accountId);
-            // Pick a random character from available ones
-            uint32 index = urand(0, characters.size() - 1);
-            return characters[index];
+            // CRITICAL FIX: Use DETERMINISTIC character selection instead of random to prevent session conflicts
+            // Always pick the first character (lowest GUID) to ensure consistency
+            TC_LOG_INFO("module.playerbot.spawner", "🎲 DETERMINISTIC: Selecting first character {} from {} available for account {}",
+                characters[0].ToString(), characters.size(), accountId);
+            return characters[0];
         }
         else
         {
