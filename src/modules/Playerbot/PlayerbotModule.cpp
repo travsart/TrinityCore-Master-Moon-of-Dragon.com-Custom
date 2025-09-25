@@ -7,7 +7,7 @@
  * option) any later version.
  */
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
 
 #include "PlayerbotModule.h"
 #include "Config/PlayerbotConfig.h"
@@ -417,4 +417,4 @@ void PlayerbotModule::ShutdownDatabase()
     TC_LOG_DEBUG("module.playerbot", "Playerbot Database connection closed");
 }
 
-#endif // PLAYERBOT_ENABLED
+#endif // BUILD_PLAYERBOT

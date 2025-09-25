@@ -29,6 +29,10 @@
 #include <boost/asio/io_context.hpp>
 #include "Chat/Chat.h"
 #include "Database/QueryHolder.h"
+#include "Group/GroupInvitationHandler.h"
+#include "PartyPackets.h"
+#include "Opcodes.h"
+#include "Group.h"
 
 namespace Playerbot {
 
@@ -477,6 +481,12 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
 
     // Note: forced parameter is not used for bot sessions but required for interface
     (void)forced;
+
+    // CRITICAL: Intercept party invitation packets for bot handling
+    if (packet->GetOpcode() == SMSG_PARTY_INVITE)
+    {
+        HandleGroupInvitation(*packet);
+    }
 
     // Simple packet handling - just store in outgoing queue
     std::lock_guard<std::recursive_timed_mutex> lock(_packetMutex);
@@ -929,5 +939,75 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
 // Process query callbacks - ensures async login callbacks are handled
 // This is called by BotSessionManager::ProcessBotCallbacks()
+
+void BotSession::HandleGroupInvitation(WorldPacket const& packet)
+{
+    // Validate session and player
+    Player* bot = GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: No player for bot session");
+        return;
+    }
+
+    // Check if bot has AI with group handler
+    if (!_ai)
+    {
+        TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: No AI for bot {}", bot->GetName());
+        return;
+    }
+
+    GroupInvitationHandler* handler = _ai->GetGroupInvitationHandler();
+    if (!handler)
+    {
+        TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: No group handler for bot {}", bot->GetName());
+        return;
+    }
+
+    try
+    {
+        // For SMSG_PARTY_INVITE, we need to manually parse the packet
+        // The packet structure from TrinityCore is already parsed when we receive it
+        // We just need to check if bot has a pending invite
+
+        Group* inviteGroup = bot->GetGroupInvite();
+        if (!inviteGroup)
+        {
+            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Bot {} has no pending group invite", bot->GetName());
+            return;
+        }
+
+        // Get inviter from the group
+        ObjectGuid inviterGuid = inviteGroup->GetLeaderGUID();
+        Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
+
+        if (!inviter)
+        {
+            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Inviter not found for bot {}", bot->GetName());
+            return;
+        }
+
+        // Create a PartyInvite packet for the handler
+        WorldPackets::Party::PartyInvite partyInvite;
+        partyInvite.Initialize(inviter, 0, true);
+
+        // Process the invitation through the handler
+        if (handler->HandleInvitation(partyInvite))
+        {
+            TC_LOG_INFO("module.playerbot.group", "Bot {} queued invitation from {} for processing",
+                bot->GetName(), inviter->GetName());
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot.group", "Bot {} rejected invitation from {}",
+                bot->GetName(), inviter->GetName());
+        }
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.group", "Exception handling party invitation for bot {}: {}",
+            bot->GetName(), e.what());
+    }
+}
 
 } // namespace Playerbot

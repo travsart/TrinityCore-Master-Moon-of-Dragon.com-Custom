@@ -88,6 +88,9 @@ public:
     // === Bot-Specific Methods ===
     void ProcessBotPackets();
 
+    // Group invitation handling
+    void HandleGroupInvitation(WorldPacket const& packet);
+
 
     // Character Login System (SYNCHRONOUS Pattern)
     bool LoginCharacter(ObjectGuid characterGuid);

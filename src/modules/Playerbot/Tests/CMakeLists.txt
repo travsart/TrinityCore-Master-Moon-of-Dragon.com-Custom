@@ -21,6 +21,13 @@ if(BUILD_PLAYERBOT_TESTS)
         BotSpawnOrchestratorTest.cpp
         BotPerformanceMonitorTest.cpp
         BotSpawnEventBusTest.cpp
+        # Group functionality test suite
+        TestUtilities.cpp
+        GroupFunctionalityTests.cpp
+        StressAndEdgeCaseTests.cpp
+        PerformanceValidator.cpp
+        AutomatedTestRunner.cpp
+        ProductionValidationDemo.cpp
         # Future test files will be added here
     )
 

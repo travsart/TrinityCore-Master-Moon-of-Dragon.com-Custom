@@ -29,6 +29,7 @@ namespace Playerbot
 
 // Forward declarations
 class Value;
+class GroupInvitationHandler;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -83,7 +84,7 @@ class TC_GAME_API BotAI
 {
 public:
     explicit BotAI(Player* bot);
-    virtual ~BotAI() = default;
+    virtual ~BotAI();
 
     // Core AI interface
     virtual void UpdateAI(uint32 diff);
@@ -144,6 +145,11 @@ public:
     void SetEnabled(bool enabled) { _enabled = enabled; }
     bool IsEnabled() const { return _enabled; }
 
+    // Group management
+    void OnGroupJoined(Group* group);
+    void OnGroupLeft();
+    void HandleGroupChange();
+
     // Performance metrics
     struct PerformanceData
     {
@@ -181,6 +187,10 @@ public:
     void Whisper(std::string const& text, Player* target);
     void PlayEmote(uint32 emoteId);
 
+    // Group management
+    GroupInvitationHandler* GetGroupInvitationHandler() { return _groupInvitationHandler.get(); }
+    GroupInvitationHandler const* GetGroupInvitationHandler() const { return _groupInvitationHandler.get(); }
+
     // Enhanced performance metrics
     struct EnhancedMetrics
     {
@@ -202,6 +212,9 @@ protected:
 
     void UpdatePerformanceMetrics(uint32 updateTimeMs);
     void LogAIDecision(std::string const& action, float score) const;
+
+    // Strategy initialization
+    void InitializeDefaultStrategies();
 
     // Enhanced internal update methods
     virtual void UpdateStrategies(uint32 diff);
@@ -261,6 +274,9 @@ private:
 
     // Thread safety
     mutable std::shared_mutex _mutex;
+
+    // Group management components
+    std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
 };
 
 // Default AI implementation for backward compatibility

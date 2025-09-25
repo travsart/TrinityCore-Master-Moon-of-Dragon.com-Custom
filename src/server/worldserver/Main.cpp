@@ -53,7 +53,7 @@
 #include "WorldSocket.h"
 #include "WorldSocketMgr.h"
 #include "Util.h"
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
 #include "modules/Playerbot/PlayerbotModule.h"
 #endif
 #include <openssl/opensslv.h>
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
     if (!sWorld->SetInitialWorldSettings())
         return 1;
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
     // Initialize Playerbot Module after world is set up
     if (!PlayerbotModule::Initialize())
     {
@@ -470,7 +470,7 @@ int main(int argc, char** argv)
 
     sScriptMgr->OnShutdown();
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
     // Shutdown Playerbot Module
     PlayerbotModule::Shutdown();
 #endif

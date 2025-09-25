@@ -90,6 +90,13 @@ bool BotSpawner::Initialize()
         // NOTE: SpawnToPopulationTarget() will be called when first player is detected
         TC_LOG_INFO("module.playerbot", "BotSpawner: Waiting for first player login to trigger spawning");
     }
+    else
+    {
+        TC_LOG_INFO("module.playerbot", "Static spawning enabled - bots will spawn immediately after world initialization");
+        TC_LOG_INFO("module.playerbot", "BotSpawner: Step 4 - CalculateZoneTargets()...");
+        CalculateZoneTargets();
+        TC_LOG_INFO("module.playerbot", "BotSpawner: Static spawning mode - immediate spawning will occur in Update()");
+    }
 
     return true;
 }
@@ -209,14 +216,17 @@ void BotSpawner::Update(uint32 /*diff*/)
     {
         if (_config.enableDynamicSpawning)
         {
-            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
+            TC_LOG_INFO("module.playerbot.spawner", "*** DYNAMIC SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
             CalculateZoneTargets();
             SpawnToPopulationTarget();
-            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Completed spawn cycle");
+            TC_LOG_INFO("module.playerbot.spawner", "*** DYNAMIC SPAWNING CYCLE: Completed spawn cycle");
         }
         else
         {
-            TC_LOG_INFO("module.playerbot.spawner", "*** SPAWNING CYCLE: Dynamic spawning disabled, skipping spawn cycle");
+            TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
+            CalculateZoneTargets();
+            SpawnToPopulationTarget();
+            TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Completed spawn cycle");
         }
         _lastTargetCalculation = currentTime;
     }
@@ -1069,11 +1079,9 @@ void BotSpawner::SpawnToPopulationTarget()
 {
     TC_LOG_TRACE("module.playerbot.spawner", "SpawnToPopulationTarget called, enableDynamicSpawning: {}", _config.enableDynamicSpawning);
 
-    if (!_config.enableDynamicSpawning)
-    {
-        TC_LOG_TRACE("module.playerbot.spawner", "Dynamic spawning disabled, skipping population target");
-        return;
-    }
+    // Allow spawning in both dynamic and static modes
+    // Dynamic: triggered by player login
+    // Static: triggered immediately during Update() cycles
 
     std::vector<SpawnRequest> spawnRequests;
 

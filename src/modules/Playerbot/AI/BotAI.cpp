@@ -21,9 +21,15 @@
 #include "SharedDefines.h"
 #include "Opcodes.h"
 #include "Log.h"
+#include "Group/GroupInvitationHandler.h"
+#include "Strategy/LeaderFollowBehavior.h"
 
 namespace Playerbot
 {
+
+// Forward declarations for strategy classes
+class IdleStrategy;
+class FollowStrategy;
 
 // TriggerResultComparator implementation
 bool TriggerResultComparator::operator()(TriggerResult const& a, TriggerResult const& b) const
@@ -44,8 +50,17 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _state.lastStateChange = std::chrono::steady_clock::now();
     _performanceData.lastUpdate = std::chrono::steady_clock::now();
 
+    // Initialize group management components
+    _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
+
+    // Initialize default strategies for basic bot functionality
+    InitializeDefaultStrategies();
+
     TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot ? _bot->GetGUID().ToString() : "null");
 }
+
+// Destructor - required for unique_ptr with forward declaration
+BotAI::~BotAI() = default;
 
 void BotAI::UpdateAI(uint32 diff)
 {
@@ -55,6 +70,12 @@ void BotAI::UpdateAI(uint32 diff)
     auto startTime = std::chrono::steady_clock::now();
 
     _timeSinceLastUpdate += diff;
+
+    // Update group invitation handler (always update for quick response)
+    if (_groupInvitationHandler)
+    {
+        _groupInvitationHandler->Update(diff);
+    }
 
     // Only update at specified interval
     if (_timeSinceLastUpdate < _updateIntervalMs)
@@ -433,6 +454,19 @@ void BotAI::DoUpdateAI(uint32 diff)
 
     // Update strategies based on current situation
     UpdateStrategies();
+
+    // Update leader follow behavior if active
+    if (auto followStrategy = GetStrategy("leader_follow"))
+    {
+        if (followStrategy->IsActive(this))
+        {
+            if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
+            {
+                followBehavior->UpdateMovement(this, diff);
+                followBehavior->UpdateFormation(this);
+            }
+        }
+    }
 
     // Process triggers from active strategies
     ProcessTriggers();
@@ -1002,5 +1036,196 @@ void BotAIFactory::InitializeDefaultValues(BotAI* ai)
     ai->SetValue("in_group", 0.0f);
     ai->SetValue("group_size", 1.0f);
 }
+
+void BotAI::InitializeDefaultStrategies()
+{
+    if (!_bot)
+        return;
+
+    TC_LOG_DEBUG("playerbots.ai", "Initializing default strategies for bot {}", _bot->GetName());
+
+    // Add the follow behavior strategy for group coordination
+    if (_bot->GetGroup())
+    {
+        auto followBehavior = std::make_unique<LeaderFollowBehavior>();
+        followBehavior->InitializeActions();
+        followBehavior->InitializeTriggers();
+        followBehavior->InitializeValues();
+        AddStrategy(std::move(followBehavior));
+        TC_LOG_DEBUG("playerbots.ai", "Added LeaderFollowBehavior strategy for bot {} in group", _bot->GetName());
+    }
+
+    TC_LOG_INFO("playerbots.ai", "Default strategies initialized for bot {}", _bot->GetName());
+}
+
+void BotAI::OnGroupJoined(Group* group)
+{
+    if (!_bot || !group)
+        return;
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} joined group", _bot->GetName());
+
+    // Add leader follow behavior if not already present
+    if (!GetStrategy("leader_follow"))
+    {
+        auto followBehavior = std::make_unique<LeaderFollowBehavior>();
+        followBehavior->InitializeActions();
+        followBehavior->InitializeTriggers();
+        followBehavior->InitializeValues();
+        AddStrategy(std::move(followBehavior));
+    }
+
+    // Activate the leader follow strategy
+    if (auto followStrategy = GetStrategy("leader_follow"))
+    {
+        followStrategy->OnActivate(this);
+
+        // Set the follow target to the group leader if we're not the leader
+        if (group->GetLeaderGUID() != _bot->GetGUID())
+        {
+            if (auto leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
+            {
+                if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
+                {
+                    followBehavior->SetFollowTarget(leader);
+                }
+            }
+        }
+    }
+}
+
+void BotAI::OnGroupLeft()
+{
+    if (!_bot)
+        return;
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} left group", _bot->GetName());
+
+    // Deactivate leader follow strategy
+    if (auto followStrategy = GetStrategy("leader_follow"))
+    {
+        followStrategy->OnDeactivate(this);
+        DeactivateStrategy("leader_follow");
+    }
+}
+
+void BotAI::HandleGroupChange()
+{
+    if (!_bot)
+        return;
+
+    Group* group = _bot->GetGroup();
+
+    if (group)
+    {
+        // We're in a group, ensure follow behavior is active
+        OnGroupJoined(group);
+    }
+    else
+    {
+        // We're not in a group, clean up follow behavior
+        OnGroupLeft();
+    }
+}
+
+// ============================================================================
+// Basic Strategy Implementations
+// ============================================================================
+
+// Simple idle strategy for basic bot movement and actions
+class IdleStrategy : public Strategy
+{
+public:
+    IdleStrategy() : Strategy("idle") {}
+
+    void InitializeActions() override
+    {
+        // Add basic idle actions (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    void InitializeTriggers() override
+    {
+        // Add basic triggers (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    void InitializeValues() override
+    {
+        // Add basic values (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    StrategyRelevance CalculateRelevance(BotAI* ai) const override
+    {
+        StrategyRelevance relevance;
+        // Idle strategy is always relevant at a low level
+        relevance.survivalRelevance = 15.0f; // Above activation threshold (10.0f)
+        return relevance;
+    }
+
+    void OnActivate(BotAI* ai) override
+    {
+        TC_LOG_DEBUG("playerbots.ai.strategy", "IdleStrategy activated for bot");
+    }
+
+    void OnDeactivate(BotAI* ai) override
+    {
+        TC_LOG_DEBUG("playerbots.ai.strategy", "IdleStrategy deactivated for bot");
+    }
+};
+
+// Simple follow strategy for group behavior
+class FollowStrategy : public Strategy
+{
+public:
+    FollowStrategy() : Strategy("follow") {}
+
+    void InitializeActions() override
+    {
+        // Add follow actions (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    void InitializeTriggers() override
+    {
+        // Add follow triggers (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    void InitializeValues() override
+    {
+        // Add follow values (will be implemented as needed)
+        // For now, this strategy just provides a framework
+    }
+
+    StrategyRelevance CalculateRelevance(BotAI* ai) const override
+    {
+        StrategyRelevance relevance;
+
+        // Check if bot is in a group and should follow
+        if (ai && ai->GetBot())
+        {
+            Group* group = ai->GetBot()->GetGroup();
+            if (group && group->GetMembersCount() > 1)
+            {
+                // High relevance when in group
+                relevance.socialRelevance = 50.0f; // High priority
+            }
+        }
+
+        return relevance;
+    }
+
+    void OnActivate(BotAI* ai) override
+    {
+        TC_LOG_DEBUG("playerbots.ai.strategy", "FollowStrategy activated for bot");
+    }
+
+    void OnDeactivate(BotAI* ai) override
+    {
+        TC_LOG_DEBUG("playerbots.ai.strategy", "FollowStrategy deactivated for bot");
+    }
+};
 
 } // namespace Playerbot

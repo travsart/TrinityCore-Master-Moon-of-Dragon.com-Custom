@@ -15,7 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
 
 #include "PlayerbotConfig.h"
 #include "Log.h"
@@ -559,4 +559,4 @@ PlayerbotConfig::PerformanceMetrics PlayerbotConfig::GetPerformanceMetrics() con
     return _metrics;
 }
 
-#endif // PLAYERBOT_ENABLED
+#endif // BUILD_PLAYERBOT

@@ -220,7 +220,7 @@ target_include_directories(scripts
 
 # Add Playerbot support if enabled
 if(BUILD_PLAYERBOT)
-  target_compile_definitions(scripts PRIVATE PLAYERBOT_ENABLED=1)
+  target_compile_definitions(scripts PRIVATE BUILD_PLAYERBOT=1)
   target_include_directories(scripts PRIVATE
     ${CMAKE_SOURCE_DIR}/src/modules/Playerbot
     ${CMAKE_SOURCE_DIR}/src/modules/Playerbot/Scripts)

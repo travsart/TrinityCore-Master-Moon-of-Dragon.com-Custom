@@ -110,7 +110,7 @@
 #include "WorldStateMgr.h"
 #include <zlib.h>
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
 #include "Lifecycle/BotSpawner.h"
 #endif
 
@@ -379,7 +379,7 @@ void World::AddSession_(WorldSession* s)
         return;
     }
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
     // Check if this is a real player session (not a bot)
     // Bot accounts typically have IDs >= 100000
     if (s->GetAccountId() < 100000)

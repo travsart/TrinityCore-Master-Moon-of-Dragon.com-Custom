@@ -18,7 +18,7 @@
 #ifndef TRINITY_PLAYERBOTMODULE_H
 #define TRINITY_PLAYERBOTMODULE_H
 
-#ifdef PLAYERBOT_ENABLED
+#ifdef BUILD_PLAYERBOT
 
 #include "Define.h"
 #include <string>
@@ -176,5 +176,5 @@ private:
     static constexpr uint32 MODULE_VERSION_PATCH = 0;
 };
 
-#endif // PLAYERBOT_ENABLED
+#endif // BUILD_PLAYERBOT
 #endif // TRINITY_PLAYERBOTMODULE_H

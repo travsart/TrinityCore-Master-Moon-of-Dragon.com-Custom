@@ -81,6 +81,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
 
+    # Group Management System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+
+    # Movement System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.h
@@ -114,6 +122,14 @@ set(PLAYERBOT_SOURCES
     # Phase 2: Enhanced Session Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
+
+    # AI Combat System - Group Combat Coordination
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.h
 
     # Phase 2: Interface Definitions (header-only)
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
@@ -182,6 +198,8 @@ source_group("AI" FILES
 source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.h
 )
 
 source_group("AI\\Actions" FILES
@@ -189,6 +207,8 @@ source_group("AI\\Actions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
 )
 
 source_group("AI\\Triggers" FILES
@@ -196,9 +216,24 @@ source_group("AI\\Triggers" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.h
 )
 
+source_group("AI\\Combat" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
+)
+
 source_group("AI\\Values" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
+)
+
+source_group("Group" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+)
+
+source_group("Movement" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
 )
 
 source_group("Account" FILES
@@ -324,7 +359,7 @@ endif()
 # Enterprise preprocessor definitions
 target_compile_definitions(playerbot
     PRIVATE
-        PLAYERBOT_ENABLED=1
+        BUILD_PLAYERBOT=1
         TRINITY_API_EXPORT_PLAYERBOT
         $<$<CONFIG:Debug>:PLAYERBOT_DEBUG=1>
         $<$<CONFIG:Release>:PLAYERBOT_RELEASE=1>
@@ -399,8 +434,7 @@ endif()
 if(TARGET game)
     target_link_libraries(game PRIVATE playerbot)
     target_compile_definitions(game PRIVATE
-        WITH_PLAYERBOTS
-        PLAYERBOT_ENABLED=1
+        BUILD_PLAYERBOT=1
     )
 endif()
 
