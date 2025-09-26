@@ -235,6 +235,13 @@ protected:
     void EvaluateTrigger(Trigger* trigger);
     void HandleTriggeredAction(TriggerResult const& result);
 
+    // Virtual combat methods for class-specific AI
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
+
 private:
     Player* _bot;
     AIState _state;

@@ -581,8 +581,6 @@ bool GroupInvitationHandler::ProcessNextInvitation()
         return false;
     }
 
-    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler::ProcessNextInvitation called for bot {} - Current inviter: {}, Queue size: {}",
-        _bot->GetName(), _currentInviter.ToString(), _pendingInvitations.size());
 
     // Check if we're already processing an invitation
     if (!_currentInviter.IsEmpty())
@@ -624,7 +622,6 @@ bool GroupInvitationHandler::ProcessNextInvitation()
     // Process next invitation from queue
     if (_pendingInvitations.empty())
     {
-        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: No pending invitations for bot {}", _bot->GetName());
         return false;
     }
 

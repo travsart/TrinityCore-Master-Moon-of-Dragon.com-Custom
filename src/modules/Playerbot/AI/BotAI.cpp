@@ -177,9 +177,8 @@ AIUpdateResult BotAI::UpdateEnhanced(uint32 diff)
         // Update movement
         UpdateMovement(diff);
 
-        // Update combat if needed
-        if (_aiState == BotAIState::COMBAT)
-            UpdateCombat(diff);
+        // Always update combat to check state transitions
+        UpdateCombat(diff);
 
         // Calculate metrics
         auto endTime = std::chrono::high_resolution_clock::now();
@@ -942,11 +941,39 @@ void BotAI::UpdateCombat(uint32 diff)
     if (!_bot)
         return;
 
-    // Update combat state
-    if (!_bot->IsInCombat() && _aiState == BotAIState::COMBAT)
+    // Update combat state transitions
+    bool wasInCombat = (_aiState == BotAIState::COMBAT);
+    bool isInCombat = _bot->IsInCombat();
+
+    if (!isInCombat && wasInCombat)
+    {
         SetAIState(BotAIState::IDLE);
-    else if (_bot->IsInCombat() && _aiState != BotAIState::COMBAT)
+        OnCombatEnd();
+    }
+    else if (isInCombat && !wasInCombat)
+    {
         SetAIState(BotAIState::COMBAT);
+        Unit* combatTarget = _bot->GetSelectedUnit();
+        OnCombatStart(combatTarget);
+    }
+
+    // If in combat, handle combat behavior
+    if (isInCombat)
+    {
+        // Update cooldowns
+        UpdateCooldowns(diff);
+
+        // Get current target
+        Unit* target = _bot->GetSelectedUnit();
+        if (target && target->IsAlive())
+        {
+            // Update rotation - derived classes should override this
+            UpdateRotation(target);
+        }
+
+        // Update buffs
+        UpdateBuffs();
+    }
 }
 
 void BotAI::UpdateValuesInternal(uint32 diff)
