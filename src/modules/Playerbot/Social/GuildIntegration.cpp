@@ -18,6 +18,7 @@
 #include "Util.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "Bag.h"
 #include "ObjectMgr.h"
 #include <algorithm>
 #include <random>
@@ -200,7 +201,7 @@ void GuildIntegration::AutomateGuildChatParticipation(Player* player)
         else if (action <= 80 && profile.helpfulnessLevel > 0.7f)
         {
             // Offer help or assistance
-            OfferGuildAssistance(player);
+            OfferGuildAssistance(player, "");
         }
     }
 }
@@ -1013,7 +1014,7 @@ bool GuildIntegration::ShouldDepositItem(Player* player, uint32 itemId)
     {
         case ITEM_CLASS_CONSUMABLE:
         case ITEM_CLASS_TRADE_GOODS:
-        case ITEM_CLASS_MISC:
+        case ITEM_CLASS_MISCELLANEOUS:
             return itemTemplate->GetQuality() >= ITEM_QUALITY_UNCOMMON;
         default:
             return false;
@@ -1037,18 +1038,25 @@ void GuildIntegration::SendGuildChatMessage(Player* player, const std::string& m
     if (!player || !player->GetGuild() || message.empty())
         return;
 
-    // Send message to guild chat
-    player->GetSession()->SendPacket(ChatHandler(player->GetSession()).PSendSysMessage(message.c_str()));
+    // Send message to guild chat using proper TrinityCore API
+    player->GetGuild()->BroadcastToGuild(player->GetSession(), false, message, LANG_UNIVERSAL);
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
     UpdateGuildMetrics(playerGuid, GuildActivityType::CHAT_PARTICIPATION, true);
 }
 
-void GuildIntegration::OfferGuildAssistance(Player* player)
+void GuildIntegration::OfferGuildAssistance(Player* player, const std::string& assistance)
 {
     if (!player)
         return;
+
+    // If specific assistance is provided, use it; otherwise use default messages
+    if (!assistance.empty())
+    {
+        SendGuildChatMessage(player, assistance);
+        return;
+    }
 
     std::vector<std::string> helpMessages = {
         "Anyone need help with quests or dungeons?",

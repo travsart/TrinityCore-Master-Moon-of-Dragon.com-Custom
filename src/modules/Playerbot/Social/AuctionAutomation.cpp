@@ -14,6 +14,7 @@
 #include "Group.h"
 #include "Item.h"
 #include "ItemTemplate.h"
+#include "Bag.h"
 #include "ObjectMgr.h"
 #include "DatabaseEnv.h"
 #include "Log.h"

@@ -286,6 +286,10 @@ private:
     void PredictQuestCompletionTime(uint32 questId, Player* bot);
     void AnalyzeQuestEfficiency(uint32 botGuid);
 
+    // Quest metadata and chain helpers
+    void PopulateQuestMetadata(uint32 questId);
+    bool IsPartOfQuestChain(uint32 questId);
+
     // Constants
     static constexpr uint32 MAX_CONCURRENT_QUESTS = 25;
     static constexpr uint32 QUEST_UPDATE_INTERVAL = 5000; // 5 seconds

@@ -363,19 +363,20 @@ bool TradeAutomation::IsAutomationActive(uint32 playerGuid)
     return it != _playerStates.end() && it->second.isActive;
 }
 
-TradeAutomation::AutomationMetrics TradeAutomation::GetPlayerAutomationMetrics(uint32 playerGuid)
+TradeAutomation::AutomationMetrics const& TradeAutomation::GetPlayerAutomationMetrics(uint32 playerGuid)
 {
     std::lock_guard<std::mutex> lock(_automationMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
         return it->second;
 
-    AutomationMetrics metrics;
+    // Create default metrics for this player and return reference to it
+    auto& metrics = _playerMetrics[playerGuid];
     metrics.Reset();
     return metrics;
 }
 
-TradeAutomation::AutomationMetrics TradeAutomation::GetGlobalAutomationMetrics()
+TradeAutomation::AutomationMetrics const& TradeAutomation::GetGlobalAutomationMetrics()
 {
     return _globalMetrics;
 }
@@ -504,8 +505,8 @@ bool TradeAutomation::NeedsRepair(Player* player)
     {
         if (Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
         {
-            uint32 maxDurability = item->GetMaxDurability();
-            uint32 durability = item->GetDurability();
+            uint32 maxDurability = *item->m_itemData->MaxDurability;
+            uint32 durability = *item->m_itemData->Durability;
 
             if (maxDurability > 0)
             {
@@ -907,50 +908,5 @@ void TradeAutomation::CleanupAutomationData()
 }
 
 // Helper function implementations
-void TradeAutomation::OptimizeInventorySpace(Player* player)
-{
-    if (!player)
-        return;
-
-    // TODO: Implement inventory space optimization
-    TC_LOG_DEBUG("playerbot", "TradeAutomation: Optimizing inventory space for player %s", player->GetName().c_str());
-}
-
-void TradeAutomation::OrganizeInventory(Player* player)
-{
-    if (!player)
-        return;
-
-    // TODO: Implement inventory organization
-    TC_LOG_DEBUG("playerbot", "TradeAutomation: Organizing inventory for player %s", player->GetName().c_str());
-}
-
-Creature* TradeAutomation::FindNearestRepairVendor(Player* player)
-{
-    if (!player)
-        return nullptr;
-
-    // TODO: Implement repair vendor finding
-    TC_LOG_DEBUG("playerbot", "TradeAutomation: Finding repair vendor for player %s", player->GetName().c_str());
-    return nullptr;
-}
-
-void TradeAutomation::RepairAllItems(Player* player)
-{
-    if (!player)
-        return;
-
-    // TODO: Implement item repair
-    TC_LOG_DEBUG("playerbot", "TradeAutomation: Repairing items for player %s", player->GetName().c_str());
-}
-
-void TradeAutomation::RestockConsumables(Player* player)
-{
-    if (!player)
-        return;
-
-    // TODO: Implement consumable restocking
-    TC_LOG_DEBUG("playerbot", "TradeAutomation: Restocking consumables for player %s", player->GetName().c_str());
-}
 
 } // namespace Playerbot

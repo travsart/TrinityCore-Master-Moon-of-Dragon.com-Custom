@@ -131,6 +131,39 @@ public:
         std::atomic<float> profitMargin{0.2f}; // 20% average profit
         std::chrono::steady_clock::time_point lastUpdate;
 
+        // Copy constructor for atomic members
+        AutomationMetrics(const AutomationMetrics& other) :
+            totalAuctionsProcessed(other.totalAuctionsProcessed.load()),
+            successfulPurchases(other.successfulPurchases.load()),
+            successfulSales(other.successfulSales.load()),
+            marketScans(other.marketScans.load()),
+            goldSpent(other.goldSpent.load()),
+            goldEarned(other.goldEarned.load()),
+            averageTaskTime(other.averageTaskTime.load()),
+            automationEfficiency(other.automationEfficiency.load()),
+            profitMargin(other.profitMargin.load()),
+            lastUpdate(other.lastUpdate) {}
+
+        // Assignment operator for atomic members
+        AutomationMetrics& operator=(const AutomationMetrics& other) {
+            if (this != &other) {
+                totalAuctionsProcessed.store(other.totalAuctionsProcessed.load());
+                successfulPurchases.store(other.successfulPurchases.load());
+                successfulSales.store(other.successfulSales.load());
+                marketScans.store(other.marketScans.load());
+                goldSpent.store(other.goldSpent.load());
+                goldEarned.store(other.goldEarned.load());
+                averageTaskTime.store(other.averageTaskTime.load());
+                automationEfficiency.store(other.automationEfficiency.load());
+                profitMargin.store(other.profitMargin.load());
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
+        }
+
+        // Default constructor
+        AutomationMetrics() = default;
+
         void Reset() {
             totalAuctionsProcessed = 0; successfulPurchases = 0; successfulSales = 0;
             marketScans = 0; goldSpent = 0; goldEarned = 0;
@@ -230,6 +263,11 @@ private:
         AutomationTask(Type t, uint32 guid, uint32 prio = 100)
             : type(t), playerGuid(guid), priority(prio), scheduledTime(getMSTime())
             , timeoutTime(getMSTime() + 600000), isCompleted(false) {}
+
+        // Comparison operator for priority_queue (higher priority value = higher priority)
+        bool operator<(const AutomationTask& other) const {
+            return priority < other.priority;
+        }
     };
 
     std::priority_queue<AutomationTask> _taskQueue;

@@ -10,7 +10,6 @@
 #include "ObjectiveTracker.h"
 #include "QuestCompletion.h"
 #include "Player.h"
-#include "Quest.h"
 #include "QuestDef.h"
 #include "Unit.h"
 #include "Creature.h"
@@ -22,6 +21,8 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "Map.h"
+#include "Group.h"
+#include "Session/BotSession.h"
 #include <algorithm>
 #include <cmath>
 
@@ -48,7 +49,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
 
     ObjectiveState state(objective.questId, objective.objectiveIndex);
     state.status = ObjectiveStatus::IN_PROGRESS;
-    state.requiredProgress = objective.amount;
+    state.requiredProgress = objective.requiredCount;
     state.lastKnownPosition = bot->GetPosition();
 
     // Initialize target detection
@@ -173,7 +174,7 @@ void ObjectiveTracker::UpdateProgressMetrics(Player* bot, const QuestObjectiveDa
     analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
 
     // Check objective completion
-    if (objective.amount <= objective.currentCount)
+    if (objective.requiredCount <= objective.currentCount)
     {
         analytics.objectivesCompleted++;
         _globalAnalytics.objectivesCompleted++;
@@ -219,14 +220,14 @@ std::vector<uint32> ObjectiveTracker::DetectObjectiveTargets(Player* bot, const 
     // Scan for different types of targets based on objective type
     switch (objective.type)
     {
-        case QuestObjectiveType::MONSTER:
-            targets = ScanForKillTargets(bot, objective.objectId, 100.0f);
+        case QuestObjectiveType::KILL_CREATURE:
+            targets = ScanForKillTargets(bot, objective.targetId, 100.0f);
             break;
-        case QuestObjectiveType::ITEM:
-            targets = ScanForCollectibles(bot, objective.objectId, 50.0f);
+        case QuestObjectiveType::COLLECT_ITEM:
+            targets = ScanForCollectibles(bot, objective.targetId, 50.0f);
             break;
-        case QuestObjectiveType::GAMEOBJECT:
-            targets = ScanForGameObjects(bot, objective.objectId, 50.0f);
+        case QuestObjectiveType::USE_GAMEOBJECT:
+            targets = ScanForGameObjects(bot, objective.targetId, 50.0f);
             break;
         default:
             break;
@@ -277,7 +278,7 @@ std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 it
 
     for (GameObject* object : nearbyObjects)
     {
-        if (object && object->GetLootState() == GO_READY)
+        if (object && object->getLootState() == GO_READY)
         {
             // Check if this object can provide the needed item
             targets.push_back(object->GetGUID().GetCounter());
@@ -599,10 +600,10 @@ void ObjectiveTracker::CoordinateGroupObjectives(Group* group, uint32 questId)
         return;
 
     // Coordinate objective completion among group members
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
-        if (member && member->IsBot())
+        Player* member = itr.GetSource();
+        if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             // Assign different objectives to different group members for efficiency
             uint32 assignedObjective = AssignObjectiveToGroupMember(group, member, questId);
@@ -623,10 +624,10 @@ void ObjectiveTracker::DistributeObjectiveTargets(Group* group, uint32 questId, 
     // Distribute targets among group members to avoid competition
     std::vector<Player*> botMembers;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
-        if (member && member->IsBot())
+        Player* member = itr.GetSource();
+        if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             botMembers.push_back(member);
         }
@@ -655,10 +656,10 @@ void ObjectiveTracker::SynchronizeObjectiveProgress(Group* group, uint32 questId
     _groupObjectiveSyncTime[groupId] = getMSTime();
 
     // Share progress information among group members
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
-        if (member && member->IsBot())
+        Player* member = itr.GetSource();
+        if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             RefreshObjectiveStates(member);
         }
@@ -887,8 +888,8 @@ bool ObjectiveTracker::ValidateObjectiveState(Player* bot, const ObjectiveState&
     if (bot->FindQuestSlot(state.questId) == MAX_QUEST_LOG_SIZE)
         return false;
 
-    // Check if objective index is valid
-    if (state.objectiveIndex >= QUEST_OBJECTIVES_COUNT)
+    // Check if objective index is valid (quests typically have up to 10 objectives)
+    if (state.objectiveIndex >= 10)
         return false;
 
     return true;
@@ -1014,19 +1015,26 @@ void ObjectiveTracker::RefreshObjectiveState(Player* bot, ObjectiveState& state)
 
 uint32 ObjectiveTracker::GetCurrentObjectiveProgress(Player* bot, const Quest* quest, uint32 objectiveIndex)
 {
-    if (!bot || !quest || objectiveIndex >= QUEST_OBJECTIVES_COUNT)
+    if (!bot || !quest || objectiveIndex >= 10)
         return 0;
 
-    // Get current progress for the specific objective
-    if (quest->RequiredNpcOrGo[objectiveIndex] != 0)
+    // Modern TrinityCore quest system uses QuestObjective vector
+    if (objectiveIndex < quest->Objectives.size())
     {
-        return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), quest->RequiredNpcOrGo[objectiveIndex]);
-    }
+        const QuestObjective& objective = quest->Objectives[objectiveIndex];
 
-    // Check item objectives
-    if (objectiveIndex < QUEST_ITEM_OBJECTIVES_COUNT && quest->RequiredItemId[objectiveIndex] != 0)
-    {
-        return bot->GetItemCount(quest->RequiredItemId[objectiveIndex], true);
+        // Get progress based on objective type
+        switch (objective.Type)
+        {
+            case QUEST_OBJECTIVE_MONSTER:
+                return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), objective.ObjectID);
+            case QUEST_OBJECTIVE_ITEM:
+                return bot->GetItemCount(objective.ObjectID, true);
+            case QUEST_OBJECTIVE_GAMEOBJECT:
+                return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), objective.ObjectID);
+            default:
+                return 0;
+        }
     }
 
     return 0;
@@ -1064,15 +1072,8 @@ void ObjectiveTracker::HandleStuckObjective(Player* bot, ObjectiveState& state)
 
 QuestObjectiveData ObjectiveTracker::ConvertToQuestObjectiveData(const ObjectiveState& state)
 {
-    QuestObjectiveData data;
-    data.questId = state.questId;
-    data.objectiveIndex = state.objectiveIndex;
-    data.amount = state.requiredProgress;
+    QuestObjectiveData data(state.questId, state.objectiveIndex, QuestObjectiveType::KILL_CREATURE, 0, state.requiredProgress);
     data.currentCount = state.currentProgress;
-
-    // Set default values for fields not in ObjectiveState
-    data.type = QuestObjectiveType::MONSTER; // Default type
-    data.objectId = 0;
 
     return data;
 }

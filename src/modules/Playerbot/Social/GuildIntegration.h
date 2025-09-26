@@ -212,6 +212,37 @@ public:
         std::atomic<float> contributionRating{0.75f};
         std::chrono::steady_clock::time_point lastUpdate;
 
+        // Default constructor
+        GuildMetrics() = default;
+
+        // Copy constructor for atomic members
+        GuildMetrics(const GuildMetrics& other) :
+            guildInteractions(other.guildInteractions.load()),
+            chatMessages(other.chatMessages.load()),
+            bankTransactions(other.bankTransactions.load()),
+            eventsParticipated(other.eventsParticipated.load()),
+            helpfulActions(other.helpfulActions.load()),
+            averageParticipationScore(other.averageParticipationScore.load()),
+            socialIntegrationScore(other.socialIntegrationScore.load()),
+            contributionRating(other.contributionRating.load()),
+            lastUpdate(other.lastUpdate) {}
+
+        // Assignment operator for atomic members
+        GuildMetrics& operator=(const GuildMetrics& other) {
+            if (this != &other) {
+                guildInteractions.store(other.guildInteractions.load());
+                chatMessages.store(other.chatMessages.load());
+                bankTransactions.store(other.bankTransactions.load());
+                eventsParticipated.store(other.eventsParticipated.load());
+                helpfulActions.store(other.helpfulActions.load());
+                averageParticipationScore.store(other.averageParticipationScore.load());
+                socialIntegrationScore.store(other.socialIntegrationScore.load());
+                contributionRating.store(other.contributionRating.load());
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
+        }
+
         void Reset() {
             guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
             eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
@@ -265,9 +296,16 @@ private:
     ~GuildIntegration() = default;
 
     // Core guild data
+    struct PlayerState {
+        uint32 lastGuildBankInteraction = 0;
+        uint32 lastChatTime = 0;
+        uint32 lastEventParticipation = 0;
+    };
+
     std::unordered_map<uint32, GuildProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
     std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
+    std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
     mutable std::mutex _guildMutex;
 
     // Chat intelligence system
@@ -303,8 +341,10 @@ private:
     void UpdateGuildSocialGraph(uint32 guildId);
 
     // Chat response generation
+    void OfferGuildAssistance(Player* player, const std::string& assistance);
+    void SendGuildChatMessage(Player* player, const std::string& message);
     std::string SelectResponseTemplate(const std::string& category);
-    std::string PersonalizeResponse(Player* player, const std::string& template);
+    std::string PersonalizeResponse(Player* player, const std::string& responseTemplate);
     float CalculateMessageRelevance(Player* player, const GuildChatMessage& message);
     std::vector<std::string> ExtractKeywords(const std::string& message);
 

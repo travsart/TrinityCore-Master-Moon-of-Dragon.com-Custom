@@ -147,8 +147,8 @@ public:
         }
     };
 
-    AutomationMetrics GetPlayerAutomationMetrics(uint32 playerGuid);
-    AutomationMetrics GetGlobalAutomationMetrics();
+    AutomationMetrics const& GetPlayerAutomationMetrics(uint32 playerGuid);
+    AutomationMetrics const& GetGlobalAutomationMetrics();
 
     // Decision making and strategy
     void MakeTradeDecision(Player* player, uint32 sessionId);
@@ -214,6 +214,17 @@ private:
         AutomationTask(Type t, uint32 guid, uint32 prio = 100)
             : type(t), playerGuid(guid), priority(prio), scheduledTime(getMSTime())
             , timeoutTime(getMSTime() + 300000), isCompleted(false) {}
+
+        // Comparison operator for priority queue (higher priority values have precedence)
+        bool operator<(const AutomationTask& other) const
+        {
+            // First compare by priority (higher priority comes first)
+            if (priority != other.priority)
+                return priority < other.priority;
+
+            // If priorities are equal, compare by scheduled time (earlier tasks first)
+            return scheduledTime > other.scheduledTime;
+        }
     };
 
     std::priority_queue<AutomationTask> _taskQueue;
@@ -232,6 +243,10 @@ private:
         float economicStability;
         float spendingRate;
         uint32 lastAnalysisTime;
+
+        EconomicProfile() : playerGuid(0), currentGold(0), averageIncome(0)
+            , averageExpenses(0), economicStability(1.0f), spendingRate(0.5f)
+            , lastAnalysisTime(getMSTime()) {}
 
         EconomicProfile(uint32 guid) : playerGuid(guid), currentGold(0), averageIncome(0)
             , averageExpenses(0), economicStability(1.0f), spendingRate(0.5f)
@@ -296,6 +311,7 @@ private:
     void OrganizeInventory(Player* player);
     Creature* FindNearestRepairVendor(Player* player);
     void RepairAllItems(Player* player);
+    void RepairAllItems(Player* player, Creature* vendor);
     void RestockConsumables(Player* player);
 };
 

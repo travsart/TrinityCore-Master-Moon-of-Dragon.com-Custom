@@ -9,7 +9,6 @@
 
 #include "DynamicQuestSystem.h"
 #include "Player.h"
-#include "Quest.h"
 #include "QuestDef.h"
 #include "Group.h"
 #include "ObjectMgr.h"
@@ -21,6 +20,8 @@
 #include "Creature.h"
 #include "GameObject.h"
 #include "MapManager.h"
+#include "ObjectAccessor.h"
+#include "Session/BotSession.h"
 #include <algorithm>
 #include <random>
 #include <cmath>
@@ -49,13 +50,13 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
     if (!bot)
         return availableQuests;
 
-    uint32 botLevel = bot->getLevel();
+    uint32 botLevel = bot->GetLevel();
     uint32 botGuid = bot->GetGUID().GetCounter();
 
     // Scan through all quest templates
     for (auto const& questPair : sObjectMgr->GetQuestTemplates())
     {
-        const Quest* quest = questPair.second;
+        const Quest* quest = questPair.second.get();
         if (!quest)
             continue;
 
@@ -63,8 +64,7 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
 
         // Check if quest is available to this bot
         if (bot->CanTakeQuest(quest, false) &&
-            quest->GetMinLevel() <= botLevel &&
-            quest->GetMinLevel() >= (botLevel > 5 ? botLevel - 5 : 1))
+            (quest->GetMaxLevel() == 0 || quest->GetMaxLevel() >= botLevel))
         {
             availableQuests.push_back(questId);
         }
@@ -212,8 +212,9 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
     if (!quest)
         return QuestPriority::TRIVIAL;
 
-    uint32 botLevel = bot->getLevel();
-    uint32 questLevel = quest->GetMinLevel();
+    uint32 botLevel = bot->GetLevel();
+    // Estimate quest level from max level or use bot level as baseline
+    uint32 questLevel = quest->GetMaxLevel() > 0 ? quest->GetMaxLevel() : botLevel;
 
     // Base priority on level difference
     if (questLevel > botLevel + 2)
@@ -224,10 +225,9 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
         return QuestPriority::NORMAL;
 
     // Boost priority for special quest types
-    if (quest->HasFlag(QUEST_FLAGS_ELITE))
-        return QuestPriority::CRITICAL;
+    // Note: TrinityCore doesn't have QUEST_FLAGS_ELITE, using other criteria for special quests
 
-    if (quest->HasFlag(QUEST_FLAGS_DUNGEON) || quest->HasFlag(QUEST_FLAGS_RAID))
+    if (quest->IsDFQuest() || quest->IsRaidQuest(DIFFICULTY_NORMAL))
         return QuestPriority::LEGENDARY;
 
     // Check for quest chains
@@ -302,8 +302,9 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
         return true;
 
     // Check if quest is no longer level appropriate
-    uint32 botLevel = bot->getLevel();
-    if (quest->GetMinLevel() < botLevel - 7) // Too low level
+    uint32 botLevel = bot->GetLevel();
+    uint32 questLevel = quest->GetMaxLevel() > 0 ? quest->GetMaxLevel() : botLevel;
+    if (questLevel < botLevel - 7) // Too low level
         return true;
 
     return false;
@@ -410,8 +411,8 @@ bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
     if (!quest)
         return false;
 
-    // Only form groups for group quests
-    if (!quest->IsAllowedInGroup() && !quest->HasFlag(QUEST_FLAGS_ELITE))
+    // Only form groups for group quests (sharable or raid group quests)
+    if (!quest->HasFlag(QUEST_FLAGS_SHARABLE) && !quest->HasFlag(QUEST_FLAGS_RAID_GROUP_OK))
         return false;
 
     // Find other players who need this quest
@@ -451,10 +452,10 @@ void DynamicQuestSystem::CoordinateGroupQuest(Group* group, uint32 questId)
     ShareQuestProgress(group, questId);
 
     // Assign roles and objectives to different group members
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
-        if (member && member->IsBot())
+        Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
+        if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             // Assign specific objectives to this member
             ExecuteQuestObjective(member, questId, 0);
@@ -481,7 +482,7 @@ bool DynamicQuestSystem::CanShareQuest(uint32 questId, Player* from, Player* to)
         return false;
 
     // Check if quest can be shared
-    if (!quest->IsAllowedInGroup())
+    if (!quest->HasFlag(QUEST_FLAGS_SHARABLE))
         return false;
 
     // Check if target player can take the quest
@@ -932,16 +933,16 @@ QuestType DynamicQuestSystem::DetermineQuestType(const Quest* quest)
         return QuestType::KILL_COLLECT;
 
     // Analyze quest objectives to determine type
-    if (quest->HasFlag(QUEST_FLAGS_DUNGEON))
+    if (quest->IsDFQuest())
         return QuestType::DUNGEON;
 
-    if (quest->HasFlag(QUEST_FLAGS_ELITE))
-        return QuestType::ELITE;
+    if (quest->IsRaidQuest(DIFFICULTY_NORMAL))
+        return QuestType::RAID;
 
     if (quest->HasFlag(QUEST_FLAGS_DAILY))
         return QuestType::DAILY;
 
-    if (quest->HasFlag(QUEST_FLAGS_PVP))
+    if (quest->HasFlag(QUEST_FLAGS_FLAGS_PVP))
         return QuestType::PVP;
 
     // Default classification based on objectives
@@ -959,18 +960,17 @@ float DynamicQuestSystem::CalculateQuestDifficulty(const Quest* quest, Player* b
     float difficulty = 5.0f; // Base difficulty
 
     // Adjust for level difference
-    uint32 levelDiff = quest->GetMinLevel() > bot->getLevel() ?
-                      quest->GetMinLevel() - bot->getLevel() : 0;
+    uint32 questLevel = quest->GetMaxLevel() > 0 ? quest->GetMaxLevel() : bot->GetLevel();
+    uint32 levelDiff = questLevel > bot->GetLevel() ?
+                      questLevel - bot->GetLevel() : 0;
     difficulty += levelDiff * 0.5f;
 
     // Adjust for quest flags
-    if (quest->HasFlag(QUEST_FLAGS_ELITE))
-        difficulty *= ELITE_QUEST_DIFFICULTY_MULTIPLIER;
-
-    if (quest->HasFlag(QUEST_FLAGS_DUNGEON))
+    // Note: No QUEST_FLAGS_ELITE in TrinityCore, using alternative logic
+    if (quest->IsDFQuest())
         difficulty *= 1.5f;
 
-    if (quest->HasFlag(QUEST_FLAGS_RAID))
+    if (quest->IsRaidQuest(DIFFICULTY_NORMAL))
         difficulty *= 3.0f;
 
     return std::clamp(difficulty, 1.0f, 10.0f);
@@ -1068,12 +1068,13 @@ void DynamicQuestSystem::PopulateQuestMetadata(uint32 questId)
     auto& metadata = _questMetadata[questId];
     metadata.questId = questId;
     metadata.type = DetermineQuestType(quest);
-    metadata.recommendedLevel = quest->GetMinLevel();
-    metadata.minLevel = quest->GetMinLevel();
-    metadata.maxLevel = quest->GetQuestLevel();
-    metadata.isElite = quest->HasFlag(QUEST_FLAGS_ELITE);
-    metadata.isDungeon = quest->HasFlag(QUEST_FLAGS_DUNGEON);
-    metadata.isRaid = quest->HasFlag(QUEST_FLAGS_RAID);
+    uint32 questLevel = quest->GetMaxLevel() > 0 ? quest->GetMaxLevel() : 1;
+    metadata.recommendedLevel = questLevel;
+    metadata.minLevel = 1; // Quests are generally available from level 1
+    metadata.maxLevel = quest->GetMaxLevel();
+    metadata.isElite = false; // TrinityCore doesn't have QUEST_FLAGS_ELITE
+    metadata.isDungeon = quest->IsDFQuest();
+    metadata.isRaid = quest->IsRaidQuest(DIFFICULTY_NORMAL);
     metadata.isDaily = quest->HasFlag(QUEST_FLAGS_DAILY);
 
     // Estimate duration based on objectives
@@ -1154,7 +1155,7 @@ void DynamicQuestSystem::ScaleQuestForBot(QuestMetadata& metadata, Player* bot)
         return;
 
     // Adjust quest parameters based on bot's capabilities
-    uint32 botLevel = bot->getLevel();
+    uint32 botLevel = bot->GetLevel();
 
     // Scale difficulty based on level
     if (metadata.recommendedLevel < botLevel - 2)

@@ -12,7 +12,7 @@
 #include "Define.h"
 #include "QuestCompletion.h"
 #include "Player.h"
-#include "Quest.h"
+#include "QuestDef.h"
 #include "Unit.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -33,6 +33,10 @@ namespace Playerbot
 class TC_GAME_API ObjectiveTracker
 {
 public:
+    // Forward declarations
+    struct ObjectiveState;
+    struct ObjectivePriority;
+
     static ObjectiveTracker* instance();
 
     // Core objective tracking
@@ -40,6 +44,7 @@ public:
     void StopTrackingObjective(Player* bot, uint32 questId, uint32 objectiveIndex);
     void UpdateObjectiveTracking(Player* bot, uint32 diff);
     void RefreshObjectiveStates(Player* bot);
+    void RefreshObjectiveState(Player* bot, ObjectiveState& state);
 
     // Progress monitoring
     void MonitorObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex);
@@ -69,11 +74,14 @@ public:
         Position lastKnownPosition;
         bool isOptimized;
         uint32 failureCount;
+        bool isStuck;
+        uint32 stuckTime;
 
         ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
             , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
             , lastUpdateTime(getMSTime()), timeStarted(getMSTime()), estimatedTimeRemaining(0)
-            , completionVelocity(0.0f), isOptimized(false), failureCount(0) {}
+            , completionVelocity(0.0f), isOptimized(false), failureCount(0)
+            , isStuck(false), stuckTime(0) {}
     };
 
     ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex);
@@ -152,8 +160,12 @@ public:
     // Error detection and recovery
     void DetectTrackingErrors(Player* bot);
     void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error);
+    void HandleStuckObjective(Player* bot, ObjectiveState& state);
     void RecoverTrackingState(Player* bot, uint32 questId);
     void ValidateObjectiveConsistency(Player* bot);
+
+    // Data conversion utilities
+    QuestObjectiveData ConvertToQuestObjectiveData(const ObjectiveState& state);
 
     // Configuration and settings
     void SetTrackingPrecision(uint32 botGuid, float precision); // 0.0 = low, 1.0 = high
@@ -206,6 +218,9 @@ private:
     void EstimateCompletionTime(ObjectiveState& state);
     bool ValidateObjectiveState(Player* bot, const ObjectiveState& state);
     void OptimizeObjectiveExecution(Player* bot, ObjectiveState& state);
+    uint32 GetCurrentObjectiveProgress(Player* bot, const Quest* quest, uint32 objectiveIndex);
+    uint32 AssignObjectiveToGroupMember(Group* group, Player* member, uint32 questId);
+    void AssignSpecificTargetToBot(Player* bot, uint32 questId, uint32 objectiveIndex, uint32 targetIndex);
 
     // Priority calculation helpers
     float CalculateUrgencyFactor(Player* bot, const ObjectiveState& state);
@@ -242,6 +257,7 @@ private:
     static constexpr float DEFAULT_TRACKING_PRECISION = 0.8f;
     static constexpr uint32 MAX_TRACKED_OBJECTIVES = 25;
     static constexpr float STALLED_PROGRESS_THRESHOLD = 0.1f;
+    static constexpr uint32 STUCK_DETECTION_TIME = 120000; // 2 minutes
     static constexpr uint32 TARGET_CACHE_DURATION = 300000; // 5 minutes
     static constexpr float COMPETITION_THRESHOLD = 3.0f; // 3+ players = high competition
     static constexpr uint32 OBJECTIVE_TIMEOUT = 1800000; // 30 minutes

@@ -19,6 +19,8 @@
 #include "Util.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "ObjectAccessor.h"
+#include "Session/BotSession.h"
 #include <algorithm>
 #include <random>
 
@@ -42,13 +44,16 @@ void LootDistribution::HandleGroupLoot(Group* group, Loot* loot)
         return;
 
     // Process each loot item
-    for (LootItem& lootItem : loot->items)
+    for (::LootItem& lootItem : loot->items)
     {
         if (lootItem.itemid == 0)
             continue;
 
         // Convert to our LootItem structure
-        LootItem ourLootItem(lootItem.itemid, lootItem.count, 0);
+        Playerbot::LootItem ourLootItem;
+        ourLootItem.itemId = lootItem.itemid;
+        ourLootItem.itemCount = lootItem.count;
+        ourLootItem.lootSlot = 0;
         PopulateLootItemData(ourLootItem);
 
         // Determine if this item needs rolling
@@ -70,12 +75,12 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         return;
 
     uint32 rollId = _nextRollId++;
-    LootRoll roll(rollId, item.itemId, item.lootSlot, group->GetLowGUID());
+    LootRoll roll(rollId, item.itemId, item.lootSlot, group->GetGUID().GetCounter());
 
     // Add all eligible group members to the roll
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        Player* member = itr->GetSource();
+        Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (member && CanParticipateInRoll(member, item))
         {
             roll.eligiblePlayers.insert(member->GetGUID().GetCounter());
@@ -99,7 +104,7 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     for (uint32 memberGuid : roll.eligiblePlayers)
     {
         Player* member = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(memberGuid));
-        if (member && member->IsBot())
+        if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             LootRollType decision = DetermineLootDecision(member, item);
             ProcessPlayerLootDecision(member, rollId, decision);
@@ -258,12 +263,12 @@ bool LootDistribution::IsClassAppropriate(Player* player, const LootItem& item)
     // Check class restrictions
     if (item.isClassRestricted)
     {
-        uint8 playerClass = player->getClass();
+        uint8 playerClass = player->GetClass();
         return std::find(item.allowedClasses.begin(), item.allowedClasses.end(), playerClass) != item.allowedClasses.end();
     }
 
     // Check if item type is useful for class
-    return IsItemTypeUsefulForClass(player->getClass(), item.itemTemplate);
+    return IsItemTypeUsefulForClass(player->GetClass(), item.itemTemplate);
 }
 
 bool LootDistribution::CanPlayerNeedItem(Player* player, const LootItem& item)
@@ -325,7 +330,7 @@ bool LootDistribution::CanPlayerDisenchantItem(Player* player, const LootItem& i
         return false;
 
     // Check if item can be disenchanted
-    return item.itemTemplate->GetDisenchantID() != 0;
+    return Item::GetBaseDisenchantLoot(item.itemTemplate, item.itemQuality, item.itemLevel) != nullptr;
 }
 
 void LootDistribution::ProcessLootRolls(uint32 rollId)
@@ -658,7 +663,7 @@ PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
     Player* player = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
     if (player)
     {
-        return PlayerLootProfile(playerGuid, player->getClass(), player->GetPrimaryTalentTree(player->GetActiveSpec()));
+        return PlayerLootProfile(playerGuid, player->GetClass(), AsUnderlyingType(player->GetPrimarySpecialization()));
     }
 
     return PlayerLootProfile(playerGuid, CLASS_WARRIOR, 0);
@@ -670,14 +675,14 @@ void LootDistribution::PopulateLootItemData(LootItem& item)
     if (!item.itemTemplate)
         return;
 
-    item.itemLevel = item.itemTemplate->GetItemLevel();
+    item.itemLevel = item.itemTemplate->GetBaseItemLevel();
     item.itemQuality = item.itemTemplate->GetQuality();
     item.vendorValue = item.itemTemplate->GetSellPrice();
-    item.itemName = item.itemTemplate->GetName();
+    item.itemName = item.itemTemplate->GetName(LOCALE_enUS);
 
     // Set binding information
-    item.isBoundOnPickup = item.itemTemplate->GetBonding() == BIND_WHEN_PICKED_UP;
-    item.isBoundOnEquip = item.itemTemplate->GetBonding() == BIND_WHEN_EQUIPED;
+    item.isBoundOnPickup = item.itemTemplate->GetBonding() == BIND_ON_ACQUIRE;
+    item.isBoundOnEquip = item.itemTemplate->GetBonding() == BIND_ON_EQUIP;
 
     // Check class restrictions
     if (item.itemTemplate->GetAllowableClass() != 0)
@@ -704,9 +709,9 @@ bool LootDistribution::ShouldInitiateRoll(Group* group, const LootItem& item)
 
     // Check if multiple players can use the item
     uint32 interestedPlayers = 0;
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (member && CanParticipateInRoll(member, item))
         {
             interestedPlayers++;
@@ -739,9 +744,9 @@ void LootDistribution::HandleAutoLoot(Group* group, const LootItem& item)
     // Find a suitable recipient for auto-loot
     Player* recipient = nullptr;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (member && CanParticipateInRoll(member, item))
         {
             recipient = member;
@@ -903,8 +908,8 @@ bool LootDistribution::IsItemForMainSpec(Player* player, const LootItem& item)
     // Simplified check based on item type and player spec
     // In a real implementation, this would be more sophisticated
 
-    uint8 playerClass = player->getClass();
-    uint8 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+    uint8 playerClass = player->GetClass();
+    uint8 spec = AsUnderlyingType(player->GetPrimarySpecialization());
 
     // Basic logic for different classes
     switch (playerClass)
@@ -1085,7 +1090,7 @@ bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group, Player* pl
     if (!group || !player)
         return false;
 
-    LootFairnessTracker tracker = GetGroupLootFairness(group->GetLowGUID());
+    LootFairnessTracker tracker = GetGroupLootFairness(group->GetGUID().GetCounter());
     return tracker.fairnessScore < FAIRNESS_ADJUSTMENT_THRESHOLD;
 }
 

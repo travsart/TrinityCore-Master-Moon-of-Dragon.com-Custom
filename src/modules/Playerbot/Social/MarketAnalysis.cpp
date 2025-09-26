@@ -55,23 +55,34 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
     std::vector<float> prices;
     uint32 totalVolume = 0;
 
-    for (uint32 i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
+    // Iterate through all auction houses (Alliance, Horde, Neutral)
+    for (uint32 auctionHouseId = 1; auctionHouseId <= 3; ++auctionHouseId)
     {
-        AuctionHouseObject* auctionHouse = auctionHouseMgr->GetAuctionsMap(AuctionHouseType(i));
+        AuctionHouseObject* auctionHouse = auctionHouseMgr->GetAuctionsById(auctionHouseId);
         if (!auctionHouse)
             continue;
 
-        for (auto& auctionPair : auctionHouse->GetAuctions())
+        // Iterate through all auctions using proper TrinityCore API
+        for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
-            AuctionEntry* auction = auctionPair.second;
-            if (auction && auction->item_template == itemId)
+            const AuctionPosting& auction = itr->second;
+
+            // Check if this auction contains items with the target itemId
+            for (Item* item : auction.Items)
             {
-                float pricePerItem = float(auction->buyout) / float(auction->item_count);
-                if (pricePerItem > 0)
+                if (item && item->GetTemplate()->GetId() == itemId)
                 {
-                    prices.push_back(pricePerItem);
-                    totalVolume += auction->item_count;
-                    snapshot.activeListings++;
+                    uint32 itemCount = auction.GetTotalItemCount();
+                    if (itemCount > 0 && auction.BuyoutOrUnitPrice > 0)
+                    {
+                        float pricePerItem = float(auction.BuyoutOrUnitPrice) / float(itemCount);
+                        if (pricePerItem > 0)
+                        {
+                            prices.push_back(pricePerItem);
+                            totalVolume += itemCount;
+                            snapshot.activeListings++;
+                        }
+                    }
                 }
             }
         }
@@ -526,19 +537,28 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
     std::vector<uint32> listingDurations;
     std::vector<float> undercutAmounts;
 
-    for (uint32 i = 0; i < MAX_AUCTION_HOUSE_TYPE; ++i)
+    // Iterate through all auction houses (Alliance, Horde, Neutral)
+    for (uint32 auctionHouseId = 1; auctionHouseId <= 3; ++auctionHouseId)
     {
-        AuctionHouseObject* auctionHouse = auctionHouseMgr->GetAuctionsMap(AuctionHouseType(i));
+        AuctionHouseObject* auctionHouse = auctionHouseMgr->GetAuctionsById(auctionHouseId);
         if (!auctionHouse)
             continue;
 
-        for (auto& auctionPair : auctionHouse->GetAuctions())
+        // Iterate through all auctions using proper TrinityCore API
+        for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
-            AuctionEntry* auction = auctionPair.second;
-            if (auction && auction->item_template == itemId)
+            const AuctionPosting& auction = itr->second;
+
+            // Check if this auction contains items with the target itemId
+            for (Item* item : auction.Items)
             {
-                sellerCounts[auction->owner]++;
-                listingDurations.push_back(auction->expire_time - auction->startbid); // Simplified
+                if (item && item->GetTemplate()->GetId() == itemId)
+                {
+                    sellerCounts[auction.Owner.GetCounter()]++;
+                    // Calculate listing duration from StartTime to EndTime
+                    auto duration = std::chrono::duration_cast<std::chrono::hours>(auction.EndTime - auction.StartTime);
+                    listingDurations.push_back(static_cast<uint32>(duration.count()));
+                }
             }
         }
     }
@@ -721,7 +741,7 @@ MarketSegment MarketAnalysis::DetermineItemSegment(uint32 itemId)
             return MarketSegment::CRAFTING;
         case ITEM_CLASS_GEM:
             return MarketSegment::GEMS;
-        case ITEM_CLASS_MISC:
+        case ITEM_CLASS_MISCELLANEOUS:
             return MarketSegment::COLLECTIBLES;
         case ITEM_CLASS_QUEST:
             return MarketSegment::QUEST_ITEMS;

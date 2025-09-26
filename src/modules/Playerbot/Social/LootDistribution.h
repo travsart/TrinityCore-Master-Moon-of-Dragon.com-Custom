@@ -78,6 +78,10 @@ struct LootItem
     bool isBoundOnEquip;
     std::string itemName;
 
+    LootItem() : itemId(0), itemCount(0), lootSlot(0), itemTemplate(nullptr)
+        , itemLevel(0), itemQuality(0), vendorValue(0), isClassRestricted(false)
+        , isBoundOnPickup(false), isBoundOnEquip(false) {}
+
     LootItem(uint32 id, uint32 count, uint32 slot) : itemId(id), itemCount(count)
         , lootSlot(slot), itemTemplate(nullptr), itemLevel(0), itemQuality(0)
         , vendorValue(0), isClassRestricted(false), isBoundOnPickup(false)
@@ -99,10 +103,27 @@ struct LootRoll
     uint32 winnerGuid;
     LootRollType winningRollType;
 
+    // Default constructor
+    LootRoll() : rollId(0), itemId(0), lootSlot(0), groupId(0), rollStartTime(0),
+        rollTimeout(0), isCompleted(false), winnerGuid(0), winningRollType(LootRollType::PASS) {}
+
+    // Parametrized constructor
     LootRoll(uint32 id, uint32 item, uint32 slot, uint32 group) : rollId(id), itemId(item)
         , lootSlot(slot), groupId(group), rollStartTime(getMSTime())
         , rollTimeout(getMSTime() + 60000), isCompleted(false), winnerGuid(0)
         , winningRollType(LootRollType::PASS) {}
+
+    // Copy constructor
+    LootRoll(const LootRoll& other) = default;
+
+    // Move constructor
+    LootRoll(LootRoll&& other) = default;
+
+    // Copy assignment operator
+    LootRoll& operator=(const LootRoll& other) = default;
+
+    // Move assignment operator
+    LootRoll& operator=(LootRoll&& other) = default;
 };
 
 struct PlayerLootProfile
@@ -123,11 +144,30 @@ struct PlayerLootProfile
     uint32 lastLootTime;
     uint32 totalLootReceived;
 
+    // Default constructor
+    PlayerLootProfile() : playerGuid(0), playerClass(CLASS_WARRIOR), playerSpec(0), playerLevel(1)
+        , strategy(LootDecisionStrategy::NEED_BEFORE_GREED), greedThreshold(0.3f)
+        , needMainSpecOnly(true), greedOffSpec(true), disenchantUnneeded(false)
+        , lastLootTime(0), totalLootReceived(0) {}
+
+    // Parameterized constructor
     PlayerLootProfile(uint32 guid, uint8 cls, uint8 spec) : playerGuid(guid)
         , playerClass(cls), playerSpec(spec), playerLevel(1)
         , strategy(LootDecisionStrategy::NEED_BEFORE_GREED), greedThreshold(0.3f)
         , needMainSpecOnly(true), greedOffSpec(true), disenchantUnneeded(false)
         , lastLootTime(0), totalLootReceived(0) {}
+
+    // Copy constructor
+    PlayerLootProfile(const PlayerLootProfile& other) = default;
+
+    // Move constructor
+    PlayerLootProfile(PlayerLootProfile&& other) = default;
+
+    // Copy assignment operator
+    PlayerLootProfile& operator=(const PlayerLootProfile& other) = default;
+
+    // Move assignment operator
+    PlayerLootProfile& operator=(PlayerLootProfile&& other) = default;
 };
 
 class TC_GAME_API LootDistribution
@@ -204,6 +244,36 @@ public:
         std::atomic<float> playerSatisfaction{0.8f};
         std::chrono::steady_clock::time_point lastUpdate;
 
+        LootMetrics() = default;
+
+        LootMetrics(const LootMetrics& other) :
+            totalRollsInitiated(other.totalRollsInitiated.load()),
+            totalRollsCompleted(other.totalRollsCompleted.load()),
+            needRollsWon(other.needRollsWon.load()),
+            greedRollsWon(other.greedRollsWon.load()),
+            itemsPassed(other.itemsPassed.load()),
+            rollTimeouts(other.rollTimeouts.load()),
+            averageRollTime(other.averageRollTime.load()),
+            decisionAccuracy(other.decisionAccuracy.load()),
+            playerSatisfaction(other.playerSatisfaction.load()),
+            lastUpdate(other.lastUpdate) {}
+
+        LootMetrics& operator=(const LootMetrics& other) {
+            if (this != &other) {
+                totalRollsInitiated.store(other.totalRollsInitiated.load());
+                totalRollsCompleted.store(other.totalRollsCompleted.load());
+                needRollsWon.store(other.needRollsWon.load());
+                greedRollsWon.store(other.greedRollsWon.load());
+                itemsPassed.store(other.itemsPassed.load());
+                rollTimeouts.store(other.rollTimeouts.load());
+                averageRollTime.store(other.averageRollTime.load());
+                decisionAccuracy.store(other.decisionAccuracy.load());
+                playerSatisfaction.store(other.playerSatisfaction.load());
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
+        }
+
         void Reset() {
             totalRollsInitiated = 0; totalRollsCompleted = 0; needRollsWon = 0;
             greedRollsWon = 0; itemsPassed = 0; rollTimeouts = 0;
@@ -278,19 +348,28 @@ private:
     void InvalidatePlayerCache(uint32 playerGuid);
 
     // Item analysis functions
+    void PopulateLootItemData(LootItem& item);
+    bool ShouldInitiateRoll(Group* group, const LootItem& item);
+    void HandleAutoLoot(Group* group, const LootItem& item);
+    bool CanParticipateInRoll(Player* player, const LootItem& item);
+    float CalculateUpgradeValue(Player* player, const LootItem& item);
+    bool IsItemUsefulForOffSpec(Player* player, const LootItem& item);
+    bool IsItemTypeUsefulForClass(uint8 playerClass, const ItemTemplate* itemTemplate);
+    bool IsItemForMainSpec(Player* player, const LootItem& item);
     bool IsArmorUpgrade(Player* player, const LootItem& item);
     bool IsWeaponUpgrade(Player* player, const LootItem& item);
     bool IsAccessoryUpgrade(Player* player, const LootItem& item);
     float CalculateItemScore(Player* player, const LootItem& item);
+    float CalculateItemScore(Player* player, Item* item);
     float CalculateStatPriority(Player* player, uint32 statType);
 
     // Roll processing helpers
     void BroadcastLootRoll(Group* group, const LootRoll& roll);
     void NotifyRollResult(const LootRoll& roll);
     void HandleRollCompletion(LootRoll& roll);
-    void ProcessNeedRolls(LootRoll& roll);
-    void ProcessGreedRolls(LootRoll& roll);
-    void ProcessDisenchantRolls(LootRoll& roll);
+    uint32 ProcessNeedRolls(LootRoll& roll);
+    uint32 ProcessGreedRolls(LootRoll& roll);
+    uint32 ProcessDisenchantRolls(LootRoll& roll);
 
     // Fairness and distribution algorithms
     void UpdateGroupLootHistory(uint32 groupId, uint32 winnerGuid, const LootItem& item);

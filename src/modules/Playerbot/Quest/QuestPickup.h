@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "SharedDefines.h"
 #include "Player.h"
 #include "QuestDef.h"
 #include "Creature.h"
@@ -247,6 +248,26 @@ public:
     void CleanupExpiredRequests();
     void ValidateQuestStates();
 
+    // Performance optimization
+    void OptimizeQuestPickupPerformance();
+    void PreloadQuestData(Player* bot);
+    void CacheFrequentlyAccessedQuests();
+    void UpdateQuestPickupStatistics(uint32 botGuid, bool wasSuccessful, uint32 timeSpent);
+
+    // Configuration constants
+    // Note: MAX_QUEST_LOG_SIZE is defined in TrinityCore
+    static constexpr uint32 QUEST_PICKUP_TIMEOUT = 10000; // 10 seconds
+    static constexpr float DEFAULT_QUEST_GIVER_RANGE = 5.0f;
+    static constexpr float QUEST_SCAN_RADIUS = 100.0f;
+    static constexpr uint32 PICKUP_QUEUE_PROCESS_INTERVAL = 2000; // 2 seconds
+    static constexpr uint32 QUEST_GIVER_UPDATE_INTERVAL = 30000; // 30 seconds
+    static constexpr float MIN_QUEST_VALUE_THRESHOLD = 0.1f;
+    static constexpr uint32 MAX_CONCURRENT_PICKUPS = 3;
+    static constexpr uint32 QUEST_CHAIN_PRIORITY_BONUS = 50;
+    static constexpr float GRAY_QUEST_VALUE_MULTIPLIER = 0.1f;
+    static constexpr float ELITE_QUEST_VALUE_MULTIPLIER = 1.5f;
+    static constexpr uint32 GROUP_QUEST_COORDINATION_TIMEOUT = 15000; // 15 seconds
+
 private:
     QuestPickup();
     ~QuestPickup() = default;
@@ -316,26 +337,6 @@ private:
     bool CanGroupMemberAcceptQuest(Player* member, uint32 questId);
     void WaitForGroupQuestDecisions(Group* group, uint32 questId, uint32 timeoutMs = 10000);
     void HandleGroupQuestConflict(Group* group, uint32 questId);
-
-    // Performance optimization
-    void OptimizeQuestPickupPerformance();
-    void PreloadQuestData(Player* bot);
-    void CacheFrequentlyAccessedQuests();
-    void UpdateQuestPickupStatistics(uint32 botGuid, bool wasSuccessful, uint32 timeSpent);
-
-    // Constants
-    static constexpr uint32 MAX_QUEST_LOG_SIZE = 25;
-    static constexpr uint32 QUEST_PICKUP_TIMEOUT = 10000; // 10 seconds
-    static constexpr float DEFAULT_QUEST_GIVER_RANGE = 5.0f;
-    static constexpr float QUEST_SCAN_RADIUS = 100.0f;
-    static constexpr uint32 PICKUP_QUEUE_PROCESS_INTERVAL = 2000; // 2 seconds
-    static constexpr uint32 QUEST_GIVER_UPDATE_INTERVAL = 30000; // 30 seconds
-    static constexpr float MIN_QUEST_VALUE_THRESHOLD = 0.1f;
-    static constexpr uint32 MAX_CONCURRENT_PICKUPS = 3;
-    static constexpr uint32 QUEST_CHAIN_PRIORITY_BONUS = 50;
-    static constexpr float GRAY_QUEST_VALUE_MULTIPLIER = 0.1f;
-    static constexpr float ELITE_QUEST_VALUE_MULTIPLIER = 1.5f;
-    static constexpr uint32 GROUP_QUEST_COORDINATION_TIMEOUT = 15000; // 15 seconds
 };
 
 } // namespace Playerbot

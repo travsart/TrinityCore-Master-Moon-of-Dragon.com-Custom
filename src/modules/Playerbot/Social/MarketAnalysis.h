@@ -207,7 +207,7 @@ public:
         }
     };
 
-    AnalysisMetrics GetAnalysisMetrics() const { return _metrics; }
+    AnalysisMetrics const& GetAnalysisMetrics() const { return _metrics; }
 
     // Configuration and learning
     void SetAnalysisDepth(float depth); // 0.0 = fast, 1.0 = thorough

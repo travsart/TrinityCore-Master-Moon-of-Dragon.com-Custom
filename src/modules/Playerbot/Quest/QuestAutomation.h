@@ -13,7 +13,7 @@
 #include "QuestPickup.h"
 #include "QuestValidation.h"
 #include "Player.h"
-#include "Quest.h"
+#include "QuestDef.h"
 #include "Group.h"
 #include <unordered_map>
 #include <vector>
@@ -115,12 +115,13 @@ public:
         std::vector<uint32> completedQuests;
         uint32 lastScanTime;
         uint32 lastPickupTime;
+        uint32 automationStartTime;
         uint32 consecutiveFailures;
         bool needsReconfiguration;
 
         AutomationState() : isActive(false), currentQuestId(0), currentQuestGiverGuid(0)
             , activeStrategy(QuestAcceptanceStrategy::LEVEL_APPROPRIATE), lastScanTime(0)
-            , lastPickupTime(0), consecutiveFailures(0), needsReconfiguration(false) {}
+            , lastPickupTime(0), automationStartTime(getMSTime()), consecutiveFailures(0), needsReconfiguration(false) {}
     };
 
     AutomationState GetAutomationState(uint32 botGuid);
@@ -261,6 +262,11 @@ private:
     void CacheQuestDecisions(Player* bot);
 
     // Helper functions
+    std::vector<Creature*> FindNearbyQuestGivers(Player* bot);
+    std::vector<uint32> GetAvailableQuestsFromGiver(Player* bot, Creature* questGiver);
+    std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot);
+    uint32 GetNextQuestInChain(uint32 completedQuestId);
+    void AcceptQuest(Player* bot, uint32 questId, Creature* questGiver = nullptr);
     bool IsQuestWorthAutomating(uint32 questId, Player* bot);
     uint32 EstimateQuestCompletionTime(uint32 questId, Player* bot);
     float CalculateQuestEfficiencyScore(uint32 questId, Player* bot);
