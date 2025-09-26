@@ -11,7 +11,7 @@
 
 #include "Define.h"
 #include "Player.h"
-#include "Quest.h"
+#include "QuestDef.h"
 #include "Creature.h"
 #include "GameObject.h"
 #include "Position.h"

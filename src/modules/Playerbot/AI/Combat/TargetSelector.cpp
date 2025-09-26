@@ -148,9 +148,9 @@ SelectionResult TargetSelector::SelectAttackTarget(float maxRange)
 
     if (Group* group = _bot->GetGroup())
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
                 context.groupMembers.push_back(member);
         }
     }
@@ -482,9 +482,9 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
 
     if (Group* group = _bot->GetGroup())
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member != _bot && _bot->GetDistance(member) <= range)
                     allies.push_back(member);
@@ -876,9 +876,9 @@ Unit* TargetSelectionUtils::GetMostWoundedAlly(Player* bot, float maxRange)
 
     if (Group* group = bot->GetGroup())
     {
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member != bot && bot->GetDistance(member) <= maxRange)
                 {

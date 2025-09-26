@@ -175,6 +175,26 @@ set(PLAYERBOT_SOURCES
     # Script integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+
+    # Social Systems - WoW 11.2 Economy Integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+
+    # Quest Systems - Dynamic Quest Management
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
 )
 
 # Group sources for IDE organization
@@ -328,6 +348,28 @@ source_group("Adapters" FILES
 source_group("Scripts" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+)
+
+source_group("Social" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+)
+
+source_group("Quest" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
 )
 
 # Create the playerbot library

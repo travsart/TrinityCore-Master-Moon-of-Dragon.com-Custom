@@ -72,9 +72,9 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
             if (Group* group = _bot->GetGroup())
             {
                 std::vector<Player*> groupMembers;
-                for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+                for (GroupReference const& ref : group->GetMembers())
                 {
-                    if (Player* member = ref->GetSource())
+                    if (Player* member = ref.GetSource())
                         groupMembers.push_back(member);
                 }
                 CoordinateInterruptsWithGroup(groupMembers);
@@ -346,7 +346,7 @@ void InterruptManager::InitializeInterruptCapabilities()
 {
     _interruptCapabilities.clear();
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     std::vector<uint32> classInterrupts = InterruptUtils::GetClassInterruptSpells(botClass);
 
     for (uint32 spellId : classInterrupts)

@@ -290,6 +290,13 @@ private:
     static constexpr float ECONOMIC_STABILITY_THRESHOLD = 0.8f;
     static constexpr uint32 VENDOR_VISIT_COOLDOWN = 600000; // 10 minutes
     static constexpr uint32 REPAIR_CHECK_INTERVAL = 300000; // 5 minutes
+
+    // Helper functions
+    void OptimizeInventorySpace(Player* player);
+    void OrganizeInventory(Player* player);
+    Creature* FindNearestRepairVendor(Player* player);
+    void RepairAllItems(Player* player);
+    void RestockConsumables(Player* player);
 };
 
 } // namespace Playerbot

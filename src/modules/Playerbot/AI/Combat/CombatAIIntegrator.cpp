@@ -291,9 +291,9 @@ void CombatAIIntegrator::SetGroup(Group* group)
     if (_formationManager && group)
     {
         std::vector<ObjectGuid> members;
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            if (Player* member = itr->GetSource())
+            if (Player* member = itr.GetSource())
                 members.push_back(member->GetGUID());
         }
         _formationManager->UpdateGroupMembers(members);

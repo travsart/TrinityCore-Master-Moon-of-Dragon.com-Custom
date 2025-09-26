@@ -25,8 +25,8 @@
 class Player;
 class Group;
 class Item;
-class ItemTemplate;
-class Loot;
+struct ItemTemplate;
+struct Loot;
 
 namespace Playerbot
 {

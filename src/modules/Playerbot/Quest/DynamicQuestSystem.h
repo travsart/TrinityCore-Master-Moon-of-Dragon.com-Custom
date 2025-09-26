@@ -11,7 +11,7 @@
 
 #include "Define.h"
 #include "Player.h"
-#include "Quest.h"
+#include "QuestDef.h"
 #include "Position.h"
 #include <unordered_map>
 #include <unordered_set>
