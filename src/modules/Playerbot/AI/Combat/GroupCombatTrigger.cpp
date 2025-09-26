@@ -7,14 +7,17 @@
  * option) any later version.
  */
 
+// Combat/ThreatManager.h removed - not used in this file
+
 #include "GroupCombatTrigger.h"
-#include "BotAI.h"
+#include "../BotAI.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
-#include "Actions/TargetAssistAction.h"
+#include "../Actions/TargetAssistAction.h"
+#include "../Actions/Action.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -110,9 +113,9 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
     uint32 membersInCombat = 0;
     uint32 totalMembers = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             ++totalMembers;
             if (member->IsInCombat())
@@ -150,9 +153,9 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     bool inCombat = false;
     uint32 membersInCombat = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat())
             {
@@ -165,7 +168,7 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     // Update cache
     if (_cachingEnabled)
     {
-        UpdateGroupCombatState(group, inCombat);
+        const_cast<GroupCombatTrigger*>(this)->UpdateGroupCombatState(group, inCombat);
     }
 
     return inCombat;
@@ -218,9 +221,9 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     Unit* leaderTarget = nullptr;
 
     // Count targets being attacked by group members
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (!member->IsInCombat())
                 continue;
@@ -254,7 +257,10 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     }
 
     if (!bestTargetGuid.IsEmpty())
-        return ObjectAccessor::GetUnit(*group->GetLeader(), bestTargetGuid);
+    {
+        if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
+            return ObjectAccessor::GetUnit(*leader, bestTargetGuid);
+    }
 
     return nullptr;
 }
@@ -290,9 +296,9 @@ Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
     Unit* nearestTarget = nullptr;
     float nearestDistance = _maxEngagementRange;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member == bot || !member->IsInCombat())
                 continue;
@@ -339,9 +345,9 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     info.memberTargets.clear();
     info.membersInCombat = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat())
             {
@@ -380,9 +386,9 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
         return false;
 
     // For melee classes, ensure they can reach the target
-    if (bot->getClass() == CLASS_WARRIOR || bot->getClass() == CLASS_ROGUE ||
-        bot->getClass() == CLASS_DEATH_KNIGHT || bot->getClass() == CLASS_DEMON_HUNTER ||
-        bot->getClass() == CLASS_PALADIN || bot->getClass() == CLASS_MONK)
+    if (bot->GetClass() == CLASS_WARRIOR || bot->GetClass() == CLASS_ROGUE ||
+        bot->GetClass() == CLASS_DEATH_KNIGHT || bot->GetClass() == CLASS_DEMON_HUNTER ||
+        bot->GetClass() == CLASS_PALADIN || bot->GetClass() == CLASS_MONK)
     {
         // Allow slightly more range for melee to account for movement
         return distance <= std::max(10.0f, MIN_ENGAGEMENT_RANGE * 2);
@@ -405,8 +411,8 @@ bool GroupCombatTrigger::IsValidGroupTarget(Player* bot, Unit* target) const
     if (!bot->IsHostileTo(target))
         return false;
 
-    // Check if target is attackable
-    if (!bot->CanAttack(target))
+    // Check if target is attackable (use Unit's CanAttack instead)
+    if (!bot->IsValidAttackTarget(target))
         return false;
 
     // Check line of sight
@@ -425,9 +431,9 @@ bool GroupCombatTrigger::IsTargetEngaged(Group* group, Unit* target) const
     if (!group || !target)
         return false;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat() && member->GetVictim() == target)
                 return true;
@@ -448,9 +454,9 @@ bool GroupCombatTrigger::UpdateCombatCache(Group* group) const
         return false;
 
     bool inCombat = false;
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat())
             {
@@ -512,9 +518,9 @@ uint32 GroupCombatTrigger::CountMembersOnTarget(Group* group, Unit* target) cons
 
     uint32 count = 0;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat() && member->GetVictim() == target)
                 ++count;

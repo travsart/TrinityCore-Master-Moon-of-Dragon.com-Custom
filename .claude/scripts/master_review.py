@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 """
 Master Review Script for PlayerBot Project
 Orchestrates complete code review with all agents

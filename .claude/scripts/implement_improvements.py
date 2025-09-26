@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 """
 PlayerBot Critical Improvements Setup Script
 Implements the most important recommendations immediately
@@ -71,7 +71,7 @@ def setup_dependency_scanner(claude_dir):
         print_colored("  ⚠ npm not found - skipping Node.js security tools", Colors.YELLOW)
     
     # Create dependency scanner script
-    scanner_content = '''#!/usr/bin/env python3
+    scanner_content = '''#!C:\Program Files\Python313\python.exe
 """
 Dependency Security Scanner for TrinityCore PlayerBot
 """
@@ -215,7 +215,7 @@ def setup_rollback_system(claude_dir, project_root):
     ensure_directory(rollback_dir)
     
     # Create rollback script
-    rollback_content = '''#!/usr/bin/env python3
+    rollback_content = '''#!C:\Program Files\Python313\python.exe
 """
 Git-based rollback system for PlayerBot
 """
@@ -443,7 +443,7 @@ def setup_monitoring(claude_dir):
     print_colored("\n📊 Enabling Real-time Monitoring...", Colors.GREEN)
     
     # Create monitoring script
-    monitoring_content = '''#!/usr/bin/env python3
+    monitoring_content = '''#!C:\Program Files\Python313\python.exe
 """
 Real-time monitoring service for PlayerBot
 """
@@ -900,7 +900,7 @@ def setup_quick_wins(claude_dir, project_root):
     git_hooks_dir = project_root / ".git" / "hooks"
     if git_hooks_dir.exists():
         # Pre-commit hook
-        pre_commit_content = '''#!/usr/bin/env python3
+        pre_commit_content = '''#!C:\Program Files\Python313\python.exe
 """
 Pre-commit hook for PlayerBot - Quick quality checks
 """
@@ -995,7 +995,7 @@ if __name__ == "__main__":
         success_count += 1
     
     # Create a simple health check script
-    health_check_content = '''#!/usr/bin/env python3
+    health_check_content = '''#!C:\Program Files\Python313\python.exe
 """
 Quick health check for PlayerBot system
 """

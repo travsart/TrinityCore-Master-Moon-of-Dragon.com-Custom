@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 """
 Automatic Documentation Generator for PlayerBot Project
 Scans all C++ files and generates comprehensive documentation

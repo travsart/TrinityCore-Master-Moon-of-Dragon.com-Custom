@@ -327,7 +327,7 @@ private:
      * @param bot The bot player
      * @return true if class needs to face target
      */
-    bool RequiresFacing(Player* bot) const;
+    bool RequiresFacingForClass(Player* bot) const;
 
     // Member variables
     std::unordered_map<ObjectGuid, std::chrono::steady_clock::time_point> _lastTargetSwitch; // Track switch times

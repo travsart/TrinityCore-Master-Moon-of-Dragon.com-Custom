@@ -387,7 +387,7 @@ void RogueAI::HandleEmergencysituations()
 
     // Handle multiple attackers
     std::vector<::Unit*> attackers;
-    for (auto& threat : _bot->GetThreatMgr().GetThreats())
+    for (auto& threat : _bot->GetThreatManager().GetThreats())
     {
         if (::Unit* attacker = threat.getTarget())
         {

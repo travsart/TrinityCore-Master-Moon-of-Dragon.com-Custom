@@ -108,7 +108,7 @@ private:
     void OptimizeDoTRotation();
 
     // Combat system integration
-    std::unique_ptr<class ThreatManager> _threatManager;
+    std::unique_ptr<class BotThreatManager> _threatManager;
     std::unique_ptr<class TargetSelector> _targetSelector;
     std::unique_ptr<class PositionManager> _positionManager;
     std::unique_ptr<class InterruptManager> _interruptManager;

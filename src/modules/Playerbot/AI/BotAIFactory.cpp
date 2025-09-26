@@ -2,6 +2,7 @@
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  */
 
+// Combat/ThreatManager.h removed - not used in this file
 #include "BotAI.h"
 #include "Player.h"
 #include "Log.h"
@@ -23,7 +24,7 @@ std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
     }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Creating BotAI for player {} (class: {})",
-                 bot->GetName(), bot->getClass());
+                 bot->GetName(), bot->GetClass());
 
     try
     {

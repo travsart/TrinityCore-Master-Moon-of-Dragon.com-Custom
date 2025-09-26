@@ -126,8 +126,26 @@ set(PLAYERBOT_SOURCES
     # AI Combat System - Group Combat Coordination
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.h
+    # ThreatManager - resolved naming conflict by renaming to BotThreatManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
+# Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.h
 
@@ -209,6 +227,8 @@ source_group("AI\\Actions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.h
 )
 
 source_group("AI\\Triggers" FILES
@@ -219,6 +239,22 @@ source_group("AI\\Triggers" FILES
 source_group("AI\\Combat" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.h
+    # ThreatManager - resolved naming conflict by renaming to BotThreatManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
+# Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
 )
 
 source_group("AI\\Values" FILES

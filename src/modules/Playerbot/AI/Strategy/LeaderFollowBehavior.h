@@ -271,13 +271,20 @@ public:
      */
     void ResetStats() { _stats = BehaviorStats{}; }
 
-private:
-    // Internal methods
     /**
      * Update formation positions
      * @param ai The bot AI instance
      */
     void UpdateFormation(BotAI* ai);
+
+    /**
+     * Set target to follow
+     * @param leader The leader to follow
+     */
+    void SetFollowTarget(Player* leader);
+
+private:
+    // Internal methods
 
     /**
      * Check if movement is needed

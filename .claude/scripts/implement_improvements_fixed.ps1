@@ -48,7 +48,7 @@ if ($InstallDependencyScanner) {
     
     # Create dependency check script content
     $depCheckContent = @"
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 import json
 import subprocess
 import re

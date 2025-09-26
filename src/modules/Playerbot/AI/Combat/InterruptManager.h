@@ -28,7 +28,7 @@ class SpellInfo;
 namespace Playerbot
 {
 
-// Interrupt priority levels
+// Interrupt priority levels for WoW 11.2 encounters
 enum class InterruptPriority : uint8
 {
     CRITICAL = 0,           // Must interrupt immediately (healing, fear, etc.)
@@ -36,6 +36,16 @@ enum class InterruptPriority : uint8
     MODERATE = 2,           // Standard interrupt priority
     LOW = 3,                // Low priority interrupt
     IGNORE = 4              // Do not interrupt
+};
+
+// Interrupt assignment states for group coordination
+enum class InterruptAssignment : uint8
+{
+    UNASSIGNED = 0,         // No one assigned
+    PRIMARY = 1,            // Primary interrupter
+    BACKUP = 2,             // Backup interrupter
+    TERTIARY = 3,           // Tertiary interrupter
+    EXCLUDED = 4            // Excluded from interrupt rotation
 };
 
 // Interrupt types based on spell effects
@@ -64,7 +74,7 @@ enum class InterruptMethod : uint8
     FEAR = 7               // Fear to interrupt
 };
 
-// Interrupt target information
+// Interrupt target information for WoW 11.2
 struct InterruptTarget
 {
     ObjectGuid guid;
@@ -86,15 +96,29 @@ struct InterruptTarget
     std::string spellName;
     std::string targetName;
 
+    // WoW 11.2 specific fields
+    bool isMythicPlus;
+    uint8 mythicLevel;
+    bool hasInterruptImmunity;
+    uint32 immunityExpires;
+    float threatMultiplier;
+    bool isKeyAbility;      // Key ability that must be interrupted
+    uint32 schoolMask;      // Spell school for lockout tracking
+    ObjectGuid assignedInterrupter;  // Who's assigned to interrupt
+    InterruptAssignment assignmentStatus;
+
     InterruptTarget() : unit(nullptr), currentSpell(nullptr), spellInfo(nullptr),
                        spellId(0), priority(InterruptPriority::IGNORE),
                        type(InterruptType::DAMAGE_PREVENTION), remainingCastTime(0.0f),
                        totalCastTime(0.0f), castProgress(0.0f), detectedTime(0),
                        timeWindow(0), isChanneled(false), isInterruptible(false),
-                       requiresLoS(true) {}
+                       requiresLoS(true), isMythicPlus(false), mythicLevel(0),
+                       hasInterruptImmunity(false), immunityExpires(0),
+                       threatMultiplier(1.0f), isKeyAbility(false), schoolMask(0),
+                       assignmentStatus(InterruptAssignment::UNASSIGNED) {}
 };
 
-// Interrupt capability information
+// Interrupt capability information for WoW 11.2 abilities
 struct InterruptCapability
 {
     uint32 spellId;
@@ -103,18 +127,37 @@ struct InterruptCapability
     float range;
     float cooldown;
     uint32 manaCost;
+    uint32 resourceCost;     // For non-mana resources
+    Powers resourceType;      // Resource type (Energy, Rage, etc.)
     float castTime;
     bool requiresLoS;
     bool requiresFacing;
     bool isAvailable;
     uint32 lastUsed;
+    uint32 cooldownExpires;
     InterruptPriority minPriority;
     std::vector<InterruptType> effectiveAgainst;
 
+    // WoW 11.2 specific fields
+    uint32 lockoutDuration;  // Duration of spell school lockout
+    uint32 schoolMask;       // Which schools this locks out
+    bool isHeroTalent;       // Hero talent ability
+    bool requiresSpec;       // Requires specific specialization
+    uint32 requiredSpec;     // Required spec ID
+    float globalCooldown;    // GCD duration
+    bool offGCD;            // Can be used off GCD
+    uint8 charges;          // Number of charges (for abilities like Wind Shear)
+    uint8 currentCharges;
+    uint32 chargeRecoveryTime;
+
     InterruptCapability() : spellId(0), method(InterruptMethod::SPELL_INTERRUPT),
-                           range(0.0f), cooldown(0.0f), manaCost(0), castTime(0.0f),
+                           range(0.0f), cooldown(0.0f), manaCost(0), resourceCost(0),
+                           resourceType(POWER_MANA), castTime(0.0f),
                            requiresLoS(true), requiresFacing(true), isAvailable(false),
-                           lastUsed(0), minPriority(InterruptPriority::MODERATE) {}
+                           lastUsed(0), cooldownExpires(0), minPriority(InterruptPriority::MODERATE),
+                           lockoutDuration(0), schoolMask(0), isHeroTalent(false),
+                           requiresSpec(false), requiredSpec(0), globalCooldown(1.5f),
+                           offGCD(false), charges(1), currentCharges(1), chargeRecoveryTime(0) {}
 };
 
 // Interrupt execution plan
@@ -195,6 +238,32 @@ struct InterruptMetrics
     }
 };
 
+// Group interrupt coordination data
+struct GroupInterruptData
+{
+    std::unordered_map<ObjectGuid, InterruptAssignment> assignments;
+    std::unordered_map<ObjectGuid, std::vector<InterruptCapability>> memberCapabilities;
+    std::unordered_map<ObjectGuid, uint32> memberCooldowns;
+    std::unordered_map<uint32, ObjectGuid> spellAssignments;  // SpellId -> Assigned player
+    uint32 lastRotationUpdate;
+    uint8 rotationIndex;
+    std::vector<ObjectGuid> rotationOrder;
+
+    GroupInterruptData() : lastRotationUpdate(0), rotationIndex(0) {}
+};
+
+// Interrupt rotation strategy
+struct InterruptRotation
+{
+    std::vector<ObjectGuid> primaryInterrupters;
+    std::vector<ObjectGuid> backupInterrupters;
+    std::unordered_map<ObjectGuid, uint32> nextAvailable;  // When each member's interrupt is available
+    uint32 rotationCooldown;  // Time between rotation switches
+    bool useStaggered;        // Use staggered interrupts for chain casting
+
+    InterruptRotation() : rotationCooldown(10000), useStaggered(false) {}
+};
+
 class TC_GAME_API InterruptManager
 {
 public:
@@ -238,17 +307,41 @@ public:
     bool CanInterruptInTime(const InterruptTarget& target, InterruptMethod method);
     uint32 GetOptimalInterruptTiming(const InterruptTarget& target);
 
-    // Group coordination
+    // Group coordination for WoW 11.2
     void CoordinateInterruptsWithGroup(const std::vector<Player*>& groupMembers);
     bool ShouldLetOthersInterrupt(const InterruptTarget& target);
     void RegisterInterruptAttempt(const InterruptTarget& target);
     void ShareInterruptInformation(const std::vector<Player*>& groupMembers);
 
-    // Advanced interrupt strategies
+    // Interrupt rotation management
+    void InitializeInterruptRotation(const std::vector<Player*>& groupMembers);
+    void UpdateInterruptRotation();
+    InterruptAssignment GetMyAssignment(const InterruptTarget& target);
+    ObjectGuid GetAssignedInterrupter(const InterruptTarget& target);
+    void AssignInterruptRoles(const std::vector<Player*>& groupMembers);
+    void OptimizeRotationForEncounter(uint32 encounterId);
+
+    // Cooldown tracking across group
+    void TrackGroupCooldowns(const std::vector<Player*>& groupMembers);
+    uint32 GetMemberInterruptCooldown(ObjectGuid memberGuid);
+    bool IsMemberInterruptReady(ObjectGuid memberGuid);
+    std::vector<ObjectGuid> GetAvailableInterrupters();
+
+    // Backup interrupt systems
+    bool TriggerBackupInterrupt(const InterruptTarget& target);
+    void PromoteBackupToMain(const InterruptTarget& target);
+    bool HandleInterruptFailure(const InterruptTarget& target, const InterruptResult& result);
+    void RequestEmergencyAssist(const InterruptTarget& target);
+
+    // Advanced interrupt strategies for WoW 11.2
     void HandleMultipleInterruptTargets();
     void OptimizeInterruptRotation();
     void ManageInterruptCooldowns();
     void HandleInterruptImmunity(Unit* target);
+    void HandleMythicPlusAffixes(uint8 mythicLevel);
+    void PredictChainCasting(Unit* caster);
+    void HandleSchoolLockouts(uint32 schoolMask, uint32 duration);
+    void AdaptToEncounterMechanics(uint32 encounterId);
 
     // Configuration and management
     void SetReactionTime(uint32 reactionTimeMs) { _reactionTime = reactionTimeMs; }
@@ -261,6 +354,9 @@ public:
     // Performance monitoring
     InterruptMetrics const& GetMetrics() const { return _metrics; }
     void ResetMetrics() { _metrics.Reset(); }
+    float GetInterruptUptime() const;
+    float GetRotationEfficiency() const;
+    void LogRotationPerformance();
 
     // Query methods
     bool IsCurrentlyInterrupting() const { return _isInterrupting; }
@@ -328,6 +424,13 @@ private:
     std::vector<InterruptTarget> _trackedTargets;
     std::vector<InterruptCapability> _interruptCapabilities;
 
+    // WoW 11.2 specific tracking
+    std::unordered_map<uint32, uint32> _schoolLockouts;  // School mask -> expiry time
+    std::unordered_map<ObjectGuid, uint32> _targetImmunities;  // Target -> immunity expiry
+    GroupInterruptData _groupData;
+    InterruptRotation _currentRotation;
+    std::unordered_map<uint32, InterruptPriority> _spellPriorityOverrides;  // Custom priorities
+
     // Configuration
     uint32 _reactionTime;
     float _maxInterruptRange;
@@ -351,13 +454,17 @@ private:
     // Thread safety
     mutable std::shared_mutex _mutex;
 
-    // Constants
+    // Constants for WoW 11.2
     static constexpr uint32 DEFAULT_REACTION_TIME = 250;        // 250ms reaction time
     static constexpr float DEFAULT_MAX_RANGE = 30.0f;          // 30 yards max interrupt range
     static constexpr uint32 DEFAULT_SCAN_INTERVAL = 100;       // 100ms scan interval
     static constexpr float TIMING_ACCURACY_TARGET = 0.8f;      // 80% timing accuracy target
     static constexpr uint32 COORDINATION_UPDATE_INTERVAL = 500; // 500ms coordination updates
     static constexpr uint32 TARGET_TRACKING_DURATION = 5000;   // 5 seconds target tracking
+    static constexpr uint32 SCHOOL_LOCKOUT_DURATION = 4000;    // 4 seconds default lockout
+    static constexpr uint32 INTERRUPT_GCD = 1500;              // 1.5 second GCD
+    static constexpr float MYTHIC_PLUS_SCALING = 1.08f;        // 8% scaling per M+ level
+    static constexpr uint32 ROTATION_SYNC_INTERVAL = 1000;     // 1 second rotation sync
 };
 
 // Interrupt utilities and spell database

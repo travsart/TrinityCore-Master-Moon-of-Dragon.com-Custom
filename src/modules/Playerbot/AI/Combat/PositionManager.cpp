@@ -24,7 +24,7 @@
 namespace Playerbot
 {
 
-PositionManager::PositionManager(Player* bot, ThreatManager* threatManager)
+PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
     : _bot(bot), _threatManager(threatManager), _updateInterval(DEFAULT_UPDATE_INTERVAL),
       _lastUpdate(0), _positionTolerance(POSITION_TOLERANCE), _maxCandidates(MAX_CANDIDATES),
       _lastZoneUpdate(0)

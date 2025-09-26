@@ -7,6 +7,7 @@
  * option) any later version.
  */
 
+// Combat/ThreatManager.h removed - not used in this file
 #include "Action.h"
 #include "BotAI.h"
 #include "Player.h"

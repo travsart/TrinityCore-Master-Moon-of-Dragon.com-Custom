@@ -12,7 +12,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Position.h"
-#include "ThreatManager.h"
+#include "BotThreatManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -191,7 +191,7 @@ struct SelectionMetrics
 class TC_GAME_API TargetSelector
 {
 public:
-    explicit TargetSelector(Player* bot, ThreatManager* threatManager);
+    explicit TargetSelector(Player* bot, BotThreatManager* threatManager);
     ~TargetSelector() = default;
 
     // Primary target selection methods
@@ -289,7 +289,7 @@ private:
 
 private:
     Player* _bot;
-    ThreatManager* _threatManager;
+    BotThreatManager* _threatManager;
     Unit* _groupTarget;
     TargetWeights _weights;
     bool _emergencyMode;

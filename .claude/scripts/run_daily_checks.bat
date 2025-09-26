@@ -70,8 +70,8 @@ if "%CHECK_TYPE%"=="auto" set CHECK_TYPE=%DEFAULT_CHECK%
 echo Executing %CHECK_TYPE% checks... >> "%LOG_FILE%"
 
 REM Run PowerShell automation script
-echo Starting PowerShell automation... >> "%LOG_FILE%"
-powershell.exe -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\daily_automation.ps1" -CheckType %CHECK_TYPE% -ProjectRoot "%PROJECT_ROOT%" -AutoFix:%AUTO_FIX% -EmailReport:%EMAIL_REPORT% >> "%LOG_FILE%" 2>&1
+echo Starting Python automation... >> "%LOG_FILE%"
+    %PYTHON_PATH% "%SCRIPTS_DIR%\daily_automation.py" -CheckType %CHECK_TYPE% -ProjectRoot "%PROJECT_ROOT%" -AutoFix:%AUTO_FIX% -EmailReport:%EMAIL_REPORT% >> "%LOG_FILE%" 2>&1
 
 set PS_EXIT_CODE=%ERRORLEVEL%
 if %PS_EXIT_CODE% NEQ 0 (

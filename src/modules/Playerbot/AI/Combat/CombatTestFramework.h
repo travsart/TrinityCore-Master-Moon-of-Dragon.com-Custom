@@ -31,7 +31,7 @@ namespace Playerbot
 {
 
 // Forward declarations for combat systems
-class ThreatManager;
+class BotThreatManager;
 class TargetSelector;
 class PositionManager;
 class LineOfSightManager;

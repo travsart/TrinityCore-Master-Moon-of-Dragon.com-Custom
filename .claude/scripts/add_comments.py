@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 """
 Auto-comment insertion script for PlayerBot project
 Adds comments to undocumented code sections

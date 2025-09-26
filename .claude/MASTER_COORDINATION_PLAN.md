@@ -1,5 +1,15 @@
 # TrinityCore PlayerBot Master Coordination Plan
 
+## Quality Requirements (FUNDAMENTAL RULES)
+- **NEVER take shortcuts** - Full implementation, no simplified approaches, no stubs, no commenting out
+- **AVOID modify core files** - All code in src/modules/Playerbot/
+- **ALWAYS use TrinityCore APIs** - Never bypass existing systems
+- **ALWAYS evaluate dbc, db2 and sql information** - No need to do work twice and to avoid redundancy
+- **ALWAYS maintain performance** - <0.1% CPU per bot, <10MB memory
+- **ALWAYS test thoroughly** - Unit tests for every component
+- **ALWAYS aim for quality and completeness** - quality and completeness first
+- **ALWAYS there are no time constraints** - there is no need to shorten or speed up something
+
 ## Project Overview
 
 **Objective**: Transform the TrinityCore PlayerBot module from architectural foundation to fully functional bot system with priority on group-based testing and gameplay.
@@ -36,6 +46,50 @@
 - **Combat Systems** (`ThreatManager`, `TargetSelector`, `PositionManager`)
 - **Session Management** (`BotSession.cpp/.h`, `BotSessionMgr`)
 - **Performance Monitoring** (`BotPerformanceMonitor`, `BotProfiler`)
+
+#### ⚠️ CRITICAL TECHNICAL DEBT - PHASE 2 COMBAT SYSTEMS
+
+**STATUS**: Phase 2 Advanced Combat Coordination systems have compilation issues with TrinityCore Map.h template dependencies that require proper resolution.
+
+##### InterruptAwareness System Issue:
+- **Problem**: Complex TrinityCore Map.h includes causing template compilation errors in InterruptAwareness.cpp
+- **Current Workaround**: Simplified implementation using group members only (removed Map.h dependency)
+- **REQUIRED**: Full implementation with proper TrinityCore grid system integration
+- **Impact**: Limited spell detection range, reduced combat effectiveness
+- **Priority**: HIGH - Must be resolved before production deployment
+
+##### Required Implementation:
+1. **Proper TrinityCore Grid System Integration**:
+   - Implement `GetNearbyUnits()` using TrinityCore's grid search APIs
+   - Resolve Map.h template dependency conflicts
+   - Ensure full 50-yard spell detection range
+
+2. **Complete Spell Detection**:
+   - Real-time enemy spell cast detection beyond group members
+   - Line-of-sight checking for accurate threat assessment
+   - Performance optimization for 5000+ bot scenarios
+
+3. **Testing Requirements**:
+   - Unit tests for grid system integration
+   - Performance benchmarks with full detection range
+   - Memory usage validation under high bot loads
+
+**Timeline**: Must be completed in Phase 3 or before production release.
+
+##### TargetAssistAction System Issue:
+- **Problem**: TrinityCore Group API changes causing compilation errors in TargetAssistAction.cpp
+- **Current Errors**: `GetFirstMember()` method not found, `getClass()` vs `GetClass()` API mismatches
+- **Required**: Update to proper TrinityCore Group iteration API
+- **Impact**: Group target assistance functionality broken
+- **Priority**: MEDIUM - Core functionality works without target assist
+
+##### Additional Technical Debt:
+- Multiple files using outdated TrinityCore API calls
+- Group iteration patterns need modernization
+- Player class access methods require API updates
+- All Phase 2 combat systems require TrinityCore API compliance review
+
+**Timeline**: Must be completed in Phase 3 or before production release.
 
 #### ⚠️ Partially Implemented (Needs Completion)
 - **Movement Systems** (PathfindingManager, ObstacleAvoidanceManager)

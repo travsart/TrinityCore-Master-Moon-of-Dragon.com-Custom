@@ -619,7 +619,7 @@ bool ProtectionSpecialization::HasThreat(Unit* target)
     if (!target || !_bot)
         return false;
 
-    return target->GetThreatMgr().GetThreat(_bot) > 0;
+    return target->GetThreatManager().GetThreat(_bot) > 0;
 }
 
 float ProtectionSpecialization::GetThreatPercent(Unit* target)
@@ -627,7 +627,7 @@ float ProtectionSpecialization::GetThreatPercent(Unit* target)
     if (!target || !_bot)
         return 0.0f;
 
-    ThreatMgr& threatMgr = target->GetThreatMgr();
+    ThreatManager& threatMgr = target->GetThreatManager();
     float maxThreat = threatMgr.GetMaxThreat();
     float myThreat = threatMgr.GetThreat(_bot);
 

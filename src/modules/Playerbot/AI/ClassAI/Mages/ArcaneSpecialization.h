@@ -14,7 +14,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
-#include "ThreatManager.h"
+#include "BotThreatManager.h"
 
 namespace Playerbot
 {

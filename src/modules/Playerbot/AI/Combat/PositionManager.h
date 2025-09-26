@@ -12,7 +12,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Position.h"
-#include "ThreatManager.h"
+#include "BotThreatManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -217,7 +217,7 @@ struct PositionMetrics
 class TC_GAME_API PositionManager
 {
 public:
-    explicit PositionManager(Player* bot, ThreatManager* threatManager);
+    explicit PositionManager(Player* bot, BotThreatManager* threatManager);
     ~PositionManager() = default;
 
     // Main positioning interface
@@ -322,7 +322,7 @@ private:
 
 private:
     Player* _bot;
-    ThreatManager* _threatManager;
+    BotThreatManager* _threatManager;
     PositionWeights _weights;
 
     // Configuration

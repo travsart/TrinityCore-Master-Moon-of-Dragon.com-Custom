@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 """
 Agent Status Dashboard - Shows which agents are running when
 """

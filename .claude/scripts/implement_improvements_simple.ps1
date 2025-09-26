@@ -49,7 +49,7 @@ if ($InstallDependencyScanner) {
     
     # Create a simple Python dependency scanner
     $pythonScript = @'
-#!/usr/bin/env python3
+#!C:\Program Files\Python313\python.exe
 import json
 import os
 from pathlib import Path

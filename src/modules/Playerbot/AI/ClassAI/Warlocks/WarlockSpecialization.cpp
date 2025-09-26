@@ -533,7 +533,7 @@ void WarlockSpecialization::UseEmergencyAbilities()
     {
         // Check if we have high threat
         Unit* target = _bot->GetSelectedUnit();
-        if (target && target->GetThreatMgr().GetThreat(_bot) > 0)
+        if (target && target->GetThreatManager().GetThreat(_bot) > 0)
         {
             if (_bot->CastSpell(_bot, SOULSHATTER, false))
             {

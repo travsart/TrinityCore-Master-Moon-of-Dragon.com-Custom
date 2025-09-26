@@ -12,7 +12,7 @@
 #include "ClassAI.h"
 #include "WarriorSpecialization.h"
 #include "Position.h"
-#include "ThreatManager.h"
+#include "BotThreatManager.h"
 #include "TargetSelector.h"
 #include "PositionManager.h"
 #include "InterruptManager.h"

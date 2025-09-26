@@ -19,12 +19,15 @@
 #include <chrono>
 #include <unordered_map>
 
+class Unit;  // TrinityCore forward declaration
+class Player;
+class WorldObject;
+
 namespace Playerbot
 {
 
 // Forward declarations
 class BotAI;
-class Unit;
 
 // Trigger types
 enum class TriggerType

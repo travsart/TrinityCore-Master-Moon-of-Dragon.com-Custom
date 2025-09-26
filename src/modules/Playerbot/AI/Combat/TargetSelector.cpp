@@ -25,7 +25,7 @@
 namespace Playerbot
 {
 
-TargetSelector::TargetSelector(Player* bot, ThreatManager* threatManager)
+TargetSelector::TargetSelector(Player* bot, BotThreatManager* threatManager)
     : _bot(bot), _threatManager(threatManager), _groupTarget(nullptr), _emergencyMode(false),
       _maxTargetsToEvaluate(DEFAULT_MAX_TARGETS), _selectionCacheDuration(CACHE_DURATION_MS),
       _defaultMaxRange(DEFAULT_MAX_RANGE), _cacheTimestamp(0), _cacheDirty(true)

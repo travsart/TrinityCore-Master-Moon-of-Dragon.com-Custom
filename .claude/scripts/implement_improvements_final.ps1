@@ -64,7 +64,7 @@ if ($InstallDependencyScanner) {
     
     # Create dependency check script
     $depScannerLines = @(
-        "#!/usr/bin/env python3",
+        "#!C:\Program Files\Python313\python.exe",
         "import json",
         "import subprocess", 
         "import re",

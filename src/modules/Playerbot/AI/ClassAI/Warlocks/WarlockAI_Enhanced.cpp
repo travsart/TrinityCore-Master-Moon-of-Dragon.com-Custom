@@ -15,7 +15,7 @@
 #include "Pet.h"
 #include "Group.h"
 #include "SpellMgr.h"
-#include "ThreatManager.h"
+#include "BotThreatManager.h"
 #include "TargetSelector.h"
 #include "PositionManager.h"
 #include "InterruptManager.h"

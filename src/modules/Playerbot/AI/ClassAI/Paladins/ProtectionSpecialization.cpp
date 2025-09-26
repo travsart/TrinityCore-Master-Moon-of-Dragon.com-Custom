@@ -107,7 +107,7 @@ void ProtectionSpecialization::OnCombatStart(::Unit* target)
     GenerateThreat();
 
     if (target)
-        bot->GetThreatMgr().AddThreat(target, 1000.0f);
+        bot->GetThreatManager().AddThreat(target, 1000.0f);
 }
 
 void ProtectionSpecialization::OnCombatEnd()
@@ -331,7 +331,7 @@ void ProtectionSpecialization::GenerateThreat()
     ::Unit* target = bot->GetSelectedUnit();
     if (target && target->IsHostileTo(bot))
     {
-        bot->GetThreatMgr().AddThreat(target, 500.0f);
+        bot->GetThreatManager().AddThreat(target, 500.0f);
     }
 }
 
@@ -346,7 +346,7 @@ void ProtectionSpecialization::MaintainThreat()
     {
         if (NeedsThreat(target))
         {
-            bot->GetThreatMgr().AddThreat(target, 200.0f);
+            bot->GetThreatManager().AddThreat(target, 200.0f);
         }
     }
 }
@@ -377,10 +377,10 @@ bool ProtectionSpecialization::NeedsThreat(::Unit* target)
     if (!bot)
         return false;
 
-    float myThreat = target->GetThreatMgr().GetThreat(bot);
+    float myThreat = target->GetThreatManager().GetThreat(bot);
     float maxThreat = 0.0f;
 
-    auto const& threatList = target->GetThreatMgr().GetThreatList();
+    auto const& threatList = target->GetThreatManager().GetThreatList();
     for (auto const& ref : threatList)
     {
         if (ref->GetThreat() > maxThreat)

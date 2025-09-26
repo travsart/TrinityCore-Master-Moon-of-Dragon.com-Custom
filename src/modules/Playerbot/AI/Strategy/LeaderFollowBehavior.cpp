@@ -215,14 +215,14 @@ bool LeaderFollowBehavior::CalculateFollowPosition(Player* bot, Player* leader, 
         uint32 index = 0;
         bool found = false;
 
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            if (itr->GetSource() == bot)
+            if (itr.GetSource() == bot)
             {
                 found = true;
                 break;
             }
-            if (itr->GetSource() != leader)
+            if (itr.GetSource() != leader)
                 index++;
         }
 
@@ -251,7 +251,7 @@ float LeaderFollowBehavior::GetFollowDistance(Player* bot) const
         return _minFollowDistance;
 
     // Determine distance based on class/role
-    switch (bot->getClass())
+    switch (bot->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:
@@ -262,7 +262,6 @@ float LeaderFollowBehavior::GetFollowDistance(Player* bot) const
         case CLASS_SHAMAN:
         case CLASS_DRUID:
         case CLASS_MONK:
-        case CLASS_PALADIN:
             // Check if healer spec (simplified)
             return HEALER_FOLLOW_DISTANCE;
 
@@ -378,9 +377,9 @@ bool LeaderFollowBehavior::IsGroupInCombat(Group* group) const
     if (!group)
         return false;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr->GetSource())
+        if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat())
                 return true;
@@ -576,8 +575,8 @@ bool LeaderFollowBehavior::NeedsMovement(Player* bot, float targetX, float targe
         return true;
 
     // Also check if too close (for ranged classes)
-    if (bot->getClass() == CLASS_HUNTER || bot->getClass() == CLASS_MAGE ||
-        bot->getClass() == CLASS_WARLOCK || bot->getClass() == CLASS_PRIEST)
+    if (bot->GetClass() == CLASS_HUNTER || bot->GetClass() == CLASS_MAGE ||
+        bot->GetClass() == CLASS_WARLOCK || bot->GetClass() == CLASS_PRIEST)
     {
         if (distance < _minFollowDistance * 0.8f)
             return true;
@@ -592,7 +591,7 @@ float LeaderFollowBehavior::GetRolePositionOffset(Player* bot, float baseAngle, 
         return baseAngle;
 
     // Adjust angle based on role
-    switch (bot->getClass())
+    switch (bot->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_DEATH_KNIGHT:
@@ -675,6 +674,23 @@ void LeaderFollowBehavior::UpdateStatistics(std::string const& eventType, std::c
     }
 
     _stats.lastUpdate = std::chrono::steady_clock::now();
+}
+
+void LeaderFollowBehavior::SetFollowTarget(Player* leader)
+{
+    if (!leader)
+    {
+        _currentLeader = ObjectGuid::Empty;
+        _isFollowing = false;
+        return;
+    }
+
+    _currentLeader = leader->GetGUID();
+    _isFollowing = true;
+
+    TC_LOG_DEBUG("playerbot", "LeaderFollowBehavior: Set follow target to %s (%s)",
+                 leader->GetName().c_str(),
+                 leader->GetGUID().ToString().c_str());
 }
 
 } // namespace Playerbot

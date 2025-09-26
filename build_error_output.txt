@@ -1,0 +1,940 @@
+MSBuild-Version 17.14.18+a338add32 für .NET Framework
+Der Buildvorgang wurde am 26.09.2025 06:43:42 gestartet.
+
+Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" auf Knoten "1" (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\ZERO_CHECK.vcxproj" (2) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "x64\Release\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "x64\Release\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+FinalizeBuildStatus:
+  Die Datei "x64\Release\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "x64\Release\ZERO_CHECK\ZERO_CHECK.tlog\ZERO_CHECK.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\ZERO_CHECK.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\Detour.vcxproj" (3) auf Knoten "1" (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\Detour.vcxproj" (3) erstellt "C:\TrinityBots\TrinityCore\build\dep\zlib\zlib.vcxproj" (4) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "zlib.dir\Release\zlib.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "zlib.dir\Release\zlib.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  zlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\zlib\Release\zlib.lib
+FinalizeBuildStatus:
+  Die Datei "zlib.dir\Release\zlib.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "zlib.dir\Release\zlib.tlog\zlib.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\zlib\zlib.vcxproj" ist abgeschlossen (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "Detour.dir\Release\Detour.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "Detour.dir\Release\Detour.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  Detour.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\Release\Detour.lib
+FinalizeBuildStatus:
+  Die Datei "Detour.dir\Release\Detour.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "Detour.dir\Release\Detour.tlog\Detour.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\Detour.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\dep\argon2\argon2.vcxproj" (5) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "argon2.dir\Release\argon2.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "argon2.dir\Release\argon2.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  argon2.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\argon2\Release\argon2.lib
+FinalizeBuildStatus:
+  Die Datei "argon2.dir\Release\argon2.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "argon2.dir\Release\argon2.tlog\argon2.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\argon2\argon2.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) auf Knoten "1" (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) erstellt "C:\TrinityBots\TrinityCore\build\src\genrev\revision_data.h.vcxproj" (7) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "x64\Release\revision_data.h\revision_data.h.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "x64\Release\revision_data.h\revision_data.h.tlog\unsuccessfulbuild".
+FinalizeBuildStatus:
+  Die Datei "x64\Release\revision_data.h\revision_data.h.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "x64\Release\revision_data.h\revision_data.h.tlog\revision_data.h.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\genrev\revision_data.h.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) erstellt "C:\TrinityBots\TrinityCore\build\dep\fmt\fmt.vcxproj" (8) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "fmt.dir\Release\fmt.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "fmt.dir\Release\fmt.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  fmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\fmt\Release\fmt.lib
+FinalizeBuildStatus:
+  Die Datei "fmt.dir\Release\fmt.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "fmt.dir\Release\fmt.tlog\fmt.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\fmt\fmt.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) erstellt "C:\TrinityBots\TrinityCore\build\dep\g3dlite\g3dlib.vcxproj" (9) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "g3dlib.dir\Release\g3dlib.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "g3dlib.dir\Release\g3dlib.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  g3dlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\g3dlite\Release\g3dlib.lib
+FinalizeBuildStatus:
+  Die Datei "g3dlib.dir\Release\g3dlib.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "g3dlib.dir\Release\g3dlib.tlog\g3dlib.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\g3dlite\g3dlib.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) erstellt "C:\TrinityBots\TrinityCore\build\dep\openssl_ed25519\openssl_ed25519.vcxproj" (10) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "openssl_ed25519.dir\Release\openssl_ed25519.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "openssl_ed25519.dir\Release\openssl_ed25519.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Link:
+  Alle Ausgaben sind aktuell.
+  openssl_ed25519.vcxproj -> C:\TrinityBots\TrinityCore\build\bin\Release\openssl_ed25519.dll
+PostBuildEvent:
+  setlocal
+  C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/Repositories/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/TrinityBots/TrinityCore/build/bin/Release/openssl_ed25519.dll -installedDir C:/Repositories/vcpkg/installed/x64-windows/bin -OutVariable out
+  if %errorlevel% neq 0 goto :cmEnd
+  :cmEnd
+  endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+  :cmErrorLevel
+  exit /b %1
+  :cmDone
+  if %errorlevel% neq 0 goto :VCEnd
+  :VCEnd
+FinalizeBuildStatus:
+  Die Datei "openssl_ed25519.dir\Release\openssl_ed25519.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "openssl_ed25519.dir\Release\openssl_ed25519.tlog\openssl_ed25519.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\openssl_ed25519\openssl_ed25519.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" (6) erstellt "C:\TrinityBots\TrinityCore\build\dep\SFMT\sfmt.vcxproj" (11) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "sfmt.dir\Release\sfmt.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "sfmt.dir\Release\sfmt.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  sfmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\SFMT\Release\sfmt.lib
+FinalizeBuildStatus:
+  Die Datei "sfmt.dir\Release\sfmt.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "sfmt.dir\Release\sfmt.tlog\sfmt.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\SFMT\sfmt.vcxproj" ist abgeschlossen (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "common.dir\Release\common.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "common.dir\Release\common.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\Release\common.lib
+FinalizeBuildStatus:
+  Die Datei "common.dir\Release\common.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "common.dir\Release\common.tlog\common.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\common\common.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\src\server\database\database.vcxproj" (12) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "database.dir\Release\database.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "database.dir\Release\database.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  database.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\database\Release\database.lib
+FinalizeBuildStatus:
+  Die Datei "database.dir\Release\database.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "database.dir\Release\database.tlog\database.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\server\database\database.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (1) erstellt "C:\TrinityBots\TrinityCore\build\src\server\modules\Common\modules-common.vcxproj" (13) auf Knoten "1" (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Common\modules-common.vcxproj" (13) erstellt "C:\TrinityBots\TrinityCore\build\src\common\network\network.vcxproj" (14) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "network.dir\Release\network.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "network.dir\Release\network.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  network.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\network\Release\trinity_network.lib
+FinalizeBuildStatus:
+  Die Datei "network.dir\Release\network.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "network.dir\Release\network.tlog\network.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\common\network\network.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Common\modules-common.vcxproj" (13) erstellt "C:\TrinityBots\TrinityCore\build\src\server\proto\proto.vcxproj" (15) auf Knoten "1" (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\proto\proto.vcxproj" (15) erstellt "C:\TrinityBots\TrinityCore\build\dep\protobuf\protobuf.vcxproj" (16) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "protobuf.dir\Release\protobuf.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "protobuf.dir\Release\protobuf.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  protobuf.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\protobuf\Release\protobuf.lib
+FinalizeBuildStatus:
+  Die Datei "protobuf.dir\Release\protobuf.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "protobuf.dir\Release\protobuf.tlog\protobuf.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\dep\protobuf\protobuf.vcxproj" ist abgeschlossen (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "proto.dir\Release\proto.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "proto.dir\Release\proto.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  proto.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\proto\Release\proto.lib
+FinalizeBuildStatus:
+  Die Datei "proto.dir\Release\proto.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "proto.dir\Release\proto.tlog\proto.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\server\proto\proto.vcxproj" ist abgeschlossen (Standardziele).
+Das Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Common\modules-common.vcxproj" (13) erstellt "C:\TrinityBots\TrinityCore\build\src\server\shared\shared.vcxproj" (17) auf Knoten "1" (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "shared.dir\Release\shared.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "shared.dir\Release\shared.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  shared.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\shared\Release\shared.lib
+FinalizeBuildStatus:
+  Die Datei "shared.dir\Release\shared.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "shared.dir\Release\shared.tlog\shared.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\server\shared\shared.vcxproj" ist abgeschlossen (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  "modules-common.dir\Release\modules-common.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "modules-common.dir\Release\modules-common.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  Alle Ausgaben sind aktuell.
+Lib:
+  Alle Ausgaben sind aktuell.
+  modules-common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\modules\Common\Release\modules-common.lib
+FinalizeBuildStatus:
+  Die Datei "modules-common.dir\Release\modules-common.tlog\unsuccessfulbuild" wird gelöscht.
+  Aktualisieren des Timestamps von "modules-common.dir\Release\modules-common.tlog\modules-common.lastbuildstate".
+Die Erstellung von Projekt "C:\TrinityBots\TrinityCore\build\src\server\modules\Common\modules-common.vcxproj" ist abgeschlossen (Standardziele).
+PrepareForBuild:
+  Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  Aktualisieren des Timestamps von "playerbot.dir\Release\playerbot.tlog\unsuccessfulbuild".
+CustomBuild:
+  Alle Ausgaben sind aktuell.
+ClCompile:
+  C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\HostX64\x64\CL.exe /c /IC:\TrinityBots\TrinityCore\src\modules\Playerbot /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Config /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Session /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Database /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\AI /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Values /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Interfaces /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Adapters /IC:\TrinityBots\TrinityCore\src\modules\Common /I"C:\Program Files\MySQL\MySQL Server 9.4\include" /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Account /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Character /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Lifecycle /IC:\TrinityBots\TrinityCore\src\modules\Playerbot\Scripts /IC:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot /IC:\TrinityBots\TrinityCore\src\server\game /IC:\TrinityBots\TrinityCore\src\server\game\AI /IC:\TrinityBots\TrinityCore\src\server\game\AI\CoreAI /IC:\TrinityBots\TrinityCore\src\server\game\AI\PlayerAI /IC:\TrinityBots\TrinityCore\src\server\game\AI\ScriptedAI /IC:\TrinityBots\TrinityCore\src\server\game\AI\SmartScripts /IC:\TrinityBots\TrinityCore\src\server\game\Accounts /IC:\TrinityBots\TrinityCore\src\server\game\Achievements /IC:\TrinityBots\TrinityCore\src\server\game\AuctionHouse /IC:\TrinityBots\TrinityCore\src\server\game\AuctionHouseBot /IC:\TrinityBots\TrinityCore\src\server\game\BattlePets /IC:\TrinityBots\TrinityCore\src\server\game\Battlefield /IC:\TrinityBots\TrinityCore\src\server\game\Battlegrounds /IC:\TrinityBots\TrinityCore\src\server\game\BlackMarket /IC:\TrinityBots\TrinityCore\src\server\game\Cache /IC:\TrinityBots\TrinityCore\src\server\game\Calendar /IC:\TrinityBots\TrinityCore\src\server\game\Chat /IC:\TrinityBots\TrinityCore\src\server\game\Chat\Channels /IC:\TrinityBots\TrinityCore\src\server\game\Chat\ChatCommands /IC:\TrinityBots\TrinityCore\src\server\game\Combat /IC:\TrinityBots\TrinityCore\src\server\game\Conditions /IC:\TrinityBots\TrinityCore\src\server\game\DataStores /IC:\TrinityBots\TrinityCore\src\server\game\DungeonFinding /IC:\TrinityBots\TrinityCore\src\server\game\Entities /IC:\TrinityBots\TrinityCore\src\server\game\Entities\AreaTrigger /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Conversation /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Corpse /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Creature /IC:\TrinityBots\TrinityCore\src\server\game\Entities\DynamicObject /IC:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Item /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Item\AzeriteItem /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Item\Container /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Object /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Pet /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Player /IC:\TrinityBots\TrinityCore\src\server\game\Entities\SceneObject /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Taxi /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Totem /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Transport /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Unit /IC:\TrinityBots\TrinityCore\src\server\game\Entities\Vehicle /IC:\TrinityBots\TrinityCore\src\server\game\Events /IC:\TrinityBots\TrinityCore\src\server\game\Garrison /IC:\TrinityBots\TrinityCore\src\server\game\Globals /IC:\TrinityBots\TrinityCore\src\server\game\Grids /IC:\TrinityBots\TrinityCore\src\server\game\Grids\Cells /IC:\TrinityBots\TrinityCore\src\server\game\Grids\Dynamic /IC:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers /IC:\TrinityBots\TrinityCore\src\server\game\Groups /IC:\TrinityBots\TrinityCore\src\server\game\Guilds /IC:\TrinityBots\TrinityCore\src\server\game\Handlers /IC:\TrinityBots\TrinityCore\src\server\game\Instances /IC:\TrinityBots\TrinityCore\src\server\game\Loot /IC:\TrinityBots\TrinityCore\src\server\game\Mails /IC:\TrinityBots\TrinityCore\src\server\game\Maps /IC:\TrinityBots\TrinityCore\src\server\game\Miscellaneous /IC:\TrinityBots\TrinityCore\src\server\game\Modules /IC:\TrinityBots\TrinityCore\src\server\game\Movement /IC:\TrinityBots\TrinityCore\src\server\game\Movement\MovementGenerators /IC:\TrinityBots\TrinityCore\src\server\game\Movement\Spline /IC:\TrinityBots\TrinityCore\src\server\game\Movement\Waypoints /IC:\TrinityBots\TrinityCore\src\server\game\OutdoorPvP /IC:\TrinityBots\TrinityCore\src\server\game\Petitions /IC:\TrinityBots\TrinityCore\src\server\game\Phasing /IC:\TrinityBots\TrinityCore\src\server\game\Pools /IC:\TrinityBots\TrinityCore\src\server\game\Quests /IC:\TrinityBots\TrinityCore\src\server\game\Reputation /IC:\TrinityBots\TrinityCore\src\server\game\Scenarios /IC:\TrinityBots\TrinityCore\src\server\game\Scripting /IC:\TrinityBots\TrinityCore\src\server\game\Scripting\v2 /IC:\TrinityBots\TrinityCore\src\server\game\Server /IC:\TrinityBots\TrinityCore\src\server\game\Server\Packets /IC:\TrinityBots\TrinityCore\src\server\game\Server\Protocol /IC:\TrinityBots\TrinityCore\src\server\game\Services /IC:\TrinityBots\TrinityCore\src\server\game\Skills /IC:\TrinityBots\TrinityCore\src\server\game\Spells /IC:\TrinityBots\TrinityCore\src\server\game\Spells\Auras /IC:\TrinityBots\TrinityCore\src\server\game\Storages /IC:\TrinityBots\TrinityCore\src\server\game\Support /IC:\TrinityBots\TrinityCore\src\server\game\Texts /IC:\TrinityBots\TrinityCore\src\server\game\Time /IC:\TrinityBots\TrinityCore\src\server\game\Tools /IC:\TrinityBots\TrinityCore\src\server\game\Warden /IC:\TrinityBots\TrinityCore\src\server\game\Warden\Modules /IC:\TrinityBots\TrinityCore\src\server\game\Weather /IC:\TrinityBots\TrinityCore\src\server\game\World /IC:\TrinityBots\TrinityCore\src\server\game\World\WorldStates /IC:\TrinityBots\TrinityCore\src\server\shared /IC:\TrinityBots\TrinityCore\src\server\shared\DataStores /IC:\TrinityBots\TrinityCore\src\server\shared\Dynamic /IC:\TrinityBots\TrinityCore\src\server\shared\Dynamic\LinkedReference /IC:\TrinityBots\TrinityCore\src\server\shared\IpLocation /IC:\TrinityBots\TrinityCore\src\server\shared\JSON /IC:\TrinityBots\TrinityCore\src\server\shared\Networking /IC:\TrinityBots\TrinityCore\src\server\shared\Networking\ConnectionInitializers /IC:\TrinityBots\TrinityCore\src\server\shared\Packets /IC:\TrinityBots\TrinityCore\src\server\shared\Realm /IC:\TrinityBots\TrinityCore\src\server\shared\Secrets /IC:\TrinityBots\TrinityCore\src\server\database /IC:\TrinityBots\TrinityCore\src\server\database\Database /IC:\TrinityBots\TrinityCore\src\server\database\Database\Implementation /IC:\TrinityBots\TrinityCore\src\server\database\Logging /IC:\TrinityBots\TrinityCore\src\server\database\Updater /IC:\TrinityBots\TrinityCore\build /IC:\TrinityBots\TrinityCore\src\common /IC:\TrinityBots\TrinityCore\src\common\Asio /IC:\TrinityBots\TrinityCore\src\common\Collision /IC:\TrinityBots\TrinityCore\src\common\Collision\Management /IC:\TrinityBots\TrinityCore\src\common\Collision\Maps /IC:\TrinityBots\TrinityCore\src\common\Collision\Models /IC:\TrinityBots\TrinityCore\src\common\Configuration /IC:\TrinityBots\TrinityCore\src\common\Containers /IC:\TrinityBots\TrinityCore\src\common\Containers\Utilities /IC:\TrinityBots\TrinityCore\src\common\Cryptography /IC:\TrinityBots\TrinityCore\src\common\Cryptography\Authentication /IC:\TrinityBots\TrinityCore\src\common\DataStores /IC:\TrinityBots\TrinityCore\src\common\Debugging /IC:\TrinityBots\TrinityCore\src\common\Debugging\Windows /IC:\TrinityBots\TrinityCore\src\common\Encoding /IC:\TrinityBots\TrinityCore\src\common\Hacks /IC:\TrinityBots\TrinityCore\src\common\Logging /IC:\TrinityBots\TrinityCore\src\common\Metric /IC:\TrinityBots\TrinityCore\src\common\Platform /IC:\TrinityBots\TrinityCore\src\common\Platform\Windows /IC:\TrinityBots\TrinityCore\src\common\Threading /IC:\TrinityBots\TrinityCore\src\common\Time /IC:\TrinityBots\TrinityCore\src\common\Utilities /IC:\TrinityBots\TrinityCore\dep\argon2 /I"C:\libs\boost_1_78_0-bin-msvc-all-32-64\boost_1_78_0" /IC:\TrinityBots\TrinityCore\dep\fmt\include /IC:\TrinityBots\TrinityCore\dep\g3dlite\include /IC:\TrinityBots\TrinityCore\dep\zlib /IC:\TrinityBots\TrinityCore\dep\recastnavigation\Detour\Include /IC:\TrinityBots\TrinityCore\dep\SFMT /IC:\TrinityBots\TrinityCore\dep\utf8cpp /IC:\TrinityBots\TrinityCore\dep\valgrind /IC:\TrinityBots\TrinityCore\dep\openssl_ed25519 /IC:\TrinityBots\TrinityCore\dep\short_alloc /IC:\TrinityBots\TrinityCore\src\common\network /IC:\TrinityBots\TrinityCore\src\common\network\ConnectionInitializers /IC:\TrinityBots\TrinityCore\src\common\network\Http /IC:\TrinityBots\TrinityCore\src\common\network\PrecompiledHeaders /IC:\TrinityBots\TrinityCore\dep\rapidjson /IC:\TrinityBots\TrinityCore\src\server\proto /IC:\TrinityBots\TrinityCore\src\server\proto\Client /IC:\TrinityBots\TrinityCore\src\server\proto\Login /IC:\TrinityBots\TrinityCore\src\server\proto\RealmList /IC:\TrinityBots\TrinityCore\dep\protobuf\src /nologo /W3 /WX- /diagnostics:column /MP /O2 /Ob2 /GL /D _MBCS /D WIN32 /D _WINDOWS /D NDEBUG /D BUILD_PLAYERBOT=1 /D TRINITY_API_EXPORT_PLAYERBOT /D PLAYERBOT_RELEASE=1 /D WIN32_LEAN_AND_MEAN /D NOMINMAX /D _CRT_SECURE_NO_WARNINGS /D BOOST_ALL_NO_LIB /D BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE /D BOOST_ASIO_NO_DEPRECATED /D BOOST_BIND_NO_PLACEHOLDERS /D BOOST_SYSTEM_USE_UTF8 /D SFMT_MEXP=19937 /D HAVE_SSE2 /D RAPIDJSON_HAS_STDSTRING /D RAPIDJSON_48BITPOINTER_OPTIMIZATION=0 /D RAPIDJSON_ASSERT=WPAssert /D RAPIDJSON_SSE2 /D "TRINITY_BUILD_TYPE=\"Release\"" /D TRINITY_BUILD_HAS_DEBUG_INFO=0 /D _WIN32_WINNT=0x0A00 /D NTDDI_VERSION=0x0A000007 /D TRINITY_REQUIRED_WINDOWS_BUILD=18362 /D _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES /D _CRT_NONSTDC_NO_WARNINGS /D _USE_MATH_DEFINES /D "CMAKE_INTDIR=\"Release\"" /Zc:preprocessor /EHsc /MD /GS /arch:AVX2 /fp:fast /std:c++20 /permissive- /Fo"playerbot.dir\Release\\" /Fd"C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\Release\playerbot.pdb" /external:W0 /Gd /TP /wd4351 /wd4091 /errorReport:queue /we4263 /we4264  /external:I "C:/libs/OpenSSL-Win64/include" /external:I "C:/libs/vcpkg/packages/tbb_x64-windows/include" /external:I "C:/libs/vcpkg/packages/parallel-hashmap_x64-windows/include" /bigobj /Zc:__cplusplus /Zc:templateScope /Zc:throwingNew /w15038 /w34100 /w34101 /w34189 /w34389 /w35054 C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\GroupCombatTrigger.cpp C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\InterruptCoordinator.cpp C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\InterruptAwareness.cpp C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp
+  GroupCombatTrigger.cpp
+  RoleBasedCombatPositioning.cpp
+  MechanicAwareness.cpp
+  InterruptCoordinator.cpp
+  InterruptAwareness.cpp
+  ThreatManager.cpp
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(220,17): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(637,26): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(738,16): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(748,16): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\Vector2.h(186,37): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\Vector2.h(186,28): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/GroupCombatTrigger.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/RoleBasedCombatPositioning.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(366,82): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(366,65): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(365,65): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(372,101): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(372,84): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(371,84): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/MechanicAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(145,30): error C2440: "Initialisierung": "const int" kann nicht in "ThreatManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(146,23): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2005,22):
+      Siehe Deklaration von "ThreatManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(147,22): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2005,22):
+      Siehe Deklaration von "ThreatManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(628,30): error C2440: "Initialisierung": "const int" kann nicht in "ThreatManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(629,12): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2005,22):
+      Siehe Deklaration von "ThreatManager"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(76,73): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(121,25): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(151,56): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(167,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(189,106): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(258,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(356,78): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(393,22): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(485,67): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(548,27): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(588,82): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(680,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(712,26): warning C4267: "Initialisierung": Konvertierung von "size_t" nach "int", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(875,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(895,71): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(907,22): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(919,22): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(920,20): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(943,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1037,80): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1196,69): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1883,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(2027,83): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(160,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267: "Argument": Konvertierung von "size_t" nach "const _Ty", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:             _Ty=unsigned int [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(953,72): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(953,34): warning C4244: "Initialisierung": Konvertierung von "uint32" in "const float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(381,75): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(1111,141): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(1111,163): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(492,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(865,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(866,18): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/InterruptAwareness.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\InterruptAwareness.cpp(529,40): warning C4018: "<": Konflikt zwischen "signed" und "unsigned" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+Die Erstellung des Projekts "C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" ist abgeschlossen (Standardziele) -- FEHLER.
+
+Fehler beim Buildvorgang.
+
+"C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (Standardziel) (1) ->
+(ClCompile Ziel) -> 
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(220,17): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(637,26): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(738,16): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\g3dmath.h(748,16): warning C4244: "return": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\Vector2.h(186,37): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\dep\g3dlite\include\G3D\Vector2.h(186,28): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244: "Argument": Konvertierung von "uint64" in "T", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:             T=uint8 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\shared\Packets\ByteBuffer.h(202,41): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1412,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244: "return": Konvertierung von "const T" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:             T=int32 [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1413,81): warning C4244:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(366,82): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(366,65): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(365,65): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(372,101): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(372,84): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Spells\Auras\SpellAuras.h(371,84): warning C4267: "Argument": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(43,60): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\NGrid.h(44,58): warning C4244: "Argument": Konvertierung von "time_t" in "int32", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(76,73): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(121,25): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(151,56): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(167,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(189,106): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(258,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(356,78): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(393,22): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(485,67): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(548,27): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(588,82): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(680,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(712,26): warning C4267: "Initialisierung": Konvertierung von "size_t" nach "int", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(875,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(895,71): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(907,22): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(919,22): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(920,20): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(943,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1037,80): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1196,69): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(1883,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\RoleBasedCombatPositioning.cpp(2027,83): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(160,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267: "Argument": Konvertierung von "size_t" nach "const _Ty", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:             _Ty=unsigned int [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(197,57): warning C4267:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(953,72): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(953,34): warning C4244: "Initialisierung": Konvertierung von "uint32" in "const float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(381,75): warning C4244: "Argument": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(1111,141): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Grids\Notifiers\GridNotifiers.h(1111,163): warning C4244: "Initialisierung": Konvertierung von "uint32" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(492,23): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(865,21): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\MechanicAwareness.cpp(866,18): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(336,64): warning C4267: "return": Konvertierung von "size_t" nach "uint32", Datenverlust möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\InterruptAwareness.cpp(529,40): warning C4018: "<": Konflikt zwischen "signed" und "unsigned" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+
+
+"C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj" (Standardziel) (1) ->
+(ClCompile Ziel) -> 
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,22): error C2143: Syntaxfehler: Es fehlt ";" vor "&" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1075,43): error C2334: Unerwartete(s) Token vor "{"; sichtbarer Funktionstext wird übersprungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C2143: Syntaxfehler: Es fehlt ";" vor "const" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,9): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(1076,23): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(2006,23): error C2079: "Unit::m_threatManager" verwendet undefiniertes class "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(145,30): error C2440: "Initialisierung": "const int" kann nicht in "ThreatManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(146,23): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(147,22): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(628,30): error C2440: "Initialisierung": "const int" kann nicht in "ThreatManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatManager.cpp(629,12): error C2027: Verwendung des undefinierten Typs "ThreatManager" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+
+    81 Warnung(en)
+    47 Fehler
+
+Verstrichene Zeit 00:00:07.02
