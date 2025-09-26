@@ -68,6 +68,9 @@ EnhancedBotAI::~EnhancedBotAI() = default;
 
 void EnhancedBotAI::UpdateAI(uint32 diff)
 {
+    // CRITICAL: Call parent UpdateAI for core functionality (group invitations, etc.)
+    BotAI::UpdateAI(diff);
+
     auto startTime = std::chrono::high_resolution_clock::now();
 
     // Performance throttling
@@ -221,16 +224,11 @@ void EnhancedBotAI::OnRespawn()
 
 AIUpdateResult EnhancedBotAI::UpdateEnhanced(uint32 diff)
 {
-    AIUpdateResult result;
+    // CRITICAL: DO NOT call UpdateAI from within UpdateEnhanced - causes deadlock
+    // UpdateAI and UpdateEnhanced are separate entry points that should not call each other
 
-    // Use the standard update with enhanced tracking
-    UpdateAI(diff);
-
-    result.actionsExecuted = _stats.actionsExecuted;
-    result.triggersChecked = _stats.decisionsM;
-    result.updateTime = _stats.avgUpdateTime;
-
-    return result;
+    // Call parent BotAI::UpdateEnhanced instead (which has the mutex logic)
+    return BotAI::UpdateEnhanced(diff);
 }
 
 // Combat event handlers

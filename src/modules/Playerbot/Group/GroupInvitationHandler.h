@@ -245,6 +245,20 @@ private:
      */
     void CleanupExpiredInvitations();
 
+    /**
+     * Internal accept invitation method (assumes mutex is already locked)
+     * @param inviterGuid GUID of the inviter
+     * @return true if acceptance was successful
+     */
+    bool AcceptInvitationInternal(ObjectGuid inviterGuid);
+
+    /**
+     * Internal decline invitation method (assumes mutex is already locked)
+     * @param inviterGuid GUID of the inviter
+     * @param reason Optional reason for declining
+     */
+    void DeclineInvitationInternal(ObjectGuid inviterGuid, std::string const& reason = "");
+
     // Member variables
     Player* _bot;                                           // The bot player instance
     mutable std::mutex _invitationMutex;                   // Thread safety mutex

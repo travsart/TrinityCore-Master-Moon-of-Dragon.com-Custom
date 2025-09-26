@@ -65,8 +65,43 @@ BotAI::~BotAI() = default;
 
 void BotAI::UpdateAI(uint32 diff)
 {
+    // CRITICAL DEBUG: Test if this method is even being called properly
+    static uint32 testCount = 0;
+    testCount++;
+
+    // Debug early exit conditions
+    static uint32 lastErrorLogTime = 0;
+    uint32 currentTime = getMSTime();
+
     if (!_enabled || !_bot)
+    {
+        if (currentTime - lastErrorLogTime > 10000) // Every 10 seconds
+        {
+            // Use the same logging mechanism as other parts of the system
+            TC_LOG_INFO("module.playerbot.debug", "🔍 CRITICAL DEBUG: BotAI::UpdateAI early exit - enabled: {}, bot: {}, call count: {}",
+                _enabled.load() ? "true" : "false",
+                _bot ? _bot->GetName() : "null", testCount);
+            lastErrorLogTime = currentTime;
+        }
         return;
+    }
+
+    // CRITICAL DEBUG: We made it past the early exit!
+    static uint32 successCount = 0;
+    successCount++;
+
+    // Debug: Log UpdateAI calls periodically
+    static uint32 lastLogTime = 0;
+    static uint32 totalUpdates = 0;
+    totalUpdates++;
+
+    uint32 updateTime = getMSTime();
+    if (updateTime - lastLogTime > 10000) // Every 10 seconds
+    {
+        TC_LOG_INFO("module.playerbot.debug", "✅ CRITICAL DEBUG: BotAI::UpdateAI success for bot {} (total updates: {}, enabled: {}, diff: {}ms, success count: {})",
+            _bot->GetName(), totalUpdates, _enabled.load(), diff, successCount);
+        lastLogTime = updateTime;
+    }
 
     auto startTime = std::chrono::steady_clock::now();
 
@@ -75,6 +110,8 @@ void BotAI::UpdateAI(uint32 diff)
     // Update group invitation handler (always update for quick response)
     if (_groupInvitationHandler)
     {
+        // Update group invitation handler silently
+
         _groupInvitationHandler->Update(diff);
     }
 
@@ -107,6 +144,12 @@ AIUpdateResult BotAI::UpdateEnhanced(uint32 diff)
 
     if (!_enabled || !_bot)
         return result;
+
+    // Update group invitation handler (always update for quick response)
+    if (_groupInvitationHandler)
+    {
+        _groupInvitationHandler->Update(diff);
+    }
 
     // Check if update is needed
     _lastUpdate += diff;
@@ -871,11 +914,23 @@ void BotAI::UpdateActions(uint32 diff)
 
 void BotAI::UpdateMovement(uint32 diff)
 {
-    // Movement logic will be implemented based on current state
-    // For now, just update the AI state based on movement
     if (!_bot)
         return;
 
+    // Update leader follow behavior if active
+    if (auto followStrategy = GetStrategy("leader_follow"))
+    {
+        if (followStrategy->IsActive(this))
+        {
+            if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
+            {
+                followBehavior->UpdateMovement(this, diff);
+                followBehavior->UpdateFormation(this);
+            }
+        }
+    }
+
+    // Update AI state based on movement
     if (_bot->isMoving() && _aiState == BotAIState::IDLE)
         SetAIState(BotAIState::TRAVELLING);
     else if (!_bot->isMoving() && _aiState == BotAIState::TRAVELLING)

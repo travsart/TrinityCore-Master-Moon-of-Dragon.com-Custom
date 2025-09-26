@@ -18,8 +18,11 @@
 #include "World.h"
 #include "SocialMgr.h"
 #include "PartyPackets.h"
+#include "../Session/BotSession.h"
+#include "../AI/BotAI.h"
 #include "Opcodes.h"
 #include "Config/PlayerbotConfig.h"
+#include "Common.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -119,9 +122,15 @@ bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite c
 
 void GroupInvitationHandler::Update(uint32 diff)
 {
+    // GroupInvitationHandler update processing
+
     // Update timers
     _updateTimer += diff;
     _cleanupTimer += diff;
+
+    // DEADLOCK FIX: Removed TrinityCore GetGroupInvite() calls that were causing
+    // cross-system mutex deadlock. All invitations should come through HandleInvitation()
+    // packet handler instead of polling TrinityCore's group system.
 
     // Cleanup expired invitations periodically
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -278,60 +287,31 @@ bool GroupInvitationHandler::CanJoinGroup(Group* group) const
 
 bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
-
-    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} accepting invitation from {}",
-        _bot->GetName(), inviterGuid.ToString());
-
-    // Record accept time
-    auto acceptTime = std::chrono::steady_clock::now();
-
-    // Send accept packet
-    if (!SendAcceptPacket())
+    // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
+    // We use try_lock to avoid deadlock
+    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    if (!lock.owns_lock())
     {
-        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Failed to send accept packet for bot {}", _bot->GetName());
-        return false;
+        // Already locked by caller (ProcessNextInvitation), proceed without locking
+        return AcceptInvitationInternal(inviterGuid);
     }
 
-    // Update statistics
-    _stats.acceptedInvitations++;
-    if (_stats.lastInvitation != std::chrono::steady_clock::time_point{})
-    {
-        auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            acceptTime - _stats.lastInvitation);
-        UpdateStatistics(true, responseTime);
-    }
-
-    // Remember this inviter to prevent loops
-    _recentInviters.insert(inviterGuid);
-    _lastAcceptTime = acceptTime;
-
-    // Clear current inviter
-    _currentInviter = ObjectGuid::Empty;
-
-    LogInvitationEvent("ACCEPTED", inviterGuid);
-
-    return true;
+    return AcceptInvitationInternal(inviterGuid);
 }
 
 void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::string const& reason)
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
+    // We use try_lock to avoid deadlock
+    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+    {
+        // Already locked by caller (ProcessNextInvitation), proceed without locking
+        DeclineInvitationInternal(inviterGuid, reason);
+        return;
+    }
 
-    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} declining invitation from {} ({})",
-        _bot->GetName(), inviterGuid.ToString(), reason);
-
-    // Send decline packet
-    SendDeclinePacket(reason);
-
-    // Update statistics
-    _stats.declinedInvitations++;
-
-    // Clear current inviter
-    if (_currentInviter == inviterGuid)
-        _currentInviter = ObjectGuid::Empty;
-
-    LogInvitationEvent("DECLINED", inviterGuid, reason);
+    DeclineInvitationInternal(inviterGuid, reason);
 }
 
 bool GroupInvitationHandler::HasPendingInvitation() const
@@ -380,28 +360,96 @@ bool GroupInvitationHandler::SendAcceptPacket()
 {
     WorldSession* session = GetSession();
     if (!session)
+    {
+        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: No session found for bot {}", _bot->GetName());
         return false;
+    }
 
     // Check if bot has a pending group invite from TrinityCore
     Group* inviteGroup = _bot->GetGroupInvite();
     if (!inviteGroup)
     {
-        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: No pending group invite for bot {}", _bot->GetName());
+        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: No pending group invite for bot {} - this should not happen", _bot->GetName());
         return false;
     }
 
-    // Create a dummy packet for the constructor
-    WorldPacket dummyPacket(CMSG_PARTY_INVITE_RESPONSE, 1);
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: Bot {} has pending invite from group {} (Leader: {})",
+        _bot->GetName(),
+        inviteGroup->GetGUID().ToString(),
+        ObjectAccessor::FindPlayer(inviteGroup->GetLeaderGUID()) ?
+            ObjectAccessor::FindPlayer(inviteGroup->GetLeaderGUID())->GetName() : "Unknown");
 
-    // Create and configure response
-    WorldPackets::Party::PartyInviteResponse response(std::move(dummyPacket));
-    response.Accept = true;
-    // PartyIndex is optional, leave it unset for default behavior
+    // Verify session state before processing
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: Session state - Player: {}, SessionPlayer: {}, Bot GUID: {}",
+        _bot->GetName(),
+        session->GetPlayer() ? session->GetPlayer()->GetName() : "NULL",
+        _bot->GetGUID().ToString());
 
-    // Send the packet through the session
+    // Create properly formatted packet data
+    WorldPacket packet(CMSG_PARTY_INVITE_RESPONSE);
+
+    // Write packet data according to PartyInviteResponse::Read() format:
+    // 1. Optional PartyIndex (we don't specify one for normal groups)
+    packet.WriteBit(false); // PartyIndex not present
+    // 2. Accept flag (1 bit)
+    packet.WriteBit(true);  // Accept = true
+    // 3. Optional RolesDesired (we don't specify roles)
+    packet.WriteBit(false); // RolesDesired not present
+
+    packet.FlushBits(); // Flush any remaining bits
+
+    // No additional data needed since we didn't enable optional fields
+
+    // Create PartyInviteResponse and let it read from our properly formatted packet
+    WorldPackets::Party::PartyInviteResponse response(std::move(packet));
+    response.Read(); // This will properly parse our packet data
+
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: About to call HandlePartyInviteResponseOpcode for bot {}", _bot->GetName());
+
+    // Send the packet through the session handler
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: Before HandlePartyInviteResponseOpcode - Bot group: {}, Bot invite: {}",
+        _bot->GetGroup() ? _bot->GetGroup()->GetGUID().ToString() : "None",
+        _bot->GetGroupInvite() ? _bot->GetGroupInvite()->GetGUID().ToString() : "None");
+
     session->HandlePartyInviteResponseOpcode(response);
 
-    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Sent accept packet for bot {}", _bot->GetName());
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: After HandlePartyInviteResponseOpcode - Bot group: {}, Bot invite: {}",
+        _bot->GetGroup() ? _bot->GetGroup()->GetGUID().ToString() : "None",
+        _bot->GetGroupInvite() ? _bot->GetGroupInvite()->GetGUID().ToString() : "None");
+
+    // Check results immediately after the call
+    if (_bot->GetGroup())
+    {
+        Group* botGroup = _bot->GetGroup();
+        TC_LOG_INFO("playerbot", "GroupInvitationHandler: SUCCESS! Bot {} successfully joined group (Group ID: {}, Members: {}, Leader: {})",
+            _bot->GetName(),
+            botGroup->GetGUID().ToString(),
+            botGroup->GetMembersCount(),
+            ObjectAccessor::FindPlayer(botGroup->GetLeaderGUID()) ?
+                ObjectAccessor::FindPlayer(botGroup->GetLeaderGUID())->GetName() : "Unknown");
+
+        // The BotAI should detect the group change in its next update cycle and activate follow behavior
+        TC_LOG_INFO("playerbot", "GroupInvitationHandler: Group join completed - BotAI should detect this change on next update");
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: FAILURE! Bot {} group join failed - no group found after invitation acceptance", _bot->GetName());
+
+        // Check if the bot still has a pending invite (which would indicate a problem)
+        if (_bot->GetGroupInvite())
+        {
+            TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Bot {} still has pending invite - group acceptance may have failed", _bot->GetName());
+        }
+
+        // Check if the inviter's group exists and has members
+        Group* inviterGroup = inviteGroup;
+        if (inviterGroup)
+        {
+            TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Inviter group {} still exists with {} members",
+                inviterGroup->GetGUID().ToString(), inviterGroup->GetMembersCount());
+        }
+    }
+
     return true;
 }
 
@@ -411,14 +459,26 @@ void GroupInvitationHandler::SendDeclinePacket(std::string const& reason)
     if (!session)
         return;
 
-    // Create a dummy packet for the constructor
-    WorldPacket dummyPacket(CMSG_PARTY_INVITE_RESPONSE, 1);
+    // Create properly formatted packet data
+    WorldPacket packet(CMSG_PARTY_INVITE_RESPONSE);
 
-    // Create and configure response
-    WorldPackets::Party::PartyInviteResponse response(std::move(dummyPacket));
-    response.Accept = false;
+    // Write packet data according to PartyInviteResponse::Read() format:
+    // 1. Optional PartyIndex (we don't specify one for normal groups)
+    packet.WriteBit(false); // PartyIndex not present
+    // 2. Accept flag (1 bit)
+    packet.WriteBit(false); // Accept = false
+    // 3. Optional RolesDesired (we don't specify roles)
+    packet.WriteBit(false); // RolesDesired not present
 
-    // Send the packet through the session
+    packet.FlushBits(); // Flush any remaining bits
+
+    // No additional data needed since we didn't enable optional fields
+
+    // Create PartyInviteResponse and let it read from our properly formatted packet
+    WorldPackets::Party::PartyInviteResponse response(std::move(packet));
+    response.Read(); // This will properly parse our packet data
+
+    // Send the packet through the session handler
     session->HandlePartyInviteResponseOpcode(response);
 
     TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Sent decline packet for bot {} ({})",
@@ -513,26 +573,48 @@ void GroupInvitationHandler::UpdateStatistics(bool accepted, std::chrono::millis
 
 bool GroupInvitationHandler::ProcessNextInvitation()
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    // CRITICAL: Use try_lock to avoid deadlock - if mutex is busy, skip this update and try next time
+    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+    {
+        // Mutex is busy, skip this update cycle
+        return false;
+    }
+
+    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler::ProcessNextInvitation called for bot {} - Current inviter: {}, Queue size: {}",
+        _bot->GetName(), _currentInviter.ToString(), _pendingInvitations.size());
 
     // Check if we're already processing an invitation
     if (!_currentInviter.IsEmpty())
     {
+        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Already processing invitation from {} for bot {}",
+            _currentInviter.ToString(), _bot->GetName());
+
         // Check if enough time has passed for response delay
         auto now = std::chrono::steady_clock::now();
         auto timeSinceInvite = std::chrono::duration_cast<std::chrono::milliseconds>(
             now - _stats.lastInvitation);
 
+        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Time since invite: {}ms, Response delay: {}ms",
+            timeSinceInvite.count(), _responseDelayMs);
+
         if (timeSinceInvite.count() >= _responseDelayMs)
         {
-            // Time to accept the invitation
+            // Time to accept the invitation - call internal methods to avoid deadlock
+            TC_LOG_INFO("playerbot", "GroupInvitationHandler: Processing invitation acceptance for bot {} from {}",
+                _bot->GetName(), _currentInviter.ToString());
+
             if (ShouldAcceptInvitation(_currentInviter))
             {
-                AcceptInvitation(_currentInviter);
+                TC_LOG_INFO("playerbot", "GroupInvitationHandler: Bot {} accepting invitation from {}",
+                    _bot->GetName(), _currentInviter.ToString());
+                AcceptInvitationInternal(_currentInviter);
             }
             else
             {
-                DeclineInvitation(_currentInviter, "Validation failed");
+                TC_LOG_INFO("playerbot", "GroupInvitationHandler: Bot {} declining invitation from {}",
+                    _bot->GetName(), _currentInviter.ToString());
+                DeclineInvitationInternal(_currentInviter, "Validation failed");
             }
             _currentInviter = ObjectGuid::Empty;
         }
@@ -541,9 +623,16 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
     // Process next invitation from queue
     if (_pendingInvitations.empty())
+    {
+        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: No pending invitations for bot {}", _bot->GetName());
         return false;
+    }
 
     PendingInvitation& invitation = _pendingInvitations.front();
+
+    TC_LOG_INFO("playerbot", "GroupInvitationHandler: Processing queued invitation from {} for bot {} (age: {}ms)",
+        invitation.inviterName, _bot->GetName(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - invitation.timestamp).count());
 
     // Check if invitation has expired
     auto now = std::chrono::steady_clock::now();
@@ -552,8 +641,8 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
     if (age.count() > INVITATION_TIMEOUT)
     {
-        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Invitation from {} expired",
-            invitation.inviterName);
+        TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Invitation from {} expired ({}ms old)",
+            invitation.inviterName, age.count());
         _pendingInvitations.pop();
         _stats.invalidInvitations++;
         return ProcessNextInvitation(); // Try next one
@@ -605,6 +694,83 @@ void GroupInvitationHandler::CleanupExpiredInvitations()
     {
         _recentInviters.clear();
     }
+}
+
+bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
+{
+    // NOTE: This method assumes _invitationMutex is already locked by the caller
+
+    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} accepting invitation from {}",
+        _bot->GetName(), inviterGuid.ToString());
+
+    // Record accept time
+    auto acceptTime = std::chrono::steady_clock::now();
+
+    // Send accept packet
+    if (!SendAcceptPacket())
+    {
+        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Failed to send accept packet for bot {}", _bot->GetName());
+        return false;
+    }
+
+    // Update statistics
+    _stats.acceptedInvitations++;
+    if (_stats.lastInvitation != std::chrono::steady_clock::time_point{})
+    {
+        auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            acceptTime - _stats.lastInvitation);
+        UpdateStatistics(true, responseTime);
+    }
+
+    // Remember this inviter to prevent loops
+    _recentInviters.insert(inviterGuid);
+    _lastAcceptTime = acceptTime;
+
+    // Clear current inviter
+    _currentInviter = ObjectGuid::Empty;
+
+    LogInvitationEvent("ACCEPTED", inviterGuid);
+
+    // CRITICAL: Activate follow behavior after successful group join
+    // We need to check if the bot is actually in a group now and activate follow AI
+    if (_bot->GetGroup())
+    {
+        TC_LOG_INFO("module.playerbot.group", "GroupInvitationHandler: Bot {} successfully joined group, activating follow behavior", _bot->GetName());
+
+        // Get the bot's AI and trigger group join handler
+        if (auto* session = _bot->GetSession())
+        {
+            if (auto* botSession = dynamic_cast<BotSession*>(session))
+            {
+                if (auto* botAI = botSession->GetAI())
+                {
+                    botAI->OnGroupJoined(_bot->GetGroup());
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void GroupInvitationHandler::DeclineInvitationInternal(ObjectGuid inviterGuid, std::string const& reason)
+{
+    // NOTE: This method assumes _invitationMutex is already locked by the caller
+
+    TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} declining invitation from {} ({})",
+        _bot->GetName(), inviterGuid.ToString(), reason);
+
+    // Send decline packet
+    SendDeclinePacket(reason);
+
+    // Update statistics
+    _stats.declinedInvitations++;
+
+    // Clear current inviter
+    if (_currentInviter == inviterGuid)
+        _currentInviter = ObjectGuid::Empty;
+
+    LogInvitationEvent("DECLINED", inviterGuid, reason);
 }
 
 } // namespace Playerbot

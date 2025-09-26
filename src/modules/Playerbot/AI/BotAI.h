@@ -287,7 +287,8 @@ public:
 
     void UpdateAI(uint32 diff) override
     {
-        // Basic AI behavior - will be expanded with strategies
+        // Call UpdateEnhanced for full functionality including movement and group behavior
+        UpdateEnhanced(diff);
     }
 };
 

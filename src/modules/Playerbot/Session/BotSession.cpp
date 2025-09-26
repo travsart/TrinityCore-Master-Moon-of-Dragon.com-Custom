@@ -33,6 +33,9 @@
 #include "PartyPackets.h"
 #include "Opcodes.h"
 #include "Group.h"
+#include "GroupMgr.h"
+#include "RealmList.h"
+#include "AuthenticationPackets.h"
 
 namespace Playerbot {
 
@@ -485,6 +488,7 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     // CRITICAL: Intercept party invitation packets for bot handling
     if (packet->GetOpcode() == SMSG_PARTY_INVITE)
     {
+        TC_LOG_INFO("module.playerbot.group", "BotSession: Intercepted SMSG_PARTY_INVITE packet for bot session");
         HandleGroupInvitation(*packet);
     }
 
@@ -617,7 +621,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 // Layer 3: AI update (only if all validations passed)
                 if (playerIsValid && playerIsInWorld && _ai && _active.load()) {
                     try {
-                        _ai->Update(diff);
+                        _ai->UpdateAI(diff);
                     }
                     catch (std::exception const& e) {
                         TC_LOG_ERROR("module.playerbot.session", "Exception in BotAI::Update for account {}: {}", accountId, e.what());
@@ -966,41 +970,168 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
 
     try
     {
-        // For SMSG_PARTY_INVITE, we need to manually parse the packet
-        // The packet structure from TrinityCore is already parsed when we receive it
-        // We just need to check if bot has a pending invite
+        // Complete implementation: Parse the SMSG_PARTY_INVITE packet using TrinityCore APIs
+        // This follows TrinityCore's standard packet parsing approach
+        WorldPacket packetCopy = packet;
 
-        Group* inviteGroup = bot->GetGroupInvite();
-        if (!inviteGroup)
+        // Parse the packet structure according to PartyPackets.cpp Write() method
+        // Bit fields are read in the same order they were written
+        bool canAccept = packetCopy.ReadBit();
+        bool isXRealm = packetCopy.ReadBit();
+        bool isXNativeRealm = packetCopy.ReadBit();
+        bool shouldSquelch = packetCopy.ReadBit();
+        bool allowMultipleRoles = packetCopy.ReadBit();
+        bool questSessionActive = packetCopy.ReadBit();
+        uint32 inviterNameSize = packetCopy.ReadBits(6);
+        bool isCrossFaction = packetCopy.ReadBit();
+
+        packetCopy.FlushBits();
+
+        // Read VirtualRealmInfo fields manually (no operator>> available)
+        // According to AuthenticationPackets.cpp operator<<:
+        // - uint32 RealmAddress
+        // - VirtualRealmNameInfo (2 bits + 2 strings with size bits)
+        uint32 realmAddress;
+        packetCopy >> realmAddress;
+
+        // Read VirtualRealmNameInfo bit fields
+        bool isLocalRealm = packetCopy.ReadBit();
+        bool isInternalRealm = packetCopy.ReadBit();
+        uint32 realmNameActualSize = packetCopy.ReadBits(8);
+        uint32 realmNameNormalizedSize = packetCopy.ReadBits(8);
+        packetCopy.FlushBits();
+
+        std::string realmNameActual = std::string(packetCopy.ReadString(realmNameActualSize));
+        std::string realmNameNormalized = std::string(packetCopy.ReadString(realmNameNormalizedSize));
+
+        ObjectGuid inviterGUID;
+        ObjectGuid inviterBNetAccountId;
+        uint16 inviterCfgRealmID;
+        uint8 proposedRoles;
+        uint32 lfgSlotCount;
+        uint32 lfgCompletedMask;
+
+        packetCopy >> inviterGUID;
+        packetCopy >> inviterBNetAccountId;
+        packetCopy >> inviterCfgRealmID;
+        packetCopy >> proposedRoles;
+        packetCopy >> lfgSlotCount;
+        packetCopy >> lfgCompletedMask;
+
+        // Read the inviter name
+        std::string inviterName = std::string(packetCopy.ReadString(inviterNameSize));
+
+        // Read LFG slots if present
+        std::vector<uint32> lfgSlots;
+        for (uint32 i = 0; i < lfgSlotCount; ++i)
         {
-            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Bot {} has no pending group invite", bot->GetName());
-            return;
+            uint32 lfgSlot;
+            packetCopy >> lfgSlot;
+            lfgSlots.push_back(lfgSlot);
         }
 
-        // Get inviter from the group
-        ObjectGuid inviterGuid = inviteGroup->GetLeaderGUID();
-        Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
+        TC_LOG_INFO("module.playerbot.group", "Bot {} received group invitation from {} (GUID: {}, CanAccept: {}, Roles: {}, XRealm: {})",
+            bot->GetName(), inviterName, inviterGUID.ToString(), canAccept, proposedRoles, isXRealm);
 
+        // Find the inviter player using TrinityCore APIs
+        Player* inviter = ObjectAccessor::FindPlayer(inviterGUID);
         if (!inviter)
         {
-            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Inviter not found for bot {}", bot->GetName());
+            TC_LOG_ERROR("module.playerbot.group", "HandleGroupInvitation: Inviter {} (GUID: {}) not found for bot {}",
+                inviterName, inviterGUID.ToString(), bot->GetName());
             return;
         }
 
-        // Create a PartyInvite packet for the handler
-        WorldPackets::Party::PartyInvite partyInvite;
-        partyInvite.Initialize(inviter, 0, true);
-
-        // Process the invitation through the handler
-        if (handler->HandleInvitation(partyInvite))
+        // Validate the invitation can be accepted
+        if (!canAccept)
         {
-            TC_LOG_INFO("module.playerbot.group", "Bot {} queued invitation from {} for processing",
-                bot->GetName(), inviter->GetName());
+            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Bot {} cannot accept invitation from {} (canAccept=false)",
+                bot->GetName(), inviterName);
+            return;
+        }
+
+        // Critical fix: Set up proper group invitation state using TrinityCore APIs
+        Group* inviterGroup = inviter->GetGroup();
+        if (!inviterGroup)
+        {
+            // Inviter is forming a new group - create the group properly
+            inviterGroup = new Group;
+            if (!inviterGroup->Create(inviter))
+            {
+                TC_LOG_ERROR("module.playerbot.group", "HandleGroupInvitation: Failed to create new group for inviter {}", inviterName);
+                delete inviterGroup;
+                return;
+            }
+            sGroupMgr->AddGroup(inviterGroup);
+
+            TC_LOG_INFO("module.playerbot.group", "Created new group {} for inviter {} to invite bot {}",
+                inviterGroup->GetGUID().ToString(), inviterName, bot->GetName());
+        }
+
+        // Add the bot as an invitee to the group using TrinityCore APIs
+        // This is the critical missing piece that sets bot->SetGroupInvite()
+
+        // Diagnostic logging: Check why AddInvite might fail
+        TC_LOG_INFO("module.playerbot.group", "Bot {} invitation diagnostics:", bot->GetName());
+        TC_LOG_INFO("module.playerbot.group", "  - Bot exists: {}", bot != nullptr);
+        TC_LOG_INFO("module.playerbot.group", "  - Bot current group: {}",
+            bot->GetGroup() ? bot->GetGroup()->GetGUID().ToString() : "None");
+        TC_LOG_INFO("module.playerbot.group", "  - Bot current group invite: {}",
+            bot->GetGroupInvite() ? bot->GetGroupInvite()->GetGUID().ToString() : "None");
+        TC_LOG_INFO("module.playerbot.group", "  - Inviter group: {}", inviterGroup->GetGUID().ToString());
+        TC_LOG_INFO("module.playerbot.group", "  - Inviter group size: {}", inviterGroup->GetMembersCount());
+
+        // Handle existing group invitation state
+        if (bot->GetGroupInvite())
+        {
+            TC_LOG_INFO("module.playerbot.group", "Bot {} already has group invitation from group {}, removing old invitation",
+                bot->GetName(), bot->GetGroupInvite()->GetGUID().ToString());
+            bot->GetGroupInvite()->RemoveInvite(bot);
+        }
+
+        // Handle existing group membership
+        if (bot->GetGroup())
+        {
+            TC_LOG_INFO("module.playerbot.group", "Bot {} is already in group {}, cannot invite",
+                bot->GetName(), bot->GetGroup()->GetGUID().ToString());
+            return;
+        }
+
+        if (inviterGroup->AddInvite(bot))
+        {
+            TC_LOG_INFO("module.playerbot.group", "Successfully added bot {} to group {} invitee list (inviter: {})",
+                bot->GetName(), inviterGroup->GetGUID().ToString(), inviterName);
+
+            // Verify that the bot now has a group invitation
+            if (bot->GetGroupInvite() == inviterGroup)
+            {
+                TC_LOG_INFO("module.playerbot.group", "Confirmed: Bot {} now has proper group invitation state set", bot->GetName());
+
+                // Create a proper PartyInvite packet for the handler using TrinityCore APIs
+                WorldPackets::Party::PartyInvite partyInvite;
+                partyInvite.Initialize(inviter, static_cast<int32>(proposedRoles), canAccept);
+
+                // Process the invitation through our handler system
+                if (handler->HandleInvitation(partyInvite))
+                {
+                    TC_LOG_INFO("module.playerbot.group", "Bot {} successfully queued invitation from {} for processing",
+                        bot->GetName(), inviterName);
+                }
+                else
+                {
+                    TC_LOG_DEBUG("module.playerbot.group", "Bot {} rejected invitation from {} during handler processing",
+                        bot->GetName(), inviterName);
+                }
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.group", "Bot {} group invitation state not properly set after AddInvite", bot->GetName());
+            }
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot.group", "Bot {} rejected invitation from {}",
-                bot->GetName(), inviter->GetName());
+            TC_LOG_ERROR("module.playerbot.group", "Failed to add bot {} to group {} invitee list (AddInvite failed)",
+                bot->GetName(), inviterGroup->GetGUID().ToString());
         }
     }
     catch (std::exception const& e)

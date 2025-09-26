@@ -118,15 +118,15 @@ public:
     // Handle async login query holder callback
     void HandleBotPlayerLogin(BotLoginQueryHolder const& holder);
 
+    // AI Integration (public access for GroupInvitationHandler)
+    void SetAI(BotAI* ai) { _ai = ai; }
+    BotAI* GetAI() const { return _ai; }
+
 private:
     // Helper methods for safe database access
     CharacterDatabasePreparedStatement* GetSafePreparedStatement(CharacterDatabaseStatements statementId, const char* statementName);
 
     // Removed AsyncLoginState - using async approach now
-
-    // AI Integration
-    void SetAI(BotAI* ai) { _ai = ai; }
-    BotAI* GetAI() const { return _ai; }
 
     // Account accessors
     uint32 GetBnetAccountId() const { return _bnetAccountId; }
