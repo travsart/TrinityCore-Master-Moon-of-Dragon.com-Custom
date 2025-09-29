@@ -11,7 +11,7 @@
 
 #include "TestUtilities.h"
 #include "Group/GroupInvitationHandler.h"
-#include "Group/LeaderFollowBehavior.h"
+#include "Movement/LeaderFollowBehavior.h"
 #include "AI/Triggers/GroupCombatTrigger.h"
 #include "AI/Actions/TargetAssistAction.h"
 #include <gtest/gtest.h>

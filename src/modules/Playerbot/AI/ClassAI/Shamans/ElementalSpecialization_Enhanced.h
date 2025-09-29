@@ -371,28 +371,28 @@ private:
     float CalculateElementalDPS();
 
     // Enhanced constants
-    static constexpr float RANGED_POSITION = 30.0f;
-    static constexpr uint32 LIGHTNING_BOLT_CAST_TIME = 2500; // 2.5 seconds
-    static constexpr uint32 CHAIN_LIGHTNING_CAST_TIME = 2000; // 2 seconds
-    static constexpr uint32 LAVA_BURST_CAST_TIME = 2000; // 2 seconds
-    static constexpr uint32 ELEMENTAL_MASTERY_COOLDOWN = 180000; // 3 minutes
-    static constexpr uint32 THUNDERSTORM_COOLDOWN = 45000; // 45 seconds
-    static constexpr uint32 EARTHQUAKE_DURATION = 10000; // 10 seconds
-    static constexpr uint32 FLAME_SHOCK_DURATION = 30000; // 30 seconds
-    static constexpr uint32 LIGHTNING_SHIELD_DURATION = 600000; // 10 minutes
-    static constexpr uint32 ELEMENTAL_FOCUS_DURATION = 10000; // 10 seconds
-    static constexpr uint32 LIGHTNING_BOLT_MANA_COST = 400;
-    static constexpr uint32 CHAIN_LIGHTNING_MANA_COST = 800;
-    static constexpr uint32 LAVA_BURST_MANA_COST = 500;
-    static constexpr uint32 EARTHQUAKE_MANA_COST = 1200;
-    static constexpr uint32 THUNDERSTORM_MANA_COST = 800;
-    static constexpr uint32 LIGHTNING_SHIELD_MAX_CHARGES = 9;
-    static constexpr float OVERLOAD_PROC_CHANCE = 0.30f; // 30% base proc chance
-    static constexpr uint32 MULTI_TARGET_THRESHOLD = 3; // 3+ targets for Chain Lightning
-    static constexpr float ELEMENTAL_MANA_THRESHOLD = 25.0f; // Conservative mana usage below 25%
-    static constexpr uint32 LAVA_BURST_COOLDOWN = 8000; // 8 seconds
-    static constexpr float FLAME_SHOCK_REFRESH_THRESHOLD = 3.0f; // Refresh with 3s remaining
-    static constexpr uint32 TOTEM_PLACEMENT_RANGE = 40.0f; // Optimal totem placement range
+    static const float RANGED_POSITION = 30.0f;
+    static const uint32 LIGHTNING_BOLT_CAST_TIME = 2500; // 2.5 seconds
+    static const uint32 CHAIN_LIGHTNING_CAST_TIME = 2000; // 2 seconds
+    static const uint32 LAVA_BURST_CAST_TIME = 2000; // 2 seconds
+    static const uint32 ELEMENTAL_MASTERY_COOLDOWN = 180000; // 3 minutes
+    static const uint32 THUNDERSTORM_COOLDOWN = 45000; // 45 seconds
+    static const uint32 EARTHQUAKE_DURATION = 10000; // 10 seconds
+    static const uint32 FLAME_SHOCK_DURATION = 30000; // 30 seconds
+    static const uint32 LIGHTNING_SHIELD_DURATION = 600000; // 10 minutes
+    static const uint32 ELEMENTAL_FOCUS_DURATION = 10000; // 10 seconds
+    static const uint32 LIGHTNING_BOLT_MANA_COST = 400;
+    static const uint32 CHAIN_LIGHTNING_MANA_COST = 800;
+    static const uint32 LAVA_BURST_MANA_COST = 500;
+    static const uint32 EARTHQUAKE_MANA_COST = 1200;
+    static const uint32 THUNDERSTORM_MANA_COST = 800;
+    static const uint32 LIGHTNING_SHIELD_MAX_CHARGES = 9;
+    static const float OVERLOAD_PROC_CHANCE = 0.30f; // 30% base proc chance
+    static const uint32 MULTI_TARGET_THRESHOLD = 3; // 3+ targets for Chain Lightning
+    static const float ELEMENTAL_MANA_THRESHOLD = 25.0f; // Conservative mana usage below 25%
+    static const uint32 LAVA_BURST_COOLDOWN = 8000; // 8 seconds
+    static const float FLAME_SHOCK_REFRESH_THRESHOLD = 3.0f; // Refresh with 3s remaining
+    static const uint32 TOTEM_PLACEMENT_RANGE = 40.0f; // Optimal totem placement range
 };
 
 } // namespace Playerbot

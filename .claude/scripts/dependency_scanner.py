@@ -5,6 +5,7 @@ Dependency Security Scanner for TrinityCore PlayerBot
 import json
 import re
 import os
+import sys
 from pathlib import Path
 from datetime import datetime
 

@@ -187,11 +187,7 @@ private:
     static constexpr uint32 CONFLAGRATE_COOLDOWN = 10000; // 10 seconds
     static constexpr uint32 SHADOW_BURN_COOLDOWN = 15000; // 15 seconds
     static constexpr uint32 CHAOS_BOLT_COOLDOWN = 12000; // 12 seconds
-    static constexpr uint32 IMMOLATE = 348; // Add missing spell IDs
-    static constexpr uint32 INCINERATE = 29722;
-    static constexpr uint32 SHADOW_BOLT = 686;
-    static constexpr uint32 SOUL_FIRE = 6353;
-    static constexpr uint32 SHADOWFURY = 30283;
+    // Spell IDs are defined in the enum above
     static constexpr uint32 IMMOLATE_DURATION = 15000; // 15 seconds
     static constexpr uint32 MAX_BACKDRAFT_STACKS = 3;
     static constexpr uint32 BACKDRAFT_DURATION = 15000; // 15 seconds

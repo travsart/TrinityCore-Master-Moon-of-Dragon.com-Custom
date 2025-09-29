@@ -10,8 +10,11 @@
 #include "LeaderFollowBehavior.h"
 #include "AI/BotAI.h"
 #include "AI/Actions/Action.h"
+#include "AI/Actions/CommonActions.h"
 #include "AI/Triggers/Trigger.h"
 #include "AI/Values/Value.h"
+#include "AI/Combat/GroupCombatTrigger.h"
+#include "AI/Actions/TargetAssistAction.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
@@ -29,66 +32,7 @@
 namespace Playerbot
 {
 
-// Follow Action implementation
-class FollowAction : public Action
-{
-public:
-    FollowAction() : Action("follow") {}
-
-    virtual bool IsPossible(BotAI* ai) const override
-    {
-        if (!ai || !ai->GetBot())
-            return false;
-        Group* group = ai->GetBot()->GetGroup();
-        return group != nullptr;
-    }
-
-    virtual bool IsUseful(BotAI* ai) const override
-    {
-        if (!ai || !ai->GetBot())
-            return false;
-        Player* bot = ai->GetBot();
-        Group* group = bot->GetGroup();
-        if (!group)
-            return false;
-        // Useful if we're not the leader
-        return group->GetLeaderGUID() != bot->GetGUID();
-    }
-
-    virtual ActionResult Execute(BotAI* ai, ActionContext const& context) override
-    {
-        if (!ai || !ai->GetBot())
-            return ActionResult::FAILED;
-
-        Player* bot = ai->GetBot();
-        Group* group = bot->GetGroup();
-        if (!group)
-            return ActionResult::FAILED;
-
-        Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
-        if (!leader || leader == bot)
-            return ActionResult::FAILED;
-
-        // Get or create follow behavior
-        auto followStrategy = ai->GetStrategy("follow");
-        auto followBehavior = followStrategy ? dynamic_cast<LeaderFollowBehavior*>(followStrategy) : nullptr;
-
-        if (!followBehavior)
-        {
-            ai->AddStrategy(std::make_unique<LeaderFollowBehavior>());
-            followStrategy = ai->GetStrategy("follow");
-            followBehavior = followStrategy ? dynamic_cast<LeaderFollowBehavior*>(followStrategy) : nullptr;
-        }
-
-        if (followBehavior)
-        {
-            followBehavior->SetFollowTarget(leader);
-            return ActionResult::SUCCESS;
-        }
-
-        return ActionResult::FAILED;
-    }
-};
+// FollowAction is now imported from CommonActions.h
 
 // Stop Follow Action
 class StopFollowAction : public Action
@@ -181,12 +125,18 @@ void LeaderFollowBehavior::InitializeActions()
 {
     AddAction("follow", std::make_shared<FollowAction>());
     AddAction("stop follow", std::make_shared<StopFollowAction>());
+
+    // CRITICAL FIX: Add combat assistance action
+    AddAction("assist_group", std::make_shared<TargetAssistAction>("assist_group"));
 }
 
 void LeaderFollowBehavior::InitializeTriggers()
 {
     AddTrigger(std::make_shared<LeaderFarTrigger>());
     AddTrigger(std::make_shared<LeaderLostTrigger>());
+
+    // CRITICAL FIX: Add group combat trigger for combat assistance
+    AddTrigger(std::make_shared<GroupCombatTrigger>("group_combat"));
 }
 
 void LeaderFollowBehavior::InitializeValues()

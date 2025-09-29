@@ -14,6 +14,7 @@
 #include "SpellInfo.h"
 #include "Unit.h"
 #include "SharedDefines.h"
+#include "../CooldownManager.h"
 #include <chrono>
 #include <unordered_map>
 #include <queue>
@@ -102,7 +103,6 @@ enum RogueSpells : uint32
     VITALITY = 61329,
     UNFAIR_ADVANTAGE = 51672,
     IMPROVED_KICK = 13754,
-    IMPROVED_EXPOSE_ARMOR = 14168,
     SURPRISE_ATTACKS = 32601,
 
     // Subtlety Spells
@@ -119,7 +119,6 @@ enum RogueSpells : uint32
     SLEIGHT_OF_HAND = 30892,
     DIRTY_FIGHTING = 14067,
     HEMORRHAGE = 16511,
-    IMPROVED_SAP = 6687,
     SERRATED_BLADES = 14171,
     HEIGHTENED_SENSES = 30894,
     SETUP = 13983,
@@ -205,7 +204,11 @@ enum RogueSpells : uint32
 
     // Additional Weapon Types
     ANESTHETIC_POISON = 26785,
-    PARALYTIC_POISON = 26969
+    PARALYTIC_POISON = 26969,
+
+    // Missing spells from WotLK
+    DEADLY_THROW = 48674,
+    KILLING_SPREE = 51690
 };
 
 enum class ComboPointState : uint8
@@ -260,16 +263,7 @@ enum class PoisonType : uint8
     PARALYTIC = 7
 };
 
-struct CooldownInfo
-{
-    uint32 spellId;
-    uint32 cooldownMs;
-    std::chrono::steady_clock::time_point lastUsed;
-    bool isReady;
-
-    CooldownInfo() : spellId(0), cooldownMs(0), isReady(true) {}
-    CooldownInfo(uint32 spell, uint32 cd) : spellId(spell), cooldownMs(cd), isReady(true) {}
-};
+// CooldownInfo is defined in CooldownManager.h
 
 struct ComboPointInfo
 {

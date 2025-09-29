@@ -9,14 +9,18 @@
 
 #include "ClassAI.h"
 #include "ActionPriority.h"
-#include "CooldownManager.h"
-#include "ResourceManager.h"
+#include "../CooldownManager.h"
+#include "../ResourceManager.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Map.h"
 #include "Object.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
+#include "Group.h"
+#include "SpellAuras.h"
+#include "MotionMaster.h"
+#include "SpellHistory.h"
 #include <chrono>
 
 namespace Playerbot
@@ -27,9 +31,11 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot), _currentTarget(nullptr), _inCombat(f
 {
     // Initialize component managers
     _actionQueue = std::make_unique<ActionPriorityQueue>();
-    _cooldownManager = std::make_unique<CooldownManager>();
+    _cooldownManager = std::make_unique<CooldownManager>(bot);
     _resourceManager = std::make_unique<ResourceManager>(bot);
 }
+
+ClassAI::~ClassAI() = default;
 
 void ClassAI::UpdateAI(uint32 diff)
 {
@@ -54,15 +60,29 @@ void ClassAI::UpdateAI(uint32 diff)
     if (_currentTarget)
     {
         UpdateRotation(_currentTarget);
-        UpdateMovement();
+        UpdateMovement(diff);
     }
     else
     {
         UpdateBuffs();
     }
 
-    // Call base class update
-    BotAI::UpdateAI(actualDiff);
+    // CRITICAL FIX: Call UpdateEnhanced to properly process triggers and actions
+    // This ensures GroupCombatTrigger and other triggers are actually evaluated
+    BotAI::UpdateEnhanced(actualDiff);
+
+    // Log for debugging trigger processing
+    static uint32 lastLogTime = 0;
+    static uint32 updateCount = 0;
+    updateCount++;
+    uint32 currentTime = getMSTime();
+    if (currentTime - lastLogTime > 5000) // Every 5 seconds
+    {
+        TC_LOG_INFO("module.playerbot.combat", "ClassAI::UpdateAI for {} - Updates: {}, InCombat: {}, Target: {}",
+                    GetBot()->GetName(), updateCount, _inCombat ? "Yes" : "No",
+                    _currentTarget ? _currentTarget->GetName() : "None");
+        lastLogTime = currentTime;
+    }
 }
 
 void ClassAI::OnCombatStart(::Unit* target)
@@ -130,7 +150,11 @@ bool ClassAI::IsSpellUsable(uint32 spellId)
     if (!spellInfo)
         return false;
 
-    return GetBot()->CanUseSpell(spellInfo) == SPELL_CAST_OK;
+    // Check if bot has the spell and it's ready to use
+    if (!GetBot()->HasSpell(spellId))
+        return false;
+
+    return GetBot()->GetSpellHistory()->IsReady(spellInfo);
 }
 
 float ClassAI::GetSpellRange(uint32 spellId)
@@ -349,7 +373,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
 
 bool ClassAI::IsMoving()
 {
-    return GetBot()->IsMoving();
+    return GetBot()->isMoving();
 }
 
 bool ClassAI::IsInMeleeRange(::Unit* target)
@@ -417,7 +441,7 @@ void ClassAI::UpdateTargeting()
     }
 }
 
-void ClassAI::UpdateMovement()
+void ClassAI::UpdateMovement(uint32 diff)
 {
     if (!_currentTarget)
         return;

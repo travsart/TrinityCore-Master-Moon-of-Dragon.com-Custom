@@ -9,7 +9,8 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
+#include "PriestSpecialization.h"
 #include "Position.h"
 #include <unordered_map>
 #include <queue>
@@ -18,70 +19,12 @@
 namespace Playerbot
 {
 
-// Priest specializations
-enum class PriestSpec : uint8
-{
-    DISCIPLINE = 0,
-    HOLY = 1,
-    SHADOW = 2
-};
-
-// Priest role in group
-enum class PriestRole : uint8
-{
-    HEALER = 0,
-    DPS = 1,
-    HYBRID = 2
-};
-
-// Healing priority levels
-enum class HealPriority : uint8
-{
-    EMERGENCY = 0,      // <20% health, imminent death
-    CRITICAL = 1,       // 20-40% health, needs immediate attention
-    MODERATE = 2,       // 40-70% health, should heal soon
-    MAINTENANCE = 3,    // 70-90% health, top off when convenient
-    FULL = 4           // >90% health, no healing needed
-};
-
-// Heal target info for priority queue
-struct HealTarget
-{
-    ::Unit* target;
-    HealPriority priority;
-    float healthPercent;
-    uint32 missingHealth;
-    bool inCombat;
-    bool hasHoTs;
-    uint32 timestamp;
-    float threatLevel;
-
-    HealTarget() : target(nullptr), priority(HealPriority::FULL), healthPercent(100.0f),
-                   missingHealth(0), inCombat(false), hasHoTs(false), timestamp(0), threatLevel(0.0f) {}
-
-    HealTarget(::Unit* t, HealPriority p, float hp, uint32 missing)
-        : target(t), priority(p), healthPercent(hp), missingHealth(missing),
-          inCombat(t ? t->IsInCombat() : false), hasHoTs(false), timestamp(getMSTime()), threatLevel(0.0f) {}
-
-    // Priority comparison for healing queue
-    bool operator<(const HealTarget& other) const
-    {
-        if (priority != other.priority)
-            return priority > other.priority; // Lower enum value = higher priority
-
-        if (healthPercent != other.healthPercent)
-            return healthPercent > other.healthPercent; // Lower health = higher priority
-
-        return timestamp > other.timestamp; // Older requests get priority
-    }
-};
-
 // Priest AI implementation with full healing and shadow capabilities
 class TC_GAME_API PriestAI : public ClassAI
 {
 public:
     explicit PriestAI(Player* bot);
-    ~PriestAI() = default;
+    ~PriestAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -171,7 +114,6 @@ private:
     ::Unit* GetBestHealTarget();
     ::Unit* GetBestDispelTarget();
     ::Unit* GetBestMindControlTarget();
-    ::Unit* GetLowestHealthAlly();
     ::Unit* GetHighestPriorityPatient();
 
     // Utility and support
@@ -217,6 +159,26 @@ private:
     uint32 GetSpellHealAmount(uint32 spellId);
     uint32 GetHealOverTimeRemaining(::Unit* target, uint32 spellId);
     bool TargetHasHoT(::Unit* target, uint32 spellId);
+    bool HasDispellableDebuff(::Unit* unit);
+    bool IsTank(::Unit* unit);
+    bool IsHealer(::Unit* unit);
+
+    // Performance calculation methods
+    uint32 CalculateDamageDealt(::Unit* target) const;
+    uint32 CalculateHealingDone() const;
+    uint32 CalculateManaUsage() const;
+
+    // Missing utility methods
+    void HealGroupMembers();
+    void HealTarget(::Unit* target);
+    bool IsEmergencyHeal(::Unit* target);
+    bool IsEmergencyHeal(uint32 spellId);
+    bool ShouldPrioritizeHealing(::Unit* target);
+    bool ShouldUseShadowProtection();
+    uint32 CountUnbuffedGroupMembers(uint32 spellId);
+    void CheckMajorCooldowns();
+    ::Unit* FindGroupTank();
+    ::Unit* GetLowestHealthAlly(float maxRange);
 
     // Specialization detection
     PriestSpec DetectSpecialization();

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "ShamanSpecialization.h"
 #include "Position.h"
 #include <unordered_map>
@@ -74,6 +74,24 @@ private:
     void UpdateShamanBuffs();
     void UpdateTotemCheck();
     void UpdateShockRotation();
+
+    // Private helper methods
+    void UpdateWeaponImbues();
+    void UpdateUtilityBuffs();
+    void DeployInitialTotems(::Unit* target);
+    void RecallCombatTotems();
+    void ApplyCombatBuffs();
+    void LogCombatMetrics();
+    bool IsShockSpell(uint32 spellId) const;
+    bool IsTotemSpell(uint32 spellId) const;
+    uint32 GetOptimalWeaponImbue(bool mainHand) const;
+    bool HasWeaponImbue(bool mainHand) const;
+    bool NearWater() const;
+    bool ShouldUseBloodlust() const;
+    Player* FindGroupTank(Group* group) const;
+    uint32 CalculateDamageDealt(::Unit* target) const;
+    uint32 CalculateHealingDone() const;
+    uint32 CalculateManaUsage() const;
 };
 
 } // namespace Playerbot

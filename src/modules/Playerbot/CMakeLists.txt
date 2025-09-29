@@ -62,6 +62,7 @@ set(PLAYERBOT_SOURCES
     # AI system (AI Framework implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
     # AI Strategy System
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
@@ -80,6 +81,70 @@ set(PLAYERBOT_SOURCES
     # AI Value System
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
+
+    # AI Utility Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.h
+
+    # ClassAI System - Base and implementations
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.h
+
+    # Death Knight AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.h
+
+    # Demon Hunter AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/DemonHunterAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/DemonHunterAI.h
+
+    # Druid AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/DruidAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/DruidAI.h
+
+    # Evoker AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
+
+    # Hunter AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.h
+
+    # Mage AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.h
+
+    # Monk AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/MonkAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/MonkAI.h
+
+    # Paladin AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/PaladinAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/PaladinAI.h
+
+    # Priest AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.h
+
+    # Rogue AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.h
+
+    # Shaman AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.h
+
+    # Warlock AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.h
+
+    # Warrior AI
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/WarriorAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/WarriorAI.h
 
     # Group Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
@@ -128,6 +193,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/PositionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/PositionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
@@ -146,8 +213,6 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
 # Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.h
 
     # Phase 2: Interface Definitions (header-only)
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
@@ -231,13 +296,12 @@ source_group("Database" FILES
 source_group("AI" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 )
 
 source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LeaderFollowBehavior.h
 )
 
 source_group("AI\\Actions" FILES
@@ -261,6 +325,8 @@ source_group("AI\\Combat" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/GroupCombatTrigger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/RoleBasedCombatPositioning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/PositionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/PositionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
@@ -280,6 +346,15 @@ source_group("AI\\Combat" FILES
 source_group("AI\\Values" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
+)
+
+source_group("AI\\Utilities" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.h
 )
 
 source_group("Group" FILES

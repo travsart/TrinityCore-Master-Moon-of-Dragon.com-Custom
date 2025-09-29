@@ -172,15 +172,17 @@ private:
 
     // Constants
     static constexpr uint32 MAX_ICICLES = 5;
-    static constexpr uint32 FINGERS_OF_FROST_DURATION = 15000; // 15 seconds
-    static constexpr uint32 BRAIN_FREEZE_DURATION = 15000; // 15 seconds
-    static constexpr uint32 ICY_VEINS_DURATION = 20000; // 20 seconds
-    static constexpr uint32 SHATTER_WINDOW = 1500; // 1.5 seconds
-    static constexpr float KITING_DISTANCE = 25.0f;
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr float CONE_OF_COLD_RANGE = 10.0f;
-    static constexpr float BLIZZARD_RANGE = 8.0f;
-    static constexpr uint32 WATER_ELEMENTAL_DURATION = 60000; // 60 seconds
+    enum FrostConstants : uint32 {
+        FINGERS_OF_FROST_DURATION = 15000, // 15 seconds
+        BRAIN_FREEZE_DURATION = 15000, // 15 seconds
+        ICY_VEINS_DURATION = 20000, // 20 seconds
+        SHATTER_WINDOW = 1500, // 1.5 seconds
+        WATER_ELEMENTAL_DURATION = 60000 // 60 seconds
+    };
+    #define KITING_DISTANCE 25.0f
+    #define MELEE_RANGE 5.0f
+    #define CONE_OF_COLD_RANGE 10.0f
+    #define BLIZZARD_RANGE 8.0f
 };
 
 } // namespace Playerbot

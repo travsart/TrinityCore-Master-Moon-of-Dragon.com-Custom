@@ -36,14 +36,58 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
     if (!bot || !bot->IsAlive())
         return ActionResult::FAILED;
 
-    // SIMPLIFIED STUB IMPLEMENTATION
-    // Returns success but doesn't perform complex group targeting
-    // This prevents compilation errors while functionality is deferred
+    // CRITICAL FIX: Implement actual target assistance logic
+    TC_LOG_INFO("module.playerbot.combat", "TargetAssistAction::Execute for bot {}", bot->GetName());
 
-    TC_LOG_DEBUG("playerbot", "TargetAssistAction: Stub implementation executed for bot %s",
-                 bot->GetName().c_str());
+    // Check if we have a target from context
+    Unit* targetFromContext = dynamic_cast<Unit*>(context.target);
+    if (targetFromContext)
+    {
+        TC_LOG_INFO("module.playerbot.combat", "Using target from context: {} for bot {}",
+                    targetFromContext->GetName(), bot->GetName());
 
-    return ActionResult::SUCCESS;
+        // Engage the target
+        if (EngageTarget(bot, targetFromContext))
+        {
+            TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Bot {} now attacking {}",
+                        bot->GetName(), targetFromContext->GetName());
+            return ActionResult::SUCCESS;
+        }
+    }
+
+    // Get group
+    Group* group = bot->GetGroup();
+    if (!group)
+    {
+        TC_LOG_DEBUG("module.playerbot.combat", "Bot {} not in group for assist action", bot->GetName());
+        return ActionResult::FAILED;
+    }
+
+    // Find best target to assist
+    Unit* bestTarget = GetBestAssistTarget(bot, group);
+    if (!bestTarget)
+    {
+        TC_LOG_DEBUG("module.playerbot.combat", "No valid assist target found for bot {}", bot->GetName());
+        return ActionResult::FAILED;
+    }
+
+    // Check if we should switch to this target
+    if (!ShouldSwitchTarget(bot, bestTarget))
+    {
+        TC_LOG_DEBUG("module.playerbot.combat", "Bot {} keeping current target", bot->GetName());
+        return ActionResult::IN_PROGRESS;
+    }
+
+    // Engage the new target
+    if (EngageTarget(bot, bestTarget))
+    {
+        TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Bot {} now assisting by attacking {}",
+                    bot->GetName(), bestTarget->GetName());
+        return ActionResult::SUCCESS;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.combat", "Failed to engage target for bot {}", bot->GetName());
+    return ActionResult::FAILED;
 }
 
 bool TargetAssistAction::IsPossible(BotAI* ai) const

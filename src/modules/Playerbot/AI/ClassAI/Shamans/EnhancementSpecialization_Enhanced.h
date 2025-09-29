@@ -387,28 +387,28 @@ private:
     float CalculateEnhancementDPS();
 
     // Enhanced constants
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr uint32 MAELSTROM_WEAPON_MAX_STACKS = 5;
-    static constexpr uint32 STORMSTRIKE_COOLDOWN = 8000; // 8 seconds
-    static constexpr uint32 LAVA_LASH_COOLDOWN = 10000; // 10 seconds
-    static constexpr uint32 SHAMANISTIC_RAGE_COOLDOWN = 60000; // 1 minute
-    static constexpr uint32 SHAMANISTIC_RAGE_DURATION = 15000; // 15 seconds
-    static constexpr uint32 FERAL_SPIRIT_COOLDOWN = 120000; // 2 minutes
-    static constexpr uint32 FERAL_SPIRIT_DURATION = 30000; // 30 seconds
-    static constexpr uint32 UNLEASH_ELEMENTS_COOLDOWN = 15000; // 15 seconds
-    static constexpr uint32 STORMSTRIKE_DEBUFF_DURATION = 15000; // 15 seconds
-    static constexpr uint32 WEAPON_IMBUE_DURATION = 1800000; // 30 minutes
-    static constexpr uint32 STORMSTRIKE_MANA_COST = 225;
-    static constexpr uint32 LAVA_LASH_MANA_COST = 200;
-    static constexpr uint32 UNLEASH_ELEMENTS_MANA_COST = 180;
-    static constexpr uint32 FIRE_NOVA_MANA_COST = 350;
-    static constexpr float WINDFURY_PROC_CHANCE = 0.36f; // 36% proc chance
-    static constexpr float MAELSTROM_PROC_CHANCE = 0.15f; // 15% proc chance per hit
-    static constexpr uint32 MULTI_TARGET_THRESHOLD = 4; // 4+ targets for AoE
-    static constexpr float ENHANCEMENT_MANA_THRESHOLD = 20.0f; // Conservative mana usage below 20%
-    static constexpr uint32 WEAPON_IMBUE_REFRESH_THRESHOLD = 300000; // Refresh with 5 minutes remaining
-    static constexpr float DUAL_WIELD_HIT_PENALTY = 0.19f; // 19% miss chance penalty
-    static constexpr float OPTIMAL_ATTACK_SPEED = 2.6f; // Optimal weapon speed for Enhancement
+    static const float MELEE_RANGE = 5.0f;
+    static const uint32 MAELSTROM_WEAPON_MAX_STACKS = 5;
+    static const uint32 STORMSTRIKE_COOLDOWN = 8000; // 8 seconds
+    static const uint32 LAVA_LASH_COOLDOWN = 10000; // 10 seconds
+    static const uint32 SHAMANISTIC_RAGE_COOLDOWN = 60000; // 1 minute
+    static const uint32 SHAMANISTIC_RAGE_DURATION = 15000; // 15 seconds
+    static const uint32 FERAL_SPIRIT_COOLDOWN = 120000; // 2 minutes
+    static const uint32 FERAL_SPIRIT_DURATION = 30000; // 30 seconds
+    static const uint32 UNLEASH_ELEMENTS_COOLDOWN = 15000; // 15 seconds
+    static const uint32 STORMSTRIKE_DEBUFF_DURATION = 15000; // 15 seconds
+    static const uint32 WEAPON_IMBUE_DURATION = 1800000; // 30 minutes
+    static const uint32 STORMSTRIKE_MANA_COST = 225;
+    static const uint32 LAVA_LASH_MANA_COST = 200;
+    static const uint32 UNLEASH_ELEMENTS_MANA_COST = 180;
+    static const uint32 FIRE_NOVA_MANA_COST = 350;
+    static const float WINDFURY_PROC_CHANCE = 0.36f; // 36% proc chance
+    static const float MAELSTROM_PROC_CHANCE = 0.15f; // 15% proc chance per hit
+    static const uint32 MULTI_TARGET_THRESHOLD = 4; // 4+ targets for AoE
+    static const float ENHANCEMENT_MANA_THRESHOLD = 20.0f; // Conservative mana usage below 20%
+    static const uint32 WEAPON_IMBUE_REFRESH_THRESHOLD = 300000; // Refresh with 5 minutes remaining
+    static const float DUAL_WIELD_HIT_PENALTY = 0.19f; // 19% miss chance penalty
+    static const float OPTIMAL_ATTACK_SPEED = 2.6f; // Optimal weapon speed for Enhancement
 };
 
 } // namespace Playerbot

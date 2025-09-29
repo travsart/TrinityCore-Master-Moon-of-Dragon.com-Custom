@@ -7,51 +7,92 @@
  * option) any later version.
  */
 
-#pragma once
+#ifndef DEATHKNIGHT_AI_H
+#define DEATHKNIGHT_AI_H
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "DeathKnightSpecialization.h"
 #include <memory>
+#include <atomic>
+#include <chrono>
 
 namespace Playerbot
 {
 
-class DeathKnightSpecialization;
+// Forward declarations
+struct DeathKnightMetrics;
+class DeathKnightCombatMetrics;
+class DeathKnightCombatPositioning;
+class RuneManager;
+class DiseaseManager;
+class BotThreatManager;
+class TargetSelector;
+class PositionManager;
+class InterruptManager;
+class CooldownManager;
 
-class TC_GAME_API DeathKnightAI : public ClassAI
+
+class DeathKnightAI : public ClassAI
 {
 public:
     explicit DeathKnightAI(Player* bot);
-    ~DeathKnightAI() = default;
+    ~DeathKnightAI() override;
 
-    // ClassAI interface implementation
-    void UpdateRotation(::Unit* target) override;
+    // Core AI Interface
+    void UpdateRotation(Unit* target) override;
     void UpdateBuffs() override;
     void UpdateCooldowns(uint32 diff) override;
     bool CanUseAbility(uint32 spellId) override;
-
-    // Combat state callbacks
-    void OnCombatStart(::Unit* target) override;
+    void OnCombatStart(Unit* target) override;
     void OnCombatEnd() override;
 
-protected:
-    // Resource management
+    // Resource Management
     bool HasEnoughResource(uint32 spellId) override;
     void ConsumeResource(uint32 spellId) override;
 
     // Positioning
-    Position GetOptimalPosition(::Unit* target) override;
-    float GetOptimalRange(::Unit* target) override;
+    Position GetOptimalPosition(Unit* target) override;
+    float GetOptimalRange(Unit* target) override;
 
-private:
-    // Specialization management
-    void DetectSpecialization();
-    void InitializeSpecialization();
+    // Specialization Management
     DeathKnightSpec GetCurrentSpecialization() const;
 
-    // Specialization delegation
+private:
+    // Initialization
+    void InitializeCombatSystems();
+    void DetectSpecialization();
+    void InitializeSpecialization();
+
+    // Combat execution
+    void ExecuteFallbackRotation(Unit* target);
+    void ActivateBurstCooldowns(Unit* target);
+
+    // Specialization system
     std::unique_ptr<DeathKnightSpecialization> _specialization;
     DeathKnightSpec _detectedSpec;
+
+    // Combat systems
+    std::unique_ptr<BotThreatManager> _threatManager;
+    std::unique_ptr<TargetSelector> _targetSelector;
+    std::unique_ptr<PositionManager> _positionManager;
+    std::unique_ptr<InterruptManager> _interruptManager;
+    std::unique_ptr<CooldownManager> _cooldownManager;
+
+    // Death Knight-specific systems
+    std::unique_ptr<DeathKnightMetrics> _metrics;
+    std::unique_ptr<DeathKnightCombatMetrics> _combatMetrics;
+    std::unique_ptr<DeathKnightCombatPositioning> _positioning;
+    std::unique_ptr<RuneManager> _runeManager;
+    std::unique_ptr<DiseaseManager> _diseaseManager;
+
+    // Combat tracking
+    uint32 _runicPowerSpent;
+    uint32 _runesUsed;
+    uint32 _diseasesApplied;
+    uint32 _lastPresence;
+    uint32 _lastHorn;
 };
 
 } // namespace Playerbot
+
+#endif // DEATHKNIGHT_AI_H

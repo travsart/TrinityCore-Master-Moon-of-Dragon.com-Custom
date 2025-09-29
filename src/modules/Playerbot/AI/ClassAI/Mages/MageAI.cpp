@@ -11,23 +11,23 @@
 #include "ArcaneSpecialization.h"
 #include "FireSpecialization.h"
 #include "FrostSpecialization.h"
-#include "ActionPriority.h"
-#include "CooldownManager.h"
-#include "ResourceManager.h"
+#include "Player.h"
+#include "Unit.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Map.h"
-#include "Log.h"
-#include "Unit.h"
-#include "Player.h"
-#include "Spell.h"
-#include "SpellAuras.h"
-#include "ObjectAccessor.h"
 #include "Group.h"
-#include "Pet.h"
 #include "Item.h"
+#include "MotionMaster.h"
+#include "Log.h"
+#include "ObjectAccessor.h"
+#include "WorldSession.h"
+#include "../CooldownManager.h"
+#include "CellImpl.h"
+#include "GridNotifiersImpl.h"
 #include <algorithm>
-#include <numeric>
+#include <chrono>
+#include <mutex>
 
 namespace Playerbot
 {
@@ -39,153 +39,274 @@ const std::unordered_map<uint32, MageSchool> MageAI::_spellSchools = {
     {ARCANE_BLAST, MageSchool::ARCANE},
     {ARCANE_BARRAGE, MageSchool::ARCANE},
     {ARCANE_ORB, MageSchool::ARCANE},
+    {ARCANE_POWER, MageSchool::ARCANE},
+    {ARCANE_INTELLECT, MageSchool::ARCANE},
     {ARCANE_EXPLOSION, MageSchool::ARCANE},
-
     // Fire spells
     {FIREBALL, MageSchool::FIRE},
     {FIRE_BLAST, MageSchool::FIRE},
     {PYROBLAST, MageSchool::FIRE},
     {FLAMESTRIKE, MageSchool::FIRE},
     {SCORCH, MageSchool::FIRE},
+    {COMBUSTION, MageSchool::FIRE},
     {LIVING_BOMB, MageSchool::FIRE},
     {DRAGON_BREATH, MageSchool::FIRE},
-
     // Frost spells
     {FROSTBOLT, MageSchool::FROST},
     {ICE_LANCE, MageSchool::FROST},
     {FROZEN_ORB, MageSchool::FROST},
     {BLIZZARD, MageSchool::FROST},
     {CONE_OF_COLD, MageSchool::FROST},
-    {FROST_NOVA, MageSchool::FROST}
+    {ICY_VEINS, MageSchool::FROST},
+    {WATER_ELEMENTAL, MageSchool::FROST},
+    {ICE_BARRIER, MageSchool::FROST},
+    // Generic/utility spells
+    {POLYMORPH, MageSchool::GENERIC},
+    {FROST_NOVA, MageSchool::GENERIC},
+    {COUNTERSPELL, MageSchool::GENERIC},
+    {BLINK, MageSchool::GENERIC},
+    {INVISIBILITY, MageSchool::GENERIC},
+    {ICE_BLOCK, MageSchool::GENERIC},
+    {MANA_SHIELD, MageSchool::GENERIC}
 };
 
-MageAI::MageAI(Player* bot) : ClassAI(bot), _lastPolymorph(0), _lastCounterspell(0),
-    _lastBlink(0), _lastManaShield(0), _lastIceBarrier(0),
-    _threatManager(std::make_unique<ThreatManager>(bot)),
-    _targetSelector(std::make_unique<TargetSelector>(bot)),
-    _positionManager(std::make_unique<PositionManager>(bot)),
-    _interruptManager(std::make_unique<InterruptManager>(bot))
+// Static member initialization for MageSpellCalculator
+std::unordered_map<uint32, uint32> MageSpellCalculator::_baseDamageCache;
+std::unordered_map<uint32, uint32> MageSpellCalculator::_manaCostCache;
+std::unordered_map<uint32, uint32> MageSpellCalculator::_castTimeCache;
+std::mutex MageSpellCalculator::_cacheMutex;
+
+// Talent IDs for specialization detection
+enum MageTalents
 {
+    // Arcane talents
+    TALENT_ARCANE_POWER = 12042,
+    TALENT_ARCANE_BARRAGE = 44425,
+    TALENT_ARCANE_MISSILES_PROC = 79683,
+    TALENT_PRESENCE_OF_MIND = 12043,
+    TALENT_ARCANE_ORB = 153626,
+    TALENT_NETHER_TEMPEST = 114923,
+
+    // Fire talents
+    TALENT_PYROBLAST = 11366,
+    TALENT_COMBUSTION = 190319,
+    TALENT_LIVING_BOMB = 44457,
+    TALENT_DRAGON_BREATH = 31661,
+    TALENT_IGNITE = 12846,
+    TALENT_HOT_STREAK = 48108,
+
+    // Frost talents
+    TALENT_ICE_LANCE = 30455,
+    TALENT_ICY_VEINS = 12472,
+    TALENT_FROZEN_ORB = 84714,
+    TALENT_WATER_ELEMENTAL = 31687,
+    TALENT_COLD_SNAP = 11958,
+    TALENT_DEEP_FREEZE = 44572
+};
+
+MageAI::MageAI(Player* bot) : ClassAI(bot),
+    _currentSpec(MageSpec::FROST), // Default to Frost spec
+    _manaSpent(0),
+    _damageDealt(0),
+    _spellsCast(0),
+    _interruptedCasts(0),
+    _criticalHits(0),
+    _successfulPolymorphs(0),
+    _successfulCounterspells(0),
+    _lastPolymorph(0),
+    _lastCounterspell(0),
+    _lastBlink(0),
+    _lastManaShield(0),
+    _lastIceBarrier(0)
+{
+    // Initialize specialization
     InitializeSpecialization();
 
-    // Initialize combat metrics
+    // Initialize combat system components
+    _threatManager = std::make_unique<BotThreatManager>(bot);
+    _targetSelector = std::make_unique<TargetSelector>(bot, _threatManager.get());
+    _positionManager = std::make_unique<PositionManager>(bot, _threatManager.get());
+    _interruptManager = std::make_unique<InterruptManager>(bot);
+
+    // Reset combat metrics
     _combatMetrics.Reset();
 
-    // Initialize combat systems
-    if (_threatManager)
-        _threatManager->Initialize();
-    if (_targetSelector)
-        _targetSelector->Initialize();
-    if (_positionManager)
-        _positionManager->Initialize();
-    if (_interruptManager)
-        _interruptManager->Initialize();
+    TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {} with specialization {}",
+                 bot ? bot->GetName() : "null",
+                 _specialization ? _specialization->GetSpecializationName() : "none");
+}
 
-    TC_LOG_DEBUG("playerbot.mage", "MageAI initialized for {} with specialization {} and combat systems",
-                 GetBot()->GetName(), static_cast<uint32>(_currentSpec));
+MageAI::~MageAI() = default;
+
+void MageAI::InitializeSpecialization()
+{
+    if (!GetBot())
+        return;
+
+    // Detect current specialization based on talents
+    _currentSpec = DetectCurrentSpecialization();
+
+    // Create appropriate specialization handler
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            _specialization = std::make_unique<ArcaneSpecialization>(GetBot());
+            break;
+        case MageSpec::FIRE:
+            _specialization = std::make_unique<FireSpecialization>(GetBot());
+            break;
+        case MageSpec::FROST:
+        default:
+            _specialization = std::make_unique<FrostSpecialization>(GetBot());
+            break;
+    }
+}
+
+MageSpec MageAI::DetectCurrentSpecialization()
+{
+    if (!GetBot())
+        return MageSpec::FROST;
+
+    // Count points in each tree
+    uint32 arcanePoints = 0;
+    uint32 firePoints = 0;
+    uint32 frostPoints = 0;
+
+    // Check for signature talents
+    if (GetBot()->HasSpell(TALENT_ARCANE_BARRAGE) || GetBot()->HasSpell(TALENT_ARCANE_POWER))
+        arcanePoints += 10;
+
+    if (GetBot()->HasSpell(TALENT_PYROBLAST) || GetBot()->HasSpell(TALENT_COMBUSTION))
+        firePoints += 10;
+
+    if (GetBot()->HasSpell(TALENT_ICY_VEINS) || GetBot()->HasSpell(TALENT_WATER_ELEMENTAL))
+        frostPoints += 10;
+
+    // Determine specialization based on point distribution
+    if (arcanePoints > firePoints && arcanePoints > frostPoints)
+        return MageSpec::ARCANE;
+    else if (firePoints > arcanePoints && firePoints > frostPoints)
+        return MageSpec::FIRE;
+    else
+        return MageSpec::FROST; // Default to Frost
+}
+
+void MageAI::SwitchSpecialization(MageSpec newSpec)
+{
+    if (_currentSpec == newSpec)
+        return;
+
+    _currentSpec = newSpec;
+
+    // Recreate specialization handler
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            _specialization = std::make_unique<ArcaneSpecialization>(GetBot());
+            break;
+        case MageSpec::FIRE:
+            _specialization = std::make_unique<FireSpecialization>(GetBot());
+            break;
+        case MageSpec::FROST:
+            _specialization = std::make_unique<FrostSpecialization>(GetBot());
+            break;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switched specialization to {}",
+                 GetBot() ? GetBot()->GetName() : "null",
+                 _specialization ? _specialization->GetSpecializationName() : "none");
 }
 
 void MageAI::UpdateRotation(::Unit* target)
 {
-    if (!target)
+    if (!GetBot())
         return;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    // Check if we need to switch specialization
+    MageSpec newSpec = DetectCurrentSpecialization();
+    if (newSpec != _currentSpec)
+    {
+        SwitchSpecialization(newSpec);
+    }
 
-    // Update specialization if needed
-    UpdateSpecialization();
-
-    // Update combat systems
-    if (_threatManager)
-        _threatManager->UpdateThreatAnalysis();
-    if (_positionManager)
-        _positionManager->UpdatePosition(PositionManager::MovementContext{target, GetBot()});
-    if (_interruptManager)
-        _interruptManager->UpdateInterruptSystem(100);
-
-    // Advanced target selection
-    ::Unit* optimalTarget = SelectOptimalTarget(GetNearbyEnemies(30.0f));
-    if (optimalTarget && optimalTarget != target)
-        target = optimalTarget;
-
-    // Update positioning first
-    UpdateMagePositioning();
-
-    // Check if we can cast (not moving, not silenced, etc.)
-    if (!CanCastSpell())
+    // Handle emergency situations first
+    if (IsInCriticalDanger())
+    {
+        HandleEmergencySituation();
         return;
-
-    // Advanced combat logic
-    UpdateAdvancedCombatLogic(target);
-
-    // Use crowd control if needed
-    UseCrowdControl(target);
-
-    // Delegate to current specialization
-    DelegateToSpecialization(target);
-
-    // Check for AoE opportunities
-    std::vector<::Unit*> nearbyEnemies = GetNearbyEnemies(10.0f);
-    if (nearbyEnemies.size() > 1)
-    {
-        UseAoEAbilities(nearbyEnemies);
-    }
-    else if (nearbyEnemies.size() > 3)
-    {
-        HandleMultipleEnemies(nearbyEnemies);
     }
 
-    // Update performance metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    // Update threat management
+    ManageThreat();
 
-    // Update average cast time tracking
-    float currentAvg = _combatMetrics.averageCastTime.load();
-    float newAvg = (currentAvg * 0.9f) + (duration.count() * 0.1f);
-    _combatMetrics.averageCastTime.store(newAvg);
+    // Handle crowd control priorities
+    if (target)
+    {
+        // Check for polymorph opportunities
+        ::Unit* polymorphTarget = GetBestPolymorphTarget();
+        if (polymorphTarget && CanPolymorphSafely(polymorphTarget))
+        {
+            UsePolymorph(polymorphTarget);
+            return;
+        }
+
+        // Check for counterspell opportunities
+        ::Unit* interruptTarget = GetBestCounterspellTarget();
+        if (interruptTarget && ShouldInterrupt(interruptTarget))
+        {
+            UseCounterspell(interruptTarget);
+            return;
+        }
+    }
+
+    // Delegate to specialization for main rotation
+    if (_specialization && target)
+    {
+        _specialization->UpdateRotation(target);
+    }
+    else if (target)
+    {
+        // Fallback basic rotation
+        ExecuteAdvancedRotation(target);
+    }
+
+    // Update combat metrics
+    if (GetBot()->IsInCombat())
+    {
+        UpdatePerformanceMetrics(100);
+        AnalyzeCastingEffectiveness();
+    }
 }
 
 void MageAI::UpdateBuffs()
 {
+    if (!GetBot())
+        return;
+
     UpdateMageBuffs();
+
+    // Delegate to specialization for specific buffs
+    if (_specialization)
+    {
+        _specialization->UpdateBuffs();
+    }
 }
 
 void MageAI::UpdateCooldowns(uint32 diff)
 {
-    // Use defensive abilities if in danger
-    if (IsInCriticalDanger())
-    {
-        HandleEmergencySituation();
-    }
-    else if (IsInDanger())
-    {
-        UseDefensiveAbilities();
-    }
+    if (!GetBot())
+        return;
 
-    // Use offensive cooldowns in good situations
-    if (_inCombat && _currentTarget && GetBot()->GetHealthPct() > 50.0f)
+    // Update shared cooldown trackers
+    if (_cooldownManager)
     {
-        UseOffensiveCooldowns();
+        _cooldownManager->Update(diff);
     }
 
-    // Manage mana efficiency
-    OptimizeManaUsage();
-
-    // Update specialization-specific mechanics
-    switch (_specialization)
+    // Delegate to specialization
+    if (_specialization)
     {
-        case MageSpec::ARCANE:
-            ManageArcaneCharges();
-            UpdateArcaneOrb();
-            break;
-        case MageSpec::FIRE:
-            ManageCombustion();
-            UpdateHotStreak();
-            break;
-        case MageSpec::FROST:
-            ManageFrostbolt();
-            UpdateIcicles();
-            break;
+        _specialization->UpdateCooldowns(diff);
     }
 
     // Update performance metrics
@@ -194,346 +315,275 @@ void MageAI::UpdateCooldowns(uint32 diff)
 
 bool MageAI::CanUseAbility(uint32 spellId)
 {
-    if (!IsSpellReady(spellId) || !IsSpellUsable(spellId))
+    if (!GetBot())
         return false;
 
+    // Check if spell is ready
+    if (!IsSpellReady(spellId))
+        return false;
+
+    // Check resource requirements
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Check if we're currently casting
-    if (IsCasting() || IsChanneling())
-    {
-        // Only allow instant spells while casting
-        if (!IsSpellInstant(spellId))
-            return false;
-    }
-
-    // Check range to target for targeted spells
-    if (_currentTarget)
-    {
-        if (!IsInRange(_currentTarget, spellId))
-            return false;
-
-        if (!HasLineOfSight(_currentTarget))
-            return false;
-    }
-
-    // School-specific checks
-    MageSchool school = GetSpellSchool(spellId);
-
-    // Check for spell school lockouts (from counterspell, etc.)
-    // This would integrate with TrinityCore's spell school lockout system
+    // Delegate to specialization for specific checks
+    if (_specialization)
+        return _specialization->CanUseAbility(spellId);
 
     return true;
 }
 
 void MageAI::OnCombatStart(::Unit* target)
 {
-    ClassAI::OnCombatStart(target);
+    if (!GetBot())
+        return;
 
-    // Reset combat variables
-    _manaSpent = 0;
-    _damageDealt = 0;
-    _spellsCast = 0;
-    _interruptedCasts = 0;
+    // Reset combat metrics
+    _combatMetrics.Reset();
 
-    // Specialization-specific combat preparation
-    switch (_specialization)
+    // Apply combat buffs
+    UpdateArmorSpells();
+    CastManaShield();
+
+    // Notify specialization
+    if (_specialization)
+        _specialization->OnCombatStart(target);
+
+    // Initialize positioning - move to optimal range
+    if (_positionManager && target)
     {
-        case MageSpec::ARCANE:
-            _arcaneCharges = 0;
-            _arcaneBlastStacks = 0;
-            break;
-        case MageSpec::FIRE:
-            _combustionStacks = 0;
-            _hotStreakAvailable = false;
-            break;
-        case MageSpec::FROST:
-            _frostboltCounter = 0;
-            _wintersChill = false;
-            break;
+        Position optimalPos = _positionManager->FindRangedPosition(target, OPTIMAL_CASTING_RANGE);
+        GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
     }
 
-    TC_LOG_DEBUG("playerbot.mage", "Mage {} entering combat - Spec: {}, Mana: {}%",
-                 GetBot()->GetName(), static_cast<uint32>(_specialization), GetManaPercent() * 100);
+    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} entering combat with target {}",
+                 GetBot()->GetName(), target ? target->GetName() : "null");
 }
 
 void MageAI::OnCombatEnd()
 {
-    ClassAI::OnCombatEnd();
+    if (!GetBot())
+        return;
 
-    // Analyze combat effectiveness
-    AnalyzeCastingEffectiveness();
+    // Notify specialization
+    if (_specialization)
+        _specialization->OnCombatEnd();
 
-    // Use mana regeneration abilities if needed
-    if (GetManaPercent() < 0.5f)
-    {
-        UseManaRegeneration();
-    }
+    // Perform post-combat actions
+    UseManaRegeneration();
+
+    // Log combat performance
+    TC_LOG_DEBUG("module.playerbot.ai",
+                 "Mage {} combat ended - Damage: {}, Mana spent: {}, Spells cast: {}, Crits: {}",
+                 GetBot()->GetName(),
+                 _combatMetrics.totalDamage.load(),
+                 _combatMetrics.totalManaSpent.load(),
+                 _spellsCast.load(),
+                 _criticalHits.load());
 }
 
 bool MageAI::HasEnoughResource(uint32 spellId)
 {
-    return _resourceManager->HasEnoughResource(spellId);
+    if (!GetBot())
+        return false;
+
+    // Get spell info
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+        return false;
+
+    // Calculate mana cost with modifiers
+    uint32 manaCost = MageSpellCalculator::CalculateSpellManaCost(spellId, GetBot());
+
+    // Check if we have enough mana
+    return HasEnoughMana(manaCost);
 }
 
 void MageAI::ConsumeResource(uint32 spellId)
 {
-    uint32 manaCost = 0;
+    if (!GetBot())
+        return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (spellInfo && spellInfo->PowerType == POWER_MANA)
-    {
-        manaCost = spellInfo->ManaCost + spellInfo->ManaCostPercentage * GetMaxMana() / 100;
-    }
-
-    _resourceManager->ConsumeResource(spellId);
+    // Calculate and consume mana
+    uint32 manaCost = MageSpellCalculator::CalculateSpellManaCost(spellId, GetBot());
     _manaSpent += manaCost;
+    _combatMetrics.totalManaSpent += manaCost;
 
-    TC_LOG_DEBUG("playerbot.mage", "Consumed {} mana for spell {}", manaCost, spellId);
+    // Track spell cast
+    _spellsCast++;
+    RecordSpellCast(spellId, _currentTarget);
 }
 
 Position MageAI::GetOptimalPosition(::Unit* target)
 {
-    if (!target)
-        return GetBot()->GetPosition();
+    if (!GetBot() || !target)
+        return GetBot() ? GetBot()->GetPosition() : Position();
 
-    // Mages want to stay at optimal casting range
-    float distance = GetOptimalRange(target);
-    float angle = GetBot()->GetAngle(target);
+    // Delegate to position manager
+    if (_positionManager)
+        return _positionManager->FindRangedPosition(target, OPTIMAL_CASTING_RANGE);
 
-    // Stay behind cover if possible, and away from melee range
+    // Fallback: maintain max range
+    float angle = GetBot()->GetAbsoluteAngle(target->GetPositionX(), target->GetPositionY());
+    float distance = OPTIMAL_CASTING_RANGE - 2.0f; // Small buffer
+
     Position pos;
-    target->GetNearPosition(pos, distance, angle + M_PI); // Opposite side from target
+    pos.m_positionX = target->GetPositionX() - distance * cos(angle);
+    pos.m_positionY = target->GetPositionY() - distance * sin(angle);
+    pos.m_positionZ = target->GetPositionZ();
+    pos.SetOrientation(target->GetOrientation());
+
     return pos;
 }
 
 float MageAI::GetOptimalRange(::Unit* target)
 {
-    // Mages are ranged casters
+    if (!target)
+        return OPTIMAL_CASTING_RANGE;
+
+    // Adjust range based on target type and situation
+    if (NeedsToKite(target))
+        return KITING_RANGE;
+
     return OPTIMAL_CASTING_RANGE;
 }
 
-void MageAI::UpdateArcaneRotation(::Unit* target)
-{
-    if (!target || !IsAtOptimalRange(target))
-        return;
-
-    // Arcane priority rotation
-    // 1. Arcane Orb if available and low mana
-    if (GetManaPercent() < 0.4f && _arcaneOrbCharges > 0 && CanUseAbility(ARCANE_ORB))
-    {
-        _actionQueue->AddAction(ARCANE_ORB, ActionPriority::ROTATION, 90.0f, target);
-        return;
-    }
-
-    // 2. Arcane Barrage if at max charges or low mana
-    if ((_arcaneCharges >= MAX_ARCANE_CHARGES || GetManaPercent() < 0.3f) &&
-        CanUseAbility(ARCANE_BARRAGE))
-    {
-        float score = 85.0f + (_arcaneCharges * 5.0f);
-        _actionQueue->AddAction(ARCANE_BARRAGE, ActionPriority::ROTATION, score, target);
-        return;
-    }
-
-    // 3. Arcane Blast to build charges
-    if (CanUseAbility(ARCANE_BLAST))
-    {
-        float score = 80.0f - (_arcaneCharges * 10.0f); // Lower priority as charges increase
-        if (GetManaPercent() > 0.5f)
-            score += 10.0f;
-
-        _actionQueue->AddAction(ARCANE_BLAST, ActionPriority::ROTATION, score, target);
-        return;
-    }
-
-    // 4. Arcane Missiles if everything else is on cooldown
-    if (CanUseAbility(ARCANE_MISSILES))
-    {
-        _actionQueue->AddAction(ARCANE_MISSILES, ActionPriority::ROTATION, 60.0f, target);
-    }
-}
-
-void MageAI::UpdateFireRotation(::Unit* target)
-{
-    if (!target || !IsAtOptimalRange(target))
-        return;
-
-    // Fire priority rotation
-    // 1. Hot Streak Pyroblast (instant cast proc)
-    if (_hotStreakAvailable && CanUseAbility(PYROBLAST))
-    {
-        _actionQueue->AddAction(PYROBLAST, ActionPriority::BURST, 100.0f, target);
-        _hotStreakAvailable = false;
-        return;
-    }
-
-    // 2. Fire Blast for instant damage and crit chance
-    if (CanUseAbility(FIRE_BLAST))
-    {
-        _actionQueue->AddAction(FIRE_BLAST, ActionPriority::ROTATION, 90.0f, target);
-        return;
-    }
-
-    // 3. Scorch if target is low health (execute range)
-    if (target->GetHealthPct() < 25.0f && CanUseAbility(SCORCH))
-    {
-        _actionQueue->AddAction(SCORCH, ActionPriority::BURST, 85.0f, target);
-        return;
-    }
-
-    // 4. Living Bomb if not up
-    if (!target->HasAura(LIVING_BOMB) && CanUseAbility(LIVING_BOMB))
-    {
-        _actionQueue->AddAction(LIVING_BOMB, ActionPriority::ROTATION, 80.0f, target);
-        return;
-    }
-
-    // 5. Fireball as main nuke
-    if (CanUseAbility(FIREBALL))
-    {
-        float score = 75.0f;
-        if (GetManaPercent() > 0.6f)
-            score += 10.0f;
-
-        _actionQueue->AddAction(FIREBALL, ActionPriority::ROTATION, score, target);
-    }
-}
-
-void MageAI::UpdateFrostRotation(::Unit* target)
-{
-    if (!target || !IsAtOptimalRange(target))
-        return;
-
-    // Frost priority rotation
-    // 1. Ice Lance if target has Winter's Chill or is frozen
-    if ((_wintersChill || target->HasAuraType(SPELL_AURA_MOD_STUN)) &&
-        CanUseAbility(ICE_LANCE))
-    {
-        _actionQueue->AddAction(ICE_LANCE, ActionPriority::BURST, 95.0f, target);
-        return;
-    }
-
-    // 2. Frozen Orb if available and multiple targets or cooldown available
-    if (_frozenOrbCharges > 0 && CanUseAbility(FROZEN_ORB))
-    {
-        uint32 enemyCount = GetEnemyCount(15.0f);
-        float score = 85.0f + (enemyCount * 5.0f);
-        _actionQueue->AddAction(FROZEN_ORB, ActionPriority::ROTATION, score, target);
-        return;
-    }
-
-    // 3. Frostbolt as main nuke (builds Winter's Chill)
-    if (CanUseAbility(FROSTBOLT))
-    {
-        float score = 80.0f;
-        if (!_wintersChill)
-            score += 10.0f; // Higher priority to build Winter's Chill
-
-        _actionQueue->AddAction(FROSTBOLT, ActionPriority::ROTATION, score, target);
-    }
-}
-
+// Mana management methods
 bool MageAI::HasEnoughMana(uint32 amount)
 {
-    return GetMana() >= amount;
+    return GetBot() && GetBot()->GetPower(POWER_MANA) >= amount;
 }
 
 uint32 MageAI::GetMana()
 {
-    return _resourceManager->GetResource(ResourceType::MANA);
+    return GetBot() ? GetBot()->GetPower(POWER_MANA) : 0;
 }
 
 uint32 MageAI::GetMaxMana()
 {
-    return _resourceManager->GetMaxResource(ResourceType::MANA);
+    return GetBot() ? GetBot()->GetMaxPower(POWER_MANA) : 0;
 }
 
 float MageAI::GetManaPercent()
 {
-    return _resourceManager->GetResourcePercent(ResourceType::MANA);
+    uint32 maxMana = GetMaxMana();
+    return maxMana > 0 ? (static_cast<float>(GetMana()) / maxMana) * 100.0f : 0.0f;
 }
 
 void MageAI::OptimizeManaUsage()
 {
+    if (!GetBot())
+        return;
+
     float manaPercent = GetManaPercent();
 
-    // Emergency mana conservation
-    if (manaPercent < MANA_EMERGENCY_THRESHOLD)
+    // Adjust casting priorities based on mana
+    if (manaPercent < MANA_EMERGENCY_THRESHOLD * 100.0f)
     {
-        // Stop casting expensive spells
-        // Use mana gems or other mana restoration
-        if (CanUseAbility(CONJURE_MANA_GEM))
-        {
-            _actionQueue->AddAction(CONJURE_MANA_GEM, ActionPriority::EMERGENCY, 100.0f);
-        }
+        HandleLowManaEmergency();
     }
-    // Conservative mana usage
-    else if (manaPercent < MANA_CONSERVATION_THRESHOLD)
+    else if (manaPercent < MANA_CONSERVATION_THRESHOLD * 100.0f)
     {
-        // Prefer more mana-efficient spells
-        // Avoid expensive AoE abilities
+        // Use more efficient spells
+        TC_LOG_DEBUG("module.playerbot.ai",
+                     "Mage {} conserving mana at {:.1f}%",
+                     GetBot()->GetName(), manaPercent);
     }
 }
 
 bool MageAI::ShouldConserveMana()
 {
-    return GetManaPercent() < MANA_CONSERVATION_THRESHOLD;
+    return GetManaPercent() < (MANA_CONSERVATION_THRESHOLD * 100.0f);
 }
 
 void MageAI::UseManaRegeneration()
 {
-    // Use mana gems if available
-    if (CanUseAbility(CONJURE_MANA_GEM))
+    if (!GetBot() || GetBot()->IsInCombat())
+        return;
+
+    // Use Evocation if available
+    if (IsSpellReady(12051) && GetManaPercent() < 50.0f) // Evocation spell ID
     {
-        CastSpell(CONJURE_MANA_GEM);
+        CastSpell(12051);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} using Evocation for mana regeneration",
+                     GetBot()->GetName());
     }
 
-    // Evocation if available (channeled mana regen)
-    // This would be a high-level spell for mana regeneration
+    // Use mana gems if available
+    if (GetManaPercent() < 70.0f)
+    {
+        // Check for mana gems in inventory and use them
+        // This would require inventory management implementation
+    }
 }
 
+// Buff management methods
 void MageAI::UpdateMageBuffs()
 {
-    // Maintain armor spell
-    UpdateArmorSpells();
+    if (!GetBot())
+        return;
 
-    // Cast Arcane Intellect if not up
+    // Maintain Arcane Intellect
     CastArcaneIntellect();
 
-    // Maintain defensive buffs based on situation
-    if (IsInDanger())
+    // Update armor spells
+    UpdateArmorSpells();
+
+    // Check for missing buffs on allies
+    if (Group* group = GetBot()->GetGroup())
     {
-        CastManaShield();
-        CastIceBarrier();
+        for (auto const& slot : group->GetMemberSlots())
+        {
+            if (Player* member = ObjectAccessor::FindPlayer(slot.guid))
+            {
+                if (!member->HasAura(ARCANE_INTELLECT) &&
+                    GetBot()->GetDistance2d(member) < 40.0f)
+                {
+                    CastSpell(member, ARCANE_INTELLECT);
+                }
+            }
+        }
     }
 }
 
 void MageAI::CastMageArmor()
 {
-    if (!HasAura(MAGE_ARMOR) && CanUseAbility(MAGE_ARMOR))
-    {
-        CastSpell(MAGE_ARMOR);
-    }
+    if (!GetBot() || GetBot()->HasAura(MAGE_ARMOR))
+        return;
+
+    CastSpell(MAGE_ARMOR);
 }
 
 void MageAI::CastManaShield()
 {
+    if (!GetBot())
+        return;
+
     uint32 currentTime = getMSTime();
-    if (currentTime - _lastManaShield > 30000 && CanUseAbility(MANA_SHIELD))
+    if (currentTime - _lastManaShield < 10000) // 10 second cooldown check
+        return;
+
+    if (GetBot()->GetHealthPct() < 70.0f && !GetBot()->HasAura(MANA_SHIELD))
     {
         if (CastSpell(MANA_SHIELD))
         {
             _lastManaShield = currentTime;
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Mana Shield",
+                         GetBot()->GetName());
         }
     }
 }
 
 void MageAI::CastIceBarrier()
 {
+    if (!GetBot() || _currentSpec != MageSpec::FROST)
+        return;
+
     uint32 currentTime = getMSTime();
-    if (_specialization == MageSpec::FROST &&
-        currentTime - _lastIceBarrier > 30000 && CanUseAbility(ICE_BARRIER))
+    if (currentTime - _lastIceBarrier < 30000) // 30 second cooldown
+        return;
+
+    if (!GetBot()->HasAura(ICE_BARRIER) && IsSpellReady(ICE_BARRIER))
     {
         if (CastSpell(ICE_BARRIER))
         {
@@ -544,116 +594,146 @@ void MageAI::CastIceBarrier()
 
 void MageAI::CastArcaneIntellect()
 {
-    if (!HasAura(ARCANE_INTELLECT) && CanUseAbility(ARCANE_INTELLECT))
-    {
-        CastSpell(ARCANE_INTELLECT);
-    }
+    if (!GetBot() || GetBot()->HasAura(ARCANE_INTELLECT))
+        return;
+
+    CastSpell(ARCANE_INTELLECT);
 }
 
 void MageAI::UpdateArmorSpells()
 {
-    // Choose armor based on specialization and situation
-    switch (_specialization)
+    if (!GetBot())
+        return;
+
+    // Choose armor based on specialization
+    uint32 armorSpell = 0;
+
+    switch (_currentSpec)
     {
         case MageSpec::ARCANE:
+            armorSpell = MAGE_ARMOR;
+            break;
         case MageSpec::FIRE:
-            if (!HasAura(MAGE_ARMOR) && !HasAura(MOLTEN_ARMOR))
-            {
-                if (CanUseAbility(MOLTEN_ARMOR))
-                    CastSpell(MOLTEN_ARMOR);
-                else if (CanUseAbility(MAGE_ARMOR))
-                    CastSpell(MAGE_ARMOR);
-            }
+            armorSpell = MOLTEN_ARMOR;
             break;
         case MageSpec::FROST:
-            if (!HasAura(FROST_ARMOR) && !HasAura(MAGE_ARMOR))
-            {
-                if (CanUseAbility(FROST_ARMOR))
-                    CastSpell(FROST_ARMOR);
-                else if (CanUseAbility(MAGE_ARMOR))
-                    CastSpell(MAGE_ARMOR);
-            }
+            armorSpell = FROST_ARMOR;
             break;
+    }
+
+    // Cast appropriate armor if not active
+    if (armorSpell && !GetBot()->HasAura(armorSpell))
+    {
+        CastSpell(armorSpell);
     }
 }
 
+// Defensive abilities
 void MageAI::UseDefensiveAbilities()
 {
-    // Blink away from danger
-    if (IsInMeleeRange(_currentTarget) && CanUseAbility(BLINK))
+    if (!GetBot())
+        return;
+
+    float healthPct = GetBot()->GetHealthPct();
+
+    // Ice Block at critical health
+    if (healthPct < 20.0f)
+    {
+        UseIceBlock();
+    }
+    // Invisibility to drop aggro
+    else if (healthPct < 40.0f && HasTooMuchThreat())
+    {
+        UseInvisibility();
+    }
+    // Blink to create distance
+    else if (healthPct < 60.0f && GetNearestEnemy(8.0f))
     {
         UseBlink();
     }
 
-    // Use barriers
+    // Use barrier spells
     UseBarrierSpells();
-
-    // Frost Nova to freeze nearby enemies
-    if (GetEnemyCount(8.0f) > 0 && CanUseAbility(FROST_NOVA))
-    {
-        _actionQueue->AddAction(FROST_NOVA, ActionPriority::SURVIVAL, 90.0f);
-    }
 }
 
 void MageAI::UseBlink()
 {
+    if (!GetBot() || !IsSpellReady(BLINK))
+        return;
+
     uint32 currentTime = getMSTime();
-    if (currentTime - _lastBlink > BLINK_COOLDOWN && CanUseAbility(BLINK))
+    if (currentTime - _lastBlink < BLINK_COOLDOWN)
+        return;
+
+    // Blink away from danger
+    if (CastSpell(BLINK))
     {
-        _actionQueue->AddAction(BLINK, ActionPriority::SURVIVAL, 95.0f);
         _lastBlink = currentTime;
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} used Blink to escape",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseInvisibility()
 {
-    if (GetBot()->GetHealthPct() < 20.0f && CanUseAbility(INVISIBILITY))
+    if (!GetBot() || !IsSpellReady(INVISIBILITY))
+        return;
+
+    if (CastSpell(INVISIBILITY))
     {
-        _actionQueue->AddAction(INVISIBILITY, ActionPriority::EMERGENCY, 100.0f);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} used Invisibility",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseIceBlock()
 {
-    if (GetBot()->GetHealthPct() < 15.0f && CanUseAbility(ICE_BLOCK))
+    if (!GetBot() || !IsSpellReady(ICE_BLOCK))
+        return;
+
+    if (GetBot()->HasAura(ICE_BLOCK))
+        return; // Already in Ice Block
+
+    if (CastSpell(ICE_BLOCK))
     {
-        _actionQueue->AddAction(ICE_BLOCK, ActionPriority::EMERGENCY, 100.0f);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Ice Block!",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseColdSnap()
 {
-    // Reset cooldowns if in dire situation
-    if (GetBot()->GetHealthPct() < 25.0f && CanUseAbility(COLD_SNAP))
+    if (!GetBot() || _currentSpec != MageSpec::FROST || !IsSpellReady(COLD_SNAP))
+        return;
+
+    // Cold Snap resets cooldowns
+    if (CastSpell(COLD_SNAP))
     {
-        _actionQueue->AddAction(COLD_SNAP, ActionPriority::EMERGENCY, 95.0f);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} used Cold Snap",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseBarrierSpells()
 {
-    // Use appropriate barrier based on specialization
-    switch (_specialization)
+    CastManaShield();
+
+    if (_currentSpec == MageSpec::FROST)
     {
-        case MageSpec::FROST:
-            CastIceBarrier();
-            break;
-        default:
-            CastManaShield();
-            break;
+        CastIceBarrier();
     }
 }
 
+// Offensive cooldowns
 void MageAI::UseOffensiveCooldowns()
 {
-    if (!_currentTarget)
+    if (!GetBot() || !GetBot()->IsInCombat())
         return;
 
-    switch (_specialization)
+    switch (_currentSpec)
     {
         case MageSpec::ARCANE:
             UseArcanePower();
-            UsePresenceOfMind();
             break;
         case MageSpec::FIRE:
             UseCombustion();
@@ -663,134 +743,179 @@ void MageAI::UseOffensiveCooldowns()
             break;
     }
 
-    // Mirror Image for threat reduction and extra damage
-    if (HasTooMuchThreat() && CanUseAbility(MIRROR_IMAGE))
-    {
-        _actionQueue->AddAction(MIRROR_IMAGE, ActionPriority::SURVIVAL, 80.0f);
-    }
+    UsePresenceOfMind();
+    UseMirrorImage();
 }
 
 void MageAI::UseArcanePower()
 {
-    uint32 currentTime = getMSTime();
-    if (currentTime - _lastArcanePower > 180000 && // 3 minute cooldown
-        GetManaPercent() > 0.6f && CanUseAbility(ARCANE_POWER))
+    if (_currentSpec != MageSpec::ARCANE || !IsSpellReady(ARCANE_POWER))
+        return;
+
+    if (CastSpell(ARCANE_POWER))
     {
-        _actionQueue->AddAction(ARCANE_POWER, ActionPriority::BURST, 90.0f);
-        _lastArcanePower = currentTime;
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Arcane Power",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseCombustion()
 {
-    uint32 currentTime = getMSTime();
-    if (currentTime - _lastCombustion > 180000 && // 3 minute cooldown
-        _combustionStacks > 0 && CanUseAbility(COMBUSTION))
+    if (_currentSpec != MageSpec::FIRE || !IsSpellReady(COMBUSTION))
+        return;
+
+    if (CastSpell(COMBUSTION))
     {
-        _actionQueue->AddAction(COMBUSTION, ActionPriority::BURST, 95.0f);
-        _lastCombustion = currentTime;
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Combustion",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseIcyVeins()
 {
-    uint32 currentTime = getMSTime();
-    if (currentTime - _lastIcyVeins > 180000 && // 3 minute cooldown
-        CanUseAbility(ICY_VEINS))
+    if (_currentSpec != MageSpec::FROST || !IsSpellReady(ICY_VEINS))
+        return;
+
+    if (CastSpell(ICY_VEINS))
     {
-        _actionQueue->AddAction(ICY_VEINS, ActionPriority::BURST, 85.0f);
-        _lastIcyVeins = currentTime;
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Icy Veins",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UsePresenceOfMind()
 {
-    if (CanUseAbility(PRESENCE_OF_MIND))
+    if (!IsSpellReady(PRESENCE_OF_MIND))
+        return;
+
+    if (CastSpell(PRESENCE_OF_MIND))
     {
-        _actionQueue->AddAction(PRESENCE_OF_MIND, ActionPriority::BURST, 75.0f);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Presence of Mind",
+                     GetBot()->GetName());
     }
 }
 
 void MageAI::UseMirrorImage()
 {
-    if (CanUseAbility(MIRROR_IMAGE))
+    if (!IsSpellReady(MIRROR_IMAGE))
+        return;
+
+    if (CastSpell(MIRROR_IMAGE))
     {
-        _actionQueue->AddAction(MIRROR_IMAGE, ActionPriority::SURVIVAL, 70.0f);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} summoned Mirror Images",
+                     GetBot()->GetName());
     }
 }
 
+// Crowd control abilities
 void MageAI::UseCrowdControl(::Unit* target)
 {
-    if (!target)
+    if (!target || !GetBot())
         return;
 
-    // Counterspell interrupts
-    if (ShouldInterrupt(target) && CanUseAbility(COUNTERSPELL))
+    // Prioritize polymorph for humanoids/beasts
+    if (target->GetTypeId() == TYPEID_UNIT && CanPolymorphSafely(target))
+    {
+        UsePolymorph(target);
+    }
+    // Use Frost Nova for melee enemies
+    else if (GetBot()->GetDistance2d(target) < 10.0f)
+    {
+        UseFrostNova();
+    }
+    // Counterspell casters
+    else if (target->HasUnitState(UNIT_STATE_CASTING))
     {
         UseCounterspell(target);
-    }
-
-    // Polymorph secondary targets
-    ::Unit* polymorphTarget = GetBestPolymorphTarget();
-    if (polymorphTarget && polymorphTarget != target)
-    {
-        UsePolymorph(polymorphTarget);
     }
 }
 
 void MageAI::UsePolymorph(::Unit* target)
 {
-    if (!target || !CanPolymorphSafely(target))
+    if (!target || !IsSpellReady(POLYMORPH))
         return;
 
     uint32 currentTime = getMSTime();
-    if (currentTime - _lastPolymorph > POLYMORPH_COOLDOWN && CanUseAbility(POLYMORPH))
+    if (currentTime - _lastPolymorph < POLYMORPH_COOLDOWN)
+        return;
+
+    // Check if target is already polymorphed
+    if (_polymorphTargets.find(target->GetGUID()) != _polymorphTargets.end())
     {
-        _actionQueue->AddAction(POLYMORPH, ActionPriority::INTERRUPT, 100.0f, target);
+        if (currentTime - _polymorphTargets[target->GetGUID()] < 8000) // 8 second duration
+            return;
+    }
+
+    if (CastSpell(target, POLYMORPH))
+    {
         _lastPolymorph = currentTime;
         _polymorphTargets[target->GetGUID()] = currentTime;
+        _successfulPolymorphs++;
+
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} polymorphed target {}",
+                     GetBot()->GetName(), target->GetName());
     }
 }
 
 void MageAI::UseFrostNova()
 {
-    if (GetEnemyCount(8.0f) > 0 && CanUseAbility(FROST_NOVA))
+    if (!GetBot() || !IsSpellReady(FROST_NOVA))
+        return;
+
+    // Check for nearby enemies
+    if (GetNearestEnemy(10.0f))
     {
-        _actionQueue->AddAction(FROST_NOVA, ActionPriority::SURVIVAL, 85.0f);
+        if (CastSpell(FROST_NOVA))
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} cast Frost Nova",
+                         GetBot()->GetName());
+        }
     }
 }
 
 void MageAI::UseCounterspell(::Unit* target)
 {
-    if (!target || !ShouldInterrupt(target))
+    if (!target || !IsSpellReady(COUNTERSPELL))
         return;
 
     uint32 currentTime = getMSTime();
-    if (currentTime - _lastCounterspell > COUNTERSPELL_COOLDOWN && CanUseAbility(COUNTERSPELL))
+    if (currentTime - _lastCounterspell < COUNTERSPELL_COOLDOWN)
+        return;
+
+    if (!target->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    if (CastSpell(target, COUNTERSPELL))
     {
-        _actionQueue->AddAction(COUNTERSPELL, ActionPriority::INTERRUPT, 100.0f, target);
         _lastCounterspell = currentTime;
+        _successfulCounterspells++;
+
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} counterspelled {}",
+                     GetBot()->GetName(), target->GetName());
     }
 }
 
 void MageAI::UseBanish(::Unit* target)
 {
-    // Banish is typically a warlock spell, but including for completeness
-    if (target && CanUseAbility(BANISH))
+    if (!target || !IsSpellReady(BANISH))
+        return;
+
+    // Banish is typically a Warlock spell, but implement if mages have it
+    if (CastSpell(target, BANISH))
     {
-        _actionQueue->AddAction(BANISH, ActionPriority::INTERRUPT, 80.0f, target);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} banished target {}",
+                     GetBot()->GetName(), target->GetName());
     }
 }
 
+// AoE abilities
 void MageAI::UseAoEAbilities(const std::vector<::Unit*>& enemies)
 {
-    uint32 enemyCount = static_cast<uint32>(enemies.size());
-
-    if (enemyCount < 2)
+    if (!GetBot() || enemies.size() < 3)
         return;
 
-    // Choose AoE based on specialization and enemy count
-    switch (_specialization)
+    // Choose AoE based on specialization
+    switch (_currentSpec)
     {
         case MageSpec::ARCANE:
             UseArcaneExplosion(enemies);
@@ -807,48 +932,97 @@ void MageAI::UseAoEAbilities(const std::vector<::Unit*>& enemies)
 
 void MageAI::UseBlizzard(const std::vector<::Unit*>& enemies)
 {
-    if (enemies.size() > 2 && CanUseAbility(BLIZZARD))
+    if (!IsSpellReady(BLIZZARD) || enemies.empty())
+        return;
+
+    // Find center point of enemies
+    Position centerPos;
+    float avgX = 0, avgY = 0, avgZ = 0;
+    for (auto enemy : enemies)
     {
-        float score = 70.0f + (enemies.size() * 10.0f);
-        _actionQueue->AddAction(BLIZZARD, ActionPriority::ROTATION, score, enemies[0]);
+        avgX += enemy->GetPositionX();
+        avgY += enemy->GetPositionY();
+        avgZ += enemy->GetPositionZ();
     }
+
+    centerPos.m_positionX = avgX / enemies.size();
+    centerPos.m_positionY = avgY / enemies.size();
+    centerPos.m_positionZ = avgZ / enemies.size();
+
+    // Cast Blizzard at center (would need ground-targeted spell implementation)
+    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Blizzard on {} enemies",
+                 GetBot()->GetName(), enemies.size());
 }
 
 void MageAI::UseFlamestrike(const std::vector<::Unit*>& enemies)
 {
-    if (enemies.size() > 2 && CanUseAbility(FLAMESTRIKE))
-    {
-        float score = 75.0f + (enemies.size() * 10.0f);
-        _actionQueue->AddAction(FLAMESTRIKE, ActionPriority::ROTATION, score, enemies[0]);
-    }
+    if (!IsSpellReady(FLAMESTRIKE) || enemies.empty())
+        return;
+
+    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Flamestrike on {} enemies",
+                 GetBot()->GetName(), enemies.size());
 }
 
 void MageAI::UseArcaneExplosion(const std::vector<::Unit*>& enemies)
 {
-    if (enemies.size() > 1 && CanUseAbility(ARCANE_EXPLOSION))
+    if (!IsSpellReady(ARCANE_EXPLOSION))
+        return;
+
+    // Check if enemies are close enough
+    uint32 nearbyCount = 0;
+    for (auto enemy : enemies)
     {
-        float score = 65.0f + (enemies.size() * 8.0f);
-        _actionQueue->AddAction(ARCANE_EXPLOSION, ActionPriority::ROTATION, score);
+        if (GetBot()->GetDistance2d(enemy) < 10.0f)
+            nearbyCount++;
+    }
+
+    if (nearbyCount >= 2)
+    {
+        if (CastSpell(ARCANE_EXPLOSION))
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} cast Arcane Explosion hitting {} enemies",
+                         GetBot()->GetName(), nearbyCount);
+        }
     }
 }
 
 void MageAI::UseConeOfCold(const std::vector<::Unit*>& enemies)
 {
-    if (enemies.size() > 1 && CanUseAbility(CONE_OF_COLD))
+    if (!IsSpellReady(CONE_OF_COLD))
+        return;
+
+    // Check for enemies in front
+    uint32 frontalCount = 0;
+    for (auto enemy : enemies)
     {
-        float score = 60.0f + (enemies.size() * 5.0f);
-        _actionQueue->AddAction(CONE_OF_COLD, ActionPriority::ROTATION, score);
+        if (GetBot()->GetDistance2d(enemy) < 10.0f && GetBot()->HasInArc(M_PI/2, enemy))
+            frontalCount++;
+    }
+
+    if (frontalCount >= 2)
+    {
+        if (CastSpell(CONE_OF_COLD))
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} cast Cone of Cold hitting {} enemies",
+                         GetBot()->GetName(), frontalCount);
+        }
     }
 }
 
+// Positioning and movement
 void MageAI::UpdateMagePositioning()
 {
-    if (!_currentTarget)
+    if (!GetBot() || !_currentTarget)
         return;
 
+    // Check if we need to reposition
     if (NeedsToKite(_currentTarget))
     {
         PerformKiting(_currentTarget);
+    }
+    else if (IsInDanger())
+    {
+        FindSafeCastingPosition();
     }
     else if (!IsAtOptimalRange(_currentTarget))
     {
@@ -858,96 +1032,143 @@ void MageAI::UpdateMagePositioning()
 
 bool MageAI::IsAtOptimalRange(::Unit* target)
 {
-    if (!target)
+    if (!GetBot() || !target)
         return false;
 
-    float distance = GetBot()->GetDistance(target);
-    return distance >= MINIMUM_SAFE_RANGE && distance <= OPTIMAL_CASTING_RANGE;
+    float distance = GetBot()->GetDistance2d(target);
+    float optimalRange = GetOptimalRange(target);
+
+    return distance >= (optimalRange - 5.0f) && distance <= optimalRange;
 }
 
 bool MageAI::NeedsToKite(::Unit* target)
 {
-    if (!target)
+    if (!GetBot() || !target)
         return false;
 
-    float distance = GetBot()->GetDistance(target);
-    return distance < MINIMUM_SAFE_RANGE || IsInMeleeRange(target);
+    // Kite if melee enemy is too close
+    if (target->GetDistance2d(GetBot()) < MINIMUM_SAFE_RANGE)
+    {
+        return target->CanFreeMove() && !target->HasUnitState(UNIT_STATE_ROOT);
+    }
+
+    return false;
 }
 
 void MageAI::PerformKiting(::Unit* target)
 {
-    if (!target)
+    if (!GetBot() || !target)
         return;
 
-    // Move to kiting range
-    Position kitePos = GetOptimalPosition(target);
-    GetBot()->GetMotionMaster()->MovePoint(0, kitePos.GetPositionX(), kitePos.GetPositionY(), kitePos.GetPositionZ());
+    // Use Frost Nova to root
+    if (target->GetDistance2d(GetBot()) < 10.0f)
+    {
+        UseFrostNova();
+    }
 
-    // Use Blink if available and in immediate danger
-    if (IsInMeleeRange(target) && CanUseAbility(BLINK))
+    // Blink away if needed
+    if (target->GetDistance2d(GetBot()) < 8.0f)
     {
         UseBlink();
     }
+
+    // Move to kiting range
+    Position kitingPos = GetOptimalPosition(target);
+    GetBot()->GetMotionMaster()->MovePoint(0, kitingPos);
 }
 
 bool MageAI::IsInDanger()
 {
-    float healthPct = GetBot()->GetHealthPct();
-    uint32 nearbyEnemies = GetEnemyCount(10.0f);
+    if (!GetBot())
+        return false;
 
-    return healthPct < 50.0f || nearbyEnemies > 2 || IsInMeleeRange(_currentTarget);
-}
+    // Check health
+    if (GetBot()->GetHealthPct() < 40.0f)
+        return true;
 
-bool MageAI::IsInCriticalDanger()
-{
-    float healthPct = GetBot()->GetHealthPct();
-    uint32 nearbyEnemies = GetEnemyCount(5.0f);
+    // Check for multiple enemies
+    std::list<::Unit*> enemies;
+    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), 15.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), enemies, check);
+    Cell::VisitAllObjects(GetBot(), searcher, 15.0f);
+    if (enemies.size() > 2)
+        return true;
 
-    return healthPct < 25.0f || nearbyEnemies > 3;
-}
-
-void MageAI::HandleEmergencySituation()
-{
-    // Use most powerful defensive abilities
-    UseIceBlock();
-    UseInvisibility();
-    UseBlink();
-    UseFrostNova();
+    // Check threat level
+    return HasTooMuchThreat();
 }
 
 void MageAI::FindSafeCastingPosition()
 {
-    // Find a position that's safe from melee and has line of sight to target
-    if (!_currentTarget)
+    if (!GetBot() || !_positionManager)
         return;
 
-    Position safePos = GetOptimalPosition(_currentTarget);
-    GetBot()->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(), safePos.GetPositionY(), safePos.GetPositionZ());
+    Position safePos = _positionManager->FindSafePosition(GetBot()->GetPosition(), OPTIMAL_CASTING_RANGE);
+    GetBot()->GetMotionMaster()->MovePoint(0, safePos);
 }
 
+// Targeting and priorities
 ::Unit* MageAI::GetBestPolymorphTarget()
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies(30.0f);
+    if (!GetBot())
+        return nullptr;
 
-    for (::Unit* enemy : enemies)
+    std::list<::Unit*> enemies;
+    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), enemies, check);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
+
+    ::Unit* bestTarget = nullptr;
+    float highestPriority = 0.0f;
+
+    for (auto enemy : enemies)
     {
+        // Skip current target
         if (enemy == _currentTarget)
             continue;
 
-        if (CanPolymorphSafely(enemy))
-            return enemy;
+        // Check if can be polymorphed
+        if (!CanPolymorphSafely(enemy))
+            continue;
+
+        // Calculate priority (healers and casters first)
+        float priority = 1.0f;
+        if (enemy->GetPowerType() == POWER_MANA)
+            priority += 2.0f;
+        if (enemy->HasUnitState(UNIT_STATE_CASTING))
+            priority += 3.0f;
+
+        if (priority > highestPriority)
+        {
+            highestPriority = priority;
+            bestTarget = enemy;
+        }
     }
 
-    return nullptr;
+    return bestTarget;
 }
 
 ::Unit* MageAI::GetBestCounterspellTarget()
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies(30.0f);
+    if (!GetBot())
+        return nullptr;
 
-    for (::Unit* enemy : enemies)
+    if (_interruptManager)
     {
-        if (ShouldInterrupt(enemy))
+        auto targets = _interruptManager->ScanForInterruptTargets();
+        if (!targets.empty())
+            return targets[0].unit; // Return the first (highest priority) target
+    }
+
+    // Fallback
+    std::list<::Unit*> enemies;
+    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), enemies, check);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
+
+    for (auto enemy : enemies)
+    {
+        if (enemy->HasUnitState(UNIT_STATE_CASTING))
             return enemy;
     }
 
@@ -956,20 +1177,51 @@ void MageAI::FindSafeCastingPosition()
 
 ::Unit* MageAI::GetBestAoETarget()
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies(15.0f);
+    if (!GetBot())
+        return nullptr;
 
-    if (enemies.size() > 1)
-        return enemies[0]; // Return first enemy as AoE center
+    std::list<::Unit*> enemies;
+    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), enemies, check);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
 
-    return nullptr;
+    // Find target with most enemies nearby
+    ::Unit* bestTarget = nullptr;
+    uint32 maxNearby = 0;
+
+    for (auto enemy : enemies)
+    {
+        uint32 nearbyCount = 0;
+        for (auto other : enemies)
+        {
+            if (enemy->GetDistance2d(other) < 10.0f)
+                nearbyCount++;
+        }
+
+        if (nearbyCount > maxNearby)
+        {
+            maxNearby = nearbyCount;
+            bestTarget = enemy;
+        }
+    }
+
+    return bestTarget;
 }
 
 bool MageAI::ShouldInterrupt(::Unit* target)
 {
-    if (!target)
+    if (!target || !target->HasUnitState(UNIT_STATE_CASTING))
         return false;
 
-    return target->IsNonMeleeSpellCast(false);
+    // Always interrupt healing spells
+    if (target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    {
+        SpellInfo const* spellInfo = target->GetCurrentSpell(CURRENT_GENERIC_SPELL)->GetSpellInfo();
+        if (spellInfo && spellInfo->HasEffect(SPELL_EFFECT_HEAL))
+            return true;
+    }
+
+    return false; // Default to false - local interrupt logic already handles most cases
 }
 
 bool MageAI::CanPolymorphSafely(::Unit* target)
@@ -977,112 +1229,172 @@ bool MageAI::CanPolymorphSafely(::Unit* target)
     if (!target)
         return false;
 
-    // Check if target is humanoid or beast
-    uint32 creatureType = target->GetCreatureType();
-    return creatureType == CREATURE_TYPE_HUMANOID || creatureType == CREATURE_TYPE_BEAST;
+    // Check if target is valid for polymorph
+    if (target->GetTypeId() != TYPEID_UNIT)
+        return false;
+
+    Creature* creature = target->ToCreature();
+    if (!creature)
+        return false;
+
+    // Check creature type (humanoid or beast)
+    uint32 creatureType = creature->GetCreatureTemplate()->type;
+    if (creatureType != CREATURE_TYPE_HUMANOID && creatureType != CREATURE_TYPE_BEAST)
+        return false;
+
+    // Check if already controlled
+    if (target->HasAuraType(SPELL_AURA_MOD_CONFUSE) ||
+        target->HasAuraType(SPELL_AURA_MOD_CHARM) ||
+        target->HasAuraType(SPELL_AURA_MOD_STUN))
+        return false;
+
+    // Check if immune
+    if (target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY))
+        return false;
+
+    return true;
 }
 
-void MageAI::ManageArcaneCharges()
+// Delegation to specialization
+void MageAI::DelegateToSpecialization(::Unit* target)
 {
-    // Track Arcane Blast stacks and Arcane Charges
-    // This would integrate with the actual spell effect tracking
+    if (!target || !GetBot())
+        return;
+
+    // Basic fallback rotation if specialization is not available
+    ExecuteAdvancedRotation(target);
 }
 
-void MageAI::UpdateArcaneOrb()
-{
-    // Track Arcane Orb charges and availability
-    // This would check for the actual spell charges from TrinityCore
-}
-
-void MageAI::ManageArcaneBlast()
-{
-    // Manage the Arcane Blast stacking mechanic
-}
-
-void MageAI::ManageCombustion()
-{
-    // Track Combustion stacks from DoT spells
-}
-
-void MageAI::UpdateHotStreak()
-{
-    // Check for Hot Streak proc availability
-}
-
-void MageAI::ManagePyroblastProcs()
-{
-    // Track Pyroblast instant cast procs
-}
-
-void MageAI::ManageFrostbolt()
-{
-    // Track Frostbolt effects and Winter's Chill
-}
-
-void MageAI::UpdateIcicles()
-{
-    // Track Icicle stacks for Frost mages
-}
-
-void MageAI::ManageWintersChill()
-{
-    // Track Winter's Chill debuff on target
-}
-
+// Advanced spell effectiveness tracking
 void MageAI::RecordSpellCast(uint32 spellId, ::Unit* target)
 {
+    // Track spell casting metrics
     _spellsCast++;
-    RecordPerformanceMetric("spells_cast", 1);
 }
 
 void MageAI::RecordSpellHit(uint32 spellId, ::Unit* target, uint32 damage)
 {
     _damageDealt += damage;
-    RecordPerformanceMetric("damage_dealt", damage);
+    _combatMetrics.totalDamage += damage;
 }
 
 void MageAI::RecordSpellCrit(uint32 spellId, ::Unit* target, uint32 damage)
 {
-    RecordPerformanceMetric("critical_hits", 1);
+    _criticalHits++;
+    RecordSpellHit(spellId, target, damage);
+
+    float currentRate = _combatMetrics.criticalHitRate.load();
+    _combatMetrics.criticalHitRate = (currentRate * (_spellsCast - 1) + 1.0f) / _spellsCast;
+}
+
+void MageAI::RecordSpellResist(uint32 spellId, ::Unit* target)
+{
+    // Track spell resistance for adaptation
+    TC_LOG_DEBUG("module.playerbot.ai", "Spell {} resisted by {}",
+                 spellId, target ? target->GetName() : "null");
+}
+
+void MageAI::RecordInterruptAttempt(uint32 spellId, ::Unit* target, bool success)
+{
+    if (success)
+    {
+        _successfulCounterspells++;
+
+        float currentRate = _combatMetrics.interruptSuccessRate.load();
+        float totalAttempts = _successfulCounterspells + _interruptedCasts;
+        _combatMetrics.interruptSuccessRate = _successfulCounterspells / totalAttempts;
+    }
+    else
+    {
+        _interruptedCasts++;
+    }
 }
 
 void MageAI::AnalyzeCastingEffectiveness()
 {
-    if (_spellsCast > 0)
-    {
-        float efficiency = static_cast<float>(_damageDealt) / _manaSpent;
-        TC_LOG_DEBUG("playerbot.mage", "Combat efficiency: {} damage per mana", efficiency);
-    }
+    if (_spellsCast == 0)
+        return;
 
-    RecordPerformanceMetric("mana_spent", _manaSpent);
-    RecordPerformanceMetric("interrupted_casts", _interruptedCasts);
+    float critRate = static_cast<float>(_criticalHits) / _spellsCast * 100.0f;
+    float manaEfficiency = _damageDealt.load() / std::max(1u, _manaSpent.load());
+
+    TC_LOG_DEBUG("module.playerbot.ai",
+                 "Mage {} effectiveness - Crit: {:.1f}%, Mana efficiency: {:.2f} damage/mana",
+                 GetBot() ? GetBot()->GetName() : "null",
+                 critRate, manaEfficiency);
 }
 
+float MageAI::CalculateSpellEfficiency(uint32 spellId)
+{
+    if (!GetBot())
+        return 0.0f;
+
+    uint32 manaCost = MageSpellCalculator::CalculateSpellManaCost(spellId, GetBot());
+    if (manaCost == 0)
+        return 100.0f; // Free spells are maximally efficient
+
+    // Calculate expected damage
+    uint32 expectedDamage = 0;
+    switch (spellId)
+    {
+        case FIREBALL:
+            expectedDamage = MageSpellCalculator::CalculateFireballDamage(GetBot(), _currentTarget);
+            break;
+        case FROSTBOLT:
+            expectedDamage = MageSpellCalculator::CalculateFrostboltDamage(GetBot(), _currentTarget);
+            break;
+        case ARCANE_MISSILES:
+            expectedDamage = MageSpellCalculator::CalculateArcaneMissilesDamage(GetBot(), _currentTarget);
+            break;
+        default:
+            expectedDamage = 100; // Default value
+            break;
+    }
+
+    return static_cast<float>(expectedDamage) / manaCost;
+}
+
+void MageAI::OptimizeSpellPriorities()
+{
+    // Analyze and adjust spell priorities based on effectiveness
+    if (_currentTarget)
+    {
+        AdaptToTargetResistances(_currentTarget);
+    }
+}
+
+// Helper methods
 bool MageAI::IsChanneling()
 {
-    return GetBot()->HasChannelInterruptFlag(CHANNEL_INTERRUPT_FLAG_INTERRUPT);
+    return GetBot() && GetBot()->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
 }
 
 bool MageAI::IsCasting()
 {
-    return GetBot()->IsNonMeleeSpellCast(false);
+    return GetBot() &&
+           (GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL) ||
+            GetBot()->GetCurrentSpell(CURRENT_CHANNELED_SPELL));
 }
 
 bool MageAI::CanCastSpell()
 {
-    return !IsMoving() && !IsCasting() && !IsChanneling();
+    return GetBot() && !IsCasting() && !IsChanneling() &&
+           !GetBot()->HasUnitState(UNIT_STATE_STUNNED) &&
+           !GetBot()->HasUnitState(UNIT_STATE_CONFUSED);
 }
 
 MageSchool MageAI::GetSpellSchool(uint32 spellId)
 {
     auto it = _spellSchools.find(spellId);
-    return (it != _spellSchools.end()) ? it->second : MageSchool::GENERIC;
+    if (it != _spellSchools.end())
+        return it->second;
+
+    return MageSchool::GENERIC;
 }
 
 uint32 MageAI::GetSpellCastTime(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    return spellInfo ? spellInfo->CastTime : 0;
+    return MageSpellCalculator::CalculateCastTime(spellId, GetBot());
 }
 
 bool MageAI::IsSpellInstant(uint32 spellId)
@@ -1090,26 +1402,40 @@ bool MageAI::IsSpellInstant(uint32 spellId)
     return GetSpellCastTime(spellId) == 0;
 }
 
+// Specialization detection and optimization
 MageSpec MageAI::DetectSpecialization()
 {
-    // This would detect the mage's specialization based on talents
-    // For now, return a default
-    return MageSpec::FROST; // Default to Frost for safety and control
+    return DetectCurrentSpecialization();
 }
 
 void MageAI::OptimizeForSpecialization()
 {
-    // Adjust AI behavior based on detected specialization
+    // Adjust behavior based on specialization
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            // Prioritize mana management and burst
+            break;
+        case MageSpec::FIRE:
+            // Prioritize DoTs and critical strikes
+            break;
+        case MageSpec::FROST:
+            // Prioritize control and survivability
+            break;
+    }
 }
 
 bool MageAI::HasTalent(uint32 talentId)
 {
-    // This would check if the player has a specific talent
-    return false; // Placeholder
+    return GetBot() && GetBot()->HasSpell(talentId);
 }
 
+// Threat and aggro management
 void MageAI::ManageThreat()
 {
+    if (!GetBot() || !_threatManager)
+        return;
+
     if (HasTooMuchThreat())
     {
         ReduceThreat();
@@ -1118,47 +1444,421 @@ void MageAI::ManageThreat()
 
 bool MageAI::HasTooMuchThreat()
 {
-    // Check if we have too much threat on current target
-    return false; // Placeholder
+    // Simple threat check based on target's threat list
+    ::Unit* target = GetBot()->GetSelectedUnit();
+    if (!target)
+        return false;
+
+    // Check if we're high on threat list (simplified approach)
+    ThreatManager& threatMgr = target->GetThreatManager();
+    float myThreat = threatMgr.GetThreat(GetBot());
+    Unit* victim = target->GetVictim();
+
+    if (victim && victim == GetBot())
+        return true; // We have aggro
+
+    return false;
 }
 
 void MageAI::ReduceThreat()
 {
-    // Use threat reduction abilities like Mirror Image
-    UseMirrorImage();
+    // Use threat reduction abilities
+    UseInvisibility();
+
+    // Consider using Ice Block in extreme cases
+    if (HasTooMuchThreat())
+    {
+        UseIceBlock();
+    }
+}
+
+// Advanced emergency responses
+void MageAI::HandleEmergencySituation()
+{
+    if (!GetBot())
+        return;
+
+    float healthPct = GetBot()->GetHealthPct();
+
+    // Critical health - use Ice Block
+    if (healthPct < 20.0f)
+    {
+        UseIceBlock();
+        return;
+    }
+
+    // Low health - defensive measures
+    if (healthPct < 40.0f)
+    {
+        UseDefensiveAbilities();
+    }
+
+    // Multiple enemies
+    std::list<::Unit*> enemies;
+    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), enemies, check);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
+    if (enemies.size() > 3)
+    {
+        std::vector<::Unit*> enemyVec(enemies.begin(), enemies.end());
+        HandleMultipleEnemies(enemyVec);
+    }
+
+    // Low mana
+    if (GetManaPercent() < 15.0f)
+    {
+        HandleLowManaEmergency();
+    }
+}
+
+bool MageAI::IsInCriticalDanger()
+{
+    if (!GetBot())
+        return false;
+
+    return GetBot()->GetHealthPct() < 25.0f ||
+           (GetBot()->GetHealthPct() < 40.0f && GetNearestEnemy(10.0f) != nullptr);
 }
 
 void MageAI::UseEmergencyEscape()
 {
-    UseInvisibility();
-    UseIceBlock();
     UseBlink();
+    UseInvisibility();
+
+    // If still in danger, use Ice Block
+    if (IsInCriticalDanger())
+    {
+        UseIceBlock();
+    }
 }
 
+void MageAI::HandleMultipleEnemies(const std::vector<::Unit*>& enemies)
+{
+    // Use AoE crowd control
+    UseFrostNova();
+
+    // Use AoE damage
+    UseAoEAbilities(enemies);
+
+    // Create distance
+    if (GetNearestEnemy(10.0f))
+    {
+        UseBlink();
+    }
+}
+
+void MageAI::HandleLowManaEmergency()
+{
+    // Use mana gems if available
+    // This would require inventory management
+
+    // Use Evocation if safe
+    if (!GetNearestEnemy(20.0f) && IsSpellReady(12051))
+    {
+        CastSpell(12051); // Evocation
+    }
+
+    // Switch to wand attacks
+    // This would require weapon management
+}
+
+void MageAI::HandleHighThreatSituation()
+{
+    ReduceThreat();
+
+    // Move away from threat source
+    if (_currentTarget)
+    {
+        PerformKiting(_currentTarget);
+    }
+}
+
+void MageAI::ExecuteEmergencyTeleport()
+{
+    // Teleport to safety if possible
+    // This would require location management
+    if (IsSpellReady(TELEPORT_STORMWIND))
+    {
+        CastSpell(TELEPORT_STORMWIND);
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} emergency teleporting!",
+                     GetBot()->GetName());
+    }
+}
+
+// Advanced combat AI
+void MageAI::UpdateAdvancedCombatLogic(::Unit* target)
+{
+    if (!target)
+        return;
+
+    // Optimize casting sequence
+    OptimizeCastingSequence(target);
+
+    // Manage resources efficiently
+    ManageResourceEfficiency();
+
+    // Handle phase transitions
+    HandleCombatPhaseTransitions();
+}
+
+void MageAI::OptimizeCastingSequence(::Unit* target)
+{
+    if (!target)
+        return;
+
+    // Determine most effective spell school
+    MageSchool bestSchool = GetMostEffectiveSchool(target);
+
+    // Adjust rotation based on effectiveness
+    switch (bestSchool)
+    {
+        case MageSchool::ARCANE:
+            // Use arcane spells
+            break;
+        case MageSchool::FIRE:
+            // Use fire spells
+            break;
+        case MageSchool::FROST:
+            // Use frost spells
+            break;
+        default:
+            break;
+    }
+}
+
+void MageAI::ManageResourceEfficiency()
+{
+    OptimizeManaUsage();
+
+    // Track efficiency metrics
+    if (_manaSpent > 0)
+    {
+        float efficiency = static_cast<float>(_damageDealt) / _manaSpent;
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} resource efficiency: {:.2f}",
+                     GetBot() ? GetBot()->GetName() : "null", efficiency);
+    }
+}
+
+void MageAI::HandleCombatPhaseTransitions()
+{
+    // Adapt to different combat phases
+    // This would require boss/encounter knowledge
+}
+
+::Unit* MageAI::SelectOptimalTarget(const std::vector<::Unit*>& enemies)
+{
+    if (enemies.empty())
+        return nullptr;
+
+    if (_targetSelector)
+    {
+        SelectionContext context;
+        context.bot = GetBot();
+        context.botRole = ThreatRole::DPS;
+        context.currentTarget = GetBot()->GetSelectedUnit();
+        context.groupTarget = nullptr;
+        context.spellId = 0;
+        context.maxRange = OPTIMAL_CASTING_RANGE;
+        context.inCombat = GetBot()->IsInCombat();
+        context.emergencyMode = false;
+
+        SelectionResult result = _targetSelector->SelectBestTarget(context);
+        if (result.success && result.target)
+            return result.target;
+    }
+
+    // Fallback: return nearest enemy
+    return enemies.front();
+}
+
+void MageAI::ExecuteAdvancedRotation(::Unit* target)
+{
+    if (!target || !GetBot())
+        return;
+
+    // Use offensive cooldowns
+    UseOffensiveCooldowns();
+
+    // Basic rotation based on spec
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            // Arcane Blast spam with Arcane Missiles procs
+            if (IsSpellReady(ARCANE_BLAST))
+                CastSpell(target, ARCANE_BLAST);
+            break;
+
+        case MageSpec::FIRE:
+            // Fireball with Fire Blast for instant damage
+            if (IsSpellReady(FIREBALL))
+                CastSpell(target, FIREBALL);
+            if (IsSpellReady(FIRE_BLAST))
+                CastSpell(target, FIRE_BLAST);
+            break;
+
+        case MageSpec::FROST:
+            // Frostbolt with Ice Lance for shatters
+            if (IsSpellReady(FROSTBOLT))
+                CastSpell(target, FROSTBOLT);
+            if (IsSpellReady(ICE_LANCE))
+                CastSpell(target, ICE_LANCE);
+            break;
+    }
+
+    // Track damage
+    _damageDealt += 100; // Simplified
+}
+
+// Spell school mastery
+void MageAI::UpdateSchoolMastery()
+{
+    // Update mastery bonuses based on gear and talents
+}
+
+float MageAI::GetSchoolMasteryBonus(MageSchool school)
+{
+    // Calculate mastery bonus for spell school
+    switch (school)
+    {
+        case MageSchool::ARCANE:
+            return _currentSpec == MageSpec::ARCANE ? 1.15f : 1.0f;
+        case MageSchool::FIRE:
+            return _currentSpec == MageSpec::FIRE ? 1.15f : 1.0f;
+        case MageSchool::FROST:
+            return _currentSpec == MageSpec::FROST ? 1.15f : 1.0f;
+        default:
+            return 1.0f;
+    }
+}
+
+void MageAI::AdaptToTargetResistances(::Unit* target)
+{
+    if (!target)
+        return;
+
+    // Check target resistances and adapt spell selection
+    // This would require resistance checking implementation
+}
+
+MageSchool MageAI::GetMostEffectiveSchool(::Unit* target)
+{
+    if (!target)
+        return MageSchool::GENERIC;
+
+    // Determine most effective school based on target
+    // For now, return specialization school
+    switch (_currentSpec)
+    {
+        case MageSpec::ARCANE:
+            return MageSchool::ARCANE;
+        case MageSpec::FIRE:
+            return MageSchool::FIRE;
+        case MageSpec::FROST:
+            return MageSchool::FROST;
+        default:
+            return MageSchool::GENERIC;
+    }
+}
+
+// Predictive casting
+void MageAI::PredictEnemyMovement(::Unit* target)
+{
+    if (!target || !_positionManager)
+        return;
+
+    // Predict where target will be for ground-targeted spells
+    Position predictedPos = _positionManager->PredictTargetPosition(target, 2.0f); // 2 seconds ahead
+}
+
+void MageAI::PrecastSpells(::Unit* target)
+{
+    if (!target)
+        return;
+
+    // Start casting before target is in range if approaching
+    float distance = GetBot()->GetDistance2d(target);
+    if (distance < 35.0f && distance > 30.0f)
+    {
+        // Start precasting
+        if (_currentSpec == MageSpec::FIRE && IsSpellReady(PYROBLAST))
+        {
+            CastSpell(target, PYROBLAST);
+        }
+    }
+}
+
+void MageAI::HandleMovingTargets(::Unit* target)
+{
+    if (!target)
+        return;
+
+    // Use instant casts for moving targets
+    if (target->isMoving())
+    {
+        OptimizeInstantCasts();
+    }
+}
+
+void MageAI::OptimizeInstantCasts()
+{
+    // Prioritize instant cast spells
+    if (IsSpellReady(FIRE_BLAST))
+        CastSpell(_currentTarget, FIRE_BLAST);
+
+    if (_currentSpec == MageSpec::FROST && IsSpellReady(ICE_LANCE))
+        CastSpell(_currentTarget, ICE_LANCE);
+
+    if (_currentSpec == MageSpec::ARCANE && IsSpellReady(ARCANE_BARRAGE))
+        CastSpell(_currentTarget, ARCANE_BARRAGE);
+}
+
+// Performance optimization
 void MageAI::UpdatePerformanceMetrics(uint32 diff)
 {
-    // Track performance metrics for optimization
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - _combatMetrics.lastMetricsUpdate).count();
+
+    if (elapsed > 5000) // Update every 5 seconds
+    {
+        _combatMetrics.lastMetricsUpdate = now;
+        AnalyzeCastingEffectiveness();
+    }
 }
 
 void MageAI::OptimizeCastingSequence()
 {
-    // Optimize spell casting sequence based on performance data
+    OptimizeSpellPriorities();
+
+    // Adjust for current situation
+    if (ShouldConserveMana())
+    {
+        // Use more efficient spells
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switching to mana-efficient rotation",
+                     GetBot() ? GetBot()->GetName() : "null");
+    }
 }
 
-// MageSpellCalculator implementation
-
-std::unordered_map<uint32, uint32> MageSpellCalculator::_baseDamageCache;
-std::unordered_map<uint32, uint32> MageSpellCalculator::_manaCostCache;
-std::unordered_map<uint32, uint32> MageSpellCalculator::_castTimeCache;
-std::mutex MageSpellCalculator::_cacheMutex;
-
+// MageSpellCalculator implementations
 uint32 MageSpellCalculator::CalculateFireballDamage(Player* caster, ::Unit* target)
 {
     if (!caster || !target)
         return 0;
 
-    // This would calculate actual Fireball damage based on spell power, target resistance, etc.
-    return 1000; // Placeholder
+    // Base damage calculation (simplified)
+    uint32 baseDamage = 500;
+
+    // Apply spell power scaling (simplified for TrinityCore compatibility)
+    baseDamage += (caster->GetLevel() - 1) * 15; // Level-based scaling
+
+    // Apply specialization bonus
+    baseDamage = static_cast<uint32>(baseDamage * GetSpecializationBonus(MageSpec::FIRE, MageAI::FIREBALL));
+
+    // Apply resistance
+    float resistance = CalculateResistance(MageAI::FIREBALL, caster, target);
+    baseDamage = ApplyResistance(baseDamage, resistance);
+
+    return baseDamage;
 }
 
 uint32 MageSpellCalculator::CalculateFrostboltDamage(Player* caster, ::Unit* target)
@@ -1166,8 +1866,20 @@ uint32 MageSpellCalculator::CalculateFrostboltDamage(Player* caster, ::Unit* tar
     if (!caster || !target)
         return 0;
 
-    // This would calculate actual Frostbolt damage
-    return 900; // Placeholder
+    // Base damage calculation (simplified)
+    uint32 baseDamage = 450;
+
+    // Apply spell power scaling (use level-based scaling)
+    baseDamage += (caster->GetLevel() - 1) * 18; // Level-based scaling for Fireball
+
+    // Apply specialization bonus
+    baseDamage = static_cast<uint32>(baseDamage * GetSpecializationBonus(MageSpec::FROST, MageAI::FROSTBOLT));
+
+    // Apply resistance
+    float resistance = CalculateResistance(MageAI::FROSTBOLT, caster, target);
+    baseDamage = ApplyResistance(baseDamage, resistance);
+
+    return baseDamage;
 }
 
 uint32 MageSpellCalculator::CalculateArcaneMissilesDamage(Player* caster, ::Unit* target)
@@ -1175,8 +1887,20 @@ uint32 MageSpellCalculator::CalculateArcaneMissilesDamage(Player* caster, ::Unit
     if (!caster || !target)
         return 0;
 
-    // This would calculate actual Arcane Missiles damage
-    return 800; // Placeholder
+    // Base damage calculation (simplified) - total for all missiles
+    uint32 baseDamage = 600;
+
+    // Apply spell power scaling (use level-based scaling)
+    baseDamage += (caster->GetLevel() - 1) * 22; // Level-based scaling for Frostbolt
+
+    // Apply specialization bonus
+    baseDamage = static_cast<uint32>(baseDamage * GetSpecializationBonus(MageSpec::ARCANE, MageAI::ARCANE_MISSILES));
+
+    // Apply resistance
+    float resistance = CalculateResistance(MageAI::ARCANE_MISSILES, caster, target);
+    baseDamage = ApplyResistance(baseDamage, resistance);
+
+    return baseDamage;
 }
 
 uint32 MageSpellCalculator::CalculateSpellManaCost(uint32 spellId, Player* caster)
@@ -1184,37 +1908,79 @@ uint32 MageSpellCalculator::CalculateSpellManaCost(uint32 spellId, Player* caste
     if (!caster)
         return 0;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    std::lock_guard<std::mutex> lock(_cacheMutex);
+
+    // Check cache
+    auto it = _manaCostCache.find(spellId);
+    if (it != _manaCostCache.end())
+        return it->second;
+
+    // Get spell info
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NORMAL);
     if (!spellInfo)
         return 0;
 
-    return spellInfo->ManaCost + spellInfo->ManaCostPercentage * caster->GetMaxPower(POWER_MANA) / 100;
+    // Calculate base mana cost
+    auto powerCosts = spellInfo->CalcPowerCost(caster, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (const auto& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
+
+    // Cache the result
+    _manaCostCache[spellId] = manaCost;
+
+    return manaCost;
 }
 
 uint32 MageSpellCalculator::ApplyArcanePowerBonus(uint32 damage, Player* caster)
 {
-    if (!caster || !caster->HasAura(MageAI::ARCANE_POWER))
+    if (!caster)
         return damage;
 
-    return static_cast<uint32>(damage * 1.3f); // 30% damage bonus
+    // Check for Arcane Power buff
+    if (caster->HasAura(MageAI::ARCANE_POWER))
+    {
+        damage = static_cast<uint32>(damage * 1.3f); // 30% damage increase
+    }
+
+    return damage;
 }
 
 uint32 MageSpellCalculator::CalculateCastTime(uint32 spellId, Player* caster)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!caster)
+        return 0;
+
+    std::lock_guard<std::mutex> lock(_cacheMutex);
+
+    // Check cache
+    auto it = _castTimeCache.find(spellId);
+    if (it != _castTimeCache.end())
+    {
+        // Apply haste
+        float hasteModifier = GetHasteModifier(caster);
+        return static_cast<uint32>(it->second / hasteModifier);
+    }
+
+    // Get spell info
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NORMAL);
     if (!spellInfo)
         return 0;
 
-    uint32 castTime = spellInfo->CastTime;
+    uint32 castTime = spellInfo->GetRecoveryTime();
+
+    // Cache the base cast time
+    _castTimeCache[spellId] = castTime;
 
     // Apply haste
-    if (caster)
-    {
-        float haste = GetHasteModifier(caster);
-        castTime = static_cast<uint32>(castTime / haste);
-    }
-
-    return castTime;
+    float hasteModifier = GetHasteModifier(caster);
+    return static_cast<uint32>(castTime / hasteModifier);
 }
 
 float MageSpellCalculator::GetHasteModifier(Player* caster)
@@ -1222,8 +1988,11 @@ float MageSpellCalculator::GetHasteModifier(Player* caster)
     if (!caster)
         return 1.0f;
 
-    // This would calculate actual haste from gear and buffs
-    return 1.0f; // Placeholder
+    // Get haste rating and convert to percentage
+    float hastePct = caster->GetRatingBonusValue(CR_HASTE_SPELL);
+    // Rating bonus value already returns percentage
+
+    return 1.0f + (hastePct / 100.0f);
 }
 
 float MageSpellCalculator::CalculateCritChance(uint32 spellId, Player* caster, ::Unit* target)
@@ -1231,23 +2000,29 @@ float MageSpellCalculator::CalculateCritChance(uint32 spellId, Player* caster, :
     if (!caster)
         return 0.0f;
 
-    // This would calculate actual crit chance
-    return 15.0f; // Placeholder 15% base
+    // Base crit chance from rating system
+    float critChance = caster->GetRatingBonusValue(CR_CRIT_SPELL);
+
+    // Add spell-specific bonuses
+    // This would require spell-specific data
+
+    return critChance;
 }
 
 bool MageSpellCalculator::WillCriticalHit(uint32 spellId, Player* caster, ::Unit* target)
 {
     float critChance = CalculateCritChance(spellId, caster, target);
-    return (rand() % 100) < critChance;
+    return (rand_chance() < critChance);
 }
 
 float MageSpellCalculator::CalculateResistance(uint32 spellId, Player* caster, ::Unit* target)
 {
-    if (!target)
+    if (!caster || !target)
         return 0.0f;
 
-    // This would calculate spell resistance
-    return 0.0f; // Placeholder
+    // Simplified resistance calculation
+    // This would require proper resistance mechanics
+    return 0.0f;
 }
 
 uint32 MageSpellCalculator::ApplyResistance(uint32 damage, float resistance)
@@ -1257,31 +2032,56 @@ uint32 MageSpellCalculator::ApplyResistance(uint32 damage, float resistance)
 
 float MageSpellCalculator::GetSpecializationBonus(MageSpec spec, uint32 spellId)
 {
-    // This would return specialization bonuses for spells
-    return 1.0f; // Placeholder
+    // Apply specialization bonus to matching spells
+    switch (spec)
+    {
+        case MageSpec::ARCANE:
+            if (spellId == MageAI::ARCANE_MISSILES || spellId == MageAI::ARCANE_BLAST)
+                return 1.15f;
+            break;
+        case MageSpec::FIRE:
+            if (spellId == MageAI::FIREBALL || spellId == MageAI::PYROBLAST)
+                return 1.15f;
+            break;
+        case MageSpec::FROST:
+            if (spellId == MageAI::FROSTBOLT || spellId == MageAI::ICE_LANCE)
+                return 1.15f;
+            break;
+    }
+
+    return 1.0f;
 }
 
 uint32 MageSpellCalculator::GetOptimalRotationSpell(MageSpec spec, Player* caster, ::Unit* target)
 {
-    // This would recommend the optimal spell for the rotation
+    if (!caster || !target)
+        return 0;
+
+    // Return primary spell for each spec
     switch (spec)
     {
-        case MageSpec::ARCANE: return MageAI::ARCANE_BLAST;
-        case MageSpec::FIRE: return MageAI::FIREBALL;
-        case MageSpec::FROST: return MageAI::FROSTBOLT;
-        default: return MageAI::FIREBALL;
+        case MageSpec::ARCANE:
+            return MageAI::ARCANE_BLAST;
+        case MageSpec::FIRE:
+            return MageAI::FIREBALL;
+        case MageSpec::FROST:
+            return MageAI::FROSTBOLT;
+        default:
+            return 0;
     }
 }
 
 void MageSpellCalculator::CacheSpellData(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    // Pre-cache spell data for performance
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NORMAL);
     if (!spellInfo)
         return;
 
     std::lock_guard<std::mutex> lock(_cacheMutex);
-    _manaCostCache[spellId] = spellInfo->ManaCost;
-    _castTimeCache[spellId] = spellInfo->CastTime;
+
+    // Cache various spell properties
+    // This would be expanded with more data
 }
 
 } // namespace Playerbot

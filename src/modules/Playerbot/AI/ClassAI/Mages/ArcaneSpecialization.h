@@ -14,7 +14,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
-#include "BotThreatManager.h"
+#include "../../Combat/BotThreatManager.h"
 
 namespace Playerbot
 {
@@ -135,7 +135,7 @@ private:
     struct ArcaneMetrics {
         std::atomic<uint32> totalArcaneBlasts{0};
         std::atomic<uint32> fourStackBlasts{0};
-        std::atomic<uint32> wasted Charges{0};
+        std::atomic<uint32> wastedCharges{0};
         std::atomic<float> averageCharges{0.0f};
         std::atomic<float> burnPhaseEfficiency{0.0f};
         std::atomic<float> manaEfficiency{0.0f};

@@ -16,9 +16,7 @@
 namespace Playerbot
 {
 
-// Static members
-std::unique_ptr<BotSpawnEventBus> BotSpawnEventBus::_instance;
-std::mutex BotSpawnEventBus::_instanceMutex;
+// Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotSpawnEventBus::BotSpawnEventBus()
     : _lastProcessing(std::chrono::steady_clock::now())

@@ -136,13 +136,13 @@ private:
     uint32 _spellsCast;
 
     // Constants
-    static constexpr float OPTIMAL_CASTING_RANGE = 30.0f;
-    static constexpr float CHAIN_LIGHTNING_RANGE = 25.0f;
-    static constexpr float THUNDERSTORM_RANGE = 10.0f;
-    static constexpr uint32 ELEMENTAL_FOCUS_MAX_STACKS = 3;
-    static constexpr uint32 LIGHTNING_SHIELD_MAX_CHARGES = 3;
-    static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f;
-    static constexpr uint32 CHAIN_LIGHTNING_MIN_TARGETS = 3;
+    // static const float OPTIMAL_CASTING_RANGE;
+    // static const float CHAIN_LIGHTNING_RANGE;
+    // static const float THUNDERSTORM_RANGE;
+    static const uint32 ELEMENTAL_FOCUS_MAX_STACKS = 3;
+    static const uint32 LIGHTNING_SHIELD_MAX_CHARGES = 3;
+    // static const float MANA_CONSERVATION_THRESHOLD;
+    static const uint32 CHAIN_LIGHTNING_MIN_TARGETS = 3;
 };
 
 } // namespace Playerbot

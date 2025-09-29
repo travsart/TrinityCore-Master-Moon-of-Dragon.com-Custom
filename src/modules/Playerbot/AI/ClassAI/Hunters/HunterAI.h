@@ -10,15 +10,12 @@
 #ifndef TRINITY_HUNTERPLAYERAI_H
 #define TRINITY_HUNTERPLAYERAI_H
 
-#include "ClassAI.h"
-#include <memory>
+#include "../ClassAI.h"
 
 class Player;
 
 namespace Playerbot
 {
-
-class HunterSpecialization;
 
 enum class HunterSpec : uint8
 {
@@ -49,11 +46,27 @@ public:
     HunterSpec GetCurrentSpecialization() const;
 
 private:
+    // Initialization methods
+    void InitializeCombatSystems();
     void DetectSpecialization();
     void InitializeSpecialization();
 
-    std::unique_ptr<HunterSpecialization> _specialization;
+    // Hunter-specific mechanics
+    void ManageAspects();
+    void HandlePositioning(::Unit* target);
+    void HandleSharedAbilities(::Unit* target);
+    void UpdateTracking();
+    bool HasAnyAspect();
+    uint32 GetCurrentAspect();
+    void SwitchToCombatAspect();
+    bool ValidateAspectForAbility(uint32 spellId);
+    Player* GetMainTank();
+    void LogCombatMetrics();
+
+    // Specialization
     HunterSpec _detectedSpec;
+
+    // TODO: Add member variables as needed
 };
 
 } // namespace Playerbot

@@ -1218,4 +1218,90 @@ void AssassinationSpecialization::LogAssassinationDecision(const std::string& de
     LogRotationDecision(decision, reason);
 }
 
+// Implementation of pure virtual methods from RogueSpecialization base class
+bool AssassinationSpecialization::CastSpell(uint32 spellId, ::Unit* target)
+{
+    if (!_bot)
+        return false;
+
+    // Check if spell can be cast
+    if (!CanUseAbility(spellId))
+        return false;
+
+    // Get spell info for validation
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return false;
+
+    // Start cooldown tracking
+    StartCooldown(spellId);
+
+    // Consume resources
+    ConsumeResource(spellId);
+
+    // Track metrics based on spell type
+    if (spellId == MUTILATE)
+        _metrics.mutilateCasts++;
+    else if (spellId == ENVENOM)
+        _metrics.envenomCasts++;
+    else if (spellId == RUPTURE)
+        _metrics.ruptureCasts++;
+    else if (spellId == GARROTE)
+        _metrics.garroteCasts++;
+    else if (spellId == COLD_BLOOD)
+        _metrics.coldBloodUses++;
+    else if (spellId == VENDETTA)
+        _metrics.vendettaUses++;
+
+    // Cast the spell through the bot
+    if (target)
+    {
+        return _bot->CastSpell(target, spellId, false);
+    }
+    else
+    {
+        return _bot->CastSpell(_bot, spellId, false);
+    }
+}
+
+bool AssassinationSpecialization::HasSpell(uint32 spellId)
+{
+    if (!_bot)
+        return false;
+
+    return _bot->HasSpell(spellId);
+}
+
+SpellInfo const* AssassinationSpecialization::GetSpellInfo(uint32 spellId)
+{
+    if (!_bot)
+        return nullptr;
+
+    return sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+}
+
+uint32 AssassinationSpecialization::GetSpellCooldown(uint32 spellId)
+{
+    if (!_bot)
+        return 0;
+
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return 0;
+
+    // Check if spell has an active cooldown
+    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
+    auto itr = cooldowns.find(spellId);
+    if (itr != cooldowns.end())
+    {
+        uint32 currentTime = getMSTime();
+        if (itr->second.end > currentTime)
+        {
+            return itr->second.end - currentTime;
+        }
+    }
+
+    return 0;
+}
+
 } // namespace Playerbot

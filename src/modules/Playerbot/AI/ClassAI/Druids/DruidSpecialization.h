@@ -34,7 +34,8 @@ enum class DruidSpec : uint8
 // Druid forms
 enum class DruidForm : uint8
 {
-    HUMANOID = 0,
+    CASTER = 0,      // Humanoid/Caster form
+    HUMANOID = 0,    // Alias for CASTER
     BEAR = 1,
     CAT = 2,
     AQUATIC = 3,
@@ -53,14 +54,14 @@ enum class EclipseState : uint8
 };
 
 // Combo point tracking for Feral
-struct ComboPointInfo
+struct DruidComboPointInfo
 {
     uint32 current;
     uint32 maximum;
     uint32 lastGenerated;
     ::Unit* target;
 
-    ComboPointInfo() : current(0), maximum(5), lastGenerated(0), target(nullptr) {}
+    DruidComboPointInfo() : current(0), maximum(5), lastGenerated(0), target(nullptr) {}
 
     bool HasComboPoints(uint32 required = 1) const { return current >= required; }
     void AddComboPoint() { current = std::min(current + 1, maximum); }

@@ -147,6 +147,12 @@ public:
         uint32 lastActivity;
         uint32 joinDate;
 
+        // Default constructor for std::unordered_map compatibility
+        GuildParticipation() : playerGuid(0), guildId(0)
+            , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
+            , socialScore(0.5f), contributionScore(0.5f), lastActivity(getMSTime())
+            , joinDate(getMSTime()) {}
+
         GuildParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
             , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
             , socialScore(0.5f), contributionScore(0.5f), lastActivity(getMSTime())
@@ -324,6 +330,10 @@ private:
         float overallMorale;
         float activityLevel;
         uint32 lastAnalysisTime;
+
+        // Default constructor for std::unordered_map compatibility
+        GuildActivityTracker() : guildId(0), overallMorale(0.8f)
+            , activityLevel(0.6f), lastAnalysisTime(getMSTime()) {}
 
         GuildActivityTracker(uint32 gId) : guildId(gId), overallMorale(0.8f)
             , activityLevel(0.6f), lastAnalysisTime(getMSTime()) {}

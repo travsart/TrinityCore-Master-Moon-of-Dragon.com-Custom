@@ -243,8 +243,8 @@ private:
     static constexpr uint32 PROCESSING_INTERVAL_MS = 10; // 10ms
 
     // Singleton
-    static std::unique_ptr<BotSpawnEventBus> _instance;
-    static std::mutex _instanceMutex;
+    inline static std::unique_ptr<BotSpawnEventBus> _instance;
+    inline static std::mutex _instanceMutex;
 
     // Non-copyable
     BotSpawnEventBus(BotSpawnEventBus const&) = delete;

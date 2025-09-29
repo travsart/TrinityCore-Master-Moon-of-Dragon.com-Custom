@@ -166,14 +166,14 @@ private:
     static void ShutdownDatabase();
 
     // Module state
-    static bool _initialized;
-    static bool _enabled;
-    static std::string _lastError;
+    inline static bool _initialized = false;
+    inline static bool _enabled = false;
+    inline static std::string _lastError = "";
 
     // Version constants
-    static constexpr uint32 MODULE_VERSION_MAJOR = 1;
-    static constexpr uint32 MODULE_VERSION_MINOR = 0;
-    static constexpr uint32 MODULE_VERSION_PATCH = 0;
+    inline static constexpr uint32 MODULE_VERSION_MAJOR = 1;
+    inline static constexpr uint32 MODULE_VERSION_MINOR = 0;
+    inline static constexpr uint32 MODULE_VERSION_PATCH = 0;
 };
 
 #endif // BUILD_PLAYERBOT

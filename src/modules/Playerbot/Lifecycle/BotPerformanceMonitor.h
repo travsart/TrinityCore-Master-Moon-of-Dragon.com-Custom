@@ -161,8 +161,8 @@ private:
     uint32 _updateInterval = 1000; // 1 second
 
     // Singleton
-    static std::unique_ptr<BotPerformanceMonitor> _instance;
-    static std::mutex _instanceMutex;
+    inline static std::unique_ptr<BotPerformanceMonitor> _instance;
+    inline static std::mutex _instanceMutex;
 
     // Non-copyable
     BotPerformanceMonitor(BotPerformanceMonitor const&) = delete;

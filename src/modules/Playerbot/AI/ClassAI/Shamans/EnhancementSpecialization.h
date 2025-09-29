@@ -149,16 +149,16 @@ private:
     uint32 _weaponImbueProcs;
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr uint32 MAELSTROM_WEAPON_MAX_STACKS = 5;
-    static constexpr uint32 WEAPON_IMBUE_CHECK_INTERVAL = 5000; // 5 seconds
-    static constexpr uint32 STORMSTRIKE_COOLDOWN = 8000; // 8 seconds
-    static constexpr uint32 LAVA_LASH_COOLDOWN = 6000; // 6 seconds
-    static constexpr uint32 SHAMANISTIC_RAGE_COOLDOWN = 60000; // 1 minute
-    static constexpr uint32 FERAL_SPIRIT_COOLDOWN = 120000; // 2 minutes
-    static constexpr uint32 FLAMETONGUE_DURATION = 3600000; // 1 hour
-    static constexpr uint32 WINDFURY_DURATION = 3600000; // 1 hour
-    static constexpr uint32 FROSTBRAND_DURATION = 3600000; // 1 hour
+    // static const float MELEE_RANGE;
+    static const uint32 MAELSTROM_WEAPON_MAX_STACKS = 5;
+    static const uint32 WEAPON_IMBUE_CHECK_INTERVAL = 5000; // 5 seconds
+    static const uint32 STORMSTRIKE_COOLDOWN = 8000; // 8 seconds
+    static const uint32 LAVA_LASH_COOLDOWN = 6000; // 6 seconds
+    static const uint32 SHAMANISTIC_RAGE_COOLDOWN = 60000; // 1 minute
+    static const uint32 FERAL_SPIRIT_COOLDOWN = 120000; // 2 minutes
+    static const uint32 FLAMETONGUE_DURATION = 3600000; // 1 hour
+    static const uint32 WINDFURY_DURATION = 3600000; // 1 hour
+    static const uint32 FROSTBRAND_DURATION = 3600000; // 1 hour
 };
 
 } // namespace Playerbot

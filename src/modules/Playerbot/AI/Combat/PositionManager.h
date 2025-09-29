@@ -13,6 +13,7 @@
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "BotThreatManager.h"
+#include "EnumFlag.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -31,7 +32,7 @@ namespace Playerbot
 // Position types for different combat roles
 enum class PositionType : uint8
 {
-    MELEE_RANGE = 0,        // Close combat positioning (2-5 yards)
+    MELEE_COMBAT = 0,       // Close combat positioning (2-5 yards)
     RANGED_DPS = 1,         // Ranged damage positioning (20-40 yards)
     HEALING = 2,            // Healing positioning (15-35 yards)
     KITING = 3,             // Kiting/mobility positioning (variable)
@@ -114,7 +115,7 @@ struct PositionInfo
     std::string reason;
     uint32 evaluationTime;
 
-    PositionInfo() : score(0.0f), type(PositionType::MELEE_RANGE), priority(MovementPriority::IDLE),
+    PositionInfo() : score(0.0f), type(PositionType::MELEE_COMBAT), priority(MovementPriority::IDLE),
                     distanceToTarget(0.0f), safetyRating(0.0f), hasLineOfSight(false),
                     isOptimalRange(false), movementCost(0.0f), evaluationTime(0) {}
 
@@ -145,7 +146,7 @@ struct MovementContext
     std::vector<Position> avoidZones;  // Areas to avoid (fire, aoe, etc.)
 
     MovementContext() : bot(nullptr), target(nullptr), primaryThreat(nullptr),
-                       desiredType(PositionType::MELEE_RANGE), botRole(ThreatRole::DPS),
+                       desiredType(PositionType::MELEE_COMBAT), botRole(ThreatRole::DPS),
                        preferredRange(5.0f), maxRange(40.0f), inCombat(false),
                        emergencyMode(false), validationFlags(PositionValidation::BASIC) {}
 };
@@ -239,7 +240,7 @@ public:
 
     // Role-specific positioning
     Position FindTankPosition(Unit* target);
-    Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_RANGE);
+    Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_COMBAT);
     Position FindHealerPosition(const std::vector<Player*>& groupMembers);
     Position FindSupportPosition(const std::vector<Player*>& groupMembers);
 

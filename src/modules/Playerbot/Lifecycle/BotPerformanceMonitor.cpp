@@ -9,9 +9,7 @@
 namespace Playerbot
 {
 
-// Static members
-std::unique_ptr<BotPerformanceMonitor> BotPerformanceMonitor::_instance;
-std::mutex BotPerformanceMonitor::_instanceMutex;
+// Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotPerformanceMonitor::BotPerformanceMonitor()
     : _lastUpdate(std::chrono::steady_clock::now())

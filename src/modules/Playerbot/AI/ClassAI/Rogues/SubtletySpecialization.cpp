@@ -1461,4 +1461,94 @@ void SubtletySpecialization::OptimizePositionalAdvantage(::Unit* target)
     }
 }
 
+// Implementation of pure virtual methods from RogueSpecialization base class
+bool SubtletySpecialization::CastSpell(uint32 spellId, ::Unit* target)
+{
+    if (!_bot)
+        return false;
+
+    // Check if spell can be cast
+    if (!CanUseAbility(spellId))
+        return false;
+
+    // Get spell info for validation
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return false;
+
+    // Start cooldown tracking
+    StartCooldown(spellId);
+
+    // Consume resources
+    ConsumeResource(spellId);
+
+    // Track metrics based on spell type
+    if (spellId == AMBUSH)
+        _metrics.ambushCasts++;
+    else if (spellId == BACKSTAB)
+        _metrics.backstabCasts++;
+    else if (spellId == HEMORRHAGE)
+        _metrics.hemorrhageCasts++;
+    else if (spellId == EVISCERATE)
+        _metrics.eviscerateCasts++;
+    else if (spellId == SHADOWSTEP)
+        _metrics.shadowstepUses++;
+    else if (spellId == VANISH)
+        _metrics.vanishUses++;
+    else if (spellId == SHADOW_DANCE)
+        _metrics.shadowDanceActivations++;
+    else if (spellId == PREPARATION)
+        _metrics.preparationUses++;
+
+    // Cast the spell through the bot
+    if (target)
+    {
+        return _bot->CastSpell(target, spellId, false);
+    }
+    else
+    {
+        return _bot->CastSpell(_bot, spellId, false);
+    }
+}
+
+bool SubtletySpecialization::HasSpell(uint32 spellId)
+{
+    if (!_bot)
+        return false;
+
+    return _bot->HasSpell(spellId);
+}
+
+SpellInfo const* SubtletySpecialization::GetSpellInfo(uint32 spellId)
+{
+    if (!_bot)
+        return nullptr;
+
+    return sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+}
+
+uint32 SubtletySpecialization::GetSpellCooldown(uint32 spellId)
+{
+    if (!_bot)
+        return 0;
+
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return 0;
+
+    // Check if spell has an active cooldown
+    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
+    auto itr = cooldowns.find(spellId);
+    if (itr != cooldowns.end())
+    {
+        uint32 currentTime = getMSTime();
+        if (itr->second.end > currentTime)
+        {
+            return itr->second.end - currentTime;
+        }
+    }
+
+    return 0;
+}
+
 } // namespace Playerbot

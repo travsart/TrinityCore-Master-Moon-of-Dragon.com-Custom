@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "WarriorSpecialization.h"
 #include "Position.h"
-#include "BotThreatManager.h"
-#include "TargetSelector.h"
-#include "PositionManager.h"
-#include "InterruptManager.h"
-#include "FormationManager.h"
+#include "../../Combat/BotThreatManager.h"
+#include "../../Combat/TargetSelector.h"
+#include "../../Combat/PositionManager.h"
+#include "../../Combat/InterruptManager.h"
+#include "../../Combat/FormationManager.h"
 #include <unordered_map>
 #include <memory>
 #include <atomic>

@@ -37,17 +37,39 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
 
     Player* bot = ai->GetBot();
 
+    // Debug logging
+    static uint32 lastLog = 0;
+    uint32 currentTime = getMSTime();
+    bool shouldLog = (currentTime - lastLog > 5000); // Log every 5 seconds
+
     // First check if bot is already in combat
     if (bot->IsInCombat())
+    {
+        if (shouldLog)
+            TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} already in combat, skipping", bot->GetName());
         return false; // Already handled by normal combat
+    }
 
     // Check if bot is in a group
     Group* group = bot->GetGroup();
     if (!group)
+    {
+        if (shouldLog)
+            TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} not in group, skipping", bot->GetName());
         return false;
+    }
 
     // Check if group is in combat and bot should engage
-    return ShouldEngageCombat(bot, group);
+    bool shouldEngage = ShouldEngageCombat(bot, group);
+
+    if (shouldLog || shouldEngage)
+    {
+        TC_LOG_INFO("module.playerbot.combat", "GroupCombatTrigger::Check - {} in group {}, should engage: {}",
+                    bot->GetName(), group->GetGUID().ToString(), shouldEngage ? "YES" : "no");
+        lastLog = currentTime;
+    }
+
+    return shouldEngage;
 }
 
 TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
@@ -72,10 +94,10 @@ TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
     if (!target)
         return result;
 
-    // Create the assist action
+    // Create the assist action - use default name from TargetAssistAction constructor
     result.triggered = true;
     result.urgency = CalculateUrgency(ai);
-    result.suggestedAction = std::make_shared<TargetAssistAction>("assist_group");
+    result.suggestedAction = std::make_shared<TargetAssistAction>();  // Uses "target_assist" as name
     result.context.target = target;
 
     // Log the trigger
@@ -180,7 +202,11 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
         return false;
 
     // Check if group is in combat
-    if (!IsGroupInCombat(group))
+    bool groupInCombat = IsGroupInCombat(group);
+    TC_LOG_DEBUG("module.playerbot.combat", "ShouldEngageCombat - {} checking group combat state: {}",
+                 bot->GetName(), groupInCombat ? "IN COMBAT" : "not in combat");
+
+    if (!groupInCombat)
         return false;
 
     // Check engagement delay

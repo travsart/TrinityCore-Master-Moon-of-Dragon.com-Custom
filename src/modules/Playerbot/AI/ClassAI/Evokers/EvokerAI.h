@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "Position.h"
 #include <unordered_map>
 #include <queue>
@@ -113,6 +113,64 @@ class TC_GAME_API EvokerAI : public ClassAI
 public:
     explicit EvokerAI(Player* bot);
     ~EvokerAI() = default;
+
+    // Spell IDs (version-specific)
+    enum EvokerSpells
+    {
+        // Basic abilities
+        AZURE_STRIKE = 362969,
+        LIVING_FLAME = 361469,
+        HOVER = 358267,
+        SOAR = 369536,
+
+        // Devastation abilities
+        ETERNITYS_SURGE = 359073,
+        DISINTEGRATE = 356995,
+        PYRE = 357211,
+        DEEP_BREATH = 357210,
+        FIRE_BREATH = 357208,
+        AZURE_STRIKE_DEVASTATION = 362969,
+
+        // Preservation abilities
+        DREAM_BREATH = 355936,
+        SPIRIT_BLOOM = 367226,
+        SPIRITBLOOM = 367226, // Alias for compatibility
+        EMERALD_BLOSSOM = 355916,
+        VERDANT_EMBRACE = 360995,
+        LIFEBIND = 373267,
+        EMERALD_COMMUNION = 370960,
+        TEMPORAL_ANOMALY = 373861,
+
+        // Augmentation abilities
+        EBON_MIGHT = 395152,
+        BREATH_OF_EONS = 403631,
+        PRESCIENCE = 409311,
+        BLISTERING_SCALES = 360827,
+
+        // Utility abilities
+        BLESSING_OF_THE_BRONZE = 364342,
+        LANDSLIDE = 358385,
+        TAIL_SWIPE = 368970,
+        WING_BUFFET = 357214,
+        SLEEP_WALK = 360806,
+
+        // Defensive abilities
+        OBSIDIAN_SCALES = 363916,
+        RENEWING_BLAZE = 374348,
+        RESCUE = 370665,
+
+        // Movement abilities
+        DEEP_BREATH_MOVEMENT = 357210,
+        SOAR_MOVEMENT = 369536,
+
+        // Additional constants
+        ECHO = 364343,
+        BRONZE_ASPECT = 364344,
+        AZURE_ASPECT = 364345,
+        GREEN_ASPECT = 364346,
+        RED_ASPECT = 364347,
+        BLACK_ASPECT = 364348
+    };
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -218,6 +276,7 @@ private:
     void ReleaseEmpoweredSpell();
     EmpowermentLevel CalculateOptimalEmpowermentLevel(uint32 spellId, ::Unit* target);
     bool ShouldEmpowerSpell(uint32 spellId);
+    bool IsEmpoweredSpell(uint32 spellId);
     uint32 GetEmpowermentChannelTime(EmpowermentLevel level);
 
     // Echo management system (Preservation)
@@ -324,7 +383,7 @@ private:
     uint32 GetSpellRange(uint32 spellId);
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
+    static constexpr float EVOKER_MELEE_RANGE = 5.0f;
     static constexpr float OPTIMAL_CASTING_RANGE = 25.0f;
     static constexpr float EMPOWERED_SPELL_RANGE = 30.0f;
     static constexpr uint32 ESSENCE_MAX = 6;
@@ -335,58 +394,7 @@ private:
     static constexpr float ESSENCE_CONSERVATION_THRESHOLD = 0.3f; // 30%
     static constexpr uint32 ASPECT_SHIFT_COOLDOWN = 1500; // 1.5 seconds
 
-    // Spell IDs (version-specific)
-    enum EvokerSpells
-    {
-        // Basic abilities
-        AZURE_STRIKE = 362969,
-        LIVING_FLAME = 361469,
-        HOVER = 358267,
-        SOAR = 369536,
-
-        // Devastation abilities
-        ETERNITYS_SURGE = 359073,
-        DISINTEGRATE = 356995,
-        PYRE = 357211,
-        FIRE_BREATH = 357208,
-        DEEP_BREATH = 353995,
-        DRAGONRAGE = 375087,
-
-        // Preservation abilities
-        EMERALD_BLOSSOM = 355913,
-        VERDANT_EMBRACE = 360995,
-        DREAM_BREATH = 355936,
-        SPIRIT_BLOOM = 367226,
-        TEMPORAL_ANOMALY = 373861,
-        RENEWING_BLAZE = 374348,
-        ECHO = 364343,
-
-        // Augmentation abilities
-        EBON_MIGHT = 395152,
-        BREATH_OF_EONS = 403631,
-        PRESCIENCE = 409311,
-        BLISTERY_SCALES = 360827,
-        SPATIAL_PARADOX = 406732,
-
-        // Utility abilities
-        RESCUE = 370665,
-        TIME_SPIRAL = 374968,
-        WING_BUFFET = 357214,
-        OBSIDIAN_SCALES = 363916,
-
-        // Aspect abilities
-        BRONZE_ASPECT = 364342,
-        AZURE_ASPECT = 364343,
-        GREEN_ASPECT = 364344,
-        RED_ASPECT = 364345,
-        BLACK_ASPECT = 364346,
-
-        // Empowered versions
-        ETERNITYS_SURGE_EMPOWERED = 382411,
-        FIRE_BREATH_EMPOWERED = 382266,
-        DREAM_BREATH_EMPOWERED = 382614,
-        SPIRIT_BLOOM_EMPOWERED = 382731
-    };
+    // Note: Spell IDs moved to public section to fix access errors
 };
 
 // Utility class for evoker calculations

@@ -72,7 +72,7 @@ struct AssassinationMetrics
 {
     uint32 mutilateCasts;
     uint32 backStabCasts;
-    uint32 envenom Casts;
+    uint32 envenomCasts;
     uint32 ruptureApplications;
     uint32 garroteApplications;
     uint32 poisonApplications;
@@ -153,6 +153,12 @@ public:
     void UpdateCombatPhase() override;
     CombatPhase GetCurrentPhase() override;
     bool ShouldExecuteBurstRotation() override;
+
+    // Utility Functions Implementation
+    bool CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
+    bool HasSpell(uint32 spellId) override;
+    SpellInfo const* GetSpellInfo(uint32 spellId) override;
+    uint32 GetSpellCooldown(uint32 spellId) override;
 
 private:
     // Assassination-specific systems

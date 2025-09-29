@@ -12,9 +12,7 @@
 namespace Playerbot
 {
 
-// Static members
-std::unique_ptr<BotResourcePool> BotResourcePool::_instance;
-std::mutex BotResourcePool::_instanceMutex;
+// Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotResourcePool::BotResourcePool()
     : _lastCleanup(std::chrono::steady_clock::now())

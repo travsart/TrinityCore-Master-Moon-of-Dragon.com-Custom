@@ -141,6 +141,9 @@ public:
         std::atomic<uint32> questGiversVisited{0};
         std::chrono::steady_clock::time_point lastMetricsUpdate;
 
+        // Default constructor
+        AutomationMetrics() : lastMetricsUpdate(std::chrono::steady_clock::now()) {}
+
         void Reset() {
             totalQuestsAutomated = 0; successfulAutomations = 0; failedAutomations = 0;
             questsSkipped = 0; averageAutomationTime = 10000.0f; automationEfficiency = 0.8f;
@@ -151,6 +154,34 @@ public:
         float GetSuccessRate() const {
             uint32 total = successfulAutomations.load() + failedAutomations.load();
             return total > 0 ? (float)successfulAutomations.load() / total : 0.0f;
+        }
+
+        // Copy constructor for atomic members
+        AutomationMetrics(const AutomationMetrics& other)
+            : totalQuestsAutomated(other.totalQuestsAutomated.load()),
+              successfulAutomations(other.successfulAutomations.load()),
+              failedAutomations(other.failedAutomations.load()),
+              questsSkipped(other.questsSkipped.load()),
+              averageAutomationTime(other.averageAutomationTime.load()),
+              automationEfficiency(other.automationEfficiency.load()),
+              totalTravelDistance(other.totalTravelDistance.load()),
+              questGiversVisited(other.questGiversVisited.load()),
+              lastMetricsUpdate(other.lastMetricsUpdate) {}
+
+        // Assignment operator for atomic members
+        AutomationMetrics& operator=(const AutomationMetrics& other) {
+            if (this != &other) {
+                totalQuestsAutomated = other.totalQuestsAutomated.load();
+                successfulAutomations = other.successfulAutomations.load();
+                failedAutomations = other.failedAutomations.load();
+                questsSkipped = other.questsSkipped.load();
+                averageAutomationTime = other.averageAutomationTime.load();
+                automationEfficiency = other.automationEfficiency.load();
+                totalTravelDistance = other.totalTravelDistance.load();
+                questGiversVisited = other.questGiversVisited.load();
+                lastMetricsUpdate = other.lastMetricsUpdate;
+            }
+            return *this;
         }
     };
 
@@ -270,6 +301,7 @@ private:
     bool IsQuestWorthAutomating(uint32 questId, Player* bot);
     uint32 EstimateQuestCompletionTime(uint32 questId, Player* bot);
     float CalculateQuestEfficiencyScore(uint32 questId, Player* bot);
+    float CalculateDistanceFactor(Player* bot, uint32 questId);
     void UpdateAutomationMetrics(uint32 botGuid, bool wasSuccessful, uint32 timeSpent);
     void LogAutomationEvent(uint32 botGuid, const std::string& event, const std::string& details = "");
 

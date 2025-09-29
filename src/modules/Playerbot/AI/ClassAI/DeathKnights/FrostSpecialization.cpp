@@ -331,7 +331,7 @@ Position FrostSpecialization::GetOptimalPosition(::Unit* target)
         return Position();
 
     // Melee DPS positioning - prefer flanking for dual-wield
-    float distance = MELEE_RANGE * 0.8f;
+    float distance = FROST_MELEE_RANGE * 0.8f;
     float angle = target->GetAngle(bot);
 
     if (_isDualWielding)
@@ -349,7 +349,7 @@ Position FrostSpecialization::GetOptimalPosition(::Unit* target)
 
 float FrostSpecialization::GetOptimalRange(::Unit* target)
 {
-    return MELEE_RANGE;
+    return FROST_MELEE_RANGE;
 }
 
 void FrostSpecialization::UpdateRuneManagement()
@@ -733,7 +733,7 @@ void FrostSpecialization::CastChainsOfIce(::Unit* target)
     if (!bot || !target)
         return;
 
-    if (HasEnoughResource(CHAINS_OF_ICE) && bot->GetDistance(target) > MELEE_RANGE)
+    if (HasEnoughResource(CHAINS_OF_ICE) && bot->GetDistance(target) > FROST_MELEE_RANGE)
     {
         bot->CastSpell(target, CHAINS_OF_ICE, false);
         ConsumeResource(CHAINS_OF_ICE);
@@ -950,7 +950,7 @@ void FrostSpecialization::HandleUtilitySpells(::Unit* target)
     }
 
     // Slow fleeing enemies
-    if (bot->GetDistance(target) > MELEE_RANGE * 1.5f)
+    if (bot->GetDistance(target) > FROST_MELEE_RANGE * 1.5f)
     {
         if (ShouldUseDeathGrip(target))
         {
@@ -964,7 +964,7 @@ void FrostSpecialization::HandleUtilitySpells(::Unit* target)
     }
 
     // Ranged damage when out of melee
-    if (bot->GetDistance(target) > MELEE_RANGE)
+    if (bot->GetDistance(target) > FROST_MELEE_RANGE)
     {
         CastDeathCoil(target);
     }

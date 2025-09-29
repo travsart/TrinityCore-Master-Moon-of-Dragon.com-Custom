@@ -156,7 +156,7 @@ private:
     uint32 _runicPowerSpent;
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
+    static constexpr float FROST_MELEE_RANGE = 5.0f;
     static constexpr uint32 KILLING_MACHINE_DURATION = 30000; // 30 seconds
     static constexpr uint32 RIME_DURATION = 15000; // 15 seconds
     static constexpr uint32 UNBREAKABLE_WILL_COOLDOWN = 120000; // 2 minutes

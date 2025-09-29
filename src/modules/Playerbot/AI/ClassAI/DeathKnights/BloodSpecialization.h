@@ -159,7 +159,7 @@ private:
     uint32 _runicPowerSpent;
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
+    static constexpr float BLOOD_MELEE_RANGE = 5.0f;
     static constexpr uint32 VAMPIRIC_BLOOD_COOLDOWN = 60000; // 1 minute
     static constexpr uint32 BONE_SHIELD_DURATION = 300000; // 5 minutes
     static constexpr uint32 DANCING_RUNE_WEAPON_COOLDOWN = 90000; // 1.5 minutes

@@ -204,7 +204,7 @@ private:
     static constexpr uint32 FELGUARD_CLEAVE_TARGETS = 3;
     static constexpr float IMMOLATION_AURA_RANGE = 8.0f;
     static constexpr uint32 DEMON_CHARGE_RANGE = 25;
-    static constexpr float PET_POSITIONING_TOLERANCE = 3.0f
+    static constexpr float PET_POSITIONING_TOLERANCE = 3.0f;
 };
 
 } // namespace Playerbot

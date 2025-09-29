@@ -212,12 +212,13 @@ std::vector<uint32> QuestAutomation::DiscoverOptimalQuests(Player* bot)
     // Query all available quests in level range
     for (auto const& questPair : sObjectMgr->GetQuestTemplates())
     {
-        const Quest* quest = questPair.second;
+        Quest const* quest = questPair.second.get();
         if (!quest)
             continue;
 
         // Check level requirements
-        if (quest->GetMinLevel() < minLevel || quest->GetMinLevel() > maxLevel)
+        int32 questMinLevel = bot->GetQuestMinLevel(quest);
+        if (questMinLevel < minLevel || questMinLevel > maxLevel)
             continue;
 
         // Check if quest is suitable
@@ -433,9 +434,9 @@ void QuestAutomation::AutomateGroupQuestSharing(Group* group)
     // Find quests that can be shared among group members
     std::vector<uint32> shareableQuests;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (!member || !dynamic_cast<BotSession*>(member->GetSession()))
             continue;
 
@@ -452,9 +453,9 @@ void QuestAutomation::AutomateGroupQuestSharing(Group* group)
 
             // Check if quest can be shared with other group members
             bool canShare = true;
-            for (GroupReference* itr2 = group->GetFirstMember(); itr2 != nullptr; itr2 = itr2->next())
+            for (GroupReference const& itr2 : group->GetMembers())
             {
-                Player* otherMember = itr2->GetSource();
+                Player* otherMember = itr2.GetSource();
                 if (otherMember == member || !dynamic_cast<BotSession*>(otherMember->GetSession()))
                     continue;
 
@@ -491,9 +492,9 @@ void QuestAutomation::CoordinateGroupQuestDecisions(Group* group, uint32 questId
     // Coordinate quest acceptance among group members
     std::vector<Player*> eligibleMembers;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (member && dynamic_cast<BotSession*>(member->GetSession()) && member->CanTakeQuest(quest, false))
         {
             eligibleMembers.push_back(member);
@@ -645,11 +646,12 @@ std::vector<QuestAutomation::DecisionFactor> QuestAutomation::AnalyzeQuestDecisi
         return factors;
 
     // Level appropriateness
-    uint32 botLevel = bot->GetLevel();
+    int32 botLevel = static_cast<int32>(bot->GetLevel());
     float levelFactor = 1.0f;
-    if (quest->GetMinLevel() > botLevel)
+    int32 questMinLevel = bot->GetQuestMinLevel(quest);
+    if (questMinLevel > botLevel)
         levelFactor = 0.0f;
-    else if (quest->GetMinLevel() < botLevel - 5)
+    else if (questMinLevel < botLevel - 5)
         levelFactor = 0.3f;
 
     factors.emplace_back("Level Appropriateness", 0.3f, levelFactor,
@@ -663,7 +665,8 @@ std::vector<QuestAutomation::DecisionFactor> QuestAutomation::AnalyzeQuestDecisi
 
     // Quest difficulty - check if quest is challenging based on level
     float difficultyFactor = 1.0f;
-    if (quest->GetMinLevel() > botLevel)
+    int32 questMinLevel2 = bot->GetQuestMinLevel(quest);
+    if (questMinLevel2 > botLevel)
         difficultyFactor = 0.7f; // More difficult quest
     factors.emplace_back("Quest Difficulty", 0.2f, difficultyFactor,
                         "Quest difficulty assessment");
@@ -855,11 +858,10 @@ std::vector<uint32> QuestAutomation::GetAvailableQuestsFromGiver(Player* bot, Cr
         return availableQuests;
 
     // Get quest relations for this creature
-    QuestRelationBounds objectQR = sObjectMgr->GetCreatureQuestRelationBounds(questGiver->GetEntry());
+    QuestRelationResult objectQR = sObjectMgr->GetCreatureQuestRelations(questGiver->GetEntry());
 
-    for (QuestRelations::const_iterator itr = objectQR.first; itr != objectQR.second; ++itr)
+    for (uint32 questId : objectQR)
     {
-        uint32 questId = itr->second;
         const Quest* quest = sObjectMgr->GetQuestTemplate(questId);
 
         if (quest && bot->CanTakeQuest(quest, false))

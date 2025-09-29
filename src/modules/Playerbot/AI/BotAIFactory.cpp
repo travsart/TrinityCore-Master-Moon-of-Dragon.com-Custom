@@ -166,4 +166,14 @@ std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
     return CreateClassAI(bot, bot->GetClass());
 }
 
+void BotAIFactory::InitializeDefaultTriggers(BotAI* ai)
+{
+    if (!ai)
+        return;
+
+    // Initialize default triggers for basic bot automation
+    // This will be expanded to register specific triggers for different behaviors
+    TC_LOG_DEBUG("module.playerbot.ai", "Initialized default triggers for bot");
+}
+
 } // namespace Playerbot

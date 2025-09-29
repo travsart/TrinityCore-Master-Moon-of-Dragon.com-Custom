@@ -142,7 +142,12 @@ private:
     std::vector<MigrationFile> _discoveredMigrations;
 
     // Legacy: Supported migration versions (deprecated - now auto-discovered)
-    static std::vector<std::string> const MIGRATION_SEQUENCE;
+    inline static std::vector<std::string> const MIGRATION_SEQUENCE = {
+        "001",  // Initial schema
+        "002",  // Account management
+        "003",  // Lifecycle management
+        "004"   // Character distribution
+    };
 };
 
 // Migration helper macros

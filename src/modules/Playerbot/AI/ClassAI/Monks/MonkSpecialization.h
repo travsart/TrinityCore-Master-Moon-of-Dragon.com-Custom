@@ -10,7 +10,7 @@
 #ifndef MONK_SPECIALIZATION_H
 #define MONK_SPECIALIZATION_H
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "Position.h"
 #include <vector>
 #include <unordered_set>
@@ -40,7 +40,7 @@ struct ChiInfo
 };
 
 // Energy resource management
-struct EnergyInfo
+struct MonkEnergyInfo
 {
     uint32 current;
     uint32 maximum;
@@ -48,7 +48,7 @@ struct EnergyInfo
     uint32 lastRegen;
     bool isRegenerating;
 
-    EnergyInfo() : current(100), maximum(100), regenRate(10), lastRegen(0), isRegenerating(true) {}
+    MonkEnergyInfo() : current(100), maximum(100), regenRate(10), lastRegen(0), isRegenerating(true) {}
 
     bool HasEnergy(uint32 required) const { return current >= required; }
     void SpendEnergy(uint32 amount) { current = current >= amount ? current - amount : 0; }
@@ -236,7 +236,7 @@ protected:
 
     // Shared resource state
     ChiInfo _chi;
-    EnergyInfo _energy;
+    MonkEnergyInfo _energy;
     uint32 _mana;
     uint32 _maxMana;
 
@@ -266,12 +266,15 @@ protected:
     uint32 _energySpent;
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr float OPTIMAL_HEAL_RANGE = 40.0f;
-    static constexpr uint32 CHI_GENERATION_INTERVAL = 4000; // 4 seconds
-    static constexpr uint32 ENERGY_REGEN_RATE = 100; // per second
-    static constexpr float CHI_CONSERVATION_THRESHOLD = 0.5f; // 50%
-    static constexpr float ENERGY_CONSERVATION_THRESHOLD = 0.3f; // 30%
+    enum MonkConstants : uint32 {
+        CHI_GENERATION_INTERVAL = 4000, // 4 seconds
+        ENERGY_REGEN_RATE = 100 // per second
+    };
+
+    #define MONK_MELEE_RANGE 5.0f
+    #define OPTIMAL_HEAL_RANGE 40.0f
+    #define CHI_CONSERVATION_THRESHOLD 0.5f // 50%
+    #define ENERGY_CONSERVATION_THRESHOLD 0.3f // 30%
 
     // Monk spell IDs
     enum MonkSpells

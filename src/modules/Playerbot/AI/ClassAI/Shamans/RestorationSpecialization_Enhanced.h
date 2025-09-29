@@ -479,28 +479,28 @@ private:
     float CalculateRestorationEfficiency();
 
     // Enhanced constants
-    static constexpr float HEALING_RANGE = 40.0f;
-    static constexpr uint32 EARTH_SHIELD_MAX_CHARGES = 9;
-    static constexpr uint32 EARTH_SHIELD_DURATION = 600000; // 10 minutes
-    static constexpr uint32 RIPTIDE_DURATION = 15000; // 15 seconds
-    static constexpr uint32 TIDAL_WAVES_DURATION = 15000; // 15 seconds
-    static constexpr uint32 NATURE_SWIFTNESS_COOLDOWN = 60000; // 1 minute
-    static constexpr uint32 MANA_TIDE_TOTEM_COOLDOWN = 300000; // 5 minutes
-    static constexpr uint32 SPIRIT_LINK_TOTEM_COOLDOWN = 180000; // 3 minutes
-    static constexpr uint32 WATER_SHIELD_MAX_CHARGES = 3;
-    static constexpr uint32 WATER_SHIELD_DURATION = 600000; // 10 minutes
-    static constexpr uint32 HEALING_WAVE_MANA_COST = 400;
-    static constexpr uint32 GREATER_HEALING_WAVE_MANA_COST = 650;
-    static constexpr uint32 LESSER_HEALING_WAVE_MANA_COST = 280;
-    static constexpr uint32 CHAIN_HEAL_MANA_COST = 620;
-    static constexpr uint32 RIPTIDE_MANA_COST = 360;
-    static constexpr uint32 HEALING_RAIN_MANA_COST = 800;
-    static constexpr float GROUP_HEAL_THRESHOLD = 3.0f; // Use Chain Heal when 3+ injured
-    static constexpr float EMERGENCY_HEAL_THRESHOLD = 20.0f; // Emergency healing below 20%
-    static constexpr float RESTORATION_MANA_THRESHOLD = 20.0f; // Conservative mana usage below 20%
-    static constexpr uint32 EARTH_SHIELD_REFRESH_CHARGES = 3; // Refresh when 3 or fewer charges
-    static constexpr uint32 TIDAL_WAVES_MAX_STACKS = 2; // Maximum Tidal Waves stacks
-    static constexpr float CHAIN_HEAL_RANGE = 12.5f; // Range for Chain Heal bouncing
+    static const float HEALING_RANGE = 40.0f;
+    static const uint32 EARTH_SHIELD_MAX_CHARGES = 9;
+    static const uint32 EARTH_SHIELD_DURATION = 600000; // 10 minutes
+    static const uint32 RIPTIDE_DURATION = 15000; // 15 seconds
+    static const uint32 TIDAL_WAVES_DURATION = 15000; // 15 seconds
+    static const uint32 NATURE_SWIFTNESS_COOLDOWN = 60000; // 1 minute
+    static const uint32 MANA_TIDE_TOTEM_COOLDOWN = 300000; // 5 minutes
+    static const uint32 SPIRIT_LINK_TOTEM_COOLDOWN = 180000; // 3 minutes
+    static const uint32 WATER_SHIELD_MAX_CHARGES = 3;
+    static const uint32 WATER_SHIELD_DURATION = 600000; // 10 minutes
+    static const uint32 HEALING_WAVE_MANA_COST = 400;
+    static const uint32 GREATER_HEALING_WAVE_MANA_COST = 650;
+    static const uint32 LESSER_HEALING_WAVE_MANA_COST = 280;
+    static const uint32 CHAIN_HEAL_MANA_COST = 620;
+    static const uint32 RIPTIDE_MANA_COST = 360;
+    static const uint32 HEALING_RAIN_MANA_COST = 800;
+    static const float GROUP_HEAL_THRESHOLD = 3.0f; // Use Chain Heal when 3+ injured
+    static const float EMERGENCY_HEAL_THRESHOLD = 20.0f; // Emergency healing below 20%
+    static const float RESTORATION_MANA_THRESHOLD = 20.0f; // Conservative mana usage below 20%
+    static const uint32 EARTH_SHIELD_REFRESH_CHARGES = 3; // Refresh when 3 or fewer charges
+    static const uint32 TIDAL_WAVES_MAX_STACKS = 2; // Maximum Tidal Waves stacks
+    static const float CHAIN_HEAL_RANGE = 12.5f; // Range for Chain Heal bouncing
 };
 
 } // namespace Playerbot

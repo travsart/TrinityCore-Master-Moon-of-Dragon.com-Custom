@@ -17,8 +17,7 @@
 namespace Playerbot
 {
 
-bool PlayerbotModuleAdapter::s_registered = false;
-bool PlayerbotModuleAdapter::s_initialized = false;
+// Static members now inline static in header for DLL compatibility
 
 void PlayerbotModuleAdapter::RegisterWithModuleManager()
 {

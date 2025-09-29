@@ -14,9 +14,14 @@
 #include "SpellInfo.h"
 #include "Unit.h"
 #include "ObjectMgr.h"
+#include "ObjectAccessor.h"
 #include "Map.h"
 #include "Group.h"
 #include "WorldSession.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "Cell.h"
+#include "CellImpl.h"
 
 namespace Playerbot
 {
@@ -232,7 +237,7 @@ void EvokerAI::OnCombatEnd()
 
 bool EvokerAI::HasEnoughResource(uint32 spellId)
 {
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return false;
 
@@ -253,7 +258,13 @@ bool EvokerAI::HasEnoughResource(uint32 spellId)
         case SPIRIT_BLOOM:
         case EBON_MIGHT:
         case PRESCIENCE:
-            return HasEssence(spellInfo->ManaCost);
+        {
+            auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
+            for (auto const& cost : powerCosts)
+                if (cost.Power == POWER_MANA)
+                    return HasEssence(cost.Amount);
+            return true;
+        }
 
         default:
             return true;
@@ -262,7 +273,7 @@ bool EvokerAI::HasEnoughResource(uint32 spellId)
 
 void EvokerAI::ConsumeResource(uint32 spellId)
 {
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return;
 
@@ -282,8 +293,13 @@ void EvokerAI::ConsumeResource(uint32 spellId)
         case SPIRIT_BLOOM:
         case EBON_MIGHT:
         case PRESCIENCE:
-            SpendEssence(spellInfo->ManaCost);
+        {
+            auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
+            for (auto const& cost : powerCosts)
+                if (cost.Power == POWER_MANA)
+                    SpendEssence(cost.Amount);
             break;
+        }
     }
 }
 
@@ -415,7 +431,7 @@ void EvokerAI::UpdateEssenceManagement()
     if (_essence.current >= _essence.maximum * 0.9f)
     {
         // Spend excess essence
-        ::Unit* target = GetTarget();
+        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), GetBot()->GetTarget());
         if (target)
         {
             if (_specialization == EvokerSpec::DEVASTATION && CanUseAbility(DISINTEGRATE))
@@ -644,7 +660,7 @@ bool EvokerAI::CanShiftAspect()
     {
         for (auto const& member : group->GetMemberSlots())
         {
-            if (Player* player = ObjectAccessor::GetPlayer(*_bot, member.guid))
+            if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
                 if (player->GetHealthPct() < lowestHealth && player->GetDistance(_bot) <= OPTIMAL_CASTING_RANGE)
                 {
@@ -665,7 +681,7 @@ bool EvokerAI::CanShiftAspect()
     {
         for (auto const& member : group->GetMemberSlots())
         {
-            if (Player* player = ObjectAccessor::GetPlayer(*_bot, member.guid))
+            if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
                 if (player->GetDistance(_bot) <= OPTIMAL_CASTING_RANGE && player != _bot)
                 {
@@ -684,8 +700,8 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     std::vector<::Unit*> targets;
 
     std::list<Unit*> nearbyEnemies;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(_bot, _bot, EMPOWERED_SPELL_RANGE);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
+    Trinity::AnyUnitInObjectRangeCheck check(_bot, EMPOWERED_SPELL_RANGE);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
     Cell::VisitAllObjects(_bot, searcher, EMPOWERED_SPELL_RANGE);
 
     for (Unit* enemy : nearbyEnemies)
@@ -914,7 +930,7 @@ void EvokerAI::OptimizeResourceUsage()
     // Optimize essence usage based on situation
     if (_essence.current >= _essence.maximum * 0.9f)
     {
-        ::Unit* target = GetTarget();
+        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), GetBot()->GetTarget());
         if (target && _specialization == EvokerSpec::DEVASTATION)
         {
             if (CanUseAbility(DISINTEGRATE))

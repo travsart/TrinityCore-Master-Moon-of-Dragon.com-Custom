@@ -26,10 +26,7 @@
 #include "Log.h"
 #include "GitRevision.h"
 
-// Module state
-bool PlayerbotModule::_initialized = false;
-bool PlayerbotModule::_enabled = false;
-std::string PlayerbotModule::_lastError = "";
+// Module state - using inline static in header for DLL compatibility
 
 bool PlayerbotModule::Initialize()
 {

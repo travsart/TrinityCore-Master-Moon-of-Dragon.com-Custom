@@ -139,19 +139,30 @@ enum PetSpells : uint32
 };
 
 // Hunter constants
-static constexpr float RANGED_ATTACK_RANGE = 35.0f;
-static constexpr float MELEE_RANGE = 5.0f;
-static constexpr float DEAD_ZONE_MIN = 5.0f;
-static constexpr float DEAD_ZONE_MAX = 8.0f;
-static constexpr float OPTIMAL_RANGE = 25.0f;
-static constexpr float PET_COMMAND_RANGE = 50.0f;
+enum HunterConstants : uint32 {
+    RANGED_ATTACK_RANGE_INT = 35,
+    MELEE_RANGE_INT = 5,
+    DEAD_ZONE_MIN_INT = 5,
+    DEAD_ZONE_MAX_INT = 8,
+    OPTIMAL_RANGE_INT = 25,
+    PET_COMMAND_RANGE_INT = 50
+};
+
+#define RANGED_ATTACK_RANGE 35.0f
+#define MELEE_RANGE 5.0f
+#define DEAD_ZONE_MIN 5.0f
+#define DEAD_ZONE_MAX 8.0f
+#define OPTIMAL_RANGE 25.0f
+#define PET_COMMAND_RANGE 50.0f
 
 // Timing constants
-static constexpr uint32 PET_CHECK_INTERVAL = 2000;        // 2 seconds
-static constexpr uint32 TRAP_COOLDOWN_TIME = 30000;       // 30 seconds
-static constexpr uint32 ASPECT_CHECK_INTERVAL = 5000;     // 5 seconds
-static constexpr uint32 TRACKING_UPDATE_INTERVAL = 10000; // 10 seconds
-static constexpr uint32 ROTATION_UPDATE_INTERVAL = 200;   // 200ms
+enum HunterTimingConstants : uint32 {
+    PET_CHECK_INTERVAL = 2000,        // 2 seconds
+    TRAP_COOLDOWN_TIME = 30000,       // 30 seconds
+    ASPECT_CHECK_INTERVAL = 5000,     // 5 seconds
+    TRACKING_UPDATE_INTERVAL = 10000, // 10 seconds
+    ROTATION_UPDATE_INTERVAL = 200    // 200ms
+};
 
 // Trap information
 struct TrapInfo

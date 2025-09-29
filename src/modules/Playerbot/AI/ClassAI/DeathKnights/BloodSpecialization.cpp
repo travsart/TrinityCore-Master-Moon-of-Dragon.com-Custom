@@ -133,7 +133,7 @@ void BloodSpecialization::UpdateRotation(::Unit* target)
     }
 
     // Ranged abilities
-    if (bot->GetDistance(target) > MELEE_RANGE)
+    if (bot->GetDistance(target) > BLOOD_MELEE_RANGE)
     {
         CastDeathCoil(target);
     }
@@ -330,7 +330,7 @@ Position BloodSpecialization::GetOptimalPosition(::Unit* target)
         return Position();
 
     // Tank stays in front of target
-    float distance = MELEE_RANGE * 0.8f;
+    float distance = BLOOD_MELEE_RANGE * 0.8f;
     float angle = target->GetAngle(bot);
 
     return Position(
@@ -343,7 +343,7 @@ Position BloodSpecialization::GetOptimalPosition(::Unit* target)
 
 float BloodSpecialization::GetOptimalRange(::Unit* target)
 {
-    return MELEE_RANGE;
+    return BLOOD_MELEE_RANGE;
 }
 
 // Implementation of pure virtual methods from base class

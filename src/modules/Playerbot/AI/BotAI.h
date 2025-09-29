@@ -242,7 +242,7 @@ protected:
     virtual void OnCombatStart(::Unit* target) {}
     virtual void OnCombatEnd() {}
 
-private:
+protected:
     Player* _bot;
     AIState _state;
     BotAIState _aiState = BotAIState::IDLE;
@@ -328,11 +328,13 @@ public:
                          std::function<void(BotAI*)> initializer);
     void ApplyTemplate(BotAI* ai, std::string const& templateName);
 
+    // Initialization methods
+    void InitializeDefaultTriggers(BotAI* ai);
+    void InitializeDefaultValues(BotAI* ai);
+
 private:
     void InitializeDefaultStrategies(BotAI* ai);
     void InitializeClassStrategies(BotAI* ai, uint8 classId, uint8 spec);
-    void InitializeDefaultTriggers(BotAI* ai);
-    void InitializeDefaultValues(BotAI* ai);
 
 private:
     std::unordered_map<std::string, std::function<std::unique_ptr<BotAI>(Player*)>> _creators;

@@ -20,12 +20,6 @@
 namespace Playerbot
 {
 
-// Spell priority comparator for TriggerResult priority queue
-bool TriggerResultComparator::operator()(TriggerResult const& a, TriggerResult const& b) const
-{
-    // Higher priority values should be processed first
-    return a.urgency < b.urgency;
-}
 
 InterruptCoordinator::InterruptCoordinator(Group* group)
     : _group(group)

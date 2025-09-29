@@ -40,15 +40,6 @@ enum class MomentumState : uint8
     FADING          = 4   // Momentum about to expire
 };
 
-enum class MetamorphosisState : uint8
-{
-    UNAVAILABLE     = 0,  // On cooldown or not learned
-    READY           = 1,  // Available for use
-    PREPARING       = 2,  // Setting up for activation
-    ACTIVE          = 3,  // Currently active
-    OPTIMIZING      = 4,  // Maximizing active window
-    ENDING          = 5   // About to end
-};
 
 struct HavocTarget
 {
@@ -93,6 +84,21 @@ public:
     void ConsumeResource(uint32 spellId) override;
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
+
+    // Metamorphosis management
+    void UpdateMetamorphosis() override;
+    void TriggerMetamorphosis() override;
+    MetamorphosisState GetMetamorphosisState() const override;
+
+    // Soul fragment management
+    void UpdateSoulFragments() override;
+    void ConsumeSoulFragments() override;
+    bool ShouldConsumeSoulFragments() override;
+    uint32 GetAvailableSoulFragments() const override;
+
+    // Specialization info
+    DemonHunterSpec GetSpecialization() const override;
+    const char* GetSpecializationName() const override;
 
     // Advanced fury mastery
     void ManageFuryOptimally();
@@ -156,6 +162,88 @@ public:
             perfectEyeBeams = 0; executionKills = 0;
             lastUpdate = std::chrono::steady_clock::now();
         }
+
+        // Copy constructor
+        HavocMetrics(const HavocMetrics& other)
+            : demonsBiteCasts(other.demonsBiteCasts.load())
+            , chaosStrikeCasts(other.chaosStrikeCasts.load())
+            , bladeDanceCasts(other.bladeDanceCasts.load())
+            , eyeBeamCasts(other.eyeBeamCasts.load())
+            , felRushUses(other.felRushUses.load())
+            , vengefulRetreatUses(other.vengefulRetreatUses.load())
+            , metamorphosisActivations(other.metamorphosisActivations.load())
+            , soulFragmentsConsumed(other.soulFragmentsConsumed.load())
+            , furyEfficiency(other.furyEfficiency.load())
+            , momentumUptime(other.momentumUptime.load())
+            , metamorphosisEfficiency(other.metamorphosisEfficiency.load())
+            , mobilityEfficiency(other.mobilityEfficiency.load())
+            , perfectEyeBeams(other.perfectEyeBeams.load())
+            , executionKills(other.executionKills.load())
+            , lastUpdate(other.lastUpdate)
+        {}
+
+        // Move constructor
+        HavocMetrics(HavocMetrics&& other) noexcept
+            : demonsBiteCasts(other.demonsBiteCasts.load())
+            , chaosStrikeCasts(other.chaosStrikeCasts.load())
+            , bladeDanceCasts(other.bladeDanceCasts.load())
+            , eyeBeamCasts(other.eyeBeamCasts.load())
+            , felRushUses(other.felRushUses.load())
+            , vengefulRetreatUses(other.vengefulRetreatUses.load())
+            , metamorphosisActivations(other.metamorphosisActivations.load())
+            , soulFragmentsConsumed(other.soulFragmentsConsumed.load())
+            , furyEfficiency(other.furyEfficiency.load())
+            , momentumUptime(other.momentumUptime.load())
+            , metamorphosisEfficiency(other.metamorphosisEfficiency.load())
+            , mobilityEfficiency(other.mobilityEfficiency.load())
+            , perfectEyeBeams(other.perfectEyeBeams.load())
+            , executionKills(other.executionKills.load())
+            , lastUpdate(std::move(other.lastUpdate))
+        {}
+
+        // Copy assignment operator
+        HavocMetrics& operator=(const HavocMetrics& other) {
+            if (this != &other) {
+                demonsBiteCasts = other.demonsBiteCasts.load();
+                chaosStrikeCasts = other.chaosStrikeCasts.load();
+                bladeDanceCasts = other.bladeDanceCasts.load();
+                eyeBeamCasts = other.eyeBeamCasts.load();
+                felRushUses = other.felRushUses.load();
+                vengefulRetreatUses = other.vengefulRetreatUses.load();
+                metamorphosisActivations = other.metamorphosisActivations.load();
+                soulFragmentsConsumed = other.soulFragmentsConsumed.load();
+                furyEfficiency = other.furyEfficiency.load();
+                momentumUptime = other.momentumUptime.load();
+                metamorphosisEfficiency = other.metamorphosisEfficiency.load();
+                mobilityEfficiency = other.mobilityEfficiency.load();
+                perfectEyeBeams = other.perfectEyeBeams.load();
+                executionKills = other.executionKills.load();
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
+        }
+
+        // Move assignment operator
+        HavocMetrics& operator=(HavocMetrics&& other) noexcept {
+            if (this != &other) {
+                demonsBiteCasts = other.demonsBiteCasts.load();
+                chaosStrikeCasts = other.chaosStrikeCasts.load();
+                bladeDanceCasts = other.bladeDanceCasts.load();
+                eyeBeamCasts = other.eyeBeamCasts.load();
+                felRushUses = other.felRushUses.load();
+                vengefulRetreatUses = other.vengefulRetreatUses.load();
+                metamorphosisActivations = other.metamorphosisActivations.load();
+                soulFragmentsConsumed = other.soulFragmentsConsumed.load();
+                furyEfficiency = other.furyEfficiency.load();
+                momentumUptime = other.momentumUptime.load();
+                metamorphosisEfficiency = other.metamorphosisEfficiency.load();
+                mobilityEfficiency = other.mobilityEfficiency.load();
+                perfectEyeBeams = other.perfectEyeBeams.load();
+                executionKills = other.executionKills.load();
+                lastUpdate = std::move(other.lastUpdate);
+            }
+            return *this;
+        }
     };
 
     HavocMetrics GetSpecializationMetrics() const { return _metrics; }
@@ -174,7 +262,6 @@ public:
 
     // Advanced rotation optimization
     void OptimizeRotationForTarget(::Unit* target);
-    void HandleMultiTargetHavoc();
     void CoordinateAoERotation();
     void ManageExecutePhase();
 
@@ -203,7 +290,7 @@ private:
     void ExecuteFelRush(::Unit* target);
 
     // Cooldown management
-    bool ShouldUseMetamorphosis() const;
+    bool ShouldUseMetamorphosis() override;
     bool ShouldUseNemesis(::Unit* target) const;
     bool ShouldUseChaosBlades() const;
     bool ShouldUseVengefulRetreat() const;

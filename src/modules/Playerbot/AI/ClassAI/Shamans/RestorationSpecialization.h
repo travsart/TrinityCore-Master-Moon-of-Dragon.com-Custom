@@ -222,17 +222,17 @@ private:
     uint32 _overhealingDone;
 
     // Constants
-    static constexpr uint32 EARTH_SHIELD_DURATION = 600000; // 10 minutes
-    static constexpr uint32 RIPTIDE_DURATION = 18000; // 18 seconds
-    static constexpr uint32 NATURE_SWIFTNESS_COOLDOWN = 120000; // 2 minutes
-    static constexpr uint32 CHAIN_HEAL_COOLDOWN = 2500; // 2.5 seconds
-    static constexpr float EMERGENCY_HEALTH_THRESHOLD = 25.0f;
-    static constexpr float LESSER_HEALING_WAVE_THRESHOLD = 50.0f;
-    static constexpr float HEALING_WAVE_THRESHOLD = 70.0f;
-    static constexpr uint32 MAX_TIDAL_WAVE_STACKS = 2;
-    static constexpr float OPTIMAL_HEALING_RANGE = 40.0f;
-    static constexpr uint32 CHAIN_HEAL_MIN_TARGETS = 3;
-    static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f;
+    static const uint32 EARTH_SHIELD_DURATION = 600000; // 10 minutes
+    static const uint32 RIPTIDE_DURATION = 18000; // 18 seconds
+    static const uint32 NATURE_SWIFTNESS_COOLDOWN = 120000; // 2 minutes
+    static const uint32 CHAIN_HEAL_COOLDOWN = 2500; // 2.5 seconds
+    // static const float EMERGENCY_HEALTH_THRESHOLD;
+    // static const float LESSER_HEALING_WAVE_THRESHOLD;
+    // static const float HEALING_WAVE_THRESHOLD;
+    static const uint32 MAX_TIDAL_WAVE_STACKS = 2;
+    // static const float OPTIMAL_HEALING_RANGE;
+    static const uint32 CHAIN_HEAL_MIN_TARGETS = 3;
+    // static const float MANA_CONSERVATION_THRESHOLD;
 };
 
 } // namespace Playerbot

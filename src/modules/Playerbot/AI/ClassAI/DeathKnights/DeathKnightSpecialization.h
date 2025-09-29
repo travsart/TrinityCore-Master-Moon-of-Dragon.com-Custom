@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "Position.h"
 #include <unordered_map>
 #include <bitset>

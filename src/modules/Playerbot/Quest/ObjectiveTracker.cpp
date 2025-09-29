@@ -650,7 +650,7 @@ void ObjectiveTracker::SynchronizeObjectiveProgress(Group* group, uint32 questId
         return;
 
     // Synchronize progress updates among group members
-    uint32 groupId = group->GetLowGUID();
+    uint32 groupId = group->GetDbStoreId();
 
     std::lock_guard<std::mutex> lock(_trackingMutex);
     _groupObjectiveSyncTime[groupId] = getMSTime();
@@ -675,19 +675,19 @@ void ObjectiveTracker::HandleObjectiveConflicts(Group* group, uint32 questId, ui
     ResolveObjectiveConflicts(group, questId, objectiveIndex);
 }
 
-ObjectiveTracker::ObjectiveAnalytics ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
+const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
 {
     std::lock_guard<std::mutex> lock(_trackingMutex);
     auto it = _botAnalytics.find(botGuid);
     if (it != _botAnalytics.end())
         return it->second;
 
-    ObjectiveAnalytics analytics;
-    analytics.Reset();
-    return analytics;
+    // Create a new analytics entry if it doesn't exist
+    _botAnalytics[botGuid].Reset();
+    return _botAnalytics[botGuid];
 }
 
-ObjectiveTracker::ObjectiveAnalytics ObjectiveTracker::GetGlobalObjectiveAnalytics()
+const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetGlobalObjectiveAnalytics()
 {
     return _globalAnalytics;
 }
@@ -921,8 +921,9 @@ float ObjectiveTracker::CalculateUrgencyFactor(Player* bot, const ObjectiveState
     float urgency = 0.5f;
 
     // Higher urgency for higher level quests
-    uint32 botLevel = bot->getLevel();
-    if (quest->GetMinLevel() >= botLevel)
+    int32 botLevel = static_cast<int32>(bot->GetLevel());
+    int32 questMinLevel = bot->GetQuestMinLevel(quest);
+    if (questMinLevel >= botLevel)
         urgency += 0.3f;
 
     // Higher urgency for quests that have been active longer

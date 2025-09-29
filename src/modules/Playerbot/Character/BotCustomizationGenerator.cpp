@@ -15,10 +15,7 @@
 
 namespace Playerbot {
 
-// Static member initialization
-std::unordered_map<uint64, std::vector<BotCustomizationGenerator::CustomizationOption>>
-    BotCustomizationGenerator::_customizationCache;
-bool BotCustomizationGenerator::_initialized = false;
+// Static member definitions removed - now inline static in header to fix DLL export issues
 
 void BotCustomizationGenerator::Initialize()
 {

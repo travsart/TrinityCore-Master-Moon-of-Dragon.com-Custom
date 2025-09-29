@@ -87,6 +87,13 @@ struct QuestMetadata
     bool isDaily;
     bool isSeasonal;
 
+    // Default constructor
+    QuestMetadata() : questId(0), type(QuestType::KILL_COLLECT)
+        , priority(QuestPriority::NORMAL), recommendedLevel(1), minLevel(1)
+        , maxLevel(80), requiredPlayers(1), estimatedDuration(1200) // 20 minutes
+        , difficultyRating(5.0f), questGiver(0), isElite(false)
+        , isDungeon(false), isRaid(false), isDaily(false), isSeasonal(false) {}
+
     QuestMetadata(uint32 id) : questId(id), type(QuestType::KILL_COLLECT)
         , priority(QuestPriority::NORMAL), recommendedLevel(1), minLevel(1)
         , maxLevel(80), requiredPlayers(1), estimatedDuration(1200) // 20 minutes
@@ -199,6 +206,9 @@ public:
         std::atomic<uint32> goldEarned{0};
         std::chrono::steady_clock::time_point lastUpdate;
 
+        // Default constructor
+        QuestMetrics() : lastUpdate(std::chrono::steady_clock::now()) {}
+
         void Reset() {
             questsStarted = 0; questsCompleted = 0; questsAbandoned = 0; questsFailed = 0;
             averageCompletionTime = 1200.0f; successRate = 0.85f; efficiencyRating = 1.0f;
@@ -210,6 +220,36 @@ public:
             uint32 started = questsStarted.load();
             uint32 completed = questsCompleted.load();
             return started > 0 ? (float)completed / started : 0.0f;
+        }
+
+        // Copy constructor for atomic members
+        QuestMetrics(const QuestMetrics& other)
+            : questsStarted(other.questsStarted.load()),
+              questsCompleted(other.questsCompleted.load()),
+              questsAbandoned(other.questsAbandoned.load()),
+              questsFailed(other.questsFailed.load()),
+              averageCompletionTime(other.averageCompletionTime.load()),
+              successRate(other.successRate.load()),
+              efficiencyRating(other.efficiencyRating.load()),
+              experienceGained(other.experienceGained.load()),
+              goldEarned(other.goldEarned.load()),
+              lastUpdate(other.lastUpdate) {}
+
+        // Assignment operator for atomic members
+        QuestMetrics& operator=(const QuestMetrics& other) {
+            if (this != &other) {
+                questsStarted = other.questsStarted.load();
+                questsCompleted = other.questsCompleted.load();
+                questsAbandoned = other.questsAbandoned.load();
+                questsFailed = other.questsFailed.load();
+                averageCompletionTime = other.averageCompletionTime.load();
+                successRate = other.successRate.load();
+                efficiencyRating = other.efficiencyRating.load();
+                experienceGained = other.experienceGained.load();
+                goldEarned = other.goldEarned.load();
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
         }
     };
 
@@ -285,6 +325,9 @@ private:
     void BalanceQuestLoad();
     void PredictQuestCompletionTime(uint32 questId, Player* bot);
     void AnalyzeQuestEfficiency(uint32 botGuid);
+
+    // Gear optimization helpers
+    float CalculateGearScoreImprovement(Player* bot, const std::vector<uint32>& items);
 
     // Quest metadata and chain helpers
     void PopulateQuestMetadata(uint32 questId);

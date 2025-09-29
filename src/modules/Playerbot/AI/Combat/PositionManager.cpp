@@ -18,8 +18,12 @@
 #include "CellImpl.h"
 #include "PathGenerator.h"
 #include "MoveSpline.h"
+#include "PhasingHandler.h"
+#include "MotionMaster.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "PhaseShift.h"
+#include "SharedDefines.h"
 
 namespace Playerbot
 {
@@ -224,7 +228,7 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
 
     info.score = std::max(0.0f, totalScore);
     info.distanceToTarget = context.target ? pos.GetExactDist(context.target) : 0.0f;
-    info.hasLineOfSight = context.target ? _bot->IsWithinLOSInMap(context.target, pos) : true;
+    info.hasLineOfSight = context.target ? _bot->IsWithinLOSInMap(context.target) : true;
     info.isOptimalRange = (info.distanceToTarget >= context.preferredRange * 0.8f &&
                           info.distanceToTarget <= context.preferredRange * 1.2f);
     info.safetyRating = CalculateSafetyScore(pos, context);
@@ -285,7 +289,7 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
 
     switch (context.desiredType)
     {
-        case PositionType::MELEE_RANGE:
+        case PositionType::MELEE_COMBAT:
             candidates = GenerateCircularPositions(targetPos, 4.0f, 8);
             break;
 
@@ -372,7 +376,7 @@ Position PositionManager::FindMeleePosition(Unit* target, bool preferBehind)
         MovementContext context;
         context.bot = _bot;
         context.target = target;
-        context.desiredType = PositionType::MELEE_RANGE;
+        context.desiredType = PositionType::MELEE_COMBAT;
         context.validationFlags = PositionValidation::COMBAT;
 
         PositionInfo bestPosition;
@@ -551,23 +555,23 @@ void PositionManager::ClearExpiredZones(uint32 currentTime)
 
 bool PositionManager::ValidatePosition(const Position& pos, PositionValidation flags)
 {
-    if ((flags & PositionValidation::WALKABLE) && !IsWalkablePosition(pos))
+    if ((static_cast<uint32>(flags) & static_cast<uint32>(PositionValidation::WALKABLE)) && !IsWalkablePosition(pos))
         return false;
 
-    if ((flags & PositionValidation::STABLE_GROUND))
+    if (static_cast<uint32>(flags) & static_cast<uint32>(PositionValidation::STABLE_GROUND))
     {
         Map* map = _bot->GetMap();
         if (!map || !PositionUtils::IsPositionOnGround(pos, map))
             return false;
     }
 
-    if ((flags & PositionValidation::NO_OBSTACLES))
+    if (static_cast<uint32>(flags) & static_cast<uint32>(PositionValidation::NO_OBSTACLES))
     {
         if (!PositionUtils::CanWalkStraightLine(_bot->GetPosition(), pos, _bot->GetMap()))
             return false;
     }
 
-    if ((flags & PositionValidation::AVOID_AOE) && IsInDangerZone(pos))
+    if ((static_cast<uint32>(flags) & static_cast<uint32>(PositionValidation::AVOID_AOE)) && IsInDangerZone(pos))
         return false;
 
     return true;
@@ -579,7 +583,7 @@ bool PositionManager::IsWalkablePosition(const Position& pos)
     if (!map)
         return false;
 
-    return map->IsInWater(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()) == false &&
+    return map->IsInWater(_bot->GetPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()) == false &&
            PositionUtils::IsPositionOnGround(pos, map);
 }
 
@@ -669,7 +673,7 @@ float PositionManager::CalculateLineOfSightScore(const Position& pos, const Move
     if (!context.target)
         return 100.0f;
 
-    if (_bot->IsWithinLOSInMap(context.target, pos))
+    if (_bot->IsWithinLOSInMap(context.target))
         return 100.0f;
     else
         return 0.0f;
@@ -687,7 +691,7 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
 
     switch (context.desiredType)
     {
-        case PositionType::MELEE_RANGE:
+        case PositionType::MELEE_COMBAT:
         case PositionType::FLANKING:
             {
                 float behindAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
@@ -871,7 +875,7 @@ bool PositionUtils::IsInOptimalRange(Player* bot, Unit* target, PositionType typ
 
     switch (type)
     {
-        case PositionType::MELEE_RANGE:
+        case PositionType::MELEE_COMBAT:
             return distance <= 5.0f;
         case PositionType::RANGED_DPS:
             return distance >= 20.0f && distance <= 40.0f;
@@ -914,7 +918,7 @@ bool PositionUtils::IsPositionOnGround(const Position& pos, Map* map)
     if (!map)
         return false;
 
-    float groundZ = map->GetHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+    float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
     return std::abs(pos.GetPositionZ() - groundZ) <= 2.0f;
 }
 
@@ -923,8 +927,12 @@ bool PositionUtils::CanWalkStraightLine(const Position& from, const Position& to
     if (!map)
         return false;
 
-    return !map->isInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ(),
-                                to.GetPositionX(), to.GetPositionY(), to.GetPositionZ());
+    // Use TrinityCore API properly with PhaseShift
+    // We need a PhaseShift - for now, create a default one or get from a WorldObject
+    PhaseShift phaseShift;
+    return map->isInLineOfSight(phaseShift, from.GetPositionX(), from.GetPositionY(), from.GetPositionZ(),
+                               to.GetPositionX(), to.GetPositionY(), to.GetPositionZ(),
+                               LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
 }
 
 } // namespace Playerbot

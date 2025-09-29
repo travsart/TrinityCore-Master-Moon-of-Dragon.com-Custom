@@ -148,8 +148,8 @@ public:
         }
     };
 
-    ObjectiveAnalytics GetBotObjectiveAnalytics(uint32 botGuid);
-    ObjectiveAnalytics GetGlobalObjectiveAnalytics();
+    const ObjectiveAnalytics& GetBotObjectiveAnalytics(uint32 botGuid);
+    const ObjectiveAnalytics& GetGlobalObjectiveAnalytics();
 
     // Advanced tracking features
     void EnablePredictiveTracking(Player* bot, bool enable);
@@ -197,6 +197,10 @@ private:
         bool isAvailable;
         uint32 competitionLevel; // Number of players competing for this target
         float spawnProbability;
+
+        // Default constructor for std::unordered_map compatibility
+        TargetTrackingData() : targetId(0), lastSeenTime(0), respawnTime(0)
+            , isAvailable(true), competitionLevel(0), spawnProbability(1.0f) {}
 
         TargetTrackingData(uint32 id) : targetId(id), lastSeenTime(0), respawnTime(0)
             , isAvailable(true), competitionLevel(0), spawnProbability(1.0f) {}

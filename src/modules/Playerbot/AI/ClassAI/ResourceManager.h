@@ -180,7 +180,7 @@ private:
     std::unordered_map<uint32, uint32> _spellUsageCount;   // spellId -> usage count
 
     // Rune tracking (Death Knight specific)
-    static constexpr uint32 MAX_RUNES = 6;
+    #define MAX_RUNES 6
     RuneInfo _runes[MAX_RUNES];
     uint32 _runicPower;
 

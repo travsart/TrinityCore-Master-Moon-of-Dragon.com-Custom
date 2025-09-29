@@ -531,7 +531,7 @@ See the main configuration file for advanced settings and customization options.
 
 ---
 
-*Generated: {timestamp} | Total Classes: {len(analysis_data.get('classes_found', []))} | Total Functions: {len(analysis_data.get('functions_found', [])))}*
+*Generated: {timestamp} | Total Classes: {len(analysis_data.get('classes_found', []))} | Total Functions: {len(analysis_data.get('functions_found', []))}*
 '''
     
     def insert_comments(self, directories: List[str], auto_fix: bool = False) -> Dict[str, Any]:

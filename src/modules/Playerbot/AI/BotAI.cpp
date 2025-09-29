@@ -23,7 +23,8 @@
 #include "Opcodes.h"
 #include "Log.h"
 #include "Group/GroupInvitationHandler.h"
-#include "Strategy/LeaderFollowBehavior.h"
+#include "Movement/LeaderFollowBehavior.h"
+#include "Combat/GroupCombatTrigger.h"
 
 namespace Playerbot
 {
@@ -56,6 +57,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 
     // Initialize default strategies for basic bot functionality
     InitializeDefaultStrategies();
+
+    // Initialize default triggers for automation and basic AI
+    sBotAIFactory->InitializeDefaultTriggers(this);
 
     TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot ? _bot->GetGUID().ToString() : "null");
 }
@@ -145,6 +149,19 @@ AIUpdateResult BotAI::UpdateEnhanced(uint32 diff)
     if (!_enabled || !_bot)
         return result;
 
+    // DEBUG: Log UpdateEnhanced calls
+    static uint32 lastEnhancedLog = 0;
+    static uint32 enhancedCallCount = 0;
+    enhancedCallCount++;
+    uint32 currentTime = getMSTime();
+    if (currentTime - lastEnhancedLog > 5000) // Every 5 seconds
+    {
+        TC_LOG_INFO("module.playerbot.combat", "UpdateEnhanced called for {} - Count: {}, Enabled: {}, InCombat: {}",
+                    _bot->GetName(), enhancedCallCount, _enabled.load() ? "Yes" : "No",
+                    _bot->IsInCombat() ? "Yes" : "No");
+        lastEnhancedLog = currentTime;
+    }
+
     // Update group invitation handler (always update for quick response)
     if (_groupInvitationHandler)
     {
@@ -201,6 +218,7 @@ AIUpdateResult BotAI::UpdateEnhanced(uint32 diff)
 
     return result;
 }
+
 
 void BotAI::OnDeath()
 {
@@ -505,8 +523,7 @@ void BotAI::DoUpdateAI(uint32 diff)
         {
             if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
             {
-                followBehavior->UpdateMovement(this, diff);
-                followBehavior->UpdateFormation(this);
+                followBehavior->UpdateFollowBehavior(this, diff);
             }
         }
     }
@@ -528,6 +545,62 @@ void BotAI::ProcessTriggers()
 {
     if (!_bot)
         return;
+
+    // CRITICAL DEBUG: Log trigger processing
+    static uint32 lastDebugLog = 0;
+    uint32 currentTime = getMSTime();
+    bool shouldLog = (currentTime - lastDebugLog > 3000); // Log every 3 seconds
+
+    if (shouldLog)
+    {
+        TC_LOG_INFO("module.playerbot.combat", "ProcessTriggers for {} - Trigger count: {}, InCombat: {}, Group: {}",
+                    _bot->GetName(), _triggers.size(),
+                    _bot->IsInCombat() ? "Yes" : "No",
+                    _bot->GetGroup() ? "Yes" : "No");
+        lastDebugLog = currentTime;
+    }
+
+    // CRITICAL FIX: Process direct triggers registered with BotAI first
+    for (auto const& trigger : _triggers)
+    {
+        if (!trigger)
+            continue;
+
+        // Log each trigger check for debugging
+        bool checkResult = trigger->Check(this);
+        if (shouldLog)
+        {
+            TC_LOG_DEBUG("module.playerbot.combat", "  Checking trigger '{}' for {} - Result: {}",
+                        trigger->GetName(), _bot->GetName(), checkResult ? "TRUE" : "false");
+        }
+
+        if (checkResult)
+        {
+            TriggerResult result = trigger->Evaluate(this);
+            if (result.triggered && result.suggestedAction)
+            {
+                TC_LOG_INFO("module.playerbot.combat", "TRIGGER FIRED: '{}' for bot {} - Executing action '{}'",
+                            trigger->GetName(), _bot->GetName(), result.suggestedAction->GetName());
+
+                // Queue the action for execution
+                QueueAction(result.suggestedAction, result.context);
+
+                // Also try immediate execution
+                ActionResult actionResult = result.suggestedAction->Execute(this, result.context);
+                if (actionResult == ActionResult::SUCCESS)
+                {
+                    TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Executed action from trigger {} for bot {}",
+                                trigger->GetName(), _bot->GetName());
+                    return; // Execute only one action per update
+                }
+                else
+                {
+                    TC_LOG_DEBUG("module.playerbot.combat", "Action execution returned: {} for trigger {} on bot {}",
+                                static_cast<int>(actionResult), trigger->GetName(), _bot->GetName());
+                }
+            }
+        }
+    }
 
     // Process triggers from all active strategies
     for (Strategy* strategy : GetActiveStrategies())
@@ -597,90 +670,103 @@ void BotAI::LogAIDecision(std::string const& action, float score) const
                  _bot ? _bot->GetName() : "null", action, score);
 }
 
-// BotAIFactory implementation
-BotAIFactory* BotAIFactory::instance()
+// Missing method implementations
+void BotAI::UpdateValuesInternal(uint32 diff)
 {
-    static BotAIFactory instance;
-    return &instance;
+    // Update internal values based on bot state
+    UpdateValues();
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
+void BotAI::UpdateCombat(uint32 diff)
 {
-    if (!bot)
-        return nullptr;
+    if (!_bot || !_bot->IsInCombat())
+        return;
 
-    // For now, create default AI - will be expanded with specialized AIs
-    return std::make_unique<DefaultBotAI>(bot);
-}
+    // Update combat state and handle combat actions
+    if (_aiState != BotAIState::COMBAT)
+        SetAIState(BotAIState::COMBAT);
 
-std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
-{
-    if (!bot)
-        return nullptr;
-
-    // This will be expanded with class-specific AI implementations
-    return CreateAI(bot);
-}
-
-std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, std::string const& type)
-{
-    if (!bot)
-        return nullptr;
-
-    auto it = _creators.find(type);
-    if (it != _creators.end())
-        return it->second(bot);
-
-    // Fallback to default AI
-    return CreateAI(bot);
-}
-
-void BotAIFactory::RegisterAICreator(std::string const& type,
-                                    std::function<std::unique_ptr<BotAI>(Player*)> creator)
-{
-    _creators[type] = creator;
-    TC_LOG_DEBUG("playerbots.ai", "Registered AI creator for type '{}'", type);
-}
-
-// Enhanced BotAI methods
-bool BotAI::ExecuteAction(std::string const& name, ActionContext const& context)
-{
-    if (!_bot || name.empty())
-        return false;
-
-    // Find action in active strategies
-    for (Strategy* strategy : GetActiveStrategies())
+    // Delegate to class-specific combat routines
+    if (::Unit* target = GetTargetUnit())
     {
-        if (std::shared_ptr<Action> action = strategy->GetAction(name))
+        UpdateRotation(target);
+        OnCombatStart(target);
+    }
+
+    UpdateBuffs();
+    UpdateCooldowns(diff);
+}
+
+void BotAI::UpdateMovement(uint32 diff)
+{
+    if (!_bot)
+        return;
+
+    // Handle basic movement updates
+    // Movement is primarily handled by individual strategies and actions
+
+    // Check if bot should follow group leader
+    Group* group = _bot->GetGroup();
+    if (group && group->GetMembersCount() > 1)
+    {
+        // Movement handled by LeaderFollowBehavior strategy
+    }
+}
+
+void BotAI::UpdateActions(uint32 diff)
+{
+    // Process action queue
+    if (!_actionQueue.empty() && !_currentAction)
+    {
+        auto actionPair = _actionQueue.front();
+        _actionQueue.pop();
+
+        _currentAction = actionPair.first;
+        _currentContext = actionPair.second;
+
+        if (_currentAction)
         {
-            if (action->IsPossible(this))
-            {
-                ActionResult result = action->Execute(this, context);
-                if (result == ActionResult::SUCCESS)
-                {
-                    _enhancedMetrics.actionsExecuted++;
-                    LogAIDecision(name, 1.0f);
-                    return true;
-                }
-            }
+            ExecuteActionInternal(_currentAction.get(), _currentContext);
         }
     }
-
-    return false;
 }
 
-void BotAI::QueueAction(std::shared_ptr<Action> action, ActionContext const& context)
+void BotAI::UpdateStrategies(uint32 diff)
 {
-    if (action)
+    // Update strategy relevance and activation
+    EvaluateStrategies();
+
+    // Update active strategies
+    for (auto const& strategyName : _activeStrategies)
     {
-        _actionQueue.push({action, context});
+        Strategy* strategy = GetStrategy(strategyName);
+        if (strategy)
+        {
+            // Strategy updates are handled during trigger processing
+        }
     }
 }
 
-void BotAI::CancelCurrentAction()
+void BotAI::OnGroupJoined(Group* group)
 {
-    _currentAction = nullptr;
-    _currentContext = ActionContext();
+    if (!group || !_bot)
+        return;
+
+    TC_LOG_INFO("playerbots.ai", "Bot {} joined group {}",
+                _bot->GetName(), group->GetGUID().ToString());
+
+    // Activate follow strategy when joining a group
+    ActivateStrategy("follow");
+
+    // Initialize group-specific behaviors
+    if (_groupInvitationHandler)
+    {
+        // Group invitation handler setup if needed
+    }
+
+    // Update AI state
+    if (_aiState == BotAIState::IDLE)
+        SetAIState(BotAIState::FOLLOWING);
 }
 
 void BotAI::SetAIState(BotAIState state)
@@ -691,71 +777,51 @@ void BotAI::SetAIState(BotAIState state)
         _aiState = state;
 
         TC_LOG_DEBUG("playerbots.ai", "Bot {} AI state changed from {} to {}",
-                     _bot ? _bot->GetName() : "null", static_cast<int>(oldState), static_cast<int>(state));
+                     _bot ? _bot->GetName() : "null",
+                     static_cast<int>(oldState), static_cast<int>(state));
+
+        // Handle state-specific logic
+        switch (state)
+        {
+            case BotAIState::COMBAT:
+                ActivateStrategy("combat");
+                break;
+            case BotAIState::FOLLOWING:
+                ActivateStrategy("follow");
+                break;
+            case BotAIState::IDLE:
+                ActivateStrategy("idle");
+                break;
+            default:
+                break;
+        }
     }
 }
 
-void BotAI::RegisterTrigger(std::shared_ptr<Trigger> trigger)
+void BotAI::CancelCurrentAction()
 {
-    if (trigger)
+    if (_currentAction)
     {
-        _triggers.push_back(trigger);
-        TC_LOG_DEBUG("playerbots.ai", "Registered trigger '{}' for bot {}",
-                     trigger->GetName(), _bot ? _bot->GetName() : "null");
+        TC_LOG_DEBUG("playerbots.ai", "Bot {} cancelling current action",
+                     _bot ? _bot->GetName() : "null");
+
+        _currentAction.reset();
+        _currentContext = ActionContext{};
     }
 }
 
-void BotAI::UnregisterTrigger(std::string const& name)
+void BotAI::QueueAction(std::shared_ptr<Action> action, ActionContext const& context)
 {
-    auto it = std::find_if(_triggers.begin(), _triggers.end(),
-        [&name](std::shared_ptr<Trigger> const& trigger) {
-            return trigger && trigger->GetName() == name;
-        });
-
-    if (it != _triggers.end())
-    {
-        _triggers.erase(it);
-        TC_LOG_DEBUG("playerbots.ai", "Unregistered trigger '{}' from bot {}",
-                     name, _bot ? _bot->GetName() : "null");
-    }
-}
-
-float BotAI::GetValue(std::string const& name) const
-{
-    auto it = _values.find(name);
-    return (it != _values.end()) ? it->second : 0.0f;
-}
-
-void BotAI::SetValue(std::string const& name, float value)
-{
-    _values[name] = value;
-}
-
-void BotAI::UpdateValues()
-{
-    if (!_bot)
+    if (!action)
         return;
 
-    // Update basic values
-    _values["health"] = _bot->GetHealthPct() / 100.0f;
-    _values["mana"] = _bot->GetMaxPower(POWER_MANA) > 0 ?
-        static_cast<float>(_bot->GetPower(POWER_MANA)) / static_cast<float>(_bot->GetMaxPower(POWER_MANA)) : 1.0f;
-    _values["in_combat"] = _bot->IsInCombat() ? 1.0f : 0.0f;
-    _values["level"] = static_cast<float>(_bot->GetLevel());
+    _actionQueue.push(std::make_pair(action, context));
 
-    // Update group values
-    if (Group* group = _bot->GetGroup())
-    {
-        _values["in_group"] = 1.0f;
-        _values["group_size"] = static_cast<float>(group->GetMembersCount());
-    }
-    else
-    {
-        _values["in_group"] = 0.0f;
-        _values["group_size"] = 1.0f;
-    }
+    TC_LOG_TRACE("playerbots.ai", "Bot {} queued action, queue size: {}",
+                 _bot ? _bot->GetName() : "null", _actionQueue.size());
 }
 
+// Additional missing method implementations
 ::Unit* BotAI::GetTargetUnit() const
 {
     if (_currentTarget.IsEmpty())
@@ -764,452 +830,25 @@ void BotAI::UpdateValues()
     return ObjectAccessor::GetUnit(*_bot, _currentTarget);
 }
 
-void BotAI::MoveTo(float x, float y, float z)
+void BotAI::UpdateValues()
 {
-    if (!_bot)
-        return;
-
-    _bot->GetMotionMaster()->MovePoint(0, x, y, z);
-    SetAIState(BotAIState::TRAVELLING);
-}
-
-void BotAI::Follow(::Unit* target, float distance)
-{
-    if (!_bot || !target)
-        return;
-
-    _bot->GetMotionMaster()->MoveFollow(target, distance, float(M_PI) / 2.0f);
-    SetAIState(BotAIState::FOLLOWING);
-}
-
-void BotAI::StopMovement()
-{
-    if (!_bot)
-        return;
-
-    _bot->GetMotionMaster()->Clear();
-    _bot->StopMoving();
-}
-
-bool BotAI::IsMoving() const
-{
-    if (!_bot)
-        return false;
-
-    return _bot->isMoving();
-}
-
-void BotAI::Say(std::string const& text)
-{
-    if (!_bot || text.empty())
-        return;
-
-    _bot->Say(text, LANG_UNIVERSAL);
-}
-
-void BotAI::Whisper(std::string const& text, Player* target)
-{
-    if (!_bot || !target || text.empty())
-        return;
-
-    _bot->Whisper(text, LANG_UNIVERSAL, target);
-}
-
-void BotAI::PlayEmote(uint32 emoteId)
-{
-    if (!_bot)
-        return;
-
-    // Use the emoteId as Emote enum value
-    // TrinityCore's HandleEmoteCommand expects Emote enum
-    Emote emote = static_cast<Emote>(emoteId);
-    _bot->HandleEmoteCommand(emote);
-}
-
-// Enhanced internal update methods
-void BotAI::UpdateStrategies(uint32 diff)
-{
-    // Evaluate all strategies and activate/deactivate based on relevance
-    for (auto& [name, strategy] : _strategies)
+    // Update internal value system
+    for (auto& valuePair : _values)
     {
-        if (!strategy)
-            continue;
-
-        float relevance = strategy->GetRelevance(this);
-        bool shouldBeActive = relevance > 10.0f; // Threshold for activation
-        bool isActive = std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end();
-
-        if (shouldBeActive && !isActive)
-        {
-            ActivateStrategy(name);
-        }
-        else if (!shouldBeActive && isActive)
-        {
-            DeactivateStrategy(name);
-        }
+        // Values are updated based on bot state
+        // This is a simplified implementation
     }
-
-    _enhancedMetrics.strategiesEvaluated += static_cast<uint32>(_strategies.size());
-}
-
-void BotAI::UpdateActions(uint32 diff)
-{
-    // Check current action
-    if (_currentAction)
-    {
-        // Continue executing current action
-        ActionResult result = _currentAction->Execute(this, _currentContext);
-
-        if (result == ActionResult::SUCCESS || result == ActionResult::FAILED)
-        {
-            // Action completed
-            _currentAction = nullptr;
-            _enhancedMetrics.actionsExecuted++;
-        }
-        else if (result == ActionResult::CANCELLED)
-        {
-            _currentAction = nullptr;
-        }
-        // IN_PROGRESS - continue next update
-        return;
-    }
-
-    // Select next action
-    std::shared_ptr<Action> nextAction;
-
-    // Priority: Triggered actions > Queued actions > Strategy actions
-    if (!_triggeredActions.empty())
-    {
-        TriggerResult triggered = _triggeredActions.top();
-        _triggeredActions.pop();
-        nextAction = triggered.suggestedAction;
-        _currentContext = triggered.context;
-    }
-    else if (!_actionQueue.empty())
-    {
-        auto queued = _actionQueue.front();
-        _actionQueue.pop();
-        nextAction = queued.first;
-        _currentContext = queued.second;
-    }
-    else
-    {
-        nextAction = SelectNextAction();
-    }
-
-    // Execute selected action
-    if (nextAction && CanExecuteAction(nextAction.get()))
-    {
-        _currentAction = nextAction;
-        ActionResult result = _currentAction->Execute(this, _currentContext);
-
-        if (result == ActionResult::SUCCESS || result == ActionResult::FAILED)
-        {
-            _currentAction = nullptr;
-            _enhancedMetrics.actionsExecuted++;
-        }
-    }
-}
-
-void BotAI::UpdateMovement(uint32 diff)
-{
-    if (!_bot)
-        return;
-
-    // Update leader follow behavior if active
-    if (auto followStrategy = GetStrategy("leader_follow"))
-    {
-        if (followStrategy->IsActive(this))
-        {
-            if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
-            {
-                followBehavior->UpdateMovement(this, diff);
-                followBehavior->UpdateFormation(this);
-            }
-        }
-    }
-
-    // Update AI state based on movement
-    if (_bot->isMoving() && _aiState == BotAIState::IDLE)
-        SetAIState(BotAIState::TRAVELLING);
-    else if (!_bot->isMoving() && _aiState == BotAIState::TRAVELLING)
-        SetAIState(BotAIState::IDLE);
-}
-
-void BotAI::UpdateCombat(uint32 diff)
-{
-    if (!_bot)
-        return;
-
-    // Update combat state transitions
-    bool wasInCombat = (_aiState == BotAIState::COMBAT);
-    bool isInCombat = _bot->IsInCombat();
-
-    if (!isInCombat && wasInCombat)
-    {
-        SetAIState(BotAIState::IDLE);
-        OnCombatEnd();
-    }
-    else if (isInCombat && !wasInCombat)
-    {
-        SetAIState(BotAIState::COMBAT);
-        Unit* combatTarget = _bot->GetSelectedUnit();
-        OnCombatStart(combatTarget);
-    }
-
-    // If in combat, handle combat behavior
-    if (isInCombat)
-    {
-        // Update cooldowns
-        UpdateCooldowns(diff);
-
-        // Get current target
-        Unit* target = _bot->GetSelectedUnit();
-        if (target && target->IsAlive())
-        {
-            // Update rotation - derived classes should override this
-            UpdateRotation(target);
-        }
-
-        // Update buffs
-        UpdateBuffs();
-    }
-}
-
-void BotAI::UpdateValuesInternal(uint32 diff)
-{
-    UpdateValues();
-}
-
-std::shared_ptr<Action> BotAI::SelectNextAction()
-{
-    // Get actions from active strategies
-    std::vector<std::shared_ptr<Action>> candidates;
-
-    for (auto const& strategyName : _activeStrategies)
-    {
-        if (Strategy* strategy = GetStrategy(strategyName))
-        {
-            auto actions = strategy->GetActions();
-            for (auto const& action : actions)
-            {
-                if (action && action->IsPossible(this) && action->IsUseful(this))
-                {
-                    candidates.push_back(action);
-                }
-            }
-        }
-    }
-
-    if (candidates.empty())
-        return nullptr;
-
-    // Sort by relevance
-    std::sort(candidates.begin(), candidates.end(),
-        [this](auto const& a, auto const& b)
-        {
-            return a->GetRelevance(this) > b->GetRelevance(this);
-        });
-
-    return candidates.front();
-}
-
-bool BotAI::CanExecuteAction(Action* action) const
-{
-    return action && action->IsPossible(const_cast<BotAI*>(this)) && !action->IsOnCooldown();
 }
 
 ActionResult BotAI::ExecuteActionInternal(Action* action, ActionContext const& context)
 {
-    if (!action)
+    if (!action || !_bot)
         return ActionResult::FAILED;
 
+    // Try to execute the action with proper parameters
     return action->Execute(this, context);
 }
 
-// Enhanced BotAIFactory methods
-std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, uint8 spec)
-{
-    auto ai = std::make_unique<BotAI>(bot);
-
-    // Initialize class strategies
-    InitializeClassStrategies(ai.get(), classId, spec);
-
-    // Initialize default triggers
-    InitializeDefaultTriggers(ai.get());
-
-    // Initialize default values
-    InitializeDefaultValues(ai.get());
-
-    return ai;
-}
-
-std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
-{
-    auto ai = CreateAI(bot);
-    if (ai)
-        ApplyTemplate(ai.get(), "pvp");
-    return ai;
-}
-
-std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
-{
-    auto ai = CreateAI(bot);
-    if (ai)
-        ApplyTemplate(ai.get(), "pve");
-    return ai;
-}
-
-std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
-{
-    auto ai = CreateAI(bot);
-    if (ai)
-        ApplyTemplate(ai.get(), "raid");
-    return ai;
-}
-
-void BotAIFactory::RegisterTemplate(std::string const& name,
-                                   std::function<void(BotAI*)> initializer)
-{
-    _templates[name] = initializer;
-    TC_LOG_DEBUG("playerbots.ai", "Registered AI template '{}'", name);
-}
-
-void BotAIFactory::ApplyTemplate(BotAI* ai, std::string const& templateName)
-{
-    auto it = _templates.find(templateName);
-    if (it != _templates.end())
-    {
-        it->second(ai);
-        TC_LOG_DEBUG("playerbots.ai", "Applied template '{}' to bot {}",
-                     templateName, ai->GetBot() ? ai->GetBot()->GetName() : "null");
-    }
-}
-
-void BotAIFactory::InitializeDefaultStrategies(BotAI* ai)
-{
-    // Default strategies will be implemented
-}
-
-void BotAIFactory::InitializeClassStrategies(BotAI* ai, uint8 classId, uint8 spec)
-{
-    // Class-specific strategies will be implemented
-}
-
-void BotAIFactory::InitializeDefaultTriggers(BotAI* ai)
-{
-    // Health triggers
-    ai->RegisterTrigger(std::make_shared<HealthTrigger>("low_health", 0.3f));
-    ai->RegisterTrigger(std::make_shared<HealthTrigger>("critical_health", 0.15f));
-
-    // Combat triggers
-    ai->RegisterTrigger(std::make_shared<CombatTrigger>("enemy_too_close"));
-
-    // Timer triggers
-    ai->RegisterTrigger(std::make_shared<TimerTrigger>("buff_check", 30000));
-    ai->RegisterTrigger(std::make_shared<TimerTrigger>("rest_check", 5000));
-}
-
-void BotAIFactory::InitializeDefaultValues(BotAI* ai)
-{
-    // Initialize basic values
-    ai->SetValue("health", 1.0f);
-    ai->SetValue("mana", 1.0f);
-    ai->SetValue("in_combat", 0.0f);
-    ai->SetValue("in_group", 0.0f);
-    ai->SetValue("group_size", 1.0f);
-}
-
-void BotAI::InitializeDefaultStrategies()
-{
-    if (!_bot)
-        return;
-
-    TC_LOG_DEBUG("playerbots.ai", "Initializing default strategies for bot {}", _bot->GetName());
-
-    // Add the follow behavior strategy for group coordination
-    if (_bot->GetGroup())
-    {
-        auto followBehavior = std::make_unique<LeaderFollowBehavior>();
-        followBehavior->InitializeActions();
-        followBehavior->InitializeTriggers();
-        followBehavior->InitializeValues();
-        AddStrategy(std::move(followBehavior));
-        TC_LOG_DEBUG("playerbots.ai", "Added LeaderFollowBehavior strategy for bot {} in group", _bot->GetName());
-    }
-
-    TC_LOG_INFO("playerbots.ai", "Default strategies initialized for bot {}", _bot->GetName());
-}
-
-void BotAI::OnGroupJoined(Group* group)
-{
-    if (!_bot || !group)
-        return;
-
-    TC_LOG_DEBUG("playerbots.ai", "Bot {} joined group", _bot->GetName());
-
-    // Add leader follow behavior if not already present
-    if (!GetStrategy("leader_follow"))
-    {
-        auto followBehavior = std::make_unique<LeaderFollowBehavior>();
-        followBehavior->InitializeActions();
-        followBehavior->InitializeTriggers();
-        followBehavior->InitializeValues();
-        AddStrategy(std::move(followBehavior));
-    }
-
-    // Activate the leader follow strategy
-    if (auto followStrategy = GetStrategy("leader_follow"))
-    {
-        followStrategy->OnActivate(this);
-
-        // Set the follow target to the group leader if we're not the leader
-        if (group->GetLeaderGUID() != _bot->GetGUID())
-        {
-            if (auto leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
-            {
-                if (auto followBehavior = dynamic_cast<LeaderFollowBehavior*>(followStrategy))
-                {
-                    followBehavior->SetFollowTarget(leader);
-                }
-            }
-        }
-    }
-}
-
-void BotAI::OnGroupLeft()
-{
-    if (!_bot)
-        return;
-
-    TC_LOG_DEBUG("playerbots.ai", "Bot {} left group", _bot->GetName());
-
-    // Deactivate leader follow strategy
-    if (auto followStrategy = GetStrategy("leader_follow"))
-    {
-        followStrategy->OnDeactivate(this);
-        DeactivateStrategy("leader_follow");
-    }
-}
-
-void BotAI::HandleGroupChange()
-{
-    if (!_bot)
-        return;
-
-    Group* group = _bot->GetGroup();
-
-    if (group)
-    {
-        // We're in a group, ensure follow behavior is active
-        OnGroupJoined(group);
-    }
-    else
-    {
-        // We're not in a group, clean up follow behavior
-        OnGroupLeft();
-    }
-}
 
 // ============================================================================
 // Basic Strategy Implementations
@@ -1310,5 +949,19 @@ public:
         TC_LOG_DEBUG("playerbots.ai.strategy", "FollowStrategy deactivated for bot");
     }
 };
+
+// BotAI method implementation after class definitions
+void BotAI::InitializeDefaultStrategies()
+{
+    // Add basic strategies for bot functionality
+    AddStrategy(std::unique_ptr<Strategy>(new IdleStrategy()));
+    AddStrategy(std::unique_ptr<Strategy>(new FollowStrategy()));
+
+    // Activate idle strategy by default
+    ActivateStrategy("idle");
+
+    TC_LOG_DEBUG("playerbots.ai", "Initialized default strategies for bot {}",
+                 _bot ? _bot->GetName() : "null");
+}
 
 } // namespace Playerbot

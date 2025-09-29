@@ -287,6 +287,11 @@ private:
         float riskTolerance;
         uint32 lastEconomicAnalysis;
 
+        // Default constructor for std::unordered_map compatibility
+        EconomicProfile() : playerGuid(0), currentGold(0), liquidAssets(0)
+            , totalPortfolioValue(0), economicGrowthRate(0.05f), riskTolerance(0.5f)
+            , lastEconomicAnalysis(getMSTime()) {}
+
         EconomicProfile(uint32 guid) : playerGuid(guid), currentGold(0), liquidAssets(0)
             , totalPortfolioValue(0), economicGrowthRate(0.05f), riskTolerance(0.5f)
             , lastEconomicAnalysis(getMSTime()) {}

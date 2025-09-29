@@ -127,7 +127,7 @@ private:
 
     // Shadow healing (Vampiric abilities)
     void UpdateVampiricHealing();
-    void CastVampiricEmbrace(::Unit* healTarget);
+    void CastVampiricEmbrace();
     bool ShouldUseVampiricHealing();
 
     // Mana and resource optimization
@@ -196,7 +196,7 @@ private:
     uint32 _lastMindControl;
 
     // Emergency healing (limited in shadow form)
-    std::priority_queue<HealTarget> _emergencyHealQueue;
+    std::priority_queue<Playerbot::HealTarget> _emergencyHealQueue;
 
     // Constants
     static constexpr uint32 SHADOW_WORD_PAIN_DURATION = 18000; // 18 seconds

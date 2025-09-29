@@ -39,8 +39,8 @@ private:
     static void OnModuleShutdown();
 
     // State tracking
-    static bool s_registered;
-    static bool s_initialized;
+    inline static bool s_registered = false;
+    inline static bool s_initialized = false;
 };
 
 } // namespace Playerbot

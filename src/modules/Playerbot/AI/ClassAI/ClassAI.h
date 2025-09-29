@@ -32,7 +32,7 @@ class TC_GAME_API ClassAI : public BotAI
 {
 public:
     ClassAI(Player* bot);
-    virtual ~ClassAI() = default;
+    virtual ~ClassAI();
 
     // Core AI interface
     void UpdateAI(uint32 diff) override;
@@ -105,7 +105,7 @@ protected:
 private:
     // Internal update methods
     void UpdateTargeting();
-    void UpdateMovement();
+    void UpdateMovement(uint32 diff) override;
     void UpdateCombatState(uint32 diff);
 
     // Performance tracking

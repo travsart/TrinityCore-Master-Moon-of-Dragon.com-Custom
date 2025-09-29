@@ -1281,4 +1281,88 @@ bool CombatSpecialization::ShouldRepositionForAdvantage(::Unit* target)
     return false;
 }
 
+// Implementation of pure virtual methods from RogueSpecialization base class
+bool CombatSpecialization::CastSpell(uint32 spellId, ::Unit* target)
+{
+    if (!_bot)
+        return false;
+
+    // Check if spell can be cast
+    if (!CanUseAbility(spellId))
+        return false;
+
+    // Get spell info for validation
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return false;
+
+    // Start cooldown tracking
+    StartCooldown(spellId);
+
+    // Consume resources
+    ConsumeResource(spellId);
+
+    // Track metrics based on spell type
+    if (spellId == SINISTER_STRIKE)
+        _metrics.sinisterStrikeCasts++;
+    else if (spellId == BLADE_FLURRY)
+        _metrics.bladeFlurryUses++;
+    else if (spellId == ADRENALINE_RUSH)
+        _metrics.adrenalineRushUses++;
+    else if (spellId == RIPOSTE)
+        _metrics.riposteCasts++;
+    else if (spellId == KILLING_SPREE)
+        _metrics.killingSpreeUses++;
+
+    // Cast the spell through the bot
+    if (target)
+    {
+        return _bot->CastSpell(target, spellId, false);
+    }
+    else
+    {
+        return _bot->CastSpell(_bot, spellId, false);
+    }
+}
+
+bool CombatSpecialization::HasSpell(uint32 spellId)
+{
+    if (!_bot)
+        return false;
+
+    return _bot->HasSpell(spellId);
+}
+
+SpellInfo const* CombatSpecialization::GetSpellInfo(uint32 spellId)
+{
+    if (!_bot)
+        return nullptr;
+
+    return sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+}
+
+uint32 CombatSpecialization::GetSpellCooldown(uint32 spellId)
+{
+    if (!_bot)
+        return 0;
+
+    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!spellInfo)
+        return 0;
+
+    // Check if spell has an active cooldown
+    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
+    auto itr = cooldowns.find(spellId);
+    if (itr != cooldowns.end())
+    {
+        uint32 currentTime = getMSTime();
+        if (itr->second.end > currentTime)
+        {
+            return itr->second.end - currentTime;
+        }
+    }
+
+    return 0;
+}
+
 } // namespace Playerbot

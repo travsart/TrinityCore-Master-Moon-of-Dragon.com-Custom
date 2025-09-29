@@ -18,6 +18,7 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "Creature.h"
+#include "SharedDefines.h"
 #include "GameObject.h"
 #include "MapManager.h"
 #include "ObjectAccessor.h"
@@ -56,7 +57,7 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
     // Scan through all quest templates
     for (auto const& questPair : sObjectMgr->GetQuestTemplates())
     {
-        const Quest* quest = questPair.second.get();
+        Quest const* quest = questPair.second.get();
         if (!quest)
             continue;
 
@@ -424,9 +425,9 @@ bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
     Group* group = initiator->GetGroup();
     if (group)
     {
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             if (member && member != initiator && CanShareQuest(questId, initiator, member))
             {
                 eligiblePlayers.push_back(member);
@@ -741,7 +742,7 @@ DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 qu
         return reward;
 
     reward.experience = quest->XPValue(bot);
-    reward.gold = quest->GetRewOrReqMoney();
+    reward.gold = quest->GetRewMoneyMaxLevel();
 
     // Analyze item rewards
     for (uint8 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
@@ -857,7 +858,7 @@ void DynamicQuestSystem::LoadQuestMetadata()
     // Load quest metadata from database or initialize from templates
     for (auto const& questPair : sObjectMgr->GetQuestTemplates())
     {
-        const Quest* quest = questPair.second;
+        Quest const* quest = questPair.second.get();
         if (!quest)
             continue;
 
@@ -874,7 +875,7 @@ void DynamicQuestSystem::AnalyzeQuestDependencies()
     // Analyze quest prerequisites and dependencies
     for (auto const& questPair : sObjectMgr->GetQuestTemplates())
     {
-        const Quest* quest = questPair.second;
+        Quest const* quest = questPair.second.get();
         if (!quest)
             continue;
 
@@ -937,7 +938,7 @@ QuestType DynamicQuestSystem::DetermineQuestType(const Quest* quest)
         return QuestType::DUNGEON;
 
     if (quest->IsRaidQuest(DIFFICULTY_NORMAL))
-        return QuestType::RAID;
+        return QuestType::ELITE;
 
     if (quest->HasFlag(QUEST_FLAGS_DAILY))
         return QuestType::DAILY;
@@ -946,7 +947,18 @@ QuestType DynamicQuestSystem::DetermineQuestType(const Quest* quest)
         return QuestType::PVP;
 
     // Default classification based on objectives
-    if (quest->GetRequiredKillCount() > 0 || quest->GetRequiredItemCount() > 0)
+    bool hasKillObjectives = false;
+    bool hasItemObjectives = false;
+
+    for (QuestObjective const& obj : quest->GetObjectives())
+    {
+        if (obj.Type == QUEST_OBJECTIVE_MONSTER)
+            hasKillObjectives = true;
+        else if (obj.Type == QUEST_OBJECTIVE_ITEM)
+            hasItemObjectives = true;
+    }
+
+    if (hasKillObjectives || hasItemObjectives)
         return QuestType::KILL_COLLECT;
 
     return QuestType::INTERACTION;
@@ -1006,35 +1018,33 @@ void DynamicQuestSystem::UpdateQuestObjectiveProgress(QuestProgress& progress, c
     uint32 completedObjectives = 0;
     uint32 totalObjectives = 0;
 
-    // Check kill objectives
-    for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
+    // Check objectives using modern TrinityCore API
+    uint32 objectiveIndex = 0;
+    for (QuestObjective const& obj : quest->GetObjectives())
     {
-        if (quest->RequiredNpcOrGo[i] != 0)
+        totalObjectives++;
+        uint32 currentCount = 0;
+
+        switch (obj.Type)
         {
-            totalObjectives++;
-            uint32 requiredCount = quest->RequiredNpcOrGoCount[i];
-            uint32 currentCount = bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), quest->RequiredNpcOrGo[i]);
-
-            progress.objectiveTargets[i] = requiredCount;
-            progress.objectiveProgress[i] = currentCount;
-
-            if (currentCount >= requiredCount)
-                completedObjectives++;
+            case QUEST_OBJECTIVE_MONSTER:
+                currentCount = bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), obj.ObjectID);
+                break;
+            case QUEST_OBJECTIVE_ITEM:
+                currentCount = bot->GetItemCount(obj.ObjectID, true);
+                break;
+            default:
+                // Handle other objective types as needed
+                break;
         }
-    }
 
-    // Check item objectives
-    for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
-    {
-        if (quest->RequiredItemId[i] != 0)
-        {
-            totalObjectives++;
-            uint32 requiredCount = quest->RequiredItemCount[i];
-            uint32 currentCount = bot->GetItemCount(quest->RequiredItemId[i], true);
+        progress.objectiveTargets[objectiveIndex] = obj.Amount;
+        progress.objectiveProgress[objectiveIndex] = currentCount;
 
-            if (currentCount >= requiredCount)
-                completedObjectives++;
-        }
+        if (currentCount >= obj.Amount)
+            completedObjectives++;
+
+        objectiveIndex++;
     }
 
     // Calculate completion percentage
@@ -1077,10 +1087,23 @@ void DynamicQuestSystem::PopulateQuestMetadata(uint32 questId)
     metadata.isRaid = quest->IsRaidQuest(DIFFICULTY_NORMAL);
     metadata.isDaily = quest->HasFlag(QUEST_FLAGS_DAILY);
 
-    // Estimate duration based on objectives
+    // Estimate duration based on objectives using modern API
     metadata.estimatedDuration = 600; // Base 10 minutes
-    metadata.estimatedDuration += quest->GetRequiredKillCount() * 30; // 30 seconds per kill
-    metadata.estimatedDuration += quest->GetRequiredItemCount() * 60; // 1 minute per item
+
+    // Count objectives to estimate duration
+    uint32 killObjectives = 0;
+    uint32 itemObjectives = 0;
+
+    for (QuestObjective const& obj : quest->GetObjectives())
+    {
+        if (obj.Type == QUEST_OBJECTIVE_MONSTER)
+            killObjectives += obj.Amount;
+        else if (obj.Type == QUEST_OBJECTIVE_ITEM)
+            itemObjectives += obj.Amount;
+    }
+
+    metadata.estimatedDuration += killObjectives * 30; // 30 seconds per kill
+    metadata.estimatedDuration += itemObjectives * 60; // 1 minute per item
 
     if (metadata.isElite)
         metadata.estimatedDuration *= 2;
@@ -1105,8 +1128,8 @@ float DynamicQuestSystem::CalculateGearScoreImprovement(Player* bot, const std::
         const ItemTemplate* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (itemTemplate)
         {
-            // Simplified gear score calculation
-            improvement += itemTemplate->GetItemLevel() * 0.1f;
+            // Simplified gear score calculation using proper API
+            improvement += itemTemplate->GetBaseItemLevel() * 0.1f;
         }
     }
 

@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "ClassAI.h"
+#include "../ClassAI.h"
 #include "MageSpecialization.h"
 #include "Position.h"
-#include "BotThreatManager.h"
-#include "TargetSelector.h"
-#include "PositionManager.h"
-#include "InterruptManager.h"
+#include "../../Combat/BotThreatManager.h"
+#include "../../Combat/TargetSelector.h"
+#include "../../Combat/PositionManager.h"
+#include "../../Combat/InterruptManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -44,7 +44,7 @@ class TC_GAME_API MageAI : public ClassAI
 {
 public:
     explicit MageAI(Player* bot);
-    ~MageAI() = default;
+    ~MageAI();
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -83,7 +83,7 @@ private:
     uint32 _lastBlink;
 
     // Combat system integration
-    std::unique_ptr<ThreatManager> _threatManager;
+    std::unique_ptr<BotThreatManager> _threatManager;
     std::unique_ptr<TargetSelector> _targetSelector;
     std::unique_ptr<PositionManager> _positionManager;
     std::unique_ptr<InterruptManager> _interruptManager;
@@ -255,6 +255,7 @@ private:
     static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f; // 30%
     static constexpr float MANA_EMERGENCY_THRESHOLD = 0.15f; // 15%
 
+public:
     // Spell IDs (version-specific - these need to be accurate for target WoW version)
     enum MageSpells
     {

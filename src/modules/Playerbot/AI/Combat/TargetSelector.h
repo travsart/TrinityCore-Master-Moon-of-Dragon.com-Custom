@@ -68,7 +68,7 @@ enum class TargetValidation : uint32
     NOT_CONFUSED = 0x00000080,
     IN_COMBAT = 0x00000100,
     SPELL_RANGE = 0x00000200,
-    MELEE_RANGE = 0x00000400,
+    MELEE_RANGE_CHECK = 0x00000400,
     NOT_CROWD_CONTROLLED = 0x00000800,
     THREAT_REQUIRED = 0x00001000,
 
@@ -76,10 +76,19 @@ enum class TargetValidation : uint32
     BASIC = ALIVE | HOSTILE | NOT_FRIENDLY,
     COMBAT = BASIC | IN_RANGE | LINE_OF_SIGHT | NOT_IMMUNE,
     SPELL_TARGET = COMBAT | SPELL_RANGE | NOT_EVADING,
-    MELEE_TARGET = COMBAT | MELEE_RANGE | NOT_CONFUSED
+    MELEE_TARGET = COMBAT | MELEE_RANGE_CHECK | NOT_CONFUSED
 };
 
-DEFINE_ENUM_FLAG(TargetValidation);
+// Enable bitwise operations for TargetValidation enum
+inline TargetValidation operator|(TargetValidation a, TargetValidation b) {
+    return static_cast<TargetValidation>(static_cast<uint32>(a) | static_cast<uint32>(b));
+}
+inline TargetValidation operator&(TargetValidation a, TargetValidation b) {
+    return static_cast<TargetValidation>(static_cast<uint32>(a) & static_cast<uint32>(b));
+}
+inline bool HasFlag(TargetValidation a) {
+    return static_cast<uint32>(a) != 0;
+}
 
 // Target scoring weights for different selection criteria
 struct TargetWeights

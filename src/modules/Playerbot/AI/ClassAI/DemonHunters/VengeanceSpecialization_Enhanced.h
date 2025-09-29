@@ -92,6 +92,22 @@ public:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
+    // Metamorphosis management
+    void UpdateMetamorphosis() override;
+    bool ShouldUseMetamorphosis() override;
+    void TriggerMetamorphosis() override;
+    MetamorphosisState GetMetamorphosisState() const override;
+
+    // Soul fragment management
+    void UpdateSoulFragments() override;
+    void ConsumeSoulFragments() override;
+    bool ShouldConsumeSoulFragments() override;
+    uint32 GetAvailableSoulFragments() const override;
+
+    // Specialization info
+    DemonHunterSpec GetSpecialization() const override;
+    const char* GetSpecializationName() const override;
+
     // Advanced pain mastery
     void ManagePainOptimally();
     void OptimizePainGeneration();
@@ -155,6 +171,92 @@ public:
             sigilEffectiveness = 0.8f; damageReductionPercentage = 0.45f; emergencyDefensivesUsed = 0;
             lastUpdate = std::chrono::steady_clock::now();
         }
+
+        // Copy constructor
+        VengeanceMetrics(const VengeanceMetrics& other)
+            : shearCasts(other.shearCasts.load())
+            , soulCleaveCasts(other.soulCleaveCasts.load())
+            , demonSpikesCasts(other.demonSpikesCasts.load())
+            , fieryBrandCasts(other.fieryBrandCasts.load())
+            , sigilsCast(other.sigilsCast.load())
+            , infernalStrikeCasts(other.infernalStrikeCasts.load())
+            , metamorphosisActivations(other.metamorphosisActivations.load())
+            , soulFragmentsGenerated(other.soulFragmentsGenerated.load())
+            , soulFragmentsConsumed(other.soulFragmentsConsumed.load())
+            , painEfficiency(other.painEfficiency.load())
+            , threatControlEfficiency(other.threatControlEfficiency.load())
+            , soulFragmentEfficiency(other.soulFragmentEfficiency.load())
+            , sigilEffectiveness(other.sigilEffectiveness.load())
+            , damageReductionPercentage(other.damageReductionPercentage.load())
+            , emergencyDefensivesUsed(other.emergencyDefensivesUsed.load())
+            , lastUpdate(other.lastUpdate)
+        {}
+
+        // Move constructor
+        VengeanceMetrics(VengeanceMetrics&& other) noexcept
+            : shearCasts(other.shearCasts.load())
+            , soulCleaveCasts(other.soulCleaveCasts.load())
+            , demonSpikesCasts(other.demonSpikesCasts.load())
+            , fieryBrandCasts(other.fieryBrandCasts.load())
+            , sigilsCast(other.sigilsCast.load())
+            , infernalStrikeCasts(other.infernalStrikeCasts.load())
+            , metamorphosisActivations(other.metamorphosisActivations.load())
+            , soulFragmentsGenerated(other.soulFragmentsGenerated.load())
+            , soulFragmentsConsumed(other.soulFragmentsConsumed.load())
+            , painEfficiency(other.painEfficiency.load())
+            , threatControlEfficiency(other.threatControlEfficiency.load())
+            , soulFragmentEfficiency(other.soulFragmentEfficiency.load())
+            , sigilEffectiveness(other.sigilEffectiveness.load())
+            , damageReductionPercentage(other.damageReductionPercentage.load())
+            , emergencyDefensivesUsed(other.emergencyDefensivesUsed.load())
+            , lastUpdate(std::move(other.lastUpdate))
+        {}
+
+        // Copy assignment operator
+        VengeanceMetrics& operator=(const VengeanceMetrics& other) {
+            if (this != &other) {
+                shearCasts = other.shearCasts.load();
+                soulCleaveCasts = other.soulCleaveCasts.load();
+                demonSpikesCasts = other.demonSpikesCasts.load();
+                fieryBrandCasts = other.fieryBrandCasts.load();
+                sigilsCast = other.sigilsCast.load();
+                infernalStrikeCasts = other.infernalStrikeCasts.load();
+                metamorphosisActivations = other.metamorphosisActivations.load();
+                soulFragmentsGenerated = other.soulFragmentsGenerated.load();
+                soulFragmentsConsumed = other.soulFragmentsConsumed.load();
+                painEfficiency = other.painEfficiency.load();
+                threatControlEfficiency = other.threatControlEfficiency.load();
+                soulFragmentEfficiency = other.soulFragmentEfficiency.load();
+                sigilEffectiveness = other.sigilEffectiveness.load();
+                damageReductionPercentage = other.damageReductionPercentage.load();
+                emergencyDefensivesUsed = other.emergencyDefensivesUsed.load();
+                lastUpdate = other.lastUpdate;
+            }
+            return *this;
+        }
+
+        // Move assignment operator
+        VengeanceMetrics& operator=(VengeanceMetrics&& other) noexcept {
+            if (this != &other) {
+                shearCasts = other.shearCasts.load();
+                soulCleaveCasts = other.soulCleaveCasts.load();
+                demonSpikesCasts = other.demonSpikesCasts.load();
+                fieryBrandCasts = other.fieryBrandCasts.load();
+                sigilsCast = other.sigilsCast.load();
+                infernalStrikeCasts = other.infernalStrikeCasts.load();
+                metamorphosisActivations = other.metamorphosisActivations.load();
+                soulFragmentsGenerated = other.soulFragmentsGenerated.load();
+                soulFragmentsConsumed = other.soulFragmentsConsumed.load();
+                painEfficiency = other.painEfficiency.load();
+                threatControlEfficiency = other.threatControlEfficiency.load();
+                soulFragmentEfficiency = other.soulFragmentEfficiency.load();
+                sigilEffectiveness = other.sigilEffectiveness.load();
+                damageReductionPercentage = other.damageReductionPercentage.load();
+                emergencyDefensivesUsed = other.emergencyDefensivesUsed.load();
+                lastUpdate = std::move(other.lastUpdate);
+            }
+            return *this;
+        }
     };
 
     VengeanceMetrics GetSpecializationMetrics() const { return _metrics; }
@@ -202,7 +304,6 @@ private:
     void ExecuteSigil(uint32 sigilType, Position targetPos);
 
     // Cooldown management
-    bool ShouldUseMetamorphosis() const;
     bool ShouldUseSoulBarrier() const;
     bool ShouldUseInfernalStrike(::Unit* target) const;
     bool ShouldUseImmolationAura() const;

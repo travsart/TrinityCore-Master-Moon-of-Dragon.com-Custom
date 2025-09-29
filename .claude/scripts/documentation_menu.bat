@@ -1,6 +1,8 @@
 @echo off
 REM Quick launcher for PlayerBot Documentation System
 
+set PYTHON_PATH=python
+
 echo ================================================================================
 echo                    PlayerBot Documentation System
 echo ================================================================================
@@ -23,22 +25,22 @@ set SCRIPT_DIR=%PROJECT_ROOT%\.claude\scripts
 if "%choice%"=="1" (
     echo.
     echo Starting FULL documentation workflow...
-    powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\document_project.ps1" -Mode full -AutoFix
+    %PYTHON_PATH% "%SCRIPT_DIR%\document_project.py" --mode full -autofix
     pause
 ) else if "%choice%"=="2" (
     echo.
     echo Generating documentation without modifying code...
-    powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\document_project.ps1" -Mode document
+    %PYTHON_PATH% "%SCRIPT_DIR%\document_project.py" --mode document
     pause
 ) else if "%choice%"=="3" (
     echo.
     echo Analyzing code structure...
-    powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\document_project.ps1" -Mode analyze
+    %PYTHON_PATH% "%SCRIPT_DIR%\document_project.py" -Mode analyze
     pause
 ) else if "%choice%"=="4" (
     echo.
     echo Inserting comments into code...
-    powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\document_project.ps1" -Mode insert -AutoFix
+    %PYTHON_PATH% "%SCRIPT_DIR%\document_project.py" --mode insert -autofix
     pause
 ) else if "%choice%"=="5" (
     echo.

@@ -123,8 +123,8 @@ private:
     mutable PoolStats _stats;
 
     // Singleton
-    static std::unique_ptr<BotResourcePool> _instance;
-    static std::mutex _instanceMutex;
+    inline static std::unique_ptr<BotResourcePool> _instance;
+    inline static std::mutex _instanceMutex;
 
     // Non-copyable
     BotResourcePool(BotResourcePool const&) = delete;

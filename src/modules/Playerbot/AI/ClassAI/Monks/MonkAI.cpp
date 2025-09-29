@@ -8,162 +8,98 @@
  */
 
 #include "MonkAI.h"
-#include "BrewmasterSpecialization.h"
-#include "MistweaverSpecialization.h"
-#include "WindwalkerSpecialization.h"
 #include "Player.h"
 #include "SpellMgr.h"
-#include "SpellInfo.h"
 #include "Log.h"
 
 namespace Playerbot
 {
 
-MonkAI::MonkAI(Player* bot) : ClassAI(bot), _specialization(nullptr)
+MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
 {
-    DetectSpecialization();
-    InitializeSpecialization();
+    TC_LOG_DEBUG("playerbots", "MonkAI initialized for player {}", bot->GetName());
 }
 
 void MonkAI::UpdateRotation(::Unit* target)
 {
-    if (_specialization)
-        _specialization->UpdateRotation(target);
+    if (!target)
+        return;
+
+    // Basic monk rotation - placeholder implementation
+    // TODO: Implement proper monk combat rotation
 }
 
 void MonkAI::UpdateBuffs()
 {
-    if (_specialization)
-        _specialization->UpdateBuffs();
+    // Basic buff management - placeholder implementation
+    // TODO: Implement monk buff management
 }
 
 void MonkAI::UpdateCooldowns(uint32 diff)
 {
-    if (_specialization)
-        _specialization->UpdateCooldowns(diff);
+    // Basic cooldown management - placeholder implementation
+    // TODO: Implement monk cooldown management
 }
 
 bool MonkAI::CanUseAbility(uint32 spellId)
 {
-    if (_specialization)
-        return _specialization->CanUseAbility(spellId);
-    return false;
+    // Basic ability check - placeholder implementation
+    return GetBot() && GetBot()->HasSpell(spellId);
 }
 
 void MonkAI::OnCombatStart(::Unit* target)
 {
-    if (_specialization)
-        _specialization->OnCombatStart(target);
+    // Combat start logic - placeholder implementation
+    ClassAI::OnCombatStart(target);
 }
 
 void MonkAI::OnCombatEnd()
 {
-    if (_specialization)
-        _specialization->OnCombatEnd();
+    // Combat end logic - placeholder implementation
+    ClassAI::OnCombatEnd();
 }
 
 bool MonkAI::HasEnoughResource(uint32 spellId)
 {
-    if (_specialization)
-        return _specialization->HasEnoughResource(spellId);
-    return false;
+    // Resource check - placeholder implementation
+    return true; // TODO: Implement proper resource checking
 }
 
 void MonkAI::ConsumeResource(uint32 spellId)
 {
-    if (_specialization)
-        _specialization->ConsumeResource(spellId);
+    // Resource consumption - placeholder implementation
+    // TODO: Implement proper resource consumption
 }
 
 Position MonkAI::GetOptimalPosition(::Unit* target)
 {
-    if (_specialization)
-        return _specialization->GetOptimalPosition(target);
-    return Position();
+    if (!target)
+        return GetBot()->GetPosition();
+
+    // Basic positioning - stay in melee range
+    return target->GetNearPosition(3.0f, target->GetRelativeAngle(GetBot()));
 }
 
 float MonkAI::GetOptimalRange(::Unit* target)
 {
-    if (_specialization)
-        return _specialization->GetOptimalRange(target);
+    // Basic range - melee range for monks
     return 5.0f;
 }
 
-MonkSpec MonkAI::DetectSpecialization()
+// Placeholder implementations for the advanced methods
+void MonkAI::HandleAdvancedBrewmasterManagement()
 {
-    Player* bot = GetBot();
-    if (!bot)
-        return MonkSpec::WINDWALKER;
-
-    // Detect specialization based on talents and spells
-    MonkSpec detected = MonkSpec::WINDWALKER; // Default
-
-    // Check for Brewmaster specific spells/talents
-    if (bot->HasSpell(KEG_SMASH) || bot->HasSpell(IRONSKIN_BREW) || bot->HasSpell(PURIFYING_BREW))
-    {
-        detected = MonkSpec::BREWMASTER;
-    }
-    // Check for Mistweaver specific spells/talents
-    else if (bot->HasSpell(VIVIFY) || bot->HasSpell(ENVELOPING_MIST) || bot->HasSpell(ESSENCE_FONT))
-    {
-        detected = MonkSpec::MISTWEAVER;
-    }
-    // Check for Windwalker specific spells/talents
-    else if (bot->HasSpell(FISTS_OF_FURY) || bot->HasSpell(WHIRLING_DRAGON_PUNCH) || bot->HasSpell(STORM_EARTH_AND_FIRE))
-    {
-        detected = MonkSpec::WINDWALKER;
-    }
-    // Fallback detection based on general spell availability
-    else if (bot->HasSpell(BREATH_OF_FIRE) || bot->HasSpell(FORTIFYING_BREW))
-    {
-        detected = MonkSpec::BREWMASTER;
-    }
-    else if (bot->HasSpell(RENEWING_MIST) || bot->HasSpell(SOOTHING_MIST))
-    {
-        detected = MonkSpec::MISTWEAVER;
-    }
-    else if (bot->HasSpell(RISING_SUN_KICK) || bot->HasSpell(TOUCH_OF_DEATH))
-    {
-        detected = MonkSpec::WINDWALKER;
-    }
-
-    // Store the detected specialization for use in InitializeSpecialization
-    _detectedSpec = detected;
-    return detected;
+    // Placeholder implementation
 }
 
-void MonkAI::InitializeSpecialization()
+void MonkAI::HandleAdvancedMistweaverManagement()
 {
-    Player* bot = GetBot();
-    if (!bot)
-        return;
-
-    MonkSpec spec = GetCurrentSpecialization();
-
-    switch (spec)
-    {
-        case MonkSpec::BREWMASTER:
-            _specialization = std::make_unique<BrewmasterSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Brewmaster specialization for bot {}", bot->GetName());
-            break;
-        case MonkSpec::MISTWEAVER:
-            _specialization = std::make_unique<MistweaverSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Mistweaver specialization for bot {}", bot->GetName());
-            break;
-        case MonkSpec::WINDWALKER:
-            _specialization = std::make_unique<WindwalkerSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Windwalker specialization for bot {}", bot->GetName());
-            break;
-        default:
-            _specialization = std::make_unique<WindwalkerSpecialization>(bot);
-            TC_LOG_WARN("playerbot", "MonkAI: Unknown specialization for bot {}, defaulting to Windwalker", bot->GetName());
-            break;
-    }
+    // Placeholder implementation
 }
 
-MonkSpec MonkAI::GetCurrentSpecialization() const
+void MonkAI::HandleAdvancedWindwalkerManagement()
 {
-    return _detectedSpec;
+    // Placeholder implementation
 }
 
 } // namespace Playerbot

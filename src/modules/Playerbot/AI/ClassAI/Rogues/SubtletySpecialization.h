@@ -200,6 +200,12 @@ public:
     CombatPhase GetCurrentPhase() override;
     bool ShouldExecuteBurstRotation() override;
 
+    // Utility Functions Implementation
+    bool CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
+    bool HasSpell(uint32 spellId) override;
+    SpellInfo const* GetSpellInfo(uint32 spellId) override;
+    uint32 GetSpellCooldown(uint32 spellId) override;
+
 private:
     // Subtlety-specific systems
     void UpdateShadowDanceManagement();

@@ -21,14 +21,7 @@
 #include <regex>
 #include <chrono>
 
-// Define migration sequence
-std::vector<std::string> const PlayerbotMigrationMgr::MIGRATION_SEQUENCE =
-{
-    "001",  // Initial schema
-    "002",  // Account management
-    "003",  // Lifecycle management
-    "004"   // Character distribution
-};
+// Static member definitions removed - now inline static in header to fix DLL export issues
 
 PlayerbotMigrationMgr::PlayerbotMigrationMgr()
 {

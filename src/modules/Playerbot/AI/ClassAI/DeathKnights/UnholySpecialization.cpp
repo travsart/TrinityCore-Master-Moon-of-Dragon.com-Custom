@@ -651,7 +651,7 @@ Position UnholySpecialization::GetOptimalPosition(::Unit* target)
         return Position();
 
     // Unholy Death Knights prefer melee range but with positioning for pet management
-    float distance = MELEE_RANGE * 0.8f; // Slightly closer than max melee range
+    float distance = UNHOLY_MELEE_RANGE * 0.8f; // Slightly closer than max melee range
     float angle = target->GetAngle(bot);
 
     // Adjust angle for pet positioning - avoid being directly behind target
@@ -682,7 +682,7 @@ Position UnholySpecialization::GetOptimalPosition(::Unit* target)
 
 float UnholySpecialization::GetOptimalRange(::Unit* target)
 {
-    return MELEE_RANGE;
+    return UNHOLY_MELEE_RANGE;
 }
 
 // ===== ROTATION PHASE IMPLEMENTATIONS =====
@@ -1013,7 +1013,7 @@ bool UnholySpecialization::HandleFallbackRotation(::Unit* target)
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: HandleFallbackRotation for bot {}", bot->GetName());
 
     // Basic melee range check
-    if (bot->GetDistance(target) > MELEE_RANGE)
+    if (bot->GetDistance(target) > UNHOLY_MELEE_RANGE)
     {
         // Use Death Grip to pull target
         if (ShouldUseDeathGrip(target) && HasEnoughResource(DEATH_GRIP))
@@ -1861,7 +1861,7 @@ bool UnholySpecialization::ShouldCastDeathPact()
 bool UnholySpecialization::ShouldUseDeathGrip(::Unit* target)
 {
     Player* bot = GetBot();
-    return bot && target && bot->GetDistance(target) > MELEE_RANGE &&
+    return bot && target && bot->GetDistance(target) > UNHOLY_MELEE_RANGE &&
            bot->GetDistance(target) < 30.0f && HasEnoughResource(DEATH_GRIP);
 }
 

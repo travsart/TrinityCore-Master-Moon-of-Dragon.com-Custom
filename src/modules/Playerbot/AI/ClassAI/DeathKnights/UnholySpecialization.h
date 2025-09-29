@@ -174,7 +174,7 @@ private:
     uint32 _runicPowerSpent;
 
     // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
+    static constexpr float UNHOLY_MELEE_RANGE = 5.0f;
     static constexpr uint32 SUDDEN_DOOM_DURATION = 10000; // 10 seconds
     static constexpr uint32 SUMMON_GARGOYLE_COOLDOWN = 180000; // 3 minutes
     static constexpr uint32 ARMY_OF_THE_DEAD_COOLDOWN = 600000; // 10 minutes
