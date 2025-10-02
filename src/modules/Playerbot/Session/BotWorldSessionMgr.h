@@ -59,6 +59,11 @@ public:
     // Character login trigger (compatibility with existing system)
     void TriggerCharacterLoginForAllSessions();
 
+    // Chat command support - NEW APIs for command system
+    std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const;
+    void RemoveAllPlayerBots(uint32 accountId);
+    uint32 GetBotCountByAccount(uint32 accountId) const;
+
 private:
     BotWorldSessionMgr() = default;
     ~BotWorldSessionMgr() = default;

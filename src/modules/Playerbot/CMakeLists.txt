@@ -64,11 +64,13 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
-    # AI Strategy System
+    # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
 
-    # AI Action System
+    # AI Action System (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.cpp
@@ -93,10 +95,43 @@ set(PLAYERBOT_SOURCES
     # ClassAI System - Base and implementations
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
+
+    # ClassAI Template Architecture (Phase 3: Code Duplication Elimination)
+    # Note: .cpp removed due to old SPEC_* constants, but .h still needed for template definitions
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/RoleSpecializations.h
+
+    # Baseline Rotation Manager (Levels 1-9 unspecialized bots)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.h
 
     # Death Knight AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.cpp
+    # DeathKnightAI.cpp removed due to duplicate symbols with DeathKnightAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DiseaseManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DiseaseManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/RuneManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/RuneManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/UnholySpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/BloodSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/FrostSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI_Specialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightSpecialization.cpp
+
+    # Death Knight Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/BloodDeathKnightRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/FrostDeathKnightRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/UnholyDeathKnightRefactored.h
 
     # Demon Hunter AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/DemonHunterAI.cpp
@@ -106,45 +141,144 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/DruidAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/DruidAI.h
 
+    # Druid Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/BalanceDruidRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/FeralDruidRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/GuardianDruidRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/RestorationDruidRefactored.h
+
     # Evoker AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
 
+    # Evoker Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/DevastationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/PreservationEvokerRefactored.h
+
     # Hunter AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterSpecializationBase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterSpecialization.h
+    # Note: Old HunterSpecialization.cpp excluded - uses deprecated APIs
+    # HunterSpecializationBase.cpp provides only the base class constructor and helpers
+    # Using refactored template-based specializations (BeastMastery/Marksmanship/SurvivalHunterRefactored)
+
+    # Hunter Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/BeastMasteryHunterRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/MarksmanshipHunterRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/SurvivalHunterRefactored.h
+
+    # Demon Hunter Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/HavocDemonHunterRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/VengeanceDemonHunterRefactored.h
 
     # Mage AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.cpp
+    # MageAI.cpp removed due to duplicate symbols with MageAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FireSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/ArcaneSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FrostSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI_Specialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageSpecialization.cpp
+
+    # Mage Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/ArcaneMageRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FireMageRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FrostMageRefactored.h
+
+    # Priest Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/DisciplinePriestRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/HolyPriestRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowPriestRefactored.h
 
     # Monk AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/MonkAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/MonkAI.h
 
+    # Monk Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/BrewmasterMonkRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/MistweaverMonkRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Monks/WindwalkerMonkRefactored.h
+
     # Paladin AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/PaladinAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/PaladinAI.h
 
+    # Paladin Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/HolyPaladinRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/ProtectionPaladinRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/RetributionSpecializationRefactored.h
+
     # Priest AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
+    # PriestAI.cpp removed due to duplicate symbols with PriestAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/DisciplineSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/HolySpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI_Specialization.cpp
 
     # Rogue AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.cpp
+    # RogueAI.cpp removed due to duplicate symbols with RogueAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueCombatPositioning.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletySpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/CombatSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI_Specialization.cpp
+
+    # Rogue Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationRogueRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/OutlawRogueRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletyRogueRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueSpecialization.cpp
 
     # Shaman AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.cpp
+    # ShamanAI.cpp removed due to duplicate symbols with ShamanAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanSpecialization.h
+
+    # Shaman Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ElementalShamanRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/EnhancementShamanRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/RestorationShamanRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/RestorationSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/EnhancementSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ElementalSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI_Specialization.cpp
 
     # Warlock AI
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
+    # WarlockAI.cpp removed due to duplicate symbols with WarlockAI_Specialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/AfflictionSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DestructionSpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DemonologySpecialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI_Specialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockSpecialization.cpp
+
+    # Warlock Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/AfflictionWarlockRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DemonologyWarlockRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DestructionWarlockRefactored.h
 
     # Warrior AI
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/WarriorAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/WarriorAI.h
+
+    # Warrior Refactored Specializations (Template-based)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/ArmsWarriorRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/FuryWarriorRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warriors/ProtectionWarriorRefactored.h
 
     # Group Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
@@ -201,6 +335,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptAwareness.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
@@ -256,10 +394,15 @@ set(PLAYERBOT_SOURCES
     # Quest Systems - Dynamic Quest Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
+
+    # Commands - Chat command system for bot management
+    ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
 
 # Group sources for IDE organization
@@ -302,6 +445,10 @@ source_group("AI" FILES
 source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
 )
 
 source_group("AI\\Actions" FILES
@@ -313,6 +460,12 @@ source_group("AI\\Actions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/RestAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/RestAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/BuffAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/BuffAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/LootAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/LootAction.h
 )
 
 source_group("AI\\Triggers" FILES
@@ -445,6 +598,10 @@ source_group("Quest" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
+)
+
+source_group("Commands" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
 
 # Create the playerbot library

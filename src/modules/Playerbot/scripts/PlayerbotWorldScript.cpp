@@ -16,6 +16,7 @@
 #include "Config/PlayerbotConfig.h"
 #include "Lifecycle/BotSpawner.h"
 #include "Session/BotSessionMgr.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleMgr.h"
 
 PlayerbotWorldScript::PlayerbotWorldScript() : WorldScript("PlayerbotWorldScript")
@@ -52,12 +53,17 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
             {
                 TC_LOG_DEBUG("module.playerbot.script", "PlayerbotWorldScript: Waiting for Playerbot module initialization (attempt {})", initRetryCount);
             }
+            TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() RETURNING EARLY - not enabled ===");
             return;
         }
 
+        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() PAST enabled check, about to set initialized=true ===");
+
         // Module is now ready!
-        TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Playerbot module now ready - initialization complete");
+        TC_LOG_ERROR("module.playerbot.script", "PlayerbotWorldScript: Playerbot module now ready - initialization complete");
         initialized = true;
+
+        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() initialized=true SET, initializing performance tracking ===");
 
         // Initialize performance tracking
         _lastMetricUpdate = GameTime::GetGameTimeMS();
@@ -170,6 +176,10 @@ void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMas
 
 void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
 {
+    static uint32 lastDebugLog = 0;
+    uint32 currentTime = getMSTime();
+    bool shouldLog = (currentTime - lastDebugLog > 5000); // Log every 5 seconds
+
     // Update BotSpawner for population management and character creation
     if (Playerbot::sBotSpawner)
     {
@@ -184,19 +194,36 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
         }
     }
 
-    // Update BotSessionMgr for active bot management
-    if (sBotSessionMgr)
+    // ENTERPRISE FIX: Use BotWorldSessionMgr (correct system) instead of BotSessionMgr (legacy/unused)
+    // Root Cause: Two competing session management systems exist:
+    //   1. BotSessionMgr - Legacy system with empty _activeSessions (NOT used by BotSpawner)
+    //   2. BotWorldSessionMgr - Active system with all bot sessions (used by BotSpawner)
+    // BotSpawner calls sBotWorldSessionMgr->AddPlayerBot() which stores sessions in BotWorldSessionMgr
+    // Therefore, we must call sBotWorldSessionMgr->UpdateSessions() to update those sessions
+    if (Playerbot::sBotWorldSessionMgr)
     {
+        if (shouldLog)
+        {
+            TC_LOG_INFO("module.playerbot.script", "🔄 UpdateBotSystems: Calling sBotWorldSessionMgr->UpdateSessions(), active bots: {}",
+                        Playerbot::sBotWorldSessionMgr->GetBotCount());
+        }
         try
         {
-            sBotSessionMgr->UpdateAllSessions(diff);
+            Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
         }
         catch (std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.script",
-                "PlayerbotWorldScript::UpdateBotSystems: BotSessionMgr exception: {}", e.what());
+                "PlayerbotWorldScript::UpdateBotSystems: BotWorldSessionMgr exception: {}", e.what());
         }
     }
+    else if (shouldLog)
+    {
+        TC_LOG_ERROR("module.playerbot.script", "❌ UpdateBotSystems: sBotWorldSessionMgr is NULL!");
+    }
+
+    if (shouldLog)
+        lastDebugLog = currentTime;
 
     // Update BotLifecycleMgr for bot lifecycle management
     // Note: This may be commented out in current implementation
@@ -261,8 +288,16 @@ void PlayerbotWorldScript::UpdateMetrics(uint32 updateTime)
     }
 }
 
+// Forward declaration for playerbot command script
+void AddSC_playerbot_commandscript();
+
 // Script registration function
 void AddSC_playerbot_world()
 {
     new PlayerbotWorldScript();
+
+    // Register playerbot commands (module-only approach)
+    #ifdef BUILD_PLAYERBOT
+    AddSC_playerbot_commandscript();
+    #endif
 }

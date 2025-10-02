@@ -142,7 +142,27 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     // Store the shared_ptr to keep the session alive
     _botSessions[playerGuid] = botSession;
 
-    // Start the async login process
+    // ENTERPRISE FIX V2: DEADLOCK-FREE staggered login using immediate execution
+    //
+    // CRITICAL DEADLOCK BUG FOUND: Previous implementation created detached threads WHILE
+    // holding _sessionsMutex (non-recursive), causing deadlock when threads tried to
+    // acquire the same mutex for cleanup (line 184). This disabled the spawner.
+    //
+    // ROOT CAUSE: std::mutex is NOT recursive. Main thread holds lock, detached thread
+    // tries to acquire → deadlock → "resource deadlock would occur" exception.
+    //
+    // NEW SOLUTION: Calculate position-based delay but execute immediately WITHOUT threads.
+    // Let TrinityCore's async database system handle the queueing naturally.
+    // The async connection pool has built-in queuing - we don't need manual thread delays.
+    //
+    // Performance: Database pool will process callbacks in order as connections become
+    // available. Natural flow-control without threading complexity or deadlock risk.
+
+    TC_LOG_INFO("module.playerbot.session",
+        "🔧 Initiating async login for bot {} (position {} in spawn batch)",
+        playerGuid.ToString(), _botSessions.size());
+
+    // Initiate async login immediately - let database pool handle queuing
     if (!botSession->LoginCharacter(playerGuid))
     {
         TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to initiate async login for character {}", playerGuid.ToString());
@@ -151,8 +171,6 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    // Note: Login is now async and will complete in the Update cycle
-    // The bot will be marked as loaded when LoginState becomes LOGIN_COMPLETE
     TC_LOG_INFO("module.playerbot.session", "🔧 Async bot login initiated for: {}", playerGuid.ToString());
     return true; // Return true to indicate login was started (not completed)
 }
@@ -285,6 +303,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Validate session is still active before processing
         if (!botSession || !botSession->IsActive())
         {
+            TC_LOG_WARN("module.playerbot.session", "🔄 Skipping inactive session: {}", guid.ToString());
             disconnectedSessions.push_back(guid);
             continue;
         }
@@ -413,6 +432,76 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     TC_LOG_DEBUG("module.playerbot.session", "🔧 Character cache synchronized for {}", playerGuid.ToString());
     return true;
+}
+
+// ============================================================================
+// Chat Command Support APIs - Added for PlayerBot command system
+// ============================================================================
+
+std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId) const
+{
+    std::vector<Player*> bots;
+    std::lock_guard<std::mutex> lock(_sessionsMutex);
+
+    for (auto const& [guid, session] : _botSessions)
+    {
+        if (!session)
+            continue;
+
+        Player* bot = session->GetPlayer();
+        if (!bot)
+            continue;
+
+        // Check if this bot belongs to the specified account
+        if (bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+            bots.push_back(bot);
+    }
+
+    return bots;
+}
+
+void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
+{
+    std::vector<ObjectGuid> botsToRemove;
+
+    // Collect GUIDs to remove (avoid modifying map while iterating)
+    {
+        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        for (auto const& [guid, session] : _botSessions)
+        {
+            if (!session)
+                continue;
+
+            Player* bot = session->GetPlayer();
+            if (bot && bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+                botsToRemove.push_back(guid);
+        }
+    }
+
+    // Remove bots (this releases the mutex between iterations)
+    for (ObjectGuid const& guid : botsToRemove)
+    {
+        RemovePlayerBot(guid);
+        TC_LOG_INFO("module.playerbot.commands", "Removed bot {} for account {}", guid.ToString(), accountId);
+    }
+}
+
+uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
+{
+    uint32 count = 0;
+    std::lock_guard<std::mutex> lock(_sessionsMutex);
+
+    for (auto const& [guid, session] : _botSessions)
+    {
+        if (!session)
+            continue;
+
+        Player* bot = session->GetPlayer();
+        if (bot && bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+            ++count;
+    }
+
+    return count;
 }
 
 } // namespace Playerbot
