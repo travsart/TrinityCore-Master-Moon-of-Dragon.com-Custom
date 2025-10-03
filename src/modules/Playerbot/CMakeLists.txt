@@ -357,10 +357,10 @@ set(PLAYERBOT_SOURCES
     # ThreatManager - resolved naming conflict by renaming to BotThreatManager
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
 # Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
 
     # Phase 2: Interface Definitions (header-only)
@@ -422,8 +422,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
 
     # Game Systems - Integrated Quest, Inventory, Trade Management
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    # QuestManager temporarily disabled - requires TrinityCore API modernization for Phase 3
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
     # Config files commented out - incomplete implementations
@@ -521,10 +522,10 @@ source_group("AI\\Combat" FILES
     # ThreatManager - resolved naming conflict by renaming to BotThreatManager
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/BotThreatManager.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
 # Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
 )
 
@@ -645,8 +646,8 @@ source_group("Quest" FILES
 )
 
 source_group("Game" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
 )

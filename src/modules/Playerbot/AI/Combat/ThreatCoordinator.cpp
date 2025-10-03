@@ -18,6 +18,7 @@
 #include "Group.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "SpellHistory.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include <algorithm>
@@ -85,7 +86,7 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
     ObjectGuid botGuid = bot->GetGUID();
 
     // Create threat manager for the bot
-    _botThreatManagers[botGuid] = std::make_unique<ThreatManager>(bot);
+    _botThreatManagers[botGuid] = std::make_unique<BotThreatManager>(bot);
 
     // Store AI reference
     _botAIs[botGuid] = ai;
@@ -98,7 +99,7 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
 
     // Load available threat abilities for this bot
     auto& db = ThreatAbilitiesDB::Instance();
-    auto abilities = db.GetClassAbilities(bot->getClass());
+    auto abilities = db.GetClassAbilities(static_cast<Classes>(bot->GetClass()));
     for (const auto& ability : abilities)
     {
         if (bot->HasSpell(ability.spellId))
@@ -277,7 +278,7 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
         return false;
 
     // Check if taunt is ready
-    if (tank->HasSpellCooldown(tauntSpell))
+    if (tank->GetSpellHistory()->HasCooldown(tauntSpell))
         return false;
 
     // Execute taunt through AI
@@ -309,14 +310,14 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reducti
 
     // Find appropriate threat reduction ability
     auto& db = ThreatAbilitiesDB::Instance();
-    auto abilities = db.GetClassAbilities(bot->getClass());
+    auto abilities = db.GetClassAbilities(static_cast<Classes>(bot->GetClass()));
 
     for (const auto& ability : abilities)
     {
         if (ability.type == ThreatAbilityType::THREAT_REDUCTION ||
             ability.type == ThreatAbilityType::THREAT_DROP)
         {
-            if (bot->HasSpell(ability.spellId) && !bot->HasSpellCooldown(ability.spellId))
+            if (bot->HasSpell(ability.spellId) && !bot->GetSpellHistory()->HasCooldown(ability.spellId))
             {
                 bot->CastSpell(bot, ability.spellId, false);
 
@@ -344,13 +345,13 @@ bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toB
 
     // Check for threat transfer abilities (Misdirection, Tricks of the Trade)
     auto& db = ThreatAbilitiesDB::Instance();
-    auto abilities = db.GetClassAbilities(from->getClass());
+    auto abilities = db.GetClassAbilities(static_cast<Classes>(from->GetClass()));
 
     for (const auto& ability : abilities)
     {
         if (ability.type == ThreatAbilityType::THREAT_TRANSFER)
         {
-            if (from->HasSpell(ability.spellId) && !from->HasSpellCooldown(ability.spellId))
+            if (from->HasSpell(ability.spellId) && !from->GetSpellHistory()->HasCooldown(ability.spellId))
             {
                 from->CastSpell(to, ability.spellId, false);
 
@@ -906,7 +907,7 @@ ThreatRole ThreatCoordinator::DetermineRole(Player* bot) const
     if (!bot)
         return ThreatRole::UNDEFINED;
 
-    uint8 classId = bot->getClass();
+    uint8 classId = bot->GetClass();
 
     // Check specialization for hybrid classes
     // This is simplified - in production, check actual spec
@@ -949,7 +950,7 @@ uint32 ThreatCoordinator::GetTauntSpellForBot(ObjectGuid botGuid) const
         return 0;
 
     // Get class-specific taunt
-    switch (bot->getClass())
+    switch (bot->GetClass())
     {
         case CLASS_WARRIOR:
             return ThreatSpells::TAUNT;
@@ -978,7 +979,7 @@ bool ThreatCoordinator::CanBotTaunt(ObjectGuid botGuid) const
     if (tauntSpell == 0)
         return false;
 
-    return !bot->HasSpellCooldown(tauntSpell);
+    return !bot->GetSpellHistory()->HasCooldown(tauntSpell);
 }
 
 void ThreatCoordinator::LogThreatStatus() const

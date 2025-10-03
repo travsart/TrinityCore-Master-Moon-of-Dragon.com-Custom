@@ -282,6 +282,11 @@ private:
     void CleanupInactiveBots();
     void CleanupExpiredResponses();
 
+    // Helper methods
+    ThreatRole DetermineRole(Player* bot) const;
+    uint32 GetTauntSpellForBot(ObjectGuid botGuid) const;
+    bool CanBotTaunt(ObjectGuid botGuid) const;
+
 private:
     // Group reference
     Group* _group;
