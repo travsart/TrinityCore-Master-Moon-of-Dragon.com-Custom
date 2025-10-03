@@ -10,8 +10,11 @@
 #include "AssassinationSpecialization.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "SpellHistory.h"
+#include "SpellAuras.h"
 #include "Log.h"
 #include "Player.h"
+#include "Map.h"
 
 namespace Playerbot
 {
@@ -25,7 +28,8 @@ AssassinationSpecialization::AssassinationSpecialization(Player* bot)
     // Initialize DoT tracking
     _dots[RUPTURE] = DotInfo(RUPTURE, 22000);  // 22 seconds
     _dots[GARROTE] = DotInfo(GARROTE, 18000);  // 18 seconds
-    _dots[DEADLY_POISON_9] = DotInfo(DEADLY_POISON_9, 12000); // 12 seconds
+    // Modern WoW 11.2: Deadly Poison is now applied as character buff, not weapon coating
+    _dots[DEADLY_POISON_MODERN] = DotInfo(DEADLY_POISON_MODERN, 12000); // 12 seconds
 
     // Initialize stealth openers in priority order
     _stealthOpeners = {GARROTE, CHEAP_SHOT, AMBUSH};
@@ -252,7 +256,7 @@ void AssassinationSpecialization::UpdateStealthManagement()
     // Check if we should enter stealth
     if (ShouldEnterStealth() && !IsStealthed())
     {
-        if (IsSpellReady(STEALTH) && _bot->IsOutOfCombat())
+        if (IsSpellReady(STEALTH) && !_bot->IsInCombat())
         {
             if (CastSpell(STEALTH))
             {
@@ -260,7 +264,7 @@ void AssassinationSpecialization::UpdateStealthManagement()
                 LogAssassinationDecision("Entered Stealth", "Preparing for opener");
             }
         }
-        else if (IsSpellReady(VANISH) && _bot->isInCombat())
+        else if (IsSpellReady(VANISH) && _bot->IsInCombat())
         {
             if (CastSpell(VANISH))
             {
@@ -284,15 +288,15 @@ bool AssassinationSpecialization::ShouldEnterStealth()
         return false;
 
     // Enter stealth before combat
-    if (_bot->IsOutOfCombat() && !IsStealthed())
+    if (!_bot->IsInCombat() && !IsStealthed())
         return true;
 
     // Use Vanish in emergencies
-    if (_bot->isInCombat() && _bot->GetHealthPct() < EMERGENCY_HEALTH_THRESHOLD)
+    if (_bot->IsInCombat() && _bot->GetHealthPct() < EMERGENCY_HEALTH_THRESHOLD)
         return true;
 
     // Use Vanish for re-opener in long fights
-    if (_bot->isInCombat() && IsSpellReady(VANISH))
+    if (_bot->IsInCombat() && IsSpellReady(VANISH))
     {
         uint32 combatTime = getMSTime() - _combatStartTime;
         if (combatTime > 60000) // After 1 minute of combat
@@ -468,72 +472,109 @@ void AssassinationSpecialization::ExecuteComboSpender(::Unit* target)
 
 void AssassinationSpecialization::UpdatePoisonManagement()
 {
-    // Update poison application timing
-    uint32 currentTime = getMSTime();
-    if (_lastPoisonApplicationTime == 0)
-        _lastPoisonApplicationTime = currentTime;
+    // WoW 11.2 Modern Poison Management
+    // Poisons are now character buffs lasting 1 hour, not weapon charges
 
-    // Check if poisons need reapplication
-    if (currentTime - _lastPoisonApplicationTime > POISON_REAPPLY_INTERVAL)
+    // Only check/apply poisons if needed (buffs missing or expiring)
+    if (ShouldApplyPoisons())
     {
         ApplyPoisons();
-        _lastPoisonApplicationTime = currentTime;
+        _lastPoisonApplicationTime = getMSTime();
     }
 
-    // Update poison charges
-    UpdatePoisonCharges();
+    // Update poison application tracking for combat metrics
+    UpdatePoisonStacks();
 }
 
 void AssassinationSpecialization::ApplyPoisons()
 {
-    PoisonType mainHandPoison = GetOptimalMainHandPoison();
-    PoisonType offHandPoison = GetOptimalOffHandPoison();
+    // WoW 11.2 Modern Poison System: Poisons are now character buffs, not weapon coatings
+    // Each poison type persists for 1 hour and applies automatically in combat
 
-    // Apply main hand poison
-    if (mainHandPoison == PoisonType::INSTANT)
-        ApplyInstantPoison();
-    else if (mainHandPoison == PoisonType::DEADLY)
+    PoisonType lethalPoison = GetOptimalLethalPoison();
+    PoisonType nonLethalPoison = GetOptimalNonLethalPoison();
+
+    // Apply lethal poison (character buff)
+    if (lethalPoison == PoisonType::DEADLY)
         ApplyDeadlyPoison();
-    else if (mainHandPoison == PoisonType::WOUND)
+    else if (lethalPoison == PoisonType::AMPLIFYING)
+        ApplyAmplifyingPoison();
+    else if (lethalPoison == PoisonType::INSTANT)
+        ApplyInstantPoison();
+    else if (lethalPoison == PoisonType::WOUND)
         ApplyWoundPoison();
 
-    // Apply off hand poison
-    if (offHandPoison == PoisonType::CRIPPLING)
+    // Apply non-lethal poison (character buff)
+    if (nonLethalPoison == PoisonType::CRIPPLING)
         ApplyCripplingPoison();
-    else if (offHandPoison == PoisonType::MIND_NUMBING)
-        CastSpell(MIND_NUMBING_POISON_3);
+    else if (nonLethalPoison == PoisonType::NUMBING)
+        ApplyNumbingPoison();
+    else if (nonLethalPoison == PoisonType::ATROPHIC)
+        ApplyAtrophicPoison();
 
     _metrics.poisonApplications++;
-    LogAssassinationDecision("Applied Poisons", "Maintaining weapon enchants");
+
+    // SPAM FIX: Only log poison application once every 30 seconds to prevent log spam
+    static uint32 lastPoisonLogTime = 0;
+    uint32 currentTime = getMSTime();
+    if (currentTime - lastPoisonLogTime > 30000) // 30 seconds between logs
+    {
+        LogAssassinationDecision("Applied Poisons", "Maintaining character poison buffs (WoW 11.2)");
+        lastPoisonLogTime = currentTime;
+    }
 }
 
-PoisonType AssassinationSpecialization::GetOptimalMainHandPoison()
+// WoW 11.2 Modern Poison Selection - Lethal and Non-Lethal Categories
+PoisonType AssassinationSpecialization::GetOptimalLethalPoison()
 {
-    // Deadly poison for sustained damage
-    if (HasSpell(DEADLY_POISON_9))
+    // WoW 11.2 Guide: "Your Lethal Poison should always be Deadly Poison and Amplifying Poison"
+    // Priority: Deadly Poison for sustained damage
+    if (HasSpell(DEADLY_POISON_MODERN))
         return PoisonType::DEADLY;
 
-    // Instant poison for immediate damage
-    if (HasSpell(INSTANT_POISON_10))
+    // Amplifying Poison for burst windows with Envenom
+    if (HasSpell(AMPLIFYING_POISON))
+        return PoisonType::AMPLIFYING;
+
+    // Wound Poison for PvP (healing reduction)
+    if (HasSpell(WOUND_POISON_MODERN))
+        return PoisonType::WOUND;
+
+    // Fallback to Instant Poison
+    if (HasSpell(INSTANT_POISON_MODERN))
         return PoisonType::INSTANT;
 
     return PoisonType::NONE;
 }
 
-PoisonType AssassinationSpecialization::GetOptimalOffHandPoison()
+PoisonType AssassinationSpecialization::GetOptimalNonLethalPoison()
 {
-    // Crippling poison for utility
-    if (HasSpell(CRIPPLING_POISON_2))
+    // WoW 11.2 Guide: Three choices - Crippling, Atrophic, Numbing
+
+    // Atrophic Poison for raiding (damage reduction)
+    if (HasSpell(ATROPHIC_POISON))
+        return PoisonType::ATROPHIC;
+
+    // Numbing Poison for M+ (attack/cast speed reduction)
+    if (HasSpell(NUMBING_POISON))
+        return PoisonType::NUMBING;
+
+    // Crippling Poison for kiting and mobility control
+    if (HasSpell(CRIPPLING_POISON_MODERN))
         return PoisonType::CRIPPLING;
 
-    // Mind numbing against casters
-    if (_currentTarget && _currentTarget->GetPowerType() == POWER_MANA)
-    {
-        if (HasSpell(MIND_NUMBING_POISON_3))
-            return PoisonType::MIND_NUMBING;
-    }
-
     return PoisonType::NONE;
+}
+
+// Legacy methods for compatibility
+PoisonType AssassinationSpecialization::GetOptimalMainHandPoison()
+{
+    return GetOptimalLethalPoison();
+}
+
+PoisonType AssassinationSpecialization::GetOptimalOffHandPoison()
+{
+    return GetOptimalNonLethalPoison();
 }
 
 void AssassinationSpecialization::UpdateDebuffManagement()
@@ -900,9 +941,16 @@ bool AssassinationSpecialization::ShouldUseEnvenom(::Unit* target)
     if (!HasSpell(ENVENOM) || GetComboPoints() < MIN_COMBO_FOR_ENVENOM)
         return false;
 
-    // Use if target has poison effects
+    // WoW 11.2: Prioritize Envenom when Amplifying Poison has high stacks
+    uint32 amplifyingStacks = GetPoisonStacks(target, PoisonType::AMPLIFYING);
+    if (amplifyingStacks >= 10) // Envenom can consume 10 stacks for 35% increased damage
+        return true;
+
+    // Use if target has poison effects (any lethal poison)
     return GetPoisonStacks(target, PoisonType::DEADLY) > 0 ||
-           GetPoisonStacks(target, PoisonType::INSTANT) > 0;
+           GetPoisonStacks(target, PoisonType::INSTANT) > 0 ||
+           GetPoisonStacks(target, PoisonType::WOUND) > 0 ||
+           amplifyingStacks > 0;
 }
 
 bool AssassinationSpecialization::ShouldUseEviscerate(::Unit* target)
@@ -953,37 +1001,115 @@ bool AssassinationSpecialization::ShouldRefreshGarrote(::Unit* target)
     return ShouldRefreshDebuff(GARROTE) && IsStealthed();
 }
 
-// Poison application methods
-void AssassinationSpecialization::ApplyInstantPoison()
-{
-    if (HasSpell(INSTANT_POISON_10))
-        CastSpell(INSTANT_POISON_10);
-    else if (HasSpell(INSTANT_POISON_9))
-        CastSpell(INSTANT_POISON_9);
-}
-
+// WoW 11.2 Modern Poison Application Methods
 void AssassinationSpecialization::ApplyDeadlyPoison()
 {
-    if (HasSpell(DEADLY_POISON_9))
-        CastSpell(DEADLY_POISON_9);
+    // Modern WoW 11.2: Apply as character buff
+    if (HasSpell(DEADLY_POISON_MODERN))
+        CastSpell(DEADLY_POISON_MODERN);
+}
+
+void AssassinationSpecialization::ApplyAmplifyingPoison()
+{
+    // WoW 11.2: New poison that enhances Envenom damage
+    if (HasSpell(AMPLIFYING_POISON))
+        CastSpell(AMPLIFYING_POISON);
+}
+
+void AssassinationSpecialization::ApplyInstantPoison()
+{
+    // Modern WoW 11.2: Apply as character buff
+    if (HasSpell(INSTANT_POISON_MODERN))
+        CastSpell(INSTANT_POISON_MODERN);
 }
 
 void AssassinationSpecialization::ApplyWoundPoison()
 {
-    if (HasSpell(WOUND_POISON_5))
-        CastSpell(WOUND_POISON_5);
+    // Modern WoW 11.2: Apply as character buff
+    if (HasSpell(WOUND_POISON_MODERN))
+        CastSpell(WOUND_POISON_MODERN);
 }
 
 void AssassinationSpecialization::ApplyCripplingPoison()
 {
-    if (HasSpell(CRIPPLING_POISON_2))
-        CastSpell(CRIPPLING_POISON_2);
+    // Modern WoW 11.2: Apply as character buff
+    if (HasSpell(CRIPPLING_POISON_MODERN))
+        CastSpell(CRIPPLING_POISON_MODERN);
+}
+
+void AssassinationSpecialization::ApplyNumbingPoison()
+{
+    // WoW 11.2: Replaces old Mind-numbing Poison
+    if (HasSpell(NUMBING_POISON))
+        CastSpell(NUMBING_POISON);
+}
+
+void AssassinationSpecialization::ApplyAtrophicPoison()
+{
+    // WoW 11.2: New poison that reduces enemy damage
+    if (HasSpell(ATROPHIC_POISON))
+        CastSpell(ATROPHIC_POISON);
 }
 
 bool AssassinationSpecialization::ShouldApplyPoisons()
 {
-    uint32 currentTime = getMSTime();
-    return (currentTime - _lastPoisonApplicationTime) > POISON_REAPPLY_INTERVAL;
+    // WoW 11.2: Poisons are character buffs lasting 1 hour
+    // Only reapply if the buff is missing or has less than 5 minutes remaining
+
+    if (!_bot)
+        return false;
+
+    // Check if lethal poison buff is missing or expiring soon
+    PoisonType lethalPoison = GetOptimalLethalPoison();
+    bool needsLethalPoison = false;
+
+    switch (lethalPoison)
+    {
+        case PoisonType::DEADLY:
+            needsLethalPoison = !_bot->HasAura(DEADLY_POISON_MODERN) ||
+                              GetAuraTimeRemaining(DEADLY_POISON_MODERN, _bot) < 300000; // 5 minutes
+            break;
+        case PoisonType::AMPLIFYING:
+            needsLethalPoison = !_bot->HasAura(AMPLIFYING_POISON) ||
+                              GetAuraTimeRemaining(AMPLIFYING_POISON, _bot) < 300000;
+            break;
+        case PoisonType::INSTANT:
+            needsLethalPoison = !_bot->HasAura(INSTANT_POISON_MODERN) ||
+                              GetAuraTimeRemaining(INSTANT_POISON_MODERN, _bot) < 300000;
+            break;
+        case PoisonType::WOUND:
+            needsLethalPoison = !_bot->HasAura(WOUND_POISON_MODERN) ||
+                              GetAuraTimeRemaining(WOUND_POISON_MODERN, _bot) < 300000;
+            break;
+        default:
+            needsLethalPoison = true;
+            break;
+    }
+
+    // Check if non-lethal poison buff is missing or expiring soon
+    PoisonType nonLethalPoison = GetOptimalNonLethalPoison();
+    bool needsNonLethalPoison = false;
+
+    switch (nonLethalPoison)
+    {
+        case PoisonType::CRIPPLING:
+            needsNonLethalPoison = !_bot->HasAura(CRIPPLING_POISON_MODERN) ||
+                                 GetAuraTimeRemaining(CRIPPLING_POISON_MODERN, _bot) < 300000;
+            break;
+        case PoisonType::NUMBING:
+            needsNonLethalPoison = !_bot->HasAura(NUMBING_POISON) ||
+                                 GetAuraTimeRemaining(NUMBING_POISON, _bot) < 300000;
+            break;
+        case PoisonType::ATROPHIC:
+            needsNonLethalPoison = !_bot->HasAura(ATROPHIC_POISON) ||
+                                 GetAuraTimeRemaining(ATROPHIC_POISON, _bot) < 300000;
+            break;
+        default:
+            needsNonLethalPoison = true;
+            break;
+    }
+
+    return needsLethalPoison || needsNonLethalPoison;
 }
 
 uint32 AssassinationSpecialization::GetPoisonStacks(::Unit* target, PoisonType type)
@@ -991,13 +1117,35 @@ uint32 AssassinationSpecialization::GetPoisonStacks(::Unit* target, PoisonType t
     if (!target)
         return 0;
 
-    // Simplified poison stack tracking
+    // WoW 11.2 Modern poison stack tracking
     switch (type)
     {
         case PoisonType::DEADLY:
-            return HasAura(DEADLY_POISON_9, target) ? 5 : 0;
+            return HasAura(DEADLY_POISON_MODERN, target) ? 1 : 0; // Deadly Poison no longer stacks
+        case PoisonType::AMPLIFYING:
+            // Amplifying Poison stacks up to 20 for Envenom consumption
+            if (HasAura(AMPLIFYING_POISON, target))
+            {
+                if (Aura* aura = target->GetAura(AMPLIFYING_POISON))
+                    return aura->GetStackAmount();
+            }
+            return 0;
         case PoisonType::INSTANT:
-            return HasAura(INSTANT_POISON_10, target) ? 1 : 0;
+            return HasAura(INSTANT_POISON_MODERN, target) ? 1 : 0; // Instant damage, no stacks
+        case PoisonType::WOUND:
+            // Wound Poison stacks up to 3 times for healing reduction
+            if (HasAura(WOUND_POISON_MODERN, target))
+            {
+                if (Aura* aura = target->GetAura(WOUND_POISON_MODERN))
+                    return aura->GetStackAmount();
+            }
+            return 0;
+        case PoisonType::CRIPPLING:
+            return HasAura(CRIPPLING_POISON_MODERN, target) ? 1 : 0; // Movement slow, no stacks
+        case PoisonType::NUMBING:
+            return HasAura(NUMBING_POISON, target) ? 1 : 0; // Attack/cast speed slow, no stacks
+        case PoisonType::ATROPHIC:
+            return HasAura(ATROPHIC_POISON, target) ? 1 : 0; // Damage reduction, highest instance only
         default:
             return 0;
     }
@@ -1178,9 +1326,9 @@ void AssassinationSpecialization::UpdateDotTicks()
 
 void AssassinationSpecialization::UpdatePoisonCharges()
 {
-    // Simplified poison charge tracking
-    _poisons.mainHandCharges = 100; // Assume full charges
-    _poisons.offHandCharges = 100;
+    // WoW 11.2: Poison charges no longer exist
+    // Poisons are character buffs that persist for 1 hour
+    // This method is kept for compatibility but does nothing
 }
 
 void AssassinationSpecialization::UpdateCombatMetrics()
@@ -1245,13 +1393,13 @@ bool AssassinationSpecialization::CastSpell(uint32 spellId, ::Unit* target)
     else if (spellId == ENVENOM)
         _metrics.envenomCasts++;
     else if (spellId == RUPTURE)
-        _metrics.ruptureCasts++;
+        _metrics.ruptureApplications++;
     else if (spellId == GARROTE)
-        _metrics.garroteCasts++;
+        _metrics.garroteApplications++;
     else if (spellId == COLD_BLOOD)
-        _metrics.coldBloodUses++;
+        _metrics.coldBloodUsages++;
     else if (spellId == VENDETTA)
-        _metrics.vendettaUses++;
+        _metrics.coldBloodUsages++; // Track vendetta uses in coldBloodUsages for now
 
     // Cast the spell through the bot
     if (target)
@@ -1289,16 +1437,12 @@ uint32 AssassinationSpecialization::GetSpellCooldown(uint32 spellId)
     if (!spellInfo)
         return 0;
 
-    // Check if spell has an active cooldown
-    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
-    auto itr = cooldowns.find(spellId);
-    if (itr != cooldowns.end())
+    // Check if spell has an active cooldown using modern SpellHistory API
+    SpellHistory* spellHistory = _bot->GetSpellHistory();
+    if (spellHistory && spellHistory->HasCooldown(spellId))
     {
-        uint32 currentTime = getMSTime();
-        if (itr->second.end > currentTime)
-        {
-            return itr->second.end - currentTime;
-        }
+        auto cooldownDuration = spellHistory->GetRemainingCooldown(spellInfo);
+        return static_cast<uint32>(cooldownDuration.count());
     }
 
     return 0;

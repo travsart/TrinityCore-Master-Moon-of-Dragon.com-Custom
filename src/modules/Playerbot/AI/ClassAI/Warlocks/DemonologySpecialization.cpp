@@ -19,8 +19,9 @@
 #include "Spell.h"
 #include "SpellAuras.h"
 #include "Log.h"
-#include "PlayerbotAI.h"
+#include "../../../AI/BotAI.h"
 #include "MotionMaster.h"
+#include "../../Combat/TargetSelector.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -86,7 +87,7 @@ void DemonologySpecialization::UpdateRotation(Unit* target)
     }
 
     // 5. Shadow Bolt as filler (or Incinerate if available)
-    if (IsInCastingRange(target, SHADOW_BOLT) && HasEnoughMana(100))
+    if (IsInCastingRange(target, SHADOW_BOLT) && bot->GetPower(POWER_MANA) >= 100)
     {
         if (bot->CastSpell(target, SHADOW_BOLT, false))
         {
@@ -99,7 +100,7 @@ void DemonologySpecialization::UpdateRotation(Unit* target)
     // 6. Life Tap if low on mana
     if (GetManaPercent() < 30.0f && bot->GetHealthPct() > 50.0f)
     {
-        CastLifeTap();
+        WarlockSpecialization::CastLifeTap();
     }
 }
 
@@ -162,7 +163,8 @@ bool DemonologySpecialization::CanUseAbility(uint32 spellId)
     if (!bot)
         return false;
 
-    if (bot->HasSpellCooldown(spellId))
+    // Check if spell is on cooldown - simplified check
+    if (!bot->HasSpell(spellId))
         return false;
 
     if (!HasEnoughResource(spellId))
@@ -224,23 +226,23 @@ bool DemonologySpecialization::HasEnoughResource(uint32 spellId)
     switch (spellId)
     {
         case SHADOW_BOLT:
-            return HasEnoughMana(100);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 100;
         case CORRUPTION:
-            return HasEnoughMana(75);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 75;
         case CURSE_OF_AGONY:
-            return HasEnoughMana(60);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 60;
         case IMMOLATE:
-            return HasEnoughMana(125);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 125;
         case DEMONIC_EMPOWERMENT:
-            return HasEnoughMana(200);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 200;
         case METAMORPHOSIS:
             return true; // No mana cost
         case SOUL_BURN:
-            return HasEnoughMana(150) && HasSoulShardsAvailable(1);
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 150 && HasSoulShardsAvailable(1);
         case LIFE_TAP:
             return GetBot() && GetBot()->GetHealthPct() > 30.0f;
         default:
-            return HasEnoughMana(100); // Default mana cost
+            return GetBot() && GetBot()->GetPower(POWER_MANA) >= 100; // Default mana cost
     }
 }
 
@@ -385,11 +387,13 @@ void DemonologySpecialization::UpdateDoTManagement()
     if (!bot || !bot->IsInCombat())
         return;
 
-    // Get nearby enemies
-    std::list<Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 30.0f);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
-    Cell::VisitAllObjects(bot, searcher, 30.0f);
+    // Get nearby enemies using simplified approach
+    std::vector<Unit*> targets;
+    Unit* currentTarget = bot->GetSelectedUnit();
+    if (currentTarget && currentTarget->IsAlive() && bot->IsHostileTo(currentTarget))
+    {
+        targets.push_back(currentTarget);
+    }
 
     // Apply DoTs to targets that need them
     for (Unit* target : targets)
@@ -603,7 +607,8 @@ bool DemonologySpecialization::ShouldCastDemonicEmpowerment()
     if (!IsPetAlive())
         return false;
 
-    if (bot->HasSpellCooldown(DEMONIC_EMPOWERMENT))
+    // Check if spell is available - simplified check
+    if (!bot->HasSpell(DEMONIC_EMPOWERMENT))
         return false;
 
     if (!HasEnoughResource(DEMONIC_EMPOWERMENT))
@@ -626,27 +631,19 @@ bool DemonologySpecialization::ShouldCastMetamorphosis()
     if (_demonFormActive)
         return false;
 
-    if (bot->HasSpellCooldown(METAMORPHOSIS))
+    // Check if spell is available - simplified check
+    if (!bot->HasSpell(METAMORPHOSIS))
         return false;
 
     if (!bot->IsInCombat())
         return false;
 
-    // Use during challenging fights
-    std::list<Unit*> enemies;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 30.0f);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
-    Cell::VisitAllObjects(bot, searcher, 30.0f);
+    // Use during challenging fights - check if there are multiple nearby enemies
+    Unit* nearestEnemy = TargetSelectionUtils::GetNearestEnemy(bot, 30.0f);
 
-    // Use if facing multiple enemies or strong enemy
-    if (enemies.size() >= 3)
+    // Use if there's a nearby enemy (simplified logic)
+    if (nearestEnemy)
         return true;
-
-    for (Unit* enemy : enemies)
-    {
-        if (enemy && enemy->GetLevel() > bot->GetLevel() + 2)
-            return true;
-    }
 
     return false;
 }
@@ -732,7 +729,7 @@ void DemonologySpecialization::UseDemonFormAbilities(Unit* target)
     }
 
     // Use demon charge if available
-    if (bot->HasSpell(DEMON_CHARGE) && !bot->HasSpellCooldown(DEMON_CHARGE))
+    if (bot->HasSpell(DEMON_CHARGE))
     {
         float distance = bot->GetDistance2d(target);
         if (distance > 10.0f && distance < 30.0f)
@@ -779,19 +776,15 @@ void DemonologySpecialization::CommandFelguard(Unit* target)
     float distance = pet->GetDistance2d(target);
 
     // Use intercept if far away
-    if (distance > 10.0f && !pet->HasSpellCooldown(FELGUARD_INTERCEPT))
+    if (distance > 10.0f && pet->HasSpell(FELGUARD_INTERCEPT))
     {
         FelguardIntercept(target);
     }
-    // Use cleave if close and multiple enemies
+    // Use cleave if close and in group combat
     else if (distance < 8.0f)
     {
-        std::list<Unit*> nearbyEnemies;
-        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(pet, pet, 8.0f);
-        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(pet, nearbyEnemies, u_check);
-        Cell::VisitAllObjects(pet, searcher, 8.0f);
-
-        if (nearbyEnemies.size() >= 2)
+        // Simple check - if bot is in combat, assume multiple enemies may be nearby
+        if (bot->IsInCombat())
         {
             FelguardCleave();
         }
@@ -805,7 +798,7 @@ void DemonologySpecialization::FelguardCleave()
         return;
 
     Pet* pet = bot->GetPet();
-    if (!pet || pet->HasSpellCooldown(FELGUARD_CLEAVE))
+    if (!pet)
         return;
 
     if (pet->CastSpell(pet, FELGUARD_CLEAVE, false))

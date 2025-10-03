@@ -324,7 +324,7 @@ bool MarksmanshipSpecialization::HasEnoughResource(uint32 spellId)
         return false;
 
     uint32 manaCost = 0;
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (spellInfo)
         manaCost = spellInfo->ManaCost;
 
@@ -412,7 +412,7 @@ void MarksmanshipSpecialization::ConsumeResource(uint32 spellId)
     if (!bot) return;
 
     uint32 manaCost = 0;
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (spellInfo) manaCost = spellInfo->ManaCost;
 
     if (manaCost > 0)

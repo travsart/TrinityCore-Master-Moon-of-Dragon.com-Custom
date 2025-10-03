@@ -53,6 +53,29 @@ public:
     PriestSpec GetSpecialization() const override { return PriestSpec::SHADOW; }
     const char* GetSpecializationName() const override { return "Shadow"; }
 
+    // Shadow spell IDs (public for external access)
+    enum ShadowSpells
+    {
+        SHADOW_FORM = 15473,
+        VOID_FORM = 194249,
+        MIND_BLAST = 8092,
+        SHADOW_WORD_PAIN = 589,
+        VAMPIRIC_TOUCH = 34914,
+        MIND_FLAY = 15407,
+        SHADOW_WORD_DEATH = 32379,
+        MIND_SPIKE = 73510,
+        PSYCHIC_SCREAM = 8122,
+        VOID_BOLT = 205448,
+        MIND_SEAR = 48045,
+        SHADOWFIEND = 34433,
+        MIND_CONTROL = 605,
+        DISPERSION = 47585,
+        VAMPIRIC_EMBRACE = 15286,
+        INSANITY = 129197,
+        VOIDFORM_BUFF = 194249,
+        LINGERING_INSANITY = 197937
+    };
+
 private:
     // Shadow-specific mechanics
     void UpdateShadowForm();
@@ -140,29 +163,6 @@ private:
     ::Unit* GetBestDoTTarget();
     ::Unit* GetBestMindControlTarget();
     bool ShouldSwitchTargets();
-
-    // Shadow spell IDs
-    enum ShadowSpells
-    {
-        SHADOW_FORM = 15473,
-        VOID_FORM = 194249,
-        MIND_BLAST = 8092,
-        SHADOW_WORD_PAIN = 589,
-        VAMPIRIC_TOUCH = 34914,
-        MIND_FLAY = 15407,
-        SHADOW_WORD_DEATH = 32379,
-        MIND_SPIKE = 73510,
-        PSYCHIC_SCREAM = 8122,
-        VOID_BOLT = 205448,
-        MIND_SEAR = 48045,
-        SHADOWFIEND = 34433,
-        MIND_CONTROL = 605,
-        DISPERSION = 47585,
-        VAMPIRIC_EMBRACE = 15286,
-        INSANITY = 129197,
-        VOIDFORM_BUFF = 194249,
-        LINGERING_INSANITY = 197937
-    };
 
     // State tracking
     PriestRole _currentRole;

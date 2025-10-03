@@ -19,6 +19,7 @@
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Spell.h"
+#include "SpellHistory.h"
 #include "Log.h"
 #include "Chat.h"
 #include "GridNotifiers.h"
@@ -85,9 +86,9 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
             return false;
     }
 
-    // Check cooldown - simplified check
-    // TODO: Implement proper cooldown checking with TrinityCore API
-    // For now, assume spell is available (could be enhanced later)
+    // Check cooldown using TrinityCore's SpellHistory API
+    if (bot->GetSpellHistory()->HasCooldown(spellId))
+        return false;
 
     // Check if target is valid (if spell requires target)
     if (spellInfo->IsTargetingArea() && !target)
@@ -178,9 +179,14 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     if (!item)
         return false;
 
-    // Use the item with simplified approach for now
-    // TODO: Implement proper SpellCastTargets when needed
-    bot->CastItemUseSpell(item, SpellCastTargets(), ObjectGuid::Empty, nullptr);
+    // Use the item with proper SpellCastTargets
+    SpellCastTargets targets;
+    if (target)
+        targets.SetUnitTarget(target);
+    else
+        targets.SetUnitTarget(bot);
+
+    bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, nullptr);
     return true;
 }
 

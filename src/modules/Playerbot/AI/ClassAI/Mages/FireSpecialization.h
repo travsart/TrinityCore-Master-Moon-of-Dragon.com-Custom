@@ -10,8 +10,13 @@
 #pragma once
 
 #include "MageSpecialization.h"
+#include "ObjectGuid.h"
+#include "Timer.h"
 #include <map>
 #include <vector>
+#include <atomic>
+#include <chrono>
+#include <unordered_map>
 
 namespace Playerbot
 {

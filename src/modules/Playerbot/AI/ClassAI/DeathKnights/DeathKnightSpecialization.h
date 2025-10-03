@@ -11,6 +11,8 @@
 
 #include "../ClassAI.h"
 #include "Position.h"
+#include "DiseaseManager.h"
+#include "DeathKnightTypes.h"
 #include <unordered_map>
 #include <bitset>
 
@@ -25,59 +27,9 @@ enum class DeathKnightSpec : uint8
     UNHOLY = 2
 };
 
-// Rune types
-enum class RuneType : uint8
-{
-    BLOOD = 0,
-    FROST = 1,
-    UNHOLY = 2,
-    DEATH = 3
-};
+// Disease types defined in DiseaseManager.h
 
-// Disease types
-enum class DiseaseType : uint8
-{
-    NONE = 0,
-    BLOOD_PLAGUE = 1,
-    FROST_FEVER = 2,
-    NECROTIC_STRIKE = 3
-};
-
-// Rune state tracking
-struct RuneInfo
-{
-    RuneType type;
-    bool available;
-    uint32 cooldownRemaining;
-    uint32 lastUsed;
-
-    RuneInfo() : type(RuneType::BLOOD), available(true), cooldownRemaining(0), lastUsed(0) {}
-    RuneInfo(RuneType t) : type(t), available(true), cooldownRemaining(0), lastUsed(0) {}
-
-    bool IsReady() const { return available && cooldownRemaining == 0; }
-    void Use() { available = false; lastUsed = getMSTime(); cooldownRemaining = 10000; } // 10 second cooldown
-};
-
-// Disease tracking on targets
-struct DiseaseInfo
-{
-    DiseaseType type;
-    uint32 spellId;
-    uint32 remainingTime;
-    uint32 ticksRemaining;
-    uint32 damagePerTick;
-    uint32 lastTick;
-
-    DiseaseInfo() : type(DiseaseType::NONE), spellId(0), remainingTime(0),
-                    ticksRemaining(0), damagePerTick(0), lastTick(0) {}
-
-    DiseaseInfo(DiseaseType t, uint32 spell, uint32 duration, uint32 damage)
-        : type(t), spellId(spell), remainingTime(duration),
-          ticksRemaining(duration / 3000), damagePerTick(damage), lastTick(getMSTime()) {}
-
-    bool IsActive() const { return remainingTime > 0; }
-    bool NeedsRefresh() const { return remainingTime < 6000; } // Refresh with <6 seconds remaining
-};
+// Disease tracking defined in DiseaseManager.h
 
 // Base class for all Death Knight specializations
 class TC_GAME_API DeathKnightSpecialization
@@ -87,51 +39,51 @@ public:
     virtual ~DeathKnightSpecialization() = default;
 
     // Core specialization interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
 
     // Combat callbacks
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 0.0f; }
 
     // Rune management
-    virtual void UpdateRuneManagement() = 0;
-    virtual bool HasAvailableRunes(RuneType type, uint32 count = 1) = 0;
-    virtual void ConsumeRunes(RuneType type, uint32 count = 1) = 0;
-    virtual uint32 GetAvailableRunes(RuneType type) const = 0;
+    virtual void UpdateRuneManagement() {}
+    virtual bool HasAvailableRunes(RuneType type, uint32 count = 1) { return false; }
+    virtual void ConsumeRunes(RuneType type, uint32 count = 1) {}
+    virtual uint32 GetAvailableRunes(RuneType type) const { return 0; }
 
     // Runic Power management
-    virtual void UpdateRunicPowerManagement() = 0;
-    virtual void GenerateRunicPower(uint32 amount) = 0;
-    virtual void SpendRunicPower(uint32 amount) = 0;
-    virtual uint32 GetRunicPower() const = 0;
-    virtual bool HasEnoughRunicPower(uint32 required) const = 0;
+    virtual void UpdateRunicPowerManagement() {}
+    virtual void GenerateRunicPower(uint32 amount) {}
+    virtual void SpendRunicPower(uint32 amount) {}
+    virtual uint32 GetRunicPower() const { return 0; }
+    virtual bool HasEnoughRunicPower(uint32 required) const { return false; }
 
     // Disease management
-    virtual void UpdateDiseaseManagement() = 0;
-    virtual void ApplyDisease(::Unit* target, DiseaseType type, uint32 spellId) = 0;
-    virtual bool HasDisease(::Unit* target, DiseaseType type) const = 0;
-    virtual bool ShouldApplyDisease(::Unit* target, DiseaseType type) const = 0;
-    virtual void RefreshExpringDiseases() = 0;
+    virtual void UpdateDiseaseManagement() {}
+    virtual void ApplyDisease(::Unit* target, DiseaseType type, uint32 spellId) {}
+    virtual bool HasDisease(::Unit* target, DiseaseType type) const { return false; }
+    virtual bool ShouldApplyDisease(::Unit* target, DiseaseType type) const { return false; }
+    virtual void RefreshExpringDiseases() {}
 
     // Death and Decay management
-    virtual void UpdateDeathAndDecay() = 0;
-    virtual bool ShouldCastDeathAndDecay() const = 0;
-    virtual void CastDeathAndDecay(Position targetPos) = 0;
+    virtual void UpdateDeathAndDecay() {}
+    virtual bool ShouldCastDeathAndDecay() const { return false; }
+    virtual void CastDeathAndDecay(Position targetPos) {}
 
     // Specialization info
-    virtual DeathKnightSpec GetSpecialization() const = 0;
-    virtual const char* GetSpecializationName() const = 0;
+    virtual DeathKnightSpec GetSpecialization() const { return DeathKnightSpec::BLOOD; }
+    virtual const char* GetSpecializationName() const { return "Death Knight"; }
 
 protected:
     Player* GetBot() const { return _bot; }
@@ -167,19 +119,30 @@ protected:
         PLAGUE_STRIKE = 45462,
         ICY_TOUCH = 45477,
         BLOOD_BOIL = 48721,
+        PESTILENCE = 50842,
 
         // Buffs
-        BONE_ARMOR = 49222,
+        BONE_ARMOR = 195181, // Updated for WoW 11.2
         HORN_OF_WINTER = 57330,
         UNHOLY_PRESENCE = 48265,
         BLOOD_PRESENCE = 48266,
         FROST_PRESENCE = 48263,
 
         // Death Runes
-        DEATH_RUNE_MASTERY = 49467
+        DEATH_RUNE_MASTERY = 49467,
+
+        // Additional Death Knight abilities
+        DEATH_PACT = 48743,
+        MIND_FREEZE = 47528,
+        RAISE_DEAD = 46584,
+        ANTI_MAGIC_SHELL = 48707,
+
+        // Additional spell constants
+        UNHOLY_FRENZY = 49016,
+        BLOOD_STRIKE = 45902
     };
 
-private:
+protected:
     Player* _bot;
 
     // Rune system (6 runes total: 2 Blood, 2 Frost, 2 Unholy)

@@ -28,7 +28,7 @@ class TC_GAME_API ShamanAI : public ClassAI
 {
 public:
     explicit ShamanAI(Player* bot);
-    ~ShamanAI() = default;
+    ~ShamanAI(); // Implemented in cpp file
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;

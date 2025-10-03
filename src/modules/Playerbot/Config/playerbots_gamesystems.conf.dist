@@ -1,0 +1,284 @@
+###################################################################################################
+# PLAYERBOT GAME SYSTEMS CONFIGURATION
+#
+# This configuration section controls the advanced game systems for PlayerBots including:
+# - Quest automation and management
+# - Inventory and loot management
+# - Player-to-player trading
+# - Auction house participation
+#
+###################################################################################################
+
+###################################################################################################
+# GAME SYSTEMS MASTER CONTROL
+#
+# Controls all game systems with a single switch
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Enable
+#        Description: Master switch for all game systems
+#        Default:     1 (Enabled)
+#        Values:      0 (Disabled - bots will not use any game systems)
+#                     1 (Enabled - individual systems controlled by their own settings)
+#
+
+Playerbot.GameSystems.Enable = 1
+
+###################################################################################################
+# QUEST SYSTEM CONFIGURATION
+#
+# Automated quest discovery, acceptance, completion and turn-in
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Quest.Enable
+#        Description: Enable automated quest management
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Quest.Enable = 1
+
+#
+#    Playerbot.GameSystems.Quest.UpdateInterval
+#        Description: How often to update quest objectives (milliseconds)
+#        Default:     5000 (5 seconds)
+#        Range:       1000-30000
+#        Note:        Lower values use more CPU for quest database queries
+#
+
+Playerbot.GameSystems.Quest.UpdateInterval = 5000
+
+#
+#    Playerbot.GameSystems.Quest.MaxActive
+#        Description: Maximum number of active quests per bot
+#        Default:     20 (Blizzard default quest log size)
+#        Range:       1-25
+#
+
+Playerbot.GameSystems.Quest.MaxActive = 20
+
+#
+#    Playerbot.GameSystems.Quest.AutoAccept
+#        Description: Automatically accept appropriate quests
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Quest.AutoAccept = 1
+
+#
+#    Playerbot.GameSystems.Quest.AutoTurnIn
+#        Description: Automatically turn in completed quests
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Quest.AutoTurnIn = 1
+
+###################################################################################################
+# INVENTORY SYSTEM CONFIGURATION
+#
+# Looting, equipment management, and bag organization
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Inventory.Enable
+#        Description: Enable inventory management system
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Inventory.Enable = 1
+
+#
+#    Playerbot.GameSystems.Inventory.UpdateInterval
+#        Description: How often to scan for loot and manage inventory (milliseconds)
+#        Default:     100 (every frame for responsive looting)
+#        Range:       50-1000
+#        Warning:     Higher values may cause bots to miss loot windows
+#
+
+Playerbot.GameSystems.Inventory.UpdateInterval = 100
+
+#
+#    Playerbot.GameSystems.Inventory.AutoLoot
+#        Description: Automatically loot corpses and objects
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Inventory.AutoLoot = 1
+
+#
+#    Playerbot.GameSystems.Inventory.AutoEquip
+#        Description: Automatically equip better items
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Inventory.AutoEquip = 1
+
+#
+#    Playerbot.GameSystems.Inventory.SellGrayItems
+#        Description: Automatically sell gray (trash) items to vendors
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Inventory.SellGrayItems = 1
+
+#
+#    Playerbot.GameSystems.Inventory.DestroyExcessItems
+#        Description: Destroy lowest value items when bags are full
+#        Default:     0 (Disabled - safer default)
+#
+
+Playerbot.GameSystems.Inventory.DestroyExcessItems = 0
+
+###################################################################################################
+# TRADE SYSTEM CONFIGURATION
+#
+# Player-to-player trading automation
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Trade.Enable
+#        Description: Enable trade system
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Trade.Enable = 1
+
+#
+#    Playerbot.GameSystems.Trade.AutoAcceptGroup
+#        Description: Automatically accept trades from group members
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Trade.AutoAcceptGroup = 1
+
+#
+#    Playerbot.GameSystems.Trade.AutoAcceptGuild
+#        Description: Automatically accept trades from guild members
+#        Default:     0 (Disabled - more cautious)
+#
+
+Playerbot.GameSystems.Trade.AutoAcceptGuild = 0
+
+#
+#    Playerbot.GameSystems.Trade.SecurityLevel
+#        Description: Trade security validation level
+#        Default:     2 (Standard)
+#        Values:      0 (None - accept all trades)
+#                     1 (Basic - ownership checks only)
+#                     2 (Standard - value comparison and whitelist)
+#                     3 (Strict - all validations)
+#
+
+Playerbot.GameSystems.Trade.SecurityLevel = 2
+
+#
+#    Playerbot.GameSystems.Trade.MaxValue
+#        Description: Maximum gold value for automatic trade acceptance
+#        Default:     1000 (1000 gold)
+#        Note:        Trades above this value require manual approval
+#
+
+Playerbot.GameSystems.Trade.MaxValue = 1000
+
+###################################################################################################
+# AUCTION HOUSE SYSTEM CONFIGURATION
+#
+# Automated auction house participation and market trading
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Auction.Enable
+#        Description: Enable auction house system
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Auction.Enable = 1
+
+#
+#    Playerbot.GameSystems.Auction.UpdateInterval
+#        Description: How often to check auction house (milliseconds)
+#        Default:     60000 (60 seconds)
+#        Range:       30000-300000
+#        Warning:     Lower values significantly increase server load
+#
+
+Playerbot.GameSystems.Auction.UpdateInterval = 60000
+
+#
+#    Playerbot.GameSystems.Auction.MaxActive
+#        Description: Maximum active auctions per bot
+#        Default:     10
+#        Range:       1-50
+#
+
+Playerbot.GameSystems.Auction.MaxActive = 10
+
+#
+#    Playerbot.GameSystems.Auction.Strategy
+#        Description: Default auction pricing strategy
+#        Default:     5 (Smart Pricing)
+#        Values:      0 (Conservative - undercut by 1%)
+#                     1 (Aggressive - undercut by 5-10%)
+#                     2 (Premium - list at market average)
+#                     3 (Quick Sale - undercut by 20%)
+#                     4 (Market Maker - buy low, sell high)
+#                     5 (Smart Pricing - AI-driven based on trends)
+#
+
+Playerbot.GameSystems.Auction.Strategy = 5
+
+#
+#    Playerbot.GameSystems.Auction.MinProfit
+#        Description: Minimum profit margin for creating auctions (gold)
+#        Default:     10 (10 gold minimum profit)
+#
+
+Playerbot.GameSystems.Auction.MinProfit = 10
+
+#
+#    Playerbot.GameSystems.Auction.EnableCommodities
+#        Description: Allow bots to trade in commodities (ore, herbs, etc)
+#        Default:     1 (Enabled)
+#
+
+Playerbot.GameSystems.Auction.EnableCommodities = 1
+
+#
+#    Playerbot.GameSystems.Auction.EnableMarketMaker
+#        Description: Allow bots to buy underpriced items for resale
+#        Default:     0 (Disabled - can affect economy)
+#
+
+Playerbot.GameSystems.Auction.EnableMarketMaker = 0
+
+###################################################################################################
+# PERFORMANCE TUNING
+#
+# Advanced settings for optimizing game system performance
+###################################################################################################
+
+#
+#    Playerbot.GameSystems.Performance.MaxCPUPercent
+#        Description: Maximum CPU usage for game systems per bot
+#        Default:     0.11 (0.11% per bot)
+#        Warning:     Higher values may impact server performance
+#
+
+Playerbot.GameSystems.Performance.MaxCPUPercent = 0.11
+
+#
+#    Playerbot.GameSystems.Performance.MaxMemoryMB
+#        Description: Maximum memory usage for game systems per bot
+#        Default:     2 (2MB per bot)
+#
+
+Playerbot.GameSystems.Performance.MaxMemoryMB = 2
+
+#
+#    Playerbot.GameSystems.Performance.CacheLifetime
+#        Description: How long to cache game system data (seconds)
+#        Default:     300 (5 minutes)
+#
+
+Playerbot.GameSystems.Performance.CacheLifetime = 300

@@ -12,6 +12,9 @@
 #include "SpellInfo.h"
 #include "Log.h"
 #include "Player.h"
+#include "GameTime.h"
+#include "Map.h"
+#include "SpellHistory.h"
 
 namespace Playerbot
 {
@@ -115,7 +118,7 @@ void SubtletySpecialization::UpdateBuffs()
     {
         // Master of Subtlety is triggered by breaking stealth
         if (!IsStealthed() && (_lastStealthExit > 0) &&
-            (getMSTime() - _lastStealthExit < MASTER_OF_SUBTLETY_DURATION))
+            (GameTime::GetGameTimeMS() - _lastStealthExit < MASTER_OF_SUBTLETY_DURATION))
         {
             _metrics.masterOfSubtletyProcs++;
         }
@@ -155,13 +158,13 @@ void SubtletySpecialization::UpdateCooldowns(uint32 diff)
     // Update current stealth window
     if (IsStealthed() && _currentStealthWindow.startTime > 0)
     {
-        _currentStealthWindow.duration = getMSTime() - _currentStealthWindow.startTime;
+        _currentStealthWindow.duration = GameTime::GetGameTimeMS() - _currentStealthWindow.startTime;
     }
 
     // Update shadowstep cooldown tracking
     if (_shadowstep.isOnCooldown)
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _shadowstep.lastUsed > SHADOWSTEP_COOLDOWN)
         {
             _shadowstep.isOnCooldown = false;
@@ -207,7 +210,7 @@ void SubtletySpecialization::OnCombatStart(::Unit* target)
     if (!target)
         return;
 
-    _combatStartTime = getMSTime();
+    _combatStartTime = GameTime::GetGameTimeMS();
     _currentTarget = target;
 
     // Reset metrics for new combat
@@ -234,12 +237,12 @@ void SubtletySpecialization::OnCombatEnd()
     // Analyze final stealth window if active
     if (IsStealthed() && _currentStealthWindow.startTime > 0)
     {
-        _currentStealthWindow.duration = getMSTime() - _currentStealthWindow.startTime;
+        _currentStealthWindow.duration = GameTime::GetGameTimeMS() - _currentStealthWindow.startTime;
         AnalyzeStealthWindow(_currentStealthWindow);
     }
 
     // Log combat statistics
-    uint32 combatDuration = getMSTime() - _combatStartTime;
+    uint32 combatDuration = GameTime::GetGameTimeMS() - _combatStartTime;
     _averageCombatTime = (_averageCombatTime + combatDuration) / 2.0f;
 
     TC_LOG_DEBUG("playerbot", "SubtletySpecialization [{}]: Combat ended. Duration: {}ms, Stealth uptime: {:.1f}%, Ambush: {}, Backstab: {}",
@@ -300,7 +303,7 @@ void SubtletySpecialization::UpdateStealthManagement()
     if (!_bot)
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Track stealth state changes
     bool wasStealthed = (_lastStealthEntry > _lastStealthExit);
@@ -343,7 +346,7 @@ bool SubtletySpecialization::ShouldEnterStealth()
         return false;
 
     // Always want stealth before combat
-    if (_bot->IsOutOfCombat())
+    if (!_bot->IsInCombat())
         return true;
 
     // Use stealth for burst windows
@@ -448,7 +451,7 @@ void SubtletySpecialization::ExecuteComboBuilder(::Unit* target)
         {
             _metrics.backstabCasts++;
             _totalCombosBuilt++;
-            _lastBackstabTime = getMSTime();
+            _lastBackstabTime = GameTime::GetGameTimeMS();
             LogSubtletyDecision("Cast Backstab", "Positional combo builder");
             return;
         }
@@ -461,7 +464,7 @@ void SubtletySpecialization::ExecuteComboBuilder(::Unit* target)
         {
             _metrics.hemorrhageCasts++;
             _totalCombosBuilt++;
-            _lastHemorrhageTime = getMSTime();
+            _lastHemorrhageTime = GameTime::GetGameTimeMS();
             LogSubtletyDecision("Cast Hemorrhage", "Debuff combo builder");
             return;
         }
@@ -492,7 +495,7 @@ void SubtletySpecialization::ExecuteComboSpender(::Unit* target)
         if (CastSpell(EVISCERATE, target))
         {
             _metrics.eviscerateCasts++;
-            _lastEviscerateeTime = getMSTime();
+            _lastEviscerateeTime = GameTime::GetGameTimeMS();
             LogSubtletyDecision("Cast Eviscerate", "High damage finisher");
             return;
         }
@@ -521,7 +524,7 @@ void SubtletySpecialization::ExecuteComboSpender(::Unit* target)
 void SubtletySpecialization::UpdatePoisonManagement()
 {
     // Subtlety uses minimal poisons
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (_lastPoisonApplicationTime == 0)
         _lastPoisonApplicationTime = currentTime;
 
@@ -545,6 +548,12 @@ void SubtletySpecialization::ApplyPoisons()
     }
 
     LogSubtletyDecision("Applied Minimal Poisons", "Basic weapon enhancement");
+}
+
+bool SubtletySpecialization::ShouldApplyPoisons()
+{
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    return (currentTime - _lastPoisonApplicationTime) > (POISON_REAPPLY_INTERVAL * 3);
 }
 
 PoisonType SubtletySpecialization::GetOptimalMainHandPoison()
@@ -893,7 +902,7 @@ void SubtletySpecialization::ExecuteEmergencyPhase(::Unit* target)
 // Stealth management methods
 void SubtletySpecialization::EnterStealth()
 {
-    if (_bot->IsOutOfCombat() && !IsStealthed())
+    if (!_bot->IsInCombat() && !IsStealthed())
     {
         if (CastSpell(STEALTH))
         {
@@ -907,7 +916,7 @@ void SubtletySpecialization::ActivateVanish()
     if (CastSpell(VANISH))
     {
         _metrics.vanishUses++;
-        _lastVanishTime = getMSTime();
+        _lastVanishTime = GameTime::GetGameTimeMS();
         LogSubtletyDecision("Used Vanish", "Re-stealth for burst window");
     }
 }
@@ -918,7 +927,7 @@ void SubtletySpecialization::ActivateShadowDance()
     {
         _shadowDance.isActive = true;
         _shadowDance.remainingTime = SHADOW_DANCE_DURATION;
-        _shadowDance.lastActivation = getMSTime();
+        _shadowDance.lastActivation = GameTime::GetGameTimeMS();
         _metrics.shadowDanceActivations++;
         InitiateShadowDanceBurst();
         LogSubtletyDecision("Activated Shadow Dance", "Stealth burst window");
@@ -929,7 +938,7 @@ void SubtletySpecialization::UsePreparation()
 {
     if (CastSpell(PREPARATION))
     {
-        _preparation.lastUsed = getMSTime();
+        _preparation.lastUsed = GameTime::GetGameTimeMS();
         _preparation.totalUses++;
         _metrics.preparationUses++;
         LogSubtletyDecision("Used Preparation", "Reset cooldowns");
@@ -1002,7 +1011,7 @@ void SubtletySpecialization::ExecuteShadowstep(::Unit* target)
 {
     if (CastSpell(SHADOWSTEP, target))
     {
-        _shadowstep.lastUsed = getMSTime();
+        _shadowstep.lastUsed = GameTime::GetGameTimeMS();
         _shadowstep.totalUses++;
         _shadowstep.isOnCooldown = true;
         _metrics.shadowstepUses++;
@@ -1048,7 +1057,7 @@ void SubtletySpecialization::ExecuteAmbushOpener(::Unit* target)
     if (CastSpell(AMBUSH, target))
     {
         _metrics.ambushCasts++;
-        _lastAmbushTime = getMSTime();
+        _lastAmbushTime = GameTime::GetGameTimeMS();
         LogSubtletyDecision("Ambush Opener", "High damage stealth opener");
     }
 }
@@ -1102,7 +1111,7 @@ void SubtletySpecialization::ApplyHemorrhage(::Unit* target)
 {
     if (CastSpell(HEMORRHAGE, target))
     {
-        _hemorrhage.lastApplication = getMSTime();
+        _hemorrhage.lastApplication = GameTime::GetGameTimeMS();
         _hemorrhage.totalApplications++;
         LogSubtletyDecision("Applied Hemorrhage", "Debuff and combo building");
     }
@@ -1259,7 +1268,7 @@ void SubtletySpecialization::UpdateShadowstepManagement()
     // Update shadowstep cooldown tracking
     if (_shadowstep.isOnCooldown)
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _shadowstep.lastUsed > SHADOWSTEP_COOLDOWN)
         {
             _shadowstep.isOnCooldown = false;
@@ -1286,7 +1295,7 @@ void SubtletySpecialization::UpdateStealthWindows()
     // Update current stealth window tracking
     if (IsStealthed() && _currentStealthWindow.startTime > 0)
     {
-        _currentStealthWindow.duration = getMSTime() - _currentStealthWindow.startTime;
+        _currentStealthWindow.duration = GameTime::GetGameTimeMS() - _currentStealthWindow.startTime;
     }
 }
 
@@ -1352,7 +1361,7 @@ float SubtletySpecialization::CalculateStealthWindowEfficiency(const StealthWind
 
 void SubtletySpecialization::UpdateSubtletyMetrics()
 {
-    uint32 combatTime = getMSTime() - _combatStartTime;
+    uint32 combatTime = GameTime::GetGameTimeMS() - _combatStartTime;
     if (combatTime > 0)
     {
         // Calculate uptime percentages
@@ -1378,7 +1387,7 @@ void SubtletySpecialization::UpdateSubtletyMetrics()
 void SubtletySpecialization::AnalyzeSubtletyEfficiency()
 {
     // Performance analysis every 20 seconds
-    if (getMSTime() % 20000 == 0)
+    if (GameTime::GetGameTimeMS() % 20000 == 0)
     {
         TC_LOG_DEBUG("playerbot", "SubtletySpecialization [{}]: Efficiency - Stealth: {:.1f}%, Position: {:.1f}%, Shadow Dance: {}",
                     _bot->GetName(), _metrics.stealthUptime * 100, _metrics.positionalAdvantagePercentage * 100,
@@ -1532,23 +1541,88 @@ uint32 SubtletySpecialization::GetSpellCooldown(uint32 spellId)
     if (!_bot)
         return 0;
 
-    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return 0;
 
-    // Check if spell has an active cooldown
-    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
-    auto itr = cooldowns.find(spellId);
-    if (itr != cooldowns.end())
+    // Check if spell has an active cooldown using modern TrinityCore API
+    auto remainingCooldown = _bot->GetSpellHistory()->GetRemainingCooldown(spellInfo);
+    if (remainingCooldown > Milliseconds::zero())
     {
-        uint32 currentTime = getMSTime();
-        if (itr->second.end > currentTime)
-        {
-            return itr->second.end - currentTime;
-        }
+        return uint32(remainingCooldown.count());
     }
 
     return 0;
+}
+
+bool SubtletySpecialization::ShouldUseCrowdControl()
+{
+    if (!_bot || !_currentTarget)
+        return false;
+
+    // Only use crowd control when fighting multiple enemies or in PvP
+    uint32 nearbyEnemies = _bot->getAttackers().size();
+    if (nearbyEnemies <= 1)
+        return false;
+
+    // Don't use CC if we're in a stealth window (waste of stealth time)
+    if (IsStealthed())
+        return false;
+
+    // Use CC when our health is low and we need breathing room
+    if (_bot->GetHealthPct() < 30.0f)
+        return true;
+
+    // Use CC when energy is low to allow regeneration
+    if (GetCurrentEnergy() < 20)
+        return true;
+
+    // Use CC strategically when facing multiple targets
+    if (nearbyEnemies >= 3)
+        return true;
+
+    return false;
+}
+
+void SubtletySpecialization::ExecuteBlind(::Unit* target)
+{
+    if (!_bot || !target || !HasSpell(BLIND))
+        return;
+
+    // Check if we can use Blind
+    if (!CanUseAbility(BLIND))
+        return;
+
+    // Don't blind targets that are already CC'd or dying
+    if (target->HasUnitState(UNIT_STATE_STUNNED) ||
+        target->HasUnitState(UNIT_STATE_ROOT) ||
+        target->HasUnitState(UNIT_STATE_CONFUSED) ||
+        target->GetHealthPct() < 15.0f)
+        return;
+
+    // Ensure we're in range for Blind
+    if (_bot->GetDistance(target) > 10.0f)
+        return;
+
+    // Cast Blind
+    if (CastSpell(BLIND, target))
+    {
+        TC_LOG_DEBUG("playerbot", "SubtletySpecialization [{}]: Used Blind on {} for crowd control",
+                     _bot->GetName(), target->GetName());
+
+        // Track CC usage
+        _metrics.vanishUses++; // Use existing counter as proxy
+
+        // Set cooldown
+        StartCooldown(BLIND);
+
+        // Consume resources
+        ConsumeResource(BLIND);
+
+        // Switch to a different target since this one is blinded
+        _currentTarget = nullptr;
+        // Target switching will be handled by the targeting system automatically
+    }
 }
 
 } // namespace Playerbot

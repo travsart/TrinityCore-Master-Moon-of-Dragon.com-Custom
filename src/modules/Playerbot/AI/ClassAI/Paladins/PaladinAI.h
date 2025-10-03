@@ -10,10 +10,18 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "PaladinSpecialization.h"
 #include "Position.h"
+#include <memory>
 
 namespace Playerbot
 {
+
+// Forward declarations
+class PaladinSpecialization;
+class HolyPaladinRefactored;
+class ProtectionPaladinRefactored;
+class RetributionPaladinRefactored;
 
 // Minimal Paladin AI implementation - stub for compilation
 class TC_GAME_API PaladinAI : public ClassAI
@@ -40,6 +48,15 @@ protected:
     // Positioning
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
+
+private:
+    // Specialization management
+    void DetectSpecialization();
+    void InitializeSpecialization();
+    PaladinSpec _currentSpec;
+    std::unique_ptr<PaladinSpecialization> _specialization;
+    void SwitchSpecialization(PaladinSpec newSpec);
+    void DelegateToSpecialization(::Unit* target);
 };
 
 } // namespace Playerbot

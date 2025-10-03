@@ -349,7 +349,7 @@ void InterruptCoordinator::LoadDefaultPriorities()
     _spellPriorities[6078] = InterruptPriority::MEDIUM;     // Renew
 
     // Low priority (Minor effects)
-    _spellPriorities[1243] = InterruptPriority::LOW;        // Power Word: Fortitude
+    _spellPriorities[21562] = InterruptPriority::LOW;       // Power Word: Fortitude (Updated for WoW 11.2)
     _spellPriorities[8091] = InterruptPriority::LOW;        // Lightning Bolt
     _spellPriorities[133] = InterruptPriority::LOW;         // Fireball
 

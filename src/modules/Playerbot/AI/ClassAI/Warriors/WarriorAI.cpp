@@ -8,6 +8,10 @@
  */
 
 #include "WarriorAI.h"
+#include "ArmsWarriorRefactored.h"
+#include "FuryWarriorRefactored.h"
+#include "ProtectionWarriorRefactored.h"
+#include "../BaselineRotationManager.h"
 #include "Player.h"
 #include "Log.h"
 
@@ -35,7 +39,25 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (!target || !GetBot())
         return;
 
-    // Delegate to specialization
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        // Use baseline rotation manager for unspecialized bots
+        static BaselineRotationManager baselineManager;
+
+        // Try auto-specialization if level 10+
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        // Execute baseline rotation
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback to charge if nothing else worked
+        UseChargeAbilities(target);
+        return;
+    }
+
+    // Delegate to specialization for level 10+ bots with spec
     DelegateToSpecialization(target);
 
     // Handle warrior-specific abilities
@@ -45,17 +67,35 @@ void WarriorAI::UpdateRotation(::Unit* target)
 
 void WarriorAI::UpdateBuffs()
 {
+    // Check if bot should use baseline buffs
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
+
+    // Use full warrior buff system for specialized bots
     UpdateWarriorBuffs();
 }
 
 void WarriorAI::UpdateCooldowns(uint32 diff)
 {
     UpdateMetrics(diff);
+
+    if (_specialization)
+        _specialization->UpdateCooldowns(diff);
 }
 
 bool WarriorAI::CanUseAbility(uint32 spellId)
 {
-    return IsSpellReady(spellId) && HasEnoughResource(spellId);
+    if (!IsSpellReady(spellId) || !HasEnoughResource(spellId))
+        return false;
+
+    if (_specialization)
+        return _specialization->CanUseAbility(spellId);
+
+    return true;
 }
 
 void WarriorAI::OnCombatStart(::Unit* target)
@@ -63,9 +103,7 @@ void WarriorAI::OnCombatStart(::Unit* target)
     _warriorMetrics.combatStartTime = std::chrono::steady_clock::now();
 
     if (_specialization)
-    {
-        // Delegate to specialization
-    }
+        _specialization->OnCombatStart(target);
 }
 
 void WarriorAI::OnCombatEnd()
@@ -73,21 +111,24 @@ void WarriorAI::OnCombatEnd()
     AnalyzeCombatEffectiveness();
 
     if (_specialization)
-    {
-        // Delegate to specialization
-    }
+        _specialization->OnCombatEnd();
 }
 
 bool WarriorAI::HasEnoughResource(uint32 spellId)
 {
-    // Check rage requirements for warrior abilities
-    return true; // Simplified for now
+    if (_specialization)
+        return _specialization->HasEnoughResource(spellId);
+
+    // Fallback: check if we have any rage
+    return GetBot()->GetPower(POWER_RAGE) >= 10;
 }
 
 void WarriorAI::ConsumeResource(uint32 spellId)
 {
-    // Consume rage for warrior abilities
     RecordAbilityUsage(spellId);
+
+    if (_specialization)
+        _specialization->ConsumeResource(spellId);
 }
 
 Position WarriorAI::GetOptimalPosition(::Unit* target)
@@ -95,18 +136,24 @@ Position WarriorAI::GetOptimalPosition(::Unit* target)
     if (!target || !GetBot())
         return Position();
 
+    if (_specialization)
+        return _specialization->GetOptimalPosition(target);
+
     return CalculateOptimalChargePosition(target);
 }
 
 float WarriorAI::GetOptimalRange(::Unit* target)
 {
+    if (_specialization)
+        return _specialization->GetOptimalRange(target);
+
     return OPTIMAL_MELEE_RANGE;
 }
 
 void WarriorAI::InitializeSpecialization()
 {
     _currentSpec = DetectCurrentSpecialization();
-    // Specialization creation will be implemented when classes are available
+    SwitchSpecialization(_currentSpec);
 }
 
 void WarriorAI::UpdateSpecialization()
@@ -126,22 +173,51 @@ WarriorSpec WarriorAI::DetectCurrentSpecialization()
 
 void WarriorAI::SwitchSpecialization(WarriorSpec newSpec)
 {
-    if (_currentSpec != newSpec)
+    _currentSpec = newSpec;
+
+    // TODO: Re-enable refactored specialization classes once template issues are fixed
+    _specialization = nullptr;
+    TC_LOG_WARN("module.playerbot.warrior", "Warrior specialization switching temporarily disabled for {}",
+                 GetBot()->GetName());
+
+    /* switch (newSpec)
     {
-        _currentSpec = newSpec;
-        InitializeSpecialization();
-    }
+        case WarriorSpec::ARMS:
+            _specialization = std::make_unique<ArmsWarriorRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warrior", "Warrior {} switched to Arms specialization",
+                         GetBot()->GetName());
+            break;
+        case WarriorSpec::FURY:
+            _specialization = std::make_unique<FuryWarriorRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warrior", "Warrior {} switched to Fury specialization",
+                         GetBot()->GetName());
+            break;
+        case WarriorSpec::PROTECTION:
+            _specialization = std::make_unique<ProtectionWarriorRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warrior", "Warrior {} switched to Protection specialization",
+                         GetBot()->GetName());
+            break;
+        default:
+            _specialization = std::make_unique<ArmsWarriorRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warrior", "Warrior {} defaulted to Arms specialization",
+                         GetBot()->GetName());
+            break;
+    } */
 }
 
 void WarriorAI::DelegateToSpecialization(::Unit* target)
 {
-    // Delegate to specialization-specific logic
+    if (_specialization)
+        _specialization->UpdateRotation(target);
 }
 
 void WarriorAI::UpdateWarriorBuffs()
 {
     CastBattleShout();
     CastCommandingShout();
+
+    if (_specialization)
+        _specialization->UpdateBuffs();
 }
 
 void WarriorAI::CastBattleShout()

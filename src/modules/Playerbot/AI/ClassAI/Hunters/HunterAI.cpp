@@ -8,6 +8,10 @@
  */
 
 #include "HunterAI.h"
+#include "BeastMasteryHunterRefactored.h"
+#include "MarksmanshipHunterRefactored.h"
+#include "SurvivalHunterRefactored.h"
+#include "../BaselineRotationManager.h"
 #include "Player.h"
 #include "Pet.h"
 #include "Group.h"
@@ -19,21 +23,12 @@
 namespace Playerbot
 {
 
-// Hunter-specific spell IDs (3.3.5a)
-enum HunterSpells
-{
-    // Basic abilities for minimal implementation
-    HUNTERS_MARK            = 53338,
-    ARCANE_SHOT             = 49045,
-    ASPECT_OF_THE_HAWK      = 13165
-};
-
 HunterAI::HunterAI(Player* bot) :
     ClassAI(bot),
     _detectedSpec(HunterSpec::BEAST_MASTERY)
 {
-    // TODO: Implement initialization
-    TC_LOG_DEBUG("playerbot", "HunterAI initialized for {} - STUB IMPLEMENTATION", bot->GetName());
+    InitializeSpecialization();
+    TC_LOG_DEBUG("playerbot", "HunterAI initialized for {}", bot->GetName());
 }
 
 void HunterAI::InitializeCombatSystems()
@@ -43,13 +38,63 @@ void HunterAI::InitializeCombatSystems()
 
 void HunterAI::DetectSpecialization()
 {
-    // TODO: Implement specialization detection
-    _detectedSpec = HunterSpec::BEAST_MASTERY; // Default
+    Player* bot = GetBot();
+    if (!bot)
+    {
+        _detectedSpec = HunterSpec::BEAST_MASTERY;
+        return;
+    }
+
+    // Check for Marksmanship specialization indicators
+    if (bot->HasSpell(19434) || bot->HasSpell(53209)) // Aimed Shot or Chimera Shot
+        _detectedSpec = HunterSpec::MARKSMANSHIP;
+    // Check for Survival specialization indicators
+    else if (bot->HasSpell(3674) || bot->HasSpell(60053)) // Black Arrow or Explosive Shot
+        _detectedSpec = HunterSpec::SURVIVAL;
+    // Default to Beast Mastery
+    else
+        _detectedSpec = HunterSpec::BEAST_MASTERY;
 }
 
 void HunterAI::InitializeSpecialization()
 {
-    // TODO: Implement specialization initialization
+    DetectSpecialization();
+    SwitchSpecialization(_detectedSpec);
+}
+
+void HunterAI::SwitchSpecialization(HunterSpec newSpec)
+{
+    _detectedSpec = newSpec;
+
+    switch (newSpec)
+    {
+        case HunterSpec::BEAST_MASTERY:
+            _specialization = std::make_unique<BeastMasteryHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Beast Mastery specialization",
+                         GetBot()->GetName());
+            break;
+        case HunterSpec::MARKSMANSHIP:
+            _specialization = std::make_unique<MarksmanshipHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Marksmanship specialization",
+                         GetBot()->GetName());
+            break;
+        case HunterSpec::SURVIVAL:
+            _specialization = std::make_unique<SurvivalHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Survival specialization",
+                         GetBot()->GetName());
+            break;
+        default:
+            _specialization = std::make_unique<BeastMasteryHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} defaulted to Beast Mastery specialization",
+                         GetBot()->GetName());
+            break;
+    }
+}
+
+void HunterAI::DelegateToSpecialization(::Unit* target)
+{
+    if (_specialization)
+        _specialization->UpdateRotation(target);
 }
 
 void HunterAI::UpdateRotation(::Unit* target)
@@ -57,21 +102,29 @@ void HunterAI::UpdateRotation(::Unit* target)
     if (!target || !_bot)
         return;
 
-    // TODO: Implement rotation - minimal stub
-    // Apply Hunter's Mark if available
-    if (_bot->HasSpell(HUNTERS_MARK) && !target->HasAura(HUNTERS_MARK))
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
     {
-        if (CanUseAbility(HUNTERS_MARK))
+        // Use baseline rotation manager for unspecialized bots
+        static BaselineRotationManager baselineManager;
+
+        // Try auto-specialization if level 10+
+        baselineManager.HandleAutoSpecialization(_bot);
+
+        // Execute baseline rotation
+        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+            return;
+
+        // Fallback to basic ranged attack if nothing else worked
+        if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
         {
-            _bot->CastSpell(target, HUNTERS_MARK, false);
+            _bot->CastSpell(target, ARCANE_SHOT, false);
         }
+        return;
     }
 
-    // Use Arcane Shot as basic attack
-    if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
-    {
-        _bot->CastSpell(target, ARCANE_SHOT, false);
-    }
+    // Delegate to specialization for level 10+ bots with spec
+    DelegateToSpecialization(target);
 }
 
 void HunterAI::UpdateBuffs()
@@ -79,51 +132,54 @@ void HunterAI::UpdateBuffs()
     if (!_bot)
         return;
 
-    // TODO: Implement buffs - minimal stub
-    // Ensure aspect is active
-    if (_bot->HasSpell(ASPECT_OF_THE_HAWK) && !HasAura(ASPECT_OF_THE_HAWK))
+    // Check if bot should use baseline buffs
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
     {
-        CastSpell(ASPECT_OF_THE_HAWK);
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(_bot);
+        return;
     }
+
+    // Use full hunter buff system for specialized bots
+    ManageAspects();
+
+    if (_specialization)
+        _specialization->UpdateBuffs();
 }
 
 void HunterAI::UpdateCooldowns(uint32 diff)
 {
-    // TODO: Implement cooldown management
+    // UpdateCooldowns is provided by template base classes as 'final override'
+    // The specialization handles its own cooldowns internally
+    // No need to delegate here - just call base class implementation
+    ClassAI::UpdateCooldowns(diff);
 }
 
 bool HunterAI::CanUseAbility(uint32 spellId)
 {
-    if (!_bot || !IsSpellReady(spellId))
-        return false;
-
-    return HasEnoughResource(spellId);
+    // CanUseAbility is provided by template base classes as 'final override'
+    // Just call base class implementation
+    return ClassAI::CanUseAbility(spellId);
 }
 
 void HunterAI::OnCombatStart(::Unit* target)
 {
-    if (!target || !_bot)
-        return;
-
-    TC_LOG_DEBUG("playerbot", "HunterAI {} entering combat with {} - STUB",
-                 _bot->GetName(), target->GetName());
-
     _inCombat = true;
-    _currentTarget = target;
+    _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
     _combatTime = 0;
 
-    // TODO: Implement combat start logic
+    // OnCombatStart is provided by template base classes as 'final override'
+    ClassAI::OnCombatStart(target);
 }
 
 void HunterAI::OnCombatEnd()
 {
     _inCombat = false;
-    _currentTarget = nullptr;
+    _currentTarget = ObjectGuid::Empty;
     _combatTime = 0;
 
-    TC_LOG_DEBUG("playerbot", "HunterAI {} leaving combat - STUB", _bot->GetName());
-
-    // TODO: Implement combat end logic
+    // OnCombatEnd is provided by template base classes as 'final override'
+    ClassAI::OnCombatEnd();
 }
 
 bool HunterAI::HasEnoughResource(uint32 spellId)
@@ -131,16 +187,21 @@ bool HunterAI::HasEnoughResource(uint32 spellId)
     if (!_bot)
         return false;
 
-    // TODO: Implement proper resource checking
-    return true; // Stub implementation
+    // Check focus cost - hunters use focus as primary resource
+    uint32 focusCost = 10; // Default cost, should look up actual spell cost
+    return _bot->GetPower(POWER_FOCUS) >= focusCost;
 }
 
 void HunterAI::ConsumeResource(uint32 spellId)
 {
+    // ConsumeResource implementation - hunters use focus
+    // The actual resource consumption is handled by TrinityCore's spell system
+    // This is just a notification hook for tracking purposes
     if (!_bot)
         return;
 
-    // TODO: Implement proper resource consumption
+    // Note: Template base classes in refactored specs handle this automatically
+    // This implementation is for the legacy HunterAI wrapper
 }
 
 Position HunterAI::GetOptimalPosition(::Unit* target)
@@ -148,12 +209,17 @@ Position HunterAI::GetOptimalPosition(::Unit* target)
     if (!target || !_bot)
         return Position();
 
-    // TODO: Implement optimal positioning
+    if (_specialization)
+        return _specialization->GetOptimalPosition(target);
+
     return _bot->GetPosition();
 }
 
 float HunterAI::GetOptimalRange(::Unit* target)
 {
+    // GetOptimalRange is provided by template base classes (RangedDpsSpecialization, etc.)
+    // All hunter specs use 25.0f-35.0f range based on their spec
+    // No need to delegate to specialization - this is the default implementation
     return 25.0f; // Default hunter range
 }
 
@@ -165,7 +231,14 @@ HunterSpec HunterAI::GetCurrentSpecialization() const
 // Private helper methods
 void HunterAI::ManageAspects()
 {
-    // TODO: Implement aspect management
+    if (!_bot)
+        return;
+
+    // Basic aspect management - ensure combat aspect is active
+    if (_bot->HasSpell(ASPECT_OF_THE_HAWK) && !HasAura(ASPECT_OF_THE_HAWK))
+    {
+        CastSpell(ASPECT_OF_THE_HAWK);
+    }
 }
 
 void HunterAI::HandlePositioning(::Unit* target)

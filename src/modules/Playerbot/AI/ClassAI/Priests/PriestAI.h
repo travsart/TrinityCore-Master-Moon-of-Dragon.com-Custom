@@ -237,7 +237,7 @@ private:
         FEAR_WARD = 6346,
 
         // Buffs
-        POWER_WORD_FORTITUDE = 1243,
+        POWER_WORD_FORTITUDE = 21562, // Updated for WoW 11.2
         PRAYER_OF_FORTITUDE = 21562,
         DIVINE_SPIRIT = 14752,
         PRAYER_OF_SPIRIT = 27681,

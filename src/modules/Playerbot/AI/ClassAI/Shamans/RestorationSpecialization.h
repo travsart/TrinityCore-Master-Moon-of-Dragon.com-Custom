@@ -10,6 +10,9 @@
 #pragma once
 
 #include "ShamanSpecialization.h"
+#include "Unit.h"
+#include "Timer.h"
+#include "ObjectGuid.h"
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -226,13 +229,13 @@ private:
     static const uint32 RIPTIDE_DURATION = 18000; // 18 seconds
     static const uint32 NATURE_SWIFTNESS_COOLDOWN = 120000; // 2 minutes
     static const uint32 CHAIN_HEAL_COOLDOWN = 2500; // 2.5 seconds
-    // static const float EMERGENCY_HEALTH_THRESHOLD;
-    // static const float LESSER_HEALING_WAVE_THRESHOLD;
-    // static const float HEALING_WAVE_THRESHOLD;
+    static constexpr float EMERGENCY_HEALTH_THRESHOLD = 25.0f;
+    static constexpr float LESSER_HEALING_WAVE_THRESHOLD = 60.0f;
+    static constexpr float HEALING_WAVE_THRESHOLD = 80.0f;
     static const uint32 MAX_TIDAL_WAVE_STACKS = 2;
-    // static const float OPTIMAL_HEALING_RANGE;
+    static constexpr float OPTIMAL_HEALING_RANGE = 40.0f;
     static const uint32 CHAIN_HEAL_MIN_TARGETS = 3;
-    // static const float MANA_CONSERVATION_THRESHOLD;
+    static constexpr float MANA_CONSERVATION_THRESHOLD = 30.0f;
 };
 
 } // namespace Playerbot

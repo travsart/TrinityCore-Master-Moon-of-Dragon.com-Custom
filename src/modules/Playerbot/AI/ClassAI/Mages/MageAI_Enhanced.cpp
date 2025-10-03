@@ -935,11 +935,11 @@ float MageAI::CalculateSpellEfficiency(uint32 spellId)
     static std::unordered_map<uint32, float> damagePerMana;
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0.0f;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     if (manaCost == 0)
         return 100.0f; // Free spells are infinitely efficient
 
@@ -955,7 +955,7 @@ float MageAI::CalculateSpellEfficiency(uint32 spellId)
 float MageAI::EstimateSpellDamage(uint32 spellId)
 {
     // Simplified damage estimation
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0.0f;
 

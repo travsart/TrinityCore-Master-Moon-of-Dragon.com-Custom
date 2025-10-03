@@ -514,22 +514,31 @@ void BotSession::QueuePacket(WorldPacket* packet)
 
 bool BotSession::Update(uint32 diff, PacketFilter& updater)
 {
+    // DIAGNOSTIC: Track update entry for debugging - PER SESSION instead of global
+    static thread_local uint32 updateCounter = 0;
+    uint32 thisUpdateId = ++updateCounter;
+
     // CRITICAL MEMORY CORRUPTION DETECTION: Comprehensive session validation
     if (!_active.load() || _destroyed.load()) {
+        if (thisUpdateId <= 200) { // Log first 200 per-session failures
+            TC_LOG_WARN("module.playerbot.session", "🔍 Update #{} EARLY RETURN: _active={} _destroyed={}",
+                thisUpdateId, _active.load(), _destroyed.load());
+        }
         return false;
     }
 
     // CRITICAL SAFETY: Validate session integrity before any operations
     uint32 accountId = GetAccountId();
     if (accountId == 0) {
-        TC_LOG_ERROR("module.playerbot.session", "BotSession::Update called with invalid account ID");
+        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: GetAccountId() returned 0", thisUpdateId);
         _active.store(false);
         return false;
     }
 
     // MEMORY CORRUPTION DETECTION: Validate critical member variables
     if (_bnetAccountId == 0 || _bnetAccountId != accountId) {
-        TC_LOG_ERROR("module.playerbot.session", "MEMORY CORRUPTION: Account ID mismatch - BnetAccount: {}, GetAccount: {}", _bnetAccountId, accountId);
+        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: Account ID mismatch - BnetAccount: {}, GetAccount: {}",
+            thisUpdateId, _bnetAccountId, accountId);
         _active.store(false);
         return false;
     }
@@ -537,7 +546,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     // THREAD SAFETY: Validate we're not in a recursive Update call
     static thread_local bool inUpdateCall = false;
     if (inUpdateCall) {
-        TC_LOG_ERROR("module.playerbot.session", "CRITICAL: Recursive BotSession::Update call detected for account {}", accountId);
+        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: Recursive call detected for account {}", thisUpdateId, accountId);
         return false;
     }
 
@@ -563,6 +572,9 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Update AI if available and player is valid
         // CRITICAL FIX: Add comprehensive memory safety validation to prevent ACCESS_VIOLATION
         Player* player = GetPlayer();
+
+        // Removed excessive per-tick logging
+
         if (_ai && player && _active.load() && !_destroyed.load()) {
 
             // MEMORY CORRUPTION DETECTION: Validate player object pointer before access
@@ -621,6 +633,8 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 // Layer 3: AI update (only if all validations passed)
                 if (playerIsValid && playerIsInWorld && _ai && _active.load()) {
                     try {
+                        // SUCCESS: Direct BotAI::UpdateAI() call works, so just call it normally
+                        // The issue was that we weren't calling it at all before!
                         _ai->UpdateAI(diff);
                     }
                     catch (std::exception const& e) {
@@ -633,7 +647,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         _ai = nullptr;
                     }
                 } else {
-                    TC_LOG_DEBUG("module.playerbot.session", "Skipping AI update - player validation failed or not in world (account: {})", accountId);
+                    // Removed excessive per-tick logging
                 }
             }
             catch (...) {
@@ -742,10 +756,10 @@ void BotSession::ProcessBotPackets()
         }
     }
 
-    // Log outgoing packet statistics (debugging purposes)
-    if (!outgoingBatch.empty()) {
-        TC_LOG_DEBUG("module.playerbot.session", "Processed {} outgoing packets for account {}", outgoingBatch.size(), GetAccountId());
-    }
+    // Removed noisy packet statistics logging - was spamming logs
+    // if (!outgoingBatch.empty()) {
+    //     TC_LOG_DEBUG("module.playerbot.session", "Processed {} outgoing packets for account {}", outgoingBatch.size(), GetAccountId());
+    // }
 }
 
 bool BotSession::LoginCharacter(ObjectGuid characterGuid)
@@ -905,6 +919,20 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             {
                 SetAI(botAI.release()); // Transfer ownership to BotSession
                 TC_LOG_INFO("module.playerbot.session", "Successfully created BotAI for character {}", characterGuid.ToString());
+
+                // CRITICAL FIX: Check if bot is already in a group at login and activate strategies
+                // This fixes the "reboot breaks groups" issue where strategies aren't activated
+                if (Player* player = GetPlayer())
+                {
+                    if (Group* group = player->GetGroup())
+                    {
+                        TC_LOG_INFO("module.playerbot.session", "🔄 Bot {} is already in group at login - activating strategies", player->GetName());
+                        if (BotAI* ai = GetAI())
+                        {
+                            ai->OnGroupJoined(group);
+                        }
+                    }
+                }
             }
             else
             {

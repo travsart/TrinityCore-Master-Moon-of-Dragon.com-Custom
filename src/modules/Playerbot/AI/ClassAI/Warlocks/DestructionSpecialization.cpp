@@ -19,8 +19,12 @@
 #include "Spell.h"
 #include "SpellAuras.h"
 #include "Log.h"
-#include "PlayerbotAI.h"
+#include "../../BotAI.h"
 #include "MotionMaster.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
+#include "SpellHistory.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -163,7 +167,7 @@ bool DestructionSpecialization::CanUseAbility(uint32 spellId)
     if (!bot)
         return false;
 
-    if (bot->HasSpellCooldown(spellId))
+    if (bot->GetSpellHistory()->HasCooldown(spellId))
         return false;
 
     if (!HasEnoughResource(spellId))
@@ -562,7 +566,7 @@ void DestructionSpecialization::UpdateShadowBurn()
         return;
 
     // Check if shadow burn is off cooldown
-    if (!bot->HasSpellCooldown(SHADOW_BURN))
+    if (!bot->GetSpellHistory()->HasCooldown(SHADOW_BURN))
     {
         _shadowBurnCharges = std::min(_shadowBurnCharges + 1, 3u);
     }
@@ -592,7 +596,7 @@ bool DestructionSpecialization::ShouldCastIncinerate(Unit* target)
 
     Player* bot = GetBot();
 
-    if (bot->HasSpellCooldown(INCINERATE))
+    if (bot->GetSpellHistory()->HasCooldown(INCINERATE))
         return false;
 
     if (!IsInCastingRange(target, INCINERATE))
@@ -611,7 +615,7 @@ bool DestructionSpecialization::ShouldCastConflagrate(Unit* target)
 
     Player* bot = GetBot();
 
-    if (bot->HasSpellCooldown(CONFLAGRATE))
+    if (bot->GetSpellHistory()->HasCooldown(CONFLAGRATE))
         return false;
 
     if (!IsInCastingRange(target, CONFLAGRATE))
@@ -634,7 +638,7 @@ bool DestructionSpecialization::ShouldCastShadowBurn(Unit* target)
 
     Player* bot = GetBot();
 
-    if (bot->HasSpellCooldown(SHADOW_BURN))
+    if (bot->GetSpellHistory()->HasCooldown(SHADOW_BURN))
         return false;
 
     if (!IsInCastingRange(target, SHADOW_BURN))
@@ -657,7 +661,7 @@ bool DestructionSpecialization::ShouldCastChaosBolt(Unit* target)
 
     Player* bot = GetBot();
 
-    if (bot->HasSpellCooldown(CHAOS_BOLT))
+    if (bot->GetSpellHistory()->HasCooldown(CHAOS_BOLT))
         return false;
 
     if (!IsInCastingRange(target, CHAOS_BOLT))

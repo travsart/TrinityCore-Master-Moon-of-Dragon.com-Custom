@@ -13,10 +13,11 @@
 #include "ObjectMgr.h"
 #include "CharacterCache.h"
 #include "RBAC.h"
+#include "Lifecycle/BotSpawner.h"
+#include "Lifecycle/BotCharacterCreator.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotSession.h"
 #include "AI/BotAI.h"
-#include "Lifecycle/BotSpawner.h"
 #include "Config/PlayerbotConfig.h"
 #include <sstream>
 
@@ -541,22 +542,46 @@ public:
             }
         }
 
-        // Note: CreateAndSpawnBot requires full character creation implementation
-        // This is a placeholder that will be implemented when character creation system is ready
-        handler->SendSysMessage("Bot spawning via command is not yet implemented.");
-        handler->SendSysMessage("Use .bot add <characterName> to add existing characters as bots.");
-
-        /* Future implementation when CreateAndSpawnBot is ready:
-        ObjectGuid characterGuid;
-        if (Playerbot::sBotSpawner->CreateAndSpawnBot(accountId, classId, race, 1, name, characterGuid))
+        // Validate class and race IDs
+        if (classId == 0 || classId > CLASS_EVOKER)
         {
-            handler->PSendSysMessage("Bot '%s' created and spawned successfully!", name.c_str());
+            handler->PSendSysMessage("Invalid class ID %u. Valid range: 1-%u", classId, CLASS_EVOKER);
+            return true;
+        }
+
+        // Note: Race IDs are not sequential (e.g., Dracthyr is 52/70). Validate against known maximums.
+        if (race == 0 || race > RACE_DRACTHYR_HORDE)
+        {
+            handler->PSendSysMessage("Invalid race ID %u. Must be a valid playable race", race);
+            return true;
+        }
+
+        // Default gender to male if not specified (can be enhanced later)
+        uint8 gender = GENDER_MALE;
+
+        // Create and spawn the bot
+        ObjectGuid newCharGuid;
+        bool success = Playerbot::sBotSpawner->CreateAndSpawnBot(
+            accountId,
+            classId,
+            race,
+            gender,
+            name,
+            newCharGuid);
+
+        if (success)
+        {
+            handler->PSendSysMessage("Successfully created and spawned bot '%s' (GUID: %s)",
+                name.c_str(), newCharGuid.ToString().c_str());
+            handler->PSendSysMessage("Class: %s, Race: %s, Level: %u",
+                GetClassName(classId),
+                GetRaceName(race),
+                Playerbot::BotCharacterCreator::GetStartingLevel(race, classId));
         }
         else
         {
-            handler->PSendSysMessage("Failed to create bot '%s'. Check logs for details.", name.c_str());
+            handler->PSendSysMessage("Failed to create bot '%s'. Check server logs for details.", name.c_str());
         }
-        */
 
         return true;
     }

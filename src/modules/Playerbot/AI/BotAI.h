@@ -1,10 +1,13 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * REFACTORED BotAI - Clean Update Chain Architecture
+ *
+ * This refactored version provides:
+ * 1. Single, clean update path without DoUpdateAI/UpdateEnhanced confusion
+ * 2. Clear separation between base behaviors and combat specialization
+ * 3. No throttling that breaks movement/following
+ * 4. Proper virtual method hierarchy for class-specific overrides
  */
 
 #pragma once
@@ -37,25 +40,6 @@ struct TriggerResultComparator
     bool operator()(TriggerResult const& a, TriggerResult const& b) const;
 };
 
-// AI state information
-struct AIState
-{
-    enum Type
-    {
-        STATE_IDLE,
-        STATE_COMBAT,
-        STATE_QUESTING,
-        STATE_SOCIAL,
-        STATE_TRAVELING,
-        STATE_MAINTENANCE
-    };
-
-    Type currentState = STATE_IDLE;
-    std::chrono::steady_clock::time_point lastStateChange;
-    std::string stateData;
-    uint32 stateCounter = 0;
-};
-
 // Enhanced AI state enum
 enum class BotAIState
 {
@@ -71,7 +55,7 @@ enum class BotAIState
     RESTING
 };
 
-// AI update result
+// AI update result for performance tracking
 struct AIUpdateResult
 {
     uint32 actionsExecuted = 0;
@@ -86,20 +70,55 @@ public:
     explicit BotAI(Player* bot);
     virtual ~BotAI();
 
-    // Core AI interface
+    // ========================================================================
+    // CLEAN UPDATE INTERFACE - Single entry point, no confusion
+    // ========================================================================
+
+    /**
+     * Main update method - SINGLE ENTRY POINT for all AI updates
+     * This is the ONLY method called by BotSession::Update()
+     *
+     * Update flow:
+     * 1. Update core behaviors (strategies, movement, idle)
+     * 2. Check combat state transitions
+     * 3. If in combat AND derived class exists, call OnCombatUpdate()
+     *
+     * CRITICAL: This method is NOT throttled and runs every frame
+     * to ensure smooth movement and responsive behavior
+     */
     virtual void UpdateAI(uint32 diff);
+
+    /**
+     * Virtual method for class-specific COMBAT ONLY updates
+     * Called by UpdateAI() when bot is in combat
+     *
+     * ClassAI implementations should override this for:
+     * - Combat rotations
+     * - Target selection
+     * - Cooldown management
+     * - Resource management
+     *
+     * MUST NOT:
+     * - Control movement (handled by strategies)
+     * - Throttle updates (causes following issues)
+     * - Call base UpdateAI (would cause recursion)
+     */
+    virtual void OnCombatUpdate(uint32 diff) {}
+
+    // ========================================================================
+    // STATE TRANSITIONS - Clean lifecycle management
+    // ========================================================================
+
     virtual void Reset();
     virtual void OnDeath();
     virtual void OnRespawn();
+    virtual void OnCombatStart(::Unit* target);
+    virtual void OnCombatEnd();
 
-    // Enhanced AI loop with performance metrics
-    virtual AIUpdateResult UpdateEnhanced(uint32 diff);
+    // ========================================================================
+    // STRATEGY MANAGEMENT - Core behavior system
+    // ========================================================================
 
-    // Legacy compatibility
-    virtual void Update(uint32 diff) { UpdateAI(diff); }
-    Player* GetPlayer() const { return GetBot(); }
-
-    // Strategy management
     void AddStrategy(std::unique_ptr<Strategy> strategy);
     void RemoveStrategy(std::string const& name);
     Strategy* GetStrategy(std::string const& name) const;
@@ -107,92 +126,68 @@ public:
     void ActivateStrategy(std::string const& name);
     void DeactivateStrategy(std::string const& name);
 
-    // Action execution
+    // ========================================================================
+    // ACTION EXECUTION - Command pattern implementation
+    // ========================================================================
+
     bool ExecuteAction(std::string const& actionName);
     bool ExecuteAction(std::string const& name, ActionContext const& context);
     bool IsActionPossible(std::string const& actionName) const;
     uint32 GetActionPriority(std::string const& actionName) const;
 
-    // Enhanced action management
     void QueueAction(std::shared_ptr<Action> action, ActionContext const& context = {});
     void CancelCurrentAction();
     bool IsActionInProgress() const { return _currentAction != nullptr; }
 
-    // State management
-    AIState const& GetState() const { return _state; }
-    void SetState(AIState::Type newState, std::string const& data = "");
-    bool IsInState(AIState::Type state) const { return _state.currentState == state; }
+    // ========================================================================
+    // STATE MANAGEMENT - AI state tracking
+    // ========================================================================
 
-    // Enhanced state management
     BotAIState GetAIState() const { return _aiState; }
     void SetAIState(BotAIState state);
     bool IsInCombat() const { return _aiState == BotAIState::COMBAT; }
     bool IsIdle() const { return _aiState == BotAIState::IDLE; }
+    bool IsFollowing() const { return _aiState == BotAIState::FOLLOWING; }
 
-    // Bot access
+    // ========================================================================
+    // BOT ACCESS - Core entity access
+    // ========================================================================
+
     Player* GetBot() const { return _bot; }
     ObjectGuid GetBotGuid() const { return _bot ? _bot->GetGUID() : ObjectGuid::Empty; }
 
-    // Decision making
-    float EvaluateAction(std::string const& actionName) const;
-    std::string SelectBestAction() const;
-    void UpdateStrategies();
+    // ========================================================================
+    // GROUP MANAGEMENT - Social behavior
+    // ========================================================================
 
-    // Configuration
-    void SetUpdateInterval(uint32 intervalMs) { _updateIntervalMs = intervalMs; }
-    uint32 GetUpdateInterval() const { return _updateIntervalMs; }
-
-    void SetEnabled(bool enabled) { _enabled = enabled; }
-    bool IsEnabled() const { return _enabled; }
-
-    // Group management
     void OnGroupJoined(Group* group);
     void OnGroupLeft();
     void HandleGroupChange();
+    GroupInvitationHandler* GetGroupInvitationHandler() { return _groupInvitationHandler.get(); }
+    GroupInvitationHandler const* GetGroupInvitationHandler() const { return _groupInvitationHandler.get(); }
 
-    // Performance metrics
-    struct PerformanceData
-    {
-        std::atomic<uint32> actionsExecuted{0};
-        std::atomic<uint32> strategiesEvaluated{0};
-        std::atomic<uint32> averageUpdateTimeMs{0};
-        std::atomic<uint32> lastUpdateTimeMs{0};
-        std::chrono::steady_clock::time_point lastUpdate;
-    };
+    // ========================================================================
+    // TARGET MANAGEMENT - Combat targeting
+    // ========================================================================
 
-    PerformanceData const& GetPerformanceData() const { return _performanceData; }
-
-    // Enhanced trigger management
-    void RegisterTrigger(std::shared_ptr<Trigger> trigger);
-    void UnregisterTrigger(std::string const& name);
-
-    // Enhanced value system
-    float GetValue(std::string const& name) const;
-    void SetValue(std::string const& name, float value);
-    void UpdateValues();
-
-    // Target management
     void SetTarget(ObjectGuid guid) { _currentTarget = guid; }
     ObjectGuid GetTarget() const { return _currentTarget; }
     ::Unit* GetTargetUnit() const;
 
-    // Movement control
+    // ========================================================================
+    // MOVEMENT CONTROL - Strategy-driven movement
+    // ========================================================================
+
     void MoveTo(float x, float y, float z);
     void Follow(::Unit* target, float distance = 5.0f);
     void StopMovement();
     bool IsMoving() const;
 
-    // Communication
-    void Say(std::string const& text);
-    void Whisper(std::string const& text, Player* target);
-    void PlayEmote(uint32 emoteId);
+    // ========================================================================
+    // PERFORMANCE METRICS - Monitoring and optimization
+    // ========================================================================
 
-    // Group management
-    GroupInvitationHandler* GetGroupInvitationHandler() { return _groupInvitationHandler.get(); }
-    GroupInvitationHandler const* GetGroupInvitationHandler() const { return _groupInvitationHandler.get(); }
-
-    // Enhanced performance metrics
-    struct EnhancedMetrics
+    struct PerformanceMetrics
     {
         std::atomic<uint32> totalUpdates{0};
         std::atomic<uint32> actionsExecuted{0};
@@ -200,106 +195,123 @@ public:
         std::atomic<uint32> strategiesEvaluated{0};
         std::chrono::microseconds averageUpdateTime{0};
         std::chrono::microseconds maxUpdateTime{0};
+        std::chrono::steady_clock::time_point lastUpdate;
     };
-    EnhancedMetrics const& GetEnhancedMetrics() const { return _enhancedMetrics; }
+
+    PerformanceMetrics const& GetPerformanceMetrics() const { return _performanceMetrics; }
 
 protected:
-    // Internal methods
-    virtual void DoUpdateAI(uint32 diff);
-    virtual void EvaluateStrategies();
-    virtual void ProcessTriggers();
-    virtual void ExecuteSelectedAction();
+    // ========================================================================
+    // INTERNAL UPDATE METHODS - Called by UpdateAI()
+    // ========================================================================
 
-    void UpdatePerformanceMetrics(uint32 updateTimeMs);
-    void LogAIDecision(std::string const& action, float score) const;
+    /**
+     * Update all active strategies
+     * CRITICAL: Must run every frame for following behavior
+     */
+    void UpdateStrategies(uint32 diff);
 
-    // Strategy initialization
-    void InitializeDefaultStrategies();
+    /**
+     * Update movement based on active strategies
+     * CRITICAL: Must run every frame for smooth movement
+     */
+    void UpdateMovement(uint32 diff);
 
-    // Enhanced internal update methods
-    virtual void UpdateStrategies(uint32 diff);
-    virtual void UpdateActions(uint32 diff);
-    virtual void UpdateMovement(uint32 diff);
-    virtual void UpdateCombat(uint32 diff);
-    virtual void UpdateValuesInternal(uint32 diff);
+    /**
+     * Update idle behaviors (questing, trading, etc.)
+     * Only runs when not in combat or following
+     */
+    void UpdateIdleBehaviors(uint32 diff);
 
-    // Enhanced strategy evaluation
+    /**
+     * Check and handle combat state transitions
+     */
+    void UpdateCombatState(uint32 diff);
+
+    /**
+     * Process all registered triggers
+     */
+    void ProcessTriggers();
+
+    /**
+     * Execute queued and triggered actions
+     */
+    void UpdateActions(uint32 diff);
+
+    /**
+     * Update internal values and caches
+     */
+    void UpdateValues(uint32 diff);
+
+    // ========================================================================
+    // HELPER METHODS - Utilities for derived classes
+    // ========================================================================
+
     Strategy* SelectBestStrategy();
-
-    // Enhanced action selection
     std::shared_ptr<Action> SelectNextAction();
     bool CanExecuteAction(Action* action) const;
     ActionResult ExecuteActionInternal(Action* action, ActionContext const& context);
 
-    // Enhanced trigger evaluation
     void EvaluateTrigger(Trigger* trigger);
     void HandleTriggeredAction(TriggerResult const& result);
 
-    // Virtual combat methods for class-specific AI
-    virtual void UpdateRotation(::Unit* target) {}
-    virtual void UpdateBuffs() {}
-    virtual void UpdateCooldowns(uint32 diff) {}
-    virtual void OnCombatStart(::Unit* target) {}
-    virtual void OnCombatEnd() {}
+    void InitializeDefaultStrategies();
+    void UpdatePerformanceMetrics(uint32 updateTimeMs);
+    void LogAIDecision(std::string const& action, float score) const;
 
 protected:
+    // Core components
     Player* _bot;
-    AIState _state;
     BotAIState _aiState = BotAIState::IDLE;
     ObjectGuid _currentTarget;
 
-    // Strategy collection
+    // Strategy system
     std::unordered_map<std::string, std::unique_ptr<Strategy>> _strategies;
     std::vector<std::string> _activeStrategies;
 
-    // Enhanced action system with concurrent queue
+    // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;
     std::shared_ptr<Action> _currentAction;
     ActionContext _currentContext;
 
-    // Enhanced trigger system
+    // Trigger system
     std::vector<std::shared_ptr<Trigger>> _triggers;
     std::priority_queue<TriggerResult, std::vector<TriggerResult>, TriggerResultComparator> _triggeredActions;
 
-    // Enhanced value system
+    // Value cache
     std::unordered_map<std::string, float> _values;
 
-    // Configuration
-    std::atomic<bool> _enabled{true};
-    uint32 _updateIntervalMs = 1000; // 1 second default
-    uint32 _timeSinceLastUpdate = 0;
-    uint32 _lastUpdate = 0;
+    // Group management
+    std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
+    bool _wasInGroup = false;
 
     // Performance tracking
-    mutable PerformanceData _performanceData;
-    mutable EnhancedMetrics _enhancedMetrics;
-
-    // Current action context
-    std::string _selectedAction;
-    float _selectedActionScore = 0.0f;
-    std::chrono::steady_clock::time_point _lastActionTime;
+    mutable PerformanceMetrics _performanceMetrics;
 
     // Thread safety
     mutable std::shared_mutex _mutex;
 
-    // Group management components
-    std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
+    // Debug tracking
+    uint32 _lastDebugLogTime = 0;
 };
 
-// Default AI implementation for backward compatibility
+// ========================================================================
+// DEFAULT IMPLEMENTATION - For bots without specialized AI
+// ========================================================================
+
 class TC_GAME_API DefaultBotAI : public BotAI
 {
 public:
     explicit DefaultBotAI(Player* player) : BotAI(player) {}
 
-    void UpdateAI(uint32 diff) override
-    {
-        // Call UpdateEnhanced for full functionality including movement and group behavior
-        UpdateEnhanced(diff);
-    }
+    // Uses base UpdateAI() implementation
+    // No combat specialization needed for default bots
 };
 
-// AI factory for creating specialized AI instances
+// ========================================================================
+// AI FACTORY - Creates appropriate AI for each class
+// ========================================================================
+
 class TC_GAME_API BotAIFactory
 {
     BotAIFactory() = default;
@@ -314,6 +326,8 @@ public:
     std::unique_ptr<BotAI> CreateAI(Player* bot);
     std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId);
     std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec);
+
+    // Specialized AI creation
     std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type);
     std::unique_ptr<BotAI> CreatePvPAI(Player* bot);
     std::unique_ptr<BotAI> CreatePvEAI(Player* bot);
@@ -323,12 +337,7 @@ public:
     void RegisterAICreator(std::string const& type,
                           std::function<std::unique_ptr<BotAI>(Player*)> creator);
 
-    // AI templates
-    void RegisterTemplate(std::string const& name,
-                         std::function<void(BotAI*)> initializer);
-    void ApplyTemplate(BotAI* ai, std::string const& templateName);
-
-    // Initialization methods
+    // Initialization
     void InitializeDefaultTriggers(BotAI* ai);
     void InitializeDefaultValues(BotAI* ai);
 
@@ -336,9 +345,7 @@ private:
     void InitializeDefaultStrategies(BotAI* ai);
     void InitializeClassStrategies(BotAI* ai, uint8 classId, uint8 spec);
 
-private:
     std::unordered_map<std::string, std::function<std::unique_ptr<BotAI>(Player*)>> _creators;
-    std::unordered_map<std::string, std::function<void(BotAI*)>> _templates;
 };
 
 #define sBotAIFactory BotAIFactory::instance()

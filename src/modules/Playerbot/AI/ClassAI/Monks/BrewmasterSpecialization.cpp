@@ -187,7 +187,7 @@ void BrewmasterSpecialization::OnCombatEnd()
 
 bool BrewmasterSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
@@ -206,7 +206,7 @@ bool BrewmasterSpecialization::HasEnoughResource(uint32 spellId)
 
 void BrewmasterSpecialization::ConsumeResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 

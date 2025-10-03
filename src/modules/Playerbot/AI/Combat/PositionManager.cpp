@@ -284,8 +284,8 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
     }
 
     Position targetPos = context.target->GetPosition();
-    float minRange = 2.0f;
-    float maxRange = context.maxRange;
+    // Variables for potential position calculations
+    (void)context.maxRange; // Silence unused warning
 
     switch (context.desiredType)
     {
@@ -602,7 +602,7 @@ float PositionManager::CalculateMovementCost(const Position& from, const Positio
     return cost;
 }
 
-MovementResult PositionManager::HandleEmergencyMovement(const MovementContext& context)
+MovementResult PositionManager::HandleEmergencyMovement(const MovementContext& /* context */)
 {
     _metrics.emergencyMoves++;
 
@@ -668,7 +668,7 @@ float PositionManager::CalculateSafetyScore(const Position& pos, const MovementC
     return std::max(0.0f, score);
 }
 
-float PositionManager::CalculateLineOfSightScore(const Position& pos, const MovementContext& context)
+float PositionManager::CalculateLineOfSightScore(const Position& /* pos */, const MovementContext& context)
 {
     if (!context.target)
         return 100.0f;
@@ -806,7 +806,7 @@ std::vector<Position> PositionManager::CalculateWaypoints(const Position& from, 
     return waypoints;
 }
 
-void PositionManager::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void PositionManager::TrackPerformance(std::chrono::microseconds duration, const std::string& /* operation */)
 {
     if (duration > _metrics.maxEvaluationTime)
         _metrics.maxEvaluationTime = duration;
@@ -825,6 +825,68 @@ void PositionManager::TrackPerformance(std::chrono::microseconds duration, const
         }
         _metrics.lastUpdate = currentTime;
     }
+}
+
+float PositionManager::CalculateEscapeScore(const Position& pos, const MovementContext& context)
+{
+    if (!_bot)
+        return 0.0f;
+
+    float score = 0.0f;
+
+    // Base score for distance from current position
+    float currentDistance = _bot->GetPosition().GetExactDist(&pos);
+    score += std::min(currentDistance * 10.0f, 50.0f); // Max 50 points for distance
+
+    // Check distance from nearby enemies
+    float minEnemyDistance = 1000.0f;
+    std::list<Unit*> enemies;
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(_bot, _bot, 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, enemies, check);
+    Cell::VisitAllObjects(_bot, searcher, 30.0f);
+
+    for (Unit* enemy : enemies)
+    {
+        if (!enemy || !enemy->IsAlive())
+            continue;
+
+        float enemyDistance = pos.GetExactDist(enemy);
+        minEnemyDistance = std::min(minEnemyDistance, enemyDistance);
+
+        // Higher score for positions farther from enemies
+        if (enemyDistance > 0.0f)
+            score += std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
+    }
+
+    // Bonus for getting to safe range
+    if (minEnemyDistance > 15.0f)
+        score += 20.0f;
+
+    // Check for line of sight to group members (we want to maintain LOS)
+    if (Group* group = _bot->GetGroup())
+    {
+        for (GroupReference const& itr : group->GetMembers())
+        {
+            Player* member = itr.GetSource();
+            if (member && member != _bot && member->IsInWorld())
+            {
+                if (_bot->IsWithinLOSInMap(member))
+                    score += 5.0f;
+            }
+        }
+    }
+
+    // Penalty for positions in AoE zones
+    // TODO: Implement IsInAoEZone function
+    // if (IsInAoEZone(pos))
+    //     score -= 40.0f;
+
+    // Penalty for positions too close to walls/obstacles
+    MovementContext tempContext;
+    if (!IsPositionSafe(pos, tempContext))
+        score -= 20.0f;
+
+    return std::max(score, 0.0f);
 }
 
 // PositionUtils implementation
@@ -920,6 +982,51 @@ bool PositionUtils::IsPositionOnGround(const Position& pos, Map* map)
 
     float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
     return std::abs(pos.GetPositionZ() - groundZ) <= 2.0f;
+}
+
+Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
+{
+    if (!target)
+        return Position();
+
+    // Get current position and movement info
+    Position currentPos = target->GetPosition();
+
+    // Calculate predicted position based on movement speed
+    // Simple prediction: if target has movement speed, predict forward movement
+
+    // Calculate predicted position based on current velocity
+    float speed = target->GetSpeed(MOVE_RUN); // Get movement speed
+    if (speed <= 0.0f)
+        return currentPos;
+
+    // Get current facing direction
+    float orientation = target->GetOrientation();
+
+    // Calculate movement distance
+    float distance = speed * timeAhead;
+
+    // Project position forward based on current facing direction
+    Position predictedPos;
+    predictedPos.m_positionX = currentPos.GetPositionX() + distance * std::cos(orientation);
+    predictedPos.m_positionY = currentPos.GetPositionY() + distance * std::sin(orientation);
+    predictedPos.m_positionZ = currentPos.GetPositionZ();
+    predictedPos.SetOrientation(orientation);
+
+    // Validate the predicted position (check if walkable)
+    if (_bot && _bot->GetMap())
+    {
+        float groundZ = _bot->GetMap()->GetHeight(PhasingHandler::GetEmptyPhaseShift(),
+                                                 predictedPos.GetPositionX(),
+                                                 predictedPos.GetPositionY(),
+                                                 predictedPos.GetPositionZ());
+
+        // If ground height is reasonable, use it
+        if (std::abs(groundZ - predictedPos.GetPositionZ()) <= 10.0f)
+            predictedPos.m_positionZ = groundZ;
+    }
+
+    return predictedPos;
 }
 
 bool PositionUtils::CanWalkStraightLine(const Position& from, const Position& to, Map* map)

@@ -158,6 +158,7 @@ public:
     // Poison Management Implementation (Minimal for Combat)
     void UpdatePoisonManagement() override;
     void ApplyPoisons() override;
+    bool ShouldApplyPoisons() override;
     PoisonType GetOptimalMainHandPoison() override;
     PoisonType GetOptimalOffHandPoison() override;
 
@@ -168,15 +169,15 @@ public:
 
     // Energy Management Implementation
     void UpdateEnergyManagement() override;
-    bool HasEnoughEnergyFor(uint32 spellId) override;
-    uint32 GetEnergyCost(uint32 spellId) override;
+    bool HasEnoughEnergyFor(uint32 spellId);
+    uint32 GetEnergyCost(uint32 spellId);
     bool ShouldWaitForEnergy() override;
 
     // Cooldown Management Implementation
-    void UpdateCooldownTracking(uint32 diff) override;
-    bool IsSpellReady(uint32 spellId) override;
-    void StartCooldown(uint32 spellId) override;
-    uint32 GetCooldownRemaining(uint32 spellId) override;
+    void UpdateCooldownTracking(uint32 diff);
+    bool IsSpellReady(uint32 spellId);
+    void StartCooldown(uint32 spellId);
+    uint32 GetCooldownRemaining(uint32 spellId);
 
     // Combat Phase Management Implementation
     void UpdateCombatPhase() override;
@@ -184,10 +185,10 @@ public:
     bool ShouldExecuteBurstRotation() override;
 
     // Utility Functions Implementation
-    bool CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
-    bool HasSpell(uint32 spellId) override;
-    SpellInfo const* GetSpellInfo(uint32 spellId) override;
-    uint32 GetSpellCooldown(uint32 spellId) override;
+    bool CastSpell(uint32 spellId, ::Unit* target = nullptr);
+    bool HasSpell(uint32 spellId);
+    SpellInfo const* GetSpellInfo(uint32 spellId);
+    uint32 GetSpellCooldown(uint32 spellId);
 
 private:
     // Combat-specific systems

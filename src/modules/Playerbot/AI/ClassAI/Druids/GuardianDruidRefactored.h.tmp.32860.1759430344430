@@ -1,0 +1,529 @@
+/*
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef PLAYERBOT_GUARDIANDRUIDREFACTORED_H
+#define PLAYERBOT_GUARDIANDRUIDREFACTORED_H
+
+#include "../CombatSpecializationTemplates.h"
+#include "Player.h"
+#include "SpellAuras.h"
+#include "SpellMgr.h"
+#include "SpellInfo.h"
+#include <unordered_map>
+#include "Log.h"
+#include "DruidSpecialization.h"
+
+// WoW 11.2 (The War Within) - Guardian Druid Spell IDs
+constexpr uint32 GUARDIAN_MANGLE = 33917;
+constexpr uint32 GUARDIAN_THRASH = 77758;
+constexpr uint32 GUARDIAN_SWIPE = 213771;
+constexpr uint32 GUARDIAN_MAUL = 6807;
+constexpr uint32 GUARDIAN_IRONFUR = 192081;
+constexpr uint32 GUARDIAN_FRENZIED_REGENERATION = 22842;
+constexpr uint32 GUARDIAN_BARKSKIN = 22812;
+constexpr uint32 GUARDIAN_SURVIVAL_INSTINCTS = 61336;
+constexpr uint32 GUARDIAN_PULVERIZE = 80313; // Talent
+constexpr uint32 GUARDIAN_INCARNATION_BEAR = 102558; // Incarnation: Guardian of Ursoc
+constexpr uint32 GUARDIAN_BERSERK = 50334;
+constexpr uint32 GUARDIAN_MOONFIRE = 8921;
+constexpr uint32 GUARDIAN_RAGE_OF_SLEEPER = 200851; // Talent
+constexpr uint32 GUARDIAN_BEAR_FORM = 5487;
+constexpr uint32 GUARDIAN_BRISTLING_FUR = 155835; // Talent
+constexpr uint32 GUARDIAN_RENEWAL = 108238;
+constexpr uint32 GUARDIAN_REGROWTH = 8936;
+
+// Ironfur stacking tracker
+class GuardianIronfurTracker
+{
+public:
+    GuardianIronfurTracker() : _ironfurStacks(0), _ironfurEndTime(0) {}
+
+    void ApplyIronfur(uint32 duration = 7000)
+    {
+        _ironfurStacks = std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
+        _ironfurEndTime = getMSTime() + duration;
+    }
+
+    void Update(Player* bot)
+    {
+        if (!bot)
+            return;
+
+        // Sync with actual aura
+        if (Aura* aura = bot->GetAura(GUARDIAN_IRONFUR))
+        {
+            _ironfurStacks = aura->GetStackAmount();
+            _ironfurEndTime = getMSTime() + aura->GetDuration();
+        }
+        else
+        {
+            _ironfurStacks = 0;
+            _ironfurEndTime = 0;
+        }
+    }
+
+    [[nodiscard]] uint32 GetStacks() const { return _ironfurStacks; }
+    [[nodiscard]] bool IsActive() const { return _ironfurStacks > 0 && getMSTime() < _ironfurEndTime; }
+    [[nodiscard]] bool NeedsRefresh() const
+    {
+        // Refresh if no stacks or about to expire
+        return _ironfurStacks == 0 || (_ironfurEndTime > 0 && (getMSTime() + 2000) >= _ironfurEndTime);
+    }
+    [[nodiscard]] uint32 GetTimeRemaining() const
+    {
+        if (_ironfurEndTime == 0)
+            return 0;
+        uint32 now = getMSTime();
+        return now < _ironfurEndTime ? (_ironfurEndTime - now) : 0;
+    }
+
+private:
+    uint32 _ironfurStacks;
+    uint32 _ironfurEndTime;
+};
+
+// Thrash debuff tracker (for Pulverize talent)
+class GuardianThrashTracker
+{
+public:
+    GuardianThrashTracker() = default;
+
+    void ApplyThrash(ObjectGuid guid, uint32 duration, uint32 stacks = 1)
+    {
+        auto& thrash = _thrashTargets[guid];
+        thrash.endTime = getMSTime() + duration;
+        thrash.stacks = std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
+    }
+
+    void RemoveThrash(ObjectGuid guid)
+    {
+        _thrashTargets.erase(guid);
+    }
+
+    [[nodiscard]] uint32 GetStacks(ObjectGuid guid) const
+    {
+        auto it = _thrashTargets.find(guid);
+        if (it != _thrashTargets.end() && getMSTime() < it->second.endTime)
+            return it->second.stacks;
+        return 0;
+    }
+
+    [[nodiscard]] bool HasThrash(ObjectGuid guid) const
+    {
+        return GetStacks(guid) > 0;
+    }
+
+    void Update(Unit* target)
+    {
+        if (!target)
+            return;
+
+        ObjectGuid guid = target->GetGUID();
+
+        // Sync with actual aura
+        if (Aura* aura = target->GetAura(GUARDIAN_THRASH))
+        {
+            auto& thrash = _thrashTargets[guid];
+            thrash.stacks = aura->GetStackAmount();
+            thrash.endTime = getMSTime() + aura->GetDuration();
+        }
+        else
+        {
+            _thrashTargets.erase(guid);
+        }
+    }
+
+private:
+    struct ThrashInfo
+    {
+        uint32 stacks = 0;
+        uint32 endTime = 0;
+    };
+
+    std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
+};
+
+class GuardianDruidRefactored : public TankSpecialization<Playerbot::RageResource>, public DruidSpecialization
+{
+public:
+    using Base = TankSpecialization<Playerbot::RageResource>;
+    using Base::GetBot;
+    using Base::CastSpell;
+    using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
+    using Base::_resource;
+    explicit GuardianDruidRefactored(Player* bot)
+        : TankSpecialization<Playerbot::RageResource>(bot)
+        , DruidSpecialization(bot)
+        , _ironfurTracker()
+        , _thrashTracker()
+        , _frenziedRegenerationActive(false)
+        , _frenziedRegenerationEndTime(0)
+        , _berserkActive(false)
+        , _berserkEndTime(0)
+        , _lastBerserkTime(0)
+        , _lastFrenziedRegenerationTime(0)
+    {
+        InitializeCooldowns();
+        TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for {}", bot->GetName());
+    }
+
+    void UpdateRotation(::Unit* target) override
+    {
+        Player* bot = this->GetBot();
+        if (!target || !bot)
+            return;
+
+        UpdateGuardianState(target);
+        MaintainBearForm();
+        HandleActiveMitigation();
+
+        uint32 enemyCount = this->GetEnemiesInRange(8.0f);
+
+        if (enemyCount >= 3)
+            ExecuteAoEThreatRotation(target, enemyCount);
+        else
+            ExecuteSingleTargetThreatRotation(target);
+    }
+
+    void UpdateBuffs() override
+    {
+        Player* bot = this->GetBot();
+        if (!bot)
+            return;
+
+        MaintainBearForm();
+    }
+
+    void UpdateDefensives() override
+    {
+        Player* bot = this->GetBot();
+        if (!bot)
+            return;
+
+        float healthPct = bot->GetHealthPct();
+
+        // Survival Instincts (critical emergency - 50% damage reduction)
+        if (healthPct < 30.0f && this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
+        {
+            this->CastSpell(bot, GUARDIAN_SURVIVAL_INSTINCTS);
+            return;
+        }
+
+        // Frenzied Regeneration (strong self-heal)
+        if (healthPct < 50.0f && this->_resource >= 10)
+        {
+            if (this->CanCastSpell(GUARDIAN_FRENZIED_REGENERATION, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_FRENZIED_REGENERATION);
+                _frenziedRegenerationActive = true;
+                _frenziedRegenerationEndTime = getMSTime() + 3000; // 3 sec heal over time
+                _lastFrenziedRegenerationTime = getMSTime();
+                return;
+            }
+        }
+
+        // Barkskin (moderate damage reduction - 20%)
+        if (healthPct < 60.0f && this->CanCastSpell(GUARDIAN_BARKSKIN, bot))
+        {
+            this->CastSpell(bot, GUARDIAN_BARKSKIN);
+            return;
+        }
+
+        // Renewal (instant 30% heal)
+        if (healthPct < 50.0f && this->CanCastSpell(GUARDIAN_RENEWAL, bot))
+        {
+            this->CastSpell(bot, GUARDIAN_RENEWAL);
+            return;
+        }
+
+        // Regrowth (if out of combat and low health)
+        if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(GUARDIAN_REGROWTH, bot))
+        {
+            this->CastSpell(bot, GUARDIAN_REGROWTH);
+        }
+    }
+
+private:
+    void InitializeCooldowns()
+    {
+        _lastBerserkTime = 0;
+        _lastFrenziedRegenerationTime = 0;
+    }
+
+    void UpdateGuardianState(::Unit* target)
+    {
+        Player* bot = this->GetBot();
+        _ironfurTracker.Update(bot);
+        _thrashTracker.Update(target);
+        UpdateCooldownStates();
+    }
+
+    void UpdateCooldownStates()
+    {
+        Player* bot = this->GetBot();
+        // Frenzied Regeneration state
+        if (_frenziedRegenerationActive && getMSTime() >= _frenziedRegenerationEndTime)
+            _frenziedRegenerationActive = false;
+
+        if (bot->HasAura(GUARDIAN_FRENZIED_REGENERATION))
+        {
+            _frenziedRegenerationActive = true;
+            if (Aura* aura = bot->GetAura(GUARDIAN_FRENZIED_REGENERATION))
+                _frenziedRegenerationEndTime = getMSTime() + aura->GetDuration();
+        }
+
+        // Berserk state
+        if (_berserkActive && getMSTime() >= _berserkEndTime)
+            _berserkActive = false;
+
+        if (bot->HasAura(GUARDIAN_BERSERK) || bot->HasAura(GUARDIAN_INCARNATION_BEAR))
+        {
+            _berserkActive = true;
+            Aura* aura = bot->GetAura(GUARDIAN_BERSERK);
+            if (!aura)
+                aura = bot->GetAura(GUARDIAN_INCARNATION_BEAR);
+            if (aura)
+                _berserkEndTime = getMSTime() + aura->GetDuration();
+        }
+    }
+
+    void MaintainBearForm()
+    {
+        Player* bot = this->GetBot();
+        if (!bot->HasAura(GUARDIAN_BEAR_FORM))
+        {
+            if (this->CanCastSpell(GUARDIAN_BEAR_FORM, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_BEAR_FORM);
+            }
+        }
+    }
+
+    void HandleActiveMitigation()
+    {
+        Player* bot = this->GetBot();
+        float healthPct = bot->GetHealthPct();
+
+        // Ironfur (primary active mitigation - increases armor)
+        if (_ironfurTracker.NeedsRefresh() && this->_resource >= 45)
+        {
+            if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_IRONFUR);
+                _ironfurTracker.ApplyIronfur(7000); // 7 sec duration
+                return;
+            }
+        }
+
+        // Stack Ironfur when taking heavy damage
+        if (healthPct < 80.0f && _ironfurTracker.GetStacks() < 3 && this->_resource >= 45)
+        {
+            if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_IRONFUR);
+                _ironfurTracker.ApplyIronfur(7000);
+                return;
+            }
+        }
+    }
+
+    void ExecuteSingleTargetThreatRotation(::Unit* target)
+    {
+        ObjectGuid targetGuid = target->GetGUID();
+
+        // Berserk/Incarnation (major cooldown - increased damage and rage gen)
+        if (this->_resource < 50 && CanUseMajorCooldown())
+        {
+            if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
+                _berserkActive = true;
+                _berserkEndTime = getMSTime() + 30000; // 30 sec
+                _lastBerserkTime = getMSTime();
+                return;
+            }
+            else if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_BERSERK);
+                _berserkActive = true;
+                _berserkEndTime = getMSTime() + 15000; // 15 sec
+                _lastBerserkTime = getMSTime();
+                return;
+            }
+        }
+
+        // Mangle (highest priority - generates rage and threat)
+        if (this->CanCastSpell(GUARDIAN_MANGLE, target))
+        {
+            this->CastSpell(target, GUARDIAN_MANGLE);
+            GenerateRage(8);
+            return;
+        }
+
+        // Thrash (apply/maintain bleed)
+        if (!_thrashTracker.HasThrash(targetGuid) || _thrashTracker.GetStacks(targetGuid) < 3)
+        {
+            if (this->CanCastSpell(GUARDIAN_THRASH, target))
+            {
+                this->CastSpell(target, GUARDIAN_THRASH);
+                uint32 currentStacks = _thrashTracker.GetStacks(targetGuid);
+                _thrashTracker.ApplyThrash(targetGuid, 15000, 1); // 15 sec, add 1 stack
+                GenerateRage(5);
+                return;
+            }
+        }
+
+        // Pulverize (consume Thrash stacks for damage buff - if talented)
+        if (bot->HasSpell(GUARDIAN_PULVERIZE) && _thrashTracker.GetStacks(targetGuid) >= 2)
+        {
+            if (this->CanCastSpell(GUARDIAN_PULVERIZE, target))
+            {
+                this->CastSpell(target, GUARDIAN_PULVERIZE);
+                _thrashTracker.RemoveThrash(targetGuid); // Consumes Thrash
+                return;
+            }
+        }
+
+        // Moonfire (ranged filler for pulling or when target is out of melee)
+        if (bot->GetDistance(target) > 8.0f && bot->GetDistance(target) < 40.0f)
+        {
+            if (this->CanCastSpell(GUARDIAN_MOONFIRE, target))
+            {
+                this->CastSpell(target, GUARDIAN_MOONFIRE);
+                GenerateRage(3);
+                return;
+            }
+        }
+
+        // Maul (rage dump when high rage)
+        if (this->_resource > 80 && this->_resource >= 40)
+        {
+            if (this->CanCastSpell(GUARDIAN_MAUL, target))
+            {
+                this->CastSpell(target, GUARDIAN_MAUL);
+                return;
+            }
+        }
+
+        // Swipe (filler)
+        if (this->CanCastSpell(GUARDIAN_SWIPE, target))
+        {
+            this->CastSpell(target, GUARDIAN_SWIPE);
+            GenerateRage(4);
+            return;
+        }
+    }
+
+    void ExecuteAoEThreatRotation(::Unit* target, uint32 enemyCount)
+    {
+        ObjectGuid targetGuid = target->GetGUID();
+
+        // Berserk for AoE threat burst
+        if (this->_resource < 50 && CanUseMajorCooldown())
+        {
+            if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
+                _berserkActive = true;
+                _berserkEndTime = getMSTime() + 30000;
+                _lastBerserkTime = getMSTime();
+                return;
+            }
+            else if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
+            {
+                this->CastSpell(bot, GUARDIAN_BERSERK);
+                _berserkActive = true;
+                _berserkEndTime = getMSTime() + 15000;
+                _lastBerserkTime = getMSTime();
+                return;
+            }
+        }
+
+        // Thrash (AoE bleed - highest priority in AoE)
+        if (!_thrashTracker.HasThrash(targetGuid) || _thrashTracker.GetStacks(targetGuid) < 3)
+        {
+            if (this->CanCastSpell(GUARDIAN_THRASH, target))
+            {
+                this->CastSpell(target, GUARDIAN_THRASH);
+                _thrashTracker.ApplyThrash(targetGuid, 15000, 1);
+                GenerateRage(5);
+                return;
+            }
+        }
+
+        // Mangle (still use for rage generation)
+        if (this->CanCastSpell(GUARDIAN_MANGLE, target))
+        {
+            this->CastSpell(target, GUARDIAN_MANGLE);
+            GenerateRage(8);
+            return;
+        }
+
+        // Swipe (AoE damage and threat)
+        if (this->CanCastSpell(GUARDIAN_SWIPE, target))
+        {
+            this->CastSpell(target, GUARDIAN_SWIPE);
+            GenerateRage(4);
+            return;
+        }
+
+        // Maul (if high rage and need to dump)
+        if (this->_resource > 80 && this->_resource >= 40)
+        {
+            if (this->CanCastSpell(GUARDIAN_MAUL, target))
+            {
+                this->CastSpell(target, GUARDIAN_MAUL);
+                return;
+            }
+        }
+    }
+
+    void GenerateRage(uint32 amount)
+    {
+        // Rage is managed by base template class
+        // No direct manipulation needed
+    }
+
+    void ConsumeRage(uint32 amount)
+    {
+        // Rage is managed by base template class
+        // No direct manipulation needed
+    }
+
+    [[nodiscard]] bool CanUseMajorCooldown() const
+    {
+        // Only use major cooldowns in threatening situations or during burst windows
+        Player* bot = this->GetBot();
+        float healthPct = bot->GetHealthPct();
+        return healthPct < 80.0f;
+    }
+
+    // Member variables
+    GuardianIronfurTracker _ironfurTracker;
+    GuardianThrashTracker _thrashTracker;
+
+    bool _frenziedRegenerationActive;
+    uint32 _frenziedRegenerationEndTime;
+    bool _berserkActive;
+    uint32 _berserkEndTime;
+
+    uint32 _lastBerserkTime;
+    uint32 _lastFrenziedRegenerationTime;
+};
+
+#endif // PLAYERBOT_GUARDIANDRUIDREFACTORED_H

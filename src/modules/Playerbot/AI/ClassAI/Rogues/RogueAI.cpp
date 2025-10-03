@@ -8,9 +8,13 @@
  */
 
 #include "RogueAI.h"
+#include "../BaselineRotationManager.h"
 #include "AssassinationSpecialization.h"
 #include "CombatSpecialization.h"
 #include "SubtletySpecialization.h"
+#include "AssassinationRogueRefactored.h"
+#include "OutlawRogueRefactored.h"
+#include "SubtletyRogueRefactored.h"
 #include "Player.h"
 #include "Group.h"
 #include "SpellMgr.h"
@@ -82,178 +86,7 @@ struct RogueMetrics
 };
 
 
-// Combat positioning strategy
-class RogueCombatPositioning
-{
-public:
-    explicit RogueCombatPositioning(Player* bot) : _bot(bot) {}
 
-    Position CalculateOptimalPosition(Unit* target, RogueSpec spec)
-    {
-        if (!target || !_bot)
-            return _bot->GetPosition();
-
-        Position optimalPos = _bot->GetPosition();
-        float currentDistance = _bot->GetDistance(target);
-
-        // Calculate angle to target's back
-        float targetFacing = target->GetOrientation();
-        float idealAngle = targetFacing + M_PI; // Behind target
-
-        // Adjust for specialization preferences
-        switch (spec)
-        {
-            case RogueSpec::ASSASSINATION:
-                // Prefers staying behind for Mutilate
-                if (currentDistance > 3.0f || !IsBehindTarget(target))
-                {
-                    optimalPos.m_positionX = target->GetPositionX() + cos(idealAngle) * 2.5f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(idealAngle) * 2.5f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
-                break;
-
-            case RogueSpec::COMBAT:
-                // More flexible positioning, focuses on uptime
-                if (currentDistance > 5.0f)
-                {
-                    float angle = target->GetRelativeAngle(_bot);
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
-                break;
-
-            case RogueSpec::SUBTLETY:
-                // Highly mobile, uses shadowstep
-                if (currentDistance > 10.0f)
-                {
-                    // Position for shadowstep range
-                    float angle = target->GetRelativeAngle(_bot);
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 8.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 8.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
-                else if (!IsBehindTarget(target))
-                {
-                    optimalPos.m_positionX = target->GetPositionX() + cos(idealAngle) * 2.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(idealAngle) * 2.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
-                break;
-        }
-
-        return optimalPos;
-    }
-
-    bool IsBehindTarget(Unit* target) const
-    {
-        if (!target || !_bot)
-            return false;
-
-        float targetFacing = target->GetOrientation();
-        float angleToMe = target->GetAbsoluteAngle(_bot);
-        float diff = std::abs(targetFacing - angleToMe);
-
-        if (diff > M_PI)
-            diff = 2 * M_PI - diff;
-
-        return diff < (M_PI / 3); // Within 60 degrees behind
-    }
-
-    float GetOptimalRange(RogueSpec spec) const
-    {
-        switch (spec)
-        {
-            case RogueSpec::ASSASSINATION:
-                return 2.5f; // Close for mutilate
-            case RogueSpec::COMBAT:
-                return 5.0f; // Standard melee
-            case RogueSpec::SUBTLETY:
-                return 3.0f; // Flexible
-            default:
-                return 5.0f;
-        }
-    }
-
-private:
-    Player* _bot;
-};
-
-// Energy management system
-class EnergyManager
-{
-public:
-    explicit EnergyManager(Player* bot) : _bot(bot), _lastTickTime(getMSTime()) {}
-
-    bool ShouldPoolEnergy(uint32 targetEnergy = 60)
-    {
-        if (!_bot)
-            return false;
-
-        uint32 currentEnergy = _bot->GetPower(POWER_ENERGY);
-        return currentEnergy < targetEnergy;
-    }
-
-    float CalculateEnergyRegenRate()
-    {
-        // Base regen is 10 energy per second
-        float baseRegen = 10.0f;
-
-        // Check for Combat Potency talent (Combat spec)
-        if (_bot->HasSpell(35551))
-            baseRegen *= 1.2f;
-
-        // Check for Vigor talent
-        if (_bot->HasSpell(14983))
-            baseRegen *= 1.1f;
-
-        return baseRegen;
-    }
-
-    uint32 GetTimeToEnergy(uint32 targetEnergy)
-    {
-        uint32 currentEnergy = _bot->GetPower(POWER_ENERGY);
-        if (currentEnergy >= targetEnergy)
-            return 0;
-
-        float regenRate = CalculateEnergyRegenRate();
-        uint32 energyNeeded = targetEnergy - currentEnergy;
-
-        return static_cast<uint32>((energyNeeded / regenRate) * 1000);
-    }
-
-    void UpdateEnergyTracking()
-    {
-        uint32 currentTime = getMSTime();
-        uint32 deltaTime = currentTime - _lastTickTime;
-
-        if (deltaTime >= 100) // Update every 100ms
-        {
-            uint32 currentEnergy = _bot->GetPower(POWER_ENERGY);
-            _energyHistory.push_back({currentTime, currentEnergy});
-
-            // Keep only last 10 seconds of history
-            while (!_energyHistory.empty() &&
-                   currentTime - _energyHistory.front().timestamp > 10000)
-            {
-                _energyHistory.erase(_energyHistory.begin());
-            }
-
-            _lastTickTime = currentTime;
-        }
-    }
-
-private:
-    Player* _bot;
-    uint32 _lastTickTime;
-    struct EnergySnapshot
-    {
-        uint32 timestamp;
-        uint32 energy;
-    };
-    std::vector<EnergySnapshot> _energyHistory;
-};
 
 // Combat metrics tracking
 class RogueCombatMetrics
@@ -354,10 +187,10 @@ RogueAI::RogueAI(Player* bot) :
     InitializeSpecialization();
 
     // Initialize performance tracking
-    _metrics = std::make_unique<RogueMetrics>();
-    _combatMetrics = std::make_unique<RogueCombatMetrics>();
+    _metrics = new RogueMetrics();
+    _combatMetrics = new RogueCombatMetrics();
     _energyManager = std::make_unique<EnergyManager>(bot);
-    _positioning = std::make_unique<RogueCombatPositioning>(bot);
+    _positioning = new RogueCombatPositioning(bot);
 
     TC_LOG_DEBUG("playerbot", "RogueAI initialized for {} with specialization {}",
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
@@ -435,32 +268,32 @@ void RogueAI::DetectSpecialization()
 
 void RogueAI::InitializeSpecialization()
 {
-    // Create specialization instance based on detected spec
-    switch (_detectedSpec)
-    {
-        case RogueSpec::ASSASSINATION:
-            _specialization = std::make_unique<AssassinationSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "RogueAI: Initialized Assassination specialization");
-            break;
-
-        case RogueSpec::COMBAT:
-            _specialization = std::make_unique<CombatSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "RogueAI: Initialized Combat specialization");
-            break;
-
-        case RogueSpec::SUBTLETY:
-            _specialization = std::make_unique<SubtletySpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "RogueAI: Initialized Subtlety specialization");
-            break;
-    }
-
-    // Specialization is initialized in its constructor
+    DetectSpecialization();
+    SwitchSpecialization(_detectedSpec);
 }
 
 void RogueAI::UpdateRotation(Unit* target)
 {
     if (!target || !GetBot())
         return;
+
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        // Use baseline rotation manager for unspecialized bots
+        static BaselineRotationManager baselineManager;
+
+        // Try auto-specialization if level 10+
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        // Execute baseline rotation
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback to basic melee attack if nothing else worked
+        ExecuteFallbackRotation(target);
+        return;
+    }
 
     auto startTime = std::chrono::steady_clock::now();
 
@@ -472,14 +305,7 @@ void RogueAI::UpdateRotation(Unit* target)
         return;
 
     // Delegate to specialization if available
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-    }
-    else
-    {
-        ExecuteFallbackRotation(target);
-    }
+    DelegateToSpecialization(target);
 
     // Update performance metrics
     auto endTime = std::chrono::steady_clock::now();
@@ -703,6 +529,14 @@ void RogueAI::UpdateBuffs()
 {
     if (!GetBot())
         return;
+
+    // Check if bot should use baseline buffs
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
 
     uint32 currentTime = getMSTime();
 
@@ -1088,7 +922,50 @@ RogueSpec RogueAI::GetCurrentSpecialization() const
 
 RogueAI::~RogueAI()
 {
-    // Cleanup is handled by smart pointers
+    // Cleanup is handled by smart pointers for unique_ptr members
+    delete _metrics;
+    delete _combatMetrics;
+    delete _positioning;
+}
+
+void RogueAI::SwitchSpecialization(RogueSpec newSpec)
+{
+    _detectedSpec = newSpec;
+
+    switch (newSpec)
+    {
+        case RogueSpec::ASSASSINATION:
+            _specialization = std::make_unique<AssassinationRogueRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Assassination specialization",
+                         GetBot()->GetName());
+            break;
+
+        case RogueSpec::COMBAT:
+            _specialization = std::make_unique<OutlawRogueRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Outlaw/Combat specialization",
+                         GetBot()->GetName());
+            break;
+
+        case RogueSpec::SUBTLETY:
+            _specialization = std::make_unique<SubtletyRogueRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Subtlety specialization",
+                         GetBot()->GetName());
+            break;
+
+        default:
+            _specialization = std::make_unique<AssassinationRogueRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} defaulted to Assassination specialization",
+                         GetBot()->GetName());
+            break;
+    }
+}
+
+void RogueAI::DelegateToSpecialization(::Unit* target)
+{
+    if (_specialization)
+        _specialization->UpdateRotation(target);
+    else
+        ExecuteFallbackRotation(target);
 }
 
 } // namespace Playerbot

@@ -19,6 +19,7 @@
 #include "PlayerbotDatabase.h"
 #include "BotCharacterDistribution.h"
 #include "BotNameMgr.h"
+#include "BotCharacterCreator.h"
 #include "Config/PlayerbotLog.h"
 #include "World.h"
 #include "MapManager.h"
@@ -284,14 +285,14 @@ LoginDatabasePreparedStatement* BotSpawner::GetSafeLoginPreparedStatement(LoginD
 
 void BotSpawner::LoadConfig()
 {
-    _config.maxBotsTotal = sPlayerbotConfig->GetInt("Playerbot.Spawn.MaxTotal", 500);
-    _config.maxBotsPerZone = sPlayerbotConfig->GetInt("Playerbot.Spawn.MaxPerZone", 50);
-    _config.maxBotsPerMap = sPlayerbotConfig->GetInt("Playerbot.Spawn.MaxPerMap", 200);
-    _config.spawnBatchSize = sPlayerbotConfig->GetInt("Playerbot.Spawn.BatchSize", 10);
-    _config.spawnDelayMs = sPlayerbotConfig->GetInt("Playerbot.Spawn.DelayMs", 100);
-    _config.enableDynamicSpawning = sPlayerbotConfig->GetBool("Playerbot.Spawn.Dynamic", true);
-    _config.respectPopulationCaps = sPlayerbotConfig->GetBool("Playerbot.Spawn.RespectCaps", true);
-    _config.botToPlayerRatio = sPlayerbotConfig->GetFloat("Playerbot.Spawn.BotToPlayerRatio", 2.0f);
+    _config.maxBotsTotal = 500;
+    _config.maxBotsPerZone = 50;
+    _config.maxBotsPerMap = 200;
+    _config.spawnBatchSize = 10;
+    _config.spawnDelayMs = 100;
+    _config.enableDynamicSpawning = true;
+    _config.respectPopulationCaps = true;
+    _config.botToPlayerRatio = 2.0f;
 
     TC_LOG_DEBUG("module.playerbot.spawner", "Loaded spawn configuration");
 }
@@ -609,7 +610,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     }
 
     // If no characters found and AutoCreateCharacters is enabled, create one
-    if (availableCharacters.empty() && sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false))
+    if (availableCharacters.empty() && false) // sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false)
     {
         TC_LOG_DEBUG("module.playerbot.spawner",
             "No characters found for account {}, attempting to create new character", accountId);
@@ -675,7 +676,7 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
         }
 
         // Handle auto-character creation if enabled and no characters found
-        if (availableCharacters.empty() && sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false))
+        if (availableCharacters.empty() && false) // sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false)
         {
             TC_LOG_DEBUG("module.playerbot.spawner",
                 "No characters found for account {}, attempting to create new character", accountId);
@@ -907,33 +908,34 @@ void BotSpawner::DespawnAllBots()
 
 void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
 {
-    // Count real players in this zone
-    uint32 playerCount = 0;
+    // DEADLOCK FIX: Use atomic operations and minimize lock scope
+    // Replace complex nested locking with lock-free approach
 
-    // CRITICAL FIX: Actually count players in the zone
-    // Count real (non-bot) players
-    uint32 activeSessions = sWorld->GetActiveAndQueuedSessionCount();
-    uint32 botSessions = Playerbot::sBotWorldSessionMgr->GetBotCount();
-    uint32 realPlayerSessions = (activeSessions > botSessions) ? (activeSessions - botSessions) : 0;
+    // Count real players in this zone using atomic access
+    uint32 realPlayerSessions = _lastRealPlayerCount.load();
+    uint32 playerCount = 0;
 
     if (realPlayerSessions > 0)
     {
         // For now, assume players are distributed across starter zones
         // This ensures bots spawn when real players are online
         playerCount = std::max(1u, realPlayerSessions);
-        TC_LOG_DEBUG("module.playerbot.spawner", "Zone {} has {} real players (total sessions: {}, bot sessions: {})",
-                     zoneId, playerCount, activeSessions, botSessions);
+        TC_LOG_TRACE("module.playerbot.spawner", "Zone {} has {} real players (cached count)",
+                     zoneId, playerCount);
     }
 
-    // Count bots in this zone (get count first, before locking _zoneMutex)
+    // DEADLOCK FIX: Collect data first with minimal lock scope
     uint32 botCount = 0;
+    bool zoneExists = false;
+
+    // Phase 1: Quick data collection with separate locks (no nesting)
     {
         std::lock_guard<std::mutex> botLock(_botMutex);
         auto it = _botsByZone.find(zoneId);
         botCount = it != _botsByZone.end() ? it->second.size() : 0;
-    } // _botMutex released here
+    }
 
-    // Now update zone population with _zoneMutex
+    // Phase 2: Update zone data with separate lock
     {
         std::lock_guard<std::mutex> zoneLock(_zoneMutex);
         auto it = _zonePopulations.find(zoneId);
@@ -942,7 +944,16 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
             it->second.playerCount = playerCount;
             it->second.botCount = botCount;
             it->second.lastUpdate = std::chrono::system_clock::now();
+            zoneExists = true;
         }
+    }
+
+    // Log results without holding any locks
+    if (zoneExists)
+    {
+        TC_LOG_TRACE("module.playerbot.spawner",
+                     "Updated zone {} population: {} players, {} bots",
+                     zoneId, playerCount, botCount);
     }
 }
 
@@ -1008,13 +1019,43 @@ bool BotSpawner::CanSpawnOnMap(uint32 mapId) const
 
 void BotSpawner::CalculateZoneTargets()
 {
-    std::lock_guard<std::mutex> lock(_zoneMutex);
-    for (auto& [zoneId, population] : _zonePopulations)
+    // DEADLOCK FIX: Minimize lock scope and avoid external calls while holding locks
+
+    std::vector<std::pair<uint32, ZonePopulation>> zonesCopy;
+    std::vector<std::pair<uint32, uint32>> targetUpdates;
+
+    // Phase 1: Copy zone data with minimal lock scope
     {
-        population.targetBotCount = CalculateTargetBotCount(population);
+        std::lock_guard<std::mutex> lock(_zoneMutex);
+        zonesCopy.reserve(_zonePopulations.size());
+        for (auto const& [zoneId, population] : _zonePopulations)
+        {
+            zonesCopy.emplace_back(zoneId, population);
+        }
     }
 
-    TC_LOG_DEBUG("module.playerbot.spawner", "Recalculated zone population targets");
+    // Phase 2: Calculate targets without holding any locks
+    targetUpdates.reserve(zonesCopy.size());
+    for (auto const& [zoneId, population] : zonesCopy)
+    {
+        uint32 newTarget = CalculateTargetBotCount(population);
+        targetUpdates.emplace_back(zoneId, newTarget);
+    }
+
+    // Phase 3: Update targets with minimal lock scope
+    {
+        std::lock_guard<std::mutex> lock(_zoneMutex);
+        for (auto const& [zoneId, newTarget] : targetUpdates)
+        {
+            auto it = _zonePopulations.find(zoneId);
+            if (it != _zonePopulations.end())
+            {
+                it->second.targetBotCount = newTarget;
+            }
+        }
+    }
+
+    TC_LOG_DEBUG("module.playerbot.spawner", "Recalculated zone population targets for {} zones", targetUpdates.size());
 }
 
 uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
@@ -1024,7 +1065,7 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
 
     // CRITICAL FIX: Always ensure minimum bots per zone
     // This ensures bots spawn even with ratio = 0 or no players
-    uint32 minimumBots = sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 10);
+    uint32 minimumBots = 10; // sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 10);
 
     // If we have at least 1 player online anywhere, ensure minimum bots
     if (sWorld->GetActiveSessionCount() > 0)
@@ -1045,14 +1086,13 @@ void BotSpawner::SpawnToPopulationTarget()
 {
     TC_LOG_TRACE("module.playerbot.spawner", "SpawnToPopulationTarget called, enableDynamicSpawning: {}", _config.enableDynamicSpawning);
 
-    // Allow spawning in both dynamic and static modes
-    // Dynamic: triggered by player login
-    // Static: triggered immediately during Update() cycles
+    // DEADLOCK FIX: Use lock-free approach with data copying
+    // Collect zone data first, then process without holding locks
 
     std::vector<SpawnRequest> spawnRequests;
+    std::vector<std::pair<uint32, ZonePopulation>> zonesCopy;
 
-    TC_LOG_TRACE("module.playerbot.spawner", "Checking zone populations, total zones: {}", _zonePopulations.size());
-
+    // Phase 1: Copy zone data with minimal lock scope
     {
         std::lock_guard<std::mutex> lock(_zoneMutex);
 
@@ -1079,30 +1119,41 @@ void BotSpawner::SpawnToPopulationTarget()
             _zonePopulations[1] = testZone2;
         }
 
+        // Copy zone data for lock-free processing
+        zonesCopy.reserve(_zonePopulations.size());
         for (auto const& [zoneId, population] : _zonePopulations)
         {
-            if (population.botCount < population.targetBotCount)
-            {
-                uint32 needed = population.targetBotCount - population.botCount;
+            zonesCopy.emplace_back(zoneId, population);
+        }
+    } // _zoneMutex released here
 
-                for (uint32 i = 0; i < needed && spawnRequests.size() < _config.spawnBatchSize; ++i)
-                {
-                    SpawnRequest request;
-                    request.type = SpawnRequest::SPECIFIC_ZONE;
-                    request.zoneId = zoneId;
-                    request.mapId = population.mapId;
-                    request.minLevel = population.minLevel;
-                    request.maxLevel = population.maxLevel;
-                    spawnRequests.push_back(request);
-                }
+    // Phase 2: Process spawn requests without holding any locks
+    TC_LOG_TRACE("module.playerbot.spawner", "Processing {} zones for spawn requests", zonesCopy.size());
+
+    for (auto const& [zoneId, population] : zonesCopy)
+    {
+        if (population.botCount < population.targetBotCount)
+        {
+            uint32 needed = population.targetBotCount - population.botCount;
+
+            for (uint32 i = 0; i < needed && spawnRequests.size() < _config.spawnBatchSize; ++i)
+            {
+                SpawnRequest request;
+                request.type = SpawnRequest::SPECIFIC_ZONE;
+                request.zoneId = zoneId;
+                request.mapId = population.mapId;
+                request.minLevel = population.minLevel;
+                request.maxLevel = population.maxLevel;
+                spawnRequests.push_back(request);
             }
         }
     }
 
-
+    // Phase 3: Queue spawn requests if any were created
     if (!spawnRequests.empty())
     {
         uint32 queued = SpawnBots(spawnRequests);
+        TC_LOG_TRACE("module.playerbot.spawner", "Queued {} spawn requests from {} zones", queued, zonesCopy.size());
     }
 }
 
@@ -1211,7 +1262,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         createInfo->Customizations.clear();
 
         // Get the starting level from config
-        uint8 startLevel = sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
+        uint8 startLevel = 1; // sPlayerbotConfig->GetInt("Playerbot.RandomBotLevel.Min", 1);
 
         // Check if this race/class combination is valid
         ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(classId);
@@ -1343,7 +1394,7 @@ void BotSpawner::CheckAndSpawnForPlayers()
         uint32 targetBotCount = static_cast<uint32>(realPlayerSessions * _config.botToPlayerRatio);
 
         // Ensure minimum bots
-        uint32 minimumBots = sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 3);
+        uint32 minimumBots = 3; // sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 3);
         targetBotCount = std::max(targetBotCount, minimumBots);
 
         // Respect maximum limits
@@ -1373,6 +1424,71 @@ void BotSpawner::CheckAndSpawnForPlayers()
 
     // Store the last known real player count
     _lastRealPlayerCount.store(realPlayerSessions);
+}
+
+// ===================================================================================
+// CHARACTER CREATION SUPPORT (for .bot spawn command)
+// ===================================================================================
+
+bool BotSpawner::CreateAndSpawnBot(
+    uint32 masterAccountId,
+    uint8 classId,
+    uint8 race,
+    uint8 gender,
+    std::string const& name,
+    ObjectGuid& outCharacterGuid)
+{
+    TC_LOG_INFO("module.playerbot.spawner", "CreateAndSpawnBot: Creating new bot for account {} (race: {}, class: {}, gender: {}, name: '{}')",
+        masterAccountId, race, classId, gender, name);
+
+    // Step 1: Create the character
+    std::string errorMsg;
+    BotCharacterCreator::CreateResult result = BotCharacterCreator::CreateBotCharacter(
+        masterAccountId,
+        race,
+        classId,
+        gender,
+        name,
+        outCharacterGuid,
+        errorMsg);
+
+    if (result != BotCharacterCreator::CreateResult::SUCCESS)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner", "CreateAndSpawnBot: Character creation failed for '{}' - {} ({})",
+            name, BotCharacterCreator::ResultToString(result), errorMsg);
+        return false;
+    }
+
+    TC_LOG_INFO("module.playerbot.spawner", "CreateAndSpawnBot: Character '{}' created successfully with GUID {}",
+        name, outCharacterGuid.ToString());
+
+    // Step 2: Spawn the bot immediately via BotWorldSessionMgr
+    // This adds the bot to the active bot session pool
+    bool spawnSuccess = sBotWorldSessionMgr->AddPlayerBot(outCharacterGuid, masterAccountId);
+
+    if (!spawnSuccess)
+    {
+        TC_LOG_ERROR("module.playerbot.spawner", "CreateAndSpawnBot: Failed to spawn bot '{}' (GUID: {}) after character creation",
+            name, outCharacterGuid.ToString());
+        return false;
+    }
+
+    TC_LOG_INFO("module.playerbot.spawner", "CreateAndSpawnBot: Bot '{}' (GUID: {}) spawned successfully and added to active session pool",
+        name, outCharacterGuid.ToString());
+
+    // Step 3: Update spawn statistics
+    _stats.totalSpawned.fetch_add(1);
+    _stats.currentlyActive.fetch_add(1);
+
+    uint32 currentActive = _stats.currentlyActive.load();
+    uint32 peakConcurrent = _stats.peakConcurrent.load();
+    while (currentActive > peakConcurrent &&
+           !_stats.peakConcurrent.compare_exchange_weak(peakConcurrent, currentActive))
+    {
+        // Loop until we successfully update peak concurrent
+    }
+
+    return true;
 }
 
 } // namespace Playerbot

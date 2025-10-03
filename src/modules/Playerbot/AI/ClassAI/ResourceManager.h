@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <memory>
 #include <atomic>
+#include <mutex>
 
 namespace Playerbot
 {

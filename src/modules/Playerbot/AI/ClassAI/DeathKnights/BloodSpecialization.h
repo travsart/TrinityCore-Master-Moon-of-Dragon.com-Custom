@@ -83,7 +83,7 @@ private:
     // Threat management
     void BuildThreat(::Unit* target);
     void MaintainThreat();
-    std::vector<::Unit*> GetThreatTargets();
+    std::vector<::Unit*> GetThreatTargets() const;
     bool NeedsThreat(::Unit* target);
 
     // Self-healing mechanics
@@ -118,7 +118,7 @@ private:
         HEART_STRIKE = 55050,
         BLOOD_STRIKE = 45902,
         VAMPIRIC_BLOOD = 55233,
-        BONE_SHIELD = 49222,
+        BONE_SHIELD = 195181, // Updated for WoW 11.2
         DANCING_RUNE_WEAPON = 49028,
         DEATH_PACT = 48743,
         DARK_COMMAND = 56222,

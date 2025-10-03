@@ -78,6 +78,7 @@ struct AssassinationMetrics
     uint32 poisonApplications;
     uint32 totalDotTicks;
     uint32 coldBloodUsages;
+    uint32 burstPhaseCount;
     uint32 vanishEscapes;
     uint32 totalStealthTime;
     float poisonUptime;
@@ -87,7 +88,7 @@ struct AssassinationMetrics
 
     AssassinationMetrics() : mutilateCasts(0), backStabCasts(0), envenomCasts(0), ruptureApplications(0),
                            garroteApplications(0), poisonApplications(0), totalDotTicks(0), coldBloodUsages(0),
-                           vanishEscapes(0), totalStealthTime(0), poisonUptime(0.0f), ruptureUptime(0.0f),
+                           burstPhaseCount(0), vanishEscapes(0), totalStealthTime(0), poisonUptime(0.0f), ruptureUptime(0.0f),
                            garroteUptime(0.0f), averageComboPointsOnSpend(0.0f) {}
 };
 
@@ -139,15 +140,15 @@ public:
 
     // Energy Management Implementation
     void UpdateEnergyManagement() override;
-    bool HasEnoughEnergyFor(uint32 spellId) override;
-    uint32 GetEnergyCost(uint32 spellId) override;
+    bool HasEnoughEnergyFor(uint32 spellId);
+    uint32 GetEnergyCost(uint32 spellId);
     bool ShouldWaitForEnergy() override;
 
     // Cooldown Management Implementation
-    void UpdateCooldownTracking(uint32 diff) override;
-    bool IsSpellReady(uint32 spellId) override;
-    void StartCooldown(uint32 spellId) override;
-    uint32 GetCooldownRemaining(uint32 spellId) override;
+    void UpdateCooldownTracking(uint32 diff);
+    bool IsSpellReady(uint32 spellId);
+    void StartCooldown(uint32 spellId);
+    uint32 GetCooldownRemaining(uint32 spellId);
 
     // Combat Phase Management Implementation
     void UpdateCombatPhase() override;
@@ -155,10 +156,10 @@ public:
     bool ShouldExecuteBurstRotation() override;
 
     // Utility Functions Implementation
-    bool CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
-    bool HasSpell(uint32 spellId) override;
-    SpellInfo const* GetSpellInfo(uint32 spellId) override;
-    uint32 GetSpellCooldown(uint32 spellId) override;
+    bool CastSpell(uint32 spellId, ::Unit* target = nullptr);
+    bool HasSpell(uint32 spellId);
+    SpellInfo const* GetSpellInfo(uint32 spellId);
+    uint32 GetSpellCooldown(uint32 spellId);
 
 private:
     // Assassination-specific systems
@@ -190,11 +191,16 @@ private:
     bool ShouldRefreshGarrote(::Unit* target);
     uint32 GetOptimalRuptureComboPoints();
 
-    // Poison management
-    void ApplyInstantPoison();
+    // Poison management (WoW 11.2 Modern System)
+    PoisonType GetOptimalLethalPoison();
+    PoisonType GetOptimalNonLethalPoison();
     void ApplyDeadlyPoison();
+    void ApplyAmplifyingPoison();
+    void ApplyInstantPoison();
     void ApplyWoundPoison();
     void ApplyCripplingPoison();
+    void ApplyNumbingPoison();
+    void ApplyAtrophicPoison();
     void UpdatePoisonCharges();
     bool ShouldApplyPoisons();
     uint32 GetPoisonStacks(::Unit* target, PoisonType type);

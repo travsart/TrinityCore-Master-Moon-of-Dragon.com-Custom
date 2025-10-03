@@ -193,7 +193,7 @@ private:
         BLOOD_BOIL = 48721,
         RUNE_STRIKE = 56815,
         VAMPIRIC_BLOOD = 55233,
-        BONE_SHIELD = 49222,
+        BONE_SHIELD = 195181, // Updated for WoW 11.2
         DANCING_RUNE_WEAPON = 49028,
         ICEBOUND_FORTITUDE = 48792,
         ANTI_MAGIC_SHELL = 48707,

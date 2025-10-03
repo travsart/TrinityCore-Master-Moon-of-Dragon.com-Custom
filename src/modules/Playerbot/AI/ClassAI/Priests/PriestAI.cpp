@@ -30,6 +30,7 @@
 #include "Spell.h"
 #include "SpellAuras.h"
 #include "SpellDefines.h"
+#include "../BaselineRotationManager.h"
 #include <algorithm>
 #include <chrono>
 
@@ -101,6 +102,26 @@ void PriestAI::UpdateRotation(::Unit* target)
     if (!GetBot())
         return;
 
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic ranged attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (target && GetBot()->GetDistance(target) <= 35.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
+
     // Check if we need to switch specialization
     PriestSpec newSpec = DetectCurrentSpecialization();
     if (newSpec != _currentSpec)
@@ -145,6 +166,14 @@ void PriestAI::UpdateBuffs()
 {
     if (!GetBot())
         return;
+
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
 
     UpdatePriestBuffs();
     UpdateFortitudeBuffs();
@@ -1898,6 +1927,24 @@ bool PriestAI::IsEmergencyHeal(::Unit* target)
     if (!target)
         return false;
     return target->GetHealthPct() < 30.0f;
+}
+
+bool PriestAI::IsEmergencyHeal(uint32 spellId)
+{
+    // Define emergency healing spells
+    switch (spellId)
+    {
+        case 2061:   // Flash Heal
+        case 2060:   // Greater Heal
+        case 139:    // Renew
+        case 596:    // Prayer of Healing
+        case 33076:  // Prayer of Mending
+        case 64843:  // Divine Hymn
+        case 64901:  // Hymn of Hope
+            return true;
+        default:
+            return false;
+    }
 }
 
 uint32 PriestAI::CountUnbuffedGroupMembers(uint32 spellId)

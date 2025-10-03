@@ -8,12 +8,13 @@
  */
 
 #include "ShamanAI.h"
-#include "ElementalSpecialization.h"
-#include "EnhancementSpecialization.h"
-#include "RestorationSpecialization.h"
+#include "ElementalShamanRefactored.h"
+#include "EnhancementShamanRefactored.h"
+#include "RestorationShamanRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "../BaselineRotationManager.h"
 
 namespace Playerbot
 {
@@ -46,21 +47,34 @@ void ShamanAI::SwitchSpecialization(ShamanSpec newSpec)
 {
     _currentSpec = newSpec;
 
-    switch (newSpec)
+    // TODO: Re-enable refactored specialization classes once template issues are fixed
+    _specialization = nullptr;
+    TC_LOG_WARN("module.playerbot.shaman", "Shaman specialization switching temporarily disabled for {}",
+                 GetBot()->GetName());
+
+    /* switch (newSpec)
     {
         case ShamanSpec::ELEMENTAL:
-            _specialization = std::make_unique<ElementalSpecialization>(GetBot());
+            _specialization = std::make_unique<ElementalShamanRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} switched to Elemental specialization",
+                         GetBot()->GetName());
             break;
         case ShamanSpec::ENHANCEMENT:
-            _specialization = std::make_unique<EnhancementSpecialization>(GetBot());
+            _specialization = std::make_unique<EnhancementShamanRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} switched to Enhancement specialization",
+                         GetBot()->GetName());
             break;
         case ShamanSpec::RESTORATION:
-            _specialization = std::make_unique<RestorationSpecialization>(GetBot());
+            _specialization = std::make_unique<RestorationShamanRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} switched to Restoration specialization",
+                         GetBot()->GetName());
             break;
         default:
-            _specialization = std::make_unique<ElementalSpecialization>(GetBot());
+            _specialization = std::make_unique<ElementalShamanRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} defaulted to Elemental specialization",
+                         GetBot()->GetName());
             break;
-    }
+    } */
 }
 
 void ShamanAI::DelegateToSpecialization(::Unit* target)
@@ -71,14 +85,45 @@ void ShamanAI::DelegateToSpecialization(::Unit* target)
 
 void ShamanAI::UpdateRotation(::Unit* target)
 {
-    if (!target)
+    if (!target || !GetBot())
         return;
+
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic ranged attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (GetBot()->GetDistance(target) <= 35.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
 
     DelegateToSpecialization(target);
 }
 
 void ShamanAI::UpdateBuffs()
 {
+    if (!GetBot())
+        return;
+
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
+
     UpdateShamanBuffs();
     if (_specialization)
         _specialization->UpdateBuffs();
@@ -152,7 +197,12 @@ ShamanAI::ShamanAI(Player* bot)
     , _shocksUsed(0)
 {
     InitializeSpecialization();
+    TC_LOG_DEBUG("playerbot.shaman", "ShamanAI initialized for {} with specialization {}",
+                 GetBot()->GetName(), static_cast<uint32>(_currentSpec));
 }
+
+// Destructor implementation
+ShamanAI::~ShamanAI() = default;
 
 void ShamanAI::UpdateShamanBuffs()
 {
@@ -161,9 +211,9 @@ void ShamanAI::UpdateShamanBuffs()
         return;
 
     // Basic Lightning Shield management
-    if (!bot->HasAura(324) && bot->HasSpell(324)) // Lightning Shield
+    if (!bot->HasAura(192106) && bot->HasSpell(192106)) // Lightning Shield (Updated for WoW 11.2)
     {
-        bot->CastSpell(bot, 324, false);
+        bot->CastSpell(bot, 192106, false);
     }
 }
 

@@ -12,6 +12,13 @@
 
 #include "../ClassAI.h"
 #include "DeathKnightSpecialization.h"
+#include "DiseaseManager.h"
+#include "RuneManager.h"
+#include "../Combat/BotThreatManager.h"
+#include "../Combat/TargetSelector.h"
+#include "../Combat/PositionManager.h"
+#include "../Combat/InterruptManager.h"
+#include "../CooldownManager.h"
 #include <memory>
 #include <atomic>
 #include <chrono>
@@ -23,13 +30,6 @@ namespace Playerbot
 struct DeathKnightMetrics;
 class DeathKnightCombatMetrics;
 class DeathKnightCombatPositioning;
-class RuneManager;
-class DiseaseManager;
-class BotThreatManager;
-class TargetSelector;
-class PositionManager;
-class InterruptManager;
-class CooldownManager;
 
 
 class DeathKnightAI : public ClassAI
@@ -79,10 +79,10 @@ private:
     std::unique_ptr<CooldownManager> _cooldownManager;
 
     // Death Knight-specific systems
-    std::unique_ptr<DeathKnightMetrics> _metrics;
-    std::unique_ptr<DeathKnightCombatMetrics> _combatMetrics;
-    std::unique_ptr<DeathKnightCombatPositioning> _positioning;
-    std::unique_ptr<RuneManager> _runeManager;
+    DeathKnightMetrics* _metrics;
+    DeathKnightCombatMetrics* _combatMetrics;
+    DeathKnightCombatPositioning* _positioning;
+    RuneManager* _runeManager;
     std::unique_ptr<DiseaseManager> _diseaseManager;
 
     // Combat tracking

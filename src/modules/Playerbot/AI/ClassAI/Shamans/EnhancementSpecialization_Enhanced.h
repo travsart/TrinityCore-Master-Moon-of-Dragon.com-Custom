@@ -213,7 +213,7 @@ private:
         EARTHLIVING_WEAPON = 51730,
         ROCKBITER_WEAPON = 8017,
         // Shield spells
-        LIGHTNING_SHIELD = 324,
+        LIGHTNING_SHIELD = 192106, // Updated for WoW 11.2
         WATER_SHIELD = 52127,
         // Utility
         GHOST_WOLF = 2645,

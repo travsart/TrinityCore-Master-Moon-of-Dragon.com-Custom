@@ -12,7 +12,9 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
 #include "ObjectAccessor.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {
@@ -110,7 +112,7 @@ void DisciplineSpecialization::UpdateBuffs()
     // Power Word: Fortitude
     if (!_bot->HasAura(POWER_WORD_FORTITUDE))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, POWER_WORD_FORTITUDE, false);
         }
@@ -119,7 +121,7 @@ void DisciplineSpecialization::UpdateBuffs()
     // Divine Spirit
     if (!_bot->HasAura(DIVINE_SPIRIT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(DIVINE_SPIRIT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(DIVINE_SPIRIT, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, DIVINE_SPIRIT, false);
         }
@@ -128,7 +130,7 @@ void DisciplineSpecialization::UpdateBuffs()
     // Inner Fire
     if (!_bot->HasAura(INNER_FIRE))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, INNER_FIRE, false);
         }
@@ -199,7 +201,7 @@ bool DisciplineSpecialization::CanUseAbility(uint32 spellId)
 void DisciplineSpecialization::OnCombatStart(::Unit* target)
 {
     _atonementMode = false;
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = {};
     _atonementTargets.clear();
 }
 
@@ -211,16 +213,25 @@ void DisciplineSpecialization::OnCombatEnd()
     _weakenedSoulTimers.clear();
     _graceStacks.clear();
     _atonementTargets.clear();
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = {};
 }
 
 bool DisciplineSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     return GetMana() >= manaCost;
 }
 
@@ -237,8 +248,7 @@ Position DisciplineSpecialization::GetOptimalPosition(::Unit* target)
         float distance = OPTIMAL_HEALING_RANGE;
         if (target)
         {
-            Position pos;
-            target->GetNearPosition(pos, distance, target->GetOrientation() + M_PI);
+            Position pos = target->GetNearPosition(distance, target->GetOrientation() + M_PI);
             return pos;
         }
     }
@@ -248,8 +258,7 @@ Position DisciplineSpecialization::GetOptimalPosition(::Unit* target)
         float distance = OPTIMAL_DPS_RANGE;
         if (target)
         {
-            Position pos;
-            target->GetNearPosition(pos, distance, target->GetOrientation() + M_PI);
+            Position pos = target->GetNearPosition(distance, target->GetOrientation() + M_PI);
             return pos;
         }
     }
@@ -270,7 +279,7 @@ void DisciplineSpecialization::UpdateHealing()
     _lastHealCheck = currentTime;
 
     // Clear old heal queue
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = {};
 
     // Scan group members for healing needs
     std::vector<::Unit*> groupMembers = GetGroupMembers();
@@ -293,7 +302,7 @@ void DisciplineSpecialization::UpdateHealing()
                 priority = HealPriority::MAINTENANCE;
 
             uint32 missingHealth = member->GetMaxHealth() - member->GetHealth();
-            HealTarget healTarget(member, priority, healthPercent, missingHealth);
+            ::Playerbot::HealTarget healTarget(member, priority, healthPercent, missingHealth);
             healTarget.hasHoTs = member->HasAura(RENEW) || member->HasAura(PRAYER_OF_MENDING);
             _healQueue.push(healTarget);
         }
@@ -310,7 +319,7 @@ bool DisciplineSpecialization::ShouldHeal()
     if (_healQueue.empty())
         return nullptr;
 
-    HealTarget bestTarget = _healQueue.top();
+    ::Playerbot::HealTarget bestTarget = _healQueue.top();
     return bestTarget.target;
 }
 
@@ -744,6 +753,122 @@ void DisciplineSpecialization::RemoveExpiredShields(uint32 diff)
             timer.second -= diff;
         else
             timer.second = 0;
+    }
+}
+
+void DisciplineSpecialization::CastMindBlast(::Unit* target)
+{
+    if (!target || !CanUseAbility(MIND_BLAST))
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(MIND_BLAST, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return;
+
+    // Check mana cost
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
+
+    if (GetMana() < manaCost)
+        return;
+
+    // Check range
+    float distance = _bot->GetDistance(target);
+    if (distance > spellInfo->GetMaxRange())
+        return;
+
+    // Cast spell
+    if (_bot->CastSpell(target, MIND_BLAST, false) == SPELL_CAST_OK)
+    {
+        _cooldowns[MIND_BLAST] = 8000; // 8 second cooldown
+    }
+}
+
+void DisciplineSpecialization::CastHolyFire(::Unit* target)
+{
+    if (!target || !CanUseAbility(HOLY_FIRE))
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(HOLY_FIRE, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return;
+
+    // Check mana cost
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
+
+    if (GetMana() < manaCost)
+        return;
+
+    // Check range
+    float distance = _bot->GetDistance(target);
+    if (distance > spellInfo->GetMaxRange())
+        return;
+
+    // Check line of sight
+    if (!_bot->IsWithinLOSInMap(target))
+        return;
+
+    // Cast spell
+    if (_bot->CastSpell(target, HOLY_FIRE, false) == SPELL_CAST_OK)
+    {
+        _cooldowns[HOLY_FIRE] = 10000; // 10 second cooldown
+    }
+}
+
+void DisciplineSpecialization::CastSmite(::Unit* target)
+{
+    if (!target || !CanUseAbility(SMITE))
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SMITE, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return;
+
+    // Check mana cost
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
+
+    if (GetMana() < manaCost)
+        return;
+
+    // Check range
+    float distance = _bot->GetDistance(target);
+    if (distance > spellInfo->GetMaxRange())
+        return;
+
+    // Check line of sight
+    if (!_bot->IsWithinLOSInMap(target))
+        return;
+
+    // Cast spell
+    if (_bot->CastSpell(target, SMITE, false) == SPELL_CAST_OK)
+    {
+        // Smite has no cooldown in classic, only cast time
     }
 }
 

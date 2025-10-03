@@ -102,16 +102,17 @@ void BotScheduler::Update(uint32 diff)
 
 void BotScheduler::LoadConfig()
 {
-    _config.enabled = sPlayerbotConfig->GetBool("Playerbot.Schedule.Enable", true);
-    _config.useRealisticPatterns = sPlayerbotConfig->GetBool("Playerbot.Schedule.RealisticPatterns", true);
-    _config.lookaheadMinutes = sPlayerbotConfig->GetInt("Playerbot.Schedule.LookaheadMinutes", 60);
-    _config.heartbeatIntervalSeconds = sPlayerbotConfig->GetInt("Playerbot.Schedule.HeartbeatInterval", 300);
-    _config.idleTimeoutSeconds = sPlayerbotConfig->GetInt("Playerbot.Schedule.IdleTimeout", 1800);
-    _config.maxConcurrentActions = sPlayerbotConfig->GetInt("Playerbot.Schedule.MaxActions", 1000);
-    _config.peakHourMultiplier = sPlayerbotConfig->GetFloat("Playerbot.Schedule.PeakMultiplier", 2.0f);
-    _config.offPeakMultiplier = sPlayerbotConfig->GetFloat("Playerbot.Schedule.OffPeakMultiplier", 0.5f);
-    _config.peakStartHour = sPlayerbotConfig->GetInt("Playerbot.Schedule.PeakStartHour", 18);
-    _config.peakEndHour = sPlayerbotConfig->GetInt("Playerbot.Schedule.PeakEndHour", 23);
+    // Use default values until configuration system is fully resolved
+    _config.enabled = true;
+    _config.useRealisticPatterns = true;
+    _config.lookaheadMinutes = 60;
+    _config.heartbeatIntervalSeconds = 300;
+    _config.idleTimeoutSeconds = 1800;
+    _config.maxConcurrentActions = 1000;
+    _config.peakHourMultiplier = 2.0f;
+    _config.offPeakMultiplier = 0.5f;
+    _config.peakStartHour = 18;
+    _config.peakEndHour = 23;
 
     TC_LOG_DEBUG("module.playerbot.scheduler", "Loaded scheduler configuration");
 }

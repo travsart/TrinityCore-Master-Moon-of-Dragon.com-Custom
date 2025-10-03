@@ -10,6 +10,7 @@
 #include "ResourceManager.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "DB2Structure.h"
 #include "Log.h"
 #include <algorithm>
 
@@ -43,7 +44,7 @@ void ResourceManager::Update(uint32 diff)
     }
 
     // Update runes for Death Knights
-    if (_bot && _bot->getClass() == CLASS_DEATH_KNIGHT)
+    if (_bot && _bot->GetClass() == CLASS_DEATH_KNIGHT)
     {
         UpdateRunes(diff);
     }
@@ -67,7 +68,7 @@ void ResourceManager::Initialize()
     SyncWithPlayer();
 
     TC_LOG_DEBUG("playerbot.resource", "ResourceManager initialized for class {}",
-                 static_cast<uint32>(_bot->getClass()));
+                 static_cast<uint32>(_bot->GetClass()));
 }
 
 bool ResourceManager::HasEnoughResource(uint32 spellId)
@@ -79,18 +80,20 @@ bool ResourceManager::HasEnoughResource(uint32 spellId)
     if (!spellInfo)
         return false;
 
-    // Check the spell's power type
-    Powers powerType = spellInfo->GetPowerIndex();
-    if (powerType == POWER_UNKNOWN)
+    // Check spell power costs using modern API
+    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    if (costs.empty())
         return true; // No resource cost
 
-    uint32 cost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
-
-    if (cost > 0)
+    // Check if we have enough of each required resource
+    for (const SpellPowerCost& powerCost : costs)
     {
-        ResourceType resourceType = GetResourceTypeForPower(powerType);
-        if (!HasEnoughResource(resourceType, cost))
-            return false;
+        if (powerCost.Amount > 0)
+        {
+            ResourceType resourceType = GetResourceTypeForPower(powerCost.Power);
+            if (!HasEnoughResource(resourceType, powerCost.Amount))
+                return false;
+        }
     }
 
     return true;
@@ -163,16 +166,19 @@ void ResourceManager::ConsumeResource(uint32 spellId)
     if (!spellInfo)
         return;
 
-    Powers powerType = spellInfo->PowerType;
-    uint32 cost = spellInfo->ManaCost + spellInfo->ManaCostPercentage * _bot->GetMaxPower(powerType) / 100;
+    // Get power costs using modern API
+    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
 
-    if (cost > 0)
+    for (const SpellPowerCost& powerCost : costs)
     {
-        ResourceType resourceType = GetResourceTypeForPower(powerType);
-        ConsumeResource(resourceType, cost);
+        if (powerCost.Amount > 0)
+        {
+            ResourceType resourceType = GetResourceTypeForPower(powerCost.Power);
+            ConsumeResource(resourceType, powerCost.Amount);
 
-        // Record usage for tracking
-        RecordResourceUsage(resourceType, cost, spellId);
+            // Record usage for tracking
+            RecordResourceUsage(resourceType, powerCost.Amount, spellId);
+        }
     }
 }
 
@@ -406,9 +412,14 @@ bool ResourceManager::CanAffordSpellSequence(const std::vector<uint32>& spellIds
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (spellInfo)
         {
-            ResourceType type = GetResourceTypeForPower(spellInfo->PowerType);
-            uint32 cost = spellInfo->ManaCost;
-            totalCosts[type] += cost;
+            // Get power costs for this spell
+            std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            for (const SpellPowerCost& powerCost : costs)
+            {
+                ResourceType type = GetResourceTypeForPower(powerCost.Power);
+                uint32 cost = powerCost.Amount;
+                totalCosts[type] += cost;
+            }
         }
     }
 
@@ -465,7 +476,7 @@ std::vector<uint32> ResourceManager::GetResourceEmergencySpells()
         return emergencySpells;
 
     // Class-specific emergency resource spells
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
             // Berserker Rage, etc.
@@ -517,7 +528,7 @@ void ResourceManager::DumpResourceState()
                      static_cast<uint32>(info.GetPercent() * 100), info.regenRate);
     }
 
-    if (_bot->getClass() == CLASS_DEATH_KNIGHT)
+    if (_bot->GetClass() == CLASS_DEATH_KNIGHT)
     {
         TC_LOG_DEBUG("playerbot.resource", "Runic Power: {}", _runicPower);
         for (uint32 i = 0; i < MAX_RUNES; ++i)
@@ -599,7 +610,7 @@ void ResourceManager::SyncWithPlayer()
     }
 
     // Sync class-specific resources
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_ROGUE:
         case CLASS_DRUID: // In cat form
@@ -662,7 +673,7 @@ void ResourceManager::InitializeClassResources()
                                            regenRate);
 
     // Initialize class-specific secondary resources
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_ROGUE:
         case CLASS_DRUID:
@@ -694,7 +705,7 @@ ResourceType ResourceManager::GetPrimaryResourceType()
     if (!_bot)
         return ResourceType::MANA;
 
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
             return ResourceType::RAGE;
@@ -764,11 +775,25 @@ uint32 ResourceManager::CalculateSpellResourceCost(uint32 spellId, ResourceType 
 
     Powers requiredPower = GetPowerTypeForResource(type);
 
-    if (spellInfo->PowerType == requiredPower)
+    // Check if spell uses the required power type and calculate cost
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        uint32 baseCost = spellInfo->ManaCost;
-        uint32 percentCost = spellInfo->ManaCostPercentage * _bot->GetMaxPower(requiredPower) / 100;
-        return baseCost + percentCost;
+        if (!powerEntry)
+            continue;
+
+        if (powerEntry->PowerType == requiredPower)
+        {
+            uint32 baseCost = powerEntry->ManaCost;
+            uint32 percentCost = 0;
+
+            // Calculate percentage-based cost
+            if (powerEntry->PowerCostPct > 0.0f)
+            {
+                percentCost = uint32(powerEntry->PowerCostPct * _bot->GetMaxPower(requiredPower) / 100.0f);
+            }
+
+            return baseCost + percentCost;
+        }
     }
 
     return 0;
@@ -781,7 +806,15 @@ bool ResourceManager::IsResourceTypeUsedBySpell(uint32 spellId, ResourceType typ
         return false;
 
     Powers requiredPower = GetPowerTypeForResource(type);
-    return spellInfo->PowerType == requiredPower;
+
+    // Check if any of the spell's power costs match the required type
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
+    {
+        if (powerEntry && powerEntry->PowerType == requiredPower)
+            return true;
+    }
+
+    return false;
 }
 
 // ResourceCalculator implementation
@@ -802,10 +835,26 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
         return it->second;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo || spellInfo->PowerType != POWER_MANA)
+    if (!spellInfo)
         return 0;
 
-    uint32 cost = spellInfo->ManaCost + spellInfo->ManaCostPercentage * caster->GetMaxPower(POWER_MANA) / 100;
+    // Calculate mana cost using modern API
+    uint32 cost = 0;
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
+    {
+        if (!powerEntry || powerEntry->PowerType != POWER_MANA)
+            continue;
+
+        cost = powerEntry->ManaCost;
+        if (powerEntry->PowerCostPct > 0.0f)
+        {
+            cost += uint32(powerEntry->PowerCostPct * caster->GetMaxPower(POWER_MANA) / 100.0f);
+        }
+        break; // Use first mana cost found
+    }
+
+    if (cost == 0)
+        return 0;
     _manaCostCache[spellId] = cost;
     return cost;
 }
@@ -816,10 +865,19 @@ uint32 ResourceCalculator::CalculateRageCost(uint32 spellId, Player* caster)
         return 0;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo || spellInfo->PowerType != POWER_RAGE)
+    if (!spellInfo)
         return 0;
 
-    return spellInfo->ManaCost;
+    // Find rage cost in power costs array
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
+    {
+        if (powerEntry && powerEntry->PowerType == POWER_RAGE)
+        {
+            return powerEntry->ManaCost;
+        }
+    }
+
+    return 0;
 }
 
 uint32 ResourceCalculator::CalculateEnergyCost(uint32 spellId, Player* caster)
@@ -828,10 +886,19 @@ uint32 ResourceCalculator::CalculateEnergyCost(uint32 spellId, Player* caster)
         return 0;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo || spellInfo->PowerType != POWER_ENERGY)
+    if (!spellInfo)
         return 0;
 
-    return spellInfo->ManaCost;
+    // Find energy cost in power costs array
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
+    {
+        if (powerEntry && powerEntry->PowerType == POWER_ENERGY)
+        {
+            return powerEntry->ManaCost;
+        }
+    }
+
+    return 0;
 }
 
 uint32 ResourceCalculator::CalculateFocusCost(uint32 spellId, Player* caster)
@@ -840,10 +907,19 @@ uint32 ResourceCalculator::CalculateFocusCost(uint32 spellId, Player* caster)
         return 0;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo || spellInfo->PowerType != POWER_FOCUS)
+    if (!spellInfo)
         return 0;
 
-    return spellInfo->ManaCost;
+    // Find focus cost in power costs array
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
+    {
+        if (powerEntry && powerEntry->PowerType == POWER_FOCUS)
+        {
+            return powerEntry->ManaCost;
+        }
+    }
+
+    return 0;
 }
 
 float ResourceCalculator::CalculateManaRegen(Player* player)
@@ -925,17 +1001,26 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
 
     std::lock_guard<std::mutex> lock(_cacheMutex);
 
-    switch (spellInfo->PowerType)
+    // Cache costs for each power type the spell uses
+    for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        case POWER_MANA:
-            _manaCostCache[spellId] = spellInfo->ManaCost;
-            break;
-        case POWER_RAGE:
-            _rageCostCache[spellId] = spellInfo->ManaCost;
-            break;
-        case POWER_ENERGY:
-            _energyCostCache[spellId] = spellInfo->ManaCost;
-            break;
+        if (!powerEntry)
+            continue;
+
+        switch (powerEntry->PowerType)
+        {
+            case POWER_MANA:
+                _manaCostCache[spellId] = powerEntry->ManaCost;
+                break;
+            case POWER_RAGE:
+                _rageCostCache[spellId] = powerEntry->ManaCost;
+                break;
+            case POWER_ENERGY:
+                _energyCostCache[spellId] = powerEntry->ManaCost;
+                break;
+            default:
+                break;
+        }
     }
 }
 

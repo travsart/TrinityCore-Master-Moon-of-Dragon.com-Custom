@@ -87,6 +87,11 @@ public:
     virtual void OnDeactivate(BotAI* ai) {}
     void SetActive(bool active) { _active = active; }
 
+    // Update method for every-frame behavior updates
+    // Called from BotAI::UpdateStrategies() every frame when strategy is active
+    // No throttling - runs at full frame rate for smooth behavior
+    virtual void UpdateBehavior(BotAI* ai, uint32 diff) {}
+
 protected:
     std::string _name;
     uint32 _priority = 100;

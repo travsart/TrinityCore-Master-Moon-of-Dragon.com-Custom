@@ -22,6 +22,7 @@
 #include "GridNotifiersImpl.h"
 #include "Cell.h"
 #include "CellImpl.h"
+#include "../BaselineRotationManager.h"
 
 namespace Playerbot
 {
@@ -91,6 +92,26 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (!target || !_bot)
         return;
 
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(_bot);
+
+        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+            return;
+
+        // Fallback: basic ranged attack
+        if (!_bot->IsNonMeleeSpellCast(false))
+        {
+            if (_bot->GetDistance(target) <= 35.0f)
+            {
+                _bot->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
+
     UpdateEssenceManagement();
     UpdateEmpowermentSystem();
     UpdateAspectManagement();
@@ -116,6 +137,14 @@ void EvokerAI::UpdateBuffs()
 {
     if (!_bot)
         return;
+
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(_bot);
+        return;
+    }
 
     ManageBuffs();
 

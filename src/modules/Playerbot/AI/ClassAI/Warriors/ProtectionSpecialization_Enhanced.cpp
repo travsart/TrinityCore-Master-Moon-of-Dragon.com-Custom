@@ -795,7 +795,7 @@ void ProtectionSpecialization::CastSpellReflection()
 
 bool ProtectionSpecialization::CanCastSpell(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
@@ -820,7 +820,7 @@ float ProtectionSpecialization::GetThreatPercent(::Unit* target)
 
 void ProtectionSpecialization::ConsumeResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 

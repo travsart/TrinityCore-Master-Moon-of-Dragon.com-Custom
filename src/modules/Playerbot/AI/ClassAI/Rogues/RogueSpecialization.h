@@ -208,7 +208,19 @@ enum RogueSpells : uint32
 
     // Missing spells from WotLK
     DEADLY_THROW = 48674,
-    KILLING_SPREE = 51690
+    KILLING_SPREE = 51690,
+
+    // WoW 11.2 War Within Poison System (Modern)
+    // Lethal Poisons
+    DEADLY_POISON_MODERN = 2823,        // Current Deadly Poison
+    AMPLIFYING_POISON = 381664,         // New in Dragonflight/War Within
+    INSTANT_POISON_MODERN = 315584,     // Current Instant Poison
+    WOUND_POISON_MODERN = 8679,         // Current Wound Poison
+
+    // Non-Lethal Poisons
+    CRIPPLING_POISON_MODERN = 3408,     // Current Crippling Poison
+    NUMBING_POISON = 5761,              // Current Numbing Poison (was Mind-numbing)
+    ATROPHIC_POISON = 381637            // New in Dragonflight/War Within
 };
 
 enum class ComboPointState : uint8
@@ -254,13 +266,19 @@ enum class CombatPhase : uint8
 enum class PoisonType : uint8
 {
     NONE = 0,
-    INSTANT = 1,
-    DEADLY = 2,
-    WOUND = 3,
-    MIND_NUMBING = 4,
+    // Lethal Poisons (WoW 11.2)
+    DEADLY = 1,
+    AMPLIFYING = 2,
+    INSTANT = 3,
+    WOUND = 4,
+    // Non-Lethal Poisons (WoW 11.2)
     CRIPPLING = 5,
-    ANESTHETIC = 6,
-    PARALYTIC = 7
+    NUMBING = 6,
+    ATROPHIC = 7,
+    // Legacy (deprecated)
+    MIND_NUMBING = 8,
+    ANESTHETIC = 9,
+    PARALYTIC = 10
 };
 
 // CooldownInfo is defined in CooldownManager.h
@@ -333,67 +351,68 @@ public:
     virtual ~RogueSpecialization() = default;
 
     // Core Interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource Management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 0.0f; }
 
     // Stealth Management
-    virtual void UpdateStealthManagement() = 0;
-    virtual bool ShouldEnterStealth() = 0;
-    virtual bool CanBreakStealth() = 0;
-    virtual void ExecuteStealthOpener(::Unit* target) = 0;
+    virtual void UpdateStealthManagement() {}
+    virtual bool ShouldEnterStealth() { return false; }
+    virtual bool CanBreakStealth() { return false; }
+    virtual void ExecuteStealthOpener(::Unit* target) {}
 
     // Combo Point Management
-    virtual void UpdateComboPointManagement() = 0;
-    virtual bool ShouldBuildComboPoints() = 0;
-    virtual bool ShouldSpendComboPoints() = 0;
-    virtual void ExecuteComboBuilder(::Unit* target) = 0;
-    virtual void ExecuteComboSpender(::Unit* target) = 0;
+    virtual void UpdateComboPointManagement() {}
+    virtual bool ShouldBuildComboPoints() { return false; }
+    virtual bool ShouldSpendComboPoints() { return false; }
+    virtual void ExecuteComboBuilder(::Unit* target) {}
+    virtual void ExecuteComboSpender(::Unit* target) {}
 
     // Poison Management
-    virtual void UpdatePoisonManagement() = 0;
-    virtual void ApplyPoisons() = 0;
-    virtual PoisonType GetOptimalMainHandPoison() = 0;
-    virtual PoisonType GetOptimalOffHandPoison() = 0;
+    virtual void UpdatePoisonManagement() {}
+    virtual void ApplyPoisons() {}
+    virtual bool ShouldApplyPoisons() { return false; }
+    virtual PoisonType GetOptimalMainHandPoison() { return PoisonType::NONE; }
+    virtual PoisonType GetOptimalOffHandPoison() { return PoisonType::NONE; }
 
     // Debuff Management
-    virtual void UpdateDebuffManagement() = 0;
-    virtual bool ShouldRefreshDebuff(uint32 spellId) = 0;
-    virtual void ApplyDebuffs(::Unit* target) = 0;
+    virtual void UpdateDebuffManagement() {}
+    virtual bool ShouldRefreshDebuff(uint32 spellId) { return false; }
+    virtual void ApplyDebuffs(::Unit* target) {}
 
     // Energy Management
-    virtual void UpdateEnergyManagement() = 0;
-    virtual bool HasEnoughEnergyFor(uint32 spellId) = 0;
-    virtual uint32 GetEnergyCost(uint32 spellId) = 0;
-    virtual bool ShouldWaitForEnergy() = 0;
+    virtual void UpdateEnergyManagement() {}
+    bool HasEnoughEnergyFor(uint32 spellId);
+    uint32 GetEnergyCost(uint32 spellId);
+    virtual bool ShouldWaitForEnergy() { return false; }
 
     // Cooldown Management
-    virtual void UpdateCooldownTracking(uint32 diff) = 0;
-    virtual bool IsSpellReady(uint32 spellId) = 0;
-    virtual void StartCooldown(uint32 spellId) = 0;
-    virtual uint32 GetCooldownRemaining(uint32 spellId) = 0;
+    void UpdateCooldownTracking(uint32 diff);
+    bool IsSpellReady(uint32 spellId);
+    void StartCooldown(uint32 spellId);
+    uint32 GetCooldownRemaining(uint32 spellId);
 
     // Combat Phase Management
-    virtual void UpdateCombatPhase() = 0;
-    virtual CombatPhase GetCurrentPhase() = 0;
-    virtual bool ShouldExecuteBurstRotation() = 0;
+    virtual void UpdateCombatPhase() {}
+    virtual CombatPhase GetCurrentPhase() { return CombatPhase::COMBO_BUILDING; }
+    virtual bool ShouldExecuteBurstRotation() { return false; }
 
     // Utility Functions
-    virtual bool CastSpell(uint32 spellId, ::Unit* target = nullptr) = 0;
-    virtual bool HasSpell(uint32 spellId) = 0;
-    virtual SpellInfo const* GetSpellInfo(uint32 spellId) = 0;
-    virtual uint32 GetSpellCooldown(uint32 spellId) = 0;
+    bool CastSpell(uint32 spellId, ::Unit* target = nullptr);
+    bool HasSpell(uint32 spellId);
+    SpellInfo const* GetSpellInfo(uint32 spellId);
+    uint32 GetSpellCooldown(uint32 spellId);
 
 protected:
     Player* _bot;
@@ -412,6 +431,7 @@ protected:
     uint32 _lastEnergyCheck;
     uint32 _lastComboCheck;
     uint32 _lastStealthCheck;
+    uint32 _lastPoisonApplicationTime;
 
     // Combat Metrics
     uint32 _totalDamageDealt;
@@ -420,6 +440,9 @@ protected:
     uint32 _totalCombosSpent;
     uint32 _burstPhaseCount;
     float _averageCombatTime;
+
+    // Constants
+    static constexpr uint32 POISON_REAPPLY_INTERVAL = 30000; // 30 seconds
 
     // Helper Methods
     void InitializeCooldowns();

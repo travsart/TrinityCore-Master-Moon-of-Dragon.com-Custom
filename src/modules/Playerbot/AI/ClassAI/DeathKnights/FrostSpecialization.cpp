@@ -12,6 +12,9 @@
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Log.h"
+#include "Item.h"
+#include "ObjectAccessor.h"
+#include "SharedDefines.h"
 
 namespace Playerbot
 {
@@ -332,7 +335,7 @@ Position FrostSpecialization::GetOptimalPosition(::Unit* target)
 
     // Melee DPS positioning - prefer flanking for dual-wield
     float distance = FROST_MELEE_RANGE * 0.8f;
-    float angle = target->GetAngle(bot);
+    float angle = target->GetAbsoluteAngle(bot);
 
     if (_isDualWielding)
         angle += M_PI / 4; // Side positioning for dual-wield
@@ -453,7 +456,13 @@ void FrostSpecialization::ApplyDisease(::Unit* target, DiseaseType type, uint32 
     if (!target)
         return;
 
-    DiseaseInfo disease(type, spellId, 15000, 300); // 15 seconds, 300 damage per tick
+    DiseaseInfo disease;
+    disease.type = type;
+    disease.spellId = spellId;
+    disease.expirationTime = getMSTime() + 15000; // 15 seconds
+    disease.remainingTime = 15000;
+    disease.stacks = 1;
+    disease.needsRefresh = false;
     _activeDiseases[target->GetGUID()].push_back(disease);
 }
 
@@ -487,7 +496,7 @@ void FrostSpecialization::RefreshExpringDiseases()
     {
         for (auto& disease : targetDiseases.second)
         {
-            if (disease.type == DiseaseType::FROST_FEVER && disease.NeedsRefresh())
+            if (disease.type == DiseaseType::FROST_FEVER && disease.needsRefresh)
             {
                 Player* bot = GetBot();
                 if (bot)

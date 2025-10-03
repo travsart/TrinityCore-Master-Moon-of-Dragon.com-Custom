@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Position.h"
 #include "ObjectGuid.h"
+#include "Timer.h"
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -148,12 +149,12 @@ enum HunterConstants : uint32 {
     PET_COMMAND_RANGE_INT = 50
 };
 
-#define RANGED_ATTACK_RANGE 35.0f
-#define MELEE_RANGE 5.0f
-#define DEAD_ZONE_MIN 5.0f
-#define DEAD_ZONE_MAX 8.0f
-#define OPTIMAL_RANGE 25.0f
-#define PET_COMMAND_RANGE 50.0f
+// Note: MELEE_RANGE is defined in ObjectDefines.h (5.0f)
+#define HUNTER_RANGED_ATTACK_RANGE 35.0f
+#define HUNTER_DEAD_ZONE_MIN 5.0f
+#define HUNTER_DEAD_ZONE_MAX 8.0f
+#define HUNTER_OPTIMAL_RANGE 25.0f
+#define HUNTER_PET_COMMAND_RANGE 50.0f
 
 // Timing constants
 enum HunterTimingConstants : uint32 {
@@ -232,14 +233,17 @@ public:
     // Core rotation interface
     virtual void UpdateRotation(::Unit* target) = 0;
     virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
     virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+
+    // Note: These methods are provided by template base classes as 'final override'
+    // Do not declare as pure virtual here:
+    // - UpdateCooldowns(uint32 diff)
+    // - CanUseAbility(uint32 spellId)
+    // - OnCombatStart(::Unit* target)
+    // - OnCombatEnd()
+    // - HasEnoughResource(uint32 spellId)
+    // - ConsumeResource(uint32 spellId)
+    // - GetOptimalRange(::Unit* target)
 
     // Pet management interface
     virtual void UpdatePetManagement() = 0;

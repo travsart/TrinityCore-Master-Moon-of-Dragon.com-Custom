@@ -35,26 +35,30 @@ public:
     virtual ~MageSpecialization() = default;
 
     // Core specialization interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
 
     // Combat callbacks
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 0.0f; }
+
+    // Helper positioning methods
+    bool IsInCastingRange(::Unit* target, uint32 spellId);
+    Position GetOptimalCastingPosition(::Unit* target);
 
     // Specialization info
-    virtual MageSpec GetSpecialization() const = 0;
-    virtual const char* GetSpecializationName() const = 0;
+    virtual MageSpec GetSpecialization() const { return MageSpec::ARCANE; }
+    virtual const char* GetSpecializationName() const { return "Mage"; }
 
 protected:
     Player* _bot;
@@ -81,6 +85,17 @@ protected:
     bool IsCasting();
     bool CanCastSpell();
     bool IsInDanger();
+    void UseEvocation();
+    void UseEmergencyAbilities();
+    bool ShouldKite(::Unit* target);
+    void PerformKiting(::Unit* target);
+    void UseManaGem();
+    void ConjureFood();
+    void ConjureWater();
+    void UpdateArcaneIntellect();
+    ::Unit* GetBestPolymorphTarget();
+    bool IsValidPolymorphTarget(::Unit* target);
+    float CalculatePolymorphTargetScore(::Unit* target);
 
     // Common constants
     static constexpr float OPTIMAL_CASTING_RANGE = 30.0f;

@@ -216,7 +216,7 @@ uint32 MonkSpecialization::GetSpellCooldown(uint32 spellId) const
     if (!_bot)
         return 0;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0;
 

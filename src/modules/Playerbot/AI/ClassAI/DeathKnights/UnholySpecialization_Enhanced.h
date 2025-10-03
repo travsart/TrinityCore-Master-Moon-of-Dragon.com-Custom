@@ -182,7 +182,7 @@ private:
         SCOURGE_STRIKE = 55090,
         DEATH_STRIKE = 49998,
         PESTILENCE = 50842,
-        BONE_ARMOR = 49222,
+        BONE_ARMOR = 195181, // Updated for WoW 11.2
         RAISE_DEAD = 46584,
         DARK_TRANSFORMATION = 63560,
         SUMMON_GARGOYLE = 49206,

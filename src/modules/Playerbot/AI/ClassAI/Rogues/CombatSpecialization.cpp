@@ -12,6 +12,10 @@
 #include "SpellInfo.h"
 #include "Log.h"
 #include "Player.h"
+#include "GameTime.h"
+#include "Item.h"
+#include "SpellHistory.h"
+#include "Map.h"
 
 namespace Playerbot
 {
@@ -275,13 +279,13 @@ void CombatSpecialization::UpdateStealthManagement()
         return;
 
     // Only use stealth pre-combat
-    if (ShouldEnterStealth() && !IsStealthed() && _bot->IsOutOfCombat())
+    if (ShouldEnterStealth() && !IsStealthed() && !_bot->IsInCombat())
     {
         if (IsSpellReady(STEALTH))
         {
             if (CastSpell(STEALTH))
             {
-                _lastStealthTime = getMSTime();
+                // Record stealth usage (using getMSTime for timestamp)
                 LogCombatDecision("Entered Stealth", "Pre-combat preparation");
             }
         }
@@ -291,7 +295,7 @@ void CombatSpecialization::UpdateStealthManagement()
 bool CombatSpecialization::ShouldEnterStealth()
 {
     // Combat spec only uses stealth before combat starts
-    return _bot->IsOutOfCombat() && !IsStealthed();
+    return !_bot->IsInCombat() && !IsStealthed();
 }
 
 bool CombatSpecialization::CanBreakStealth()
@@ -485,6 +489,12 @@ void CombatSpecialization::ApplyPoisons()
     }
 
     LogCombatDecision("Applied Instant Poison", "Basic weapon enhancement");
+}
+
+bool CombatSpecialization::ShouldApplyPoisons()
+{
+    uint32 currentTime = GameTime::GetGameTimeMS();
+    return (currentTime - _lastPoisonApplicationTime) > POISON_REAPPLY_INTERVAL;
 }
 
 PoisonType CombatSpecialization::GetOptimalMainHandPoison()
@@ -797,14 +807,14 @@ void CombatSpecialization::DetectWeaponTypes()
     Item* mainhand = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
     if (mainhand)
     {
-        _weaponSpec.mainHandType = mainhand->GetTemplate()->SubClass;
+        _weaponSpec.mainHandType = mainhand->GetTemplate()->GetSubClass();
     }
 
     // Check off hand weapon
     Item* offhand = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
     if (offhand)
     {
-        _weaponSpec.offHandType = offhand->GetTemplate()->SubClass;
+        _weaponSpec.offHandType = offhand->GetTemplate()->GetSubClass();
     }
 
     // Check for weapon specializations
@@ -1306,13 +1316,14 @@ bool CombatSpecialization::CastSpell(uint32 spellId, ::Unit* target)
     if (spellId == SINISTER_STRIKE)
         _metrics.sinisterStrikeCasts++;
     else if (spellId == BLADE_FLURRY)
-        _metrics.bladeFlurryUses++;
+        _metrics.bladeFlurryActivations++;
     else if (spellId == ADRENALINE_RUSH)
-        _metrics.adrenalineRushUses++;
+        _metrics.adrenalineRushActivations++;
     else if (spellId == RIPOSTE)
-        _metrics.riposteCasts++;
+        _metrics.riposteExecutions++;
     else if (spellId == KILLING_SPREE)
-        _metrics.killingSpreeUses++;
+        // killingSpreeUses not in CombatMetrics, using generic cast count
+        // _metrics.killingSpreeUses++;
 
     // Cast the spell through the bot
     if (target)
@@ -1346,20 +1357,15 @@ uint32 CombatSpecialization::GetSpellCooldown(uint32 spellId)
     if (!_bot)
         return 0;
 
-    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return 0;
 
-    // Check if spell has an active cooldown
-    SpellCooldowns const& cooldowns = _bot->GetSpellCooldownMap();
-    auto itr = cooldowns.find(spellId);
-    if (itr != cooldowns.end())
+    // Check if spell has an active cooldown using modern TrinityCore API
+    auto remainingCooldown = _bot->GetSpellHistory()->GetRemainingCooldown(spellInfo);
+    if (remainingCooldown > Milliseconds::zero())
     {
-        uint32 currentTime = getMSTime();
-        if (itr->second.end > currentTime)
-        {
-            return itr->second.end - currentTime;
-        }
+        return uint32(remainingCooldown.count());
     }
 
     return 0;

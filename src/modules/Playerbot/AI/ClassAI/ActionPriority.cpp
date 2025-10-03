@@ -39,8 +39,10 @@ void ActionPriorityQueue::AddAction(uint32 spellId, ActionPriority priority, flo
 
 bool ActionPriorityQueue::GetNextAction(PrioritizedAction& action)
 {
-    if (_queue.try_pop(action))
+    if (!_queue.empty())
     {
+        action = _queue.top();
+        _queue.pop();
         _size.fetch_sub(1);
 
         // Validate the action is still relevant
@@ -65,8 +67,9 @@ bool ActionPriorityQueue::PeekNextAction(PrioritizedAction& action) const
 {
     // TBB doesn't have try_peek, so we'll implement a workaround
     PrioritizedAction tempAction;
-    if (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(tempAction))
+    if (!_queue.empty())
     {
+        tempAction = _queue.top();
         action = tempAction;
         // Put it back
         const_cast<ActionPriorityQueue*>(this)->_queue.push(tempAction);
@@ -87,9 +90,9 @@ size_t ActionPriorityQueue::Size() const
 
 void ActionPriorityQueue::Clear()
 {
-    PrioritizedAction dummy;
-    while (_queue.try_pop(dummy))
+    while (!_queue.empty())
     {
+        _queue.pop();
         _size.fetch_sub(1);
     }
 
@@ -102,8 +105,10 @@ void ActionPriorityQueue::CleanupOldActions(uint32 maxAgeMs)
     PrioritizedAction action;
 
     // Extract all actions and filter valid ones
-    while (_queue.try_pop(action))
+    while (!_queue.empty())
     {
+        action = _queue.top();
+        _queue.pop();
         _size.fetch_sub(1);
         if (action.IsValid(maxAgeMs))
         {
@@ -142,8 +147,10 @@ std::vector<PrioritizedAction> ActionPriorityQueue::GetActionsByPriority(ActionP
     PrioritizedAction action;
 
     // Extract all actions
-    while (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(action))
+    while (!const_cast<ActionPriorityQueue*>(this)->_queue.empty())
     {
+        action = const_cast<ActionPriorityQueue*>(this)->_queue.top();
+        const_cast<ActionPriorityQueue*>(this)->_queue.pop();
         const_cast<ActionPriorityQueue*>(this)->_size.fetch_sub(1);
         allActions.push_back(action);
 
@@ -170,8 +177,10 @@ bool ActionPriorityQueue::ContainsSpell(uint32 spellId) const
     bool found = false;
 
     // Extract all actions and check for spell
-    while (const_cast<ActionPriorityQueue*>(this)->_queue.try_pop(action))
+    while (!const_cast<ActionPriorityQueue*>(this)->_queue.empty())
     {
+        action = const_cast<ActionPriorityQueue*>(this)->_queue.top();
+        const_cast<ActionPriorityQueue*>(this)->_queue.pop();
         const_cast<ActionPriorityQueue*>(this)->_size.fetch_sub(1);
         allActions.push_back(action);
 

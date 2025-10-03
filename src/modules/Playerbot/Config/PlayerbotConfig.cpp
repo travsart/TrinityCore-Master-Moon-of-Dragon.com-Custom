@@ -15,7 +15,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef BUILD_PLAYERBOT
+#ifndef BUILD_PLAYERBOT
+#define BUILD_PLAYERBOT 1
+#endif
 
 #include "PlayerbotConfig.h"
 #include "Log.h"
@@ -558,5 +560,3 @@ PlayerbotConfig::PerformanceMetrics PlayerbotConfig::GetPerformanceMetrics() con
     std::lock_guard<std::mutex> lock(_configMutex);
     return _metrics;
 }
-
-#endif // BUILD_PLAYERBOT

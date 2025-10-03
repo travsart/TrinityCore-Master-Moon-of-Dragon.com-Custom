@@ -218,7 +218,7 @@ bool EvokerAI_Enhanced::CanCastSpell(uint32 spellId, Unit* target, uint8 spec)
     // Check range if target is specified
     if (target)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (spellInfo)
         {
             float range = _bot->GetSpellMaxRangeForTarget(target, spellInfo);

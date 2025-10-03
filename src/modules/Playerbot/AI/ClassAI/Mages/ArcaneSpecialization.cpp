@@ -12,6 +12,9 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
+#include "SharedDefines.h"
+#include "SpellAuras.h"
 #include "ObjectAccessor.h"
 
 namespace Playerbot
@@ -42,11 +45,11 @@ void ArcaneSpecialization::UpdateRotation(::Unit* target)
     _lastRotationUpdate = currentTime;
 
     // Update phases based on mana
-    if (_inConservePhase && GetManaPercent() > BURN_PHASE_MANA_THRESHOLD)
+    if (_inConservePhase && GetManaPercent() > BURN_ENTRY_THRESHOLD)
     {
         EnterBurnPhase();
     }
-    else if (_inBurnPhase && GetManaPercent() < CONSERVE_PHASE_MANA_THRESHOLD)
+    else if (_inBurnPhase && GetManaPercent() < CONSERVE_EXIT_THRESHOLD)
     {
         EnterConservePhase();
     }
@@ -123,9 +126,9 @@ void ArcaneSpecialization::UpdateBuffs()
     // Arcane Intellect
     if (!_bot->HasAura(ARCANE_INTELLECT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT, DIFFICULTY_NONE))
         {
-            _bot->CastSpell(_bot, ARCANE_INTELLECT, false);
+            _bot->CastSpell(_bot, ARCANE_INTELLECT, TRIGGERED_NONE);
         }
     }
 
@@ -185,11 +188,11 @@ void ArcaneSpecialization::OnCombatEnd()
 
 bool ArcaneSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
 
     // Apply Arcane Blast mana cost multiplier
     if (spellId == ARCANE_BLAST)
@@ -203,11 +206,11 @@ bool ArcaneSpecialization::HasEnoughResource(uint32 spellId)
 
 void ArcaneSpecialization::ConsumeResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
 
     if (spellId == ARCANE_BLAST)
     {
@@ -224,10 +227,9 @@ Position ArcaneSpecialization::GetOptimalPosition(::Unit* target)
         return _bot->GetPosition();
 
     float distance = GetOptimalRange(target);
-    float angle = _bot->GetAngle(target);
+    float angle = target->GetAbsoluteAngle(_bot);
 
-    Position pos;
-    target->GetNearPosition(pos, distance, angle + M_PI); // Behind the target
+    Position pos = target->GetNearPosition(distance, angle + M_PI); // Behind the target
     return pos;
 }
 
@@ -277,7 +279,7 @@ void ArcaneSpecialization::CastArcaneMissiles()
 {
     if (CanUseAbility(ARCANE_MISSILES))
     {
-        _bot->CastSpell(_bot->GetVictim(), ARCANE_MISSILES, false);
+        _bot->CastSpell(_bot->GetVictim(), ARCANE_MISSILES, TRIGGERED_NONE);
         _lastArcaneSpellTime = getMSTime();
     }
 }
@@ -286,7 +288,7 @@ void ArcaneSpecialization::CastArcaneBlast()
 {
     if (CanUseAbility(ARCANE_BLAST))
     {
-        _bot->CastSpell(_bot->GetVictim(), ARCANE_BLAST, false);
+        _bot->CastSpell(_bot->GetVictim(), ARCANE_BLAST, TRIGGERED_NONE);
         _lastArcaneSpellTime = getMSTime();
 
         // Increment stack count
@@ -299,7 +301,7 @@ void ArcaneSpecialization::CastArcaneOrb()
 {
     if (CanUseAbility(ARCANE_ORB))
     {
-        _bot->CastSpell(_bot->GetVictim(), ARCANE_ORB, false);
+        _bot->CastSpell(_bot->GetVictim(), ARCANE_ORB, TRIGGERED_NONE);
         _lastArcaneSpellTime = getMSTime();
     }
 }
@@ -308,7 +310,7 @@ void ArcaneSpecialization::CastArcaneBarrage()
 {
     if (CanUseAbility(ARCANE_BARRAGE))
     {
-        _bot->CastSpell(_bot->GetVictim(), ARCANE_BARRAGE, false);
+        _bot->CastSpell(_bot->GetVictim(), ARCANE_BARRAGE, TRIGGERED_NONE);
         _lastArcaneSpellTime = getMSTime();
         _arcaneBlastStacks = 0; // Arcane Barrage consumes all charges
     }
@@ -318,7 +320,7 @@ void ArcaneSpecialization::CastPresenceOfMind()
 {
     if (CanUseAbility(PRESENCE_OF_MIND))
     {
-        _bot->CastSpell(_bot, PRESENCE_OF_MIND, false);
+        _bot->CastSpell(_bot, PRESENCE_OF_MIND, TRIGGERED_NONE);
         _cooldowns[PRESENCE_OF_MIND] = 84000; // 84 second cooldown
     }
 }
@@ -327,7 +329,7 @@ void ArcaneSpecialization::CastArcanePower()
 {
     if (CanUseAbility(ARCANE_POWER))
     {
-        _bot->CastSpell(_bot, ARCANE_POWER, false);
+        _bot->CastSpell(_bot, ARCANE_POWER, TRIGGERED_NONE);
         _cooldowns[ARCANE_POWER] = 120000; // 2 minute cooldown
     }
 }
@@ -336,7 +338,7 @@ void ArcaneSpecialization::CastManaShield()
 {
     if (CanUseAbility(MANA_SHIELD))
     {
-        _bot->CastSpell(_bot, MANA_SHIELD, false);
+        _bot->CastSpell(_bot, MANA_SHIELD, TRIGGERED_NONE);
     }
 }
 
@@ -399,7 +401,7 @@ void ArcaneSpecialization::UpdateArcaneCooldowns(uint32 diff)
     if (_inBurnPhase)
     {
         _burnPhaseStartTime += diff;
-        if (_burnPhaseStartTime >= BURN_PHASE_DURATION)
+        if (_burnPhaseStartTime >= OPTIMAL_BURN_DURATION)
         {
             EnterConservePhase();
         }
@@ -441,11 +443,11 @@ void ArcaneSpecialization::OptimizeManaUsage()
     float manaPercent = GetManaPercent();
 
     // Determine optimal phase based on mana
-    if (manaPercent > BURN_PHASE_MANA_THRESHOLD && _inConservePhase)
+    if (manaPercent > BURN_ENTRY_THRESHOLD && _inConservePhase)
     {
         EnterBurnPhase();
     }
-    else if (manaPercent < CONSERVE_PHASE_MANA_THRESHOLD && _inBurnPhase)
+    else if (manaPercent < CONSERVE_EXIT_THRESHOLD && _inBurnPhase)
     {
         EnterConservePhase();
     }

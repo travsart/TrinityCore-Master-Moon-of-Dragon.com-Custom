@@ -12,6 +12,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Position.h"
+#include "SharedDefines.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -128,7 +129,7 @@ struct InterruptCapability
     float cooldown;
     uint32 manaCost;
     uint32 resourceCost;     // For non-mana resources
-    Powers resourceType;      // Resource type (Energy, Rage, etc.)
+    Powers resourceType;     // Resource type (Energy, Rage, etc.)
     float castTime;
     bool requiresLoS;
     bool requiresFacing;

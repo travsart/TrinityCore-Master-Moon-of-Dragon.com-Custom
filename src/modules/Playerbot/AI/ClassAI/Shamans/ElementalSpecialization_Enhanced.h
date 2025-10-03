@@ -173,7 +173,7 @@ private:
         THUNDERSTORM = 51490,
         ELEMENTAL_MASTERY = 16166,
         FIRE_NOVA = 1535,
-        LIGHTNING_SHIELD = 324,
+        LIGHTNING_SHIELD = 192106, // Updated for WoW 11.2
         WATER_SHIELD = 52127,
         ELEMENTAL_FOCUS = 16164,
         ELEMENTAL_FURY = 60188,

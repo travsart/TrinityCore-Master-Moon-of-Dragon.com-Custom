@@ -154,6 +154,7 @@ private:
     void PerformKiting(::Unit* target);
     bool IsInDanger();
     void FindSafeCastingPosition();
+    Position GetSafeCastingPosition(); // Helper method that returns Position
 
     // Targeting and priorities
     ::Unit* GetBestPolymorphTarget();

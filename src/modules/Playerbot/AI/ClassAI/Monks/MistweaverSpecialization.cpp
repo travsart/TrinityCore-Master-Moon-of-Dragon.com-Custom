@@ -192,7 +192,7 @@ void MistweaverSpecialization::OnCombatEnd()
 
 bool MistweaverSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
@@ -211,7 +211,7 @@ bool MistweaverSpecialization::HasEnoughResource(uint32 spellId)
 
 void MistweaverSpecialization::ConsumeResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 

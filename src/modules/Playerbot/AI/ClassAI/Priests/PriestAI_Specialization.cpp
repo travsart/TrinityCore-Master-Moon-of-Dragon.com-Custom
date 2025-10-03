@@ -8,12 +8,21 @@
  */
 
 #include "PriestAI.h"
-#include "DisciplineSpecialization.h"
-#include "HolySpecialization.h"
-#include "ShadowSpecialization.h"
+#include "DisciplinePriestRefactored.h"
+#include "HolyPriestRefactored.h"
+#include "ShadowPriestRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "Group.h"
+
+// Common Priest spell constants
+constexpr uint32 INNER_FIRE = 588;
+constexpr uint32 POWER_WORD_FORTITUDE = 21562; // Updated for WoW 11.2
+constexpr uint32 PENANCE = 47540;
+constexpr uint32 PAIN_SUPPRESSION = 33206;
+constexpr uint32 CIRCLE_OF_HEALING = 34861;
+constexpr uint32 GUARDIAN_SPIRIT = 47788;
 
 namespace Playerbot
 {
@@ -46,7 +55,8 @@ PriestSpec PriestAI::DetectCurrentSpecialization()
     // This is a simplified detection - real implementation would check talent trees
 
     // Check for Shadow specialization indicators
-    if (bot->HasSpell(SHADOW_FORM) || bot->HasSpell(MIND_FLAY) || bot->HasSpell(VAMPIRIC_TOUCH))
+    // Using direct spell IDs: 15473 (Shadowform rank 1), 232698 (Shadowform WoW 11.2), 15407 (Mind Flay), 34914 (Vampiric Touch)
+    if (bot->HasSpell(15473) || bot->HasSpell(232698) || bot->HasSpell(15407) || bot->HasSpell(34914))
         return PriestSpec::SHADOW;
 
     // Check for Discipline specialization indicators
@@ -65,25 +75,35 @@ void PriestAI::SwitchSpecialization(PriestSpec newSpec)
 {
     _currentSpec = newSpec;
 
-    // Create appropriate specialization instance
+    // TODO: Re-enable refactored specialization classes once template issues are fixed
+    _specialization = nullptr;
+    TC_LOG_WARN("module.playerbot.priest", "Priest specialization switching temporarily disabled for {}",
+                 GetBot()->GetName());
+
+    /* // Create appropriate specialization instance
     switch (newSpec)
     {
         case PriestSpec::DISCIPLINE:
-            _specialization = std::make_unique<DisciplineSpecialization>(GetBot());
+            _specialization = std::make_unique<DisciplinePriestRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.priest", "Priest {} switched to Discipline specialization",
+                         GetBot()->GetName());
             break;
         case PriestSpec::HOLY:
-            _specialization = std::make_unique<HolySpecialization>(GetBot());
+            _specialization = std::make_unique<HolyPriestRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.priest", "Priest {} switched to Holy specialization",
+                         GetBot()->GetName());
             break;
         case PriestSpec::SHADOW:
-            _specialization = std::make_unique<ShadowSpecialization>(GetBot());
+            _specialization = std::make_unique<ShadowPriestRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.priest", "Priest {} switched to Shadow specialization",
+                         GetBot()->GetName());
             break;
         default:
-            _specialization = std::make_unique<HolySpecialization>(GetBot());
+            _specialization = std::make_unique<HolyPriestRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.priest", "Priest {} defaulted to Holy specialization",
+                         GetBot()->GetName());
             break;
-    }
-
-    TC_LOG_DEBUG("playerbot.priest", "PriestAI switched to {} specialization for {}",
-                 _specialization->GetSpecializationName(), GetBot()->GetName());
+    } */
 }
 
 void PriestAI::DelegateToSpecialization(::Unit* target)
@@ -236,6 +256,50 @@ PriestAI::PriestAI(Player* bot)
     InitializeSpecialization();
     TC_LOG_DEBUG("playerbot.priest", "PriestAI initialized for {} with specialization {}",
                  GetBot()->GetName(), static_cast<uint32>(_currentSpec));
+}
+
+// Destructor implementation
+PriestAI::~PriestAI() = default;
+
+// Implementation of missing methods that were in PriestAI.cpp
+bool PriestAI::HasEnoughMana(uint32 amount)
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return false;
+
+    return bot->GetPower(POWER_MANA) >= amount;
+}
+
+void PriestAI::UpdatePriestBuffs()
+{
+    // Update shared priest buffs like Inner Fire, Power Word: Fortitude
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Check for Inner Fire
+    if (!HasAura(INNER_FIRE) && CanUseAbility(INNER_FIRE))
+    {
+        CastSpell(INNER_FIRE);
+    }
+
+    // Check for Power Word: Fortitude on self and group members
+    if (Group* group = bot->GetGroup())
+    {
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            if (Player* member = ref.GetSource())
+            {
+                if (member->IsAlive() && !member->HasAura(POWER_WORD_FORTITUDE) &&
+                    bot->GetDistance(member) <= 40.0f && CanUseAbility(POWER_WORD_FORTITUDE))
+                {
+                    CastSpell(member, POWER_WORD_FORTITUDE);
+                    break; // Cast one at a time
+                }
+            }
+        }
+    }
 }
 
 } // namespace Playerbot

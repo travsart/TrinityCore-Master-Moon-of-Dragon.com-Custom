@@ -13,6 +13,11 @@
 #include "SpellInfo.h"
 #include "Item.h"
 #include "Log.h"
+#include "Map.h"
+#include "SpellAuras.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
 
 namespace Playerbot
 {
@@ -188,11 +193,11 @@ bool EnhancementSpecialization::HasEnoughResource(uint32 spellId)
             break;
     }
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     return bot->GetPower(POWER_MANA) >= manaCost;
 }
 
@@ -216,11 +221,11 @@ void EnhancementSpecialization::ConsumeResource(uint32 spellId)
             break;
     }
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     if (bot->GetPower(POWER_MANA) >= manaCost)
         bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);
 }
@@ -393,9 +398,13 @@ bool EnhancementSpecialization::ShouldCastChainLightning()
     if (!bot || _maelstromWeaponStacks < 5)
         return false;
 
-    auto units = bot->GetMap()->GetUnitsInRange(bot->GetPosition(), 25.0f);
+    std::list<Unit*> units;
+    Trinity::AnyUnitInObjectRangeCheck u_check(bot, 25.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, units, u_check);
+    Cell::VisitAllObjects(bot, searcher, 25.0f);
+
     uint32 enemyCount = 0;
-    for (auto unit : units)
+    for (Unit* unit : units)
     {
         if (unit && unit->IsHostileTo(bot) && unit->IsAlive())
             enemyCount++;
@@ -622,7 +631,7 @@ Position EnhancementSpecialization::GetOptimalMeleePosition(::Unit* target)
         return Position();
 
     float distance = MELEE_RANGE * 0.8f;
-    float angle = target->GetAngle(bot);
+    float angle = target->GetAbsoluteAngle(bot);
 
     return Position(
         target->GetPositionX() + distance * cos(angle),

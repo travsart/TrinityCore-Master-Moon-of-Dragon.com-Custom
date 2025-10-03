@@ -8,9 +8,9 @@
  */
 
 #include "EvokerAI.h"
-#include "DevastationSpecialization.h"
-#include "PreservationSpecialization.h"
-#include "AugmentationSpecialization.h"
+#include "DevastationEvokerRefactored.h"
+#include "PreservationEvokerRefactored.h"
+#include "AugmentationEvokerRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
@@ -143,20 +143,20 @@ void EvokerAI::InitializeSpecialization()
     switch (spec)
     {
         case EvokerSpec::DEVASTATION:
-            _specialization = std::make_unique<DevastationSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "EvokerAI: Initialized Devastation specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<DevastationEvokerRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.evoker", "Evoker {} switched to Devastation specialization", bot->GetName());
             break;
         case EvokerSpec::PRESERVATION:
-            _specialization = std::make_unique<PreservationSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "EvokerAI: Initialized Preservation specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<PreservationEvokerRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.evoker", "Evoker {} switched to Preservation specialization", bot->GetName());
             break;
         case EvokerSpec::AUGMENTATION:
-            _specialization = std::make_unique<AugmentationSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "EvokerAI: Initialized Augmentation specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<AugmentationEvokerRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.evoker", "Evoker {} switched to Augmentation specialization", bot->GetName());
             break;
         default:
-            _specialization = std::make_unique<DevastationSpecialization>(bot);
-            TC_LOG_WARN("playerbot", "EvokerAI: Unknown specialization for bot {}, defaulting to Devastation", bot->GetName());
+            _specialization = std::make_unique<DevastationEvokerRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.evoker", "Evoker {} defaulted to Devastation specialization", bot->GetName());
             break;
     }
 }

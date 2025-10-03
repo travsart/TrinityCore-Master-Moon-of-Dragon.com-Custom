@@ -18,6 +18,8 @@
 #include "World.h"
 #include "SocialMgr.h"
 #include "PartyPackets.h"
+#include "BotSession.h"
+#include "BotAI.h"
 #include "../Session/BotSession.h"
 #include "../AI/BotAI.h"
 #include "Opcodes.h"
@@ -358,6 +360,9 @@ WorldSession* GroupInvitationHandler::GetSession() const
 
 bool GroupInvitationHandler::SendAcceptPacket()
 {
+    // EXECUTION MARKER: Verify this method is being called
+    TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: SendAcceptPacket() called for bot {} ===", _bot ? _bot->GetName() : "NULL");
+
     WorldSession* session = GetSession();
     if (!session)
     {
@@ -420,16 +425,86 @@ bool GroupInvitationHandler::SendAcceptPacket()
     // Check results immediately after the call
     if (_bot->GetGroup())
     {
+        // EXECUTION MARKER: Verify this success path is being reached
+        TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: Bot {} successfully joined group - entering follow activation path ===", _bot->GetName());
+
         Group* botGroup = _bot->GetGroup();
+        Player* leader = ObjectAccessor::FindPlayer(botGroup->GetLeaderGUID());
         TC_LOG_INFO("playerbot", "GroupInvitationHandler: SUCCESS! Bot {} successfully joined group (Group ID: {}, Members: {}, Leader: {})",
             _bot->GetName(),
             botGroup->GetGUID().ToString(),
             botGroup->GetMembersCount(),
-            ObjectAccessor::FindPlayer(botGroup->GetLeaderGUID()) ?
-                ObjectAccessor::FindPlayer(botGroup->GetLeaderGUID())->GetName() : "Unknown");
+            leader ? leader->GetName() : "Unknown");
 
-        // The BotAI should detect the group change in its next update cycle and activate follow behavior
-        TC_LOG_INFO("playerbot", "GroupInvitationHandler: Group join completed - BotAI should detect this change on next update");
+        // EXECUTION MARKER: Check if we reach after success message
+        TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: After success message, about to start follow activation ===");
+
+        // SIMPLE FIX: Direct call to BotAI OnGroupJoined - bypass complex session logic
+        if (_bot && _bot->GetGroup())
+        {
+            TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} calling BotAI OnGroupJoined directly ===", _bot->GetName());
+
+            // Try to get AI directly and call OnGroupJoined
+            BotSession* botSession = dynamic_cast<BotSession*>(_bot->GetSession());
+            if (botSession)
+            {
+                BotAI* botAI = botSession->GetAI();
+                if (botAI)
+                {
+                    TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} found AI, calling OnGroupJoined ===", _bot->GetName());
+                    botAI->OnGroupJoined(_bot->GetGroup());
+                    TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} OnGroupJoined completed ===", _bot->GetName());
+                }
+                else
+                {
+                    TC_LOG_ERROR("playerbot.debug", "=== SIMPLE FIX ERROR: Bot {} AI is null ===", _bot->GetName());
+                }
+            }
+            else
+            {
+                TC_LOG_ERROR("playerbot.debug", "=== SIMPLE FIX ERROR: Bot {} session cast failed ===", _bot->GetName());
+            }
+        }
+
+        // Get the bot's AI and trigger group join handler with detailed debugging
+        auto* session = _bot->GetSession();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.debug", "=== FOLLOW ERROR: Bot {} has no session! ===", _bot->GetName());
+            return false;
+        }
+        TC_LOG_INFO("playerbot.debug", "=== FOLLOW DEBUG: Bot {} has session, attempting BotSession cast ===", _bot->GetName());
+
+        auto* botSession = dynamic_cast<BotSession*>(session);
+        if (!botSession)
+        {
+            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} session is not a BotSession!", _bot->GetName());
+            return false;
+        }
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} has BotSession, getting AI", _bot->GetName());
+
+        auto* botAI = botSession->GetAI();
+        if (!botAI)
+        {
+            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} BotSession has no AI!", _bot->GetName());
+            return false;
+        }
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} has AI, calling OnGroupJoined", _bot->GetName());
+
+        botAI->OnGroupJoined(_bot->GetGroup());
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} OnGroupJoined call completed", _bot->GetName());
+
+        // BACKUP FIX: Directly activate follow strategy as fallback
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} directly activating follow strategy", _bot->GetName());
+        if (botAI->GetStrategy("follow"))
+        {
+            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} already has follow strategy", _bot->GetName());
+        }
+        else
+        {
+            botAI->ActivateStrategy("follow");
+            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} activated follow strategy directly", _bot->GetName());
+        }
     }
     else
     {
@@ -697,6 +772,10 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
 {
     // NOTE: This method assumes _invitationMutex is already locked by the caller
 
+    // EXECUTION MARKER: Verify this method is being called
+    TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: AcceptInvitationInternal() called for bot {} from inviter {} ===",
+        _bot ? _bot->GetName() : "NULL", inviterGuid.ToString());
+
     TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} accepting invitation from {}",
         _bot->GetName(), inviterGuid.ToString());
 
@@ -734,16 +813,44 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
     {
         TC_LOG_INFO("module.playerbot.group", "GroupInvitationHandler: Bot {} successfully joined group, activating follow behavior", _bot->GetName());
 
-        // Get the bot's AI and trigger group join handler
-        if (auto* session = _bot->GetSession())
+        // Get the bot's AI and trigger group join handler with detailed debugging
+        auto* session = _bot->GetSession();
+        if (!session)
         {
-            if (auto* botSession = dynamic_cast<BotSession*>(session))
-            {
-                if (auto* botAI = botSession->GetAI())
-                {
-                    botAI->OnGroupJoined(_bot->GetGroup());
-                }
-            }
+            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} has no session!", _bot->GetName());
+            return true;
+        }
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} has session, attempting BotSession cast", _bot->GetName());
+
+        auto* botSession = dynamic_cast<BotSession*>(session);
+        if (!botSession)
+        {
+            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} session is not a BotSession!", _bot->GetName());
+            return true;
+        }
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} has BotSession, getting AI", _bot->GetName());
+
+        auto* botAI = botSession->GetAI();
+        if (!botAI)
+        {
+            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} BotSession has no AI!", _bot->GetName());
+            return true;
+        }
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} has AI, calling OnGroupJoined", _bot->GetName());
+
+        botAI->OnGroupJoined(_bot->GetGroup());
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} OnGroupJoined call completed", _bot->GetName());
+
+        // BACKUP FIX: Directly activate follow strategy as fallback
+        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP PATH2: Bot {} directly activating follow strategy", _bot->GetName());
+        if (botAI->GetStrategy("follow"))
+        {
+            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP PATH2: Bot {} already has follow strategy", _bot->GetName());
+        }
+        else
+        {
+            botAI->ActivateStrategy("follow");
+            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP PATH2: Bot {} activated follow strategy directly", _bot->GetName());
         }
     }
 

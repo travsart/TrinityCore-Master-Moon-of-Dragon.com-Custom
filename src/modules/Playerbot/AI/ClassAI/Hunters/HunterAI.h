@@ -11,6 +11,8 @@
 #define TRINITY_HUNTERPLAYERAI_H
 
 #include "../ClassAI.h"
+#include "HunterSpecialization.h"
+#include <memory>
 
 class Player;
 
@@ -23,6 +25,11 @@ enum class HunterSpec : uint8
     MARKSMANSHIP = 2,
     SURVIVAL = 3
 };
+
+// Forward declarations
+class BeastMasterySpecialization;
+class MarksmanshipSpecialization;
+class SurvivalSpecialization;
 
 class HunterAI : public ClassAI
 {
@@ -50,6 +57,8 @@ private:
     void InitializeCombatSystems();
     void DetectSpecialization();
     void InitializeSpecialization();
+    void SwitchSpecialization(HunterSpec newSpec);
+    void DelegateToSpecialization(::Unit* target);
 
     // Hunter-specific mechanics
     void ManageAspects();
@@ -65,8 +74,7 @@ private:
 
     // Specialization
     HunterSpec _detectedSpec;
-
-    // TODO: Add member variables as needed
+    std::unique_ptr<HunterSpecialization> _specialization;
 };
 
 } // namespace Playerbot

@@ -8,8 +8,11 @@
  */
 
 #include "DemonHunterAI.h"
+#include "../BaselineRotationManager.h"
 #include "HavocSpecialization_Enhanced.h"
 #include "VengeanceSpecialization_Enhanced.h"
+#include "HavocDemonHunterRefactored.h"
+#include "VengeanceDemonHunterRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
@@ -28,69 +31,119 @@ DemonHunterAI::DemonHunterAI(Player* bot) : ClassAI(bot), _detectedSpec(DemonHun
 
 void DemonHunterAI::UpdateRotation(::Unit* target)
 {
-    // TODO: Implement proper rotation logic
-    if (!target)
+    if (!target || !_bot)
         return;
 
-    // Basic stub implementation - just cast Demon's Bite
-    if (_bot->HasSpell(DEMONS_BITE))
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
     {
-        _bot->CastSpell(target, DEMONS_BITE, false);
+        // Use baseline rotation manager for unspecialized bots
+        static BaselineRotationManager baselineManager;
+
+        // Try auto-specialization if level 10+
+        baselineManager.HandleAutoSpecialization(_bot);
+
+        // Execute baseline rotation
+        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+            return;
+
+        // Fallback to basic melee attack if nothing else worked
+        if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
+        {
+            _bot->CastSpell(target, DEMONS_BITE, false);
+        }
+        return;
     }
+
+    // Delegate to specialization for level 10+ bots with spec
+    DelegateToSpecialization(target);
 }
 
 void DemonHunterAI::UpdateBuffs()
 {
-    // TODO: Implement buff management
+    if (!_bot)
+        return;
+
+    // Check if bot should use baseline buffs
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(_bot);
+        return;
+    }
+
+    // Use full Demon Hunter buff system for specialized bots
+    if (_specialization)
+        _specialization->UpdateBuffs();
 }
 
 void DemonHunterAI::UpdateCooldowns(uint32 diff)
 {
-    // TODO: Implement cooldown tracking
+    if (_specialization)
+        _specialization->UpdateCooldowns(diff);
 }
 
 bool DemonHunterAI::CanUseAbility(uint32 spellId)
 {
-    // TODO: Implement ability availability checks
-    return _bot && _bot->HasSpell(spellId);
+    if (!_bot || !_bot->HasSpell(spellId))
+        return false;
+
+    if (_specialization)
+        return _specialization->CanUseAbility(spellId);
+
+    return true;
 }
 
 void DemonHunterAI::OnCombatStart(::Unit* target)
 {
-    // TODO: Implement combat start logic
     if (!target)
         return;
 
-    TC_LOG_DEBUG("playerbots", "DemonHunterAI combat started for player {}",
+    if (_specialization)
+        _specialization->OnCombatStart(target);
+
+    TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat started for player {}",
                  _bot->GetName());
 }
 
 void DemonHunterAI::OnCombatEnd()
 {
-    // TODO: Implement combat end logic
-    TC_LOG_DEBUG("playerbots", "DemonHunterAI combat ended for player {}", _bot->GetName());
+    if (_specialization)
+        _specialization->OnCombatEnd();
+
+    TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat ended for player {}", _bot->GetName());
 }
 
 bool DemonHunterAI::HasEnoughResource(uint32 spellId)
 {
-    // TODO: Implement resource checks
+    if (_specialization)
+        return _specialization->HasEnoughResource(spellId);
+
     return true;
 }
 
 void DemonHunterAI::ConsumeResource(uint32 spellId)
 {
-    // TODO: Implement resource consumption
+    if (_specialization)
+        _specialization->ConsumeResource(spellId);
 }
 
 Position DemonHunterAI::GetOptimalPosition(::Unit* target)
 {
-    // TODO: Implement optimal positioning
+    if (!target || !_bot)
+        return Position();
+
+    if (_specialization)
+        return _specialization->GetOptimalPosition(target);
+
     return _bot->GetPosition();
 }
 
 float DemonHunterAI::GetOptimalRange(::Unit* target)
 {
-    // TODO: Implement optimal range calculation
+    if (_specialization)
+        return _specialization->GetOptimalRange(target);
+
     return 5.0f; // Default melee range
 }
 
@@ -110,7 +163,8 @@ void DemonHunterAI::DetectSpecialization()
 
 void DemonHunterAI::InitializeSpecialization()
 {
-    // TODO: Implement specialization initialization
+    DetectSpecialization();
+    SwitchSpecialization(_detectedSpec);
 }
 
 void DemonHunterAI::ExitMetamorphosis()
@@ -237,6 +291,43 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
 {
     // TODO: Implement AoE target gathering
     return std::vector<::Unit*>();
+}
+
+void DemonHunterAI::SwitchSpecialization(DemonHunterSpec newSpec)
+{
+    _detectedSpec = newSpec;
+
+    // TODO: Re-enable refactored specialization classes once template issues are fixed
+    _specialization = nullptr;
+    TC_LOG_WARN("module.playerbot.demonhunter", "DemonHunter specialization switching temporarily disabled for {}",
+                 GetBot()->GetName());
+
+    /* switch (newSpec)
+    {
+        case DemonHunterSpec::HAVOC:
+            _specialization = std::make_unique<HavocDemonHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} switched to Havoc specialization",
+                         GetBot()->GetName());
+            break;
+
+        case DemonHunterSpec::VENGEANCE:
+            _specialization = std::make_unique<VengeanceDemonHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} switched to Vengeance specialization",
+                         GetBot()->GetName());
+            break;
+
+        default:
+            _specialization = std::make_unique<HavocDemonHunterRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} defaulted to Havoc specialization",
+                         GetBot()->GetName());
+            break;
+    } */
+}
+
+void DemonHunterAI::DelegateToSpecialization(::Unit* target)
+{
+    if (_specialization)
+        _specialization->UpdateRotation(target);
 }
 
 } // namespace Playerbot

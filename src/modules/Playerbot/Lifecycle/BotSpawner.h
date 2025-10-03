@@ -134,6 +134,9 @@ public:
     void SetMaxBots(uint32 maxBots) { _config.maxBotsTotal = maxBots; }
     void SetBotToPlayerRatio(float ratio) { _config.botToPlayerRatio = ratio; }
 
+    // Chat command support - Create new bot character and spawn it
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, std::string const& name, ObjectGuid& outCharacterGuid);
+
     // Allow adapter access to constructor
     friend class std::unique_ptr<BotSpawner>;
     friend std::unique_ptr<BotSpawner> std::make_unique<BotSpawner>();

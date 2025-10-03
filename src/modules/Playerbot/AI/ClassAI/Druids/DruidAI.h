@@ -10,9 +10,17 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "DruidSpecialization.h"
+#include <memory>
 
 namespace Playerbot
 {
+
+// Forward declarations
+class BalanceSpecialization;
+class FeralSpecialization;
+class GuardianSpecialization;
+class RestorationSpecialization;
 
 class TC_GAME_API DruidAI : public ClassAI
 {
@@ -40,7 +48,15 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // TODO: Add private member variables as needed
+    // Specialization system
+    DruidSpec _detectedSpec;
+    std::unique_ptr<DruidSpecialization> _specialization;
+
+    // Specialization management
+    void InitializeSpecialization();
+    void DetectSpecialization();
+    void SwitchSpecialization(DruidSpec newSpec);
+    void DelegateToSpecialization(::Unit* target);
 };
 
 } // namespace Playerbot

@@ -1893,7 +1893,7 @@ uint32 MageSpellCalculator::CalculateSpellManaCost(uint32 spellId, Player* caste
         return 0;
 
     // Calculate base mana cost
-    uint32 manaCost = spellInfo->CalcPowerCost(caster, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(caster, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
 
     // Cache the result
     _manaCostCache[spellId] = manaCost;
@@ -2037,7 +2037,7 @@ uint32 MageSpellCalculator::GetOptimalRotationSpell(MageSpec spec, Player* caste
 void MageSpellCalculator::CacheSpellData(uint32 spellId)
 {
     // Pre-cache spell data for performance
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 

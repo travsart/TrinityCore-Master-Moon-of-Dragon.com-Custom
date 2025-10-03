@@ -18,7 +18,9 @@
 #ifndef TRINITY_PLAYERBOTCONFIG_H
 #define TRINITY_PLAYERBOTCONFIG_H
 
-#ifdef BUILD_PLAYERBOT
+#ifndef BUILD_PLAYERBOT
+#define BUILD_PLAYERBOT 1
+#endif
 
 #include "Define.h"
 #include "Logging/ModuleLogManager.h"
@@ -251,5 +253,4 @@ private:
 // Global accessor
 #define sPlayerbotConfig PlayerbotConfig::instance()
 
-#endif // BUILD_PLAYERBOT
 #endif // TRINITY_PLAYERBOTCONFIG_H

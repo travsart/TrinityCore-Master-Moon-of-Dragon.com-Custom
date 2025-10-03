@@ -601,7 +601,7 @@ float PaladinAI::GetManaPercent()
 
 uint32 PaladinAI::GetSpellManaCost(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0;
 

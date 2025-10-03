@@ -306,7 +306,7 @@ void DemonologySpecialization::ManagePetMana()
             {
                 if (charmInfo->GetCharmSpell(i)->GetAction())
                 {
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(charmInfo->GetCharmSpell(i)->GetAction());
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(charmInfo->GetCharmSpell(i, DIFFICULTY_NONE)->GetAction());
                     if (spellInfo && spellInfo->ManaCost > petMana * 0.3f)
                     {
                         charmInfo->GetCharmSpell(i)->SetType(ACT_DISABLED);

@@ -11,6 +11,8 @@
 
 #include "Position.h"
 #include "SharedDefines.h"
+#include "Timer.h"
+#include "ObjectGuid.h"
 #include <vector>
 #include <array>
 #include <unordered_map>
@@ -94,38 +96,38 @@ public:
     virtual ~ShamanSpecialization() = default;
 
     // Core specialization interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
 
     // Combat callbacks
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 0.0f; }
 
     // Totem management - core to all shaman specs
-    virtual void UpdateTotemManagement() = 0;
-    virtual void DeployOptimalTotems() = 0;
-    virtual uint32 GetOptimalFireTotem() = 0;
-    virtual uint32 GetOptimalEarthTotem() = 0;
-    virtual uint32 GetOptimalWaterTotem() = 0;
-    virtual uint32 GetOptimalAirTotem() = 0;
+    virtual void UpdateTotemManagement() {}
+    virtual void DeployOptimalTotems() {}
+    virtual uint32 GetOptimalFireTotem() { return 0; }
+    virtual uint32 GetOptimalEarthTotem() { return 0; }
+    virtual uint32 GetOptimalWaterTotem() { return 0; }
+    virtual uint32 GetOptimalAirTotem() { return 0; }
 
     // Shock rotation - available to all specs
-    virtual void UpdateShockRotation(::Unit* target) = 0;
-    virtual uint32 GetNextShockSpell(::Unit* target) = 0;
+    virtual void UpdateShockRotation(::Unit* target) {}
+    virtual uint32 GetNextShockSpell(::Unit* target) { return 0; }
 
     // Specialization info
-    virtual ShamanSpec GetSpecialization() const = 0;
-    virtual const char* GetSpecializationName() const = 0;
+    virtual ShamanSpec GetSpecialization() const { return ShamanSpec::ELEMENTAL; }
+    virtual const char* GetSpecializationName() const { return "Shaman"; }
 
 protected:
     Player* GetBot() const { return _bot; }
@@ -190,7 +192,7 @@ protected:
         WRATH_OF_AIR_TOTEM = 3738,
 
         // Shield spells
-        LIGHTNING_SHIELD = 324,
+        LIGHTNING_SHIELD = 192106, // Updated for WoW 11.2
         WATER_SHIELD = 52127,
         EARTH_SHIELD = 974,
 

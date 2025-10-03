@@ -8,9 +8,9 @@
  */
 
 #include "MonkAI.h"
-#include "BrewmasterSpecialization.h"
-#include "MistweaverSpecialization.h"
-#include "WindwalkerSpecialization.h"
+#include "BrewmasterMonkRefactored.h"
+#include "MistweaverMonkRefactored.h"
+#include "WindwalkerMonkRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
@@ -143,20 +143,20 @@ void MonkAI::InitializeSpecialization()
     switch (spec)
     {
         case MonkSpec::BREWMASTER:
-            _specialization = std::make_unique<BrewmasterSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Brewmaster specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<BrewmasterMonkRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.monk", "Monk {} switched to Brewmaster specialization", bot->GetName());
             break;
         case MonkSpec::MISTWEAVER:
-            _specialization = std::make_unique<MistweaverSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Mistweaver specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<MistweaverMonkRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.monk", "Monk {} switched to Mistweaver specialization", bot->GetName());
             break;
         case MonkSpec::WINDWALKER:
-            _specialization = std::make_unique<WindwalkerSpecialization>(bot);
-            TC_LOG_DEBUG("playerbot", "MonkAI: Initialized Windwalker specialization for bot {}", bot->GetName());
+            _specialization = std::make_unique<WindwalkerMonkRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.monk", "Monk {} switched to Windwalker specialization", bot->GetName());
             break;
         default:
-            _specialization = std::make_unique<WindwalkerSpecialization>(bot);
-            TC_LOG_WARN("playerbot", "MonkAI: Unknown specialization for bot {}, defaulting to Windwalker", bot->GetName());
+            _specialization = std::make_unique<WindwalkerMonkRefactored>(bot);
+            TC_LOG_DEBUG("module.playerbot.monk", "Monk {} defaulted to Windwalker specialization", bot->GetName());
             break;
     }
 }

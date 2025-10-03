@@ -12,6 +12,8 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
+#include "SharedDefines.h"
 #include "ObjectAccessor.h"
 
 namespace Playerbot
@@ -155,7 +157,7 @@ void ShadowSpecialization::UpdateBuffs()
         if (_inShadowForm)
             ExitShadowForm();
 
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, POWER_WORD_FORTITUDE, false);
         }
@@ -171,7 +173,7 @@ void ShadowSpecialization::UpdateBuffs()
         if (_inShadowForm)
             ExitShadowForm();
 
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, INNER_FIRE, false);
         }
@@ -240,7 +242,7 @@ void ShadowSpecialization::OnCombatStart(::Unit* target)
     _voidFormStacks = 0;
     _dotTargets.clear();
     _mindControlTargets.clear();
-    _emergencyHealQueue = std::priority_queue<HealTarget>();
+    _emergencyHealQueue = {};
 
     // Enter shadow form at combat start
     if (ShouldEnterShadowForm())
@@ -259,17 +261,17 @@ void ShadowSpecialization::OnCombatEnd()
     _vampiricTouchTimers.clear();
     _dotTargets.clear();
     _mindControlTargets.clear();
-    _emergencyHealQueue = std::priority_queue<HealTarget>();
+    _emergencyHealQueue = {};
 }
 
 bool ShadowSpecialization::HasEnoughResource(uint32 spellId)
 {
     // Check mana cost
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     if (GetMana() < manaCost)
         return false;
 
@@ -314,10 +316,9 @@ Position ShadowSpecialization::GetOptimalPosition(::Unit* target)
         return _bot->GetPosition();
 
     float distance = GetOptimalRange(target);
-    float angle = _bot->GetAngle(target);
+    float angle = target->GetAbsoluteAngle(_bot);
 
-    Position pos;
-    target->GetNearPosition(pos, distance, angle + M_PI);
+    Position pos = target->GetNearPosition(distance, angle + M_PI);
     return pos;
 }
 
@@ -334,7 +335,7 @@ void ShadowSpecialization::UpdateHealing()
     _lastHealCheck = currentTime;
 
     // Clear old heal queue
-    _emergencyHealQueue = std::priority_queue<HealTarget>();
+    _emergencyHealQueue = {};
 
     // Only emergency healing in shadow spec
     std::vector<::Unit*> groupMembers = GetGroupMembers();
@@ -348,7 +349,7 @@ void ShadowSpecialization::UpdateHealing()
         {
             HealPriority priority = healthPercent < 15.0f ? HealPriority::EMERGENCY : HealPriority::CRITICAL;
             uint32 missingHealth = member->GetMaxHealth() - member->GetHealth();
-            HealTarget healTarget(member, priority, healthPercent, missingHealth);
+            Playerbot::HealTarget healTarget(member, priority, healthPercent, missingHealth);
             _emergencyHealQueue.push(healTarget);
         }
     }
@@ -364,7 +365,7 @@ bool ShadowSpecialization::ShouldHeal()
     if (_emergencyHealQueue.empty())
         return nullptr;
 
-    HealTarget bestTarget = _emergencyHealQueue.top();
+    Playerbot::HealTarget bestTarget = _emergencyHealQueue.top();
     return bestTarget.target;
 }
 
@@ -591,7 +592,7 @@ void ShadowSpecialization::CastShadowWordPain(::Unit* target)
     {
         _bot->CastSpell(target, SHADOW_WORD_PAIN, false);
         _shadowWordPainTimers[target->GetGUID().GetCounter()] = getMSTime() + SHADOW_WORD_PAIN_DURATION;
-        _dotTargets.insert(target->GetGUID().GetCounter());
+        _dotTargets.push_back(target->GetGUID().GetCounter());
     }
 }
 
@@ -601,7 +602,7 @@ void ShadowSpecialization::CastVampiricTouch(::Unit* target)
     {
         _bot->CastSpell(target, VAMPIRIC_TOUCH, false);
         _vampiricTouchTimers[target->GetGUID().GetCounter()] = getMSTime() + VAMPIRIC_TOUCH_DURATION;
-        _dotTargets.insert(target->GetGUID().GetCounter());
+        _dotTargets.push_back(target->GetGUID().GetCounter());
     }
 }
 

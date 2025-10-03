@@ -72,9 +72,9 @@ struct FormationPosition
 // Follow behavior configuration
 struct FollowConfig
 {
-    FollowMode mode = FollowMode::NORMAL;
-    float minDistance = 8.0f;
-    float maxDistance = 12.0f;
+    FollowMode mode = FollowMode::TIGHT;
+    float minDistance = 2.0f;  // Closer for melee combat
+    float maxDistance = 5.0f;   // Within melee range
     float teleportDistance = 100.0f;
     float catchUpSpeedBoost = 1.5f;
     bool autoTeleport = true;
@@ -82,7 +82,7 @@ struct FollowConfig
     bool avoidAoEAreas = true;
     bool followThroughPortals = true;
     bool followInCombat = true;
-    uint32 updateInterval = 500;  // ms
+    // REFACTORED: Removed updateInterval - now runs every frame
     uint32 teleportDelay = 2000;  // ms before teleporting
 };
 
@@ -142,7 +142,10 @@ public:
     virtual void OnActivate(BotAI* ai) override;
     virtual void OnDeactivate(BotAI* ai) override;
 
-    // Main follow behavior update
+    // Override UpdateBehavior for every-frame updates with no throttling
+    virtual void UpdateBehavior(BotAI* ai, uint32 diff) override;
+
+    // Main follow behavior update - now called from UpdateBehavior
     void UpdateFollowBehavior(BotAI* ai, uint32 diff);
 
     // Leader management
@@ -329,7 +332,7 @@ private:
     static constexpr float DEFAULT_FOLLOW_DISTANCE = 10.0f;
     static constexpr float TELEPORT_DISTANCE = 100.0f;
     static constexpr float COMBAT_FOLLOW_DISTANCE = 15.0f;
-    static constexpr uint32 UPDATE_INTERVAL = 500;        // ms
+    // REFACTORED: Removed UPDATE_INTERVAL - now runs every frame
     static constexpr uint32 STUCK_CHECK_INTERVAL = 2000;  // ms
     static constexpr uint32 PATH_UPDATE_INTERVAL = 1000;  // ms
     static constexpr uint32 LOST_LEADER_TIMEOUT = 5000;   // ms

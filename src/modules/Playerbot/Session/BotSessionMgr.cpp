@@ -181,33 +181,27 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
                 continue;
             }
 
-            // Removed async login checking - using synchronous approach
-            // Sessions are now fully loaded when created, so always update if active
-            if (session->IsActive()) {
+            // CRITICAL FIX: Simplified single update path for all active sessions
+            // The previous code had duplicate IsActive() checks causing dead code path
+            Player* player = session->GetPlayer();
 
-                try {
-                    WorldSessionFilter updater(session);
-                    session->Update(diff, updater);
-                } catch (std::exception const& e) {
-                    TC_LOG_ERROR("module.playerbot.session", "🔍 Exception in async session update: {}", e.what());
-                }
+            TC_LOG_INFO("module.playerbot.session", "🔄 Updating session for account {}, player={}, inWorld={}",
+                        session->GetAccountId(),
+                        player ? player->GetName() : "NULL",
+                        player && player->IsInWorld() ? "YES" : "NO");
 
-                ++it;
-                continue;
+            try {
+                // Create WorldSessionFilter for all active sessions
+                WorldSessionFilter updater(session);
+                session->Update(diff, updater);
+
+                TC_LOG_INFO("module.playerbot.session", "✅ Session update completed for account {}",
+                            session->GetAccountId());
+            } catch (std::exception const& e) {
+                TC_LOG_ERROR("module.playerbot.session", "Exception in session update for account {}: {}",
+                            session->GetAccountId(), e.what());
             }
 
-            // Ensure session has valid player before creating WorldSessionFilter
-            // WorldSessionFilter expects fully initialized session state
-            if (!session->GetPlayer()) {
-                ++it;
-                continue;
-            }
-
-            // CRITICAL: Call Update to process async callbacks and AI
-            // Create WorldSessionFilter only for fully initialized sessions
-            WorldSessionFilter updater(session);
-            TC_LOG_INFO("module.playerbot.session", "🔄 Calling session->Update() for session with player");
-            session->Update(diff, updater);
             ++it;
         }
         catch (std::exception const& e) {

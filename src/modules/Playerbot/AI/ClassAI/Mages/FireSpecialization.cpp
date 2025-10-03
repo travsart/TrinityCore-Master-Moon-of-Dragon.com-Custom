@@ -12,6 +12,8 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
+#include "SharedDefines.h"
 #include "ObjectAccessor.h"
 
 namespace Playerbot
@@ -50,7 +52,8 @@ void FireSpecialization::UpdateRotation(::Unit* target)
     // Check for AoE situations
     if (ShouldUseAoE())
     {
-        HandleAoERotation();
+        std::vector<::Unit*> enemies = GetNearbyEnemies();
+        HandleAoERotation(enemies);
         return;
     }
 
@@ -113,7 +116,7 @@ void FireSpecialization::UpdateBuffs()
     // Arcane Intellect
     if (!_bot->HasAura(ARCANE_INTELLECT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, ARCANE_INTELLECT, false);
         }
@@ -191,11 +194,11 @@ void FireSpecialization::OnCombatEnd()
 
 bool FireSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     return GetMana() >= manaCost;
 }
 
@@ -210,10 +213,9 @@ Position FireSpecialization::GetOptimalPosition(::Unit* target)
         return _bot->GetPosition();
 
     float distance = GetOptimalRange(target);
-    float angle = _bot->GetAngle(target);
+    float angle = target->GetAbsoluteAngle(_bot);
 
-    Position pos;
-    target->GetNearPosition(pos, distance, angle + M_PI);
+    Position pos = target->GetNearPosition(distance, angle + M_PI);
     return pos;
 }
 
@@ -463,9 +465,8 @@ uint32 FireSpecialization::GetIgniteTimeRemaining(::Unit* target)
     return 0;
 }
 
-void FireSpecialization::HandleAoERotation()
+void FireSpecialization::HandleAoERotation(const std::vector<::Unit*>& enemies)
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies();
 
     if (enemies.size() >= AOE_THRESHOLD)
     {

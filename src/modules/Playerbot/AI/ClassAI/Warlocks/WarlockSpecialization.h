@@ -11,6 +11,8 @@
 
 #include "Position.h"
 #include "SharedDefines.h"
+#include "ObjectGuid.h"
+#include "Timer.h"
 #include <vector>
 #include <unordered_map>
 
@@ -84,49 +86,57 @@ public:
     virtual ~WarlockSpecialization() = default;
 
     // Core specialization interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
 
     // Combat callbacks
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 30.0f; }
 
     // Pet management - core to all warlock specs
-    virtual void UpdatePetManagement() = 0;
-    virtual void SummonOptimalPet() = 0;
-    virtual WarlockPet GetOptimalPetForSituation() = 0;
-    virtual void CommandPet(uint32 action, ::Unit* target = nullptr) = 0;
+    virtual void UpdatePetManagement() {}
+    virtual void SummonOptimalPet() {}
+    virtual WarlockPet GetOptimalPetForSituation() { return WarlockPet::IMP; }
+    virtual void CommandPet(uint32 action, ::Unit* target = nullptr) {}
 
     // DoT management - available to all specs
-    virtual void UpdateDoTManagement() = 0;
-    virtual void ApplyDoTsToTarget(::Unit* target) = 0;
-    virtual bool ShouldApplyDoT(::Unit* target, uint32 spellId) = 0;
+    virtual void UpdateDoTManagement() {}
+    virtual void ApplyDoTsToTarget(::Unit* target) {}
+    virtual bool ShouldApplyDoT(::Unit* target, uint32 spellId) { return false; }
 
     // Curse management - available to all specs
-    virtual void UpdateCurseManagement() = 0;
-    virtual uint32 GetOptimalCurseForTarget(::Unit* target) = 0;
+    virtual void UpdateCurseManagement() {}
+    virtual uint32 GetOptimalCurseForTarget(::Unit* target) { return 0; }
 
     // Soul shard management
-    virtual void UpdateSoulShardManagement() = 0;
-    virtual bool HasSoulShardsAvailable(uint32 required = 1) = 0;
-    virtual void UseSoulShard(uint32 spellId) = 0;
+    virtual void UpdateSoulShardManagement() {}
+    bool HasSoulShardsAvailable(uint32 required = 1);
+    void UseSoulShard(uint32 spellId);
 
     // Specialization info
-    virtual WarlockSpec GetSpecialization() const = 0;
-    virtual const char* GetSpecializationName() const = 0;
+    virtual WarlockSpec GetSpecialization() const { return WarlockSpec::AFFLICTION; }
+    virtual const char* GetSpecializationName() const { return "Affliction"; }
 
 protected:
     Player* GetBot() const { return _bot; }
+
+    // Helper methods for positioning and casting
+    Position GetOptimalCastingPosition(::Unit* target);
+    bool IsInCastingRange(::Unit* target, uint32 spellId);
+    bool IsChanneling();
+    bool IsCasting();
+    bool CanCast();
+    bool UseEmergencyAbilities();
 
     // Shared pet management
     WarlockPet _currentPet;
@@ -149,6 +159,17 @@ protected:
     bool IsDoTActive(::Unit* target, uint32 spellId);
     uint32 GetDoTRemainingTime(::Unit* target, uint32 spellId);
     void CastCurse(::Unit* target, uint32 curseId);
+    ::Unit* GetBestDirectDamageTarget();
+    ::Unit* GetBestDoTTarget();
+    bool CastDeathCoil(::Unit* target);
+    bool CastBanish(::Unit* target);
+    bool CastFear(::Unit* target);
+    void UpdateArmor();
+    uint32 GetMana() const;
+    uint32 GetMaxMana() const;
+    float GetManaPercent() const;
+    bool HasEnoughMana(uint32 amount);
+    void CastLifeTap();
 
     // Shared spell IDs
     enum SharedSpells

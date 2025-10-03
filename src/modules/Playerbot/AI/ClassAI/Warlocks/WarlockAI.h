@@ -12,6 +12,10 @@
 #include "../ClassAI.h"
 #include "WarlockSpecialization.h"
 #include "Position.h"
+#include "../../Combat/InterruptManager.h"
+#include "../../Combat/BotThreatManager.h"
+#include "../../Combat/TargetSelector.h"
+#include "../../Combat/PositionManager.h"
 #include <unordered_map>
 #include <memory>
 #include <atomic>
@@ -32,7 +36,7 @@ class TC_GAME_API WarlockAI : public ClassAI
 {
 public:
     explicit WarlockAI(Player* bot);
-    ~WarlockAI() = default;
+    ~WarlockAI(); // Implemented in cpp file
 
     // ClassAI interface implementation
     void UpdateRotation(::Unit* target) override;
@@ -108,10 +112,10 @@ private:
     void OptimizeDoTRotation();
 
     // Combat system integration
-    std::unique_ptr<class BotThreatManager> _threatManager;
-    std::unique_ptr<class TargetSelector> _targetSelector;
-    std::unique_ptr<class PositionManager> _positionManager;
-    std::unique_ptr<class InterruptManager> _interruptManager;
+    std::unique_ptr<BotThreatManager> _threatManager;
+    std::unique_ptr<TargetSelector> _targetSelector;
+    std::unique_ptr<PositionManager> _positionManager;
+    std::unique_ptr<InterruptManager> _interruptManager;
 
     // Soul shard tracking
     std::atomic<uint32> _currentSoulShards{0};
@@ -134,6 +138,26 @@ private:
     static constexpr float LOW_MANA_THRESHOLD = 0.3f; // 30%
     static constexpr float LIFE_TAP_THRESHOLD = 0.8f; // 80% health
     static constexpr uint32 COMBAT_METRICS_UPDATE_INTERVAL = 500; // 0.5 seconds
+
+    // Missing method declarations from implementation
+    bool HasEnoughMana(uint32 amount);
+    uint32 GetMana();
+    uint32 GetMaxMana();
+    float GetManaPercent();
+    void UseDefensiveAbilities();
+    void UseCrowdControl(::Unit* target);
+    void UpdatePetManagement();
+    WarlockSpec GetCurrentSpecialization() const;
+    bool ShouldConserveMana();
+
+    // Member variables for implementation
+    uint32 _manaSpent;
+    uint32 _damageDealt;
+    uint32 _soulshardsUsed;
+    uint32 _fearsUsed;
+    uint32 _petsSpawned;
+    uint32 _lastFear;
+    uint32 _lastPetSummon;
 };
 
 } // namespace Playerbot

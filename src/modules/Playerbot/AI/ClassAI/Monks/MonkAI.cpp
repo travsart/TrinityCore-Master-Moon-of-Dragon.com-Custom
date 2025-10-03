@@ -11,6 +11,7 @@
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "../BaselineRotationManager.h"
 
 namespace Playerbot
 {
@@ -22,16 +23,47 @@ MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
 
 void MonkAI::UpdateRotation(::Unit* target)
 {
-    if (!target)
+    if (!target || !GetBot())
         return;
 
-    // Basic monk rotation - placeholder implementation
-    // TODO: Implement proper monk combat rotation
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic auto-attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (GetBot()->GetDistance(target) <= 5.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
+
+    // Specialized rotation for level 10+ with spec
+    // TODO: Implement specialized monk combat rotation
 }
 
 void MonkAI::UpdateBuffs()
 {
-    // Basic buff management - placeholder implementation
+    if (!GetBot())
+        return;
+
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
+
+    // Specialized buff management for level 10+ with spec
     // TODO: Implement monk buff management
 }
 

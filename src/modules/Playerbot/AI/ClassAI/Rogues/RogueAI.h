@@ -12,6 +12,14 @@
 
 #include "../ClassAI.h"
 #include "RogueSpecialization.h"
+#include "EnergyManager.h"
+#include "Position.h"
+#include "Unit.h"
+#include "../Combat/BotThreatManager.h"
+#include "../Combat/TargetSelector.h"
+#include "../Combat/PositionManager.h"
+#include "../Combat/InterruptManager.h"
+#include "../CooldownManager.h"
 #include <memory>
 #include <atomic>
 #include <chrono>
@@ -23,18 +31,45 @@ namespace Playerbot
 struct RogueMetrics;
 class RogueCombatMetrics;
 class RogueCombatPositioning;
-class EnergyManager;
-class BotThreatManager;
-class TargetSelector;
-class PositionManager;
-class InterruptManager;
-class CooldownManager;
+class AssassinationRogueRefactored;
+class OutlawRogueRefactored;
+class SubtletyRogueRefactored;
 
+// Rogue specializations
 enum class RogueSpec : uint8
 {
     ASSASSINATION = 0,
     COMBAT        = 1,
     SUBTLETY      = 2
+};
+
+// Simple positioning helper class
+class TC_GAME_API RogueCombatPositioning
+{
+public:
+    explicit RogueCombatPositioning(Player* bot) : _bot(bot) {}
+
+    Position CalculateOptimalPosition(Unit* target, RogueSpec spec);
+
+    bool IsBehindTarget(Unit* target) const
+    {
+        if (!target || !_bot)
+            return false;
+
+        float targetFacing = target->GetOrientation();
+        float angleToMe = target->GetAbsoluteAngle(_bot);
+        float diff = std::abs(targetFacing - angleToMe);
+
+        if (diff > M_PI)
+            diff = 2 * M_PI - diff;
+
+        return diff < (M_PI / 3); // Within 60 degrees behind
+    }
+
+    float GetOptimalRange(RogueSpec spec) const;
+
+private:
+    Player* _bot;
 };
 
 class RogueAI : public ClassAI
@@ -82,6 +117,8 @@ private:
     // Specialization system
     std::unique_ptr<RogueSpecialization> _specialization;
     RogueSpec _detectedSpec;
+    void SwitchSpecialization(RogueSpec newSpec);
+    void DelegateToSpecialization(::Unit* target);
 
     // Combat systems
     std::unique_ptr<BotThreatManager> _threatManager;
@@ -91,17 +128,27 @@ private:
     std::unique_ptr<CooldownManager> _cooldownManager;
 
     // Rogue-specific systems
-    std::unique_ptr<RogueMetrics> _metrics;
-    std::unique_ptr<RogueCombatMetrics> _combatMetrics;
-    std::unique_ptr<RogueCombatPositioning> _positioning;
+    RogueMetrics* _metrics;
+    RogueCombatMetrics* _combatMetrics;
+    RogueCombatPositioning* _positioning;
     std::unique_ptr<EnergyManager> _energyManager;
 
     // Combat tracking
     uint32 _energySpent;
-    uint32 _comboPointsGenerated;
-    uint32 _finishersExecuted;
-    uint32 _lastPoison;
+    uint32 _comboPointsUsed;
+    uint32 _stealthsUsed;
     uint32 _lastStealth;
+    uint32 _lastVanish;
+
+    // Missing method declarations from implementation
+    void ConsiderStealth();
+    // ActivateBurstCooldowns already declared above
+    bool HasEnoughEnergy(uint32 amount);
+    uint32 GetEnergy();
+    uint32 GetComboPoints();
+
+    // Member variable for positioning
+    std::unique_ptr<RogueCombatPositioning> _combatPositioning;
 };
 
 } // namespace Playerbot

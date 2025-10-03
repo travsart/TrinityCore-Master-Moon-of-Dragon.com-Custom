@@ -10,12 +10,13 @@
 #pragma once
 
 #include "Position.h"
+#include "Unit.h"
+#include "Timer.h"
 #include <vector>
 #include <queue>
 
 // Forward declarations
 class Player;
-class Unit;
 
 namespace Playerbot
 {
@@ -86,36 +87,36 @@ public:
     virtual ~PriestSpecialization() = default;
 
     // Core specialization interface
-    virtual void UpdateRotation(::Unit* target) = 0;
-    virtual void UpdateBuffs() = 0;
-    virtual void UpdateCooldowns(uint32 diff) = 0;
-    virtual bool CanUseAbility(uint32 spellId) = 0;
+    virtual void UpdateRotation(::Unit* target) {}
+    virtual void UpdateBuffs() {}
+    virtual void UpdateCooldowns(uint32 diff) {}
+    virtual bool CanUseAbility(uint32 spellId) { return false; }
 
     // Combat callbacks
-    virtual void OnCombatStart(::Unit* target) = 0;
-    virtual void OnCombatEnd() = 0;
+    virtual void OnCombatStart(::Unit* target) {}
+    virtual void OnCombatEnd() {}
 
     // Resource management
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-    virtual void ConsumeResource(uint32 spellId) = 0;
+    virtual bool HasEnoughResource(uint32 spellId) { return false; }
+    virtual void ConsumeResource(uint32 spellId) {}
 
     // Positioning
-    virtual Position GetOptimalPosition(::Unit* target) = 0;
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual Position GetOptimalPosition(::Unit* target) { return Position(); }
+    virtual float GetOptimalRange(::Unit* target) { return 0.0f; }
 
     // Healing interface
-    virtual void UpdateHealing() = 0;
-    virtual bool ShouldHeal() = 0;
-    virtual ::Unit* GetBestHealTarget() = 0;
-    virtual void HealTarget(::Unit* target) = 0;
+    virtual void UpdateHealing() {}
+    virtual bool ShouldHeal() { return false; }
+    virtual ::Unit* GetBestHealTarget() { return nullptr; }
+    virtual void HealTarget(::Unit* target) {}
 
     // Role management
-    virtual PriestRole GetCurrentRole() = 0;
-    virtual void SetRole(PriestRole role) = 0;
+    virtual PriestRole GetCurrentRole() { return PriestRole::HEALER; }
+    virtual void SetRole(PriestRole role) {}
 
     // Specialization info
-    virtual PriestSpec GetSpecialization() const = 0;
-    virtual const char* GetSpecializationName() const = 0;
+    virtual PriestSpec GetSpecialization() const { return PriestSpec::DISCIPLINE; }
+    virtual const char* GetSpecializationName() const { return "Priest"; }
 
 protected:
     Player* _bot;
@@ -190,7 +191,7 @@ protected:
         SMITE = 585,
 
         // Buffs
-        POWER_WORD_FORTITUDE = 1243,
+        POWER_WORD_FORTITUDE = 21562, // Updated for WoW 11.2
         DIVINE_SPIRIT = 14752,
         SHADOW_PROTECTION = 976,
         INNER_FIRE = 588

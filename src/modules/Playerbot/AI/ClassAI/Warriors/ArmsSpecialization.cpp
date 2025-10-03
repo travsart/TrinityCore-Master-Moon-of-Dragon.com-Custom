@@ -125,7 +125,7 @@ void ArmsSpecialization::UpdateBuffs()
     // Battle Shout
     if (!_bot->HasAura(BATTLE_SHOUT) && !_bot->HasAura(COMMANDING_SHOUT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(BATTLE_SHOUT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(BATTLE_SHOUT, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, BATTLE_SHOUT, false);
         }
@@ -217,7 +217,7 @@ void ArmsSpecialization::OnCombatEnd()
 
 bool ArmsSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 

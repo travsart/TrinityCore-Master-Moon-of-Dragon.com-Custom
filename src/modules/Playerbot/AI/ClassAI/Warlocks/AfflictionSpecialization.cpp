@@ -12,6 +12,10 @@
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Log.h"
+#include "Map.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
 
 namespace Playerbot
 {
@@ -27,9 +31,7 @@ AfflictionSpecialization::AfflictionSpecialization(Player* bot)
     , _lastLifeTap(0)
     , _isChanneling(false)
     , _drainTarget(nullptr)
-    , _totalDoTDamage(0)
-    , _totalDrainDamage(0)
-    , _manaFromLifeTap(0)
+    , _afflictionMetrics() // Initialize metrics struct with defaults
     , _maxDoTTargets(MAX_DOT_TARGETS)
     , _lastDoTSpread(0)
 {
@@ -46,7 +48,7 @@ void AfflictionSpecialization::UpdateRotation(::Unit* target)
 
     UpdateDoTManagement();
     UpdateDrainRotation();
-    UpdateLifeTap();
+    ManageLifeTap();
 
     if (ShouldCastUnstableAffliction(target))
     {
@@ -159,11 +161,20 @@ bool AfflictionSpecialization::HasEnoughResource(uint32 spellId)
     if (!bot)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     return bot->GetPower(POWER_MANA) >= manaCost;
 }
 
@@ -173,11 +184,20 @@ void AfflictionSpecialization::ConsumeResource(uint32 spellId)
     if (!bot)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     if (bot->GetPower(POWER_MANA) >= manaCost)
         bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);
 }
@@ -189,7 +209,7 @@ Position AfflictionSpecialization::GetOptimalPosition(::Unit* target)
         return Position();
 
     float distance = OPTIMAL_CASTING_RANGE * 0.8f;
-    float angle = target->GetAngle(bot) + M_PI;
+    float angle = target->GetAbsoluteAngle(bot) + M_PI;
 
     return Position(
         target->GetPositionX() + distance * cos(angle),
@@ -369,9 +389,13 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
     if (!bot || !target)
         return false;
 
-    auto units = bot->GetMap()->GetUnitsInRange(target->GetPosition(), 15.0f);
+    std::list<Unit*> units;
+    Trinity::AnyUnitInObjectRangeCheck u_check(target, 15.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(target, units, u_check);
+    Cell::VisitAllObjects(target, searcher, 15.0f);
+
     uint32 enemyCount = 0;
-    for (auto unit : units)
+    for (Unit* unit : units)
     {
         if (unit && unit->IsHostileTo(bot) && unit->IsAlive())
             enemyCount++;
@@ -489,7 +513,7 @@ void AfflictionSpecialization::CastLifeTap()
     {
         bot->CastSpell(bot, LIFE_TAP, false);
         _lastLifeTap = 1500;
-        _manaFromLifeTap += 500; // Approximate
+        _afflictionMetrics.manaFromLifeTap += 500; // Approximate
     }
 }
 
@@ -533,8 +557,12 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
     if (!bot)
         return targets;
 
-    auto units = bot->GetMap()->GetUnitsInRange(bot->GetPosition(), OPTIMAL_CASTING_RANGE);
-    for (auto unit : units)
+    std::list<Unit*> units;
+    Trinity::AnyUnitInObjectRangeCheck u_check(bot, OPTIMAL_CASTING_RANGE);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, units, u_check);
+    Cell::VisitAllObjects(bot, searcher, OPTIMAL_CASTING_RANGE);
+
+    for (Unit* unit : units)
     {
         if (unit && unit->IsHostileTo(bot) && unit->IsAlive() && IsTargetWorthDoTting(unit))
         {
@@ -555,6 +583,160 @@ bool AfflictionSpecialization::IsTargetWorthDoTting(::Unit* target)
     // Don't DoT targets that will die quickly
     return target->GetHealthPct() > 30.0f &&
            target->GetHealth() > 10000;
+}
+
+void AfflictionSpecialization::UpdateDrainRotation()
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    // Only update drain rotation during combat
+    if (!bot->IsInCombat())
+        return;
+
+    // If already channeling, check if we should continue or switch targets
+    if (_isChanneling)
+    {
+        // Verify drain target is still valid
+        if (!_drainTarget || !_drainTarget->IsAlive() || !bot->IsValidAttackTarget(_drainTarget))
+        {
+            // Stop channeling invalid target
+            bot->InterruptSpell(CURRENT_CHANNELED_SPELL);
+            _isChanneling = false;
+            _drainTarget = nullptr;
+            _lastDrainLife = 0;
+            return;
+        }
+
+        // Continue channeling if target is still optimal
+        if (ShouldChannelDrain())
+            return;
+
+        // Otherwise interrupt and switch
+        bot->InterruptSpell(CURRENT_CHANNELED_SPELL);
+        _isChanneling = false;
+        _drainTarget = nullptr;
+        _lastDrainLife = 0;
+    }
+
+    // Find best target for draining
+    ::Unit* drainTarget = GetBestDrainTarget();
+    if (!drainTarget)
+        return;
+
+    // Decide which drain spell to use based on situation
+    if (ShouldCastDrainLife(drainTarget))
+    {
+        CastDrainLife(drainTarget);
+    }
+    else if (bot->GetPowerPct(POWER_MANA) < 30.0f && HasEnoughResource(DRAIN_MANA))
+    {
+        // Use Drain Mana when low on mana and target has mana
+        if (drainTarget->GetPowerType() == POWER_MANA && drainTarget->GetPower(POWER_MANA) > 0)
+        {
+            if (bot->CastSpell(drainTarget, DRAIN_MANA, false) == SPELL_CAST_OK)
+            {
+                ConsumeResource(DRAIN_MANA);
+                _isChanneling = true;
+                _drainTarget = drainTarget;
+            }
+        }
+    }
+    else if (drainTarget->GetHealthPct() < 25.0f && HasEnoughResource(DRAIN_SOUL))
+    {
+        // Use Drain Soul on low health targets for soul shard generation
+        CastDrainSoul(drainTarget);
+    }
+}
+
+void AfflictionSpecialization::CastDrainSoul(::Unit* target)
+{
+    Player* bot = GetBot();
+    if (!bot || !target)
+        return;
+
+    if (HasEnoughResource(DRAIN_SOUL))
+    {
+        if (bot->CastSpell(target, DRAIN_SOUL, false) == SPELL_CAST_OK)
+        {
+            ConsumeResource(DRAIN_SOUL);
+            _isChanneling = true;
+            _drainTarget = target;
+
+            // Drain Soul generates soul shards when target dies during channel
+            if (target->GetHealthPct() < 25.0f)
+            {
+                _soulShards.count = std::min(_soulShards.count + 1, 20u); // Cap at 20 soul shards
+            }
+        }
+    }
+}
+
+bool AfflictionSpecialization::ShouldChannelDrain()
+{
+    Player* bot = GetBot();
+    if (!bot || !_drainTarget)
+        return false;
+
+    // Continue channeling if target is still valid and in range
+    if (!_drainTarget->IsAlive() || !bot->IsValidAttackTarget(_drainTarget))
+        return false;
+
+    // Check if target is still in range
+    float distance = bot->GetDistance(_drainTarget);
+    if (distance > OPTIMAL_CASTING_RANGE)
+        return false;
+
+    // Continue drain if target health is appropriate for current drain type
+    if (_lastDrainLife > 0)
+    {
+        // Continue Drain Life if we still need health
+        return bot->GetHealthPct() < DRAIN_HEALTH_THRESHOLD + 10.0f;
+    }
+
+    // Continue other drains for their full duration
+    return true;
+}
+
+::Unit* AfflictionSpecialization::GetBestDrainTarget()
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return nullptr;
+
+    // Priority 1: Current selected target if valid
+    ::Unit* currentTarget = bot->GetSelectedUnit();
+    if (currentTarget && currentTarget->IsAlive() && bot->IsValidAttackTarget(currentTarget))
+    {
+        float distance = bot->GetDistance(currentTarget);
+        if (distance <= OPTIMAL_CASTING_RANGE)
+            return currentTarget;
+    }
+
+    // Priority 2: Find nearest hostile target in range
+    std::list<Unit*> targets;
+    Trinity::AnyUnitInObjectRangeCheck u_check(bot, OPTIMAL_CASTING_RANGE);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
+    Cell::VisitAllObjects(bot, searcher, OPTIMAL_CASTING_RANGE);
+
+    ::Unit* bestTarget = nullptr;
+    float nearestDistance = OPTIMAL_CASTING_RANGE + 1.0f;
+
+    for (Unit* target : targets)
+    {
+        if (!target || !target->IsAlive() || !bot->IsValidAttackTarget(target))
+            continue;
+
+        float distance = bot->GetDistance(target);
+        if (distance < nearestDistance)
+        {
+            nearestDistance = distance;
+            bestTarget = target;
+        }
+    }
+
+    return bestTarget;
 }
 
 } // namespace Playerbot

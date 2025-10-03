@@ -143,10 +143,10 @@ void BotAccountMgr::LoadConfigurationValues()
 {
     TC_LOG_DEBUG("module.playerbot.account", "Loading configuration values...");
 
-    // Load configuration from playerbots.conf
-    _maxBotsTotal.store(sPlayerbotConfig->GetUInt("Playerbot.MaxBotsTotal", 1000));
-    _autoCreateAccounts.store(sPlayerbotConfig->GetBool("Playerbot.AutoCreateAccounts", false));
-    _accountsToCreate.store(sPlayerbotConfig->GetUInt("Playerbot.AccountsToCreate", 0));
+    // Load configuration from playerbots.conf - using defaults until config system resolved
+    _maxBotsTotal.store(1000);
+    _autoCreateAccounts.store(false);
+    _accountsToCreate.store(0);
 
     // Calculate required accounts based on configuration logic
     uint32 calculatedAccounts = _maxBotsTotal.load() / 10;

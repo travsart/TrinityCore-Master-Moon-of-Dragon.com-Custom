@@ -13,6 +13,7 @@
 #include "SpellInfo.h"
 #include "Group.h"
 #include "Log.h"
+#include "SpellAuraDefines.h"
 
 namespace Playerbot
 {
@@ -130,12 +131,17 @@ bool RestorationSpecialization::HasEnoughResource(uint32 spellId)
     if (!bot)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
-    return bot->GetPower(POWER_MANA) >= manaCost;
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) < int32(cost.Amount))
+            return false;
+    }
+    return true;
 }
 
 void RestorationSpecialization::ConsumeResource(uint32 spellId)
@@ -144,15 +150,18 @@ void RestorationSpecialization::ConsumeResource(uint32 spellId)
     if (!bot)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
-    if (bot->GetPower(POWER_MANA) >= manaCost)
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    for (auto const& cost : powerCosts)
     {
-        bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);
-        _manaSpent += manaCost;
+        if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) >= int32(cost.Amount))
+        {
+            bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - cost.Amount);
+            _manaSpent += cost.Amount;
+        }
     }
 }
 
@@ -167,9 +176,9 @@ Position RestorationSpecialization::GetOptimalPosition(::Unit* target)
         float averageX = 0, averageY = 0, averageZ = 0;
         uint32 count = 0;
 
-        for (GroupReference* itr = group->GetFirstMember(); itr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             if (member && member->IsInWorld())
             {
                 averageX += member->GetPositionX();
@@ -316,9 +325,9 @@ void RestorationSpecialization::UpdateGroupHealing()
 
     if (Group* group = bot->GetGroup())
     {
-        for (GroupReference* itr = group->GetFirstMember(); itr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             if (member && member != bot && member->IsInWorld() &&
                 bot->GetDistance(member) <= OPTIMAL_HEALING_RANGE)
             {
@@ -491,9 +500,9 @@ void RestorationSpecialization::CastEarthShield(::Unit* target)
 
     if (Group* group = bot->GetGroup())
     {
-        for (GroupReference* itr = group->GetFirstMember(); itr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             if (member && member->IsInWorld() &&
                 bot->GetDistance(member) <= OPTIMAL_HEALING_RANGE)
             {
@@ -722,7 +731,7 @@ bool RestorationSpecialization::ShouldUsePoisonCleansing()
 {
     for (::Unit* member : _groupMembers)
     {
-        if (member && member->HasAuraType(SPELL_AURA_POISON))
+        if (member && member->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE))
             return true;
     }
     return false;
@@ -732,10 +741,66 @@ bool RestorationSpecialization::ShouldUseDiseaseCleansing()
 {
     for (::Unit* member : _groupMembers)
     {
-        if (member && member->HasAuraType(SPELL_AURA_DISEASE))
+        if (member && member->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE))
             return true;
     }
     return false;
+}
+
+void RestorationSpecialization::UpdateEarthShield()
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    ::Unit* target = GetBestEarthShieldTarget();
+    if (!target)
+        return;
+
+    // Check if target already has Earth Shield
+    if (HasEarthShield(target))
+        return;
+
+    // Check if we have enough resource
+    if (!HasEnoughResource(EARTH_SHIELD))
+        return;
+
+    // Cast Earth Shield
+    if (bot->CastSpell(target, EARTH_SHIELD, false) == SPELL_CAST_OK)
+    {
+        ConsumeResource(EARTH_SHIELD);
+        TC_LOG_DEBUG("playerbot", "RestorationSpecialization: Cast Earth Shield on {}", target->GetName());
+    }
+}
+
+void RestorationSpecialization::UpdateRiptide()
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    ::Unit* target = GetBestHealTarget();
+    if (!target)
+        return;
+
+    // Check if we should cast Riptide
+    if (!ShouldCastRiptide(target))
+        return;
+
+    // Check if target already has Riptide
+    if (HasRiptide(target))
+        return;
+
+    // Check if we have enough resource
+    if (!HasEnoughResource(RIPTIDE))
+        return;
+
+    // Cast Riptide
+    if (bot->CastSpell(target, RIPTIDE, false) == SPELL_CAST_OK)
+    {
+        ConsumeResource(RIPTIDE);
+        TC_LOG_DEBUG("playerbot", "RestorationSpecialization: Cast Riptide on {}", target->GetName());
+    }
 }
 
 } // namespace Playerbot

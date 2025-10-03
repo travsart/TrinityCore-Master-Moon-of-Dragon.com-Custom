@@ -32,6 +32,7 @@
 #include "AfflictionSpecialization.h"
 #include "DemonologySpecialization.h"
 #include "DestructionSpecialization.h"
+#include "../BaselineRotationManager.h"
 
 namespace Playerbot
 {
@@ -142,7 +143,31 @@ void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
 
 void WarlockAI::UpdateRotation(::Unit* target)
 {
-    if (!target || !_specialization)
+    if (!target)
+        return;
+
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic ranged attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (GetBot()->GetDistance(target) <= 35.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
+
+    // Specialized rotation for level 10+ with spec
+    if (!_specialization)
         return;
 
     // Update performance metrics
@@ -186,6 +211,15 @@ void WarlockAI::DelegateToSpecialization(::Unit* target)
 
 void WarlockAI::UpdateBuffs()
 {
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
+
+    // Specialized buff management for level 10+ with spec
     // Update warlock-specific buffs
     UpdateWarlockBuffs();
 

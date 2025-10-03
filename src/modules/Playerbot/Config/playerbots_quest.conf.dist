@@ -1,0 +1,259 @@
+###################################################################################################
+# PLAYERBOT QUEST SYSTEM CONFIGURATION
+#
+# This file contains all configuration options for the Playerbot Quest Management System
+#
+###################################################################################################
+
+###################################################################################################
+# QUEST SYSTEM CORE SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.Quest.Enable
+#        Description: Enable the automated quest management system for bots
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.Enable = 1
+
+#
+#    Playerbot.Quest.AutoAccept
+#        Description: Automatically accept quests from NPCs when discovered
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.AutoAccept = 1
+
+#
+#    Playerbot.Quest.AutoAcceptShared
+#        Description: Automatically accept quests shared by group members
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.AutoAcceptShared = 1
+
+#
+#    Playerbot.Quest.AutoComplete
+#        Description: Automatically turn in completed quests to NPCs
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.AutoComplete = 1
+
+###################################################################################################
+# QUEST SYSTEM TIMING CONFIGURATION
+###################################################################################################
+
+#
+#    Playerbot.Quest.UpdateInterval
+#        Description: How often the quest system updates (milliseconds)
+#        Default:     5000 (5 seconds)
+#        Range:       1000-60000
+#
+
+Playerbot.Quest.UpdateInterval = 5000
+
+#
+#    Playerbot.Quest.CacheUpdateInterval
+#        Description: How often to refresh the quest cache (milliseconds)
+#        Default:     30000 (30 seconds)
+#        Range:       10000-300000
+#
+
+Playerbot.Quest.CacheUpdateInterval = 30000
+
+###################################################################################################
+# QUEST SYSTEM LIMITS
+###################################################################################################
+
+#
+#    Playerbot.Quest.MaxActiveQuests
+#        Description: Maximum number of quests a bot will maintain in their log
+#        Default:     20
+#        Range:       1-25
+#
+
+Playerbot.Quest.MaxActiveQuests = 20
+
+#
+#    Playerbot.Quest.MaxTravelDistance
+#        Description: Maximum distance (yards) a bot will travel for a quest
+#        Default:     1000
+#        Range:       100-10000
+#
+
+Playerbot.Quest.MaxTravelDistance = 1000
+
+###################################################################################################
+# QUEST TYPE PREFERENCES
+###################################################################################################
+
+#
+#    Playerbot.Quest.PrioritizeDaily
+#        Description: Give higher priority to daily quests
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.PrioritizeDaily = 1
+
+#
+#    Playerbot.Quest.AcceptDungeon
+#        Description: Accept dungeon quests (requires group)
+#        Default:     0 (Disabled)
+#                     1 (Enabled)
+#
+
+Playerbot.Quest.AcceptDungeon = 0
+
+#
+#    Playerbot.Quest.PrioritizeGroup
+#        Description: Prioritize quests that group members also have
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.PrioritizeGroup = 1
+
+###################################################################################################
+# QUEST SELECTION STRATEGY
+###################################################################################################
+
+#
+#    Playerbot.Quest.SelectionStrategy
+#        Description: Strategy for selecting which quests to accept and prioritize
+#        Default:     "optimal"
+#        Options:
+#            "simple"        - Basic quest selection (level appropriate)
+#            "optimal"       - Optimized for XP/hour and rewards
+#            "group"         - Prioritize group quests
+#            "completionist" - Accept all available quests in zone
+#            "speed"         - Focus on fastest leveling path
+#
+
+Playerbot.Quest.SelectionStrategy = "optimal"
+
+###################################################################################################
+# QUEST REWARD PREFERENCES
+###################################################################################################
+
+#
+#    Playerbot.Quest.PreferGoldRewards
+#        Description: Prefer gold rewards over item rewards when possible
+#        Default:     0 (Disabled - prefer items)
+#                     1 (Enabled - prefer gold)
+#
+
+Playerbot.Quest.PreferGoldRewards = 0
+
+#
+#    Playerbot.Quest.PreferXPRewards
+#        Description: Prioritize quests with highest XP rewards
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.PreferXPRewards = 1
+
+###################################################################################################
+# QUEST LEVEL REQUIREMENTS
+###################################################################################################
+
+#
+#    Playerbot.Quest.MinLevelOffset
+#        Description: Minimum quest level relative to bot level (negative = below bot level)
+#        Default:     -5 (5 levels below bot)
+#        Range:       -20 to 0
+#
+
+Playerbot.Quest.MinLevelOffset = -5
+
+#
+#    Playerbot.Quest.MaxLevelOffset
+#        Description: Maximum quest level relative to bot level (positive = above bot level)
+#        Default:     3 (3 levels above bot)
+#        Range:       0 to 10
+#
+
+Playerbot.Quest.MaxLevelOffset = 3
+
+###################################################################################################
+# QUEST ABANDONMENT SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.Quest.AbandonTimeout
+#        Description: Time (minutes) before abandoning an incomplete quest
+#        Default:     30
+#        Range:       10-120
+#
+
+Playerbot.Quest.AbandonTimeout = 30
+
+#
+#    Playerbot.Quest.AbandonLowLevel
+#        Description: Automatically abandon quests that become gray (too low level)
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+#
+
+Playerbot.Quest.AbandonLowLevel = 1
+
+###################################################################################################
+# QUEST DEBUG SETTINGS
+###################################################################################################
+
+#
+#    Playerbot.Quest.Debug
+#        Description: Enable debug logging for quest system
+#        Default:     0 (Disabled)
+#                     1 (Basic logging)
+#                     2 (Verbose logging)
+#
+
+Playerbot.Quest.Debug = 0
+
+#
+#    Playerbot.Quest.LogDecisions
+#        Description: Log quest selection decisions and scores
+#        Default:     0 (Disabled)
+#                     1 (Enabled)
+#
+
+Playerbot.Quest.LogDecisions = 0
+
+###################################################################################################
+# PERFORMANCE TUNING
+###################################################################################################
+
+#
+#    Playerbot.Quest.MaxScansPerUpdate
+#        Description: Maximum number of quest givers to scan per update cycle
+#        Default:     10
+#        Range:       1-50
+#
+
+Playerbot.Quest.MaxScansPerUpdate = 10
+
+#
+#    Playerbot.Quest.CPUBudgetPercent
+#        Description: Maximum CPU budget for quest system (percentage of bot CPU time)
+#        Default:     10
+#        Range:       1-50
+#
+
+Playerbot.Quest.CPUBudgetPercent = 10
+
+#
+#    Playerbot.Quest.MemoryLimitMB
+#        Description: Maximum memory usage for quest caches per bot (MB)
+#        Default:     2
+#        Range:       1-10
+#
+
+Playerbot.Quest.MemoryLimitMB = 2

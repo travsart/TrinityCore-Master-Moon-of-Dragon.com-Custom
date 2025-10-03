@@ -23,6 +23,7 @@
 #include "ObjectAccessor.h"
 #include "WorldSession.h"
 #include "../CooldownManager.h"
+#include "../BaselineRotationManager.h"
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include <algorithm>
@@ -132,7 +133,7 @@ MageAI::MageAI(Player* bot) : ClassAI(bot),
     _combatMetrics.Reset();
 
     TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {} with specialization {}",
-                 bot ? bot->GetName() : "null",
+                 bot ? bot->GetName().c_str() : "null",
                  _specialization ? _specialization->GetSpecializationName() : "none");
 }
 
@@ -212,15 +213,38 @@ void MageAI::SwitchSpecialization(MageSpec newSpec)
             break;
     }
 
-    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switched specialization to {}",
-                 GetBot() ? GetBot()->GetName() : "null",
-                 _specialization ? _specialization->GetSpecializationName() : "none");
+    if (GetBot())
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switched specialization to {}",
+                     GetBot()->GetName(), _specialization ? _specialization->GetSpecializationName() : "none");
+    else
+        TC_LOG_DEBUG("module.playerbot.ai", "Null mage switched specialization to {}",
+                     _specialization ? _specialization->GetSpecializationName() : "none");
 }
 
 void MageAI::UpdateRotation(::Unit* target)
 {
-    if (!GetBot())
+    if (!GetBot() || !target)
         return;
+
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic ranged attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (GetBot()->GetDistance(target) <= 35.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
 
     // Check if we need to switch specialization
     MageSpec newSpec = DetectCurrentSpecialization();
@@ -282,6 +306,14 @@ void MageAI::UpdateBuffs()
 {
     if (!GetBot())
         return;
+
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(GetBot());
+        return;
+    }
 
     UpdateMageBuffs();
 
@@ -356,8 +388,10 @@ void MageAI::OnCombatStart(::Unit* target)
         GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
     }
 
-    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} entering combat with target {}",
-                 GetBot()->GetName(), target ? target->GetName() : "null");
+    if (target)
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} entering combat with target {}", GetBot()->GetName(), target->GetName());
+    else
+        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} entering combat with null target", GetBot()->GetName());
 }
 
 void MageAI::OnCombatEnd()
@@ -376,10 +410,10 @@ void MageAI::OnCombatEnd()
     TC_LOG_DEBUG("module.playerbot.ai",
                  "Mage {} combat ended - Damage: {}, Mana spent: {}, Spells cast: {}, Crits: {}",
                  GetBot()->GetName(),
-                 _combatMetrics.totalDamage.load(),
-                 _combatMetrics.totalManaSpent.load(),
-                 _spellsCast.load(),
-                 _criticalHits.load());
+                 uint32(_combatMetrics.totalDamage.load()),
+                 uint32(_combatMetrics.totalManaSpent.load()),
+                 uint32(_spellsCast.load()),
+                 uint32(_criticalHits.load()));
 }
 
 bool MageAI::HasEnoughResource(uint32 spellId)
@@ -951,7 +985,7 @@ void MageAI::UseBlizzard(const std::vector<::Unit*>& enemies)
 
     // Cast Blizzard at center (would need ground-targeted spell implementation)
     TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Blizzard on {} enemies",
-                 GetBot()->GetName(), enemies.size());
+                 GetBot()->GetName(), uint32(enemies.size()));
 }
 
 void MageAI::UseFlamestrike(const std::vector<::Unit*>& enemies)
@@ -960,7 +994,7 @@ void MageAI::UseFlamestrike(const std::vector<::Unit*>& enemies)
         return;
 
     TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Flamestrike on {} enemies",
-                 GetBot()->GetName(), enemies.size());
+                 GetBot()->GetName(), uint32(enemies.size()));
 }
 
 void MageAI::UseArcaneExplosion(const std::vector<::Unit*>& enemies)
@@ -981,7 +1015,7 @@ void MageAI::UseArcaneExplosion(const std::vector<::Unit*>& enemies)
         if (CastSpell(ARCANE_EXPLOSION))
         {
             TC_LOG_DEBUG("module.playerbot.ai", "Mage {} cast Arcane Explosion hitting {} enemies",
-                         GetBot()->GetName(), nearbyCount);
+                         GetBot()->GetName(), uint32(nearbyCount));
         }
     }
 }
@@ -1004,7 +1038,7 @@ void MageAI::UseConeOfCold(const std::vector<::Unit*>& enemies)
         if (CastSpell(CONE_OF_COLD))
         {
             TC_LOG_DEBUG("module.playerbot.ai", "Mage {} cast Cone of Cold hitting {} enemies",
-                         GetBot()->GetName(), frontalCount);
+                         GetBot()->GetName(), uint32(frontalCount));
         }
     }
 }
@@ -1290,8 +1324,10 @@ void MageAI::RecordSpellCrit(uint32 spellId, ::Unit* target, uint32 damage)
 void MageAI::RecordSpellResist(uint32 spellId, ::Unit* target)
 {
     // Track spell resistance for adaptation
-    TC_LOG_DEBUG("module.playerbot.ai", "Spell {} resisted by {}",
-                 spellId, target ? target->GetName() : "null");
+    if (target)
+        TC_LOG_DEBUG("module.playerbot.ai", "Spell {} resisted by {}", spellId, target->GetName());
+    else
+        TC_LOG_DEBUG("module.playerbot.ai", "Spell {} resisted by null target", spellId);
 }
 
 void MageAI::RecordInterruptAttempt(uint32 spellId, ::Unit* target, bool success)
@@ -1318,10 +1354,14 @@ void MageAI::AnalyzeCastingEffectiveness()
     float critRate = static_cast<float>(_criticalHits) / _spellsCast * 100.0f;
     float manaEfficiency = _damageDealt.load() / std::max(1u, _manaSpent.load());
 
-    TC_LOG_DEBUG("module.playerbot.ai",
-                 "Mage {} effectiveness - Crit: {:.1f}%, Mana efficiency: {:.2f} damage/mana",
-                 GetBot() ? GetBot()->GetName() : "null",
-                 critRate, manaEfficiency);
+    if (GetBot())
+        TC_LOG_DEBUG("module.playerbot.ai",
+                     "Mage {} effectiveness - Crit: {:.1f}%, Mana efficiency: {:.2f} damage/mana",
+                     GetBot()->GetName(), critRate, manaEfficiency);
+    else
+        TC_LOG_DEBUG("module.playerbot.ai",
+                     "Null mage effectiveness - Crit: {:.1f}%, Mana efficiency: {:.2f} damage/mana",
+                     critRate, manaEfficiency);
 }
 
 float MageAI::CalculateSpellEfficiency(uint32 spellId)
@@ -1631,11 +1671,14 @@ void MageAI::ManageResourceEfficiency()
     OptimizeManaUsage();
 
     // Track efficiency metrics
-    if (_manaSpent > 0)
+    uint32 manaSpent = _manaSpent.load();
+    if (manaSpent > 0)
     {
-        float efficiency = static_cast<float>(_damageDealt) / _manaSpent;
-        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} resource efficiency: {:.2f}",
-                     GetBot() ? GetBot()->GetName() : "null", efficiency);
+        float efficiency = static_cast<float>(_damageDealt.load()) / static_cast<float>(manaSpent);
+        if (GetBot())
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} resource efficiency: {:.2f}", GetBot()->GetName(), efficiency);
+        else
+            TC_LOG_DEBUG("module.playerbot.ai", "Null mage resource efficiency: {:.2f}", efficiency);
     }
 }
 
@@ -1834,8 +1877,10 @@ void MageAI::OptimizeCastingSequence()
     if (ShouldConserveMana())
     {
         // Use more efficient spells
-        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switching to mana-efficient rotation",
-                     GetBot() ? GetBot()->GetName() : "null");
+        if (GetBot())
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switching to mana-efficient rotation", GetBot()->GetName());
+        else
+            TC_LOG_DEBUG("module.playerbot.ai", "Null mage switching to mana-efficient rotation");
     }
 }
 

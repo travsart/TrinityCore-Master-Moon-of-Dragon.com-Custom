@@ -8,12 +8,14 @@
  */
 
 #include "WarlockAI.h"
-#include "AfflictionSpecialization.h"
-#include "DemonologySpecialization.h"
-#include "DestructionSpecialization.h"
+#include "AfflictionWarlockRefactored.h"
+#include "DemonologyWarlockRefactored.h"
+#include "DestructionWarlockRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "Timer.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -49,16 +51,24 @@ void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
     switch (newSpec)
     {
         case WarlockSpec::AFFLICTION:
-            _specialization = std::make_unique<AfflictionSpecialization>(GetBot());
+            _specialization = std::make_unique<AfflictionWarlockRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warlock", "Warlock {} switched to Affliction specialization",
+                         GetBot()->GetName());
             break;
         case WarlockSpec::DEMONOLOGY:
-            _specialization = std::make_unique<DemonologySpecialization>(GetBot());
+            _specialization = std::make_unique<DemonologyWarlockRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warlock", "Warlock {} switched to Demonology specialization",
+                         GetBot()->GetName());
             break;
         case WarlockSpec::DESTRUCTION:
-            _specialization = std::make_unique<DestructionSpecialization>(GetBot());
+            _specialization = std::make_unique<DestructionWarlockRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warlock", "Warlock {} switched to Destruction specialization",
+                         GetBot()->GetName());
             break;
         default:
-            _specialization = std::make_unique<AfflictionSpecialization>(GetBot());
+            _specialization = std::make_unique<AfflictionWarlockRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.warlock", "Warlock {} defaulted to Affliction specialization",
+                         GetBot()->GetName());
             break;
     }
 }
@@ -147,11 +157,20 @@ WarlockAI::WarlockAI(Player* bot)
     : ClassAI(bot)
     , _manaSpent(0)
     , _damageDealt(0)
-    , _dotDamage(0)
-    , _petDamage(0)
+    , _soulshardsUsed(0)
+    , _fearsUsed(0)
+    , _petsSpawned(0)
+    , _lastFear(0)
+    , _lastPetSummon(0)
 {
+    _warlockMetrics.Reset();
     InitializeSpecialization();
+    TC_LOG_DEBUG("playerbot.warlock", "WarlockAI initialized for {} with specialization {}",
+                 GetBot()->GetName(), static_cast<uint32>(_currentSpec));
 }
+
+// Destructor implementation
+WarlockAI::~WarlockAI() = default;
 
 void WarlockAI::UpdateWarlockBuffs()
 {
@@ -181,6 +200,130 @@ void WarlockAI::UpdateSoulShardCheck()
 {
     if (_specialization)
         _specialization->UpdateSoulShardManagement();
+}
+
+bool WarlockAI::HasEnoughMana(uint32 amount)
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return false;
+
+    return bot->GetPower(POWER_MANA) >= amount;
+}
+
+uint32 WarlockAI::GetMana()
+{
+    Player* bot = GetBot();
+    return bot ? bot->GetPower(POWER_MANA) : 0;
+}
+
+uint32 WarlockAI::GetMaxMana()
+{
+    Player* bot = GetBot();
+    return bot ? bot->GetMaxPower(POWER_MANA) : 1;
+}
+
+float WarlockAI::GetManaPercent()
+{
+    uint32 maxMana = GetMaxMana();
+    if (maxMana == 0)
+        return 0.0f;
+
+    return static_cast<float>(GetMana()) / static_cast<float>(maxMana);
+}
+
+void WarlockAI::UseDefensiveAbilities()
+{
+    Player* bot = GetBot();
+    if (!bot || !bot->IsAlive())
+        return;
+
+    // Use fear if being attacked in melee and not on cooldown
+    if (bot->GetHealthPct() < 40.0f && !_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*bot, _currentTarget);
+        if (target && bot->GetDistance(target) < 8.0f &&
+            (getMSTime() - _lastFear) > 30000) // 30 second cooldown
+        {
+            if (bot->HasSpell(5782) && IsSpellReady(5782)) // Fear
+            {
+                CastSpell(target, 5782);
+                _lastFear = getMSTime();
+                _fearsUsed++;
+            }
+        }
+    }
+
+    // Use Death Coil for emergency healing
+    if (bot->GetHealthPct() < 25.0f &&
+        bot->HasSpell(6789) && IsSpellReady(6789)) // Death Coil
+    {
+        CastSpell(6789);
+    }
+}
+
+void WarlockAI::UseCrowdControl(::Unit* target)
+{
+    if (!target || !GetBot())
+        return;
+
+    Player* bot = GetBot();
+
+    // Use Fear if not on cooldown
+    if ((getMSTime() - _lastFear) > 30000 &&
+        bot->HasSpell(5782) && IsSpellReady(5782))
+    {
+        CastSpell(target, 5782); // Fear
+        _lastFear = getMSTime();
+        _fearsUsed++;
+    }
+}
+
+void WarlockAI::UpdatePetManagement()
+{
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    // Check if we have a pet, if not summon appropriate one
+    Pet* pet = bot->GetPet();
+    if (!pet || !pet->IsAlive())
+    {
+        // Summon pet based on specialization
+        uint32 petSpell = 0;
+        switch (_currentSpec)
+        {
+            case WarlockSpec::AFFLICTION:
+                petSpell = 691; // Summon Felhunter
+                break;
+            case WarlockSpec::DEMONOLOGY:
+                petSpell = 30146; // Summon Felguard (if available)
+                if (!bot->HasSpell(petSpell))
+                    petSpell = 712; // Summon Succubus
+                break;
+            case WarlockSpec::DESTRUCTION:
+                petSpell = 688; // Summon Imp
+                break;
+        }
+
+        if (petSpell && bot->HasSpell(petSpell) &&
+            (getMSTime() - _lastPetSummon) > 5000) // 5 second cooldown
+        {
+            CastSpell(petSpell);
+            _lastPetSummon = getMSTime();
+            _petsSpawned++;
+        }
+    }
+}
+
+WarlockSpec WarlockAI::GetCurrentSpecialization() const
+{
+    return _currentSpec;
+}
+
+bool WarlockAI::ShouldConserveMana()
+{
+    return GetManaPercent() < 0.3f; // 30%
 }
 
 } // namespace Playerbot

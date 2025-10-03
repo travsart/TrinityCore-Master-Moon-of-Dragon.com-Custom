@@ -8,16 +8,21 @@
  */
 
 #include "PaladinAI.h"
+#include "HolyPaladinRefactored.h"
+#include "ProtectionPaladinRefactored.h"
+#include "RetributionSpecializationRefactored.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "../BaselineRotationManager.h"
 
 namespace Playerbot
 {
 
-PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
+PaladinAI::PaladinAI(Player* bot) : ClassAI(bot), _currentSpec(PaladinSpec::RETRIBUTION)
 {
-    TC_LOG_DEBUG("playerbot", "PaladinAI initialized for {}", bot->GetName());
+    InitializeSpecialization();
+    TC_LOG_DEBUG("module.playerbot.paladin", "PaladinAI initialized for {}", bot->GetName());
 }
 
 void PaladinAI::UpdateRotation(::Unit* target)
@@ -25,15 +30,28 @@ void PaladinAI::UpdateRotation(::Unit* target)
     if (!target || !_bot)
         return;
 
-    // TODO: Implement paladin combat rotation
-    // Basic auto-attack for now
-    if (!_bot->IsNonMeleeSpellCast(false))
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
     {
-        if (_bot->GetDistance(target) <= 5.0f)
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(_bot);
+
+        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+            return;
+
+        // Fallback: basic auto-attack
+        if (!_bot->IsNonMeleeSpellCast(false))
         {
-            _bot->AttackerStateUpdate(target);
+            if (_bot->GetDistance(target) <= 5.0f)
+            {
+                _bot->AttackerStateUpdate(target);
+            }
         }
+        return;
     }
+
+    // Specialized rotation for level 10+ with spec
+    DelegateToSpecialization(target);
 }
 
 void PaladinAI::UpdateBuffs()
@@ -41,14 +59,23 @@ void PaladinAI::UpdateBuffs()
     if (!_bot)
         return;
 
-    // TODO: Implement paladin buff management
-    // Placeholder for blessing and aura management
+    // Use baseline buffs for low-level bots
+    if (BaselineRotationManager::ShouldUseBaselineRotation(_bot))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.ApplyBaselineBuffs(_bot);
+        return;
+    }
+
+    // Specialized buff management for level 10+ with spec
+    if (_specialization)
+        _specialization->UpdateBuffs();
 }
 
 void PaladinAI::UpdateCooldowns(uint32 diff)
 {
-    // TODO: Implement cooldown tracking
-    // Placeholder for ability cooldown management
+    if (_specialization)
+        _specialization->UpdateCooldowns(diff);
 }
 
 bool PaladinAI::CanUseAbility(uint32 spellId)
@@ -56,7 +83,9 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
     if (!_bot || !IsSpellReady(spellId))
         return false;
 
-    // TODO: Implement comprehensive ability checks
+    if (_specialization)
+        return _specialization->CanUseAbility(spellId);
+
     return HasEnoughResource(spellId);
 }
 
@@ -65,25 +94,27 @@ void PaladinAI::OnCombatStart(::Unit* target)
     if (!target || !_bot)
         return;
 
-    TC_LOG_DEBUG("playerbot", "PaladinAI {} entering combat with {}",
+    if (_specialization)
+        _specialization->OnCombatStart(target);
+
+    TC_LOG_DEBUG("module.playerbot.paladin", "PaladinAI {} entering combat with {}",
                  _bot->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target;
+    _currentTarget = target->GetGUID();
     _combatTime = 0;
-
-    // TODO: Implement combat initialization
 }
 
 void PaladinAI::OnCombatEnd()
 {
+    if (_specialization)
+        _specialization->OnCombatEnd();
+
     _inCombat = false;
-    _currentTarget = nullptr;
+    _currentTarget = ObjectGuid::Empty;
     _combatTime = 0;
 
-    TC_LOG_DEBUG("playerbot", "PaladinAI {} leaving combat", _bot->GetName());
-
-    // TODO: Implement combat cleanup
+    TC_LOG_DEBUG("module.playerbot.paladin", "PaladinAI {} leaving combat", _bot->GetName());
 }
 
 bool PaladinAI::HasEnoughResource(uint32 spellId)
@@ -91,7 +122,9 @@ bool PaladinAI::HasEnoughResource(uint32 spellId)
     if (!_bot)
         return false;
 
-    // TODO: Implement proper resource checking using TrinityCore APIs
+    if (_specialization)
+        return _specialization->HasEnoughResource(spellId);
+
     return _bot->GetPower(POWER_MANA) >= 100; // Simple placeholder
 }
 
@@ -100,8 +133,8 @@ void PaladinAI::ConsumeResource(uint32 spellId)
     if (!_bot)
         return;
 
-    // TODO: Implement proper resource consumption using TrinityCore APIs
-    // Simple placeholder for now
+    if (_specialization)
+        _specialization->ConsumeResource(spellId);
 }
 
 Position PaladinAI::GetOptimalPosition(::Unit* target)
@@ -109,8 +142,10 @@ Position PaladinAI::GetOptimalPosition(::Unit* target)
     if (!target || !_bot)
         return Position();
 
-    // TODO: Implement intelligent positioning
-    // Simple melee positioning for now
+    if (_specialization)
+        return _specialization->GetOptimalPosition(target);
+
+    // Simple melee positioning fallback
     float angle = target->GetOrientation();
     float x = target->GetPositionX() + cos(angle) * 5.0f;
     float y = target->GetPositionY() + sin(angle) * 5.0f;
@@ -124,8 +159,65 @@ float PaladinAI::GetOptimalRange(::Unit* target)
     if (!target)
         return 5.0f;
 
-    // TODO: Implement spec-based range calculation
+    if (_specialization)
+        return _specialization->GetOptimalRange(target);
+
     return 5.0f; // Default melee range
+}
+
+void PaladinAI::DetectSpecialization()
+{
+    // Detect from talents - default to Retribution for now
+    _currentSpec = PaladinSpec::RETRIBUTION;
+}
+
+void PaladinAI::InitializeSpecialization()
+{
+    DetectSpecialization();
+    SwitchSpecialization(_currentSpec);
+}
+
+void PaladinAI::SwitchSpecialization(PaladinSpec newSpec)
+{
+    _currentSpec = newSpec;
+
+    // TODO: Re-enable refactored specialization classes once template issues are fixed
+    _specialization = nullptr;
+    TC_LOG_WARN("module.playerbot.paladin", "Paladin specialization switching temporarily disabled for {}",
+                 GetBot()->GetName());
+
+    /* switch (newSpec)
+    {
+        case PaladinSpec::HOLY:
+            _specialization = std::make_unique<HolyPaladinRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Holy specialization",
+                         GetBot()->GetName());
+            break;
+
+        case PaladinSpec::PROTECTION:
+            _specialization = std::make_unique<ProtectionPaladinRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Protection specialization",
+                         GetBot()->GetName());
+            break;
+
+        case PaladinSpec::RETRIBUTION:
+            _specialization = std::make_unique<RetributionPaladinRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Retribution specialization",
+                         GetBot()->GetName());
+            break;
+
+        default:
+            _specialization = std::make_unique<RetributionPaladinRefactored>(GetBot());
+            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} defaulted to Retribution specialization",
+                         GetBot()->GetName());
+            break;
+    } */
+}
+
+void PaladinAI::DelegateToSpecialization(::Unit* target)
+{
+    if (_specialization)
+        _specialization->UpdateRotation(target);
 }
 
 } // namespace Playerbot

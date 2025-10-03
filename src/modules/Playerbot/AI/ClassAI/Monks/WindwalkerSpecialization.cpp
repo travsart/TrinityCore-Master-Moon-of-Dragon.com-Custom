@@ -202,7 +202,7 @@ void WindwalkerSpecialization::OnCombatEnd()
 
 bool WindwalkerSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
@@ -221,7 +221,7 @@ bool WindwalkerSpecialization::HasEnoughResource(uint32 spellId)
 
 void WindwalkerSpecialization::ConsumeResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 

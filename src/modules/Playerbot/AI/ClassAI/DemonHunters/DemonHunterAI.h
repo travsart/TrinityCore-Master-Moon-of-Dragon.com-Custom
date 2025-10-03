@@ -17,6 +17,8 @@ namespace Playerbot
 {
 
 class DemonHunterSpecialization;
+class HavocDemonHunterRefactored;
+class VengeanceDemonHunterRefactored;
 
 // DemonHunter Spell IDs (WoW 11.2 The War Within)
 enum DemonHunterSpells
@@ -110,6 +112,11 @@ private:
 
     // Minimal implementation - specialization detection only
     DemonHunterSpec _detectedSpec;
+
+    // Specialization system
+    std::unique_ptr<DemonHunterSpecialization> _specialization;
+    void SwitchSpecialization(DemonHunterSpec newSpec);
+    void DelegateToSpecialization(::Unit* target);
 };
 
 } // namespace Playerbot

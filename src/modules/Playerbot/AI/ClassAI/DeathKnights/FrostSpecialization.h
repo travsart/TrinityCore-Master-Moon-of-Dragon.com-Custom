@@ -86,6 +86,8 @@ private:
     bool HasRimeProc();
     void ConsumeKillingMachineProc();
     void ConsumeRimeProc();
+    void TriggerKillingMachine();
+    void TriggerRime();
 
     // Frost abilities
     void CastObliterate(::Unit* target);
@@ -94,6 +96,10 @@ private:
     void CastIcyTouch(::Unit* target);
     void CastChainsOfIce(::Unit* target);
     void CastMindFreeze(::Unit* target);
+
+    // Rotation methods
+    void UpdateDualWieldRotation(::Unit* target);
+    void UpdateTwoHandedRotation(::Unit* target);
 
     // Offensive cooldowns
     void CastUnbreakableWill();
@@ -109,6 +115,14 @@ private:
     void UpdateWeaponStrategy();
     bool IsDualWielding();
     bool ShouldUseDualWieldRotation();
+    void UpdateWeaponBuffs();
+    float GetRunicPowerThreshold() const;
+
+    // Utility abilities
+    void HandleUtilitySpells(::Unit* target);
+    void CastDeathGrip(::Unit* target);
+    void CastDeathCoil(::Unit* target);
+    bool ShouldUseDeathGrip(::Unit* target);
 
     // Frost spell IDs
     enum FrostSpells
@@ -124,7 +138,9 @@ private:
         KILLING_MACHINE = 51128,
         RIME = 59057,
         MERCILESS_COMBAT = 49024,
-        BLOOD_OF_THE_NORTH = 54637
+        BLOOD_OF_THE_NORTH = 54637,
+        DEATH_GRIP = 49576,
+        DEATH_COIL = 47541
     };
 
     // Proc tracking

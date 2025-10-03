@@ -443,7 +443,7 @@ bool EvokerSpecialization::HasSpell(uint32 spellId)
 
 SpellInfo const* EvokerSpecialization::GetSpellInfo(uint32 spellId)
 {
-    return sSpellMgr->GetSpellInfo(spellId);
+    return sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
 }
 
 uint32 EvokerSpecialization::GetSpellCooldown(uint32 spellId)

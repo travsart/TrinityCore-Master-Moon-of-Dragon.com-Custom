@@ -60,8 +60,8 @@ public:
 
     // Soul shard management
     void UpdateSoulShardManagement() override;
-    bool HasSoulShardsAvailable(uint32 required = 1) override;
-    void UseSoulShard(uint32 spellId) override;
+    bool HasSoulShardsAvailable(uint32 required = 1);
+    void UseSoulShard(uint32 spellId);
 
     // Specialization info
     WarlockSpec GetSpecialization() const override { return WarlockSpec::DESTRUCTION; }

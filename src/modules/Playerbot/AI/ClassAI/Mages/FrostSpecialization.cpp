@@ -12,7 +12,11 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
 #include "ObjectAccessor.h"
+#include "SpellAuras.h"
+#include "MotionMaster.h"
+#include "Map.h"
 
 namespace Playerbot
 {
@@ -124,7 +128,7 @@ void FrostSpecialization::UpdateBuffs()
     // Arcane Intellect
     if (!_bot->HasAura(ARCANE_INTELLECT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ARCANE_INTELLECT, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, ARCANE_INTELLECT, false);
         }
@@ -217,11 +221,20 @@ void FrostSpecialization::OnCombatEnd()
 
 bool FrostSpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     return GetMana() >= manaCost;
 }
 
@@ -243,10 +256,8 @@ Position FrostSpecialization::GetOptimalPosition(::Unit* target)
         distance = KITING_DISTANCE;
     }
 
-    float angle = _bot->GetAngle(target);
-    Position pos;
-    target->GetNearPosition(pos, distance, angle + M_PI);
-    return pos;
+    float angle = _bot->GetAbsoluteAngle(target);
+    return target->GetNearPosition(distance, angle + M_PI);
 }
 
 float FrostSpecialization::GetOptimalRange(::Unit* target)

@@ -11,7 +11,14 @@
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "Map.h"
 #include "Log.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "Cell.h"
+#include "CellImpl.h"
+#include "SpellAuras.h"
+#include "SpellAuraEffects.h"
 
 namespace Playerbot
 {
@@ -158,11 +165,20 @@ bool ElementalSpecialization::HasEnoughResource(uint32 spellId)
     if (HasClearcasting())
         return true;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     return bot->GetPower(POWER_MANA) >= manaCost;
 }
 
@@ -178,11 +194,20 @@ void ElementalSpecialization::ConsumeResource(uint32 spellId)
         return;
     }
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    uint32 manaCost = 0;
+    for (auto const& cost : powerCosts)
+    {
+        if (cost.Power == POWER_MANA)
+        {
+            manaCost = cost.Amount;
+            break;
+        }
+    }
     if (bot->GetPower(POWER_MANA) >= manaCost)
     {
         bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);
@@ -239,9 +264,13 @@ uint32 ElementalSpecialization::GetOptimalFireTotem()
 
     if (bot->IsInCombat())
     {
-        auto units = bot->GetMap()->GetUnitsInRange(bot->GetPosition(), 30.0f);
+        std::list<Unit*> units;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 30.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, units, u_check);
+        Cell::VisitAllObjects(bot, searcher, 30.0f);
+
         uint32 enemyCount = 0;
-        for (auto unit : units)
+        for (Unit* unit : units)
         {
             if (unit && unit->IsHostileTo(bot) && unit->IsAlive())
                 enemyCount++;
@@ -249,7 +278,7 @@ uint32 ElementalSpecialization::GetOptimalFireTotem()
 
         if (enemyCount > 3)
             return MAGMA_TOTEM;
-        else if (bot->getLevel() >= 50)
+        else if (bot->GetLevel() >= 50)
             return TOTEM_OF_WRATH;
         else
             return SEARING_TOTEM;
@@ -392,9 +421,12 @@ bool ElementalSpecialization::ShouldCastThunderstorm()
     if (!bot)
         return false;
 
-    auto units = bot->GetMap()->GetUnitsInRange(bot->GetPosition(), THUNDERSTORM_RANGE);
+    std::list<Unit*> units;
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, THUNDERSTORM_RANGE);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, units, u_check);
+    Cell::VisitAllObjects(bot, searcher, THUNDERSTORM_RANGE);
     uint32 enemyCount = 0;
-    for (auto unit : units)
+    for (Unit* unit : units)
     {
         if (unit && unit->IsHostileTo(bot) && unit->IsAlive())
             enemyCount++;
@@ -495,8 +527,11 @@ std::vector<::Unit*> ElementalSpecialization::GetChainLightningTargets(::Unit* p
 
     targets.push_back(primary);
 
-    auto units = bot->GetMap()->GetUnitsInRange(primary->GetPosition(), CHAIN_LIGHTNING_RANGE);
-    for (auto unit : units)
+    std::list<Unit*> units;
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(primary, bot, CHAIN_LIGHTNING_RANGE);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(primary, units, u_check);
+    Cell::VisitAllObjects(primary, searcher, CHAIN_LIGHTNING_RANGE);
+    for (Unit* unit : units)
     {
         if (unit && unit != primary && unit->IsHostileTo(bot) && unit->IsAlive())
         {
@@ -590,7 +625,7 @@ Position ElementalSpecialization::GetSafeCastingPosition(::Unit* target)
         return Position();
 
     float distance = OPTIMAL_CASTING_RANGE * 0.8f;
-    float angle = target->GetAngle(bot) + M_PI;
+    float angle = target->GetRelativeAngle(bot) + M_PI;
 
     return Position(
         target->GetPositionX() + distance * cos(angle),

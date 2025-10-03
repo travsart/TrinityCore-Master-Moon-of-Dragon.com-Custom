@@ -136,12 +136,12 @@ private:
     uint32 _spellsCast;
 
     // Constants
-    // static const float OPTIMAL_CASTING_RANGE;
-    // static const float CHAIN_LIGHTNING_RANGE;
-    // static const float THUNDERSTORM_RANGE;
+    static constexpr float OPTIMAL_CASTING_RANGE = 30.0f;
+    static constexpr float CHAIN_LIGHTNING_RANGE = 30.0f;
+    static constexpr float THUNDERSTORM_RANGE = 10.0f;
     static const uint32 ELEMENTAL_FOCUS_MAX_STACKS = 3;
     static const uint32 LIGHTNING_SHIELD_MAX_CHARGES = 3;
-    // static const float MANA_CONSERVATION_THRESHOLD;
+    static constexpr float MANA_CONSERVATION_THRESHOLD = 30.0f; // 30% mana
     static const uint32 CHAIN_LIGHTNING_MIN_TARGETS = 3;
 };
 

@@ -12,7 +12,10 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "SpellInfo.h"
+#include "SharedDefines.h"
 #include "ObjectAccessor.h"
+#include <queue>
 
 namespace Playerbot
 {
@@ -116,7 +119,7 @@ void HolySpecialization::UpdateBuffs()
     // Power Word: Fortitude
     if (!_bot->HasAura(POWER_WORD_FORTITUDE))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(POWER_WORD_FORTITUDE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, POWER_WORD_FORTITUDE, false);
         }
@@ -125,7 +128,7 @@ void HolySpecialization::UpdateBuffs()
     // Divine Spirit
     if (!_bot->HasAura(DIVINE_SPIRIT))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(DIVINE_SPIRIT))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(DIVINE_SPIRIT, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, DIVINE_SPIRIT, false);
         }
@@ -134,7 +137,7 @@ void HolySpecialization::UpdateBuffs()
     // Inner Fire
     if (!_bot->HasAura(INNER_FIRE))
     {
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(INNER_FIRE, DIFFICULTY_NONE))
         {
             _bot->CastSpell(_bot, INNER_FIRE, false);
         }
@@ -205,7 +208,7 @@ bool HolySpecialization::CanUseAbility(uint32 spellId)
 void HolySpecialization::OnCombatStart(::Unit* target)
 {
     _emergencyMode = false;
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = std::priority_queue<Playerbot::HealTarget, std::vector<Playerbot::HealTarget>, std::less<Playerbot::HealTarget>>();
 }
 
 void HolySpecialization::OnCombatEnd()
@@ -214,16 +217,16 @@ void HolySpecialization::OnCombatEnd()
     _cooldowns.clear();
     _renewTimers.clear();
     _prayerOfMendingBounces.clear();
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = std::priority_queue<Playerbot::HealTarget, std::vector<Playerbot::HealTarget>, std::less<Playerbot::HealTarget>>();
 }
 
 bool HolySpecialization::HasEnoughResource(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
 
     // Serendipity reduces Flash Heal and Greater Heal costs
     if ((spellId == FLASH_HEAL || spellId == GREATER_HEAL) && GetSerendipityStacks() > 0)
@@ -258,9 +261,7 @@ Position HolySpecialization::GetOptimalPosition(::Unit* target)
 
     if (target)
     {
-        Position pos;
-        target->GetNearPosition(pos, distance, target->GetOrientation() + M_PI);
-        return pos;
+        return target->GetNearPosition(distance, target->GetOrientation() + M_PI);
     }
 
     return _bot->GetPosition();
@@ -279,7 +280,7 @@ void HolySpecialization::UpdateHealing()
     _lastHealCheck = currentTime;
 
     // Clear old heal queue
-    _healQueue = std::priority_queue<HealTarget>();
+    _healQueue = std::priority_queue<Playerbot::HealTarget, std::vector<Playerbot::HealTarget>, std::less<Playerbot::HealTarget>>();
 
     // Scan group members for healing needs
     std::vector<::Unit*> groupMembers = GetGroupMembers();
@@ -302,7 +303,7 @@ void HolySpecialization::UpdateHealing()
                 priority = HealPriority::MAINTENANCE;
 
             uint32 missingHealth = member->GetMaxHealth() - member->GetHealth();
-            HealTarget healTarget(member, priority, healthPercent, missingHealth);
+            Playerbot::HealTarget healTarget(member, priority, healthPercent, missingHealth);
             healTarget.hasHoTs = member->HasAura(RENEW) || member->HasAura(PRAYER_OF_MENDING);
             _healQueue.push(healTarget);
         }
@@ -319,7 +320,7 @@ bool HolySpecialization::ShouldHeal()
     if (_healQueue.empty())
         return nullptr;
 
-    HealTarget bestTarget = _healQueue.top();
+    Playerbot::HealTarget bestTarget = _healQueue.top();
     return bestTarget.target;
 }
 
@@ -479,8 +480,8 @@ void HolySpecialization::CastHolyWordSanctify()
 {
     if (CanUseAbility(HOLY_WORD_SANCTIFY))
     {
-        Position aoeTar get = GetOptimalAoEHealPosition();
-        _bot->CastSpell(aoeTar get.GetPositionX(), aoeTar get.GetPositionY(), aoeTar get.GetPositionZ(), HOLY_WORD_SANCTIFY, false);
+        Position aoeTarget = GetOptimalAoEHealPosition();
+        _bot->CastSpell(aoeTarget, HOLY_WORD_SANCTIFY, false);
         _cooldowns[HOLY_WORD_SANCTIFY] = 60000; // 60 second base cooldown
     }
 }
@@ -672,7 +673,12 @@ void HolySpecialization::UpdateAoEHealing()
     _lastAoECheck = currentTime;
 
     _clusteredMembers.clear();
-    _clusteredMembers = GetClusteredInjuredMembers();
+    std::vector<::Unit*> clusteredUnits = GetClusteredInjuredMembers();
+    for (::Unit* unit : clusteredUnits)
+    {
+        if (unit)
+            _clusteredMembers.push_back(unit->GetGUID().GetCounter());
+    }
 }
 
 bool HolySpecialization::ShouldUseAoEHealing()

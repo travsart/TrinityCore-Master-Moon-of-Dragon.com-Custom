@@ -10,6 +10,7 @@
 #include "RogueSpecialization.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "SpellAuras.h"
 #include "Log.h"
 #include "Player.h"
 #include "WorldSession.h"
@@ -20,7 +21,7 @@ namespace Playerbot
 RogueSpecialization::RogueSpecialization(Player* bot)
     : _bot(bot), _combatPhase(CombatPhase::STEALTH_OPENER), _currentTarget(nullptr),
       _lastUpdateTime(0), _combatStartTime(0), _lastEnergyCheck(0), _lastComboCheck(0), _lastStealthCheck(0),
-      _totalDamageDealt(0), _totalEnergySpent(0), _totalCombosBuilt(0), _totalCombosSpent(0),
+      _lastPoisonApplicationTime(0), _totalDamageDealt(0), _totalEnergySpent(0), _totalCombosBuilt(0), _totalCombosSpent(0),
       _burstPhaseCount(0), _averageCombatTime(0.0f)
 {
     InitializeCooldowns();
@@ -206,7 +207,7 @@ uint8 RogueSpecialization::GetComboPoints()
     if (!_bot || !_currentTarget)
         return 0;
 
-    return _bot->GetComboPoints();
+    return _bot->GetPower(POWER_COMBO_POINTS);
 }
 
 uint32 RogueSpecialization::GetCurrentEnergy()
@@ -245,7 +246,7 @@ uint32 RogueSpecialization::GetAuraTimeRemaining(uint32 spellId, ::Unit* unit)
     if (!unit)
         return 0;
 
-    if (Aura* aura = unit->GetAura(spellId))
+    if (::Aura* aura = unit->GetAura(spellId))
         return aura->GetDuration();
 
     return 0;
@@ -256,37 +257,45 @@ bool RogueSpecialization::CastSpell(uint32 spellId, ::Unit* target)
     if (!_bot)
         return false;
 
-    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
     {
         TC_LOG_ERROR("playerbot", "RogueSpecialization::CastSpell: Invalid spell ID {} for bot {}", spellId, _bot->GetName());
         return false;
     }
 
-    if (!HasSpell(spellId))
+    if (!_bot->HasSpell(spellId))
     {
         TC_LOG_DEBUG("playerbot", "RogueSpecialization::CastSpell: Bot {} doesn't have spell {}", _bot->GetName(), spellId);
         return false;
     }
 
-    if (!HasEnoughEnergyFor(spellId))
+    uint32 cost = 0;
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, SPELL_SCHOOL_MASK_NORMAL);
+    for (const auto& powerCost : powerCosts)
+    {
+        if (powerCost.Power == POWER_ENERGY)
+        {
+            cost = powerCost.Amount;
+            break;
+        }
+    }
+
+    if (cost > 0 && GetCurrentEnergy() < cost)
     {
         TC_LOG_DEBUG("playerbot", "RogueSpecialization::CastSpell: Bot {} doesn't have enough energy for spell {}", _bot->GetName(), spellId);
         return false;
     }
 
-    if (!IsSpellReady(spellId))
+    auto it = _cooldowns.find(spellId);
+    if (it != _cooldowns.end() && !it->second.IsReady())
     {
         TC_LOG_DEBUG("playerbot", "RogueSpecialization::CastSpell: Spell {} not ready for bot {}", spellId, _bot->GetName());
         return false;
     }
 
     // Cast the spell
-    if (target && spellInfo->IsTargetingLocation())
-    {
-        _bot->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spellId, false);
-    }
-    else if (target)
+    if (target)
     {
         _bot->CastSpell(target, spellId, false);
     }
@@ -296,14 +305,17 @@ bool RogueSpecialization::CastSpell(uint32 spellId, ::Unit* target)
     }
 
     // Start cooldown
-    StartCooldown(spellId);
+    if (it != _cooldowns.end())
+    {
+        it->second.remainingMs = it->second.cooldownMs;
+        TC_LOG_DEBUG("playerbot", "RogueSpecialization: Started cooldown for spell {} for bot {}", spellId, _bot->GetName());
+    }
 
     // Update energy
-    uint32 energyCost = GetEnergyCost(spellId);
-    if (energyCost > 0)
+    if (cost > 0)
     {
-        _bot->ModifyPower(POWER_ENERGY, -static_cast<int32>(energyCost));
-        _totalEnergySpent += energyCost;
+        _bot->ModifyPower(POWER_ENERGY, -static_cast<int32>(cost));
+        _totalEnergySpent += cost;
     }
 
     TC_LOG_DEBUG("playerbot", "RogueSpecialization::CastSpell: Bot {} cast spell {} on target {}",
@@ -322,12 +334,12 @@ bool RogueSpecialization::HasSpell(uint32 spellId)
 
 SpellInfo const* RogueSpecialization::GetSpellInfo(uint32 spellId)
 {
-    return sSpellMgr->GetSpellInfo(spellId);
+    return sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
 }
 
 uint32 RogueSpecialization::GetSpellCooldown(uint32 spellId)
 {
-    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0;
 
@@ -336,16 +348,15 @@ uint32 RogueSpecialization::GetSpellCooldown(uint32 spellId)
 
 void RogueSpecialization::UpdateCooldownTracking(uint32 diff)
 {
-    auto currentTime = std::chrono::steady_clock::now();
-
     for (auto& [spellId, cooldown] : _cooldowns)
     {
-        if (!cooldown.isReady)
+        if (!cooldown.IsReady())
         {
-            auto timeSinceUse = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - cooldown.lastUsed);
-            if (timeSinceUse.count() >= cooldown.cooldownMs)
+            if (cooldown.remainingMs > diff)
+                cooldown.remainingMs -= diff;
+            else
             {
-                cooldown.isReady = true;
+                cooldown.remainingMs = 0;
                 TC_LOG_DEBUG("playerbot", "RogueSpecialization: Spell {} cooldown ready for bot {}", spellId, _bot->GetName());
             }
         }
@@ -356,9 +367,8 @@ bool RogueSpecialization::IsSpellReady(uint32 spellId)
 {
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
-        return it->second.isReady;
+        return it->second.IsReady();
 
-    // If not tracked, assume ready
     return true;
 }
 
@@ -367,9 +377,7 @@ void RogueSpecialization::StartCooldown(uint32 spellId)
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
-        it->second.isReady = false;
-        it->second.lastUsed = std::chrono::steady_clock::now();
-
+        it->second.remainingMs = it->second.cooldownMs;
         TC_LOG_DEBUG("playerbot", "RogueSpecialization: Started cooldown for spell {} for bot {}", spellId, _bot->GetName());
     }
 }
@@ -377,13 +385,9 @@ void RogueSpecialization::StartCooldown(uint32 spellId)
 uint32 RogueSpecialization::GetCooldownRemaining(uint32 spellId)
 {
     auto it = _cooldowns.find(spellId);
-    if (it != _cooldowns.end() && !it->second.isReady)
+    if (it != _cooldowns.end() && !it->second.IsReady())
     {
-        auto currentTime = std::chrono::steady_clock::now();
-        auto timeSinceUse = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - it->second.lastUsed);
-
-        if (timeSinceUse.count() < it->second.cooldownMs)
-            return it->second.cooldownMs - timeSinceUse.count();
+        return it->second.remainingMs;
     }
 
     return 0;
@@ -391,57 +395,34 @@ uint32 RogueSpecialization::GetCooldownRemaining(uint32 spellId)
 
 bool RogueSpecialization::HasEnoughEnergyFor(uint32 spellId)
 {
-    uint32 cost = GetEnergyCost(spellId);
-    return GetCurrentEnergy() >= cost;
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return true;
+
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, SPELL_SCHOOL_MASK_NORMAL);
+    for (const auto& cost : powerCosts)
+    {
+        if (cost.Power == POWER_ENERGY)
+            return GetCurrentEnergy() >= static_cast<uint32>(cost.Amount);
+    }
+
+    return true;
 }
 
 uint32 RogueSpecialization::GetEnergyCost(uint32 spellId)
 {
-    SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0;
 
-    // Base energy costs for common rogue abilities
-    switch (spellId)
+    auto powerCosts = spellInfo->CalcPowerCost(_bot, SPELL_SCHOOL_MASK_NORMAL);
+    for (const auto& cost : powerCosts)
     {
-        case SINISTER_STRIKE:
-        case MUTILATE:
-        case HEMORRHAGE:
-            return 40;
-        case BACKSTAB:
-        case AMBUSH:
-            return 50;
-        case EVISCERATE:
-        case RUPTURE:
-        case ENVENOM:
-            return 35;
-        case SLICE_AND_DICE:
-            return 25;
-        case EXPOSE_ARMOR:
-            return 25;
-        case GARROTE:
-            return 50;
-        case CHEAP_SHOT:
-            return 60;
-        case KIDNEY_SHOT:
-            return 25;
-        case GOUGE:
-            return 45;
-        case KICK:
-            return 25;
-        case FAN_OF_KNIVES:
-            return 50;
-        case SPRINT:
-            return 0; // No energy cost, but has cooldown
-        case VANISH:
-        case STEALTH:
-        case PREPARATION:
-        case EVASION:
-        case CLOAK_OF_SHADOWS:
-            return 0; // Utility spells typically don't cost energy
-        default:
-            return spellInfo->ManaCost; // Fallback to spell data
+        if (cost.Power == POWER_ENERGY)
+            return cost.Amount;
     }
+
+    return 0;
 }
 
 } // namespace Playerbot

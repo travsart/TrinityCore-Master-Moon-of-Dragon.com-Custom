@@ -562,7 +562,7 @@ float ShamanAI::GetManaPercent()
 
 uint32 ShamanAI::GetSpellManaCost(uint32 spellId)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return 0;
 

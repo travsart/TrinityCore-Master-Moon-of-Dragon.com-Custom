@@ -7,6 +7,7 @@
  * option) any later version.
  */
 
+#include "RuneManager.h"
 #include "DeathKnightAI.h"
 #include "BloodSpecialization.h"
 #include "FrostSpecialization.h"
@@ -24,7 +25,7 @@
 #include "../Combat/TargetSelector.h"
 #include "../Combat/PositionManager.h"
 #include "../Combat/InterruptManager.h"
-#include "../CooldownManager.h"
+#include "../BaselineRotationManager.h"
 #include "Log.h"
 #include <atomic>
 #include <chrono>
@@ -126,7 +127,7 @@ enum DeathKnightSpells : uint32
     DEATH_COIL              = 47541,
     DEATH_AND_DECAY         = 43265,
     CORPSE_EXPLOSION        = 51328,
-    BONE_SHIELD             = 49222,
+    BONE_SHIELD             = 195181, // Updated for WoW 11.2
     SUMMON_GARGOYLE         = 49206,
     UNHOLY_FRENZY           = 49016,
 
@@ -156,253 +157,8 @@ enum DeathKnightSpells : uint32
 
 // Rune types defined above
 
-// Rune management system
-class RuneManager
-{
-public:
-    explicit RuneManager(Player* bot) : _bot(bot)
-    {
-        ResetRunes();
-    }
+// Rune management system removed - using external RuneManager class
 
-    void ResetRunes()
-    {
-        // Initialize with 2 of each rune type
-        for (int i = 0; i < 6; ++i)
-        {
-            _runes[i].type = static_cast<RuneType>(i / 2);
-            _runes[i].available = true;
-            _runes[i].cooldownEnd = 0;
-        }
-    }
-
-    bool HasRunes(uint8 blood, uint8 frost, uint8 unholy)
-    {
-        uint8 availableBlood = 0, availableFrost = 0, availableUnholy = 0, availableDeath = 0;
-
-        for (const auto& rune : _runes)
-        {
-            if (!rune.available)
-                continue;
-
-            switch (static_cast<uint8>(rune.type))
-            {
-                case RUNE_BLOOD:
-                    availableBlood++;
-                    break;
-                case RUNE_FROST:
-                    availableFrost++;
-                    break;
-                case RUNE_UNHOLY:
-                    availableUnholy++;
-                    break;
-                case RUNE_DEATH:
-                    availableDeath++;
-                    break;
-            }
-        }
-
-        // Death runes can be used for any type
-        uint8 bloodNeeded = (blood > availableBlood) ? blood - availableBlood : 0;
-        uint8 frostNeeded = (frost > availableFrost) ? frost - availableFrost : 0;
-        uint8 unholyNeeded = (unholy > availableUnholy) ? unholy - availableUnholy : 0;
-
-        return (bloodNeeded + frostNeeded + unholyNeeded) <= availableDeath;
-    }
-
-    void ConsumeRunes(uint8 blood, uint8 frost, uint8 unholy)
-    {
-        // Consume specific runes first, then death runes
-        for (auto& rune : _runes)
-        {
-            if (!rune.available)
-                continue;
-
-            if (blood > 0 && rune.type == RuneType::BLOOD)
-            {
-                rune.available = false;
-                rune.cooldownEnd = getMSTime() + 10000; // 10 second cooldown
-                blood--;
-            }
-            else if (frost > 0 && rune.type == RuneType::FROST)
-            {
-                rune.available = false;
-                rune.cooldownEnd = getMSTime() + 10000;
-                frost--;
-            }
-            else if (unholy > 0 && rune.type == RuneType::UNHOLY)
-            {
-                rune.available = false;
-                rune.cooldownEnd = getMSTime() + 10000;
-                unholy--;
-            }
-        }
-
-        // Use death runes for remaining
-        for (auto& rune : _runes)
-        {
-            if (!rune.available || rune.type != RuneType::DEATH)
-                continue;
-
-            if (blood > 0 || frost > 0 || unholy > 0)
-            {
-                rune.available = false;
-                rune.cooldownEnd = getMSTime() + 10000;
-                if (blood > 0) blood--;
-                else if (frost > 0) frost--;
-                else if (unholy > 0) unholy--;
-            }
-        }
-    }
-
-    void UpdateRunes(uint32 diff)
-    {
-        uint32 currentTime = getMSTime();
-        for (auto& rune : _runes)
-        {
-            if (!rune.available && currentTime >= rune.cooldownEnd)
-            {
-                rune.available = true;
-            }
-        }
-    }
-
-    uint8 GetAvailableRunes(RuneType type) const
-    {
-        uint8 count = 0;
-        for (const auto& rune : _runes)
-        {
-            if (rune.available && (rune.type == type || rune.type == RuneType::DEATH))
-                count++;
-        }
-        return count;
-    }
-
-private:
-    struct Rune
-    {
-        RuneType type;
-        bool available;
-        uint32 cooldownEnd;
-    };
-
-    Player* _bot;
-    Rune _runes[6];
-};
-
-// Disease tracking system
-class DiseaseManager
-{
-public:
-    explicit DiseaseManager(Player* bot) : _bot(bot) {}
-
-    void UpdateDiseases(Unit* target)
-    {
-        if (!target)
-            return;
-
-        uint32 currentTime = getMSTime();
-
-        // Check Frost Fever
-        if (HasDisease(target, FROST_FEVER))
-        {
-            _frostFeverTargets[target->GetGUID()] = currentTime + 15000; // 15 second duration
-        }
-        else
-        {
-            _frostFeverTargets.erase(target->GetGUID());
-        }
-
-        // Check Blood Plague
-        if (HasDisease(target, BLOOD_PLAGUE))
-        {
-            _bloodPlagueTargets[target->GetGUID()] = currentTime + 15000;
-        }
-        else
-        {
-            _bloodPlagueTargets.erase(target->GetGUID());
-        }
-
-        CleanupExpiredDiseases(currentTime);
-    }
-
-    bool HasBothDiseases(Unit* target) const
-    {
-        if (!target)
-            return false;
-
-        ObjectGuid guid = target->GetGUID();
-        return _frostFeverTargets.find(guid) != _frostFeverTargets.end() &&
-               _bloodPlagueTargets.find(guid) != _bloodPlagueTargets.end();
-    }
-
-    bool NeedsFrostFever(Unit* target) const
-    {
-        if (!target)
-            return false;
-
-        auto it = _frostFeverTargets.find(target->GetGUID());
-        if (it == _frostFeverTargets.end())
-            return true;
-
-        // Refresh if less than 5 seconds remaining
-        return (it->second - getMSTime()) < 5000;
-    }
-
-    bool NeedsBloodPlague(Unit* target) const
-    {
-        if (!target)
-            return false;
-
-        auto it = _bloodPlagueTargets.find(target->GetGUID());
-        if (it == _bloodPlagueTargets.end())
-            return true;
-
-        // Refresh if less than 5 seconds remaining
-        return (it->second - getMSTime()) < 5000;
-    }
-
-    float GetDiseaseUptime() const
-    {
-        if (_totalTargetTime == 0)
-            return 0.0f;
-
-        return static_cast<float>(_diseasedTime) / _totalTargetTime * 100.0f;
-    }
-
-private:
-    bool HasDisease(Unit* target, uint32 spellId) const
-    {
-        // Check if target has the aura
-        return target->HasAura(spellId);
-    }
-
-    void CleanupExpiredDiseases(uint32 currentTime)
-    {
-        // Remove expired entries
-        for (auto it = _frostFeverTargets.begin(); it != _frostFeverTargets.end();)
-        {
-            if (it->second < currentTime)
-                it = _frostFeverTargets.erase(it);
-            else
-                ++it;
-        }
-
-        for (auto it = _bloodPlagueTargets.begin(); it != _bloodPlagueTargets.end();)
-        {
-            if (it->second < currentTime)
-                it = _bloodPlagueTargets.erase(it);
-            else
-                ++it;
-        }
-    }
-
-    Player* _bot;
-    std::unordered_map<ObjectGuid, uint32> _frostFeverTargets;
-    std::unordered_map<ObjectGuid, uint32> _bloodPlagueTargets;
-    uint32 _totalTargetTime = 0;
-    uint32 _diseasedTime = 0;
-};
 
 // Combat metrics tracking
 class DeathKnightCombatMetrics
@@ -566,11 +322,11 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     InitializeSpecialization();
 
     // Initialize performance tracking
-    _metrics = std::make_unique<DeathKnightMetrics>();
-    _combatMetrics = std::make_unique<DeathKnightCombatMetrics>();
-    _runeManager = std::make_unique<RuneManager>(bot);
+    _metrics = new DeathKnightMetrics();
+    _combatMetrics = new DeathKnightCombatMetrics();
+    _runeManager = new RuneManager(bot);
     _diseaseManager = std::make_unique<DiseaseManager>(bot);
-    _positioning = std::make_unique<DeathKnightCombatPositioning>(bot);
+    _positioning = new DeathKnightCombatPositioning(bot);
 
     TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
@@ -672,6 +428,27 @@ void DeathKnightAI::UpdateRotation(Unit* target)
     if (!target || !GetBot())
         return;
 
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(GetBot()))
+    {
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(GetBot());
+
+        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+            return;
+
+        // Fallback: basic melee attack
+        if (!GetBot()->IsNonMeleeSpellCast(false))
+        {
+            if (GetBot()->GetDistance(target) <= 5.0f)
+            {
+                GetBot()->AttackerStateUpdate(target);
+            }
+        }
+        return;
+    }
+
+    // Specialized rotation for level 10+ with spec
     auto startTime = std::chrono::steady_clock::now();
 
     // Update disease tracking
@@ -709,7 +486,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     // Apply diseases first
     if (_diseaseManager->NeedsFrostFever(target))
     {
-        if (CanUseAbility(ICY_TOUCH) && _runeManager->HasRunes(0, 1, 0))
+        if (CanUseAbility(ICY_TOUCH) && _runeManager->HasRunes(0u, 1u, 0u))
         {
             CastSpell(target, ICY_TOUCH);
             _runeManager->ConsumeRunes(0, 1, 0);
@@ -721,7 +498,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
     if (_diseaseManager->NeedsBloodPlague(target))
     {
-        if (CanUseAbility(PLAGUE_STRIKE) && _runeManager->HasRunes(0, 0, 1))
+        if (CanUseAbility(PLAGUE_STRIKE) && _runeManager->HasRunes(0u, 0u, 1u))
         {
             CastSpell(target, PLAGUE_STRIKE);
             _runeManager->ConsumeRunes(0, 0, 1);
@@ -734,7 +511,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     // Use Death Strike for healing if needed
     if (GetBot()->GetHealthPct() < 70.0f)
     {
-        if (CanUseAbility(DEATH_STRIKE) && _runeManager->HasRunes(0, 1, 1))
+        if (CanUseAbility(DEATH_STRIKE) && _runeManager->HasRunes(0u, 1u, 1u))
         {
             CastSpell(target, DEATH_STRIKE);
             _runeManager->ConsumeRunes(0, 1, 1);
@@ -750,7 +527,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (_diseaseManager->HasBothDiseases(target))
         {
             // Spread diseases with Blood Boil for AoE
-            if (CanUseAbility(BLOOD_BOIL) && _runeManager->HasRunes(1, 0, 0))
+            if (CanUseAbility(BLOOD_BOIL) && _runeManager->HasRunes(1u, 0u, 0u))
             {
                 CastSpell(BLOOD_BOIL);
                 _runeManager->ConsumeRunes(1, 0, 0);
@@ -761,7 +538,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
             switch (_detectedSpec)
             {
                 case DeathKnightSpec::BLOOD:
-                    if (CanUseAbility(HEART_STRIKE) && _runeManager->HasRunes(1, 0, 0))
+                    if (CanUseAbility(HEART_STRIKE) && _runeManager->HasRunes(1u, 0u, 0u))
                     {
                         CastSpell(target, HEART_STRIKE);
                         _runeManager->ConsumeRunes(1, 0, 0);
@@ -771,7 +548,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
                     break;
 
                 case DeathKnightSpec::FROST:
-                    if (CanUseAbility(OBLITERATE) && _runeManager->HasRunes(0, 1, 1))
+                    if (CanUseAbility(OBLITERATE) && _runeManager->HasRunes(0u, 1u, 1u))
                     {
                         CastSpell(target, OBLITERATE);
                         _runeManager->ConsumeRunes(0, 1, 1);
@@ -781,7 +558,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
                     break;
 
                 case DeathKnightSpec::UNHOLY:
-                    if (CanUseAbility(SCOURGE_STRIKE) && _runeManager->HasRunes(0, 0, 1))
+                    if (CanUseAbility(SCOURGE_STRIKE) && _runeManager->HasRunes(0u, 0u, 1u))
                     {
                         CastSpell(target, SCOURGE_STRIKE);
                         _runeManager->ConsumeRunes(0, 0, 1);
@@ -793,7 +570,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Use Blood Strike as fallback
-        if (CanUseAbility(BLOOD_STRIKE) && _runeManager->HasRunes(1, 0, 0))
+        if (CanUseAbility(BLOOD_STRIKE) && _runeManager->HasRunes(1u, 0u, 0u))
         {
             CastSpell(target, BLOOD_STRIKE);
             _runeManager->ConsumeRunes(1, 0, 0);
@@ -1001,18 +778,18 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     switch (spellId)
     {
         case ICY_TOUCH:
-            return _runeManager->HasRunes(0, 1, 0);
+            return _runeManager->HasRunes(0u, 1u, 0u);
         case PLAGUE_STRIKE:
-            return _runeManager->HasRunes(0, 0, 1);
+            return _runeManager->HasRunes(0u, 0u, 1u);
         case BLOOD_STRIKE:
         case HEART_STRIKE:
         case BLOOD_BOIL:
-            return _runeManager->HasRunes(1, 0, 0);
+            return _runeManager->HasRunes(1u, 0u, 0u);
         case DEATH_STRIKE:
         case OBLITERATE:
-            return _runeManager->HasRunes(0, 1, 1);
+            return _runeManager->HasRunes(0u, 1u, 1u);
         case SCOURGE_STRIKE:
-            return _runeManager->HasRunes(0, 0, 1);
+            return _runeManager->HasRunes(0u, 0u, 1u);
         default:
             break;
     }
@@ -1258,7 +1035,11 @@ DeathKnightSpec DeathKnightAI::GetCurrentSpecialization() const
 
 DeathKnightAI::~DeathKnightAI()
 {
-    // Cleanup is handled by smart pointers
+    // Cleanup is handled by smart pointers for unique_ptr members
+    delete _runeManager;
+    delete _combatMetrics;
+    delete _positioning;
+    delete _metrics;
 }
 
 } // namespace Playerbot

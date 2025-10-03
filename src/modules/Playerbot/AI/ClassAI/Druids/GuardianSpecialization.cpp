@@ -214,7 +214,7 @@ bool GuardianSpecialization::HasEnoughResource(uint32 spellId)
     if (!bot)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
@@ -236,7 +236,7 @@ bool GuardianSpecialization::HasEnoughResource(uint32 spellId)
         case SURVIVAL_INSTINCTS:
             return _survivalInstinctsReady == 0;
         default:
-            uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+            auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
             return bot->GetPower(POWER_MANA) >= manaCost;
     }
 }
@@ -271,10 +271,10 @@ void GuardianSpecialization::ConsumeResource(uint32 spellId)
             _survivalInstinctsReady = SURVIVAL_INSTINCTS_COOLDOWN;
             break;
         default:
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
             if (spellInfo)
             {
-                uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+                auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
                 if (bot->GetPower(POWER_MANA) >= manaCost)
                     bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);
             }

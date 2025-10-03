@@ -171,11 +171,11 @@ bool BalanceSpecialization::HasEnoughResource(uint32 spellId)
     if (!bot)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return true;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     return bot->GetPower(POWER_MANA) >= manaCost;
 }
 
@@ -185,11 +185,11 @@ void BalanceSpecialization::ConsumeResource(uint32 spellId)
     if (!bot)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
-    uint32 manaCost = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()); uint32 manaCost = 0; for (auto const& cost : powerCosts) { if (cost.Power == POWER_MANA) { manaCost = cost.Amount; break; } }
     if (bot->GetPower(POWER_MANA) >= manaCost)
     {
         bot->SetPower(POWER_MANA, bot->GetPower(POWER_MANA) - manaCost);

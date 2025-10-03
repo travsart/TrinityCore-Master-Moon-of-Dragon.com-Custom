@@ -40,6 +40,8 @@ set(PLAYERBOT_SOURCES
     # Configuration system (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
     # Temporarily disabled: DependencyValidator (needs MySQL headers fix)
@@ -303,10 +305,15 @@ set(PLAYERBOT_SOURCES
     # Phase 2: Bot Lifecycle Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotCharacterCreator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotCharacterCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotScheduler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
+
+    # WoW 11.2 Character Creation Data (header-only)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Data/WoW112CharacterCreation.h
 
     # Phase 2: Refactored Architecture Components
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.cpp
@@ -317,6 +324,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
+
+    # Performance Optimization System (Phase 5)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
 
     # Phase 2: Enhanced Session Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
@@ -384,12 +395,21 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.h
+    # TradeManager disabled - requires TrinityCore trade API modernization
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+
+    # Economy Systems - Advanced Auction House Integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
 
     # Quest Systems - Dynamic Quest Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
@@ -400,6 +420,16 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
+
+    # Game Systems - Integrated Quest, Inventory, Trade Management
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
+    # Config files commented out - incomplete implementations
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotInventoryConfig.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.h
 
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
@@ -416,6 +446,8 @@ source_group("" FILES
 source_group("Config" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
 )
@@ -568,6 +600,11 @@ source_group("Interfaces" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotPerformance.h
 )
 
+source_group("Performance" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
+)
+
 source_group("Adapters" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
@@ -591,6 +628,13 @@ source_group("Social" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
 )
 
+source_group("Economy" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
+)
+
 source_group("Quest" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
@@ -598,6 +642,13 @@ source_group("Quest" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
+)
+
+source_group("Game" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
 )
 
 source_group("Commands" FILES
@@ -630,6 +681,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
         ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
+        ${CMAKE_CURRENT_SOURCE_DIR}/Economy
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
     PRIVATE

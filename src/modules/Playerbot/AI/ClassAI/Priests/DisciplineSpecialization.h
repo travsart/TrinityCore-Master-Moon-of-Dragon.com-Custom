@@ -138,7 +138,7 @@ private:
     std::map<uint32, uint32> _cooldowns;
 
     // Priority queue for healing
-    std::priority_queue<Playerbot::HealTarget> _healQueue;
+    std::priority_queue<::Playerbot::HealTarget> _healQueue;
 
     // Performance optimization
     uint32 _lastHealCheck;

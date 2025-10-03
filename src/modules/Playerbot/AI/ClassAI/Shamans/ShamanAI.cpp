@@ -73,7 +73,7 @@ enum ShockSpells
 // Shield spell definitions
 enum ShieldSpells
 {
-    SPELL_LIGHTNING_SHIELD = 324,
+    SPELL_LIGHTNING_SHIELD = 192106, // Updated for WoW 11.2
     SPELL_WATER_SHIELD = 52127,
     SPELL_EARTH_SHIELD = 974
 };

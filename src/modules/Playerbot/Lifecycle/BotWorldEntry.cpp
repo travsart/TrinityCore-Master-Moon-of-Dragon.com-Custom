@@ -476,6 +476,20 @@ bool BotWorldEntry::InitializeAI()
     // Start AI updates
     ai->OnRespawn();
 
+    // CRITICAL FIX: If bot is already in a group at server startup, activate follow behavior
+    Group* group = _player->GetGroup();
+    if (group)
+    {
+        TC_LOG_INFO("module.playerbot.worldentry",
+                   "Bot {} is in group at startup - activating follow behavior for leader {}",
+                   _player->GetName(),
+                   ObjectAccessor::FindPlayer(group->GetLeaderGUID()) ?
+                   ObjectAccessor::FindPlayer(group->GetLeaderGUID())->GetName() : "Unknown");
+
+        // Trigger group join to initialize follow strategy
+        ai->OnGroupJoined(group);
+    }
+
     TC_LOG_INFO("module.playerbot.worldentry",
                "AI initialized for bot {}",
                _player->GetName());

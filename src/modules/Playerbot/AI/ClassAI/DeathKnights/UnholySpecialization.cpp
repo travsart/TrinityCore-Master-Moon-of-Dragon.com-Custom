@@ -16,6 +16,11 @@
 #include "ObjectAccessor.h"
 #include "Group.h"
 #include "ScriptMgr.h"
+#include "SharedDefines.h"
+#include "Item.h"
+#include "CharmInfo.h"
+#include "GameTime.h"
+#include "Creature.h"
 
 namespace Playerbot
 {
@@ -55,7 +60,7 @@ UnholySpecialization::UnholySpecialization(Player* bot)
     , _lastDiseaseSpread(0)
     , _lastCorpseUpdate(0)
     , _lastRotationCheck(0)
-    , _rotationPhase(UnholyRotationPhase::OPENING)
+    , _rotationPhase(OPENING)
     , _combatStartTime(0)
     , _totalDamageDealt(0)
     , _diseaseDamage(0)
@@ -74,7 +79,7 @@ UnholySpecialization::UnholySpecialization(Player* bot)
     , _lastAoeCheck(0)
     , _priorityTarget(ObjectGuid::Empty)
     , _lastTargetSwitch(0)
-    , _diseaseApplicationPhase(DiseasePhase::BLOOD_PLAGUE_FIRST)
+    , _diseaseApplicationPhase(BLOOD_PLAGUE_FIRST)
     , _lastDiseaseCheck(0)
     , _multiTargetMode(false)
     , _executePhase(false)
@@ -83,11 +88,11 @@ UnholySpecialization::UnholySpecialization(Player* bot)
     , _conserveMode(false)
     , _lastResourceCheck(0)
 {
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Initializing for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Initializing for bot {}", bot->GetName().c_str());
 
     // Initialize rotation state
-    _rotationPhase = UnholyRotationPhase::OPENING;
-    _diseaseApplicationPhase = DiseasePhase::BLOOD_PLAGUE_FIRST;
+    _rotationPhase = OPENING;
+    _diseaseApplicationPhase = BLOOD_PLAGUE_FIRST;
 
     // Reset all cooldowns
     _summonGargoyleReady = 0;
@@ -114,7 +119,7 @@ UnholySpecialization::UnholySpecialization(Player* bot)
     _pestilenceCount = 0;
     _minionsActive = 0;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Initialization complete for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Initialization complete for bot {}", bot->GetName().c_str());
 }
 
 void UnholySpecialization::UpdateRotation(::Unit* target)
@@ -134,7 +139,7 @@ void UnholySpecialization::UpdateRotation(::Unit* target)
     _lastRotationCheck = now;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateRotation for bot {} targeting {}",
-                 bot->GetName(), target->GetName());
+                 bot->GetName().c_str(), target->GetName());
 
     // Update all management systems
     UpdateRuneManagement();
@@ -174,32 +179,32 @@ void UnholySpecialization::UpdateRotation(::Unit* target)
     // Execute rotation based on current phase and situation
     switch (_rotationPhase)
     {
-        case UnholyRotationPhase::OPENING:
+        case OPENING:
             if (ExecuteOpeningRotation(target))
                 return;
             break;
 
-        case UnholyRotationPhase::DISEASE_APPLICATION:
+        case DISEASE_APPLICATION:
             if (ExecuteDiseaseApplicationRotation(target))
                 return;
             break;
 
-        case UnholyRotationPhase::BURST_PHASE:
+        case BURST_PHASE:
             if (ExecuteBurstRotation(target))
                 return;
             break;
 
-        case UnholyRotationPhase::SUSTAIN_PHASE:
+        case SUSTAIN_PHASE:
             if (ExecuteSustainRotation(target))
                 return;
             break;
 
-        case UnholyRotationPhase::AOE_PHASE:
+        case AOE_PHASE:
             if (ExecuteAoeRotation(target))
                 return;
             break;
 
-        case UnholyRotationPhase::EXECUTE_PHASE:
+        case EXECUTE_PHASE:
             if (ExecuteExecuteRotation(target))
                 return;
             break;
@@ -214,7 +219,7 @@ void UnholySpecialization::UpdateRotation(::Unit* target)
     if (HandleFallbackRotation(target))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: No rotation action taken for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: No rotation action taken for bot {}", bot->GetName().c_str());
 }
 
 void UnholySpecialization::UpdateBuffs()
@@ -223,20 +228,20 @@ void UnholySpecialization::UpdateBuffs()
     if (!bot)
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateBuffs for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateBuffs for bot {}", bot->GetName().c_str());
 
     // Maintain Unholy Presence - highest priority for DPS
     if (!bot->HasAura(UNHOLY_PRESENCE) && bot->HasSpell(UNHOLY_PRESENCE))
     {
-        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Unholy Presence for bot {}", bot->GetName());
-        bot->CastSpell(bot, UNHOLY_PRESENCE, false);
+        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Unholy Presence for bot {}", bot->GetName().c_str());
+        bot->CastSpell(bot, UNHOLY_PRESENCE, TRIGGERED_NONE);
         return;
     }
 
     // Maintain Bone Armor for survivability
     if (ShouldCastBoneArmor())
     {
-        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Bone Armor for bot {}", bot->GetName());
+        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Bone Armor for bot {}", bot->GetName().c_str());
         CastBoneArmor();
         return;
     }
@@ -244,8 +249,8 @@ void UnholySpecialization::UpdateBuffs()
     // Maintain Horn of Winter for stats
     if (!bot->HasAura(HORN_OF_WINTER) && bot->HasSpell(HORN_OF_WINTER))
     {
-        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Horn of Winter for bot {}", bot->GetName());
-        bot->CastSpell(bot, HORN_OF_WINTER, false);
+        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Horn of Winter for bot {}", bot->GetName().c_str());
+        bot->CastSpell(bot, HORN_OF_WINTER, TRIGGERED_NONE);
         return;
     }
 
@@ -258,24 +263,22 @@ void UnholySpecialization::UpdateBuffs()
         // Apply group-wide buffs when appropriate
         if (!bot->HasAura(HORN_OF_WINTER))
         {
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference const& itr : group->GetMembers())
             {
-                if (Player* member = ref->GetSource())
+                Player* member = itr.GetSource();
+                if (member && member->IsInWorld() && bot->IsWithinDistInMap(member, 40.0f))
                 {
-                    if (member->IsInWorld() && bot->IsWithinDistInMap(member, 40.0f))
+                    if (!member->HasAura(HORN_OF_WINTER) && bot->HasSpell(HORN_OF_WINTER))
                     {
-                        if (!member->HasAura(HORN_OF_WINTER) && bot->HasSpell(HORN_OF_WINTER))
-                        {
-                            bot->CastSpell(bot, HORN_OF_WINTER, false);
-                            break;
-                        }
+                        bot->CastSpell(bot, HORN_OF_WINTER, TRIGGERED_NONE);
+                        break;
                     }
                 }
             }
         }
     }
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateBuffs complete for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateBuffs complete for bot {}", bot->GetName().c_str());
 }
 
 void UnholySpecialization::UpdateCooldowns(uint32 diff)
@@ -420,7 +423,7 @@ bool UnholySpecialization::CanUseAbility(uint32 spellId)
             return _darkTransformationReady == 0;
         case BONE_ARMOR:
             return _boneArmorReady == 0;
-        case ANTI_MAGIC_SHELL:
+        case DeathKnightSpecialization::ANTI_MAGIC_SHELL:
             return _antiMagicShellReady == 0;
         case DEATH_PACT:
             return _deathPactReady == 0;
@@ -436,18 +439,18 @@ void UnholySpecialization::OnCombatStart(::Unit* target)
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: OnCombatStart for bot {} targeting {}",
-                 bot->GetName(), target ? target->GetName() : "unknown");
+                 bot->GetName().c_str(), target ? target->GetName() : "unknown");
 
     _combatStartTime = getMSTime();
-    _rotationPhase = UnholyRotationPhase::OPENING;
-    _diseaseApplicationPhase = DiseasePhase::BLOOD_PLAGUE_FIRST;
+    _rotationPhase = OPENING;
+    _diseaseApplicationPhase = BLOOD_PLAGUE_FIRST;
 
     // Enter Unholy Presence for maximum DPS
     if (ShouldUseUnholyPresence())
         EnterUnholyPresence();
 
     // Summon ghoul if not active
-    if (!HasActiveGhoul() && bot->HasSpell(RAISE_DEAD))
+    if (!HasActiveGhoul() && bot->HasSpell(DeathKnightSpecialization::RAISE_DEAD))
         SummonGhoul();
 
     // Reset proc states
@@ -468,7 +471,7 @@ void UnholySpecialization::OnCombatStart(::Unit* target)
     _burstPhase = false;
     _conserveMode = false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Combat initialization complete for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Combat initialization complete for bot {}", bot->GetName().c_str());
 }
 
 void UnholySpecialization::OnCombatEnd()
@@ -489,8 +492,8 @@ void UnholySpecialization::OnCombatEnd()
     _priorityTarget = ObjectGuid::Empty;
 
     // Reset phases
-    _rotationPhase = UnholyRotationPhase::OPENING;
-    _diseaseApplicationPhase = DiseasePhase::BLOOD_PLAGUE_FIRST;
+    _rotationPhase = OPENING;
+    _diseaseApplicationPhase = BLOOD_PLAGUE_FIRST;
     _multiTargetMode = false;
     _executePhase = false;
     _burstPhase = false;
@@ -512,7 +515,7 @@ bool UnholySpecialization::HasEnoughResource(uint32 spellId)
     {
         case SCOURGE_STRIKE:
             return HasAvailableRunes(RuneType::FROST, 1) && HasAvailableRunes(RuneType::UNHOLY, 1);
-        case DEATH_COIL:
+        case DeathKnightSpecialization::DEATH_COIL:
             return HasEnoughRunicPower(40);
         case BONE_ARMOR:
             return HasAvailableRunes(RuneType::UNHOLY, 1);
@@ -520,7 +523,7 @@ bool UnholySpecialization::HasEnoughResource(uint32 spellId)
             return HasAvailableRunes(RuneType::UNHOLY, 1);
         case ICY_TOUCH:
             return HasAvailableRunes(RuneType::FROST, 1);
-        case BLOOD_STRIKE:
+        case DeathKnightSpecialization::BLOOD_STRIKE:
             return HasAvailableRunes(RuneType::BLOOD, 1);
         case BLOOD_BOIL:
             return HasAvailableRunes(RuneType::BLOOD, 1);
@@ -530,7 +533,7 @@ bool UnholySpecialization::HasEnoughResource(uint32 spellId)
             return HasAvailableRunes(RuneType::UNHOLY, 1) && HasAvailableRunes(RuneType::FROST, 1) && HasAvailableRunes(RuneType::BLOOD, 1);
         case NECROTIC_STRIKE:
             return HasAvailableRunes(RuneType::UNHOLY, 1) && HasAvailableRunes(RuneType::FROST, 1);
-        case DEATH_STRIKE:
+        case DeathKnightSpecialization::DEATH_STRIKE:
             return HasAvailableRunes(RuneType::FROST, 1) && HasAvailableRunes(RuneType::UNHOLY, 1);
         case CORPSE_EXPLOSION:
             return HasAvailableCorpse();
@@ -540,15 +543,15 @@ bool UnholySpecialization::HasEnoughResource(uint32 spellId)
             return _armyOfTheDeadReady == 0;
         case DARK_TRANSFORMATION:
             return _darkTransformationReady == 0 && HasActiveGhoul();
-        case ANTI_MAGIC_SHELL:
+        case DeathKnightSpecialization::ANTI_MAGIC_SHELL:
             return _antiMagicShellReady == 0;
-        case DEATH_PACT:
+        case DeathKnightSpecialization::DEATH_PACT:
             return _deathPactReady == 0 && HasActiveGhoul();
-        case RAISE_DEAD:
+        case DeathKnightSpecialization::RAISE_DEAD:
             return HasAvailableRunes(RuneType::UNHOLY, 1);
-        case DEATH_GRIP:
+        case DeathKnightSpecialization::DEATH_GRIP:
             return HasAvailableRunes(RuneType::UNHOLY, 1);
-        case MIND_FREEZE:
+        case DeathKnightSpecialization::MIND_FREEZE:
             return true; // No resource cost, just cooldown
         default:
             return true;
@@ -565,7 +568,7 @@ void UnholySpecialization::ConsumeResource(uint32 spellId)
             GenerateRunicPower(15);
             _scourgeStrikesUsed++;
             break;
-        case DEATH_COIL:
+        case DeathKnightSpecialization::DEATH_COIL:
             SpendRunicPower(40);
             _deathCoilsUsed++;
             break;
@@ -582,7 +585,7 @@ void UnholySpecialization::ConsumeResource(uint32 spellId)
             ConsumeRunes(RuneType::FROST, 1);
             GenerateRunicPower(10);
             break;
-        case BLOOD_STRIKE:
+        case DeathKnightSpecialization::BLOOD_STRIKE:
             ConsumeRunes(RuneType::BLOOD, 1);
             GenerateRunicPower(10);
             break;
@@ -604,7 +607,7 @@ void UnholySpecialization::ConsumeResource(uint32 spellId)
             ConsumeRunes(RuneType::FROST, 1);
             GenerateRunicPower(15);
             break;
-        case DEATH_STRIKE:
+        case DeathKnightSpecialization::DEATH_STRIKE:
             ConsumeRunes(RuneType::FROST, 1);
             ConsumeRunes(RuneType::UNHOLY, 1);
             GenerateRunicPower(15);
@@ -622,18 +625,18 @@ void UnholySpecialization::ConsumeResource(uint32 spellId)
             _darkTransformationReady = DARK_TRANSFORMATION_COOLDOWN;
             _lastDarkTransformation = getMSTime();
             break;
-        case ANTI_MAGIC_SHELL:
+        case DeathKnightSpecialization::ANTI_MAGIC_SHELL:
             _antiMagicShellReady = ANTI_MAGIC_SHELL_COOLDOWN;
             _lastAntiMagicShell = getMSTime();
             break;
-        case DEATH_PACT:
+        case DeathKnightSpecialization::DEATH_PACT:
             _deathPactReady = DEATH_PACT_COOLDOWN;
             _lastDeathPact = getMSTime();
             break;
-        case RAISE_DEAD:
+        case DeathKnightSpecialization::RAISE_DEAD:
             ConsumeRunes(RuneType::UNHOLY, 1);
             break;
-        case DEATH_GRIP:
+        case DeathKnightSpecialization::DEATH_GRIP:
             ConsumeRunes(RuneType::UNHOLY, 1);
             break;
         default:
@@ -652,7 +655,7 @@ Position UnholySpecialization::GetOptimalPosition(::Unit* target)
 
     // Unholy Death Knights prefer melee range but with positioning for pet management
     float distance = UNHOLY_MELEE_RANGE * 0.8f; // Slightly closer than max melee range
-    float angle = target->GetAngle(bot);
+    float angle = target->GetRelativeAngle(bot);
 
     // Adjust angle for pet positioning - avoid being directly behind target
     if (HasActiveGhoul())
@@ -675,7 +678,7 @@ Position UnholySpecialization::GetOptimalPosition(::Unit* target)
     );
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Optimal position calculated for bot {} at distance {:.2f}, angle {:.2f}",
-                 bot->GetName(), distance, angle);
+                 bot->GetName().c_str(), distance, angle);
 
     return optimalPos;
 }
@@ -693,12 +696,12 @@ bool UnholySpecialization::ExecuteOpeningRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteOpeningRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteOpeningRotation for bot {}", bot->GetName().c_str());
 
     // Ensure ghoul is active first
-    if (!HasActiveGhoul() && bot->HasSpell(RAISE_DEAD))
+    if (!HasActiveGhoul() && bot->HasSpell(DeathKnightSpecialization::RAISE_DEAD))
     {
-        if (HasEnoughResource(RAISE_DEAD))
+        if (HasEnoughResource(DeathKnightSpecialization::RAISE_DEAD))
         {
             SummonGhoul();
             return true;
@@ -713,7 +716,8 @@ bool UnholySpecialization::ExecuteOpeningRotation(::Unit* target)
     }
 
     // Use Army of the Dead on tough enemies (elite/boss)
-    if (target->GetCreatureType() == CREATURE_TYPE_HUMANOID || target->IsElite())
+    Creature* creature = target->ToCreature();
+    if (target->GetCreatureType() == CREATURE_TYPE_HUMANOID || (creature && creature->IsElite()))
     {
         if (ShouldCastArmyOfTheDead())
         {
@@ -723,7 +727,7 @@ bool UnholySpecialization::ExecuteOpeningRotation(::Unit* target)
     }
 
     // Transition to disease application phase
-    _rotationPhase = UnholyRotationPhase::DISEASE_APPLICATION;
+    _rotationPhase = DISEASE_APPLICATION;
     return ExecuteDiseaseApplicationRotation(target);
 }
 
@@ -733,7 +737,7 @@ bool UnholySpecialization::ExecuteDiseaseApplicationRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteDiseaseApplicationRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteDiseaseApplicationRotation for bot {}", bot->GetName().c_str());
 
     // Check if we need to apply or refresh diseases
     bool needsBloodPlague = ShouldApplyDisease(target, DiseaseType::BLOOD_PLAGUE);
@@ -741,46 +745,46 @@ bool UnholySpecialization::ExecuteDiseaseApplicationRotation(::Unit* target)
 
     switch (_diseaseApplicationPhase)
     {
-        case DiseasePhase::BLOOD_PLAGUE_FIRST:
-            if (needsBloodPlague && HasEnoughResource(PLAGUE_STRIKE))
+        case BLOOD_PLAGUE_FIRST:
+            if (needsBloodPlague && HasEnoughResource(DeathKnightSpecialization::PLAGUE_STRIKE))
             {
                 CastPlagueStrike(target);
-                _diseaseApplicationPhase = DiseasePhase::FROST_FEVER_SECOND;
+                _diseaseApplicationPhase = FROST_FEVER_SECOND;
                 return true;
             }
             else if (!needsBloodPlague)
             {
-                _diseaseApplicationPhase = DiseasePhase::FROST_FEVER_SECOND;
+                _diseaseApplicationPhase = FROST_FEVER_SECOND;
             }
             break;
 
-        case DiseasePhase::FROST_FEVER_SECOND:
-            if (needsFrostFever && HasEnoughResource(ICY_TOUCH))
+        case FROST_FEVER_SECOND:
+            if (needsFrostFever && HasEnoughResource(DeathKnightSpecialization::ICY_TOUCH))
             {
                 CastIcyTouch(target);
-                _diseaseApplicationPhase = DiseasePhase::DISEASES_APPLIED;
+                _diseaseApplicationPhase = DISEASES_APPLIED;
                 return true;
             }
             else if (!needsFrostFever)
             {
-                _diseaseApplicationPhase = DiseasePhase::DISEASES_APPLIED;
+                _diseaseApplicationPhase = DISEASES_APPLIED;
             }
             break;
 
-        case DiseasePhase::DISEASES_APPLIED:
+        case DISEASES_APPLIED:
             // Both diseases applied, check for spreading opportunities
             if (ShouldSpreadDiseases() && HasEnoughResource(PESTILENCE))
             {
                 CastPestilence(target);
                 _pestilenceCount++;
                 // Transition to sustain phase after spreading
-                _rotationPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+                _rotationPhase = SUSTAIN_PHASE;
                 return true;
             }
             else
             {
                 // Move to sustain rotation
-                _rotationPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+                _rotationPhase = SUSTAIN_PHASE;
                 return ExecuteSustainRotation(target);
             }
             break;
@@ -789,7 +793,7 @@ bool UnholySpecialization::ExecuteDiseaseApplicationRotation(::Unit* target)
     // If we can't apply diseases, fall back to basic rotation
     if (!needsBloodPlague && !needsFrostFever)
     {
-        _rotationPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+        _rotationPhase = SUSTAIN_PHASE;
         return ExecuteSustainRotation(target);
     }
 
@@ -802,7 +806,7 @@ bool UnholySpecialization::ExecuteBurstRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteBurstRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteBurstRotation for bot {}", bot->GetName().c_str());
 
     // Use Summon Gargoyle for burst damage
     if (ShouldCastSummonGargoyle())
@@ -819,7 +823,7 @@ bool UnholySpecialization::ExecuteBurstRotation(::Unit* target)
     }
 
     // Consume Sudden Doom procs immediately
-    if (_suddenDoomActive && HasEnoughResource(DEATH_COIL))
+    if (_suddenDoomActive && HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
     {
         CastDeathCoil(target);
         ConsumeSuddenDoomProc();
@@ -841,14 +845,14 @@ bool UnholySpecialization::ExecuteBurstRotation(::Unit* target)
     }
 
     // Use Death Coil to dump runic power
-    if (GetRunicPower() >= 80 && HasEnoughResource(DEATH_COIL))
+    if (GetRunicPower() >= 80 && HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
     {
         CastDeathCoil(target);
         return true;
     }
 
     // Transition back to sustain if no burst actions available
-    _rotationPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+    _rotationPhase = SUSTAIN_PHASE;
     _burstPhase = false;
     return ExecuteSustainRotation(target);
 }
@@ -859,17 +863,17 @@ bool UnholySpecialization::ExecuteSustainRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteSustainRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteSustainRotation for bot {}", bot->GetName().c_str());
 
     // Maintain diseases - highest priority
     if (ShouldRefreshDiseases(target))
     {
-        if (ShouldApplyDisease(target, DiseaseType::BLOOD_PLAGUE) && HasEnoughResource(PLAGUE_STRIKE))
+        if (ShouldApplyDisease(target, DiseaseType::BLOOD_PLAGUE) && HasEnoughResource(DeathKnightSpecialization::PLAGUE_STRIKE))
         {
             CastPlagueStrike(target);
             return true;
         }
-        if (ShouldApplyDisease(target, DiseaseType::FROST_FEVER) && HasEnoughResource(ICY_TOUCH))
+        if (ShouldApplyDisease(target, DiseaseType::FROST_FEVER) && HasEnoughResource(DeathKnightSpecialization::ICY_TOUCH))
         {
             CastIcyTouch(target);
             return true;
@@ -877,7 +881,7 @@ bool UnholySpecialization::ExecuteSustainRotation(::Unit* target)
     }
 
     // Use procs when available
-    if (_suddenDoomActive && HasEnoughResource(DEATH_COIL))
+    if (_suddenDoomActive && HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
     {
         CastDeathCoil(target);
         ConsumeSuddenDoomProc();
@@ -892,7 +896,7 @@ bool UnholySpecialization::ExecuteSustainRotation(::Unit* target)
     }
 
     // Death Coil for runic power dump
-    if (GetRunicPower() >= 60 && HasEnoughResource(DEATH_COIL))
+    if (GetRunicPower() >= 60 && HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
     {
         CastDeathCoil(target);
         return true;
@@ -906,7 +910,7 @@ bool UnholySpecialization::ExecuteSustainRotation(::Unit* target)
     }
 
     // Blood Strike as last resort filler
-    if (HasEnoughResource(BLOOD_STRIKE))
+    if (HasEnoughResource(DeathKnightSpecialization::BLOOD_STRIKE))
     {
         CastBloodStrike(target);
         return true;
@@ -921,7 +925,7 @@ bool UnholySpecialization::ExecuteAoeRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteAoeRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteAoeRotation for bot {}", bot->GetName().c_str());
 
     // Death and Decay for major AoE
     if (ShouldCastDeathAndDecay() && HasEnoughResource(DEATH_AND_DECAY))
@@ -954,7 +958,7 @@ bool UnholySpecialization::ExecuteAoeRotation(::Unit* target)
     // Fall back to single target if no AoE opportunities
     if (_aoeTargetCount <= 2)
     {
-        _rotationPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+        _rotationPhase = SUSTAIN_PHASE;
         _multiTargetMode = false;
         return ExecuteSustainRotation(target);
     }
@@ -968,10 +972,10 @@ bool UnholySpecialization::ExecuteExecuteRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteExecuteRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: ExecuteExecuteRotation for bot {}", bot->GetName().c_str());
 
     // Spam Death Coil during execute phase
-    if (HasEnoughResource(DEATH_COIL))
+    if (HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
     {
         CastDeathCoil(target);
         return true;
@@ -995,7 +999,7 @@ bool UnholySpecialization::ExecuteExecuteRotation(::Unit* target)
     }
 
     // Death Strike for healing if low
-    if (bot->GetHealthPct() < 60.0f && HasEnoughResource(DEATH_STRIKE))
+    if (bot->GetHealthPct() < 60.0f && HasEnoughResource(DeathKnightSpecialization::DEATH_STRIKE))
     {
         CastDeathStrike(target);
         return true;
@@ -1010,20 +1014,20 @@ bool UnholySpecialization::HandleFallbackRotation(::Unit* target)
     if (!bot || !target)
         return false;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: HandleFallbackRotation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: HandleFallbackRotation for bot {}", bot->GetName().c_str());
 
     // Basic melee range check
     if (bot->GetDistance(target) > UNHOLY_MELEE_RANGE)
     {
         // Use Death Grip to pull target
-        if (ShouldUseDeathGrip(target) && HasEnoughResource(DEATH_GRIP))
+        if (ShouldUseDeathGrip(target) && HasEnoughResource(DeathKnightSpecialization::DEATH_GRIP))
         {
             CastDeathGrip(target);
             return true;
         }
 
         // Use Death Coil at range
-        if (HasEnoughResource(DEATH_COIL))
+        if (HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
         {
             CastDeathCoil(target);
             return true;
@@ -1035,7 +1039,7 @@ bool UnholySpecialization::HandleFallbackRotation(::Unit* target)
     {
         if (!bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL))
         {
-            bot->AttackStart(target);
+            bot->Attack(target, true);
             return true;
         }
     }
@@ -1075,8 +1079,8 @@ bool UnholySpecialization::HandleEmergencySurvival()
     // Death Strike for self-healing
     if (healthPct < 60.0f && bot->IsInCombat())
     {
-        ::Unit* target = bot->GetTarget();
-        if (target && HasEnoughResource(DEATH_STRIKE))
+        ::Unit* target = ObjectAccessor::GetUnit(*bot, bot->GetTarget());
+        if (target && HasEnoughResource(DeathKnightSpecialization::DEATH_STRIKE))
         {
             CastDeathStrike(target);
             return true;
@@ -1093,9 +1097,9 @@ bool UnholySpecialization::HandleMinionManagement()
         return false;
 
     // Summon ghoul if not active
-    if (!HasActiveGhoul() && bot->HasSpell(RAISE_DEAD))
+    if (!HasActiveGhoul() && bot->HasSpell(DeathKnightSpecialization::RAISE_DEAD))
     {
-        if (HasEnoughResource(RAISE_DEAD))
+        if (HasEnoughResource(DeathKnightSpecialization::RAISE_DEAD))
         {
             SummonGhoul();
             return true;
@@ -1121,7 +1125,7 @@ bool UnholySpecialization::HandleUtilitySpells(::Unit* target)
     // Interrupt casting
     if (target->HasUnitState(UNIT_STATE_CASTING) && bot->HasSpell(MIND_FREEZE))
     {
-        if (CanUseAbility(MIND_FREEZE))
+        if (CanUseAbility(DeathKnightSpecialization::MIND_FREEZE))
         {
             CastMindFreeze(target);
             return true;
@@ -1129,7 +1133,7 @@ bool UnholySpecialization::HandleUtilitySpells(::Unit* target)
     }
 
     // Death Grip to pull targets
-    if (ShouldUseDeathGrip(target) && HasEnoughResource(DEATH_GRIP))
+    if (ShouldUseDeathGrip(target) && HasEnoughResource(DeathKnightSpecialization::DEATH_GRIP))
     {
         CastDeathGrip(target);
         return true;
@@ -1171,7 +1175,7 @@ void UnholySpecialization::UpdateCombatPhase()
 
     uint32 now = getMSTime();
     uint32 combatDuration = now - _combatStartTime;
-    ::Unit* target = bot->GetTarget();
+    ::Unit* target = ObjectAccessor::GetUnit(*bot, bot->GetTarget());
 
     if (!target)
         return;
@@ -1184,13 +1188,13 @@ void UnholySpecialization::UpdateCombatPhase()
     // Execute phase for low health targets
     if (targetHealthPct < 35.0f)
     {
-        newPhase = UnholyRotationPhase::EXECUTE_PHASE;
+        newPhase = EXECUTE_PHASE;
         _executePhase = true;
     }
     // AoE phase for multiple targets
     else if (_aoeTargetCount > 2)
     {
-        newPhase = UnholyRotationPhase::AOE_PHASE;
+        newPhase = AOE_PHASE;
         _multiTargetMode = true;
     }
     // Burst phase for major cooldown usage
@@ -1198,26 +1202,26 @@ void UnholySpecialization::UpdateCombatPhase()
     {
         if (ShouldCastSummonGargoyle() || ShouldCastDarkTransformation())
         {
-            newPhase = UnholyRotationPhase::BURST_PHASE;
+            newPhase = BURST_PHASE;
             _burstPhase = true;
         }
     }
     // Disease application phase if diseases are missing
     else if (!HasDisease(target, DiseaseType::BLOOD_PLAGUE) || !HasDisease(target, DiseaseType::FROST_FEVER))
     {
-        newPhase = UnholyRotationPhase::DISEASE_APPLICATION;
-        _diseaseApplicationPhase = DiseasePhase::BLOOD_PLAGUE_FIRST;
+        newPhase = DISEASE_APPLICATION;
+        _diseaseApplicationPhase = BLOOD_PLAGUE_FIRST;
     }
     // Default to sustain phase
     else
     {
-        newPhase = UnholyRotationPhase::SUSTAIN_PHASE;
+        newPhase = SUSTAIN_PHASE;
     }
 
     if (newPhase != _rotationPhase)
     {
         TC_LOG_DEBUG("playerbot", "UnholySpecialization: Phase transition for bot {} from {} to {}",
-                     bot->GetName(), static_cast<int>(_rotationPhase), static_cast<int>(newPhase));
+                     bot->GetName().c_str(), static_cast<int>(_rotationPhase), static_cast<int>(newPhase));
         _rotationPhase = newPhase;
     }
 }
@@ -1373,7 +1377,7 @@ bool UnholySpecialization::HasEnoughRunicPower(uint32 required) const
 void UnholySpecialization::UpdateDiseaseManagement()
 {
     UpdateDiseaseTimers(0);
-    RefreshExpiringDiseases();
+    RefreshExpringDiseases();
 }
 
 void UnholySpecialization::ApplyDisease(::Unit* target, DiseaseType type, uint32 spellId)
@@ -1397,7 +1401,7 @@ void UnholySpecialization::ApplyDisease(::Unit* target, DiseaseType type, uint32
             break;
     }
 
-    DiseaseInfo disease(type, spellId, duration, damage);
+    DiseaseInfo disease(type, spellId, duration);
     _activeDiseases[target->GetGUID()].push_back(disease);
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Applied disease {} to target {} for bot {}",
@@ -1435,7 +1439,7 @@ bool UnholySpecialization::ShouldRefreshDiseases(::Unit* target) const
            ShouldApplyDisease(target, DiseaseType::FROST_FEVER);
 }
 
-void UnholySpecialization::RefreshExpiringDiseases()
+void UnholySpecialization::RefreshExpringDiseases()
 {
     Player* bot = GetBot();
     if (!bot)
@@ -1449,14 +1453,14 @@ void UnholySpecialization::RefreshExpiringDiseases()
 
         for (auto& disease : targetDiseases.second)
         {
-            if (disease.NeedsRefresh())
+            if (disease.needsRefresh || disease.remainingTime < DISEASE_REFRESH_THRESHOLD)
             {
-                if (disease.type == DiseaseType::BLOOD_PLAGUE && HasEnoughResource(PLAGUE_STRIKE))
+                if (disease.type == DiseaseType::BLOOD_PLAGUE && HasEnoughResource(DeathKnightSpecialization::PLAGUE_STRIKE))
                 {
                     CastPlagueStrike(target);
                     return;
                 }
-                else if (disease.type == DiseaseType::FROST_FEVER && HasEnoughResource(ICY_TOUCH))
+                else if (disease.type == DiseaseType::FROST_FEVER && HasEnoughResource(DeathKnightSpecialization::ICY_TOUCH))
                 {
                     CastIcyTouch(target);
                     return;
@@ -1582,14 +1586,14 @@ void UnholySpecialization::UpdatePetManagement()
 void UnholySpecialization::SummonGhoul()
 {
     Player* bot = GetBot();
-    if (!bot || !bot->HasSpell(RAISE_DEAD) || HasActiveGhoul())
+    if (!bot || !bot->HasSpell(DeathKnightSpecialization::RAISE_DEAD) || HasActiveGhoul())
         return;
 
-    if (HasEnoughResource(RAISE_DEAD))
+    if (HasEnoughResource(DeathKnightSpecialization::RAISE_DEAD))
     {
-        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Summoning ghoul for bot {}", bot->GetName());
-        bot->CastSpell(bot, RAISE_DEAD, false);
-        ConsumeResource(RAISE_DEAD);
+        TC_LOG_DEBUG("playerbot", "UnholySpecialization: Summoning ghoul for bot {}", bot->GetName().c_str());
+        bot->CastSpell(bot, DeathKnightSpecialization::RAISE_DEAD, TRIGGERED_NONE);
+        ConsumeResource(DeathKnightSpecialization::RAISE_DEAD);
         _lastGhoulSummon = getMSTime();
     }
 }
@@ -1600,7 +1604,7 @@ void UnholySpecialization::CommandGhoulIfNeeded()
         return;
 
     Player* bot = GetBot();
-    ::Unit* target = bot ? bot->GetTarget() : nullptr;
+    ::Unit* target = bot ? ObjectAccessor::GetUnit(*bot, bot->GetTarget()) : nullptr;
 
     if (target && target->IsHostileTo(bot))
     {
@@ -1624,7 +1628,7 @@ void UnholySpecialization::CommandGhoul(::Unit* target)
         pet->Attack(target, true);
 
         TC_LOG_DEBUG("playerbot", "UnholySpecialization: Commanded ghoul to attack {} for bot {}",
-                     target->GetName(), bot->GetName());
+                     target->GetName(), bot->GetName().c_str());
     }
 }
 
@@ -1680,7 +1684,7 @@ void UnholySpecialization::UpdateProcManagement()
             _suddenDoomStacks = 1; // Could check actual stacks
             _procActivations++;
 
-            TC_LOG_DEBUG("playerbot", "UnholySpecialization: Sudden Doom proc activated for bot {}", bot->GetName());
+            TC_LOG_DEBUG("playerbot", "UnholySpecialization: Sudden Doom proc activated for bot {}", bot->GetName().c_str());
         }
     }
     else if (_suddenDoomActive && now >= _suddenDoomExpires)
@@ -1700,7 +1704,7 @@ void UnholySpecialization::UpdateProcManagement()
     }
 
     // Check for Unholy Frenzy proc
-    if (bot->HasAura(UNHOLY_FRENZY))
+    if (bot->HasAura(DeathKnightSpecialization::UNHOLY_FRENZY))
     {
         if (!_unholyFrenzyActive)
         {
@@ -1777,7 +1781,7 @@ void UnholySpecialization::UpdateWeaponEnchantments()
 
     // Check off hand weapon if dual wielding
     Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-    if (offHand && offHand->GetTemplate()->InventoryType == INVTYPE_WEAPON)
+    if (offHand && offHand->GetTemplate()->GetInventoryType() == INVTYPE_WEAPON)
     {
         // Apply appropriate off-hand enchantment
     }
@@ -1788,11 +1792,11 @@ uint32 UnholySpecialization::GetSpellCooldown(uint32 spellId) const
     // Return appropriate cooldowns for spells
     switch (spellId)
     {
-        case MIND_FREEZE:
+        case DeathKnightSpecialization::MIND_FREEZE:
             return 10000; // 10 seconds
-        case DEATH_GRIP:
+        case DeathKnightSpecialization::DEATH_GRIP:
             return 35000; // 35 seconds
-        case ANTI_MAGIC_SHELL:
+        case DeathKnightSpecialization::ANTI_MAGIC_SHELL:
             return 45000; // 45 seconds
         case CORPSE_EXPLOSION:
             return 5000;  // 5 seconds
@@ -1812,7 +1816,7 @@ bool UnholySpecialization::ShouldCastScourgeStrike(::Unit* target)
 
 bool UnholySpecialization::ShouldCastDeathCoil(::Unit* target)
 {
-    return target && HasEnoughResource(DEATH_COIL) &&
+    return target && HasEnoughResource(DeathKnightSpecialization::DEATH_COIL) &&
            (GetRunicPower() >= 60 || _suddenDoomActive);
 }
 
@@ -1858,12 +1862,6 @@ bool UnholySpecialization::ShouldCastDeathPact()
     return bot && _deathPactReady == 0 && HasActiveGhoul() && bot->GetHealthPct() < 50.0f;
 }
 
-bool UnholySpecialization::ShouldUseDeathGrip(::Unit* target)
-{
-    Player* bot = GetBot();
-    return bot && target && bot->GetDistance(target) > UNHOLY_MELEE_RANGE &&
-           bot->GetDistance(target) < 30.0f && HasEnoughResource(DEATH_GRIP);
-}
 
 void UnholySpecialization::CastScourgeStrike(::Unit* target)
 {
@@ -1872,9 +1870,9 @@ void UnholySpecialization::CastScourgeStrike(::Unit* target)
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Scourge Strike on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, SCOURGE_STRIKE, false);
+    bot->CastSpell(target, SCOURGE_STRIKE, TRIGGERED_NONE);
     ConsumeResource(SCOURGE_STRIKE);
 
     // Calculate bonus damage based on diseases
@@ -1889,15 +1887,15 @@ void UnholySpecialization::CastScourgeStrike(::Unit* target)
 void UnholySpecialization::CastDeathCoil(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(DEATH_COIL))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::DEATH_COIL))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Coil on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
     if (target->IsHostileTo(bot))
     {
-        bot->CastSpell(target, DEATH_COIL, false);
+        bot->CastSpell(target, DeathKnightSpecialization::DEATH_COIL, TRIGGERED_NONE);
         _totalDamageDealt += 2000;
 
         // Bonus damage if Sudden Doom is active
@@ -1909,10 +1907,10 @@ void UnholySpecialization::CastDeathCoil(::Unit* target)
     else
     {
         // Heal friendly target
-        bot->CastSpell(target, DEATH_COIL, false);
+        bot->CastSpell(target, DeathKnightSpecialization::DEATH_COIL, TRIGGERED_NONE);
     }
 
-    ConsumeResource(DEATH_COIL);
+    ConsumeResource(DeathKnightSpecialization::DEATH_COIL);
 }
 
 void UnholySpecialization::CastBoneArmor()
@@ -1921,22 +1919,22 @@ void UnholySpecialization::CastBoneArmor()
     if (!bot || !HasEnoughResource(BONE_ARMOR))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Bone Armor for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Bone Armor for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, BONE_ARMOR, false);
+    bot->CastSpell(bot, BONE_ARMOR, TRIGGERED_NONE);
     ConsumeResource(BONE_ARMOR);
 }
 
 void UnholySpecialization::CastPlagueStrike(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(PLAGUE_STRIKE))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::PLAGUE_STRIKE))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Plague Strike on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, PLAGUE_STRIKE, false);
+    bot->CastSpell(target, PLAGUE_STRIKE, TRIGGERED_NONE);
     ConsumeResource(PLAGUE_STRIKE);
     ApplyDisease(target, DiseaseType::BLOOD_PLAGUE, PLAGUE_STRIKE);
     _totalDamageDealt += 1800;
@@ -1945,13 +1943,13 @@ void UnholySpecialization::CastPlagueStrike(::Unit* target)
 void UnholySpecialization::CastIcyTouch(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(ICY_TOUCH))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::ICY_TOUCH))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Icy Touch on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, ICY_TOUCH, false);
+    bot->CastSpell(target, ICY_TOUCH, TRIGGERED_NONE);
     ConsumeResource(ICY_TOUCH);
     ApplyDisease(target, DiseaseType::FROST_FEVER, ICY_TOUCH);
     _totalDamageDealt += 1500;
@@ -1960,14 +1958,14 @@ void UnholySpecialization::CastIcyTouch(::Unit* target)
 void UnholySpecialization::CastBloodStrike(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(BLOOD_STRIKE))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::BLOOD_STRIKE))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Blood Strike on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, BLOOD_STRIKE, false);
-    ConsumeResource(BLOOD_STRIKE);
+    bot->CastSpell(target, DeathKnightSpecialization::BLOOD_STRIKE, TRIGGERED_NONE);
+    ConsumeResource(DeathKnightSpecialization::BLOOD_STRIKE);
     _totalDamageDealt += 2000;
 
     // Bonus damage per disease
@@ -1984,9 +1982,9 @@ void UnholySpecialization::CastBloodBoil(::Unit* target)
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Blood Boil on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, BLOOD_BOIL, false);
+    bot->CastSpell(target, BLOOD_BOIL, TRIGGERED_NONE);
     ConsumeResource(BLOOD_BOIL);
     _totalDamageDealt += 1200 * _aoeTargetCount; // AoE damage
 }
@@ -1998,9 +1996,9 @@ void UnholySpecialization::CastPestilence(::Unit* target)
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Pestilence on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, PESTILENCE, false);
+    bot->CastSpell(target, PESTILENCE, TRIGGERED_NONE);
     ConsumeResource(PESTILENCE);
 }
 
@@ -2011,9 +2009,9 @@ void UnholySpecialization::CastNecroticStrike(::Unit* target)
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Necrotic Strike on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, NECROTIC_STRIKE, false);
+    bot->CastSpell(target, NECROTIC_STRIKE, TRIGGERED_NONE);
     ConsumeResource(NECROTIC_STRIKE);
     _totalDamageDealt += 2500;
 }
@@ -2021,14 +2019,14 @@ void UnholySpecialization::CastNecroticStrike(::Unit* target)
 void UnholySpecialization::CastDeathStrike(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(DEATH_STRIKE))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::DEATH_STRIKE))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Strike on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, DEATH_STRIKE, false);
-    ConsumeResource(DEATH_STRIKE);
+    bot->CastSpell(target, DeathKnightSpecialization::DEATH_STRIKE, TRIGGERED_NONE);
+    ConsumeResource(DeathKnightSpecialization::DEATH_STRIKE);
     _totalDamageDealt += 2200;
 
     // Heal for percentage of recent damage taken
@@ -2042,9 +2040,9 @@ void UnholySpecialization::CastCorpseExplosion()
     if (!bot || !bot->HasSpell(CORPSE_EXPLOSION) || !HasAvailableCorpse())
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Corpse Explosion for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Corpse Explosion for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, CORPSE_EXPLOSION, false);
+    bot->CastSpell(bot, CORPSE_EXPLOSION, TRIGGERED_NONE);
     ConsumeResource(CORPSE_EXPLOSION);
     _totalDamageDealt += 3000 * _aoeTargetCount;
 }
@@ -2055,9 +2053,9 @@ void UnholySpecialization::CastSummonGargoyle()
     if (!bot || !HasEnoughResource(SUMMON_GARGOYLE))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Summon Gargoyle for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Summon Gargoyle for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, SUMMON_GARGOYLE, false);
+    bot->CastSpell(bot, SUMMON_GARGOYLE, TRIGGERED_NONE);
     ConsumeResource(SUMMON_GARGOYLE);
     _minionsActive++;
 }
@@ -2068,9 +2066,9 @@ void UnholySpecialization::CastArmyOfTheDead()
     if (!bot || !HasEnoughResource(ARMY_OF_THE_DEAD))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Army of the Dead for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Army of the Dead for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, ARMY_OF_THE_DEAD, false);
+    bot->CastSpell(bot, ARMY_OF_THE_DEAD, TRIGGERED_NONE);
     ConsumeResource(ARMY_OF_THE_DEAD);
     _minionsActive += 8; // Army summons 8 skeletons
 }
@@ -2081,12 +2079,12 @@ void UnholySpecialization::CastDarkTransformation()
     if (!bot || !HasActiveGhoul() || !CanUseAbility(DARK_TRANSFORMATION))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Dark Transformation for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Dark Transformation for bot {}", bot->GetName().c_str());
 
     Pet* pet = bot->GetPet();
     if (pet)
     {
-        bot->CastSpell(pet, DARK_TRANSFORMATION, false);
+        bot->CastSpell(pet, DARK_TRANSFORMATION, TRIGGERED_NONE);
         ConsumeResource(DARK_TRANSFORMATION);
     }
 }
@@ -2094,29 +2092,29 @@ void UnholySpecialization::CastDarkTransformation()
 void UnholySpecialization::CastAntiMagicShell()
 {
     Player* bot = GetBot();
-    if (!bot || !CanUseAbility(ANTI_MAGIC_SHELL))
+    if (!bot || !CanUseAbility(DeathKnightSpecialization::ANTI_MAGIC_SHELL))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Anti-Magic Shell for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Anti-Magic Shell for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, ANTI_MAGIC_SHELL, false);
-    ConsumeResource(ANTI_MAGIC_SHELL);
+    bot->CastSpell(bot, DeathKnightSpecialization::ANTI_MAGIC_SHELL, TRIGGERED_NONE);
+    ConsumeResource(DeathKnightSpecialization::ANTI_MAGIC_SHELL);
 }
 
 void UnholySpecialization::CastDeathPact()
 {
     Player* bot = GetBot();
-    if (!bot || !HasActiveGhoul() || !CanUseAbility(DEATH_PACT))
+    if (!bot || !HasActiveGhoul() || !CanUseAbility(DeathKnightSpecialization::DEATH_PACT))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Pact for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Pact for bot {}", bot->GetName().c_str());
 
     Pet* pet = bot->GetPet();
     if (pet)
     {
         uint32 healing = pet->GetHealth(); // Heal for pet's current health
-        bot->CastSpell(bot, DEATH_PACT, false);
-        ConsumeResource(DEATH_PACT);
+        bot->CastSpell(bot, DeathKnightSpecialization::DEATH_PACT, TRIGGERED_NONE);
+        ConsumeResource(DeathKnightSpecialization::DEATH_PACT);
 
         // Heal the death knight
         bot->SetHealth(std::min(bot->GetHealth() + healing, bot->GetMaxHealth()));
@@ -2124,34 +2122,33 @@ void UnholySpecialization::CastDeathPact()
         // Pet is sacrificed
         _hasActiveGhoul = false;
         _ghoulGuid = ObjectGuid::Empty;
-        _minionsActive = std::max(0, (int)_minionsActive - 1);
+        _minionsActive = std::max(0u, _minionsActive > 0 ? _minionsActive - 1 : 0);
     }
 }
 
 void UnholySpecialization::CastDeathGrip(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !HasEnoughResource(DEATH_GRIP))
+    if (!bot || !target || !HasEnoughResource(DeathKnightSpecialization::DEATH_GRIP))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Grip on {} for bot {}",
-                 target->GetName(), bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death Grip for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(target, DEATH_GRIP, false);
-    ConsumeResource(DEATH_GRIP);
+    bot->CastSpell(target, DeathKnightSpecialization::DEATH_GRIP, TRIGGERED_NONE);
+    ConsumeResource(DeathKnightSpecialization::DEATH_GRIP);
 }
 
 void UnholySpecialization::CastMindFreeze(::Unit* target)
 {
     Player* bot = GetBot();
-    if (!bot || !target || !CanUseAbility(MIND_FREEZE))
+    if (!bot || !target || !CanUseAbility(DeathKnightSpecialization::MIND_FREEZE))
         return;
 
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Mind Freeze on {} for bot {}",
-                 target->GetName(), bot->GetName());
+                 target->GetName(), bot->GetName().c_str());
 
-    bot->CastSpell(target, MIND_FREEZE, false);
-    _cooldowns[MIND_FREEZE] = GetSpellCooldown(MIND_FREEZE);
+    bot->CastSpell(target, DeathKnightSpecialization::MIND_FREEZE, TRIGGERED_NONE);
+    _cooldowns[DeathKnightSpecialization::MIND_FREEZE] = GetSpellCooldown(DeathKnightSpecialization::MIND_FREEZE);
 }
 
 void UnholySpecialization::EnterUnholyPresence()
@@ -2160,9 +2157,9 @@ void UnholySpecialization::EnterUnholyPresence()
     if (!bot || !bot->HasSpell(UNHOLY_PRESENCE) || bot->HasAura(UNHOLY_PRESENCE))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Entering Unholy Presence for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Entering Unholy Presence for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(bot, UNHOLY_PRESENCE, false);
+    bot->CastSpell(bot, UNHOLY_PRESENCE, TRIGGERED_NONE);
 }
 
 bool UnholySpecialization::ShouldUseUnholyPresence()
@@ -2180,7 +2177,7 @@ void UnholySpecialization::UpdateDeathAndDecay()
 
 bool UnholySpecialization::ShouldCastDeathAndDecay() const
 {
-    return _aoeTargetCount > 2 && HasEnoughResource(DEATH_AND_DECAY);
+    return _aoeTargetCount > 2; // Resource check will be done when actually casting
 }
 
 void UnholySpecialization::CastDeathAndDecay(Position targetPos)
@@ -2189,10 +2186,9 @@ void UnholySpecialization::CastDeathAndDecay(Position targetPos)
     if (!bot || !bot->HasSpell(DEATH_AND_DECAY) || !HasEnoughResource(DEATH_AND_DECAY))
         return;
 
-    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death and Decay for bot {}", bot->GetName());
+    TC_LOG_DEBUG("playerbot", "UnholySpecialization: Casting Death and Decay for bot {}", bot->GetName().c_str());
 
-    bot->CastSpell(targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ(),
-                   DEATH_AND_DECAY, false);
+    bot->CastSpell(targetPos, DEATH_AND_DECAY, TRIGGERED_NONE);
     ConsumeResource(DEATH_AND_DECAY);
     _totalDamageDealt += 2000 * _aoeTargetCount; // Estimated AoE damage
 }
