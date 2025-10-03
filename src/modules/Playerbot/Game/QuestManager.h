@@ -21,7 +21,6 @@
 #include <deque>
 
 class Player;
-class BotAI;
 class Creature;
 class GameObject;
 class Quest;
@@ -32,6 +31,7 @@ enum QuestStatus : uint8;
 namespace Playerbot
 {
     // Forward declarations
+    class BotAI;
     class QuestSelectionStrategy;
     class QuestCache;
     struct QuestEvaluation;
@@ -333,6 +333,7 @@ namespace Playerbot
 
         std::vector<uint32> const& GetActiveQuests() const { return m_activeQuests; }
         std::vector<uint32> const& GetCompletableQuests() const { return m_completableQuests; }
+        uint32 GetLastUpdateTime() const { return m_lastUpdateTime; }
 
     private:
         struct CachedQuest

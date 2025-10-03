@@ -422,9 +422,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
 
     # Game Systems - Integrated Quest, Inventory, Trade Management
-    # QuestManager temporarily disabled - requires TrinityCore API modernization for Phase 3
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
     # Config files commented out - incomplete implementations
@@ -646,8 +647,10 @@ source_group("Quest" FILES
 )
 
 source_group("Game" FILES
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
 )

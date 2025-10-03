@@ -12,12 +12,14 @@
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"
+#include "GameObjectData.h"
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
 #include "World.h"
 #include "Log.h"
 #include "Item.h"
 #include "ItemTemplate.h"
+#include "Bag.h"
 #include "LootItemType.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -26,6 +28,7 @@
 #include "Group.h"
 #include "WorldSession.h"
 #include "MotionMaster.h"
+#include "ReputationMgr.h"
 #include <algorithm>
 #include <cmath>
 
@@ -216,9 +219,9 @@ namespace Playerbot
         , m_totalUpdateTime(0)
         , m_updateCount(0)
         , m_cpuUsage(0.0f)
+        , m_strategy(std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL))
+        , m_cache(std::make_unique<QuestCache>())
     {
-        m_strategy = std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL);
-        m_cache = std::make_unique<QuestCache>();
     }
 
     QuestManager::~QuestManager()
@@ -258,7 +261,7 @@ namespace Playerbot
         m_phaseTimer += diff;
 
         // Update quest cache periodically
-        if (getMSTime() - m_cache->m_lastUpdateTime > QUEST_CACHE_TTL)
+        if (getMSTime() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
             UpdateQuestCache();
 
         // Update quest phase state machine
@@ -534,8 +537,8 @@ namespace Playerbot
     void QuestManager::ScanCreatureQuestGivers()
     {
         std::list<Creature*> creatures;
-        Trinity::AllCreaturesInObjectRangeCheck checker(m_bot, QUEST_GIVER_SCAN_RANGE);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesInObjectRangeCheck> searcher(m_bot, creatures, checker);
+        Trinity::AnyUnitInObjectRangeCheck checker(m_bot, QUEST_GIVER_SCAN_RANGE, true, true);
+        Trinity::CreatureListSearcher searcher(m_bot, creatures, checker);
         Cell::VisitAllObjects(m_bot, searcher, QUEST_GIVER_SCAN_RANGE);
 
         for (Creature* creature : creatures)
@@ -577,13 +580,19 @@ namespace Playerbot
     void QuestManager::ScanGameObjectQuestGivers()
     {
         std::list<GameObject*> objects;
-        Trinity::AllGameObjectsInObjectRangeCheck checker(m_bot, QUEST_GIVER_SCAN_RANGE);
-        Trinity::GameObjectListSearcher<Trinity::AllGameObjectsInObjectRangeCheck> searcher(m_bot, objects, checker);
+        Trinity::AllWorldObjectsInRange checker(m_bot, QUEST_GIVER_SCAN_RANGE);
+        Trinity::GameObjectListSearcher searcher(m_bot, objects, checker);
         Cell::VisitAllObjects(m_bot, searcher, QUEST_GIVER_SCAN_RANGE);
 
         for (GameObject* object : objects)
         {
-            if (!object || !object->IsQuestGiver())
+            if (!object)
+                continue;
+
+            // Check if GameObject provides quests
+            GameObjectTemplate const* goInfo = object->GetGOInfo();
+            if (!goInfo || (goInfo->type != GAMEOBJECT_TYPE_QUESTGIVER &&
+                             !object->hasQuest(0) && !object->hasInvolvedQuest(0)))
                 continue;
 
             QuestGiverInfo info;
@@ -627,7 +636,7 @@ namespace Playerbot
                 continue;
 
             ItemTemplate const* proto = item->GetTemplate();
-            if (!proto || !proto->HasFlag(ITEM_FLAG_HAS_QUEST))
+            if (!proto || proto->GetStartQuest() == 0)
                 continue;
 
             uint32 questId = proto->GetStartQuest();
@@ -651,7 +660,7 @@ namespace Playerbot
                     continue;
 
                 ItemTemplate const* proto = item->GetTemplate();
-                if (!proto || !proto->HasFlag(ITEM_FLAG_HAS_QUEST))
+                if (!proto || proto->GetStartQuest() == 0)
                     continue;
 
                 uint32 questId = proto->GetStartQuest();
@@ -755,7 +764,7 @@ namespace Playerbot
 
     float QuestManager::CalculateXPValue(Quest const* quest) const
     {
-        if (!quest || quest->GetRewXPDifficulty() == 0)
+        if (!quest || quest->GetXPDifficulty() == 0)
             return 0.0f;
 
         // Get base XP reward
@@ -898,9 +907,9 @@ namespace Playerbot
         // Check if other group members have this quest
         uint32 membersWithQuest = 0;
         Group* group = m_bot->GetGroup();
-        for (GroupReference const* ref = group->GetMembers().getFirst(); ref; ref = ref->next())
+        for (GroupReference const& ref : group->GetMembers())
         {
-            if (Player* member = ref->GetSource())
+            if (Player* member = ref.GetSource())
             {
                 if (member != m_bot && member->GetQuestStatus(quest->GetQuestId()) != QUEST_STATUS_NONE)
                     membersWithQuest++;
