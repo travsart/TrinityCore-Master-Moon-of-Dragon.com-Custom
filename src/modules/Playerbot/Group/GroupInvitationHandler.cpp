@@ -437,74 +437,49 @@ bool GroupInvitationHandler::SendAcceptPacket()
             leader ? leader->GetName() : "Unknown");
 
         // EXECUTION MARKER: Check if we reach after success message
-        TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: After success message, about to start follow activation ===");
+        // DEADLOCK FIX #13: The code below was calling OnGroupJoined() THREE TIMES:
+        // 1. Line 455: First call (inside "SIMPLE FIX" block)
+        // 2. Line 494: Second call (DUPLICATE!)
+        // 3. Lines 499-507: Third attempt via GetStrategy/ActivateStrategy
+        //
+        // This caused "resource deadlock would occur" because OnGroupJoined() acquires
+        // unique_lock on BotAI::_mutex, and calling it multiple times in quick succession
+        // from the same or different threads caused lock contention.
+        //
+        // Solution: Call OnGroupJoined() ONCE and ONLY ONCE
 
-        // SIMPLE FIX: Direct call to BotAI OnGroupJoined - bypass complex session logic
-        if (_bot && _bot->GetGroup())
-        {
-            TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} calling BotAI OnGroupJoined directly ===", _bot->GetName());
+        TC_LOG_INFO("module.playerbot.group", "Bot {} accepted group invitation, triggering OnGroupJoined", _bot->GetName());
 
-            // Try to get AI directly and call OnGroupJoined
-            BotSession* botSession = dynamic_cast<BotSession*>(_bot->GetSession());
-            if (botSession)
-            {
-                BotAI* botAI = botSession->GetAI();
-                if (botAI)
-                {
-                    TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} found AI, calling OnGroupJoined ===", _bot->GetName());
-                    botAI->OnGroupJoined(_bot->GetGroup());
-                    TC_LOG_INFO("playerbot.debug", "=== SIMPLE FIX: Bot {} OnGroupJoined completed ===", _bot->GetName());
-                }
-                else
-                {
-                    TC_LOG_ERROR("playerbot.debug", "=== SIMPLE FIX ERROR: Bot {} AI is null ===", _bot->GetName());
-                }
-            }
-            else
-            {
-                TC_LOG_ERROR("playerbot.debug", "=== SIMPLE FIX ERROR: Bot {} session cast failed ===", _bot->GetName());
-            }
-        }
-
-        // Get the bot's AI and trigger group join handler with detailed debugging
+        // Get the bot's AI
         auto* session = _bot->GetSession();
         if (!session)
         {
-            TC_LOG_ERROR("playerbot.debug", "=== FOLLOW ERROR: Bot {} has no session! ===", _bot->GetName());
+            TC_LOG_ERROR("module.playerbot.group", "Bot {} has no session!", _bot->GetName());
             return false;
         }
-        TC_LOG_INFO("playerbot.debug", "=== FOLLOW DEBUG: Bot {} has session, attempting BotSession cast ===", _bot->GetName());
 
         auto* botSession = dynamic_cast<BotSession*>(session);
         if (!botSession)
         {
-            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} session is not a BotSession!", _bot->GetName());
+            TC_LOG_ERROR("module.playerbot.group", "Bot {} session is not a BotSession!", _bot->GetName());
             return false;
         }
-        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} has BotSession, getting AI", _bot->GetName());
 
         auto* botAI = botSession->GetAI();
         if (!botAI)
         {
-            TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} BotSession has no AI!", _bot->GetName());
+            TC_LOG_ERROR("module.playerbot.group", "Bot {} BotSession has no AI!", _bot->GetName());
             return false;
         }
-        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} has AI, calling OnGroupJoined", _bot->GetName());
 
+        // Call OnGroupJoined ONCE - it handles everything internally:
+        // - Creates follow strategy if needed
+        // - Creates group_combat strategy if needed
+        // - Activates both strategies
+        // - Calls OnActivate() callbacks
+        // - All under a SINGLE unique_lock (Fix #12)
         botAI->OnGroupJoined(_bot->GetGroup());
-        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG: Bot {} OnGroupJoined call completed", _bot->GetName());
-
-        // BACKUP FIX: Directly activate follow strategy as fallback
-        TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} directly activating follow strategy", _bot->GetName());
-        if (botAI->GetStrategy("follow"))
-        {
-            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} already has follow strategy", _bot->GetName());
-        }
-        else
-        {
-            botAI->ActivateStrategy("follow");
-            TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX BACKUP: Bot {} activated follow strategy directly", _bot->GetName());
-        }
+        TC_LOG_INFO("module.playerbot.group", "Bot {} OnGroupJoined completed successfully", _bot->GetName());
     }
     else
     {
