@@ -21,7 +21,7 @@
 #include "Chat/Channels/ChannelMgr.h"
 #include "Chat/Channels/Channel.h"
 #include "Server/Packets/ChatPackets.h"
-#include "CharacterDatabase.h"
+#include "DatabaseEnv.h"
 #include "Optional.h"
 #include "SharedDefines.h"
 #include "Group.h"
@@ -367,7 +367,7 @@ bool SocialManager::PerformEmote(EmoteType emote)
     if (!m_bot || !m_emotesEnabled)
         return false;
 
-    m_bot->HandleEmoteCommand(static_cast<uint32>(emote));
+    m_bot->HandleEmoteCommand(static_cast<Emote>(emote));
     RecordEmote(emote);
     return true;
 }
@@ -446,7 +446,9 @@ bool SocialManager::AddFriend(ObjectGuid playerGuid, std::string const& note)
     if (!social)
         return false;
 
-    social->AddToSocialList(playerGuid, SOCIAL_FLAG_FRIEND);
+    // Get account GUID for social system (required by TrinityCore API)
+    ObjectGuid accountGuid = ObjectGuid::Create<HighGuid::WowAccount>(player->GetSession()->GetAccountId());
+    social->AddToSocialList(playerGuid, accountGuid, SOCIAL_FLAG_FRIEND);
 
     // Add to local cache
     FriendInfo info;
@@ -551,11 +553,18 @@ bool SocialManager::IgnorePlayer(ObjectGuid playerGuid)
     if (!m_bot || playerGuid.IsEmpty())
         return false;
 
+    // Get player to obtain account GUID
+    Player* player = ObjectAccessor::FindPlayer(playerGuid);
+    if (!player)
+        return false;
+
     PlayerSocial* social = m_bot->GetSocial();
     if (!social)
         return false;
 
-    social->AddToSocialList(playerGuid, SOCIAL_FLAG_IGNORED);
+    // Get account GUID for social system (required by TrinityCore API)
+    ObjectGuid accountGuid = ObjectGuid::Create<HighGuid::WowAccount>(player->GetSession()->GetAccountId());
+    social->AddToSocialList(playerGuid, accountGuid, SOCIAL_FLAG_IGNORED);
     m_ignoreList.insert(playerGuid);
 
     // Remove from friends if present
