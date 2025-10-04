@@ -443,6 +443,18 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.h
 
+    # Performance Optimization (Phase 5) - ThreadPool, MemoryPool, QueryOptimizer, Profiler
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/Profiler/Profiler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/Profiler/Profiler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
+
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
@@ -674,6 +686,19 @@ source_group("Advanced" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.h
+)
+
+source_group("Performance" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/Profiler/Profiler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/Profiler/Profiler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
 )
 
 source_group("Commands" FILES
