@@ -352,6 +352,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.h
+
+    # Integration Tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/ProfessionIntegrationTest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/ProfessionIntegrationTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/TargetScannerTest.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
