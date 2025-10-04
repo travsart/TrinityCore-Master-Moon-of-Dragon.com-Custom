@@ -411,6 +411,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
 
+    # Profession System - Complete Crafting + Gathering Automation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
+
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
@@ -696,6 +700,11 @@ source_group("Social" FILES
 source_group("Equipment" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
+)
+
+source_group("Professions" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
 )
 
 source_group("Economy" FILES
