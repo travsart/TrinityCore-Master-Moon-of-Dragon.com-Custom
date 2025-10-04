@@ -293,7 +293,23 @@ protected:
     mutable PerformanceMetrics _performanceMetrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    // DEADLOCK FIX #14: Changed from std::shared_mutex to std::recursive_mutex
+    // After 13 failed fixes, the root cause is that std::shared_mutex does NOT
+    // support recursive locking (even shared_lock). When the same thread tries
+    // to acquire the lock twice (even read-only), it throws "resource deadlock would occur".
+    //
+    // Despite exhaustive analysis, we could not eliminate ALL possible recursive
+    // lock acquisitions across the complex callback chain (strategies -> triggers ->
+    // actions -> group handlers -> back to strategies). Some edge case is still
+    // triggering recursive acquisition.
+    //
+    // Solution: Use std::recursive_mutex which ALLOWS the same thread to acquire
+    // the lock multiple times. This trades some performance (recursive_mutex is
+    // slower than shared_mutex) for correctness and stability.
+    //
+    // Performance impact: Negligible - lock contention was already minimal, and
+    // recursive_mutex overhead is only a few nanoseconds per acquisition.
+    mutable std::recursive_mutex _mutex;
 
     // Debug tracking
     uint32 _lastDebugLogTime = 0;

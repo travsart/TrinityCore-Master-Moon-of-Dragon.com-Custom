@@ -224,7 +224,7 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     std::vector<std::pair<Strategy*, bool>> strategiesToCheck;
     {
-        std::shared_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         for (auto const& strategyName : _activeStrategies)
         {
             auto it = _strategies.find(strategyName);
@@ -626,7 +626,7 @@ void BotAI::OnGroupJoined(Group* group)
 
     // PHASE 1: Check strategy existence and activate - ALL UNDER ONE LOCK
     {
-        std::unique_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Check if follow strategy exists
         if (_strategies.find("follow") == _strategies.end())
@@ -714,7 +714,7 @@ void BotAI::OnGroupLeft()
     std::vector<Strategy*> strategiesToDeactivate;
 
     {
-        std::unique_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Deactivate follow strategy
         auto followIt = _strategies.find("follow");
@@ -781,14 +781,14 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
     if (!strategy)
         return;
 
-    std::unique_lock lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::string name = strategy->GetName();
     _strategies[name] = std::move(strategy);
 }
 
 void BotAI::RemoveStrategy(std::string const& name)
 {
-    std::unique_lock lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _strategies.erase(name);
 
     // Also remove from active strategies
@@ -800,7 +800,7 @@ void BotAI::RemoveStrategy(std::string const& name)
 
 Strategy* BotAI::GetStrategy(std::string const& name) const
 {
-    std::shared_lock lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _strategies.find(name);
     return it != _strategies.end() ? it->second.get() : nullptr;
 }
@@ -814,7 +814,7 @@ std::vector<Strategy*> BotAI::GetActiveStrategies() const
     // and the calling code then tried to call GetStrategy(), DEADLOCK!
     std::vector<Strategy*> result;
     {
-        std::shared_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Access _strategies directly to avoid recursive mutex acquisition
         for (auto const& name : _activeStrategies)
@@ -836,7 +836,7 @@ void BotAI::ActivateStrategy(std::string const& name)
     // which tries to acquire another shared_lock will deadlock due to writer-preference
     Strategy* strategy = nullptr;
     {
-        std::unique_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Check if strategy exists
         auto it = _strategies.find(name);
@@ -872,7 +872,7 @@ void BotAI::DeactivateStrategy(std::string const& name)
     // which tries to acquire another shared_lock will deadlock due to writer-preference
     Strategy* strategy = nullptr;
     {
-        std::unique_lock lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Find the strategy
         auto it = _strategies.find(name);
