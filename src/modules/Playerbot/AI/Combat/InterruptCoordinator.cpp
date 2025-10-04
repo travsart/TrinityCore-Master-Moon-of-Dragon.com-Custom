@@ -280,14 +280,21 @@ void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targ
     // If this was a critical spell and backup assignment is enabled, try to assign backup
     if (_enableBackupAssignment)
     {
-        std::shared_lock castLock(_castMutex);
-        auto castIt = _activeCasts.find(targetGuid);
-        if (castIt != _activeCasts.end() && castIt->second.priority <= InterruptPriority::HIGH)
+        // Collect cast info while holding lock
+        CastingSpellInfo castInfo;
+        bool foundCriticalCast = false;
         {
-            // Remove the failed bot from consideration and try to reassign
-            CastingSpellInfo castInfo = castIt->second;
-            castLock.unlock();
+            std::shared_lock castLock(_castMutex);
+            auto castIt = _activeCasts.find(targetGuid);
+            if (castIt != _activeCasts.end() && castIt->second.priority <= InterruptPriority::HIGH)
+            {
+                castInfo = castIt->second;
+                foundCriticalCast = true;
+            }
+        } // Release cast lock
 
+        if (foundCriticalCast)
+        {
             // Mark the failed bot as temporarily unavailable
             {
                 std::unique_lock botLock(_botMutex);
@@ -300,6 +307,7 @@ void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targ
                 }
             }
 
+            // Assign interrupt without holding any locks
             AssignInterrupt(castInfo);
         }
     }
@@ -863,13 +871,16 @@ void InterruptCoordinator::OptimizeForPerformance()
     // Clean up old metrics data, optimize data structures, etc.
     // This is called periodically to maintain performance
 
-    // Clean up old cooldown data
-    std::unique_lock botLock(_botMutex);
-    for (auto& [botGuid, botInfo] : _botInfo)
+    // Clean up old cooldown data and capture counts while holding lock
+    size_t botCount = 0;
     {
-        UpdateBotCooldowns(botGuid);
-    }
-    botLock.unlock();
+        std::unique_lock botLock(_botMutex);
+        for (auto& [botGuid, botInfo] : _botInfo)
+        {
+            UpdateBotCooldowns(botGuid);
+        }
+        botCount = _botInfo.size();
+    } // Release bot lock
 
     // Clean up old assignments
     CleanupExpiredAssignments();
@@ -877,10 +888,22 @@ void InterruptCoordinator::OptimizeForPerformance()
     // Clean up old casts
     CleanupExpiredCasts();
 
+    // Get remaining counts without holding locks
+    size_t castCount = 0;
+    size_t assignmentCount = 0;
+    {
+        std::shared_lock castLock(_castMutex);
+        castCount = _activeCasts.size();
+    }
+    {
+        std::shared_lock assignLock(_assignmentMutex);
+        assignmentCount = _pendingAssignments.size();
+    }
+
     TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Performance optimization complete - %u bots, %u active casts, %u pending assignments",
-                 static_cast<uint32>(GetRegisteredBotCount()),
-                 static_cast<uint32>(GetActiveCastCount()),
-                 static_cast<uint32>(GetPendingAssignmentCount()));
+                 static_cast<uint32>(botCount),
+                 static_cast<uint32>(castCount),
+                 static_cast<uint32>(assignmentCount));
 }
 
 void InterruptCoordinator::AddEncounterPattern(uint32 npcId, std::vector<uint32> const& spellSequence, std::vector<uint32> const& timings)

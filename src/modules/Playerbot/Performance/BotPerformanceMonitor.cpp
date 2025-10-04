@@ -495,24 +495,28 @@ void BotPerformanceMonitor::ProcessMetrics()
 {
     while (!_shutdownRequested.load())
     {
-        std::unique_lock<std::mutex> lock(_metricsMutex);
-        _metricsCondition.wait(lock, [this] { return !_metricsQueue.empty() || _shutdownRequested.load(); });
+        std::vector<PerformanceMetric> metricsToProcess;
 
-        if (_shutdownRequested.load())
-            break;
-
-        // Process up to 1000 metrics at once
-        int processed = 0;
-        while (!_metricsQueue.empty() && processed < 1000)
+        // Collect metrics while holding lock
         {
-            PerformanceMetric metric = _metricsQueue.front();
-            _metricsQueue.pop();
-            lock.unlock();
+            std::unique_lock<std::mutex> lock(_metricsMutex);
+            _metricsCondition.wait(lock, [this] { return !_metricsQueue.empty() || _shutdownRequested.load(); });
 
+            if (_shutdownRequested.load())
+                break;
+
+            // Collect up to 1000 metrics at once
+            while (!_metricsQueue.empty() && metricsToProcess.size() < 1000)
+            {
+                metricsToProcess.push_back(_metricsQueue.front());
+                _metricsQueue.pop();
+            }
+        } // Release lock before processing
+
+        // Process metrics without holding queue lock (UpdateStatistics needs _metricsMutex)
+        for (auto const& metric : metricsToProcess)
+        {
             UpdateStatistics(metric);
-
-            lock.lock();
-            ++processed;
         }
     }
 }
