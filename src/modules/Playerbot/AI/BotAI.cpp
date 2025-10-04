@@ -606,37 +606,77 @@ void BotAI::OnGroupJoined(Group* group)
     TC_LOG_INFO("playerbot", "Bot {} joined group, activating follow and combat strategies",
                 _bot->GetName());
 
-    // Verify follow strategy exists (should have been created in InitializeDefaultStrategies)
-    if (!GetStrategy("follow"))
+    // DEADLOCK FIX #12: This method was acquiring mutex MULTIPLE times:
+    // 1. GetStrategy("follow") - shared_lock
+    // 2. AddStrategy() - unique_lock
+    // 3. GetStrategy("group_combat") - shared_lock
+    // 4. AddStrategy() - unique_lock
+    // 5. ActivateStrategy("follow") - unique_lock
+    // 6. ActivateStrategy("group_combat") - unique_lock
+    // 7. Final confirmation block - shared_lock
+    //
+    // When UpdateStrategies() runs in another thread and releases its lock,
+    // then ActivateStrategy() tries to acquire unique_lock, and THIS method
+    // tries to acquire another lock, DEADLOCK occurs due to writer-preference!
+    //
+    // Solution: Do ALL mutex operations in a SINGLE critical section,
+    // then call OnActivate() callbacks AFTER releasing the lock
+
+    std::vector<Strategy*> strategiesToActivate;
+
+    // PHASE 1: Check strategy existence and activate - ALL UNDER ONE LOCK
     {
-        TC_LOG_ERROR("playerbot", "CRITICAL: Follow strategy not found for bot {} - this should never happen!",
-                    _bot->GetName());
-        // Emergency fallback - create it now
-        auto followBehavior = std::make_unique<LeaderFollowBehavior>();
-        AddStrategy(std::move(followBehavior));
-        TC_LOG_WARN("playerbot", "Created emergency follow strategy for bot {}", _bot->GetName());
-    }
+        std::unique_lock lock(_mutex);
 
-    // Verify group combat strategy exists
-    if (!GetStrategy("group_combat"))
-    {
-        TC_LOG_ERROR("playerbot", "CRITICAL: GroupCombat strategy not found for bot {} - this should never happen!",
-                    _bot->GetName());
-        // Emergency fallback - create it now
-        auto groupCombat = std::make_unique<GroupCombatStrategy>();
-        AddStrategy(std::move(groupCombat));
-        TC_LOG_WARN("playerbot", "Created emergency group_combat strategy for bot {}", _bot->GetName());
-    }
+        // Check if follow strategy exists
+        if (_strategies.find("follow") == _strategies.end())
+        {
+            TC_LOG_ERROR("playerbot", "CRITICAL: Follow strategy not found for bot {} - creating emergency fallback",
+                        _bot->GetName());
 
-    // Activate follow strategy
-    ActivateStrategy("follow");
+            // Create it immediately while we hold the lock
+            auto followBehavior = std::make_unique<LeaderFollowBehavior>();
+            _strategies["follow"] = std::move(followBehavior);
+            TC_LOG_WARN("playerbot", "Created emergency follow strategy for bot {}", _bot->GetName());
+        }
 
-    // CRITICAL FIX: Activate group combat strategy for combat assistance
-    ActivateStrategy("group_combat");
+        // Check if group combat strategy exists
+        if (_strategies.find("group_combat") == _strategies.end())
+        {
+            TC_LOG_ERROR("playerbot", "CRITICAL: GroupCombat strategy not found for bot {} - creating emergency fallback",
+                        _bot->GetName());
 
-    // Confirm activation succeeded by checking if it's in active strategies list
-    {
-        std::shared_lock lock(_mutex);
+            // Create it immediately while we hold the lock
+            auto groupCombat = std::make_unique<GroupCombatStrategy>();
+            _strategies["group_combat"] = std::move(groupCombat);
+            TC_LOG_WARN("playerbot", "Created emergency group_combat strategy for bot {}", _bot->GetName());
+        }
+
+        // Activate follow strategy (while still holding lock)
+        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), "follow") == _activeStrategies.end())
+        {
+            _activeStrategies.push_back("follow");
+            auto it = _strategies.find("follow");
+            if (it != _strategies.end())
+            {
+                it->second->SetActive(true);
+                strategiesToActivate.push_back(it->second.get());
+            }
+        }
+
+        // Activate group combat strategy (while still holding lock)
+        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), "group_combat") == _activeStrategies.end())
+        {
+            _activeStrategies.push_back("group_combat");
+            auto it = _strategies.find("group_combat");
+            if (it != _strategies.end())
+            {
+                it->second->SetActive(true);
+                strategiesToActivate.push_back(it->second.get());
+            }
+        }
+
+        // Confirm activation (still under same lock)
         bool followActive = std::find(_activeStrategies.begin(), _activeStrategies.end(), "follow") != _activeStrategies.end();
         bool combatActive = std::find(_activeStrategies.begin(), _activeStrategies.end(), "group_combat") != _activeStrategies.end();
 
@@ -649,9 +689,16 @@ void BotAI::OnGroupJoined(Group* group)
             TC_LOG_ERROR("playerbot", "❌ Strategy activation FAILED for bot {} - follow={}, combat={}",
                         _bot->GetName(), followActive, combatActive);
         }
+    } // RELEASE LOCK - all operations completed
+
+    // PHASE 2: Call OnActivate() callbacks WITHOUT holding lock
+    for (Strategy* strategy : strategiesToActivate)
+    {
+        if (strategy)
+            strategy->OnActivate(this);
     }
 
-    // Set state to following if not in combat
+    // Set state to following if not in combat (no lock needed - atomic operation)
     if (!IsInCombat())
         SetAIState(BotAIState::FOLLOWING);
 
@@ -663,11 +710,45 @@ void BotAI::OnGroupLeft()
     TC_LOG_INFO("playerbot", "Bot {} left group, deactivating follow and combat strategies",
                 _bot->GetName());
 
-    // Deactivate follow strategy
-    DeactivateStrategy("follow");
+    // DEADLOCK FIX #12: Same as OnGroupJoined - do all operations under one lock
+    std::vector<Strategy*> strategiesToDeactivate;
 
-    // Deactivate group combat strategy
-    DeactivateStrategy("group_combat");
+    {
+        std::unique_lock lock(_mutex);
+
+        // Deactivate follow strategy
+        auto followIt = _strategies.find("follow");
+        if (followIt != _strategies.end())
+        {
+            followIt->second->SetActive(false);
+            strategiesToDeactivate.push_back(followIt->second.get());
+        }
+
+        _activeStrategies.erase(
+            std::remove(_activeStrategies.begin(), _activeStrategies.end(), "follow"),
+            _activeStrategies.end()
+        );
+
+        // Deactivate group combat strategy
+        auto combatIt = _strategies.find("group_combat");
+        if (combatIt != _strategies.end())
+        {
+            combatIt->second->SetActive(false);
+            strategiesToDeactivate.push_back(combatIt->second.get());
+        }
+
+        _activeStrategies.erase(
+            std::remove(_activeStrategies.begin(), _activeStrategies.end(), "group_combat"),
+            _activeStrategies.end()
+        );
+    } // RELEASE LOCK
+
+    // Call OnDeactivate() callbacks WITHOUT holding lock
+    for (Strategy* strategy : strategiesToDeactivate)
+    {
+        if (strategy)
+            strategy->OnDeactivate(this);
+    }
 
     // Set state to idle if not in combat
     if (!IsInCombat())
