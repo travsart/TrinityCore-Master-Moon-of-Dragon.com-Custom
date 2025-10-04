@@ -212,28 +212,42 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    // CRITICAL FIX: Collect strategies to update FIRST, then release lock before calling UpdateBehavior
-    // Strategy update methods can call back into BotAI methods that acquire _mutex
-    // We must NOT hold _mutex while calling strategy->UpdateBehavior()
-    std::vector<Strategy*> strategiesToUpdate;
+    // DEADLOCK FIX #10: The previous fix wasn't complete!
+    // Problem: We acquired shared_lock, checked IsActive(), then released lock
+    // But IsActive() is just an atomic read - the REAL issue is that while holding
+    // shared_lock, if another thread tries to acquire unique_lock (in ActivateStrategy),
+    // and THEN we try to acquire ANOTHER shared_lock via GetStrategy() callback,
+    // we deadlock due to writer-preference in std::shared_mutex.
+    //
+    // Solution: Don't check IsActive() while holding lock. Just collect all strategies
+    // and check active status WITHOUT any mutex (IsActive() is atomic anyway).
+
+    std::vector<std::pair<Strategy*, bool>> strategiesToCheck;
     {
         std::shared_lock lock(_mutex);
-
         for (auto const& strategyName : _activeStrategies)
         {
             auto it = _strategies.find(strategyName);
             if (it != _strategies.end())
             {
-                Strategy* strategy = it->second.get();
-                if (strategy && strategy->IsActive(this))
-                {
-                    strategiesToUpdate.push_back(strategy);
-                }
+                // Collect strategy pointer - don't call IsActive yet
+                strategiesToCheck.push_back({it->second.get(), false});
             }
         }
-    } // Release lock before calling strategy updates
+    } // RELEASE LOCK IMMEDIATELY
 
-    // Now call strategy updates WITHOUT holding the lock
+    // NOW check IsActive() and update WITHOUT holding any lock
+    // IsActive() is thread-safe (atomic), and callbacks can safely call GetStrategy()
+    std::vector<Strategy*> strategiesToUpdate;
+    for (auto& [strategy, dummy] : strategiesToCheck)
+    {
+        if (strategy && strategy->IsActive(this))
+        {
+            strategiesToUpdate.push_back(strategy);
+        }
+    }
+
+    // Call strategy updates WITHOUT holding ANY lock
     for (Strategy* strategy : strategiesToUpdate)
     {
         // Special handling for follow strategy - needs every frame update
@@ -712,65 +726,96 @@ Strategy* BotAI::GetStrategy(std::string const& name) const
 
 std::vector<Strategy*> BotAI::GetActiveStrategies() const
 {
-    std::shared_lock lock(_mutex);
+    // DEADLOCK FIX #11: Release lock BEFORE returning vector
+    // The previous implementation held the lock during return, which means
+    // the lock was held while the vector was being copied/moved.
+    // If another thread requested unique_lock during that time,
+    // and the calling code then tried to call GetStrategy(), DEADLOCK!
     std::vector<Strategy*> result;
-
-    // CRITICAL FIX: Access _strategies directly to avoid recursive mutex acquisition
-    for (auto const& name : _activeStrategies)
     {
-        auto it = _strategies.find(name);
-        if (it != _strategies.end())
-            result.push_back(it->second.get());
-    }
+        std::shared_lock lock(_mutex);
 
-    return result;
+        // Access _strategies directly to avoid recursive mutex acquisition
+        for (auto const& name : _activeStrategies)
+        {
+            auto it = _strategies.find(name);
+            if (it != _strategies.end())
+                result.push_back(it->second.get());
+        }
+    } // RELEASE LOCK BEFORE RETURN
+
+    return result;  // Lock already released
 }
 
 void BotAI::ActivateStrategy(std::string const& name)
 {
-    std::unique_lock lock(_mutex);
+    // DEADLOCK FIX: Collect strategy pointer FIRST, then release lock BEFORE calling OnActivate
+    // OnActivate callbacks may call GetStrategy() which acquires shared_lock
+    // If another thread holds shared_lock and we hold unique_lock, calling OnActivate
+    // which tries to acquire another shared_lock will deadlock due to writer-preference
+    Strategy* strategy = nullptr;
+    {
+        std::unique_lock lock(_mutex);
 
-    // Check if strategy exists
-    auto it = _strategies.find(name);
-    if (it == _strategies.end())
-        return;
+        // Check if strategy exists
+        auto it = _strategies.find(name);
+        if (it == _strategies.end())
+            return;
 
-    // Check if already active
-    if (std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end())
-        return;
+        // Check if already active
+        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end())
+            return;
 
-    _activeStrategies.push_back(name);
+        _activeStrategies.push_back(name);
 
-    // CRITICAL FIX: Set the strategy's internal _active flag so IsActive() returns true
-    it->second->SetActive(true);
+        // CRITICAL FIX: Set the strategy's internal _active flag so IsActive() returns true
+        it->second->SetActive(true);
 
-    // Call OnActivate hook
-    it->second->OnActivate(this);
+        // Get strategy pointer for callback
+        strategy = it->second.get();
+    } // RELEASE LOCK BEFORE CALLBACK
 
-    TC_LOG_DEBUG("playerbot", "Activated strategy '{}' for bot {}", name, _bot->GetName());
+    // Call OnActivate hook WITHOUT holding lock
+    if (strategy)
+    {
+        strategy->OnActivate(this);
+        TC_LOG_DEBUG("playerbot", "Activated strategy '{}' for bot {}", name, _bot->GetName());
+    }
 }
 
 void BotAI::DeactivateStrategy(std::string const& name)
 {
-    std::unique_lock lock(_mutex);
-
-    // Find the strategy
-    auto it = _strategies.find(name);
-    if (it != _strategies.end())
+    // DEADLOCK FIX: Collect strategy pointer FIRST, then release lock BEFORE calling OnDeactivate
+    // OnDeactivate callbacks may call GetStrategy() which acquires shared_lock
+    // If another thread holds shared_lock and we hold unique_lock, calling OnDeactivate
+    // which tries to acquire another shared_lock will deadlock due to writer-preference
+    Strategy* strategy = nullptr;
     {
-        // Set the strategy's internal _active flag to false
-        it->second->SetActive(false);
+        std::unique_lock lock(_mutex);
 
-        // Call OnDeactivate hook
-        it->second->OnDeactivate(this);
+        // Find the strategy
+        auto it = _strategies.find(name);
+        if (it != _strategies.end())
+        {
+            // Set the strategy's internal _active flag to false
+            it->second->SetActive(false);
+
+            // Get strategy pointer for callback
+            strategy = it->second.get();
+        }
+
+        _activeStrategies.erase(
+            std::remove(_activeStrategies.begin(), _activeStrategies.end(), name),
+            _activeStrategies.end()
+        );
+    } // RELEASE LOCK BEFORE CALLBACK
+
+    // Call OnDeactivate hook WITHOUT holding lock
+    if (strategy)
+    {
+        strategy->OnDeactivate(this);
+        TC_LOG_DEBUG("playerbot", "Deactivated strategy '{}' for bot {}", name, _bot->GetName());
     }
-
-    _activeStrategies.erase(
-        std::remove(_activeStrategies.begin(), _activeStrategies.end(), name),
-        _activeStrategies.end()
-    );
-
-    TC_LOG_DEBUG("playerbot", "Deactivated strategy '{}' for bot {}", name, _bot->GetName());
 }
 
 // ============================================================================
