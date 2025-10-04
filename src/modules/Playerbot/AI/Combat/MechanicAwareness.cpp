@@ -343,7 +343,7 @@ void MechanicAwareness::HandleCleaveMechanic(Unit* target, float cleaveAngle, fl
     cleave.range = cleaveRange;
     cleave.isActive = true;
 
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _cleaveMechanics[target->GetGUID()] = cleave;
 }
 
@@ -584,7 +584,7 @@ bool MechanicAwareness::ShouldDispel(Unit* target, uint32 spellId)
 
 void MechanicAwareness::RegisterAOEZone(const AOEZone& zone)
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _activeAOEZones.push_back(zone);
 
     // Merge overlapping zones
@@ -593,7 +593,7 @@ void MechanicAwareness::RegisterAOEZone(const AOEZone& zone)
 
 void MechanicAwareness::UpdateAOEZones(uint32 currentTime)
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Remove expired zones
     _activeAOEZones.erase(
@@ -612,13 +612,13 @@ void MechanicAwareness::RemoveExpiredZones(uint32 currentTime)
 
 std::vector<AOEZone> MechanicAwareness::GetActiveAOEZones() const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _activeAOEZones;
 }
 
 std::vector<AOEZone> MechanicAwareness::GetUpcomingAOEZones(uint32 timeWindow) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<AOEZone> upcoming;
     uint32 currentTime = getMSTime();
 
@@ -633,13 +633,13 @@ std::vector<AOEZone> MechanicAwareness::GetUpcomingAOEZones(uint32 timeWindow) c
 
 void MechanicAwareness::TrackProjectile(const ProjectileInfo& projectile)
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _trackedProjectiles.push_back(projectile);
 }
 
 void MechanicAwareness::UpdateProjectiles(uint32 currentTime)
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Remove projectiles that have impacted
     _trackedProjectiles.erase(
@@ -662,7 +662,7 @@ std::vector<ProjectileInfo> MechanicAwareness::GetIncomingProjectiles(Player* ta
     if (!target)
         return {};
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<ProjectileInfo> incoming;
 
     for (const ProjectileInfo& proj : _trackedProjectiles)
@@ -691,13 +691,13 @@ void MechanicAwareness::RegisterCleaveMechanic(Unit* source, const CleaveMechani
     if (!source)
         return;
 
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _cleaveMechanics[source->GetGUID()] = cleave;
 }
 
 void MechanicAwareness::UpdateCleaveMechanics()
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 currentTime = getMSTime();
 
     // Update cleave states
@@ -717,7 +717,7 @@ bool MechanicAwareness::IsInCleaveZone(Player* bot, Unit* source)
     if (!bot || !source)
         return false;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _cleaveMechanics.find(source->GetGUID());
 
     if (it == _cleaveMechanics.end())
@@ -731,7 +731,7 @@ Position MechanicAwareness::GetCleaveAvoidancePosition(Player* bot, Unit* source
     if (!bot || !source)
         return bot ? bot->GetPosition() : Position();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _cleaveMechanics.find(source->GetGUID());
 
     if (it == _cleaveMechanics.end())
@@ -756,7 +756,7 @@ std::vector<MechanicPrediction> MechanicAwareness::PredictMechanics(Unit* target
     if (!target)
         return predictions;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _mechanicHistory.find(target->GetGUID());
 
     if (it == _mechanicHistory.end())
@@ -960,7 +960,7 @@ void MechanicAwareness::RegisterEnvironmentalHazard(const Position& location, fl
 
 bool MechanicAwareness::IsEnvironmentalHazard(const Position& pos)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 currentTime = getMSTime();
 
     for (const AOEZone& zone : _activeAOEZones)
@@ -974,7 +974,7 @@ bool MechanicAwareness::IsEnvironmentalHazard(const Position& pos)
 
 std::vector<Position> MechanicAwareness::GetEnvironmentalHazards() const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<Position> hazards;
 
     for (const AOEZone& zone : _activeAOEZones)
@@ -1324,7 +1324,7 @@ void MechanicAwareness::UpdateMechanicHistory(Unit* target, const MechanicInfo& 
     if (!target)
         return;
 
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto& history = _mechanicHistory[target->GetGUID()];
 
     history.push_back(mechanic);
@@ -1339,7 +1339,7 @@ float MechanicAwareness::AnalyzeMechanicPattern(Unit* target, MechanicType type)
     if (!target)
         return 0.0f;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _mechanicHistory.find(target->GetGUID());
 
     if (it == _mechanicHistory.end())
@@ -1363,7 +1363,7 @@ void MechanicAwareness::CleanupOldData(uint32 currentTime)
     UpdateProjectiles(currentTime);
 
     // Cleanup mechanic history
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     for (auto& [guid, history] : _mechanicHistory)
     {
         history.erase(
@@ -1391,7 +1391,7 @@ MechanicDatabase& MechanicDatabase::Instance()
 
 void MechanicDatabase::RegisterSpellMechanic(uint32 spellId, MechanicType type, float radius, float angle)
 {
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     SpellMechanicData& data = _spellMechanics[spellId];
     data.type = type;
     data.radius = radius;
@@ -1400,21 +1400,21 @@ void MechanicDatabase::RegisterSpellMechanic(uint32 spellId, MechanicType type, 
 
 MechanicType MechanicDatabase::GetSpellMechanicType(uint32 spellId) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.type : MechanicType::NONE;
 }
 
 float MechanicDatabase::GetSpellRadius(uint32 spellId) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.radius : 0.0f;
 }
 
 float MechanicDatabase::GetSpellAngle(uint32 spellId) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.angle : 0.0f;
 }

@@ -70,7 +70,7 @@ void BotThreatManager::UpdateThreat(uint32 diff)
     _lastUpdate = 0;
 
     {
-        std::unique_lock<std::shared_mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Update threat table
         UpdateThreatTable(diff);
@@ -101,7 +101,7 @@ void BotThreatManager::UpdateThreat(uint32 diff)
 
 void BotThreatManager::ResetThreat()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _threatMap.clear();
     _threatHistory.clear();
     _analysisDirty = true;
@@ -175,7 +175,7 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     ObjectGuid targetGuid = target->GetGUID();
     uint32 now = getMSTime();
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
@@ -224,7 +224,7 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -252,7 +252,7 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
         return _cachedAnalysis;
     }
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ThreatAnalysis analysis;
     std::vector<ThreatTarget> targets;
@@ -347,7 +347,7 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
@@ -368,7 +368,7 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -379,7 +379,7 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 
 void BotThreatManager::UpdateTargetPriorities()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (auto& [guid, info] : _threatMap)
     {
@@ -451,7 +451,7 @@ bool BotThreatManager::HasThreat(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     return it != _threatMap.end() && it->second.isActive && it->second.threatValue > 0.0f;
@@ -464,7 +464,7 @@ float BotThreatManager::GetThreat(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -480,7 +480,7 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -496,7 +496,7 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -509,7 +509,7 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 {
     std::vector<Unit*> targets;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (const auto& [guid, info] : _threatMap)
     {
@@ -528,7 +528,7 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
 {
     std::vector<Unit*> targets;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (const auto& [guid, info] : _threatMap)
     {
@@ -545,7 +545,7 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
 
 uint32 BotThreatManager::GetThreatTargetCount() const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 count = 0;
     for (const auto& [guid, info] : _threatMap)
@@ -603,7 +603,7 @@ void BotThreatManager::OnSpellInterrupt(Unit* target)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())

@@ -39,7 +39,7 @@ void InterruptCoordinator::Update(uint32 diff)
 
     // Update bot cooldowns and positions
     {
-        std::shared_lock lock(_botMutex);
+        std::lock_guard<std::recursive_mutex> lock(_botMutex);
         for (auto& [botGuid, botInfo] : _botInfo)
         {
             UpdateBotCooldowns(botGuid);
@@ -85,7 +85,7 @@ void InterruptCoordinator::RegisterBot(Player* bot, BotAI* ai)
 
     ObjectGuid botGuid = bot->GetGUID();
 
-    std::unique_lock lock(_botMutex);
+    std::lock_guard<std::recursive_mutex> lock(_botMutex);
 
     _botInfo[botGuid] = BotInterruptInfo(botGuid);
     _botAI[botGuid] = ai;
@@ -98,14 +98,14 @@ void InterruptCoordinator::RegisterBot(Player* bot, BotAI* ai)
 
 void InterruptCoordinator::UnregisterBot(ObjectGuid botGuid)
 {
-    std::unique_lock lock(_botMutex);
+    std::lock_guard<std::recursive_mutex> lock(_botMutex);
 
     _botInfo.erase(botGuid);
     _botAI.erase(botGuid);
     _assignedBots.erase(botGuid);
 
     // Remove any pending assignments for this bot
-    std::unique_lock assignLock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
     _pendingAssignments.erase(
         std::remove_if(_pendingAssignments.begin(), _pendingAssignments.end(),
                       [botGuid](const InterruptAssignment& assignment) {
@@ -119,7 +119,7 @@ void InterruptCoordinator::UnregisterBot(ObjectGuid botGuid)
 
 void InterruptCoordinator::RefreshBotCapabilities(ObjectGuid botGuid)
 {
-    std::unique_lock lock(_botMutex);
+    std::lock_guard<std::recursive_mutex> lock(_botMutex);
 
     auto botIt = _botAI.find(botGuid);
     if (botIt != _botAI.end() && botIt->second)
@@ -165,7 +165,7 @@ bool InterruptCoordinator::OnSpellCastStart(Unit* caster, Spell const* spell)
 
     // Store the active cast
     {
-        std::unique_lock lock(_castMutex);
+        std::lock_guard<std::recursive_mutex> lock(_castMutex);
         _activeCasts[casterGuid] = castInfo;
     }
 
@@ -194,7 +194,7 @@ void InterruptCoordinator::OnSpellCastFinish(Unit* caster, uint32 spellId, bool 
 
     // Remove from active casts
     {
-        std::unique_lock lock(_castMutex);
+        std::lock_guard<std::recursive_mutex> lock(_castMutex);
         _activeCasts.erase(casterGuid);
     }
 
@@ -207,7 +207,7 @@ void InterruptCoordinator::OnSpellCastFinish(Unit* caster, uint32 spellId, bool 
     }
 
     // Remove any pending assignments for this cast
-    std::unique_lock assignLock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
     _pendingAssignments.erase(
         std::remove_if(_pendingAssignments.begin(), _pendingAssignments.end(),
                       [casterGuid, spellId](const InterruptAssignment& assignment) {
@@ -226,7 +226,7 @@ void InterruptCoordinator::OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid ta
 {
     // Update bot cooldown
     {
-        std::unique_lock lock(_botMutex);
+        std::lock_guard<std::recursive_mutex> lock(_botMutex);
         auto botIt = _botInfo.find(botGuid);
         if (botIt != _botInfo.end())
         {
@@ -254,7 +254,7 @@ void InterruptCoordinator::OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid ta
 
     // Mark assignment as executed
     {
-        std::unique_lock lock(_assignmentMutex);
+        std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
         for (auto& assignment : _pendingAssignments)
         {
             if (assignment.assignedBot == botGuid && assignment.targetCaster == targetGuid)
@@ -284,7 +284,7 @@ void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targ
         CastingSpellInfo castInfo;
         bool foundCriticalCast = false;
         {
-            std::shared_lock castLock(_castMutex);
+            std::lock_guard<std::recursive_mutex> castLock(_castMutex);
             auto castIt = _activeCasts.find(targetGuid);
             if (castIt != _activeCasts.end() && castIt->second.priority <= InterruptPriority::HIGH)
             {
@@ -297,7 +297,7 @@ void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targ
         {
             // Mark the failed bot as temporarily unavailable
             {
-                std::unique_lock botLock(_botMutex);
+                std::lock_guard<std::recursive_mutex> botLock(_botMutex);
                 auto botIt = _botInfo.find(botGuid);
                 if (botIt != _botInfo.end())
                 {
@@ -315,13 +315,13 @@ void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targ
 
 void InterruptCoordinator::SetSpellPriority(uint32 spellId, InterruptPriority priority)
 {
-    std::unique_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     _spellPriorities[spellId] = priority;
 }
 
 InterruptPriority InterruptCoordinator::GetSpellPriority(uint32 spellId) const
 {
-    std::shared_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     auto it = _spellPriorities.find(spellId);
     if (it != _spellPriorities.end())
         return it->second;
@@ -332,7 +332,7 @@ InterruptPriority InterruptCoordinator::GetSpellPriority(uint32 spellId) const
 
 void InterruptCoordinator::LoadDefaultPriorities()
 {
-    std::unique_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
 
     // Critical interrupts (Must interrupt)
     _spellPriorities[118] = InterruptPriority::CRITICAL;    // Polymorph
@@ -367,19 +367,19 @@ void InterruptCoordinator::LoadDefaultPriorities()
 
 size_t InterruptCoordinator::GetRegisteredBotCount() const
 {
-    std::shared_lock lock(_botMutex);
+    std::lock_guard<std::recursive_mutex> lock(_botMutex);
     return _botInfo.size();
 }
 
 size_t InterruptCoordinator::GetActiveCastCount() const
 {
-    std::shared_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     return _activeCasts.size();
 }
 
 size_t InterruptCoordinator::GetPendingAssignmentCount() const
 {
-    std::shared_lock lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
     return _pendingAssignments.size();
 }
 
@@ -391,7 +391,7 @@ void InterruptCoordinator::ResetMetrics()
 
 std::vector<CastingSpellInfo> InterruptCoordinator::GetActiveCasts() const
 {
-    std::shared_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     std::vector<CastingSpellInfo> casts;
     casts.reserve(_activeCasts.size());
 
@@ -405,7 +405,7 @@ std::vector<CastingSpellInfo> InterruptCoordinator::GetActiveCasts() const
 
 std::vector<InterruptAssignment> InterruptCoordinator::GetPendingAssignments() const
 {
-    std::shared_lock lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
     return _pendingAssignments;
 }
 
@@ -416,7 +416,7 @@ bool InterruptCoordinator::AssignInterrupt(CastingSpellInfo const& castInfo)
     // Quick check if any bots are available
     std::vector<ObjectGuid> candidates;
     {
-        std::shared_lock lock(_botMutex);
+        std::lock_guard<std::recursive_mutex> lock(_botMutex);
         for (const auto& [botGuid, botInfo] : _botInfo)
         {
             if (CanBotInterrupt(botGuid, castInfo))
@@ -440,7 +440,7 @@ bool InterruptCoordinator::AssignInterrupt(CastingSpellInfo const& castInfo)
     // Get the interrupt ability for this bot
     const InterruptAbility* ability = nullptr;
     {
-        std::shared_lock lock(_botMutex);
+        std::lock_guard<std::recursive_mutex> lock(_botMutex);
         auto botIt = _botInfo.find(selectedBot);
         if (botIt != _botInfo.end())
         {
@@ -474,14 +474,14 @@ bool InterruptCoordinator::AssignInterrupt(CastingSpellInfo const& castInfo)
 
     // Store assignment
     {
-        std::unique_lock lock(_assignmentMutex);
+        std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
         _pendingAssignments.push_back(assignment);
         _assignedBots.insert(selectedBot);
     }
 
     // Notify the bot AI about the assignment
     {
-        std::shared_lock lock(_botMutex);
+        std::lock_guard<std::recursive_mutex> lock(_botMutex);
         auto botIt = _botAI.find(selectedBot);
         if (botIt != _botAI.end() && botIt->second)
         {
@@ -524,7 +524,7 @@ ObjectGuid InterruptCoordinator::SelectBestInterrupter(CastingSpellInfo const& c
     std::vector<BotScore> scores;
     scores.reserve(candidates.size());
 
-    std::shared_lock lock(_botMutex);
+    std::lock_guard<std::recursive_mutex> lock(_botMutex);
 
     for (ObjectGuid botGuid : candidates)
     {
@@ -816,7 +816,7 @@ uint32 InterruptCoordinator::CalculateInterruptTiming(CastingSpellInfo const& ca
 
 void InterruptCoordinator::CleanupExpiredCasts()
 {
-    std::unique_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
 
     for (auto it = _activeCasts.begin(); it != _activeCasts.end();)
     {
@@ -835,7 +835,7 @@ void InterruptCoordinator::CleanupExpiredCasts()
 
 void InterruptCoordinator::CleanupExpiredAssignments()
 {
-    std::unique_lock lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     for (auto it = _pendingAssignments.begin(); it != _pendingAssignments.end();)
     {
@@ -853,7 +853,7 @@ void InterruptCoordinator::CleanupExpiredAssignments()
 
 void InterruptCoordinator::UpdateAssignmentDeadlines()
 {
-    std::shared_lock lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     for (const auto& assignment : _pendingAssignments)
     {
@@ -874,7 +874,7 @@ void InterruptCoordinator::OptimizeForPerformance()
     // Clean up old cooldown data and capture counts while holding lock
     size_t botCount = 0;
     {
-        std::unique_lock botLock(_botMutex);
+        std::lock_guard<std::recursive_mutex> botLock(_botMutex);
         for (auto& [botGuid, botInfo] : _botInfo)
         {
             UpdateBotCooldowns(botGuid);
@@ -892,11 +892,11 @@ void InterruptCoordinator::OptimizeForPerformance()
     size_t castCount = 0;
     size_t assignmentCount = 0;
     {
-        std::shared_lock castLock(_castMutex);
+        std::lock_guard<std::recursive_mutex> castLock(_castMutex);
         castCount = _activeCasts.size();
     }
     {
-        std::shared_lock assignLock(_assignmentMutex);
+        std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
         assignmentCount = _pendingAssignments.size();
     }
 
@@ -974,7 +974,7 @@ void InterruptCoordinator::AdjustPrioritiesForGroup()
         }
     }
 
-    std::unique_lock lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
 
     // Adjust priorities based on group composition
     if (healerCount == 0)

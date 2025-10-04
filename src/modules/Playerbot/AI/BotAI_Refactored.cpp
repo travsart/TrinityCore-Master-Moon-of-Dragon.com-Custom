@@ -188,7 +188,7 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    std::shared_lock lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (auto const& strategyName : _activeStrategies)
     {

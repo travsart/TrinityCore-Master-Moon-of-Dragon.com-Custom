@@ -387,7 +387,7 @@ private:
     mutable AvoidanceMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float DEFAULT_SCAN_RADIUS = 15.0f;         // 15 yards scan radius

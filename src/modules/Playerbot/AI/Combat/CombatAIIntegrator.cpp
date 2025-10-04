@@ -89,7 +89,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
     }
 
     // Thread safety
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Check minimum update interval
     _lastUpdate += diff;
@@ -188,7 +188,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
 
 void CombatAIIntegrator::Reset()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _inCombat = false;
     _currentPhase = CombatPhase::NONE;
@@ -212,7 +212,7 @@ void CombatAIIntegrator::Reset()
 
 void CombatAIIntegrator::OnCombatStart(Unit* target)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _inCombat = true;
     _currentTarget = target;
@@ -238,7 +238,7 @@ void CombatAIIntegrator::OnCombatStart(Unit* target)
 
 void CombatAIIntegrator::OnCombatEnd()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _inCombat = false;
     _currentPhase = CombatPhase::RECOVERING;
@@ -258,7 +258,7 @@ void CombatAIIntegrator::OnCombatEnd()
 
 void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     Unit* oldTarget = _currentTarget;
     _currentTarget = newTarget;
@@ -284,7 +284,7 @@ void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
 
 void CombatAIIntegrator::SetGroup(Group* group)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _group = group;
 
     // Update formation manager with group

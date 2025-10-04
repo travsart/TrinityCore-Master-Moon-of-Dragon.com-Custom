@@ -43,7 +43,7 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
     auto startTime = std::chrono::steady_clock::now();
     LoSResult result;
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     try
     {
@@ -410,14 +410,14 @@ bool LineOfSightManager::HasElevationAdvantage(Unit* target)
 
 void LineOfSightManager::ClearCache()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _losCache.clear();
     TC_LOG_DEBUG("playerbot.los", "LoS cache cleared for bot {}", _bot->GetName());
 }
 
 void LineOfSightManager::ClearExpiredCacheEntries()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)

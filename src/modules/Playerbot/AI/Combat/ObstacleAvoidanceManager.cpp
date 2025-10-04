@@ -43,7 +43,7 @@ void ObstacleAvoidanceManager::UpdateObstacleDetection(const DetectionContext& c
 {
     auto startTime = std::chrono::steady_clock::now();
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     try
     {
@@ -95,7 +95,7 @@ std::vector<CollisionPrediction> ObstacleAvoidanceManager::PredictCollisions(con
     std::vector<CollisionPrediction> predictions;
     predictions.reserve(_obstacles.size());
 
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (const auto& [guid, obstacle] : _obstacles)
     {
@@ -558,7 +558,7 @@ void ObstacleAvoidanceManager::ExecuteEmergencyStop()
 
 bool ObstacleAvoidanceManager::CanSafelyProceed(const Position& nextPosition)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (const auto& [guid, obstacle] : _obstacles)
     {

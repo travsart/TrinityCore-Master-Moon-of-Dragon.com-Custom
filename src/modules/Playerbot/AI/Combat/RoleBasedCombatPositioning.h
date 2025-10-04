@@ -234,7 +234,7 @@ private:
 
 private:
     TankPositionConfig _config;
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float MIN_TANK_DISTANCE = 2.0f;
@@ -291,7 +291,7 @@ private:
 
 private:
     HealerPositionConfig _config;
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float MIN_HEALER_DISTANCE = 15.0f;
@@ -352,7 +352,7 @@ private:
 
 private:
     DPSPositionConfig _config;
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float MELEE_MIN_DISTANCE = 2.0f;
@@ -458,7 +458,7 @@ private:
     std::chrono::microseconds _averageCalculationTime{0};
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr uint32 STRATEGY_UPDATE_INTERVAL = 5000;  // 5 seconds

@@ -142,7 +142,7 @@ protected:
     void UpdateCooldowns(uint32 diff) final override
     {
         // Thread-safe cooldown update
-        std::unique_lock lock(_cooldownMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
         // Update global cooldown
         if (_globalCooldownEnd > diff)
@@ -189,7 +189,7 @@ protected:
     bool CanUseAbility(uint32 spellId) final override
     {
         // Thread-safe ability check
-        std::shared_lock lock(_cooldownMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
         // Check global cooldown
         if (_globalCooldownEnd > 0)
@@ -221,7 +221,7 @@ protected:
      */
     void RegisterCooldown(uint32 spellId, uint32 cooldownMs)
     {
-        std::unique_lock lock(_cooldownMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
         _cooldowns[spellId] = 0; // Initialize to 0, will be set when spell is cast
         // Store the cooldown duration for reference
         _cooldownDurations[spellId] = cooldownMs;
@@ -365,7 +365,7 @@ private:
      */
     void ConsumeResourceInternal(uint32 amount)
     {
-        std::unique_lock lock(_resourceMutex);
+        std::lock_guard<std::recursive_mutex> lock(_resourceMutex);
 
         if constexpr (SimpleResource<ResourceType>)
         {
@@ -400,7 +400,7 @@ private:
     {
         if constexpr (ResourceTraits<ResourceType>::regenerates)
         {
-            std::unique_lock lock(_resourceMutex);
+            std::lock_guard<std::recursive_mutex> lock(_resourceMutex);
 
             if constexpr (SimpleResource<ResourceType>)
             {
@@ -420,7 +420,7 @@ private:
      */
     void CleanupExpiredDots()
     {
-        std::unique_lock lock(_cooldownMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
         // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
@@ -497,7 +497,7 @@ protected:
     uint32 _lastResourceUpdate;
 
     // Cooldown tracking (thread-safe)
-    mutable std::shared_mutex _cooldownMutex;
+    mutable std::recursive_mutex _cooldownMutex;
     std::unordered_map<uint32, uint32> _cooldowns;
     std::unordered_map<uint32, uint32> _cooldownDurations; // Registered cooldown durations
     std::atomic<uint32> _globalCooldownEnd;
@@ -507,7 +507,7 @@ protected:
     std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint32>> _activeDots; // targetGuid -> (spellId -> duration)
 
     // Resource management (thread-safe)
-    mutable std::shared_mutex _resourceMutex;
+    mutable std::recursive_mutex _resourceMutex;
 
     // Combat state
     ::Unit* _currentTarget = nullptr;

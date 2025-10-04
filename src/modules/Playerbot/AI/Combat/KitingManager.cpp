@@ -44,7 +44,7 @@ KitingManager::KitingManager(Player* bot)
 
 void KitingManager::UpdateKiting(uint32 diff)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastMovementTime < _updateInterval && !_emergencyKiting)
@@ -237,7 +237,7 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
 
 void KitingManager::StopKiting()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_kitingActive)
         return;

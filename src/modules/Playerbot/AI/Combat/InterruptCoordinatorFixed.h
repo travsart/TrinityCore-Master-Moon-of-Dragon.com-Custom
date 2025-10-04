@@ -181,7 +181,7 @@ private:
     std::atomic<bool> _active{true};
 
     // SINGLE MUTEX DESIGN - No deadlock possible
-    mutable std::shared_mutex _stateMutex;
+    mutable std::recursive_mutex _stateMutex;
     CoordinatorState _state;
 
     // Lock-free structures for hot paths

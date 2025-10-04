@@ -394,7 +394,7 @@ private:
     mutable PathfindingMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float DEFAULT_NODE_SPACING = 1.0f;     // 1 yard between nodes

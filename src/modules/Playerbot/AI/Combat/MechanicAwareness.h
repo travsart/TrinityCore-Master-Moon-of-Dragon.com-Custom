@@ -398,7 +398,7 @@ private:
     mutable MechanicMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float DEFAULT_AOE_RADIUS = 8.0f;
@@ -442,7 +442,7 @@ private:
     };
 
     std::unordered_map<uint32, SpellMechanicData> _spellMechanics;
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 };
 
 } // namespace Playerbot

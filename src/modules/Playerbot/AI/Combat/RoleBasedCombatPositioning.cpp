@@ -1512,7 +1512,7 @@ void RoleBasedCombatPositioning::UpdateStrategy(Player* bot, CombatPositionStrat
     if (!bot)
         return;
 
-    std::lock_guard<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _strategyCache[bot->GetGUID()] = newStrategy;
     _lastStrategyUpdate[bot->GetGUID()] = getMSTime();
 }

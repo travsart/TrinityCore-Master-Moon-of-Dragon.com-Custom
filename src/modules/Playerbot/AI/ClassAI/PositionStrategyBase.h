@@ -217,7 +217,7 @@ protected:
 
     // Position tracking
     std::unordered_map<uint64_t, Position> _botPositions;  // Bot GUID -> Position
-    mutable std::shared_mutex _positionMutex;
+    mutable std::recursive_mutex _positionMutex;
 
     // Danger zones
     struct DangerZone
@@ -228,7 +228,7 @@ protected:
         uint32 expirationTime;
     };
     std::vector<DangerZone> _dangerZones;
-    mutable std::shared_mutex _dangerMutex;
+    mutable std::recursive_mutex _dangerMutex;
 
     // Position cache for performance
     struct PositionCache
@@ -237,7 +237,7 @@ protected:
         uint32 lastCleanup;
     };
     mutable PositionCache _cache;
-    mutable std::shared_mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
 
     // Performance statistics
     mutable PerformanceStats _stats;

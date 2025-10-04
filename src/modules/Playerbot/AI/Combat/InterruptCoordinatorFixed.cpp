@@ -67,7 +67,7 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 
     // Thread-safe state update with SINGLE LOCK
     {
-        std::unique_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
         _state.botInfo[info.botGuid] = info;
         _state.botAI[info.botGuid] = ai;
     }
@@ -80,7 +80,7 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 {
     // Thread-safe removal with SINGLE LOCK
-    std::unique_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     _state.botInfo.erase(botGuid);
     _state.botAI.erase(botGuid);
@@ -99,7 +99,7 @@ void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 void InterruptCoordinatorFixed::UpdateBotCooldown(ObjectGuid botGuid, uint32 cooldownMs)
 {
     // Optimized with shared lock for read, upgrade to unique only if needed
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
     auto it = _state.botInfo.find(botGuid);
     if (it != _state.botInfo.end())
     {
@@ -133,7 +133,7 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
 
     // Thread-safe insertion with SINGLE LOCK
     {
-        std::unique_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
         _state.activeCasts[caster->GetGUID()] = castInfo;
     }
 
@@ -148,7 +148,7 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
 void InterruptCoordinatorFixed::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId)
 {
     // Thread-safe update with SINGLE LOCK
-    std::unique_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     auto it = _state.activeCasts.find(casterGuid);
     if (it != _state.activeCasts.end() && it->second.spellId == spellId)
@@ -161,7 +161,7 @@ void InterruptCoordinatorFixed::OnEnemyCastInterrupted(ObjectGuid casterGuid, ui
 void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
 {
     // Thread-safe removal with SINGLE LOCK
-    std::unique_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
     _state.activeCasts.erase(casterGuid);
 }
 
@@ -187,7 +187,7 @@ void InterruptCoordinatorFixed::Update(uint32 diff)
 
     // Clean up completed casts
     {
-        std::unique_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
         for (auto it = _state.activeCasts.begin(); it != _state.activeCasts.end(); )
         {
@@ -211,7 +211,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
     // Copy data for processing (minimize lock time)
     CoordinatorState localState;
     {
-        std::shared_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
         localState = _state;  // Fast copy under read lock
     }
 
@@ -280,7 +280,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
     // Apply new assignments with SINGLE LOCK
     if (!newAssignments.empty())
     {
-        std::unique_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
         for (auto const& assignment : newAssignments)
         {
@@ -301,7 +301,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
 
     // Find ready assignments with minimal lock time
     {
-        std::shared_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
         for (auto& assignment : _state.pendingAssignments)
         {
@@ -325,7 +325,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
         // Get bot AI
         BotAI* botAI = nullptr;
         {
-            std::shared_lock lock(_stateMutex);
+            std::lock_guard<std::recursive_mutex> lock(_stateMutex);
             auto it = _state.botAI.find(assignment->botGuid);
             if (it != _state.botAI.end())
                 botAI = it->second;
@@ -349,7 +349,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     // Clean up executed assignments
     if (!readyAssignments.empty())
     {
-        std::unique_lock lock(_stateMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
         _state.pendingAssignments.erase(
             std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
@@ -371,7 +371,7 @@ std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(Cast
 {
     std::vector<ObjectGuid> available;
 
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     for (auto const& [guid, info] : _state.botInfo)
     {
@@ -424,7 +424,7 @@ uint32 InterruptCoordinatorFixed::CalculateInterruptTime(CastingSpellInfo const&
 
 bool InterruptCoordinatorFixed::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId) const
 {
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     // Check for pending assignments for this bot
     for (auto const& assignment : _state.pendingAssignments)
@@ -453,7 +453,7 @@ bool InterruptCoordinatorFixed::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGui
 
 uint32 InterruptCoordinatorFixed::GetNextInterruptTime(ObjectGuid botGuid) const
 {
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     for (auto const& assignment : _state.pendingAssignments)
     {
@@ -468,7 +468,7 @@ uint32 InterruptCoordinatorFixed::GetNextInterruptTime(ObjectGuid botGuid) const
 
 bool InterruptCoordinatorFixed::HasPendingInterrupt(ObjectGuid botGuid) const
 {
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     return std::any_of(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
         [botGuid](InterruptAssignment const& assignment) {
@@ -513,7 +513,7 @@ void InterruptCoordinatorFixed::ResetMetrics()
 
 std::string InterruptCoordinatorFixed::GetStatusString() const
 {
-    std::shared_lock lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     std::stringstream ss;
     ss << "InterruptCoordinator Status:\n";

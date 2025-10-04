@@ -43,7 +43,7 @@ FormationManager::FormationManager(Player* bot)
 
 bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     try
     {
@@ -119,7 +119,7 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
 bool FormationManager::LeaveFormation()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation)
         return false;
@@ -137,7 +137,7 @@ bool FormationManager::LeaveFormation()
 
 bool FormationManager::ChangeFormation(FormationType newFormation)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation || newFormation == _currentFormation)
         return false;
@@ -168,7 +168,7 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
 
 void FormationManager::UpdateFormation(uint32 diff)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation)
         return;
@@ -214,7 +214,7 @@ void FormationManager::UpdateFormation(uint32 diff)
 
 bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation)
         return false;
@@ -321,7 +321,7 @@ std::vector<Position> FormationManager::CalculateAllFormationPositions()
 
 Position FormationManager::GetAssignedPosition() const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (const FormationMember& member : _members)
     {
@@ -336,7 +336,7 @@ Position FormationManager::GetAssignedPosition() const
 
 bool FormationManager::IsInFormationPosition(float tolerance) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     Position assignedPos = GetAssignedPosition();
     Position currentPos = _bot->GetPosition();
@@ -346,7 +346,7 @@ bool FormationManager::IsInFormationPosition(float tolerance) const
 
 FormationIntegrity FormationManager::AssessFormationIntegrity()
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_members.empty())
         return FormationIntegrity::BROKEN;
@@ -406,7 +406,7 @@ void FormationManager::CoordinateMovement(const Position& destination)
 
 bool FormationManager::CanMoveWithoutBreakingFormation(const Position& newPos)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation)
         return true;
@@ -421,7 +421,7 @@ bool FormationManager::CanMoveWithoutBreakingFormation(const Position& newPos)
 
 Position FormationManager::AdjustMovementForFormation(const Position& intendedPos)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_inFormation)
         return intendedPos;

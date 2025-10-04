@@ -188,7 +188,7 @@ void ProtectionSpecialization::UpdateShieldEquipmentStatus()
 
 void ProtectionSpecialization::UpdateThreatTracking()
 {
-    std::unique_lock<std::shared_mutex> lock(_threatMutex);
+    std::lock_guard<std::recursive_mutex> lock(_threatMutex);
 
     auto nearbyEnemies = GetNearbyEnemies(30.0f);
     for (auto* enemy : nearbyEnemies)

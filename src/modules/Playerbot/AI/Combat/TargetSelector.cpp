@@ -52,7 +52,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
     auto startTime = std::chrono::steady_clock::now();
     SelectionResult result;
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     try
     {

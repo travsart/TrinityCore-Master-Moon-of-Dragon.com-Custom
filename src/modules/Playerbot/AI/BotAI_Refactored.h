@@ -289,7 +289,7 @@ protected:
     mutable PerformanceMetrics _performanceMetrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Debug tracking
     uint32 _lastDebugLogTime = 0;

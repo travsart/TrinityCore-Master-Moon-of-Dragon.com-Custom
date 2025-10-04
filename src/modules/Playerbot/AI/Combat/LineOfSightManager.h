@@ -327,7 +327,7 @@ private:
     mutable LoSMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr uint32 DEFAULT_CACHE_DURATION = 1000;      // 1 second

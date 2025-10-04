@@ -281,7 +281,7 @@ void PositionStrategyBase::RegisterPosition(Player* bot, const Position& pos)
     if (!bot)
         return;
 
-    std::unique_lock lock(_positionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();
 
@@ -304,7 +304,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
     if (!bot)
         return;
 
-    std::unique_lock lock(_positionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();
     auto it = _botPositions.find(guid);
@@ -319,7 +319,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
 // Danger zone management
 void PositionStrategyBase::AddDangerZone(const Position& center, float radius, float duration, float dangerLevel)
 {
-    std::unique_lock lock(_dangerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
 
     DangerZone zone;
     zone.center = center;
@@ -365,7 +365,7 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
     float gridDanger = (*_spatialGrid)[grid.first][grid.second].dangerLevel.load(std::memory_order_acquire);
 
     // Check specific danger zones
-    std::shared_lock lock(_dangerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
     float maxDanger = gridDanger;
 
     for (const auto& zone : _dangerZones)
@@ -383,7 +383,7 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
 
 void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 {
-    std::unique_lock lock(_dangerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
 
     uint32 currentTime = getMSTime();
 
@@ -614,7 +614,7 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 // Collision detection
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
-    std::shared_lock lock(_positionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
     uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
 
@@ -664,7 +664,7 @@ float PositionStrategyBase::CalculateTerrainScore(const Position& pos) const
 
 float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Player* bot) const
 {
-    std::shared_lock lock(_positionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
     float totalDistance = 0.0f;
     uint32 allyCount = 0;
@@ -703,7 +703,7 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 // Cache management
 std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bot, Unit* target) const
 {
-    std::shared_lock lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
     auto it = _cache.entries.find(key);
@@ -722,7 +722,7 @@ std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bo
 
 void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Position& pos, float score)
 {
-    std::unique_lock lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
 
@@ -934,7 +934,7 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
 
 void PositionStrategyBase::ClearAllPositions()
 {
-    std::unique_lock lock(_positionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
     _botPositions.clear();
     ClearGrid();
 }

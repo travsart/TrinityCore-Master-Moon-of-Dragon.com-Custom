@@ -114,7 +114,7 @@ void InterruptAwareness::SetObserver(Player* observer)
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     std::vector<DetectedSpellCast> allCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -131,7 +131,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid casterGuid) const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
@@ -148,7 +148,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid c
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float maxRange) const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     std::vector<DetectedSpellCast> interruptibleCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -177,7 +177,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float m
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     std::vector<DetectedSpellCast> hostileCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -196,7 +196,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 
 bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     auto it = _activeCasts.find(unitGuid);
     if (it != _activeCasts.end())
     {
@@ -211,7 +211,7 @@ bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 
 DetectedSpellCast const* InterruptAwareness::GetSpellCast(ObjectGuid casterGuid, uint32 spellId) const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
@@ -244,7 +244,7 @@ void InterruptAwareness::RegisterSpellCompleteCallback(std::function<void(Object
 
 size_t InterruptAwareness::GetActiveCastCount() const
 {
-    std::shared_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     size_t count = 0;
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -274,7 +274,7 @@ void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const
     if (spellSequence.empty())
         return;
 
-    std::unique_lock<std::shared_mutex> lock(_patternMutex);
+    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
     SpellPattern pattern;
     pattern.npcId = npcId;
     pattern.spellSequence = spellSequence;
@@ -289,19 +289,19 @@ void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const
 
 void InterruptAwareness::ClearSpellPatterns()
 {
-    std::unique_lock<std::shared_mutex> lock(_patternMutex);
+    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
     _spellPatterns.clear();
 }
 
 void InterruptAwareness::SetScanPriority(CreatureType creatureType, uint32 priority)
 {
-    std::unique_lock<std::shared_mutex> lock(_priorityMutex);
+    std::lock_guard<std::recursive_mutex> lock(_priorityMutex);
     _creatureTypePriorities[creatureType] = priority;
 }
 
 void InterruptAwareness::SetScanPriority(uint32 npcId, uint32 priority)
 {
-    std::unique_lock<std::shared_mutex> lock(_priorityMutex);
+    std::lock_guard<std::recursive_mutex> lock(_priorityMutex);
     _npcPriorities[npcId] = priority;
 }
 
@@ -379,7 +379,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Check if this is a new cast or an update
                     bool isNewCast = true;
                     {
-                        std::shared_lock<std::shared_mutex> lock(_castMutex);
+                        std::lock_guard<std::recursive_mutex> lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -426,7 +426,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Similar new cast check as above
                     bool isNewCast = true;
                     {
-                        std::shared_lock<std::shared_mutex> lock(_castMutex);
+                        std::lock_guard<std::recursive_mutex> lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -629,7 +629,7 @@ void InterruptAwareness::UpdateActiveCasts()
     RemoveExpiredCasts();
 
     // Update remaining times for active casts
-    std::unique_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
     for (auto& [casterGuid, casts] : _activeCasts)
     {
         for (auto& cast : casts)
@@ -644,7 +644,7 @@ void InterruptAwareness::UpdateActiveCasts()
 
 void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 {
-    std::unique_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
 
     // Limit total active casts to prevent memory issues
     if (GetActiveCastCount() >= MAX_ACTIVE_CASTS)
@@ -669,7 +669,7 @@ void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 
 void InterruptAwareness::RemoveExpiredCasts()
 {
-    std::unique_lock<std::shared_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_castMutex);
 
     for (auto it = _activeCasts.begin(); it != _activeCasts.end();)
     {

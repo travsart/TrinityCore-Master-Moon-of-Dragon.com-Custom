@@ -213,7 +213,7 @@ private:
     std::unordered_map<uint64, float> _threatLevels;
     std::unordered_map<uint64, uint32> _sunderArmorStacks;
     std::priority_queue<ThreatTarget> _threatQueue;
-    mutable std::shared_mutex _threatMutex;
+    mutable std::recursive_mutex _threatMutex;
 
     // Cooldown tracking
     std::map<uint32, uint32> _cooldowns;

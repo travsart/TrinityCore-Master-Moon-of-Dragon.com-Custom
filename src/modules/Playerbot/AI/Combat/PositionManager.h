@@ -344,7 +344,7 @@ private:
     mutable PositionMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr uint32 DEFAULT_UPDATE_INTERVAL = 250;   // 250ms

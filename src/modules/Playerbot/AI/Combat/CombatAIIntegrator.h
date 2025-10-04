@@ -256,7 +256,7 @@ private:
     CombatMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Performance optimization
     static constexpr uint32 MIN_UPDATE_INTERVAL = 50;  // 50ms minimum between updates

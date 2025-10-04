@@ -390,7 +390,7 @@ private:
     uint32 _kitingStartTime;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr float DEFAULT_OPTIMAL_DISTANCE = 20.0f;    // 20 yards

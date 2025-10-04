@@ -328,17 +328,17 @@ private:
     // Bot management
     std::unordered_map<ObjectGuid, BotInterruptInfo> _botInfo;
     std::unordered_map<ObjectGuid, BotAI*> _botAI;
-    mutable std::shared_mutex _botMutex;
+    mutable std::recursive_mutex _botMutex;
 
     // Spell tracking
     std::unordered_map<ObjectGuid, CastingSpellInfo> _activeCasts; // casterGuid -> cast info
     std::unordered_map<uint32, InterruptPriority> _spellPriorities;
-    mutable std::shared_mutex _castMutex;
+    mutable std::recursive_mutex _castMutex;
 
     // Assignment tracking
     std::vector<InterruptAssignment> _pendingAssignments;
     std::unordered_set<ObjectGuid> _assignedBots; // Bots with pending assignments
-    mutable std::shared_mutex _assignmentMutex;
+    mutable std::recursive_mutex _assignmentMutex;
 
     // Configuration
     uint32 _minInterruptDelay = 100;        // Min ms before interrupt after cast start

@@ -264,7 +264,7 @@ private:
 
     // Active spell tracking
     std::unordered_map<ObjectGuid, std::vector<DetectedSpellCast>> _activeCasts; // casterGuid -> casts
-    mutable std::shared_mutex _castMutex;
+    mutable std::recursive_mutex _castMutex;
 
     // Update tracking
     std::chrono::steady_clock::time_point _lastUpdate;
@@ -284,7 +284,7 @@ private:
     // Priority scanning
     std::unordered_map<CreatureType, uint32> _creatureTypePriorities;
     std::unordered_map<uint32, uint32> _npcPriorities; // npcId -> priority
-    mutable std::shared_mutex _priorityMutex;
+    mutable std::recursive_mutex _priorityMutex;
 
     // Pattern recognition
     bool _enablePatterns = false;
@@ -296,7 +296,7 @@ private:
         uint32 currentIndex = 0;
     };
     std::unordered_map<uint32, SpellPattern> _spellPatterns; // npcId -> pattern
-    mutable std::shared_mutex _patternMutex;
+    mutable std::recursive_mutex _patternMutex;
 
     // Performance optimization
     static constexpr uint32 MAX_SCAN_UNITS = 50;        // Maximum units to scan per update

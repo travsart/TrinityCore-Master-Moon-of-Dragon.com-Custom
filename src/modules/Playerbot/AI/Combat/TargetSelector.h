@@ -317,7 +317,7 @@ private:
     mutable SelectionMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Constants
     static constexpr uint32 DEFAULT_MAX_TARGETS = 50;
