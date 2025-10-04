@@ -90,7 +90,7 @@ def scan_dependencies():
     print(f"Security issues: {len(results['security_issues'])}")
     
     if results['vulnerable_packages']:
-        print("\n⚠️  Vulnerable Packages:")
+        print("\n[WARNING] Vulnerable Packages:")
         for pkg in results['vulnerable_packages']:
             print(f"  - {pkg['package']} {pkg['version']}: {pkg['recommendation']}")
     
@@ -103,20 +103,20 @@ def scan_dependencies():
     
     # Save results
     os.makedirs(".claude", exist_ok=True)
-    with open(".claude/security_scan_results.json", "w") as f:
+    with open(".claude/security_scan_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
-    
-    print(f"\n✓ Results saved to .claude/security_scan_results.json")
-    
+
+    print(f"\n[OK] Results saved to .claude/security_scan_results.json")
+
     # Return exit code based on critical issues
     critical_count = len([p for p in results['vulnerable_packages'] if p['severity'] == 'CRITICAL'])
     critical_count += len([i for i in results['security_issues'] if i['severity'] == 'CRITICAL'])
-    
+
     if critical_count > 0:
-        print(f"\n❌ {critical_count} critical issues found!")
+        print(f"\n[ERROR] {critical_count} critical issues found!")
         return 1
     else:
-        print("\n✅ No critical issues found")
+        print("\n[OK] No critical issues found")
         return 0
 
 if __name__ == "__main__":
