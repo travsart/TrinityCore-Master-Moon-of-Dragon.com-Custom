@@ -195,6 +195,10 @@ private:
     // === CACHING SYSTEM ===
 
     // Parallel hashmap for high-performance caching
+    // DEADLOCK FIX #18: Changed mutex type from std::shared_mutex to std::recursive_mutex
+    // ROOT CAUSE: phmap::parallel_flat_hash_map uses this mutex type internally
+    // When bots query database during update, the hashmap's internal std::shared_mutex
+    // throws "resource deadlock would occur" on recursive lock attempts
     using CacheMap = phmap::parallel_flat_hash_map<
         std::string,
         CacheEntry,
@@ -202,7 +206,7 @@ private:
         std::equal_to<>,
         std::allocator<std::pair<std::string, CacheEntry>>,
         4, // 4 submaps for good concurrency
-        std::shared_mutex
+        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
     >;
 
     CacheMap _resultCache;
@@ -210,6 +214,7 @@ private:
 
     // === PREPARED STATEMENT CACHE ===
 
+    // DEADLOCK FIX #18: Changed mutex type for prepared statements cache
     using PreparedStatementMap = phmap::parallel_flat_hash_map<
         uint32,
         std::string,
@@ -217,7 +222,7 @@ private:
         std::equal_to<>,
         std::allocator<std::pair<uint32, std::string>>,
         4,
-        std::shared_mutex
+        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
     >;
 
     PreparedStatementMap _preparedStatements;

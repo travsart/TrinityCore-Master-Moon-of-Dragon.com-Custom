@@ -192,6 +192,10 @@ private:
     // === DATA MEMBERS ===
 
     // Account storage with parallel hashmap for performance
+    // DEADLOCK FIX #18: Changed mutex type from std::shared_mutex to std::recursive_mutex
+    // ROOT CAUSE: phmap::parallel_flat_hash_map uses this mutex type internally
+    // When bots access account info during update, the hashmap's internal std::shared_mutex
+    // throws "resource deadlock would occur" on recursive lock attempts
     using AccountMap = phmap::parallel_flat_hash_map<
         uint32,                     // BattleNet account ID
         BotAccountInfo,
@@ -199,7 +203,7 @@ private:
         std::equal_to<>,
         std::allocator<std::pair<uint32, BotAccountInfo>>,
         4,                          // 4 submaps for concurrency
-        std::shared_mutex
+        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
     >;
 
     AccountMap _accounts;
