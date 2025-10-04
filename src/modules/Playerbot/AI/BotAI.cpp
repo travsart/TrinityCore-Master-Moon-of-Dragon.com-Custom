@@ -212,37 +212,43 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    std::shared_lock lock(_mutex);
-
-    // CRITICAL FIX: Access _strategies directly instead of calling GetStrategy()
-    // to avoid recursive mutex acquisition (std::shared_mutex is NOT recursive)
-    for (auto const& strategyName : _activeStrategies)
+    // CRITICAL FIX: Collect strategies to update FIRST, then release lock before calling UpdateBehavior
+    // Strategy update methods can call back into BotAI methods that acquire _mutex
+    // We must NOT hold _mutex while calling strategy->UpdateBehavior()
+    std::vector<Strategy*> strategiesToUpdate;
     {
-        // Direct lookup without additional lock
-        auto it = _strategies.find(strategyName);
-        if (it != _strategies.end())
+        std::shared_lock lock(_mutex);
+
+        for (auto const& strategyName : _activeStrategies)
         {
-            Strategy* strategy = it->second.get();
-            if (strategy && strategy->IsActive(this))
+            auto it = _strategies.find(strategyName);
+            if (it != _strategies.end())
             {
-                // Special handling for follow strategy - needs every frame update
-                if (strategyName == "follow")
+                Strategy* strategy = it->second.get();
+                if (strategy && strategy->IsActive(this))
                 {
-                    if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(strategy))
-                    {
-                        followBehavior->UpdateFollowBehavior(this, diff);
-                    }
-                }
-                else
-                {
-                    // Other strategies can use their normal update
-                    strategy->UpdateBehavior(this, diff);
+                    strategiesToUpdate.push_back(strategy);
                 }
             }
         }
+    } // Release lock before calling strategy updates
+
+    // Now call strategy updates WITHOUT holding the lock
+    for (Strategy* strategy : strategiesToUpdate)
+    {
+        // Special handling for follow strategy - needs every frame update
+        if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(strategy))
+        {
+            followBehavior->UpdateFollowBehavior(this, diff);
+        }
+        else
+        {
+            // Other strategies can use their normal update
+            strategy->UpdateBehavior(this, diff);
+        }
     }
 
-    _performanceMetrics.strategiesEvaluated = static_cast<uint32>(_activeStrategies.size());
+    _performanceMetrics.strategiesEvaluated = static_cast<uint32>(strategiesToUpdate.size());
 }
 
 // ============================================================================
