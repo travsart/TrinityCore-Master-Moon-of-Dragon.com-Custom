@@ -455,6 +455,41 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
 
+    # Phase 3: Game System Integration - Movement System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathfindingAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathfindingAdapter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathOptimizer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathOptimizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+
+    # Phase 3: Game System Integration - NPC Interaction System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Vendors/VendorInteraction.h
+
+    # Phase 3: Game System Integration - Quest System Completion
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestTurnIn.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestTurnIn.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestValidation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestValidation.h
+
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
@@ -666,6 +701,14 @@ source_group("Quest" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestCompletion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestTurnIn.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestTurnIn.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestValidation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestValidation.h
 )
 
 source_group("Game" FILES
@@ -699,6 +742,35 @@ source_group("Performance" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/Profiler/Profiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
+)
+
+source_group("Movement" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathfindingAdapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathfindingAdapter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathOptimizer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/PathOptimizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+)
+
+source_group("Interaction" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Vendors/VendorInteraction.h
 )
 
 source_group("Commands" FILES
