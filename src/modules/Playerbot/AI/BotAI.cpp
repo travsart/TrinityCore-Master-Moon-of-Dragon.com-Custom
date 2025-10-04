@@ -20,6 +20,7 @@
 #include "Quest/QuestAutomation.h"
 #include "Social/TradeAutomation.h"
 #include "Social/AuctionAutomation.h"
+#include "Combat/TargetScanner.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
@@ -56,6 +57,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 
     // Initialize group management
     _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
+
+    // Initialize target scanner for autonomous enemy detection
+    _targetScanner = std::make_unique<TargetScanner>(_bot);
 
     // Initialize default strategies for basic functionality
     InitializeDefaultStrategies();
@@ -398,10 +402,75 @@ void BotAI::UpdateIdleBehaviors(uint32 diff)
     if (IsInCombat() || IsFollowing())
         return;
 
+    uint32 currentTime = getMSTime();
+
+    // ========================================================================
+    // AUTONOMOUS TARGET SCANNING - Find enemies when solo
+    // ========================================================================
+
+    // For solo bots (not in a group), actively scan for nearby enemies
+    if (!_bot->GetGroup() && _targetScanner)
+    {
+        // Check if it's time to scan (throttled for performance)
+        if (_targetScanner->ShouldScan(currentTime))
+        {
+            _targetScanner->UpdateScanTime(currentTime);
+
+            // Clean up blacklist
+            _targetScanner->UpdateBlacklist(currentTime);
+
+            // Find best target to engage
+            Unit* bestTarget = _targetScanner->FindBestTarget();
+
+            // If we found a valid target, engage it
+            if (bestTarget && _targetScanner->ShouldEngage(bestTarget))
+            {
+                TC_LOG_DEBUG("playerbot", "Solo bot {} found hostile target {} at distance {:.1f}",
+                            _bot->GetName(), bestTarget->GetName(), _bot->GetDistance(bestTarget));
+
+                // CRITICAL FIX: Properly enter combat state
+                // 1. Set target
+                _bot->SetTarget(bestTarget->GetGUID());
+
+                // 2. Start combat - this sets victim and initiates auto-attack
+                _bot->Attack(bestTarget, true);
+
+                // 3. CRITICAL: Force bot into combat state (Attack() alone doesn't guarantee this)
+                _bot->SetInCombatWith(bestTarget);
+                bestTarget->SetInCombatWith(_bot);
+
+                TC_LOG_ERROR("module.playerbot", "🎯 AUTONOMOUS COMBAT START: Bot {} attacking {} (InCombat={}, HasVictim={})",
+                             _bot->GetName(), bestTarget->GetName(),
+                             _bot->IsInCombat(), _bot->GetVictim() != nullptr);
+
+                // If ranged class, start at range
+                if (_bot->GetClass() == CLASS_HUNTER ||
+                    _bot->GetClass() == CLASS_MAGE ||
+                    _bot->GetClass() == CLASS_WARLOCK ||
+                    _bot->GetClass() == CLASS_PRIEST)
+                {
+                    // Move to optimal range instead of melee
+                    float optimalRange = 25.0f; // Standard ranged distance
+                    if (_bot->GetDistance(bestTarget) > optimalRange)
+                    {
+                        // Move closer but stay at range
+                        Position pos = bestTarget->GetNearPosition(optimalRange, 0.0f);
+                        _bot->GetMotionMaster()->MovePoint(0, pos);
+                    }
+                }
+
+                // This will trigger combat state transition in next update
+                return;
+            }
+        }
+    }
+
+    // ========================================================================
+    // QUEST AND TRADE AUTOMATION
+    // ========================================================================
+
     // CRITICAL FIX: Actually call the automation systems that exist but were never connected!
     // These systems are fully implemented in Quest/, Social/ but UpdateIdleBehaviors was a stub
-
-    uint32 currentTime = getMSTime();
 
     // Run quest automation every ~5 seconds (not every frame - too expensive)
     static uint32 lastQuestUpdate = 0;
