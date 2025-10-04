@@ -24,3 +24,22 @@ cmake-build-*/*
 .vs
 *.user
 .aider*
+
+# Build artifacts and logs
+*.exe
+*.log
+build_*.txt
+build_*.bat
+worldserver_*.exe
+*_build.log
+*_output.txt
+final_*.txt
+test_*.bat
+
+# Python temporary files
+*.tmp.*
+*.pyc
+__pycache__/
+
+# SQL dumps and temporary data
+*.sql.backup
