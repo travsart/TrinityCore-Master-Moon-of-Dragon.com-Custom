@@ -386,6 +386,7 @@ private:
     bool CastCraftingSpell(::Player* player, RecipeInfo const& recipe);
     bool ConsumeMaterials(::Player* player, RecipeInfo const& recipe);
     void HandleCraftingResult(::Player* player, RecipeInfo const& recipe, bool success);
+    ProfessionType GetProfessionTypeFromSkillId(uint16 skillId) const;
 
     // ============================================================================
     // SKILL CALCULATION HELPERS

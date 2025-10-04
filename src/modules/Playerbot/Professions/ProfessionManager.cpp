@@ -14,6 +14,8 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "DB2Stores.h"
+#include "SkillDiscovery.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -53,14 +55,121 @@ void ProfessionManager::Initialize()
 
 void ProfessionManager::LoadRecipeDatabase()
 {
-    // TODO: Load from DBC/DB2 SkillLineAbility table
-    // For now, we'll populate with common leveling recipes
-    // This will be expanded with full DBC integration
-
     _recipeDatabase.clear();
     _professionRecipes.clear();
 
-    TC_LOG_DEBUG("playerbots", "ProfessionManager: Recipe database loaded");
+    uint32 recipeCount = 0;
+
+    // Iterate all SkillLineAbility entries from DB2
+    for (SkillLineAbilityEntry const* ability : sSkillLineAbilityStore)
+    {
+        if (!ability)
+            continue;
+
+        // Check if this is a profession skill
+        ProfessionType profession = GetProfessionTypeFromSkillId(ability->SkillLine);
+        if (profession == ProfessionType::NONE)
+            continue;
+
+        // Get spell info
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability->Spell, DIFFICULTY_NONE);
+        if (!spellInfo)
+            continue;
+
+        // Create recipe info
+        RecipeInfo recipe;
+        recipe.spellId = ability->Spell;
+        recipe.recipeId = ability->ID;  // Use SkillLineAbility ID as recipe ID
+        recipe.profession = profession;
+        recipe.requiredSkill = ability->MinSkillLineRank;
+
+        // Calculate skill-up thresholds
+        recipe.skillUpOrange = ability->TrivialSkillLineRankHigh;
+        recipe.skillUpYellow = (ability->TrivialSkillLineRankHigh + ability->TrivialSkillLineRankLow) / 2;
+        recipe.skillUpGreen = ability->TrivialSkillLineRankLow;
+        recipe.skillUpGray = (ability->TrivialSkillLineRankLow > 25) ? (ability->TrivialSkillLineRankLow - 25) : 0;
+
+        // Determine acquisition method
+        SkillLineAbilityAcquireMethod acquireMethod = ability->GetAcquireMethod();
+        if (acquireMethod == SkillLineAbilityAcquireMethod::Learned ||
+            acquireMethod == SkillLineAbilityAcquireMethod::AutomaticSkillRank ||
+            acquireMethod == SkillLineAbilityAcquireMethod::LearnedOrAutomaticCharLevel)
+        {
+            recipe.isTrainer = true;
+            recipe.isDiscovery = false;
+            recipe.isWorldDrop = false;
+        }
+        else
+        {
+            recipe.isTrainer = false;
+            recipe.isDiscovery = false;
+            recipe.isWorldDrop = true;
+        }
+
+        // Extract reagents from SpellReagents DB2
+        for (SpellReagentsEntry const* reagents : sSpellReagentsStore)
+        {
+            if (reagents->SpellID == static_cast<int32>(ability->Spell))
+            {
+                for (uint8 i = 0; i < MAX_SPELL_REAGENTS; ++i)
+                {
+                    if (reagents->Reagent[i] > 0)
+                    {
+                        RecipeInfo::Reagent reagent;
+                        reagent.itemId = reagents->Reagent[i];
+                        reagent.quantity = reagents->ReagentCount[i];
+                        recipe.reagents.push_back(reagent);
+                    }
+                }
+                break;  // Found reagents, no need to continue
+            }
+        }
+
+        // Extract product item from spell effects
+        for (SpellEffectInfo const& effect : spellInfo->GetEffects())
+        {
+            if (effect.Effect == SPELL_EFFECT_CREATE_ITEM)
+            {
+                recipe.productItemId = effect.ItemType;
+                // Try to get quantity from BasePoints (often 1)
+                recipe.productQuantity = (effect.BasePoints > 0) ? effect.BasePoints : 1;
+                break;
+            }
+        }
+
+        // Only add if recipe has a product (is actually a crafting spell)
+        if (recipe.productItemId > 0)
+        {
+            _recipeDatabase[recipe.recipeId] = recipe;
+            _professionRecipes[profession].push_back(recipe.recipeId);
+            recipeCount++;
+        }
+    }
+
+    TC_LOG_INFO("playerbots", "ProfessionManager: Loaded {} recipes from SkillLineAbility DB2", recipeCount);
+}
+
+// Helper method to convert skill ID to profession type
+ProfessionType ProfessionManager::GetProfessionTypeFromSkillId(uint16 skillId) const
+{
+    switch (skillId)
+    {
+        case SKILL_ALCHEMY:         return ProfessionType::ALCHEMY;
+        case SKILL_BLACKSMITHING:   return ProfessionType::BLACKSMITHING;
+        case SKILL_ENCHANTING:      return ProfessionType::ENCHANTING;
+        case SKILL_ENGINEERING:     return ProfessionType::ENGINEERING;
+        case SKILL_INSCRIPTION:     return ProfessionType::INSCRIPTION;
+        case SKILL_JEWELCRAFTING:   return ProfessionType::JEWELCRAFTING;
+        case SKILL_LEATHERWORKING:  return ProfessionType::LEATHERWORKING;
+        case SKILL_TAILORING:       return ProfessionType::TAILORING;
+        case SKILL_MINING:          return ProfessionType::MINING;
+        case SKILL_HERBALISM:       return ProfessionType::HERBALISM;
+        case SKILL_SKINNING:        return ProfessionType::SKINNING;
+        case SKILL_COOKING:         return ProfessionType::COOKING;
+        case SKILL_FISHING:         return ProfessionType::FISHING;
+        case 129:                   return ProfessionType::FIRST_AID;  // First Aid
+        default:                    return ProfessionType::NONE;
+    }
 }
 
 void ProfessionManager::LoadProfessionRecommendations()
