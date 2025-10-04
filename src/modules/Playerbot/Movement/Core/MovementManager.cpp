@@ -510,40 +510,49 @@ namespace Playerbot
         if (groupId == 0)
             return;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        auto it = _groupFormations.find(groupId);
-        if (it == _groupFormations.end() || !it->second.isActive)
-            return;
+        // Collect movement requests while holding lock
+        std::vector<std::pair<Player*, Position>> movementRequests;
 
-        auto& groupData = it->second;
-
-        // Check if leader has moved significantly
-        Position leaderPos = leader->GetPosition();
-        for (Player* member : members)
         {
-            if (member == leader)
-                continue;
+            std::shared_lock<std::shared_mutex> lock(m_mutex);
+            auto it = _groupFormations.find(groupId);
+            if (it == _groupFormations.end() || !it->second.isActive)
+                return;
 
-            auto posIt = groupData.positions.find(member->GetGUID());
-            if (posIt != groupData.positions.end())
+            auto& groupData = it->second;
+
+            // Check if leader has moved significantly
+            Position leaderPos = leader->GetPosition();
+            for (Player* member : members)
             {
-                // Calculate desired position based on formation
-                float angle = leaderPos.GetOrientation() + posIt->second.followAngle;
-                float x = leaderPos.GetPositionX() + posIt->second.followDistance * cos(angle);
-                float y = leaderPos.GetPositionY() + posIt->second.followDistance * sin(angle);
-                float z = leaderPos.GetPositionZ();
+                if (member == leader)
+                    continue;
 
-                Position formationPos(x, y, z, angle);
-
-                // Check if member needs to reposition
-                float dist = member->GetExactDist(&formationPos);
-                if (dist > MovementConstants::RECALC_THRESHOLD)
+                auto posIt = groupData.positions.find(member->GetGUID());
+                if (posIt != groupData.positions.end())
                 {
-                    lock.unlock();
-                    MoveToPoint(member, formationPos);
-                    lock.lock();
+                    // Calculate desired position based on formation
+                    float angle = leaderPos.GetOrientation() + posIt->second.followAngle;
+                    float x = leaderPos.GetPositionX() + posIt->second.followDistance * cos(angle);
+                    float y = leaderPos.GetPositionY() + posIt->second.followDistance * sin(angle);
+                    float z = leaderPos.GetPositionZ();
+
+                    Position formationPos(x, y, z, angle);
+
+                    // Check if member needs to reposition
+                    float dist = member->GetExactDist(&formationPos);
+                    if (dist > MovementConstants::RECALC_THRESHOLD)
+                    {
+                        movementRequests.emplace_back(member, formationPos);
+                    }
                 }
             }
+        } // Release lock before calling MoveToPoint
+
+        // Execute movement requests without holding lock (prevents deadlock)
+        for (auto const& [member, position] : movementRequests)
+        {
+            MoveToPoint(member, position);
         }
     }
 
