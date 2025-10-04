@@ -38,80 +38,81 @@ namespace Playerbot
 class StopFollowAction : public Action
 {
 public:
-    StopFollowAction() : Action("stop follow") {}
+    StopFollowAction(LeaderFollowBehavior* behavior)
+        : Action("stop follow"), _behavior(behavior) {}
 
     virtual bool IsPossible(BotAI* ai) const override
     {
-        return ai != nullptr;
+        return ai != nullptr && _behavior != nullptr;
     }
 
     virtual bool IsUseful(BotAI* ai) const override
     {
-        if (!ai)
-            return false;
-        auto followStrategy = ai->GetStrategy("follow");
-        return followStrategy != nullptr;
+        return _behavior != nullptr;
     }
 
     virtual ActionResult Execute(BotAI* ai, ActionContext const& context) override
     {
-        if (!ai)
+        if (!ai || !_behavior)
             return ActionResult::FAILED;
 
-        auto followStrategy = ai->GetStrategy("follow");
-        auto followBehavior = followStrategy ? dynamic_cast<LeaderFollowBehavior*>(followStrategy) : nullptr;
-
-        if (followBehavior)
-        {
-            followBehavior->ClearFollowTarget();
-            return ActionResult::SUCCESS;
-        }
-
-        return ActionResult::FAILED;
+        // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
+        // which would acquire BotAI::_mutex recursively
+        _behavior->ClearFollowTarget();
+        return ActionResult::SUCCESS;
     }
+
+private:
+    LeaderFollowBehavior* _behavior;
 };
 
 // Leader Far Trigger
 class LeaderFarTrigger : public Trigger
 {
 public:
-    LeaderFarTrigger() : Trigger("leader far", TriggerType::DISTANCE) {}
+    LeaderFarTrigger(LeaderFollowBehavior* behavior)
+        : Trigger("leader far", TriggerType::DISTANCE), _behavior(behavior) {}
 
     virtual bool Check(BotAI* ai) const override
     {
-        if (!ai || !ai->GetBot())
+        if (!ai || !ai->GetBot() || !_behavior)
             return false;
 
-        auto followStrategy = ai->GetStrategy("follow");
-        auto followBehavior = followStrategy ? dynamic_cast<LeaderFollowBehavior*>(followStrategy) : nullptr;
-
-        if (!followBehavior || !followBehavior->HasFollowTarget())
+        // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
+        // which would acquire BotAI::_mutex recursively
+        if (!_behavior->HasFollowTarget())
             return false;
 
-        return followBehavior->GetDistanceToLeader() > 30.0f;
+        return _behavior->GetDistanceToLeader() > 30.0f;
     }
+
+private:
+    LeaderFollowBehavior* _behavior;
 };
 
 // Leader Lost Trigger
 class LeaderLostTrigger : public Trigger
 {
 public:
-    LeaderLostTrigger() : Trigger("leader lost", TriggerType::WORLD) {}
+    LeaderLostTrigger(LeaderFollowBehavior* behavior)
+        : Trigger("leader lost", TriggerType::WORLD), _behavior(behavior) {}
 
     virtual bool Check(BotAI* ai) const override
     {
-        if (!ai || !ai->GetBot())
+        if (!ai || !ai->GetBot() || !_behavior)
             return false;
 
-        auto followStrategy = ai->GetStrategy("follow");
-        auto followBehavior = followStrategy ? dynamic_cast<LeaderFollowBehavior*>(followStrategy) : nullptr;
-
-        if (!followBehavior || !followBehavior->HasFollowTarget())
+        // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
+        // which would acquire BotAI::_mutex recursively
+        if (!_behavior->HasFollowTarget())
             return false;
 
-        return !followBehavior->IsLeaderInSight() &&
-               followBehavior->GetTimeSinceLastSeen() > 3000;
+        return !_behavior->IsLeaderInSight() &&
+               _behavior->GetTimeSinceLastSeen() > 3000;
     }
+
+private:
+    LeaderFollowBehavior* _behavior;
 };
 
 // LeaderFollowBehavior implementation
@@ -124,7 +125,9 @@ LeaderFollowBehavior::LeaderFollowBehavior()
 void LeaderFollowBehavior::InitializeActions()
 {
     AddAction("follow", std::make_shared<FollowAction>());
-    AddAction("stop follow", std::make_shared<StopFollowAction>());
+
+    // DEADLOCK FIX: Pass 'this' pointer to StopFollowAction so it doesn't need to call GetStrategy()
+    AddAction("stop follow", std::make_shared<StopFollowAction>(this));
 
     // CRITICAL FIX: Add combat assistance action
     AddAction("assist_group", std::make_shared<TargetAssistAction>("assist_group"));
@@ -132,8 +135,9 @@ void LeaderFollowBehavior::InitializeActions()
 
 void LeaderFollowBehavior::InitializeTriggers()
 {
-    AddTrigger(std::make_shared<LeaderFarTrigger>());
-    AddTrigger(std::make_shared<LeaderLostTrigger>());
+    // DEADLOCK FIX: Pass 'this' pointer to triggers so they don't need to call GetStrategy()
+    AddTrigger(std::make_shared<LeaderFarTrigger>(this));
+    AddTrigger(std::make_shared<LeaderLostTrigger>(this));
 
     // CRITICAL FIX: Add group combat trigger for combat assistance
     AddTrigger(std::make_shared<GroupCombatTrigger>("group_combat"));
