@@ -355,7 +355,7 @@ namespace Playerbot
 
     private:
         // Thread safety
-        mutable std::shared_mutex m_mutex;
+        mutable std::recursive_mutex m_mutex;
 
         // Configuration
         bool m_strictMode = false;

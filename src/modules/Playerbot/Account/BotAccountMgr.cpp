@@ -543,7 +543,7 @@ uint32 BotAccountMgr::GetPoolSize() const
 
 bool BotAccountMgr::CanCreateCharacter(uint32 bnetAccountId) const
 {
-    std::shared_lock lock(_accountsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     if (it == _accounts.end())
@@ -576,7 +576,7 @@ void BotAccountMgr::UpdateCharacterCount(uint32 bnetAccountId, int8 delta)
 
 BotAccountMgr::BotAccountInfo const* BotAccountMgr::GetAccountInfo(uint32 bnetAccountId) const
 {
-    std::shared_lock lock(_accountsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     return (it != _accounts.end()) ? &it->second : nullptr;
@@ -623,7 +623,7 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
 
     std::vector<uint32> accountIds;
     {
-        std::shared_lock lock(_accountsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
         accountIds.reserve(_accounts.size());
         for (auto const& [id, info] : _accounts)
         {

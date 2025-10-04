@@ -80,7 +80,7 @@ namespace Playerbot
 
     bool InteractionManager::Initialize()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (m_initialized)
             return true;
@@ -114,7 +114,7 @@ namespace Playerbot
 
     void InteractionManager::Shutdown()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (!m_initialized)
             return;
@@ -152,7 +152,7 @@ namespace Playerbot
 
     void InteractionManager::Update(uint32 diff)
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (!m_initialized)
             return;
@@ -222,7 +222,7 @@ namespace Playerbot
         if (!bot || !target)
             return InteractionResult::InvalidTarget;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         // Check if bot already has active interaction
         if (HasActiveInteraction(bot))
@@ -304,7 +304,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (it != m_activeInteractions.end())
@@ -323,7 +323,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         return m_activeInteractions.find(bot->GetGUID()) != m_activeInteractions.end();
     }
 
@@ -332,7 +332,7 @@ namespace Playerbot
         if (!bot)
             return nullptr;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (it != m_activeInteractions.end())
@@ -659,7 +659,7 @@ namespace Playerbot
 
     InteractionMetrics InteractionManager::GetMetrics(InteractionType type) const
     {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (type == InteractionType::None)
         {
@@ -690,7 +690,7 @@ namespace Playerbot
 
     void InteractionManager::ResetMetrics()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         m_metrics.clear();
         m_totalInteractionsStarted = 0;
         m_totalInteractionsCompleted = 0;

@@ -89,7 +89,7 @@ namespace Playerbot
 
         // Stop all active movements
         {
-            std::unique_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             for (auto& [guid, data] : _botData)
             {
                 if (data->currentGenerator)
@@ -121,7 +121,7 @@ namespace Playerbot
 
         // First check if data exists (shared lock)
         {
-            std::shared_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             auto it = _botData.find(bot->GetGUID());
             if (it != _botData.end())
             {
@@ -132,7 +132,7 @@ namespace Playerbot
         // If data doesn't exist, create it (unique lock)
         if (!data)
         {
-            std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+            std::lock_guard<std::recursive_mutex> writeLock(m_mutex);
             // Double-check after acquiring write lock (another thread may have created it)
             auto it = _botData.find(bot->GetGUID());
             if (it == _botData.end())
@@ -388,7 +388,7 @@ namespace Playerbot
 
         // Store formation data
         {
-            std::unique_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             uint32 groupId = bot->GetGroup() ? bot->GetGroup()->GetGUID().GetCounter() : 0;
             if (groupId > 0)
             {
@@ -425,7 +425,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it != _botData.end())
         {
@@ -451,7 +451,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() && it->second->state.isMoving;
     }
@@ -461,7 +461,7 @@ namespace Playerbot
         if (!bot)
             return nullptr;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() ? &it->second->state : nullptr;
     }
@@ -471,7 +471,7 @@ namespace Playerbot
         if (!bot)
             return nullptr;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() ? it->second->currentGenerator : nullptr;
     }
@@ -482,7 +482,7 @@ namespace Playerbot
         if (!leader || members.empty())
             return false;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         uint32 groupId = leader->GetGroup() ? leader->GetGroup()->GetGUID().GetCounter() : 0;
         if (groupId == 0)
@@ -525,7 +525,7 @@ namespace Playerbot
         std::vector<std::pair<Player*, Position>> movementRequests;
 
         {
-            std::shared_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             auto it = _groupFormations.find(groupId);
             if (it == _groupFormations.end() || !it->second.isActive)
                 return;
@@ -725,7 +725,7 @@ namespace Playerbot
         if (!bot || !newGenerator)
             return false;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it == _botData.end())
         {
@@ -779,7 +779,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it != _botData.end())
         {

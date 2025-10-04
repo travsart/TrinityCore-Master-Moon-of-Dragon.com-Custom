@@ -283,7 +283,7 @@ namespace Playerbot
         };
 
         // Cache management
-        mutable std::shared_mutex _cacheLock;
+        mutable std::recursive_mutex _cacheLock;
         std::unordered_map<uint64, CachedPath> _pathCache;
         std::queue<uint64> _cacheOrder; // LRU tracking
 

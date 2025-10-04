@@ -261,11 +261,11 @@ private:
     SchedulerStats _stats;
 
     // Thread-safe activity pattern storage
-    mutable std::shared_mutex _patternMutex;
+    mutable std::recursive_mutex _patternMutex;
     std::unordered_map<std::string, ActivityPattern> _activityPatterns;
 
     // Thread-safe bot schedule state storage (TBB removed)
-    mutable std::shared_mutex _scheduleMutex;
+    mutable std::recursive_mutex _scheduleMutex;
     std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
     // Priority queue for scheduled actions (TBB removed)

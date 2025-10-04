@@ -262,7 +262,7 @@ namespace Playerbot
         ObjectGuid guid = bot->GetGUID();
         auto now = std::chrono::steady_clock::now();
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::lock_guard<std::recursive_mutex> lock(_dataLock);
         auto& data = _stuckData[guid];
 
         // Check if enough time has passed since last check
@@ -328,7 +328,7 @@ namespace Playerbot
 
         ObjectGuid guid = bot->GetGUID();
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::lock_guard<std::recursive_mutex> lock(_dataLock);
         auto& data = _stuckData[guid];
 
         if (!data.isStuck)
@@ -392,7 +392,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::lock_guard<std::recursive_mutex> lock(_dataLock);
         auto it = _stuckData.find(bot->GetGUID());
         if (it != _stuckData.end())
         {

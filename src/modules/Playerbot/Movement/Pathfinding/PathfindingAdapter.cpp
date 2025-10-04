@@ -47,7 +47,7 @@ namespace Playerbot
 
     void PathfindingAdapter::Shutdown()
     {
-        std::unique_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -236,7 +236,7 @@ namespace Playerbot
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
 
-        std::shared_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end() && it->second.isValid)
@@ -260,7 +260,7 @@ namespace Playerbot
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
 
-        std::shared_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end())
@@ -278,7 +278,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
 
         // Remove all cache entries for this bot
         auto it = _pathCache.begin();
@@ -299,7 +299,7 @@ namespace Playerbot
 
     void PathfindingAdapter::ClearAllCache()
     {
-        std::unique_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -556,7 +556,7 @@ namespace Playerbot
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
 
-        std::unique_lock<std::shared_mutex> lock(_cacheLock);
+        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
 
         // Check cache size limit
         if (_pathCache.size() >= _maxCacheSize)

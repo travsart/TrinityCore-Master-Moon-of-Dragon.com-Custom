@@ -171,7 +171,7 @@ private:
 
     std::vector<EventSubscription> _eventHandlers;
     std::atomic<uint32> _nextHandlerId{1};
-    mutable std::shared_mutex _handlersMutex;
+    mutable std::recursive_mutex _handlersMutex;
 
     // Internal processing
     void WorkerThreadProc();

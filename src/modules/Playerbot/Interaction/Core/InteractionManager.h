@@ -642,8 +642,8 @@ namespace Playerbot
         std::unordered_map<ObjectGuid, NPCInteractionData> m_npcDatabase;
 
         // Thread safety - shared_mutex allows concurrent reads
-        mutable std::shared_mutex m_mutex;
-        mutable std::shared_mutex m_npcMutex;
+        mutable std::recursive_mutex m_mutex;
+        mutable std::recursive_mutex m_npcMutex;
 
         // Performance tracking - atomic for thread safety
         std::atomic<uint64> m_totalInteractionsStarted{0};

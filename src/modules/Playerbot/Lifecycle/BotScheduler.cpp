@@ -59,7 +59,7 @@ void BotScheduler::Shutdown()
 
     // Clear data structures
     {
-        std::unique_lock<std::shared_mutex> lock(_patternMutex);
+        std::lock_guard<std::recursive_mutex> lock(_patternMutex);
         _activityPatterns.clear();
     }
 
@@ -119,7 +119,7 @@ void BotScheduler::LoadConfig()
 
 void BotScheduler::LoadActivityPatterns()
 {
-    std::unique_lock<std::shared_mutex> lock(_patternMutex);
+    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
 
     // Load default patterns first
     LoadDefaultPatterns();
@@ -216,7 +216,7 @@ ActivityPattern BotScheduler::CreateWeekendPattern() const
 
 void BotScheduler::RegisterPattern(std::string const& name, ActivityPattern const& pattern)
 {
-    std::unique_lock<std::shared_mutex> lock(_patternMutex);
+    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
     _activityPatterns[name] = pattern;
 
     // Save to database for persistence
@@ -228,7 +228,7 @@ void BotScheduler::RegisterPattern(std::string const& name, ActivityPattern cons
 
 ActivityPattern const* BotScheduler::GetPattern(std::string const& name) const
 {
-    std::shared_lock<std::shared_mutex> lock(_patternMutex);
+    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
     auto it = _activityPatterns.find(name);
     return it != _activityPatterns.end() ? &it->second : nullptr;
 }

@@ -350,7 +350,7 @@ private:
 
     // Bot storage
     std::unordered_map<ObjectGuid, std::shared_ptr<BotLifecycle>> _botLifecycles;
-    mutable std::shared_mutex _lifecycleMutex;
+    mutable std::recursive_mutex _lifecycleMutex;
 
     // Configuration
     uint32 _maxConcurrentLogins = 10;

@@ -203,7 +203,7 @@ namespace Playerbot
         if (!bot || !target)
             return -1;
 
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         // Get or create session
         GossipSession& session = m_activeSessions[bot->GetGUID()];
@@ -256,7 +256,7 @@ namespace Playerbot
 
         // The actual packet handling would be done by the session
         // We just track the state here
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeSessions.find(bot->GetGUID());
         if (it != m_activeSessions.end())
@@ -417,7 +417,7 @@ namespace Playerbot
 
     void GossipHandler::CacheGossipPath(uint32 creatureEntry, InteractionType type, const std::vector<uint32>& path)
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         m_gossipPathCache[creatureEntry][type] = path;
 
@@ -448,7 +448,7 @@ namespace Playerbot
 
     std::vector<uint32> GossipHandler::GetCachedPath(uint32 creatureEntry, InteractionType type) const
     {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto creatureIt = m_gossipPathCache.find(creatureEntry);
         if (creatureIt != m_gossipPathCache.end())
@@ -463,7 +463,7 @@ namespace Playerbot
 
     void GossipHandler::ClearCache()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         m_gossipPathCache.clear();
         m_pathStatistics.clear();
         m_activeSessions.clear();

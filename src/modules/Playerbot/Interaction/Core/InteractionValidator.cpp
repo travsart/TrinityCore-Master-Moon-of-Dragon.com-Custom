@@ -43,7 +43,7 @@ namespace Playerbot
         auto now = std::chrono::steady_clock::now();
 
         {
-            std::shared_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             auto lastCheck = m_lastValidation.find(cacheKey);
             if (lastCheck != m_lastValidation.end())
             {
@@ -112,7 +112,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::unique_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             m_lastValidation[cacheKey] = now;
             m_validationCache[cacheKey] = result;
         }
@@ -303,7 +303,7 @@ namespace Playerbot
 
         // Check cache
         {
-            std::shared_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             auto it = m_usefulItemCache.find(itemId);
             if (it != m_usefulItemCache.end())
                 return it->second;
@@ -375,7 +375,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::unique_lock<std::shared_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
             m_usefulItemCache[itemId] = isUseful;
         }
 
@@ -717,13 +717,13 @@ namespace Playerbot
 
     InteractionValidator::ValidationMetrics InteractionValidator::GetMetrics() const
     {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         return m_metrics;
     }
 
     void InteractionValidator::ResetMetrics()
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
         m_metrics = ValidationMetrics();
     }
 
@@ -756,7 +756,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto botIt = m_cooldowns.find(bot->GetGUID());
         if (botIt == m_cooldowns.end())
@@ -779,7 +779,7 @@ namespace Playerbot
 
     void InteractionValidator::RecordValidation(InteractionType type, bool passed) const
     {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         ++m_metrics.totalValidations;
         if (passed)

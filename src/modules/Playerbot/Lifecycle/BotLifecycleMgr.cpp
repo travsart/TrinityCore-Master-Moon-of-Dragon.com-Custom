@@ -524,7 +524,7 @@ void BotLifecycleMgr::RecordEvent(LifecycleEventInfo::Type eventType, uint32 pro
 
 void BotLifecycleMgr::NotifyEventHandlers(LifecycleEventInfo const& eventInfo)
 {
-    std::shared_lock<std::shared_mutex> lock(_handlersMutex);
+    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
 
     for (auto const& subscription : _eventHandlers)
     {
@@ -544,7 +544,7 @@ void BotLifecycleMgr::NotifyEventHandlers(LifecycleEventInfo const& eventInfo)
 
 uint32 BotLifecycleMgr::RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler)
 {
-    std::unique_lock<std::shared_mutex> lock(_handlersMutex);
+    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
 
     uint32 id = _nextHandlerId++;
     _eventHandlers.push_back({id, eventType, std::move(handler)});
@@ -555,7 +555,7 @@ uint32 BotLifecycleMgr::RegisterEventHandler(LifecycleEventInfo::Type eventType,
 
 void BotLifecycleMgr::UnregisterEventHandler(uint32 handlerId)
 {
-    std::unique_lock<std::shared_mutex> lock(_handlersMutex);
+    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
 
     _eventHandlers.erase(
         std::remove_if(_eventHandlers.begin(), _eventHandlers.end(),

@@ -225,7 +225,7 @@ namespace Playerbot
         // Bot movement data storage
         std::unordered_map<ObjectGuid, std::unique_ptr<BotMovementData>> m_botMovement;
         std::unordered_map<ObjectGuid, std::unique_ptr<BotMovementData>>& _botData = m_botMovement; // Alias for compatibility
-        mutable std::shared_mutex m_mutex;
+        mutable std::recursive_mutex m_mutex;
 
         // Subsystems
         std::unique_ptr<PathfindingAdapter> m_pathfinder;

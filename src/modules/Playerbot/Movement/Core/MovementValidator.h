@@ -248,7 +248,7 @@ namespace Playerbot
         };
 
         // Member variables
-        mutable std::shared_mutex _dataLock;
+        mutable std::recursive_mutex _dataLock;
         std::unordered_map<ObjectGuid, StuckData> _stuckData;
 
         // Configuration

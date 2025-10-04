@@ -163,7 +163,7 @@ private:
     };
 
     std::unordered_map<ObjectGuid, BotMemoryUsage> _botMemoryUsage;
-    mutable std::shared_mutex _usageMutex;
+    mutable std::recursive_mutex _usageMutex;
 
     std::atomic<size_t> _totalAllocated{0};
     std::atomic<size_t> _maxMemory{1ULL << 30}; // 1GB default

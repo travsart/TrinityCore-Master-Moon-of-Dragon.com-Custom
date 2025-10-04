@@ -194,7 +194,7 @@ namespace Playerbot
 
     private:
         // Thread safety
-        mutable std::shared_mutex m_mutex;
+        mutable std::recursive_mutex m_mutex;
 
         // Gossip path cache: [creatureEntry][interactionType] = path
         std::unordered_map<uint32, std::unordered_map<InteractionType, std::vector<uint32>>> m_gossipPathCache;

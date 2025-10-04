@@ -228,7 +228,7 @@ private:
     std::atomic<uint32> _targetPoolSize{50};        // Pool size target
 
     // Thread safety
-    mutable std::shared_mutex _accountsMutex;
+    mutable std::recursive_mutex _accountsMutex;
 
     // Callback processing for thread-safe operations
     struct PendingCallback

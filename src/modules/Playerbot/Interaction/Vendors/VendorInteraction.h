@@ -267,7 +267,7 @@ namespace Playerbot
 
     private:
         // Thread safety
-        mutable std::shared_mutex m_mutex;
+        mutable std::recursive_mutex m_mutex;
 
         // Sub-managers
         std::unique_ptr<RepairManager> m_repairManager;

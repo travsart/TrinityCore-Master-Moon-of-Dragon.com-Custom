@@ -176,7 +176,7 @@ void BotMemoryManager::TrackAllocation(ObjectGuid guid, size_t size)
 {
     _totalAllocated.fetch_add(size, std::memory_order_relaxed);
 
-    std::unique_lock<std::shared_mutex> lock(_usageMutex);
+    std::lock_guard<std::recursive_mutex> lock(_usageMutex);
     auto& usage = _botMemoryUsage[guid];
     usage.totalMemory.fetch_add(size, std::memory_order_relaxed);
     usage.lastUpdate = std::chrono::steady_clock::now();
@@ -186,7 +186,7 @@ void BotMemoryManager::TrackDeallocation(ObjectGuid guid, size_t size)
 {
     _totalAllocated.fetch_sub(size, std::memory_order_relaxed);
 
-    std::shared_lock<std::shared_mutex> lock(_usageMutex);
+    std::lock_guard<std::recursive_mutex> lock(_usageMutex);
     auto it = _botMemoryUsage.find(guid);
     if (it != _botMemoryUsage.end())
     {

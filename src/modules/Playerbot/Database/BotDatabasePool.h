@@ -174,7 +174,7 @@ private:
     // Connection pool
     std::vector<std::unique_ptr<ConnectionInfo>> _connections;
     boost::lockfree::queue<size_t> _availableConnections{16};
-    mutable std::shared_mutex _connectionMutex;
+    mutable std::recursive_mutex _connectionMutex;
 
     // Connection configuration
     std::string _connectionString;
