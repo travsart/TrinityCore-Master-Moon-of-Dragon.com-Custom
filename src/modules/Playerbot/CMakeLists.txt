@@ -433,6 +433,16 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.h
 
+    # Advanced Features - Group/Raid, Economy, Social, Advanced Behaviors
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.h
+
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
@@ -653,6 +663,17 @@ source_group("Game" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
+)
+
+source_group("Advanced" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.h
 )
 
 source_group("Commands" FILES

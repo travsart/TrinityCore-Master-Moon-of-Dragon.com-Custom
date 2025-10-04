@@ -1588,6 +1588,7 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         Player* GetTrader() const;
         TradeData* GetTradeData() const { return m_trade; }
         void TradeCancel(bool sendback);
+        void InitiateTrade(Player* trader); // PlayerBot integration: minimal core hook
 
         CinematicMgr* GetCinematicMgr() const { return _cinematicMgr.get(); }
 

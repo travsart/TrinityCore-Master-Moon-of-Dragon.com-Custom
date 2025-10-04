@@ -13134,6 +13134,17 @@ void Player::TradeCancel(bool sendback)
     }
 }
 
+void Player::InitiateTrade(Player* trader)
+{
+    // PlayerBot integration: minimal core hook for trade initiation
+    // Pattern from TradeHandler.cpp:714-715
+    if (!trader || m_trade || trader->m_trade)
+        return;
+
+    m_trade = new TradeData(this, trader);
+    trader->m_trade = new TradeData(trader, this);
+}
+
 void Player::UpdateSoulboundTradeItems()
 {
     // also checks for garbage data
