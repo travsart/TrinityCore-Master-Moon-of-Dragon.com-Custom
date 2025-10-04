@@ -61,6 +61,16 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize target scanner for autonomous enemy detection
     _targetScanner = std::make_unique<TargetScanner>(_bot);
 
+    // CRITICAL: Activate idle behavior automation systems
+    // These systems are fully implemented but disabled by default - must activate on spawn
+    uint32 botGuid = _bot->GetGUID().GetCounter();
+    QuestAutomation::instance()->SetAutomationActive(botGuid, true);
+    TradeAutomation::instance()->SetAutomationActive(botGuid, true);
+    AuctionAutomation::instance()->SetAutomationActive(botGuid, true);
+
+    TC_LOG_INFO("module.playerbot", "🤖 BOT AUTOMATION ACTIVATED: {} - Quest/Trade/Auction systems enabled",
+                _bot->GetName());
+
     // Initialize default strategies for basic functionality
     InitializeDefaultStrategies();
 
