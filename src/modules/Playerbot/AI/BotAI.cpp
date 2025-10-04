@@ -214,11 +214,16 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     std::shared_lock lock(_mutex);
 
+    // CRITICAL FIX: Access _strategies directly instead of calling GetStrategy()
+    // to avoid recursive mutex acquisition (std::shared_mutex is NOT recursive)
     for (auto const& strategyName : _activeStrategies)
     {
-        if (auto* strategy = GetStrategy(strategyName))
+        // Direct lookup without additional lock
+        auto it = _strategies.find(strategyName);
+        if (it != _strategies.end())
         {
-            if (strategy->IsActive(this))
+            Strategy* strategy = it->second.get();
+            if (strategy && strategy->IsActive(this))
             {
                 // Special handling for follow strategy - needs every frame update
                 if (strategyName == "follow")
@@ -704,10 +709,12 @@ std::vector<Strategy*> BotAI::GetActiveStrategies() const
     std::shared_lock lock(_mutex);
     std::vector<Strategy*> result;
 
+    // CRITICAL FIX: Access _strategies directly to avoid recursive mutex acquisition
     for (auto const& name : _activeStrategies)
     {
-        if (auto* strategy = GetStrategy(name))
-            result.push_back(strategy);
+        auto it = _strategies.find(name);
+        if (it != _strategies.end())
+            result.push_back(it->second.get());
     }
 
     return result;
