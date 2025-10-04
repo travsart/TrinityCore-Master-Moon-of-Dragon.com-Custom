@@ -224,6 +224,23 @@ public:
      */
     ProfessionCategory GetProfessionCategory(ProfessionType profession) const;
 
+    /**
+     * Get beneficial profession pair for a given profession
+     * Example: Mining → Blacksmithing/Engineering/Jewelcrafting
+     */
+    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const;
+
+    /**
+     * Check if two professions form a beneficial pair
+     */
+    bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const;
+
+    /**
+     * Get race-specific profession skill bonus
+     * Example: Tauren +15 Herbalism, Blood Elf +10 Enchanting
+     */
+    uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const;
+
     // ============================================================================
     // RECIPE MANAGEMENT
     // ============================================================================
@@ -344,6 +361,8 @@ private:
     void LoadRecipeDatabase();
     void LoadProfessionRecommendations();
     void InitializeClassProfessions();
+    void InitializeProfessionPairs();
+    void InitializeRaceBonuses();
 
     // Profession recommendation tables (class -> professions)
     void InitializeWarriorProfessions();
@@ -387,6 +406,12 @@ private:
 
     // Class profession recommendations (classId -> preferred professions)
     std::unordered_map<uint8, std::vector<ProfessionType>> _classRecommendations;
+
+    // Beneficial profession pairs (profession -> synergistic partners)
+    std::unordered_map<ProfessionType, std::vector<ProfessionType>> _professionPairs;
+
+    // Race profession bonuses (raceId -> (profession -> bonus))
+    std::unordered_map<uint8, std::unordered_map<ProfessionType, uint16>> _raceBonuses;
 
     // Player automation profiles
     std::unordered_map<uint32, ProfessionAutomationProfile> _playerProfiles;

@@ -44,9 +44,11 @@ void ProfessionManager::Initialize()
     LoadRecipeDatabase();
     LoadProfessionRecommendations();
     InitializeClassProfessions();
+    InitializeProfessionPairs();
+    InitializeRaceBonuses();
 
-    TC_LOG_INFO("playerbots", "ProfessionManager: Initialized {} recipes for {} professions",
-        _recipeDatabase.size(), _professionRecipes.size());
+    TC_LOG_INFO("playerbots", "ProfessionManager: Initialized {} recipes, {} profession pairs, {} racial bonuses",
+        _recipeDatabase.size(), _professionPairs.size(), _raceBonuses.size());
 }
 
 void ProfessionManager::LoadRecipeDatabase()
@@ -295,6 +297,28 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
         return false;
     }
 
+    // Check 2-major profession limit (secondary professions are unlimited)
+    ProfessionCategory category = GetProfessionCategory(profession);
+    if (category == ProfessionCategory::PRODUCTION || category == ProfessionCategory::GATHERING)
+    {
+        // Count current major professions
+        uint32 majorProfessionCount = 0;
+        std::vector<ProfessionSkillInfo> currentProfessions = GetPlayerProfessions(player);
+        for (ProfessionSkillInfo const& info : currentProfessions)
+        {
+            if (info.isPrimary)
+                majorProfessionCount++;
+        }
+
+        // Enforce 2-major profession limit
+        if (majorProfessionCount >= 2)
+        {
+            TC_LOG_WARN("playerbots", "Player {} already has 2 major professions, cannot learn {}",
+                player->GetName(), skillId);
+            return false;
+        }
+    }
+
     // Learn profession (set skill to 1, max based on level)
     uint16 maxSkill = std::min<uint16>(player->GetLevel() * 5, 450);
     player->SetSkill(skillId, 1, 1, maxSkill);
@@ -406,6 +430,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
         return;
 
     uint8 classId = player->GetClass();
+    uint8 raceId = player->GetRace();
     std::vector<ProfessionType> recommended = GetRecommendedProfessions(classId);
 
     if (recommended.empty())
@@ -414,22 +439,75 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
         return;
     }
 
-    // Learn first two professions (1 production + 1 gathering preferred)
-    uint32 learnedCount = 0;
+    // Try to learn beneficial pairs with racial bonuses considered
+    ProfessionType firstProf = ProfessionType::NONE;
+    ProfessionType secondProf = ProfessionType::NONE;
+
+    // Priority 1: Check for race-specific bonuses in recommended professions
     for (ProfessionType profession : recommended)
     {
-        if (learnedCount >= 2)
-            break;
-
-        if (LearnProfession(player, profession))
+        uint16 raceBonus = GetRaceProfessionBonus(raceId, profession);
+        if (raceBonus > 0 && firstProf == ProfessionType::NONE)
         {
-            learnedCount++;
-            TC_LOG_INFO("playerbots", "Player {} auto-learned profession {}",
-                player->GetName(), static_cast<uint32>(profession));
+            firstProf = profession;
+            TC_LOG_INFO("playerbots", "Player {} ({} race) selected {} due to +{} racial bonus",
+                player->GetName(), static_cast<uint32>(raceId), static_cast<uint32>(profession), raceBonus);
+            break;
         }
     }
 
-    // Always learn secondary professions
+    // Priority 2: Find beneficial pair for first profession
+    if (firstProf != ProfessionType::NONE)
+    {
+        std::vector<ProfessionType> beneficialPairs = GetBeneficialPairs(firstProf);
+        for (ProfessionType pair : beneficialPairs)
+        {
+            // Check if this pair is in our recommended list
+            if (std::find(recommended.begin(), recommended.end(), pair) != recommended.end())
+            {
+                secondProf = pair;
+                TC_LOG_INFO("playerbots", "Player {} selected {} as beneficial pair with {}",
+                    player->GetName(), static_cast<uint32>(secondProf), static_cast<uint32>(firstProf));
+                break;
+            }
+        }
+    }
+
+    // Priority 3: Fall back to first two recommended professions
+    if (firstProf == ProfessionType::NONE && !recommended.empty())
+    {
+        firstProf = recommended[0];
+    }
+
+    if (secondProf == ProfessionType::NONE && recommended.size() > 1)
+    {
+        // Try to find a beneficial pair in remaining recommendations
+        for (size_t i = 1; i < recommended.size(); ++i)
+        {
+            if (IsBeneficialPair(firstProf, recommended[i]))
+            {
+                secondProf = recommended[i];
+                break;
+            }
+        }
+
+        // If no beneficial pair, just take the second recommendation
+        if (secondProf == ProfessionType::NONE)
+            secondProf = recommended[1];
+    }
+
+    // Learn the selected professions
+    if (firstProf != ProfessionType::NONE)
+    {
+        LearnProfession(player, firstProf);
+    }
+
+    if (secondProf != ProfessionType::NONE)
+    {
+        LearnProfession(player, secondProf);
+    }
+
+    // Always learn secondary professions (unlimited)
     LearnProfession(player, ProfessionType::COOKING);
     LearnProfession(player, ProfessionType::FISHING);
 }
@@ -466,6 +544,150 @@ ProfessionCategory ProfessionManager::GetProfessionCategory(ProfessionType profe
         default:
             return ProfessionCategory::PRODUCTION;
     }
+}
+
+std::vector<ProfessionType> ProfessionManager::GetBeneficialPairs(ProfessionType profession) const
+{
+    auto it = _professionPairs.find(profession);
+    if (it != _professionPairs.end())
+        return it->second;
+
+    return {};
+}
+
+bool ProfessionManager::IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const
+{
+    std::vector<ProfessionType> pairs1 = GetBeneficialPairs(prof1);
+    if (std::find(pairs1.begin(), pairs1.end(), prof2) != pairs1.end())
+        return true;
+
+    std::vector<ProfessionType> pairs2 = GetBeneficialPairs(prof2);
+    if (std::find(pairs2.begin(), pairs2.end(), prof1) != pairs2.end())
+        return true;
+
+    return false;
+}
+
+uint16 ProfessionManager::GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const
+{
+    auto raceIt = _raceBonuses.find(raceId);
+    if (raceIt == _raceBonuses.end())
+        return 0;
+
+    auto profIt = raceIt->second.find(profession);
+    if (profIt != raceIt->second.end())
+        return profIt->second;
+
+    return 0;
+}
+
+void ProfessionManager::InitializeProfessionPairs()
+{
+    _professionPairs.clear();
+
+    // GATHERING → PRODUCTION PAIRS
+
+    // Mining pairs
+    _professionPairs[ProfessionType::MINING] = {
+        ProfessionType::BLACKSMITHING,
+        ProfessionType::ENGINEERING,
+        ProfessionType::JEWELCRAFTING
+    };
+
+    // Herbalism pairs
+    _professionPairs[ProfessionType::HERBALISM] = {
+        ProfessionType::ALCHEMY,
+        ProfessionType::INSCRIPTION
+    };
+
+    // Skinning pairs
+    _professionPairs[ProfessionType::SKINNING] = {
+        ProfessionType::LEATHERWORKING
+    };
+
+    // PRODUCTION → GATHERING PAIRS (reciprocal)
+
+    // Blacksmithing pairs
+    _professionPairs[ProfessionType::BLACKSMITHING] = {
+        ProfessionType::MINING
+    };
+
+    // Engineering pairs
+    _professionPairs[ProfessionType::ENGINEERING] = {
+        ProfessionType::MINING
+    };
+
+    // Jewelcrafting pairs
+    _professionPairs[ProfessionType::JEWELCRAFTING] = {
+        ProfessionType::MINING
+    };
+
+    // Alchemy pairs
+    _professionPairs[ProfessionType::ALCHEMY] = {
+        ProfessionType::HERBALISM
+    };
+
+    // Inscription pairs
+    _professionPairs[ProfessionType::INSCRIPTION] = {
+        ProfessionType::HERBALISM
+    };
+
+    // Leatherworking pairs
+    _professionPairs[ProfessionType::LEATHERWORKING] = {
+        ProfessionType::SKINNING
+    };
+
+    // SPECIAL PAIRS
+
+    // Tailoring + Enchanting (cloth gear to disenchant)
+    _professionPairs[ProfessionType::TAILORING] = {
+        ProfessionType::ENCHANTING
+    };
+
+    // Enchanting + Tailoring (mutual benefit)
+    _professionPairs[ProfessionType::ENCHANTING] = {
+        ProfessionType::TAILORING
+    };
+
+    TC_LOG_DEBUG("playerbots", "ProfessionManager: Initialized {} beneficial profession pairs",
+        _professionPairs.size());
+}
+
+void ProfessionManager::InitializeRaceBonuses()
+{
+    _raceBonuses.clear();
+
+    // WoW 11.2 Racial Profession Bonuses
+
+    // TAUREN (+15 Herbalism)
+    _raceBonuses[RACE_TAUREN][ProfessionType::HERBALISM] = 15;
+
+    // BLOOD ELF (+10 Enchanting)
+    _raceBonuses[RACE_BLOODELF][ProfessionType::ENCHANTING] = 10;
+
+    // DRAENEI (+10 Jewelcrafting)
+    _raceBonuses[RACE_DRAENEI][ProfessionType::JEWELCRAFTING] = 10;
+
+    // WORGEN (+15 Skinning)
+    _raceBonuses[RACE_WORGEN][ProfessionType::SKINNING] = 15;
+
+    // GOBLIN (+15 Alchemy)
+    _raceBonuses[RACE_GOBLIN][ProfessionType::ALCHEMY] = 15;
+
+    // PANDAREN (+15 Cooking)
+    _raceBonuses[RACE_PANDAREN_NEUTRAL][ProfessionType::COOKING] = 15;
+    _raceBonuses[RACE_PANDAREN_ALLIANCE][ProfessionType::COOKING] = 15;
+    _raceBonuses[RACE_PANDAREN_HORDE][ProfessionType::COOKING] = 15;
+
+    // DARK IRON DWARF (+5 Blacksmithing) - Constant may not exist in 11.2, commenting out
+    // _raceBonuses[RACE_DARKIRONDWARF][ProfessionType::BLACKSMITHING] = 5;
+
+    // KUL TIRAN (+5 Fishing, +5 Cooking) - Constant may not exist in 11.2, commenting out
+    // _raceBonuses[RACE_KULTIRAN][ProfessionType::FISHING] = 5;
+    // _raceBonuses[RACE_KULTIRAN][ProfessionType::COOKING] = 5;
+
+    TC_LOG_DEBUG("playerbots", "ProfessionManager: Initialized racial bonuses for {} races",
+        _raceBonuses.size());
 }
 
 // ============================================================================
