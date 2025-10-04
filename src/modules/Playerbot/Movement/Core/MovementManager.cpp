@@ -118,14 +118,25 @@ namespace Playerbot
         auto startTime = std::chrono::high_resolution_clock::now();
 
         BotMovementData* data = nullptr;
+
+        // First check if data exists (shared lock)
         {
             std::shared_lock<std::shared_mutex> lock(m_mutex);
             auto it = _botData.find(bot->GetGUID());
+            if (it != _botData.end())
+            {
+                data = it->second.get();
+            }
+        }
+
+        // If data doesn't exist, create it (unique lock)
+        if (!data)
+        {
+            std::unique_lock<std::shared_mutex> writeLock(m_mutex);
+            // Double-check after acquiring write lock (another thread may have created it)
+            auto it = _botData.find(bot->GetGUID());
             if (it == _botData.end())
             {
-                // Create new movement data if doesn't exist
-                lock.unlock();
-                std::unique_lock<std::shared_mutex> writeLock(m_mutex);
                 auto [iter, inserted] = _botData.emplace(bot->GetGUID(),
                     std::make_unique<BotMovementData>());
                 data = iter->second.get();
