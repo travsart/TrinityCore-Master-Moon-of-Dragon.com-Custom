@@ -453,7 +453,14 @@ private:
     mutable InterruptMetrics _metrics;
 
     // Thread safety
-    mutable std::shared_mutex _mutex;
+    // DEADLOCK FIX #15: Changed from std::shared_mutex to std::recursive_mutex
+    // The root cause of persistent deadlock was InterruptManager._mutex, NOT BotAI._mutex.
+    // ScanForInterruptTargets() is called from multiple threads:
+    //   - Thread 1: ClassAI::UpdateRotation() -> MageAI::GetBestCounterspellTarget() (NO LOCK)
+    //   - Thread 2: UpdateInterruptSystem() -> ProcessInterruptOpportunities() (HOLDS LOCK)
+    // This creates DATA RACE when std::shared_mutex throws "resource deadlock would occur"
+    // Solution: Use std::recursive_mutex to allow same thread to acquire lock multiple times
+    mutable std::recursive_mutex _mutex;
 
     // Constants for WoW 11.2
     static constexpr uint32 DEFAULT_REACTION_TIME = 250;        // 250ms reaction time

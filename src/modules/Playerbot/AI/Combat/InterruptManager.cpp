@@ -48,7 +48,7 @@ InterruptManager::InterruptManager(Player* bot)
 
 void InterruptManager::UpdateInterruptSystem(uint32 diff)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastScan < _scanInterval && !_emergencyMode)
@@ -167,7 +167,7 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
     InterruptResult result;
     result.originalTarget = target;
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     try
     {
