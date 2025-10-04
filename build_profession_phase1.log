@@ -1,0 +1,60 @@
+MSBuild-Version 17.14.18+a338add32 für .NET Framework
+
+  argon2.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\argon2\Release\argon2.lib
+  zlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\zlib\Release\zlib.lib
+  Detour.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\Release\Detour.lib
+  fmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\fmt\Release\fmt.lib
+  g3dlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\g3dlite\Release\g3dlib.lib
+  openssl_ed25519.vcxproj -> C:\TrinityBots\TrinityCore\build\bin\Release\openssl_ed25519.dll
+  sfmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\SFMT\Release\sfmt.lib
+  protobuf.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\protobuf\Release\protobuf.lib
+  common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\Release\common.lib
+  database.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\database\Release\database.lib
+  network.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\network\Release\trinity_network.lib
+  proto.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\proto\Release\proto.lib
+  shared.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\shared\Release\shared.lib
+  modules-common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\modules\Common\Release\modules-common.lib
+  ProfessionManager.cpp
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(685,71): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(837,83): warning C4100: „currentSkill“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(837,68): warning C4100: „recipe“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12): error C2678: Binärer Operator "[": Es konnte kein Operator gefunden werden, der einen linksseitigen Operanden vom Typ "const std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>" akzeptiert (oder keine geeignete Konvertierung möglich) [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12): error C2678:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12): error C2678:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12): error C2678:             _Ty=SpellSchoolMask [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12): error C2678:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\unordered_map(432,18):
+      kann "Playerbot::ProfessionManager::ProfessionMetrics &std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>::operator [](const unsigned int &)" sein
+          with
+          [
+              _Ty=SpellSchoolMask
+          ]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12):
+          "Playerbot::ProfessionManager::ProfessionMetrics &std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>::operator [](const unsigned int &)": this-Zeiger kann nicht von "const std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>" in "std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>> &" konvertiert werden
+          with
+          [
+              _Ty=SpellSchoolMask
+          ]
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12):
+              Durch die Konvertierung gehen Qualifizierer verloren
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\unordered_map(259,18):
+      oder "Playerbot::ProfessionManager::ProfessionMetrics &std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>::operator [](unsigned int &&)"
+          with
+          [
+              _Ty=SpellSchoolMask
+          ]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12):
+          "Playerbot::ProfessionManager::ProfessionMetrics &std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>::operator [](unsigned int &&)": this-Zeiger kann nicht von "const std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>" in "std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>> &" konvertiert werden
+          with
+          [
+              _Ty=SpellSchoolMask
+          ]
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12):
+              Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Professions\ProfessionManager.cpp(879,12):
+      bei Anpassung der Argumentliste "(const std::unordered_map<uint32,Playerbot::ProfessionManager::ProfessionMetrics,std::hash<std::_Underlying_type<_Ty,true>::type>,std::equal_to<std::_Underlying_type<_Ty,true>::type>,std::allocator<std::pair<const uint32,Playerbot::ProfessionManager::ProfessionMetrics>>>, uint32)"
+          with
+          [
+              _Ty=SpellSchoolMask
+          ]
+  

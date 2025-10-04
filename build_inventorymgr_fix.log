@@ -1,0 +1,678 @@
+MSBuild-Version 17.14.18+a338add32 für .NET Framework
+
+  zlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\zlib\RelWithDebInfo\zlib.lib
+  Detour.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\RelWithDebInfo\Detour.lib
+  argon2.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\argon2\RelWithDebInfo\argon2.lib
+  fmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\fmt\RelWithDebInfo\fmt.lib
+  g3dlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\g3dlite\RelWithDebInfo\g3dlib.lib
+  openssl_ed25519.vcxproj -> C:\TrinityBots\TrinityCore\build\bin\RelWithDebInfo\openssl_ed25519.dll
+  sfmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\SFMT\RelWithDebInfo\sfmt.lib
+  common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\RelWithDebInfo\common.lib
+  database.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\database\RelWithDebInfo\database.lib
+  network.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\network\RelWithDebInfo\trinity_network.lib
+  protobuf.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\protobuf\RelWithDebInfo\protobuf.lib
+  proto.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\proto\RelWithDebInfo\proto.lib
+  shared.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\shared\RelWithDebInfo\shared.lib
+  modules-common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\modules\Common\RelWithDebInfo\modules-common.lib
+  PlayerbotTradeConfig.cpp
+  AuctionManager.cpp
+  BotAI_Auction_Integration.cpp
+  InventoryManager.cpp
+  QuestManager.cpp
+  TradeManager.cpp
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Object.h(68,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(59,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(60,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\Item.h(31,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(123,19): error C2011: "Playerbot::QuestStrategy": "class" Typneudefinition [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Creature\Creature.h(36,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\BotAI.h(106,40): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Creature\CreatureData.h(33,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject\GameObject.h(34,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(42,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(285,20): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(285,20):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\BotAI_Auction_Integration.cpp(99,49): error C2065: "ITEM_FLAG2_REGULATED_COMMODITY": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\BotAI_Auction_Integration.cpp(230,27): error C2039: "getClass" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(25,1): error C1083: Datei (Include) kann nicht geöffnet werden: "DBCStores.h": No such file or directory [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(111,36): error C2039: "GetAuctions" ist kein Member von "AuctionHouseObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(266,19):
+      Siehe Deklaration von "AuctionHouseObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(111,30): error C2530: "auctions": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,36): error C3536: "auctions": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „begin“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „end“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,26): error C2530: "auction": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,26): error C3531: "auction": Ein Symbol, dessen Typ "auto" enthält, muss einen Initialisierer aufweisen. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,34): error C2143: Syntaxfehler: Es fehlt ";" vor ":" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(114,44): error C2143: Syntaxfehler: Es fehlt ";" vor ")" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(205,36): error C2039: "GetAuctions" ist kein Member von "AuctionHouseObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(266,19):
+      Siehe Deklaration von "AuctionHouseObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(205,30): error C2530: "auctions": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,36): error C3536: "auctions": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „begin“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „end“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,26): error C2530: "auction": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,26): error C3531: "auction": Ein Symbol, dessen Typ "auto" enthält, muss einen Initialisierer aufweisen. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,34): error C2143: Syntaxfehler: Es fehlt ";" vor ":" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(206,44): error C2143: Syntaxfehler: Es fehlt ";" vor ")" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(298,37): error C2039: "AuctionPosting" ist kein Member von "WorldPackets::AuctionHouse". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(36,15):
+      Siehe Deklaration von "WorldPackets::AuctionHouse"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,72): error C2440: "<function-style-cast>": "Item *" kann nicht in "WorldPackets::AuctionHouse::AuctionItem" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,72):
+      "WorldPackets::AuctionHouse::AuctionItem::AuctionItem": Keine überladene Funktion konnte alle Argumenttypen konvertieren
+          C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(134,9):
+          kann "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(WorldPackets::AuctionHouse::AuctionItem &&)" sein
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,72):
+              "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(WorldPackets::AuctionHouse::AuctionItem &&)" : Konvertierung von Argument 1 von "Item *" in "WorldPackets::AuctionHouse::AuctionItem &&" nicht möglich
+                  C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,73):
+                  Ursache: Konvertierung von "Item *" in "WorldPackets::AuctionHouse::AuctionItem" nicht möglich
+          C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(134,9):
+          oder "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(const WorldPackets::AuctionHouse::AuctionItem &)"
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,72):
+              "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(const WorldPackets::AuctionHouse::AuctionItem &)" : Konvertierung von Argument 1 von "Item *" in "const WorldPackets::AuctionHouse::AuctionItem &" nicht möglich
+                  C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,73):
+                  Ursache: Konvertierung von "Item *" in "const WorldPackets::AuctionHouse::AuctionItem" nicht möglich
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,72):
+          bei Anpassung der Argumentliste "(Item *)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(303,17): error C2039: "Duration" ist kein Member von "AuctionPosting". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(224,8):
+      Siehe Deklaration von "AuctionPosting"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(304,17): error C2039: "ServerID" ist kein Member von "AuctionPosting". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(224,8):
+      Siehe Deklaration von "AuctionPosting"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(363,37): error C2039: "AuctionPosting" ist kein Member von "WorldPackets::AuctionHouse". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(36,15):
+      Siehe Deklaration von "WorldPackets::AuctionHouse"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,72): error C2440: "<function-style-cast>": "Item *" kann nicht in "WorldPackets::AuctionHouse::AuctionItem" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,72):
+      "WorldPackets::AuctionHouse::AuctionItem::AuctionItem": Keine überladene Funktion konnte alle Argumenttypen konvertieren
+          C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(134,9):
+          kann "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(WorldPackets::AuctionHouse::AuctionItem &&)" sein
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,72):
+              "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(WorldPackets::AuctionHouse::AuctionItem &&)" : Konvertierung von Argument 1 von "Item *" in "WorldPackets::AuctionHouse::AuctionItem &&" nicht möglich
+                  C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,73):
+                  Ursache: Konvertierung von "Item *" in "WorldPackets::AuctionHouse::AuctionItem" nicht möglich
+          C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(134,9):
+          oder "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(const WorldPackets::AuctionHouse::AuctionItem &)"
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,72):
+              "WorldPackets::AuctionHouse::AuctionItem::AuctionItem(const WorldPackets::AuctionHouse::AuctionItem &)" : Konvertierung von Argument 1 von "Item *" in "const WorldPackets::AuctionHouse::AuctionItem &" nicht möglich
+                  C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,73):
+                  Ursache: Konvertierung von "Item *" in "const WorldPackets::AuctionHouse::AuctionItem" nicht möglich
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(365,72):
+          bei Anpassung der Argumentliste "(Item *)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(368,17): error C2039: "Duration" ist kein Member von "AuctionPosting". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(224,8):
+      Siehe Deklaration von "AuctionPosting"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(369,17): error C2039: "ServerID" ist kein Member von "AuctionPosting". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(224,8):
+      Siehe Deklaration von "AuctionPosting"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664: "std::_Node_handle<std::_Tree_node<std::pair<const uint32,AuctionPosting>,std::_Default_allocator_traits<_Alloc>::void_pointer>,_Alloc,std::_Node_handle_map_base,_Kty,_Ty> AuctionHouseObject::RemoveAuction(CharacterDatabaseTransaction,AuctionPosting *,std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint32,AuctionPosting>>>> *)" : Konvertierung von Argument 2 von "uint32" in "AuctionPosting *" nicht möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:             _Alloc=std::allocator<std::pair<const uint32,AuctionPosting>>, [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:             _Kty=uint32, [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:             _Ty=AuctionPosting [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18): error C2664:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,39):
+      Die Konvertierung eines ganzzahligen Typs in einen Zeigertyp erfordert eine reinterpret_cast-Umwandlung, eine C-Stil-Umwandlung oder eine in Klammern gesetzte Umwandlung im Funktionsstil.
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(295,49):
+      Siehe Deklaration von "AuctionHouseObject::RemoveAuction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,18):
+      bei Anpassung der Argumentliste "(CharacterDatabaseTransaction, uint32)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,13): error C2088: Der integrierte Operator "!" kann nicht auf einen Operanden vom Typ "_T" angewendet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,13): error C2088:         with [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,13): error C2088:         [ [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,13): error C2088:             _T=std::_Node_handle<std::_Tree_node<std::pair<const uint32,AuctionPosting>,std::_Default_allocator_traits<std::allocator<std::pair<const uint32,AuctionPosting>>>::void_pointer>,std::allocator<std::pair<const uint32,AuctionPosting>>,std::_Node_handle_map_base,uint32,AuctionPosting> [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(412,13): error C2088:         ] [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(467,35): error C2039: "BidOrUnitPrice" ist kein Member von "AuctionPosting". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(224,8):
+      Siehe Deklaration von "AuctionPosting"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(481,53): error C2512: "WorldPackets::AuctionHouse::AuctionPlaceBid": Kein geeigneter Standardkonstruktor verfügbar [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(273,15):
+      Siehe Deklaration von "WorldPackets::AuctionHouse::AuctionPlaceBid"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(485,13): error C2039: "PlaceBid" ist kein Member von "AuctionHouseObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(266,19):
+      Siehe Deklaration von "AuctionHouseObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(514,37): error C2039: "CommodityQuote" ist kein Member von "WorldPackets::AuctionHouse". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Packets\AuctionHousePackets.h(36,15):
+      Siehe Deklaration von "WorldPackets::AuctionHouse"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(533,13): error C2664: "bool AuctionHouseObject::BuyCommodity(CharacterDatabaseTransaction,Player *,uint32,uint32,Milliseconds)" : Konvertierung von Argument 5 von "std::optional<uint32>" in "Milliseconds" nicht möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(533,56):
+      Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(322,10):
+      Siehe Deklaration von "AuctionHouseObject::BuyCommodity"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(533,13):
+      bei Anpassung der Argumentliste "(CharacterDatabaseTransaction, Player *, uint32, uint32, std::optional<uint32>)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(573,13): error C2039: "BuyoutAuction" ist kein Member von "AuctionHouseObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(266,19):
+      Siehe Deklaration von "AuctionHouseObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,29): error C3861: "Days": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23): error C2678: Binärer Operator "-": Es konnte kein Operator gefunden werden, der einen linksseitigen Operanden vom Typ "std::chrono::steady_clock::time_point" akzeptiert (oder keine geeignete Konvertierung möglich) [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(260,42):
+      kann "std::chrono::day std::chrono::operator -(const std::chrono::day &,const std::chrono::days &) noexcept" sein [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::day std::chrono::operator -(const std::chrono::day &,const std::chrono::days &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::day &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::day" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(263,43):
+      oder "std::chrono::days std::chrono::operator -(const std::chrono::day &,const std::chrono::day &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::days std::chrono::operator -(const std::chrono::day &,const std::chrono::day &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::day &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::day" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(321,44):
+      oder "std::chrono::month std::chrono::operator -(const std::chrono::month &,const std::chrono::months &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::month std::chrono::operator -(const std::chrono::month &,const std::chrono::months &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::month &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::month" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(324,45):
+      oder "std::chrono::months std::chrono::operator -(const std::chrono::month &,const std::chrono::month &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::months std::chrono::operator -(const std::chrono::month &,const std::chrono::month &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::month &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::month" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(420,43):
+      oder "std::chrono::year std::chrono::operator -(const std::chrono::year &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year std::chrono::operator -(const std::chrono::year &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(423,44):
+      oder "std::chrono::years std::chrono::operator -(const std::chrono::year &,const std::chrono::year &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::years std::chrono::operator -(const std::chrono::year &,const std::chrono::year &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(497,46):
+      oder "std::chrono::weekday std::chrono::operator -(const std::chrono::weekday &,const std::chrono::days &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::weekday std::chrono::operator -(const std::chrono::weekday &,const std::chrono::days &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::weekday &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::weekday" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(500,43):
+      oder "std::chrono::days std::chrono::operator -(const std::chrono::weekday &,const std::chrono::weekday &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::days std::chrono::operator -(const std::chrono::weekday &,const std::chrono::weekday &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::weekday &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::weekday" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(744,45):
+      oder "std::chrono::months std::chrono::operator -(const std::chrono::year_month &,const std::chrono::year_month &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::months std::chrono::operator -(const std::chrono::year_month &,const std::chrono::year_month &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(758,49):
+      oder "std::chrono::year_month std::chrono::operator -(const std::chrono::year_month &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year_month std::chrono::operator -(const std::chrono::year_month &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1052,53):
+      oder "std::chrono::year_month_day std::chrono::operator -(const std::chrono::year_month_day &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year_month_day std::chrono::operator -(const std::chrono::year_month_day &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1156,58):
+      oder "std::chrono::year_month_day_last std::chrono::operator -(const std::chrono::year_month_day_last &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year_month_day_last std::chrono::operator -(const std::chrono::year_month_day_last &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day_last &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day_last" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1285,57):
+      oder "std::chrono::year_month_weekday std::chrono::operator -(const std::chrono::year_month_weekday &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year_month_weekday std::chrono::operator -(const std::chrono::year_month_weekday &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1386,62):
+      oder "std::chrono::year_month_weekday_last std::chrono::operator -(const std::chrono::year_month_weekday_last &,const std::chrono::years &) noexcept" [bei der Verwendung der argumentbezogenen Suche gefunden]
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "std::chrono::year_month_weekday_last std::chrono::operator -(const std::chrono::year_month_weekday_last &,const std::chrono::years &) noexcept" : Konvertierung von Argument 1 von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday_last &" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday_last" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xutility(1977,30):
+      oder "unknown-type std::operator -(const std::reverse_iterator<_BidIt> &,const std::reverse_iterator<_BidIt2> &) noexcept(<expr>)"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          „unknown-type std::operator -(const std::reverse_iterator<_BidIt> &,const std::reverse_iterator<_BidIt2> &) noexcept(<expr>)“: Das Vorlage-Argument für „const std::reverse_iterator<_BidIt> &“ konnte nicht von „std::chrono::steady_clock::time_point“ abgeleitet werden.
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xutility(4528,30):
+      oder "unknown-type std::operator -(const std::move_iterator<_Iter> &,const std::move_iterator<_Iter2> &) noexcept(<expr>)"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          „unknown-type std::operator -(const std::move_iterator<_Iter> &,const std::move_iterator<_Iter2> &) noexcept(<expr>)“: Das Vorlage-Argument für „const std::move_iterator<_Iter> &“ konnte nicht von „std::chrono::steady_clock::time_point“ abgeleitet werden.
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\__msvc_chrono.hpp(296,94):
+      oder "common_type<std::chrono::duration<_Rep,_Period>,std::chrono::duration<_Rep2,_Period2>>::type std::chrono::operator -(const std::chrono::duration<_Rep,_Period> &,const std::chrono::duration<_Rep2,_Period2> &) noexcept(<expr>)"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          „common_type<std::chrono::duration<_Rep,_Period>,std::chrono::duration<_Rep2,_Period2>>::type std::chrono::operator -(const std::chrono::duration<_Rep,_Period> &,const std::chrono::duration<_Rep2,_Period2> &) noexcept(<expr>)“: Das Vorlage-Argument für „const std::chrono::duration<_Rep,_Period> &“ konnte nicht von „std::chrono::steady_clock::time_point“ abgeleitet werden.
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\__msvc_chrono.hpp(545,96):
+      oder "std::chrono::time_point<_Clock,common_type<_Duration,std::chrono::duration<_Rep2,_Period2>>::type> std::chrono::operator -(const std::chrono::time_point<_Clock,_Duration> &,const std::chrono::duration<_Rep2,_Period2> &) noexcept(<expr>)"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          „std::chrono::time_point<_Clock,common_type<_Duration,std::chrono::duration<_Rep2,_Period2>>::type> std::chrono::operator -(const std::chrono::time_point<_Clock,_Duration> &,const std::chrono::duration<_Rep2,_Period2> &) noexcept(<expr>)“: Das Vorlage-Argument für „const std::chrono::duration<_Rep2,_Period2> &“ konnte nicht von „<error type>“ abgeleitet werden.
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\__msvc_chrono.hpp(553,64):
+      oder "common_type<_Duration1,_Duration2>::type std::chrono::operator -(const std::chrono::time_point<_Clock,_Duration> &,const std::chrono::time_point<_Clock,_Duration2> &) noexcept(<expr>)"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          „common_type<_Duration1,_Duration2>::type std::chrono::operator -(const std::chrono::time_point<_Clock,_Duration> &,const std::chrono::time_point<_Clock,_Duration2> &) noexcept(<expr>)“: Das Vorlage-Argument für „const std::chrono::time_point<_Clock,_Duration2> &“ konnte nicht von „<error type>“ abgeleitet werden.
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(740,37):
+      oder "std::chrono::year_month std::chrono::operator -(const std::chrono::year_month &,const std::chrono::months &) noexcept"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "Initialisierung": "std::chrono::steady_clock::time_point" kann nicht in "const std::chrono::year_month &" konvertiert werden
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1038,41):
+      oder "std::chrono::year_month_day std::chrono::operator -(const std::chrono::year_month_day &,const std::chrono::months &) noexcept"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "Initialisierung": "std::chrono::steady_clock::time_point" kann nicht in "const std::chrono::year_month_day &" konvertiert werden
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1143,46):
+      oder "std::chrono::year_month_day_last std::chrono::operator -(const std::chrono::year_month_day_last &,const std::chrono::months &) noexcept"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "Initialisierung": "std::chrono::steady_clock::time_point" kann nicht in "const std::chrono::year_month_day_last &" konvertiert werden
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_day_last" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1272,45):
+      oder "std::chrono::year_month_weekday std::chrono::operator -(const std::chrono::year_month_weekday &,const std::chrono::months &) noexcept"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "Initialisierung": "std::chrono::steady_clock::time_point" kann nicht in "const std::chrono::year_month_weekday &" konvertiert werden
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\chrono(1372,50):
+      oder "std::chrono::year_month_weekday_last std::chrono::operator -(const std::chrono::year_month_weekday_last &,const std::chrono::months &) noexcept"
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+          "Initialisierung": "std::chrono::steady_clock::time_point" kann nicht in "const std::chrono::year_month_weekday_last &" konvertiert werden
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Ursache: Konvertierung von "std::chrono::steady_clock::time_point" in "const std::chrono::year_month_weekday_last" nicht möglich
+              C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+              Kein benutzerdefinierter Konvertierungsoperator verfügbar, der diese Konvertierung durchführen kann, oder der Operator kann nicht aufgerufen werden
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(894,23):
+      bei Anpassung der Argumentliste "(std::chrono::steady_clock::time_point, <error type>)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(898,18): error C3536: "cutoff": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(898,68): error C7746: "cutoff": kann nicht in seinem eigenen Initialisierer erscheinen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(914,36): error C2039: "GetAuctions" ist kein Member von "AuctionHouseObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\AuctionHouse\AuctionHouseMgr.h(266,19):
+      Siehe Deklaration von "AuctionHouseObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(914,30): error C2530: "auctions": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,36): error C3536: "auctions": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „begin“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,36): error C3312: Für den Typ „<error type>“ wurde keine aufrufbare Funktion „end“ gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,26): error C2530: "auction": Verweise müssen initialisiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,26): error C3531: "auction": Ein Symbol, dessen Typ "auto" enthält, muss einen Initialisierer aufweisen. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,34): error C2143: Syntaxfehler: Es fehlt ";" vor ":" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(916,44): error C2143: Syntaxfehler: Es fehlt ";" vor ")" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,54): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,54): error C2011: "Playerbot::Strategy": "class" Typneudefinition [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(51,19):
+      Siehe Deklaration von "Playerbot::Strategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20): error C4430: Fehlender Typspezifizierer - int wird angenommen. Hinweis: "default-int" wird von C++ nicht unterstützt. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20): error C2259: "Playerbot::Strategy": Abstrakte Klasse kann nicht erstellt werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(51,19):
+      Siehe Deklaration von "Playerbot::Strategy"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20):
+      aufgrund folgender Member:
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20):
+      "void Playerbot::Strategy::InitializeActions(void)": ist abstrakt
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(58,18):
+      Siehe Deklaration von "Playerbot::Strategy::InitializeActions"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20):
+      "void Playerbot::Strategy::InitializeTriggers(void)": ist abstrakt
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(59,18):
+      Siehe Deklaration von "Playerbot::Strategy::InitializeTriggers"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(45,20):
+      "void Playerbot::Strategy::InitializeValues(void)": ist abstrakt
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(60,18):
+      Siehe Deklaration von "Playerbot::Strategy::InitializeValues"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(47,5): error C2550: "Playerbot::{ctor}": Initialisierungslisten für Konstruktoren dürfen nur in Konstruktordefinition stehen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(48,5): warning C4508: "Playerbot::{ctor}": Funktion sollte einen Wert zurückgeben; Ergebnistyp "void" angenommen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(50,26): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(50,26): error C2270: "EvaluateQuest": Modifizierer für Funktionen, die keine Memberfunktionen sind, nicht zulässig [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(57,17): error C2065: "m_strategy": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(57,17): error C2050: Switch-Ausdruck ist keine Ganzzahl [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(59,33): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(59,43): error C2065: "SIMPLE": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(59,43): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(59,43):
+      Ein nicht konstanter (Teil)ausdruck wurde gefunden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(66,33): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(66,43): error C2065: "OPTIMAL": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(66,43): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(66,43):
+      Ein nicht konstanter (Teil)ausdruck wurde gefunden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(72,33): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(72,43): error C2065: "GROUP": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(72,43): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(72,43):
+      Ein nicht konstanter (Teil)ausdruck wurde gefunden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(80,33): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(80,43): error C2065: "COMPLETIONIST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(80,43): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(80,43):
+      Ein nicht konstanter (Teil)ausdruck wurde gefunden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(85,33): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(85,43): error C2065: "SPEED_LEVELING": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(85,43): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(85,43):
+      Ein nicht konstanter (Teil)ausdruck wurde gefunden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(59,43): error C2051: case-Ausdruck ist keine Konstante [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(66,43): error C2051: case-Ausdruck ist keine Konstante [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(72,43): error C2051: case-Ausdruck ist keine Konstante [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(80,43): error C2051: case-Ausdruck ist keine Konstante [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(85,43): error C2051: case-Ausdruck ist keine Konstante [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(89,9): warning C4060: switch-Anweisung enthält weder "case"- noch "default"-Bezeichnungen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(94,40): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(94,40): error C2270: "SelectQuestPath": Modifizierer für Funktionen, die keine Memberfunktionen sind, nicht zulässig [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(195,19): error C2511: "Playerbot::QuestManager::QuestManager(Player *,Playerbot::BotAI *)": Überladene Memberfunktion nicht in "Playerbot::QuestManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(49,11):
+      Siehe Deklaration von "Playerbot::QuestManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(219,5): error C2550: "Playerbot::QuestManager::{ctor}": Initialisierungslisten für Konstruktoren dürfen nur in Konstruktordefinition stehen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(220,69): error C2027: Verwendung des undefinierten Typs "Playerbot::QuestStrategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(296,11):
+      Siehe Deklaration von "Playerbot::QuestStrategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(220,79): error C2065: "OPTIMAL": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(221,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::QuestManager::m_cache" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(290,37):
+      Siehe Deklaration von "Playerbot::QuestManager::m_cache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(261,34): error C2248: "Playerbot::QuestCache::m_lastUpdateTime": Kein Zugriff auf private Member, dessen Deklaration in der Playerbot::QuestCache-Klasse erfolgte. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(348,16):
+      Siehe Deklaration von "Playerbot::QuestCache::m_lastUpdateTime"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(322,11):
+      Siehe Deklaration von "Playerbot::QuestCache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.cpp(162,37): warning C4100: „guid“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,18): error C2923: „Trinity::CreatureListSearcher“: „AllCreaturesInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48):
+      Siehe Deklaration von "AllCreaturesInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,107): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,88): error C2641: Für "Trinity::CreatureListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,18): error C2923: „Trinity::GameObjectListSearcher“: „AllGameObjectsInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50):
+      Siehe Deklaration von "AllGameObjectsInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,109): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,92): error C2641: Für "Trinity::GameObjectListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(586,37): error C2039: "IsQuestGiver" ist kein Member von "GameObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject\GameObject.h(165,19):
+      Siehe Deklaration von "GameObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(630,43): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(647,42): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(649,30): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(654,47): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(758,30): error C2039: "GetRewXPDifficulty" ist kein Member von "Quest". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Quests\QuestDef.h(574,19):
+      Siehe Deklaration von "Quest"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,62): error C2039: "getFirst" ist kein Member von "GroupRefManager". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\GroupRefManager.h(24,7):
+      Siehe Deklaration von "GroupRefManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94): error C2440: "=": "const LinkedListElement *" kann nicht in "const GroupReference *" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94):
+      Umwandlung von der Basis in die Ableitung erfordert "dynamic_cast" oder "static_cast"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1502,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1509,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17): error C2678: Binärer Operator "=": Es konnte kein Operator gefunden werden, der einen linksseitigen Operanden vom Typ "const ObjectGuid" akzeptiert (oder keine geeignete Konvertierung möglich) [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\ObjectGuid.h(389,1):
+      kann "ObjectGuid &ObjectGuid::operator =(ObjectGuid &&)" sein
+          C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+          "ObjectGuid &ObjectGuid::operator =(ObjectGuid &&)": this-Zeiger kann nicht von "const ObjectGuid" in "ObjectGuid &" konvertiert werden
+              C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+              Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\ObjectGuid.h(389,1):
+      oder "ObjectGuid &ObjectGuid::operator =(const ObjectGuid &)"
+          C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+          "ObjectGuid &ObjectGuid::operator =(const ObjectGuid &)": this-Zeiger kann nicht von "const ObjectGuid" in "ObjectGuid &" konvertiert werden
+              C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+              Durch die Konvertierung gehen Qualifizierer verloren
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+      bei Anpassung der Argumentliste "(const ObjectGuid, const ObjectGuid)"
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\xmemory(2360,17):
+      der Vorlageninstanziierungskontext (der älteste zuerst) ist
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.cpp(161,14):
+          Siehe Verweis auf die gerade kompilierte Instanziierung "_FwdIt std::remove_if<std::_List_const_iterator<std::_List_val<std::_List_simple_types<_Ty>>>,Playerbot::InventoryManager::AutoLoot::<lambda_1>>(_FwdIt,const _FwdIt,_Pr)" der Funktions-Vorlage.
+          with
+          [
+              _FwdIt=std::_List_const_iterator<std::_List_val<std::_List_simple_types<ObjectGuid>>>,
+              _Ty=ObjectGuid,
+              _Pr=Playerbot::InventoryManager::AutoLoot::<lambda_1>
+          ]
+  
+  gsoap.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\gsoap\RelWithDebInfo\gsoap.lib
+  scripts.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\scripts\RelWithDebInfo\scripts.lib

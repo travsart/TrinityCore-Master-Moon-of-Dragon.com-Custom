@@ -33,6 +33,7 @@ namespace Playerbot
 // Forward declarations
 class Value;
 class GroupInvitationHandler;
+class TargetScanner;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -284,6 +285,9 @@ protected:
     // Group management
     std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
     bool _wasInGroup = false;
+
+    // Target scanning for autonomous engagement
+    std::unique_ptr<TargetScanner> _targetScanner;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

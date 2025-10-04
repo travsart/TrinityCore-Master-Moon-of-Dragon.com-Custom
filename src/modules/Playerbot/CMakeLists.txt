@@ -411,9 +411,15 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
 
-    # Profession System - Complete Crafting + Gathering Automation
+    # Profession System - Complete Crafting + Gathering Automation (Phase 1, 2, 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringAutomation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
 
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp

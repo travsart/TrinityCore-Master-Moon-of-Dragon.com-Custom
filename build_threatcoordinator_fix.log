@@ -1,0 +1,230 @@
+MSBuild-Version 17.14.18+a338add32 für .NET Framework
+
+  zlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\zlib\RelWithDebInfo\zlib.lib
+  Detour.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\RelWithDebInfo\Detour.lib
+  argon2.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\argon2\RelWithDebInfo\argon2.lib
+  fmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\fmt\RelWithDebInfo\fmt.lib
+  g3dlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\g3dlite\RelWithDebInfo\g3dlib.lib
+  openssl_ed25519.vcxproj -> C:\TrinityBots\TrinityCore\build\bin\RelWithDebInfo\openssl_ed25519.dll
+  sfmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\SFMT\RelWithDebInfo\sfmt.lib
+  GitRevision.cpp
+  common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\RelWithDebInfo\common.lib
+  database.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\database\RelWithDebInfo\database.lib
+  network.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\network\RelWithDebInfo\trinity_network.lib
+  protobuf.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\protobuf\RelWithDebInfo\protobuf.lib
+  proto.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\proto\RelWithDebInfo\proto.lib
+  shared.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\shared\RelWithDebInfo\shared.lib
+  modules-common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\modules\Common\RelWithDebInfo\modules-common.lib
+  ThreatAbilities.cpp
+  ThreatCoordinator.cpp
+  AuctionManager.cpp
+  QuestManager.cpp
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatAbilities.cpp(185,97): warning C4100: „spec“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(59,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\BotAI.h(106,40): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Creature\CreatureData.h(33,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\BotAI.h(106,40): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/AI/Combat/ThreatCoordinator.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(38,39): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(101,25): error C2664: "std::vector<Playerbot::ThreatAbilityData,std::allocator<Playerbot::ThreatAbilityData>> Playerbot::ThreatAbilitiesDB::GetClassAbilities(Classes,uint32) const" : Konvertierung von Argument 1 von "uint8" in "Classes" nicht möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(101,56):
+      Die Konvertierung in einen Enumerationstypen erfordert explizite Umwandlung (static_cast-Umwandlung, C-Stil-Umwandlung oder eine in Klammern gesetzte Umwandlung im Funktionsstil)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatAbilities.h(69,36):
+      Siehe Deklaration von "Playerbot::ThreatAbilitiesDB::GetClassAbilities"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(101,25):
+      bei Anpassung der Argumentliste "(uint8)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(280,30): error C2027: Verwendung des undefinierten Typs "SpellHistory" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(93,7):
+      Siehe Deklaration von "SpellHistory"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(312,25): error C2664: "std::vector<Playerbot::ThreatAbilityData,std::allocator<Playerbot::ThreatAbilityData>> Playerbot::ThreatAbilitiesDB::GetClassAbilities(Classes,uint32) const" : Konvertierung von Argument 1 von "uint8" in "Classes" nicht möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(312,56):
+      Die Konvertierung in einen Enumerationstypen erfordert explizite Umwandlung (static_cast-Umwandlung, C-Stil-Umwandlung oder eine in Klammern gesetzte Umwandlung im Funktionsstil)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatAbilities.h(69,36):
+      Siehe Deklaration von "Playerbot::ThreatAbilitiesDB::GetClassAbilities"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(312,25):
+      bei Anpassung der Argumentliste "(uint8)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(319,72): error C2027: Verwendung des undefinierten Typs "SpellHistory" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(93,7):
+      Siehe Deklaration von "SpellHistory"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(347,25): error C2664: "std::vector<Playerbot::ThreatAbilityData,std::allocator<Playerbot::ThreatAbilityData>> Playerbot::ThreatAbilitiesDB::GetClassAbilities(Classes,uint32) const" : Konvertierung von Argument 1 von "uint8" in "Classes" nicht möglich [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(347,57):
+      Die Konvertierung in einen Enumerationstypen erfordert explizite Umwandlung (static_cast-Umwandlung, C-Stil-Umwandlung oder eine in Klammern gesetzte Umwandlung im Funktionsstil)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatAbilities.h(69,36):
+      Siehe Deklaration von "Playerbot::ThreatAbilitiesDB::GetClassAbilities"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(347,25):
+      bei Anpassung der Argumentliste "(uint8)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(353,74): error C2027: Verwendung des undefinierten Typs "SpellHistory" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(93,7):
+      Siehe Deklaration von "SpellHistory"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Combat\ThreatCoordinator.cpp(981,33): error C2027: Verwendung des undefinierten Typs "SpellHistory" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Unit\Unit.h(93,7):
+      Siehe Deklaration von "SpellHistory"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(739,68): warning C4100: „auctionId“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(195,19): error C2511: "Playerbot::QuestManager::QuestManager(Player *,Playerbot::BotAI *)": Überladene Memberfunktion nicht in "Playerbot::QuestManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(49,11):
+      Siehe Deklaration von "Playerbot::QuestManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(219,5): error C2550: "Playerbot::QuestManager::{ctor}": Initialisierungslisten für Konstruktoren dürfen nur in Konstruktordefinition stehen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(220,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::QuestManager::m_strategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(287,49):
+      Siehe Deklaration von "Playerbot::QuestManager::m_strategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(221,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::QuestManager::m_cache" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(290,37):
+      Siehe Deklaration von "Playerbot::QuestManager::m_cache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(261,34): error C2248: "Playerbot::QuestCache::m_lastUpdateTime": Kein Zugriff auf private Member, dessen Deklaration in der Playerbot::QuestCache-Klasse erfolgte. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(348,16):
+      Siehe Deklaration von "Playerbot::QuestCache::m_lastUpdateTime"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(322,11):
+      Siehe Deklaration von "Playerbot::QuestCache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,18): error C2923: „Trinity::CreatureListSearcher“: „AllCreaturesInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48):
+      Siehe Deklaration von "AllCreaturesInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,107): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,88): error C2641: Für "Trinity::CreatureListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,18): error C2923: „Trinity::GameObjectListSearcher“: „AllGameObjectsInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50):
+      Siehe Deklaration von "AllGameObjectsInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,109): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,92): error C2641: Für "Trinity::GameObjectListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(586,37): error C2039: "IsQuestGiver" ist kein Member von "GameObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject\GameObject.h(165,19):
+      Siehe Deklaration von "GameObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(630,43): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(647,42): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(649,30): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(654,47): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(758,30): error C2039: "GetRewXPDifficulty" ist kein Member von "Quest". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Quests\QuestDef.h(574,19):
+      Siehe Deklaration von "Quest"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,62): error C2039: "getFirst" ist kein Member von "GroupRefManager". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\GroupRefManager.h(24,7):
+      Siehe Deklaration von "GroupRefManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94): error C2440: "=": "const LinkedListElement *" kann nicht in "const GroupReference *" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94):
+      Umwandlung von der Basis in die Ableitung erfordert "dynamic_cast" oder "static_cast"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1502,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1509,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
+  gsoap.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\gsoap\RelWithDebInfo\gsoap.lib
+  scripts.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\scripts\RelWithDebInfo\scripts.lib

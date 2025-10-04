@@ -1,0 +1,555 @@
+MSBuild-Version 17.14.18+a338add32 für .NET Framework
+
+  zlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\zlib\RelWithDebInfo\zlib.lib
+  Detour.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\recastnavigation\Detour\RelWithDebInfo\Detour.lib
+  openssl_ed25519.vcxproj -> C:\TrinityBots\TrinityCore\build\bin\RelWithDebInfo\openssl_ed25519.dll
+  argon2.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\argon2\RelWithDebInfo\argon2.lib
+  fmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\fmt\RelWithDebInfo\fmt.lib
+  gsoap.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\gsoap\RelWithDebInfo\gsoap.lib
+  g3dlib.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\g3dlite\RelWithDebInfo\g3dlib.lib
+  sfmt.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\SFMT\RelWithDebInfo\sfmt.lib
+  protobuf.vcxproj -> C:\TrinityBots\TrinityCore\build\dep\protobuf\RelWithDebInfo\protobuf.lib
+  common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\RelWithDebInfo\common.lib
+  network.vcxproj -> C:\TrinityBots\TrinityCore\build\src\common\network\RelWithDebInfo\trinity_network.lib
+  database.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\database\RelWithDebInfo\database.lib
+  proto.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\proto\RelWithDebInfo\proto.lib
+  shared.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\shared\RelWithDebInfo\shared.lib
+  modules-common.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\modules\Common\RelWithDebInfo\modules-common.lib
+  scripts.vcxproj -> C:\TrinityBots\TrinityCore\build\src\server\scripts\RelWithDebInfo\scripts.lib
+  TradeManager.cpp
+  AuctionManager.cpp
+  BotAI_Auction_Integration.cpp
+  QuestManager.cpp
+  InventoryManager.cpp
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Object.h(68,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(59,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(60,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(80,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(102,29): warning C4100: „cooldownMs“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Actions\Action.h(163,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\Item.h(31,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Triggers\Trigger.h(82,43): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(65,34): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(86,36): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(87,38): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,51): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\Strategy\Strategy.h(93,40): warning C4100: „ai“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\BotAI.h(106,40): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Creature\Creature.h(36,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\AI\BotAI.h(106,40): warning C4100: „diff“: nicht referenzierter Parameter [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Social/TradeManager.cpp“ wird kompiliert)
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Creature\CreatureData.h(33,8): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(29,7):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject\GameObject.h(34,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(42,8): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\InventoryManager.h(36,7):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(285,20): warning C4099: "Loot": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/InventoryManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Loot\Loot.h(285,20):
+      Siehe Deklaration von "Loot"
+  
+C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20): warning C4099: "ItemTemplate": Geben Sie den zuerst unter Verwendung von "class" und jetzt unter Verwendung von "struct" gesehenen Namen ein [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+  (Quelldatei „../../../../../src/modules/Playerbot/Game/QuestManager.cpp“ wird kompiliert)
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(300,47): error C2027: Verwendung des undefinierten Typs "WorldSession" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Protocol\Opcodes.h(2265,7):
+      Siehe Deklaration von "WorldSession"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Economy\AuctionManager.cpp(367,47): error C2027: Verwendung des undefinierten Typs "WorldSession" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Protocol\Opcodes.h(2265,7):
+      Siehe Deklaration von "WorldSession"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(97,22): error C2511: "Playerbot::BotTradeManager::BotTradeManager(Playerbot::BotAI *)": Überladene Memberfunktion nicht in "Playerbot::BotTradeManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(144,11):
+      Siehe Deklaration von "Playerbot::BotTradeManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(107,5): error C2550: "Playerbot::BotTradeManager::{ctor}": Initialisierungslisten für Konstruktoren dürfen nur in Konstruktordefinition stehen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(108,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::BotTradeManager::m_lastUpdateTime" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(284,47):
+      Siehe Deklaration von "Playerbot::BotTradeManager::m_lastUpdateTime"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(176,16): error C2039: "SetTradeData" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(177,17): error C2039: "SetTradeData" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(181,24): error C2065: "TRADE_STATUS_BEGIN_TRADE": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(183,26): error C2027: Verwendung des undefinierten Typs "WorldSession" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Protocol\Opcodes.h(2265,7):
+      Siehe Deklaration von "WorldSession"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(184,27): error C2027: Verwendung des undefinierten Typs "WorldSession" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Server\Protocol\Opcodes.h(2265,7):
+      Siehe Deklaration von "WorldSession"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(368,61): error C2065: "ITEM_FLAG_IS_QUEST_ITEM": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(488,65): error C2065: "ITEM_FLAG_IS_QUEST_ITEM": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(623,39): error C2039: "GetFirstMember" ist kein Member von "Group". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(204,19):
+      Siehe Deklaration von "Group"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(623,57): error C3536: "member": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(623,64): error C2446: "!=": Keine Konvertierung von "nullptr" in "<error type>" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(623,67):
+      Ein systemeigener "nullptr" kann nur in "bool" oder (mithilfe von reinterpret_cast) in einen integralen Typ konvertiert werden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(711,13): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(711,13):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(711,13):
+      bei Anpassung der Argumentliste "(const char [23], const char [22])"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(728,17): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(728,17):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(728,17):
+      bei Anpassung der Argumentliste "(const char [23], const char [36])"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(743,17): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(743,17):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(743,17):
+      bei Anpassung der Argumentliste "(const char [23], const char [37])"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(770,17): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(770,17):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(770,17):
+      bei Anpassung der Argumentliste "(const char [22], std::basic_string<char,std::char_traits<char>,std::allocator<char>>)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(778,17): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(778,17):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(778,17):
+      bei Anpassung der Argumentliste "(const char [22], std::basic_string<char,std::char_traits<char>,std::allocator<char>>)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(787,17): error C2662: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &)": this-Zeiger kann nicht von "const Playerbot::BotTradeManager" in "Playerbot::BotTradeManager &" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(787,17):
+      Durch die Konvertierung gehen Qualifizierer verloren
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(253,14):
+      Siehe Deklaration von "Playerbot::BotTradeManager::LogTradeAction"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(787,17):
+      bei Anpassung der Argumentliste "(const char [22], std::basic_string<char,std::char_traits<char>,std::allocator<char>>)"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(825,39): error C2039: "GetFirstMember" ist kein Member von "Group". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(204,19):
+      Siehe Deklaration von "Group"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(825,57): error C3536: "member": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(825,64): error C2446: "!=": Keine Konvertierung von "nullptr" in "<error type>" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(825,67):
+      Ein systemeigener "nullptr" kann nur in "bool" oder (mithilfe von reinterpret_cast) in einen integralen Typ konvertiert werden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(892,28): error C2065: "ITEM_FLAG_NOT_TRADEABLE": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(900,28): error C2065: "ITEM_FLAG_IS_QUEST_ITEM": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(904,28): error C2065: "ITEM_FLAG_IS_CONJURED": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1021,47): error C2039: "GetFirstMember" ist kein Member von "Group". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(204,19):
+      Siehe Deklaration von "Group"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1021,65): error C3536: "member": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1021,72): error C2446: "!=": Keine Konvertierung von "nullptr" in "<error type>" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1021,75):
+      Ein systemeigener "nullptr" kann nur in "bool" oder (mithilfe von reinterpret_cast) in einen integralen Typ konvertiert werden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1214,27): error C2039: "IsUsableBySpecialization" ist kein Member von "ItemTemplate". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Item\ItemTemplate.h(823,20):
+      Siehe Deklaration von "ItemTemplate"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1214,60): error C2039: "GetUInt32Value" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1214,75): error C2065: "PLAYER_FIELD_CURRENT_SPEC_ID": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1238,35): error C2039: "GetFirstMember" ist kein Member von "Group". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\Group.h(204,19):
+      Siehe Deklaration von "Group"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1238,53): error C3536: "member": Kann nicht verwendet werden, bevor es initialisiert wurde. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1238,60): error C2446: "!=": Keine Konvertierung von "nullptr" in "<error type>" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1238,63):
+      Ein systemeigener "nullptr" kann nur in "bool" oder (mithilfe von reinterpret_cast) in einen integralen Typ konvertiert werden.
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1353,20): error C2039: "SetTradeData" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1372,20): error C2039: "SetTradeData" ist kein Member von "Player". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(1171,19):
+      Siehe Deklaration von "Player"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1389,27): error C2511: "void Playerbot::BotTradeManager::LogTradeAction(const std::string &,const std::string &) const": Überladene Memberfunktion nicht in "Playerbot::BotTradeManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(144,11):
+      Siehe Deklaration von "Playerbot::BotTradeManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1391,14): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::BotTradeManager::m_bot" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(259,17):
+      Siehe Deklaration von "Playerbot::BotTradeManager::m_bot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1394,9): error C7595: "fmt::v10::basic_format_string<char,const std::string &,const std::string &>::basic_format_string": Der Aufruf einer unmittelbaren Funktion ist kein konstanter Ausdruck. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      Fehler wurde durch den Aufruf einer nicht definierten Funktion oder eines nicht deklarierten "constexpr" verursacht
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      siehe Verwendung von "fmt::v10::detail::throw_format_error"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1394,9):
+      Die Aufrufliste der Auswertung (der älteste Aufruf zuerst) ist
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1394,9):
+          beim Auswerten der Funktion „fmt::v10::basic_format_string<char,const std::string &,const std::string &>::basic_format_string<Trinity::FormatStringView,0>(const S &)“
+          with
+          [
+              S=Trinity::FormatStringView
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2787,40):
+          beim Auswerten der Funktion „void fmt::v10::detail::parse_format_string<true,char,fmt::v10::basic_format_string<char,const std::string &,const std::string &>::{ctor}::checker>(fmt::v10::basic_string_view<char>,Handler &&)“
+          with
+          [
+              Handler=fmt::v10::basic_format_string<char,const std::string &,const std::string &>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2534,44):
+          beim Auswerten der Funktion „const Char *fmt::v10::detail::parse_replacement_field<char,Handler&>(const Char *,const Char *,fmt::v10::detail::format_string_checker<Char,std::basic_string<char,std::char_traits<char>,std::allocator<char>>,std::basic_string<char,std::char_traits<char>,std::allocator<char>>>&)“
+          with
+          [
+              Char=char,
+              Handler=fmt::v10::basic_format_string<char,const std::string &,const std::string &>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2502,51):
+          beim Auswerten der Funktion „int fmt::v10::detail::format_string_checker<char,std::basic_string<char,std::char_traits<char>,std::allocator<char>>,std::basic_string<char,std::char_traits<char>,std::allocator<char>>>::on_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2660,70):
+          beim Auswerten der Funktion „int fmt::v10::detail::compile_parse_context<Char>::next_arg_id(void)“
+          with
+          [
+              Char=char
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(761,31):
+          beim Auswerten der Funktion „int fmt::v10::basic_format_parse_context<char>::next_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(718,20):
+          beim Auswerten der Funktion „void fmt::v10::basic_format_parse_context<char>::do_check_arg_id(int)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+          beim Auswerten der Funktion „void fmt::v10::detail::throw_format_error(const char *)“
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1398,27): error C2511: "void Playerbot::BotTradeManager::LogTradeItem(Item *,bool) const": Überladene Memberfunktion nicht in "Playerbot::BotTradeManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(144,11):
+      Siehe Deklaration von "Playerbot::BotTradeManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1400,23): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::BotTradeManager::m_bot" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(259,17):
+      Siehe Deklaration von "Playerbot::BotTradeManager::m_bot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1407,9): error C2352: "Playerbot::BotTradeManager::EstimateItemValue": Ein Aufruf einer nicht statischen Memberfunktion erfordert ein Objekt [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(861,29):
+      Siehe Deklaration von "Playerbot::BotTradeManager::EstimateItemValue"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1407,9): error C7595: "fmt::v10::basic_format_string<char,const char *,const char *,unsigned int>::basic_format_string": Der Aufruf einer unmittelbaren Funktion ist kein konstanter Ausdruck. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      Fehler wurde durch den Aufruf einer nicht definierten Funktion oder eines nicht deklarierten "constexpr" verursacht
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      siehe Verwendung von "fmt::v10::detail::throw_format_error"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1407,9):
+      Die Aufrufliste der Auswertung (der älteste Aufruf zuerst) ist
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1407,9):
+          beim Auswerten der Funktion „fmt::v10::basic_format_string<char,const char *,const char *,unsigned int>::basic_format_string<Trinity::FormatStringView,0>(const S &)“
+          with
+          [
+              S=Trinity::FormatStringView
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2787,40):
+          beim Auswerten der Funktion „void fmt::v10::detail::parse_format_string<true,char,fmt::v10::basic_format_string<char,const char *,const char *,unsigned int>::{ctor}::checker>(fmt::v10::basic_string_view<char>,Handler &&)“
+          with
+          [
+              Handler=fmt::v10::basic_format_string<char,const char *,const char *,unsigned int>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2568,36):
+          beim Auswerten der Funktion „const Char *fmt::v10::detail::parse_replacement_field<char,Handler&>(const Char *,const Char *,fmt::v10::detail::format_string_checker<Char,const char *,const char *,unsigned int>&)“
+          with
+          [
+              Char=char,
+              Handler=fmt::v10::basic_format_string<char,const char *,const char *,unsigned int>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2502,51):
+          beim Auswerten der Funktion „int fmt::v10::detail::format_string_checker<char,const char *,const char *,unsigned int>::on_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2660,70):
+          beim Auswerten der Funktion „int fmt::v10::detail::compile_parse_context<Char>::next_arg_id(void)“
+          with
+          [
+              Char=char
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(761,31):
+          beim Auswerten der Funktion „int fmt::v10::basic_format_parse_context<char>::next_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(718,20):
+          beim Auswerten der Funktion „void fmt::v10::basic_format_parse_context<char>::do_check_arg_id(int)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+          beim Auswerten der Funktion „void fmt::v10::detail::throw_format_error(const char *)“
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1404,9): warning C4390: ";": Leere kontrollierte Anweisung aufgetreten; ist dies beabsichtigt? [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1415,27): error C2511: "void Playerbot::BotTradeManager::LogTradeCompletion(bool) const": Überladene Memberfunktion nicht in "Playerbot::BotTradeManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(144,11):
+      Siehe Deklaration von "Playerbot::BotTradeManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1417,14): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::BotTradeManager::m_bot" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.h(259,17):
+      Siehe Deklaration von "Playerbot::BotTradeManager::m_bot"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1422,13): error C7595: "fmt::v10::basic_format_string<char>::basic_format_string": Der Aufruf einer unmittelbaren Funktion ist kein konstanter Ausdruck. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      Fehler wurde durch den Aufruf einer nicht definierten Funktion oder eines nicht deklarierten "constexpr" verursacht
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      siehe Verwendung von "fmt::v10::detail::throw_format_error"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1422,13):
+      Die Aufrufliste der Auswertung (der älteste Aufruf zuerst) ist
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1422,13):
+          beim Auswerten der Funktion „fmt::v10::basic_format_string<char>::basic_format_string<Trinity::FormatStringView,0>(const S &)“
+          with
+          [
+              S=Trinity::FormatStringView
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2787,40):
+          beim Auswerten der Funktion „void fmt::v10::detail::parse_format_string<true,char,fmt::v10::basic_format_string<char>::{ctor}::checker>(fmt::v10::basic_string_view<char>,Handler &&)“
+          with
+          [
+              Handler=fmt::v10::basic_format_string<char>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2568,36):
+          beim Auswerten der Funktion „const Char *fmt::v10::detail::parse_replacement_field<char,Handler&>(const Char *,const Char *,fmt::v10::detail::format_string_checker<Char>&)“
+          with
+          [
+              Char=char,
+              Handler=fmt::v10::basic_format_string<char>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2502,51):
+          beim Auswerten der Funktion „int fmt::v10::detail::format_string_checker<char>::on_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2660,70):
+          beim Auswerten der Funktion „int fmt::v10::detail::compile_parse_context<Char>::next_arg_id(void)“
+          with
+          [
+              Char=char
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(761,31):
+          beim Auswerten der Funktion „int fmt::v10::basic_format_parse_context<char>::next_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(718,20):
+          beim Auswerten der Funktion „void fmt::v10::basic_format_parse_context<char>::do_check_arg_id(int)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+          beim Auswerten der Funktion „void fmt::v10::detail::throw_format_error(const char *)“
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1431,13): error C7595: "fmt::v10::basic_format_string<char>::basic_format_string": Der Aufruf einer unmittelbaren Funktion ist kein konstanter Ausdruck. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      Fehler wurde durch den Aufruf einer nicht definierten Funktion oder eines nicht deklarierten "constexpr" verursacht
+      C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+      siehe Verwendung von "fmt::v10::detail::throw_format_error"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1431,13):
+      Die Aufrufliste der Auswertung (der älteste Aufruf zuerst) ist
+          C:\TrinityBots\TrinityCore\src\modules\Playerbot\Social\TradeManager.cpp(1431,13):
+          beim Auswerten der Funktion „fmt::v10::basic_format_string<char>::basic_format_string<Trinity::FormatStringView,0>(const S &)“
+          with
+          [
+              S=Trinity::FormatStringView
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2787,40):
+          beim Auswerten der Funktion „void fmt::v10::detail::parse_format_string<true,char,fmt::v10::basic_format_string<char>::{ctor}::checker>(fmt::v10::basic_string_view<char>,Handler &&)“
+          with
+          [
+              Handler=fmt::v10::basic_format_string<char>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2534,44):
+          beim Auswerten der Funktion „const Char *fmt::v10::detail::parse_replacement_field<char,Handler&>(const Char *,const Char *,fmt::v10::detail::format_string_checker<Char>&)“
+          with
+          [
+              Char=char,
+              Handler=fmt::v10::basic_format_string<char>::{ctor}::checker
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2502,51):
+          beim Auswerten der Funktion „int fmt::v10::detail::format_string_checker<char>::on_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(2660,70):
+          beim Auswerten der Funktion „int fmt::v10::detail::compile_parse_context<Char>::next_arg_id(void)“
+          with
+          [
+              Char=char
+          ]
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(761,31):
+          beim Auswerten der Funktion „int fmt::v10::basic_format_parse_context<char>::next_arg_id(void)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(718,20):
+          beim Auswerten der Funktion „void fmt::v10::basic_format_parse_context<char>::do_check_arg_id(int)“
+          C:\TrinityBots\TrinityCore\dep\fmt\include\fmt\core.h(1066,33):
+          beim Auswerten der Funktion „void fmt::v10::detail::throw_format_error(const char *)“
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(195,19): error C2511: "Playerbot::QuestManager::QuestManager(Player *,Playerbot::BotAI *)": Überladene Memberfunktion nicht in "Playerbot::QuestManager" gefunden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(49,11):
+      Siehe Deklaration von "Playerbot::QuestManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(219,5): error C2550: "Playerbot::QuestManager::{ctor}": Initialisierungslisten für Konstruktoren dürfen nur in Konstruktordefinition stehen [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(220,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::QuestManager::m_strategy" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(287,49):
+      Siehe Deklaration von "Playerbot::QuestManager::m_strategy"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(221,9): error C2597: Ungültiger Verweis auf nicht-statischen Member "Playerbot::QuestManager::m_cache" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(290,37):
+      Siehe Deklaration von "Playerbot::QuestManager::m_cache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(261,34): error C2248: "Playerbot::QuestCache::m_lastUpdateTime": Kein Zugriff auf private Member, dessen Deklaration in der Playerbot::QuestCache-Klasse erfolgte. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(348,16):
+      Siehe Deklaration von "Playerbot::QuestCache::m_lastUpdateTime"
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.h(322,11):
+      Siehe Deklaration von "Playerbot::QuestCache"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,18): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(537,49): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2039: "AllCreaturesInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48): error C2065: "AllCreaturesInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,18): error C2923: „Trinity::CreatureListSearcher“: „AllCreaturesInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,48):
+      Siehe Deklaration von "AllCreaturesInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,107): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(538,88): error C2641: Für "Trinity::CreatureListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,18): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C2146: Syntaxfehler: Fehlendes ";" vor Bezeichner "checker" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(580,51): error C3861: "checker": Bezeichner wurde nicht gefunden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2039: "AllGameObjectsInObjectRangeCheck" ist kein Member von "Trinity". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Common\Logging\ModuleLogManager.h(19,11):
+      Siehe Deklaration von "Trinity"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50): error C2065: "AllGameObjectsInObjectRangeCheck": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,18): error C2923: „Trinity::GameObjectListSearcher“: „AllGameObjectsInObjectRangeCheck“ ist kein gültiges Vorlage-Typargument für Parameter „Check“. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,50):
+      Siehe Deklaration von "AllGameObjectsInObjectRangeCheck"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,109): error C2065: "checker": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(581,92): error C2641: Für "Trinity::GameObjectListSearcher" können keine Vorlagenargumente abgeleitet werden. [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(586,37): error C2039: "IsQuestGiver" ist kein Member von "GameObject". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\GameObject\GameObject.h(165,19):
+      Siehe Deklaration von "GameObject"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(630,43): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(647,42): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(649,30): error C2027: Verwendung des undefinierten Typs "Bag" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Object\Updates\UpdateFields.h(36,7):
+      Siehe Deklaration von "Bag"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(654,47): error C2065: "ITEM_FLAG_HAS_QUEST": nichtdeklarierter Bezeichner [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(758,30): error C2039: "GetRewXPDifficulty" ist kein Member von "Quest". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Quests\QuestDef.h(574,19):
+      Siehe Deklaration von "Quest"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,62): error C2039: "getFirst" ist kein Member von "GroupRefManager". [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Groups\GroupRefManager.h(24,7):
+      Siehe Deklaration von "GroupRefManager"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94): error C2440: "=": "const LinkedListElement *" kann nicht in "const GroupReference *" konvertiert werden [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(901,94):
+      Umwandlung von der Basis in die Ableitung erfordert "dynamic_cast" oder "static_cast"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1502,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
+C:\TrinityBots\TrinityCore\src\modules\Playerbot\Game\QuestManager.cpp(1509,40): error C2027: Verwendung des undefinierten Typs "ReputationMgr" [C:\TrinityBots\TrinityCore\build\src\server\modules\Playerbot\playerbot.vcxproj]
+      C:\TrinityBots\TrinityCore\src\server\game\Entities\Player\Player.h(95,7):
+      Siehe Deklaration von "ReputationMgr"
+  
