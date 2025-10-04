@@ -350,6 +350,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/TargetAssistAction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/SpellInterruptAction.cpp
@@ -404,6 +406,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+
+    # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
 
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
@@ -685,6 +691,11 @@ source_group("Social" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+)
+
+source_group("Equipment" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
 )
 
 source_group("Economy" FILES
