@@ -48,6 +48,29 @@ public:
         bool enableCaching{true};
     };
 
+    struct QueryMetricsSnapshot
+    {
+        uint64 totalQueries = 0;
+        uint64 cachedQueries = 0;
+        uint64 batchedQueries = 0;
+        uint64 totalLatency = 0;
+        uint64 slowQueries = 0;
+
+        double GetAverageLatency() const
+        {
+            if (totalQueries == 0)
+                return 0.0;
+            return totalLatency / static_cast<double>(totalQueries);
+        }
+
+        double GetCacheHitRate() const
+        {
+            if (totalQueries == 0)
+                return 0.0;
+            return cachedQueries / static_cast<double>(totalQueries);
+        }
+    };
+
     struct QueryMetrics
     {
         std::atomic<uint64> totalQueries{0};
@@ -69,20 +92,15 @@ public:
                 slowQueries.fetch_add(1, std::memory_order_relaxed);
         }
 
-        double GetAverageLatency() const
+        QueryMetricsSnapshot GetSnapshot() const
         {
-            uint64 total = totalQueries.load(std::memory_order_relaxed);
-            if (total == 0)
-                return 0.0;
-            return totalLatency.load(std::memory_order_relaxed) / static_cast<double>(total);
-        }
-
-        double GetCacheHitRate() const
-        {
-            uint64 total = totalQueries.load(std::memory_order_relaxed);
-            if (total == 0)
-                return 0.0;
-            return cachedQueries.load(std::memory_order_relaxed) / static_cast<double>(total);
+            QueryMetricsSnapshot snapshot;
+            snapshot.totalQueries = totalQueries.load(std::memory_order_relaxed);
+            snapshot.cachedQueries = cachedQueries.load(std::memory_order_relaxed);
+            snapshot.batchedQueries = batchedQueries.load(std::memory_order_relaxed);
+            snapshot.totalLatency = totalLatency.load(std::memory_order_relaxed);
+            snapshot.slowQueries = slowQueries.load(std::memory_order_relaxed);
+            return snapshot;
         }
     };
 
@@ -95,14 +113,21 @@ public:
     ~QueryOptimizer() = default;
 
     /**
-     * @brief Get performance metrics
+     * @brief Get performance metrics snapshot
      */
-    QueryMetrics GetMetrics() const { return _metrics; }
+    QueryMetricsSnapshot GetMetrics() const { return _metrics.GetSnapshot(); }
 
     /**
      * @brief Reset metrics
      */
-    void ResetMetrics() { _metrics = QueryMetrics{}; }
+    void ResetMetrics()
+    {
+        _metrics.totalQueries.store(0, std::memory_order_relaxed);
+        _metrics.cachedQueries.store(0, std::memory_order_relaxed);
+        _metrics.batchedQueries.store(0, std::memory_order_relaxed);
+        _metrics.totalLatency.store(0, std::memory_order_relaxed);
+        _metrics.slowQueries.store(0, std::memory_order_relaxed);
+    }
 
     /**
      * @brief Get singleton instance

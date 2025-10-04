@@ -25,6 +25,7 @@
 #ifndef PLAYERBOT_THREADPOOL_H
 #define PLAYERBOT_THREADPOOL_H
 
+#include "Define.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -225,7 +226,7 @@ private:
     // Local work queues (one per priority)
     std::array<WorkStealingQueue<Task*>, static_cast<size_t>(TaskPriority::COUNT)> _localQueues;
 
-    // Performance metrics
+    // Performance metrics (atomic for thread-safety)
     struct alignas(64) Metrics
     {
         std::atomic<uint64> tasksCompleted{0};
@@ -234,7 +235,27 @@ private:
         std::atomic<uint64> stealAttempts{0};
         std::atomic<uint64> stealSuccesses{0};
         std::atomic<uint32> contextSwitches{0};
+
+        // Default constructor
+        Metrics() = default;
+
+        // Deleted copy constructor and assignment (atomics cannot be copied)
+        Metrics(Metrics const&) = delete;
+        Metrics& operator=(Metrics const&) = delete;
+
+        // Move constructor and assignment are deleted by default due to atomics
     } _metrics;
+
+    // Snapshot struct for returning metrics (non-atomic, copyable)
+    struct MetricsSnapshot
+    {
+        uint64 tasksCompleted;
+        uint64 totalWorkTime;
+        uint64 totalIdleTime;
+        uint64 stealAttempts;
+        uint64 stealSuccesses;
+        uint32 contextSwitches;
+    };
 
     // Wake notification
     std::mutex _wakeMutex;
@@ -280,9 +301,19 @@ public:
     void Shutdown();
 
     /**
-     * @brief Get worker metrics
+     * @brief Get worker metrics (returns snapshot copy)
      */
-    Metrics GetMetrics() const { return _metrics; }
+    MetricsSnapshot GetMetrics() const
+    {
+        MetricsSnapshot snapshot;
+        snapshot.tasksCompleted = _metrics.tasksCompleted.load(std::memory_order_relaxed);
+        snapshot.totalWorkTime = _metrics.totalWorkTime.load(std::memory_order_relaxed);
+        snapshot.totalIdleTime = _metrics.totalIdleTime.load(std::memory_order_relaxed);
+        snapshot.stealAttempts = _metrics.stealAttempts.load(std::memory_order_relaxed);
+        snapshot.stealSuccesses = _metrics.stealSuccesses.load(std::memory_order_relaxed);
+        snapshot.contextSwitches = _metrics.contextSwitches.load(std::memory_order_relaxed);
+        return snapshot;
+    }
 
     /**
      * @brief Set CPU affinity
@@ -314,6 +345,8 @@ private:
  */
 class ThreadPool
 {
+    friend class WorkerThread; // Allow WorkerThread to access private members
+
 public:
     struct Configuration
     {

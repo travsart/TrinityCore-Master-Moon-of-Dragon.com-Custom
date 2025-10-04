@@ -19,9 +19,11 @@
 #ifndef PLAYERBOT_MEMORYPOOL_H
 #define PLAYERBOT_MEMORYPOOL_H
 
+#include "Define.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <shared_mutex>
 #include <vector>
 #include <array>
 #include <unordered_map>

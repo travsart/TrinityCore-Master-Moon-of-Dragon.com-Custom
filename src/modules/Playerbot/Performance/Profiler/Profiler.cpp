@@ -52,7 +52,10 @@ Profiler::ProfileResults Profiler::GetResults() const
     std::lock_guard<std::mutex> lock(_mutex);
 
     ProfileResults results;
-    results.sections = _sections;
+    for (const auto& [name, data] : _sections)
+    {
+        results.sections[name] = data.GetSnapshot();
+    }
     return results;
 }
 

@@ -19,7 +19,7 @@ class Map;
 class dtNavMesh;
 class dtNavMeshQuery;
 
-namespace PlayerBot
+namespace Playerbot
 {
     /**
      * @class NavMeshInterface

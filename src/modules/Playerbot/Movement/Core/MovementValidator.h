@@ -19,7 +19,7 @@
 class Player;
 class Map;
 
-namespace PlayerBot
+namespace Playerbot
 {
     /**
      * @class MovementValidator

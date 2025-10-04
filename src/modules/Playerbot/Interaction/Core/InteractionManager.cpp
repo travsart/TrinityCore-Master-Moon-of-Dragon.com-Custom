@@ -11,15 +11,16 @@
 #include "GossipHandler.h"
 #include "InteractionValidator.h"
 #include "../Vendors/VendorInteraction.h"
-#include "../Trainers/TrainerInteraction.h"
-#include "../Services/InnkeeperInteraction.h"
-#include "../Services/FlightMasterInteraction.h"
-#include "../Services/BankInteraction.h"
-#include "../Services/MailboxInteraction.h"
+// #include "../Trainers/TrainerInteraction.h"  // TODO: Create this file
+// #include "../Services/InnkeeperInteraction.h"  // TODO: Create this file
+// #include "../Services/FlightMasterInteraction.h"  // TODO: Create this file
+// #include "../Services/BankInteraction.h"  // TODO: Create this file
+// #include "../Services/MailboxInteraction.h"  // TODO: Create this file
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"
 #include "ObjectMgr.h"
+#include "ObjectAccessor.h"
 #include "WorldSession.h"
 #include "GossipDef.h"
 #include "Log.h"
@@ -29,11 +30,13 @@
 #include "CellImpl.h"
 #include "MotionMaster.h"
 #include "MovementGenerator.h"
+#include "UnitDefines.h"
 
 namespace Playerbot
 {
-    // Static member initialization
-    InteractionManager* InteractionManager::m_instance = nullptr;
+    // Static member initialization - modern singleton pattern
+    std::unique_ptr<InteractionManager> InteractionManager::s_instance;
+    std::once_flag InteractionManager::s_initFlag;
 
     InteractionManager::InteractionManager()
     {
@@ -68,22 +71,21 @@ namespace Playerbot
 
     InteractionManager* InteractionManager::Instance()
     {
-        static std::once_flag initFlag;
-        std::call_once(initFlag, []()
+        std::call_once(s_initFlag, []()
         {
-            m_instance = new InteractionManager();
+            s_instance = std::make_unique<InteractionManager>();
         });
-        return m_instance;
+        return s_instance.get();
     }
 
-    void InteractionManager::Initialize()
+    bool InteractionManager::Initialize()
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
 
         if (m_initialized)
-            return;
+            return true;
 
-        LOG_INFO("playerbot", "Initializing InteractionManager");
+        TC_LOG_INFO("playerbot", "Initializing InteractionManager");
 
         InitializeHandlers();
 
@@ -94,7 +96,8 @@ namespace Playerbot
         }
 
         m_initialized = true;
-        LOG_INFO("playerbot", "InteractionManager initialized successfully");
+        TC_LOG_INFO("playerbot", "InteractionManager initialized successfully");
+        return true;
     }
 
     void InteractionManager::InitializeHandlers()
@@ -102,11 +105,11 @@ namespace Playerbot
         m_gossipHandler = std::make_unique<GossipHandler>();
         m_validator = std::make_unique<InteractionValidator>();
         m_vendorHandler = std::make_unique<VendorInteraction>();
-        m_trainerHandler = std::make_unique<TrainerInteraction>();
-        m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();
-        m_flightHandler = std::make_unique<FlightMasterInteraction>();
-        m_bankHandler = std::make_unique<BankInteraction>();
-        m_mailHandler = std::make_unique<MailboxInteraction>();
+        // m_trainerHandler = std::make_unique<TrainerInteraction>();  // TODO: Create TrainerInteraction class
+        // m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();  // TODO: Create InnkeeperInteraction class
+        // m_flightHandler = std::make_unique<FlightMasterInteraction>();  // TODO: Create FlightMasterInteraction class
+        // m_bankHandler = std::make_unique<BankInteraction>();  // TODO: Create BankInteraction class
+        // m_mailHandler = std::make_unique<MailboxInteraction>();  // TODO: Create MailboxInteraction class
     }
 
     void InteractionManager::Shutdown()
@@ -116,7 +119,7 @@ namespace Playerbot
         if (!m_initialized)
             return;
 
-        LOG_INFO("playerbot", "Shutting down InteractionManager");
+        TC_LOG_INFO("playerbot", "Shutting down InteractionManager");
 
         // Cancel all active interactions
         for (auto& [guid, context] : m_activeInteractions)
@@ -132,7 +135,7 @@ namespace Playerbot
         CleanupHandlers();
 
         m_initialized = false;
-        LOG_INFO("playerbot", "InteractionManager shut down successfully");
+        TC_LOG_INFO("playerbot", "InteractionManager shut down successfully");
     }
 
     void InteractionManager::CleanupHandlers()
@@ -140,11 +143,11 @@ namespace Playerbot
         m_gossipHandler.reset();
         m_validator.reset();
         m_vendorHandler.reset();
-        m_trainerHandler.reset();
-        m_innkeeperHandler.reset();
-        m_flightHandler.reset();
-        m_bankHandler.reset();
-        m_mailHandler.reset();
+        // m_trainerHandler.reset();  // TODO: Uncomment when TrainerInteraction is created
+        // m_innkeeperHandler.reset();  // TODO: Uncomment when InnkeeperInteraction is created
+        // m_flightHandler.reset();  // TODO: Uncomment when FlightMasterInteraction is created
+        // m_bankHandler.reset();  // TODO: Uncomment when BankInteraction is created
+        // m_mailHandler.reset();  // TODO: Uncomment when MailboxInteraction is created
     }
 
     void InteractionManager::Update(uint32 diff)
@@ -296,7 +299,7 @@ namespace Playerbot
         return InteractionResult::Pending;
     }
 
-    void InteractionManager::CancelInteraction(Player* bot)
+    void InteractionManager::CancelInteraction(Player* bot, ObjectGuid targetGuid)
     {
         if (!bot)
             return;
@@ -306,8 +309,12 @@ namespace Playerbot
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (it != m_activeInteractions.end())
         {
-            CompleteInteraction(bot, InteractionResult::Interrupted);
-            m_activeInteractions.erase(it);
+            // Verify this is the correct interaction to cancel
+            if (targetGuid.IsEmpty() || it->second->targetGuid == targetGuid)
+            {
+                CompleteInteraction(bot, InteractionResult::Interrupted);
+                m_activeInteractions.erase(it);
+            }
         }
     }
 
@@ -347,7 +354,7 @@ namespace Playerbot
         InteractionType type = InteractionType::None;
 
         // Check NPC flags for type detection
-        uint64 npcFlags = target->GetNpcFlags();
+        NPCFlags npcFlags = target->GetNpcFlags();
 
         // Priority order for multi-flag NPCs
         if (npcFlags & UNIT_NPC_FLAG_TRAINER)
@@ -366,7 +373,7 @@ namespace Playerbot
             type = InteractionType::StableMaster;
         else if (npcFlags & UNIT_NPC_FLAG_BATTLEMASTER)
             type = InteractionType::Battlemaster;
-        else if (npcFlags & UNIT_NPC_FLAG_SPIRITGUIDE || npcFlags & UNIT_NPC_FLAG_SPIRITHEALER)
+        else if (npcFlags & UNIT_NPC_FLAG_SPIRIT_HEALER || npcFlags & UNIT_NPC_FLAG_AREA_SPIRIT_HEALER)
             type = InteractionType::SpiritHealer;
         else if (npcFlags & UNIT_NPC_FLAG_QUESTGIVER)
             type = InteractionType::QuestGiver;
@@ -381,144 +388,67 @@ namespace Playerbot
         return type;
     }
 
-    Creature* InteractionManager::FindNearestNPC(Player* bot, InteractionType type, float range) const
+    Creature* InteractionManager::FindNearestNPC(Player* bot, NPCType type, float maxRange) const
     {
         if (!bot)
             return nullptr;
 
         Creature* nearest = nullptr;
-        float minDist = range;
+        float minDist = maxRange;
 
-        Trinity::AllCreaturesOfEntryInRange checker(bot, 0, range);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, std::list<Creature*>(), checker);
-        Cell::VisitGridObjects(bot, searcher, range);
+        std::list<Creature*> creatures;
+        Trinity::AllCreaturesOfEntryInRange checker(bot, 0, maxRange);
+        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, checker);
+        Cell::VisitGridObjects(bot, searcher, maxRange);
 
-        for (Creature* creature : searcher.GetResult())
+        for (Creature* creature : creatures)
         {
-            if (DetectNPCType(creature) == type)
+            // Convert InteractionType to NPCType for comparison
+            InteractionType interactionType = DetectNPCType(creature);
+            NPCType npcType = NPCType::GENERAL;
+
+            // Map InteractionType to NPCType
+            switch (interactionType)
             {
-                float dist = bot->GetDistance(creature);
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    nearest = creature;
-                }
-            }
-        }
-
-        return nearest;
-    }
-
-    Creature* InteractionManager::FindVendorWithItem(Player* bot, uint32 itemId, float range) const
-    {
-        if (!bot || !itemId)
-            return nullptr;
-
-        Creature* nearest = nullptr;
-        float minDist = range;
-
-        Trinity::AllCreaturesOfEntryInRange checker(bot, 0, range);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, std::list<Creature*>(), checker);
-        Cell::VisitGridObjects(bot, searcher, range);
-
-        for (Creature* creature : searcher.GetResult())
-        {
-            if (!creature->IsVendor())
-                continue;
-
-            VendorItemData const* items = creature->GetVendorItems();
-            if (!items)
-                continue;
-
-            for (auto const& item : items->m_items)
-            {
-                if (item.item == itemId)
-                {
-                    float dist = bot->GetDistance(creature);
-                    if (dist < minDist)
-                    {
-                        minDist = dist;
-                        nearest = creature;
-                    }
+                case InteractionType::Vendor:
+                    npcType = NPCType::VENDOR;
                     break;
-                }
-            }
-        }
-
-        return nearest;
-    }
-
-    Creature* InteractionManager::FindNearestRepairVendor(Player* bot, float range) const
-    {
-        if (!bot)
-            return nullptr;
-
-        Creature* nearest = nullptr;
-        float minDist = range;
-
-        Trinity::AllCreaturesOfEntryInRange checker(bot, 0, range);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, std::list<Creature*>(), checker);
-        Cell::VisitGridObjects(bot, searcher, range);
-
-        for (Creature* creature : searcher.GetResult())
-        {
-            if (creature->GetNpcFlags() & UNIT_NPC_FLAG_REPAIR)
-            {
-                float dist = bot->GetDistance(creature);
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    nearest = creature;
-                }
-            }
-        }
-
-        return nearest;
-    }
-
-    Creature* InteractionManager::FindNearestClassTrainer(Player* bot, float range) const
-    {
-        if (!bot)
-            return nullptr;
-
-        uint8 botClass = bot->getClass();
-        Creature* nearest = nullptr;
-        float minDist = range;
-
-        Trinity::AllCreaturesOfEntryInRange checker(bot, 0, range);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, std::list<Creature*>(), checker);
-        Cell::VisitGridObjects(bot, searcher, range);
-
-        for (Creature* creature : searcher.GetResult())
-        {
-            if (!creature->IsTrainer())
-                continue;
-
-            // Check if trainer teaches bot's class
-            TrainerSpellData const* trainer_spells = creature->GetTrainerSpells();
-            if (!trainer_spells)
-                continue;
-
-            bool isClassTrainer = false;
-            for (auto const& spell : trainer_spells->spellList)
-            {
-                if (spell.second.reqLevel > 0) // Has level requirement = class spell
-                {
-                    // Check if bot can potentially learn this spell (class check)
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell.first);
-                    if (spellInfo)
-                    {
-                        // Simple class mask check
-                        if (spellInfo->SpellFamilyName == bot->GetSpellFamilyNameByClass())
-                        {
-                            isClassTrainer = true;
-                            break;
-                        }
-                    }
-                }
+                case InteractionType::Trainer:
+                    npcType = NPCType::TRAINER;
+                    break;
+                case InteractionType::Innkeeper:
+                    npcType = NPCType::INNKEEPER;
+                    break;
+                case InteractionType::FlightMaster:
+                    npcType = NPCType::FLIGHT_MASTER;
+                    break;
+                case InteractionType::Bank:
+                    npcType = NPCType::BANKER;
+                    break;
+                case InteractionType::Auctioneer:
+                    npcType = NPCType::AUCTIONEER;
+                    break;
+                case InteractionType::Mailbox:
+                    npcType = NPCType::MAILBOX;
+                    break;
+                case InteractionType::StableMaster:
+                    npcType = NPCType::STABLE_MASTER;
+                    break;
+                case InteractionType::Battlemaster:
+                    npcType = NPCType::BATTLEMASTER;
+                    break;
+                case InteractionType::Transmogrifier:
+                    npcType = NPCType::TRANSMOGRIFIER;
+                    break;
+                case InteractionType::QuestGiver:
+                    npcType = NPCType::QUEST_GIVER;
+                    break;
+                default:
+                    npcType = NPCType::GENERAL;
+                    break;
             }
 
-            if (isClassTrainer)
+            if (npcType == type)
             {
                 float dist = bot->GetDistance(creature);
                 if (dist < minDist)
@@ -597,7 +527,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_trainerHandler->LearnOptimalSpells(bot, trainer);
+        // TODO: Implement when TrainerInteraction is created
+        // return m_trainerHandler->LearnOptimalSpells(bot, trainer);
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::UseFlight(Player* bot, Creature* flightMaster, uint32 destinationNode)
@@ -615,10 +547,12 @@ namespace Playerbot
                 return startResult;
         }
 
-        if (destinationNode == 0)
-            return m_flightHandler->DiscoverPaths(bot, flightMaster);
-        else
-            return m_flightHandler->FlyToNode(bot, flightMaster, destinationNode);
+        // TODO: Implement when FlightMasterInteraction is created
+        // if (destinationNode == 0)
+        //     return m_flightHandler->DiscoverPaths(bot, flightMaster);
+        // else
+        //     return m_flightHandler->FlyToNode(bot, flightMaster, destinationNode);
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::BindHearthstone(Player* bot, Creature* innkeeper)
@@ -636,7 +570,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_innkeeperHandler->BindHearthstone(bot, innkeeper);
+        // TODO: Implement when InnkeeperInteraction is created
+        // return m_innkeeperHandler->BindHearthstone(bot, innkeeper);
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::AccessBank(Player* bot, WorldObject* banker)
@@ -660,7 +596,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_bankHandler->OpenBank(bot, banker);
+        // TODO: Implement when BankInteraction is created
+        // return m_bankHandler->OpenBank(bot, banker);
+        return InteractionResult::NotAvailable;
     }
 
     InteractionResult InteractionManager::CheckMail(Player* bot, GameObject* mailbox, bool takeAll)
@@ -678,10 +616,12 @@ namespace Playerbot
                 return startResult;
         }
 
-        if (takeAll)
-            return m_mailHandler->TakeAllMail(bot, mailbox);
-        else
-            return m_mailHandler->CheckMail(bot, mailbox);
+        // TODO: Implement when MailboxInteraction is created
+        // if (takeAll)
+        //     return m_mailHandler->TakeAllMail(bot, mailbox);
+        // else
+        //     return m_mailHandler->CheckMail(bot, mailbox);
+        return InteractionResult::NotAvailable;
     }
 
     void InteractionManager::HandleGossipMenu(Player* bot, uint32 menuId, WorldObject* target)
@@ -709,13 +649,12 @@ namespace Playerbot
         if (!context)
             return;
 
-        // Send gossip select packet
-        if (WorldSession* session = bot->GetSession())
+        // For bots, select gossip option directly
+        if (Creature* creature = target->ToCreature())
         {
-            if (Creature* creature = target->ToCreature())
-            {
-                session->HandleGossipSelectOptionOpcode(creature->GetGUID(), context->gossipMenuId, optionIndex);
-            }
+            bot->PlayerTalkClass->SendCloseGossip();
+            // OnGossipSelect doesn't exist in TrinityCore 11.2 - use gossip handler instead
+            // The gossip selection is handled through the gossip handler system
         }
     }
 
@@ -810,8 +749,8 @@ namespace Playerbot
         // Stop current movement
         bot->StopMoving();
 
-        // Move to target
-        float angle = bot->GetAngle(target);
+        // Move to target - use GetAbsoluteAngle instead of GetAngle
+        float angle = bot->GetAbsoluteAngle(target);
         float destX = target->GetPositionX() - (m_config.interactionRange - 0.5f) * std::cos(angle);
         float destY = target->GetPositionY() - (m_config.interactionRange - 0.5f) * std::sin(angle);
         float destZ = target->GetPositionZ();
@@ -900,8 +839,9 @@ namespace Playerbot
         if (!context || context->type != InteractionType::Trainer)
             return;
 
+        // TODO: Implement when TrainerInteraction is created
         // Pass to trainer handler
-        m_trainerHandler->HandleTrainerList(bot, packet);
+        // m_trainerHandler->HandleTrainerList(bot, packet);
     }
 
     void InteractionManager::HandleGossipMessage(Player* bot, WorldPacket const& packet)
@@ -926,23 +866,29 @@ namespace Playerbot
                     return m_vendorHandler->ProcessInteraction(bot, vendor);
                 break;
             case InteractionType::Trainer:
-                if (Creature* trainer = target->ToCreature())
-                    return m_trainerHandler->ProcessInteraction(bot, trainer);
-                break;
+                // TODO: Implement when TrainerInteraction is created
+                // if (Creature* trainer = target->ToCreature())
+                //     return m_trainerHandler->ProcessInteraction(bot, trainer);
+                return InteractionResult::NotAvailable;
             case InteractionType::Innkeeper:
-                if (Creature* innkeeper = target->ToCreature())
-                    return m_innkeeperHandler->ProcessInteraction(bot, innkeeper);
-                break;
+                // TODO: Implement when InnkeeperInteraction is created
+                // if (Creature* innkeeper = target->ToCreature())
+                //     return m_innkeeperHandler->ProcessInteraction(bot, innkeeper);
+                return InteractionResult::NotAvailable;
             case InteractionType::FlightMaster:
-                if (Creature* flightMaster = target->ToCreature())
-                    return m_flightHandler->ProcessInteraction(bot, flightMaster);
-                break;
+                // TODO: Implement when FlightMasterInteraction is created
+                // if (Creature* flightMaster = target->ToCreature())
+                //     return m_flightHandler->ProcessInteraction(bot, flightMaster);
+                return InteractionResult::NotAvailable;
             case InteractionType::Bank:
-                return m_bankHandler->ProcessInteraction(bot, target);
+                // TODO: Implement when BankInteraction is created
+                // return m_bankHandler->ProcessInteraction(bot, target);
+                return InteractionResult::NotAvailable;
             case InteractionType::Mailbox:
-                if (GameObject* mailbox = target->ToGameObject())
-                    return m_mailHandler->ProcessInteraction(bot, mailbox);
-                break;
+                // TODO: Implement when MailboxInteraction is created
+                // if (GameObject* mailbox = target->ToGameObject())
+                //     return m_mailHandler->ProcessInteraction(bot, mailbox);
+                return InteractionResult::NotAvailable;
             default:
                 return InteractionResult::NotAvailable;
         }
@@ -992,8 +938,8 @@ namespace Playerbot
                     return InteractionResult::Pending;
                 }
 
-                // Still moving
-                if (bot->IsMoving())
+                // Still moving - check MotionMaster instead of IsMoving()
+                if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != IDLE_MOTION_TYPE)
                     return InteractionResult::Pending;
 
                 // Not moving and not in range = problem
@@ -1011,10 +957,19 @@ namespace Playerbot
                 // Initiate interaction
                 if (context.needsGossip)
                 {
-                    if (WorldSession* session = bot->GetSession())
+                    // For bots, we need to interact with gossip NPCs directly
+                    if (Creature* creature = target->ToCreature())
                     {
-                        session->HandleGossipHelloOpcode(target);
+                        // SendPrepareGossip was removed - use PlayerTalkClass->SendGossipMenu instead
+                        // GossipMenuIds is now a vector in TrinityCore 11.2, use first entry if available
+                        std::vector<uint32> const& gossipMenuIds = creature->GetCreatureTemplate()->GossipMenuIds;
+                        uint32 gossipMenuId = gossipMenuIds.empty() ? 0 : gossipMenuIds[0];
+                        bot->PlayerTalkClass->SendGossipMenu(gossipMenuId, creature->GetGUID());
                         context.state = InteractionState::WaitingGossip;
+                    }
+                    else
+                    {
+                        context.state = InteractionState::ExecutingAction;
                     }
                 }
                 else
@@ -1112,7 +1067,7 @@ namespace Playerbot
     {
         if (bot)
         {
-            LOG_DEBUG("playerbot", "Bot {} interaction: {}", bot->GetName(), message);
+            TC_LOG_DEBUG("playerbot", "Bot {} interaction: {}", bot->GetName(), message);
         }
     }
 }
@@ -1120,7 +1075,7 @@ namespace Playerbot
 // Implementation of InteractionRequirement::CheckRequirements
 namespace Playerbot
 {
-    bool InteractionRequirement::CheckRequirements(Player* bot) const
+    bool InteractionRequirement::CheckRequirements(::Player* bot) const
     {
         if (!bot)
             return false;

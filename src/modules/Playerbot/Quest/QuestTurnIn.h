@@ -11,7 +11,7 @@
 
 #include "Define.h"
 #include "Player.h"
-#include "Quest.h"
+#include "QuestDef.h"
 #include "Creature.h"
 #include "Position.h"
 #include <unordered_map>
@@ -174,6 +174,11 @@ public:
         std::atomic<float> rewardSelectionAccuracy{0.85f};
         std::chrono::steady_clock::time_point lastUpdate;
 
+        // Delete copy operations (atomics are not copyable)
+        TurnInMetrics() = default;
+        TurnInMetrics(TurnInMetrics const&) = delete;
+        TurnInMetrics& operator=(TurnInMetrics const&) = delete;
+
         void Reset() {
             questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;
             failedTurnIns = 0; averageTurnInTime = 15000.0f; turnInSuccessRate = 0.95f;
@@ -186,10 +191,44 @@ public:
             uint32 successful = successfulTurnIns.load();
             return attempts > 0 ? (float)successful / attempts : 0.0f;
         }
+
+        // Snapshot structure for returning metrics
+        struct Snapshot {
+            uint32 questsTurnedIn;
+            uint32 turnInAttempts;
+            uint32 successfulTurnIns;
+            uint32 failedTurnIns;
+            float averageTurnInTime;
+            float turnInSuccessRate;
+            uint32 totalTravelDistance;
+            uint32 rewardsSelected;
+            float rewardSelectionAccuracy;
+            std::chrono::steady_clock::time_point lastUpdate;
+
+            float GetSuccessRate() const {
+                return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
+            }
+        };
+
+        // Create a snapshot of current metrics
+        Snapshot CreateSnapshot() const {
+            Snapshot snapshot;
+            snapshot.questsTurnedIn = questsTurnedIn.load();
+            snapshot.turnInAttempts = turnInAttempts.load();
+            snapshot.successfulTurnIns = successfulTurnIns.load();
+            snapshot.failedTurnIns = failedTurnIns.load();
+            snapshot.averageTurnInTime = averageTurnInTime.load();
+            snapshot.turnInSuccessRate = turnInSuccessRate.load();
+            snapshot.totalTravelDistance = totalTravelDistance.load();
+            snapshot.rewardsSelected = rewardsSelected.load();
+            snapshot.rewardSelectionAccuracy = rewardSelectionAccuracy.load();
+            snapshot.lastUpdate = lastUpdate;
+            return snapshot;
+        }
     };
 
-    TurnInMetrics GetBotTurnInMetrics(uint32 botGuid);
-    TurnInMetrics GetGlobalTurnInMetrics();
+    TurnInMetrics::Snapshot GetBotTurnInMetrics(uint32 botGuid);
+    TurnInMetrics::Snapshot GetGlobalTurnInMetrics();
 
     // Quest chain management
     void HandleQuestChainProgression(Player* bot, uint32 completedQuestId);

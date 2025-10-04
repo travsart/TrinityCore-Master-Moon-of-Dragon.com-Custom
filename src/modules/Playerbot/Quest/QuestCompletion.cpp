@@ -20,17 +20,21 @@
 #include "QuestPickup.h"
 #include "QuestTurnIn.h"
 #include "ObjectiveTracker.h"
-#include "../Movement/LeaderFollowBehavior.h"
+#include "Movement/LeaderFollowBehavior.h"
 #include "../AI/BotAI.h"
-#include "../Movement/MovementManager.h"
-#include "../NPC/InteractionManager.h"
+#include "Movement/Core/MovementManager.h"
+#include "Interaction/Core/InteractionManager.h"
 #include "../Combat/TargetSelector.h"
 #include "Config/PlayerbotConfig.h"
+#include "SpellMgr.h"
 #include <algorithm>
 #include <cmath>
 
 namespace Playerbot
 {
+
+// Quest giver interaction range constant
+constexpr float QUEST_GIVER_INTERACTION_RANGE = 5.0f;
 
 /**
  * @brief Singleton instance implementation
@@ -382,22 +386,25 @@ void QuestCompletion::UpdateObjectiveProgress(Player* bot, uint32 questId, uint3
 
     auto& objective = questIt->objectives[objectiveIndex];
 
-    // Get actual progress from game
-    QuestStatusData const* questStatus = bot->GetQuestStatus(questId);
-    if (!questStatus)
+    // Get quest from ObjectMgr to access objectives
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
         return;
 
-    // Update objective count
-    if (objectiveIndex < questStatus->CreatureOrGOCount.size())
-    {
-        objective.currentCount = questStatus->CreatureOrGOCount[objectiveIndex];
+    QuestObjectives const& questObjectives = quest->GetObjectives();
+    if (objectiveIndex >= questObjectives.size())
+        return;
 
-        if (objective.currentCount >= objective.requiredCount)
-        {
-            objective.status = ObjectiveStatus::COMPLETED;
-            _globalMetrics.objectivesCompleted++;
-            _botMetrics[bot->GetGUID().GetCounter()].objectivesCompleted++;
-        }
+    QuestObjective const& questObj = questObjectives[objectiveIndex];
+
+    // Update objective count using Player::GetQuestObjectiveData
+    objective.currentCount = bot->GetQuestObjectiveData(questObj);
+
+    if (objective.currentCount >= objective.requiredCount)
+    {
+        objective.status = ObjectiveStatus::COMPLETED;
+        _globalMetrics.objectivesCompleted++;
+        _botMetrics[bot->GetGUID().GetCounter()].objectivesCompleted++;
     }
 }
 
@@ -461,11 +468,22 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
         // Engage target through combat system
         if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
         {
-            ai->SetPrimaryTarget(target);
+            // Set the bot's target to the creature
+            bot->SetSelection(target->GetGUID());
+            // Attack the target
+            bot->Attack(target, true);
         }
 
-        // Track kill credit
-        objective.currentCount = bot->GetQuestStatus(objective.questId)->CreatureOrGOCount[objective.objectiveIndex];
+        // Track kill credit - Update using proper API
+        Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+        if (quest)
+        {
+            QuestObjectives const& questObjectives = quest->GetObjectives();
+            if (objective.objectiveIndex < questObjectives.size())
+            {
+                objective.currentCount = bot->GetQuestObjectiveData(questObjectives[objective.objectiveIndex]);
+            }
+        }
 
         TC_LOG_DEBUG("playerbot", "QuestCompletion::HandleKillObjective - Bot %s engaging %s for quest %u",
             bot->GetName().c_str(), target->GetName().c_str(), objective.questId);
@@ -546,12 +564,12 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
         // Move to NPC if not in range
         if (bot->GetDistance(npc) > QUEST_GIVER_INTERACTION_RANGE)
         {
-            MovementManager::MoveToTarget(bot, npc);
+            MovementManager::Instance()->MoveToUnit(bot, npc, QUEST_GIVER_INTERACTION_RANGE - 1.0f);
             return;
         }
 
-        // Interact with NPC
-        InteractionManager::instance()->InteractWithNpc(bot, npc);
+        // Interact with NPC - use StartInteraction instead of InteractWithNPC
+        InteractionManager::Instance()->StartInteraction(bot, npc, InteractionType::None);
 
         // Mark objective as complete
         objective.status = ObjectiveStatus::COMPLETED;
@@ -636,7 +654,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
         // Move to object if not in range
         if (bot->GetDistance(gameObject) > QUEST_GIVER_INTERACTION_RANGE)
         {
-            MovementManager::MoveToTarget(bot, gameObject);
+            MovementManager::Instance()->MoveTo(bot, gameObject->GetPosition());
             return;
         }
 
@@ -692,7 +710,7 @@ void QuestCompletion::HandleSpellCastObjective(Player* bot, QuestObjectiveData& 
     }
 
     // Cast the spell
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(objective.targetId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(objective.targetId, DIFFICULTY_NONE);
     if (spellInfo)
     {
         bot->CastSpell(target ? target : bot, objective.targetId, false);
@@ -735,8 +753,8 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
 
     if (target)
     {
-        // Perform emote
-        bot->HandleEmoteCommand(objective.targetId); // targetId is emote ID in this case
+        // Perform emote (cast targetId to Emote enum)
+        bot->HandleEmoteCommand(static_cast<Emote>(objective.targetId));
 
         // Update progress
         objective.currentCount++;
@@ -793,7 +811,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
         // Follow the escort target
         if (bot->GetDistance(escortTarget) > 10.0f)
         {
-            MovementManager::MoveToTarget(bot, escortTarget);
+            MovementManager::Instance()->MoveToUnit(bot, escortTarget, 5.0f);
         }
 
         // Check if escort is complete (handled by quest system)
@@ -830,7 +848,7 @@ void QuestCompletion::NavigateToObjective(Player* bot, const QuestObjectiveData&
     Position targetPos = GetOptimalObjectivePosition(bot, objective);
 
     // Use movement manager to navigate
-    MovementManager::MoveTo(bot, targetPos);
+    MovementManager::Instance()->MoveTo(bot, targetPos);
 
     TC_LOG_DEBUG("playerbot", "QuestCompletion::NavigateToObjective - Bot %s moving to objective for quest %u",
         bot->GetName().c_str(), objective.questId);
@@ -889,8 +907,8 @@ bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objec
 
     // First check if item drops from creatures
     std::list<Creature*> creatures;
-    Trinity::AllCreaturesInRange check(bot, objective.searchRadius);
-    Trinity::CreatureListSearcher<Trinity::AllCreaturesInRange> searcher(bot, creatures, check);
+    Trinity::AnyUnitInObjectRangeCheck check(bot, objective.searchRadius);
+    Trinity::CreatureListSearcher searcher(bot, creatures, check);
     Cell::VisitGridObjects(bot, searcher, objective.searchRadius);
 
     for (Creature* creature : creatures)
@@ -991,41 +1009,51 @@ void QuestCompletion::ParseQuestObjectives(QuestProgressData& progress, const Qu
     if (!quest)
         return;
 
-    // Parse kill/interact objectives
-    for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
+    // Parse objectives from Quest::Objectives vector (modern TrinityCore API)
+    QuestObjectives const& questObjectives = quest->GetObjectives();
+
+    for (size_t i = 0; i < questObjectives.size(); ++i)
     {
-        if (quest->RequiredNpcOrGo[i] != 0)
+        QuestObjective const& obj = questObjectives[i];
+
+        // Map TrinityCore objective types to our internal types
+        QuestObjectiveType internalType;
+        switch (obj.Type)
         {
-            QuestObjectiveType type = quest->RequiredNpcOrGo[i] > 0 ?
-                QuestObjectiveType::KILL_CREATURE : QuestObjectiveType::USE_GAMEOBJECT;
-
-            uint32 targetId = std::abs(quest->RequiredNpcOrGo[i]);
-            uint32 requiredCount = quest->RequiredNpcOrGoCount[i];
-
-            if (requiredCount > 0)
-            {
-                QuestObjectiveData objective(quest->GetQuestId(), i, type, targetId, requiredCount);
-                objective.description = quest->ObjectiveText[i];
-                progress.objectives.push_back(objective);
-            }
+            case QUEST_OBJECTIVE_MONSTER:
+                internalType = QuestObjectiveType::KILL_CREATURE;
+                break;
+            case QUEST_OBJECTIVE_ITEM:
+                internalType = QuestObjectiveType::COLLECT_ITEM;
+                break;
+            case QUEST_OBJECTIVE_GAMEOBJECT:
+                internalType = QuestObjectiveType::USE_GAMEOBJECT;
+                break;
+            case QUEST_OBJECTIVE_TALKTO:
+                internalType = QuestObjectiveType::TALK_TO_NPC;
+                break;
+            case QUEST_OBJECTIVE_AREATRIGGER:
+            case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
+            case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
+                internalType = QuestObjectiveType::REACH_LOCATION;
+                break;
+            case QUEST_OBJECTIVE_LEARNSPELL:
+                internalType = QuestObjectiveType::LEARN_SPELL;
+                break;
+            default:
+                internalType = QuestObjectiveType::CUSTOM_OBJECTIVE;
+                break;
         }
-    }
 
-    // Parse item objectives
-    for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
-    {
-        if (quest->RequiredItemId[i] != 0 && quest->RequiredItemCount[i] > 0)
+        if (obj.Amount > 0)
         {
-            QuestObjectiveData objective(quest->GetQuestId(), i,
-                QuestObjectiveType::COLLECT_ITEM,
-                quest->RequiredItemId[i],
-                quest->RequiredItemCount[i]);
+            QuestObjectiveData objective(quest->GetQuestId(), static_cast<uint32>(i),
+                                        internalType, obj.ObjectID, obj.Amount);
+            objective.description = obj.Description;
+            objective.isOptional = (obj.Flags & QUEST_OBJECTIVE_FLAG_OPTIONAL) != 0;
             progress.objectives.push_back(objective);
         }
     }
-
-    // Parse special objectives (explore, spell cast, etc.)
-    // These would need to be determined from quest flags and other fields
 }
 
 /**
@@ -1038,19 +1066,25 @@ void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objec
     if (!bot)
         return;
 
-    QuestStatusData const* questStatus = bot->GetQuestStatus(objective.questId);
-    if (!questStatus)
+    // Get quest from ObjectMgr to access objectives
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest)
         return;
+
+    QuestObjectives const& questObjectives = quest->GetObjectives();
+    if (objective.objectiveIndex >= questObjectives.size())
+        return;
+
+    QuestObjective const& questObj = questObjectives[objective.objectiveIndex];
 
     // Update based on objective type
     switch (objective.type)
     {
         case QuestObjectiveType::KILL_CREATURE:
         case QuestObjectiveType::USE_GAMEOBJECT:
-            if (objective.objectiveIndex < questStatus->CreatureOrGOCount.size())
-            {
-                objective.currentCount = questStatus->CreatureOrGOCount[objective.objectiveIndex];
-            }
+        case QuestObjectiveType::TALK_TO_NPC:
+            // Use GetQuestObjectiveData to retrieve progress
+            objective.currentCount = bot->GetQuestObjectiveData(questObj);
             break;
 
         case QuestObjectiveType::COLLECT_ITEM:
@@ -1062,6 +1096,10 @@ void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objec
             if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
             {
                 objective.currentCount = objective.requiredCount;
+            }
+            else
+            {
+                objective.currentCount = bot->GetQuestObjectiveData(questObj);
             }
             break;
     }
@@ -1194,9 +1232,9 @@ void QuestCompletion::ExecuteGroupStrategy(Player* bot, QuestProgressData& progr
         {
             // Check if other group members are near this objective
             bool groupNearby = false;
-            for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+            for (GroupReference const& itr : group->GetMembers())
             {
-                Player* member = itr->GetSource();
+                Player* member = itr.GetSource();
                 if (member && member != bot && member->IsAlive())
                 {
                     if (member->GetDistance(objective.targetLocation) < 50.0f)
@@ -1323,24 +1361,25 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
  * @param botGuid Bot GUID
  * @return Completion metrics
  */
-QuestCompletion::QuestCompletionMetrics QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
+QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
     std::lock_guard<std::mutex> lock(_completionMutex);
 
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
-        return it->second;
+        return it->second.CreateSnapshot();
 
-    return QuestCompletionMetrics();
+    QuestCompletionMetrics defaultMetrics;
+    return defaultMetrics.CreateSnapshot();
 }
 
 /**
  * @brief Get global completion metrics
  * @return Global completion metrics
  */
-QuestCompletion::QuestCompletionMetrics QuestCompletion::GetGlobalCompletionMetrics()
+QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetGlobalCompletionMetrics()
 {
-    return _globalMetrics;
+    return _globalMetrics.CreateSnapshot();
 }
 
 /**
@@ -1386,17 +1425,7 @@ void QuestCompletion::Update(uint32 diff)
         cleanupTimer = 0;
     }
 
-    // Process scheduled turn-ins
-    ProcessScheduledTurnIns();
-}
-
-/**
- * @brief Process scheduled turn-ins
- */
-void QuestCompletion::ProcessScheduledTurnIns()
-{
-    // This is handled by QuestTurnIn system
-    QuestTurnIn::instance()->ProcessScheduledTurnIns();
+    // Note: Quest turn-in processing is handled by QuestTurnIn system
 }
 
 /**

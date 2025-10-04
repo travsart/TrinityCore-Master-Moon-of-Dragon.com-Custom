@@ -20,8 +20,9 @@
 
 class Player;
 class Unit;
+class Map;
 
-namespace PlayerBot
+namespace Playerbot
 {
     /**
      * @class PathfindingAdapter

@@ -17,7 +17,7 @@
 
 class Map;
 
-namespace PlayerBot
+namespace Playerbot
 {
     /**
      * @class PathOptimizer

@@ -19,7 +19,7 @@ class Player;
 class Unit;
 class MotionMaster;
 
-namespace PlayerBot
+namespace Playerbot
 {
     /**
      * @class MovementGenerator

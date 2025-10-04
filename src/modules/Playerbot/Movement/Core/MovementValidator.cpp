@@ -12,11 +12,13 @@
 #include "Map.h"
 #include "MMapFactory.h"
 #include "VMapFactory.h"
+#include "VMapDefinitions.h"
+#include "PhaseShift.h"
 #include "Log.h"
 #include "World.h"
 #include <random>
 
-namespace PlayerBot
+namespace Playerbot
 {
     MovementValidator::MovementValidator()
         : _stuckDetectionEnabled(true),
@@ -209,15 +211,17 @@ namespace PlayerBot
         }
 
         // Check liquid type at position
+        PhaseShift phaseShift;
         LiquidData liquidData;
-        ZLiquidStatus liquidStatus = map->GetLiquidStatus(map->GetPhaseShift(),
+        ZLiquidStatus liquidStatus = map->GetLiquidStatus(phaseShift,
             position.GetPositionX(), position.GetPositionY(), position.GetPositionZ(),
-            MAP_ALL_LIQUIDS, &liquidData);
+            map_liquidHeaderTypeFlags::AllLiquids, &liquidData);
 
         if (liquidStatus != LIQUID_MAP_NO_WATER)
         {
             // Check if it's lava or slime
-            if (liquidData.type_flags & (MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME))
+            if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) ||
+                liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Slime))
                 return true;
         }
 
@@ -237,11 +241,12 @@ namespace PlayerBot
         if (groundZ < _voidThreshold)
             return true;
 
-        // Check if position is outside map bounds
-        if (!map->IsInLineOfSight(position.GetPositionX(), position.GetPositionY(),
+        // Check if position is outside map bounds using line of sight check
+        PhaseShift phaseShift;
+        if (!map->isInLineOfSight(phaseShift, position.GetPositionX(), position.GetPositionY(),
             position.GetPositionZ() + 2.0f, position.GetPositionX(),
             position.GetPositionY(), position.GetPositionZ() - 100.0f,
-            map->GetPhaseShift(), LINEOFSIGHT_CHECK_VMAP))
+            LINEOFSIGHT_CHECK_VMAP, VMAP::ModelIgnoreFlags::Nothing))
         {
             return true;
         }
@@ -341,7 +346,7 @@ namespace PlayerBot
             // Strategy 1: Move backward
             float angle = bot->GetOrientation() + M_PI;
             float distance = 5.0f + data.unstuckAttempts * 2.0f;
-            bot->GetNearPosition(unstuckPos, distance, angle);
+            unstuckPos = bot->GetNearPosition(distance, angle);
             foundPosition = ValidateDestination(bot, unstuckPos);
         }
         else if (data.unstuckAttempts <= 6)
@@ -400,13 +405,15 @@ namespace PlayerBot
         if (!map)
             return false;
 
+        PhaseShift phaseShift;
         LiquidData liquidData;
-        ZLiquidStatus liquidStatus = map->GetLiquidStatus(map->GetPhaseShift(),
+        ZLiquidStatus liquidStatus = map->GetLiquidStatus(phaseShift,
             position.GetPositionX(), position.GetPositionY(), position.GetPositionZ(),
-            MAP_ALL_LIQUIDS, &liquidData);
+            map_liquidHeaderTypeFlags::AllLiquids, &liquidData);
 
         return liquidStatus != LIQUID_MAP_NO_WATER &&
-               !(liquidData.type_flags & (MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME));
+               !liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) &&
+               !liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Slime);
     }
 
     bool MovementValidator::RequiresFlying(Map* map, Position const& position) const
@@ -430,9 +437,15 @@ namespace PlayerBot
         if (!map)
             return false;
 
-        // Check VMAP for indoor flag
-        return map->IsIndoors(position.GetPositionX(), position.GetPositionY(),
-                             position.GetPositionZ());
+        // TrinityCore 11.2 doesn't have IsIndoors() method
+        // Alternative: Check if there's a roof above by doing a LOS check upward
+        PhaseShift phaseShift;
+        bool hasRoof = !map->isInLineOfSight(phaseShift,
+            position.GetPositionX(), position.GetPositionY(), position.GetPositionZ(),
+            position.GetPositionX(), position.GetPositionY(), position.GetPositionZ() + 50.0f,
+            LINEOFSIGHT_CHECK_VMAP, VMAP::ModelIgnoreFlags::Nothing);
+
+        return hasRoof;
     }
 
     float MovementValidator::GetSafeFallDistance(Player* bot) const
@@ -459,9 +472,10 @@ namespace PlayerBot
         if (!map)
             return false;
 
-        return map->IsInLineOfSight(start.GetPositionX(), start.GetPositionY(),
+        PhaseShift phaseShift;
+        return map->isInLineOfSight(phaseShift, start.GetPositionX(), start.GetPositionY(),
             start.GetPositionZ() + 2.0f, end.GetPositionX(), end.GetPositionY(),
-            end.GetPositionZ() + 2.0f, map->GetPhaseShift(), LINEOFSIGHT_ALL_CHECKS);
+            end.GetPositionZ() + 2.0f, LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
     }
 
     void MovementValidator::SetStuckParameters(float threshold, uint32 checkInterval,
@@ -517,7 +531,8 @@ namespace PlayerBot
         if (!map)
             return false;
 
-        float groundZ = map->GetHeight(map->GetPhaseShift(), x, y, z, true, 100.0f);
+        PhaseShift phaseShift;
+        float groundZ = map->GetHeight(phaseShift, x, y, z, true, 100.0f);
         if (groundZ > INVALID_HEIGHT)
         {
             z = groundZ;
@@ -551,7 +566,7 @@ namespace PlayerBot
             float angle = angleDist(gen);
             float distance = distDist(gen);
 
-            bot->GetNearPosition(unstuckPos, distance, angle);
+            unstuckPos = bot->GetNearPosition(distance, angle);
 
             if (ValidateDestination(bot, unstuckPos))
                 return true;
@@ -567,8 +582,9 @@ namespace PlayerBot
             return false;
 
         // Use VMAP to check for collision
-        return !map->IsInLineOfSight(start.GetPositionX(), start.GetPositionY(),
+        PhaseShift phaseShift;
+        return !map->isInLineOfSight(phaseShift, start.GetPositionX(), start.GetPositionY(),
             start.GetPositionZ() + 2.0f, end.GetPositionX(), end.GetPositionY(),
-            end.GetPositionZ() + 2.0f, map->GetPhaseShift(), LINEOFSIGHT_CHECK_VMAP);
+            end.GetPositionZ() + 2.0f, LINEOFSIGHT_CHECK_VMAP, VMAP::ModelIgnoreFlags::Nothing);
     }
 }

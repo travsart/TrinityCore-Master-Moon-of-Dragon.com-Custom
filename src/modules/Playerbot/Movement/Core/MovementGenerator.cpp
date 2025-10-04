@@ -9,6 +9,7 @@
 
 #include "MovementGenerator.h"
 #include "Player.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "MovementPackets.h"
 #include "MovementDefines.h"
@@ -17,7 +18,7 @@
 #include "World.h"
 #include <chrono>
 
-namespace PlayerBot
+namespace Playerbot
 {
     MovementGenerator::MovementGenerator(MovementGeneratorType type, MovementPriority priority)
         : _type(type), _priority(priority), _isActive(false), _hasReached(false),
@@ -111,7 +112,7 @@ namespace PlayerBot
         if (_state.currentType == MovementGeneratorType::MOVEMENT_FLEE)
             init.SetBackward();
         else if (_state.currentType == MovementGeneratorType::MOVEMENT_CHASE)
-            init.SetRun();
+            init.SetWalk(false); // false = run, true = walk
 
         init.Launch();
 
@@ -134,13 +135,8 @@ namespace PlayerBot
         float diff = std::abs(angle - currentAngle);
         if (diff > 0.1f && diff < (2 * M_PI - 0.1f))
         {
+            // Use TrinityCore's built-in facing method which handles packet sending
             bot->SetFacingTo(angle);
-
-            // Send orientation update packet
-            WorldPackets::Movement::MoveSetFacing packet;
-            packet.MoverGUID = bot->GetGUID();
-            packet.Angle = angle;
-            bot->SendMessageToSet(packet.Write(), false);
         }
     }
 
@@ -250,8 +246,8 @@ namespace PlayerBot
         float angle = frand(0.0f, 2 * M_PI);
         float distance = 5.0f;
 
-        Position unstuckPos;
-        bot->GetNearPosition(unstuckPos, distance, angle);
+        // GetNearPosition(dist, angle) is a const method that returns Position
+        Position unstuckPos = bot->GetNearPosition(distance, angle);
 
         // Validate the unstuck position
         if (ValidateDestination(bot, unstuckPos))
@@ -297,13 +293,11 @@ namespace PlayerBot
         if (!bot || !bot->GetMap())
             return false;
 
-        // Check if position is valid in the map
-        if (!bot->GetMap()->IsInLineOfSight(bot->GetPositionX(), bot->GetPositionY(),
-            bot->GetPositionZ() + 2.0f, destination.GetPositionX(),
-            destination.GetPositionY(), destination.GetPositionZ() + 2.0f,
-            bot->GetPhaseShift(), LINEOFSIGHT_ALL_CHECKS))
+        // Check distance - too far destinations are suspect
+        float distance = bot->GetExactDist(&destination);
+        if (distance > 500.0f)
         {
-            TC_LOG_DEBUG("playerbot.movement", "Destination failed LOS check");
+            TC_LOG_DEBUG("playerbot.movement", "Destination too far: %.2f yards", distance);
             return false;
         }
 
@@ -339,24 +333,24 @@ namespace PlayerBot
         bot->RemoveUnitMovementFlag(MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING);
 
         // Apply appropriate flags based on terrain
-        if (terrain & TerrainType::TERRAIN_WATER)
+        if (HasFlag(terrain, TerrainType::TERRAIN_WATER))
         {
             if (bot->CanSwim())
                 bot->AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
         }
-        else if (terrain & TerrainType::TERRAIN_AIR)
+        else if (HasFlag(terrain, TerrainType::TERRAIN_AIR))
         {
             if (bot->CanFly())
                 bot->AddUnitMovementFlag(MOVEMENTFLAG_FLYING);
         }
 
         // Handle special terrain types
-        if (terrain & TerrainType::TERRAIN_LAVA)
+        if (HasFlag(terrain, TerrainType::TERRAIN_LAVA))
         {
             // Increase movement speed if has fire resistance
             // This would require checking auras/resistances
         }
-        else if (terrain & TerrainType::TERRAIN_SLIME)
+        else if (HasFlag(terrain, TerrainType::TERRAIN_SLIME))
         {
             // Apply slow effect if not immune
             // This would require checking immunities

@@ -419,7 +419,7 @@ Position LeaderFollowBehavior::CalculateFollowPosition(Player* leader, Formation
     // Adjust for formation mode
     if (_config.mode == FollowMode::FORMATION)
     {
-        FormationPosition formPos = GetFormationPosition(role);
+        FollowFormationPosition formPos = GetFormationPosition(role);
         angle = formPos.angle;
         distance = formPos.distance;
     }
@@ -1065,9 +1065,9 @@ void LeaderFollowBehavior::AdjustMovementSpeed(Player* bot, float distanceToTarg
     }
 }
 
-FormationPosition LeaderFollowBehavior::GetFormationPosition(FormationRole role)
+FollowFormationPosition LeaderFollowBehavior::GetFormationPosition(FormationRole role)
 {
-    FormationPosition pos;
+    FollowFormationPosition pos;
 
     switch (role)
     {

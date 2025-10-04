@@ -9,34 +9,28 @@
 
 #include "MovementManager.h"
 #include "MovementGenerator.h"
+#include "../Generators/ConcreteMovementGenerators.h"
 #include "../Pathfinding/PathfindingAdapter.h"
 #include "../Pathfinding/PathOptimizer.h"
 #include "MovementValidator.h"
 #include "../Pathfinding/NavMeshInterface.h"
+#include "../../AI/Combat/FormationManager.h"
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
 #include "Config.h"
+#include "ObjectAccessor.h"
 #include <execution>
 
-namespace PlayerBot
+namespace Playerbot
 {
     // Static member initialization
-    MovementManager* MovementManager::_instance = nullptr;
-    std::mutex MovementManager::_instanceMutex;
+    std::unique_ptr<MovementManager> MovementManager::s_instance = nullptr;
+    std::once_flag MovementManager::s_initFlag;
 
     MovementManager::MovementManager()
-        : _updateCounter(0), _totalCpuMicros(0), _totalMemoryBytes(0),
-          _performanceMonitoring(true), _maxBotsPerUpdate(MovementConstants::MAX_BOTS_PER_UPDATE),
-          _defaultUpdateInterval(MovementConstants::UPDATE_INTERVAL_NORMAL),
-          _defaultFollowDistance(MovementConstants::FORMATION_FOLLOW_DIST),
-          _defaultFleeDistance(20.0f), _formationSpread(MovementConstants::FORMATION_SPREAD),
-          _enablePathOptimization(true), _enableStuckDetection(true),
-          _pathCacheSize(MovementConstants::PATH_CACHE_SIZE),
-          _pathCacheDuration(MovementConstants::PATH_CACHE_DURATION)
     {
-        _lastMetricsUpdate = std::chrono::steady_clock::now();
-        _globalMetrics.Reset();
+        // Members are default-initialized through their declarations
     }
 
     MovementManager::~MovementManager()
@@ -46,16 +40,12 @@ namespace PlayerBot
 
     MovementManager* MovementManager::Instance()
     {
-        if (!_instance)
+        std::call_once(s_initFlag, []()
         {
-            std::lock_guard<std::mutex> lock(_instanceMutex);
-            if (!_instance)
-            {
-                _instance = new MovementManager();
-                _instance->Initialize();
-            }
-        }
-        return _instance;
+            s_instance = std::make_unique<MovementManager>();
+            s_instance->Initialize();
+        });
+        return s_instance.get();
     }
 
     bool MovementManager::Initialize()
@@ -76,7 +66,9 @@ namespace PlayerBot
         }
 
         // Initialize optimizer
-        _optimizer->SetOptimizationLevel(_enablePathOptimization ? 2 : 0);
+        _optimizer->SetOptimizationLevel(_enablePathOptimization ?
+            PathOptimizer::OptimizationLevel::OPTIMIZATION_SMOOTH :
+            PathOptimizer::OptimizationLevel::OPTIMIZATION_NONE);
 
         // Initialize validator
         _validator->EnableStuckDetection(_enableStuckDetection);
@@ -97,7 +89,7 @@ namespace PlayerBot
 
         // Stop all active movements
         {
-            std::unique_lock<std::shared_mutex> lock(_dataLock);
+            std::unique_lock<std::shared_mutex> lock(m_mutex);
             for (auto& [guid, data] : _botData)
             {
                 if (data->currentGenerator)
@@ -127,13 +119,13 @@ namespace PlayerBot
 
         BotMovementData* data = nullptr;
         {
-            std::shared_lock<std::shared_mutex> lock(_dataLock);
+            std::shared_lock<std::shared_mutex> lock(m_mutex);
             auto it = _botData.find(bot->GetGUID());
             if (it == _botData.end())
             {
                 // Create new movement data if doesn't exist
                 lock.unlock();
-                std::unique_lock<std::shared_mutex> writeLock(_dataLock);
+                std::unique_lock<std::shared_mutex> writeLock(m_mutex);
                 auto [iter, inserted] = _botData.emplace(bot->GetGUID(),
                     std::make_unique<BotMovementData>());
                 data = iter->second.get();
@@ -150,7 +142,7 @@ namespace PlayerBot
         // Check if update is needed based on priority and timing
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - data->lastUpdate).count();
+            now - data->lastUpdateTime).count();
 
         uint32 requiredInterval = _defaultUpdateInterval;
         if (bot->IsInCombat())
@@ -161,7 +153,7 @@ namespace PlayerBot
         if (elapsed < requiredInterval && !data->needsUpdate)
             return;
 
-        data->lastUpdate = now;
+        data->lastUpdateTime = now;
         data->needsUpdate = false;
 
         // Process pending generator switch
@@ -249,7 +241,7 @@ namespace PlayerBot
         }
     }
 
-    MovementResult MovementManager::Follow(Player* bot, Unit* target, float minDist,
+    MovementResult MovementManager::FollowUnit(Player* bot, Unit* target, float minDist,
                                           float maxDist, float angle)
     {
         if (!bot || !target)
@@ -275,7 +267,7 @@ namespace PlayerBot
         return MovementResult::MOVEMENT_IN_PROGRESS;
     }
 
-    MovementResult MovementManager::Flee(Player* bot, Unit* threat, float distance)
+    MovementResult MovementManager::FleeFrom(Player* bot, Unit* threat, float distance)
     {
         if (!bot || !threat)
             return MovementResult::MOVEMENT_FAILED;
@@ -345,7 +337,7 @@ namespace PlayerBot
         return MovementResult::MOVEMENT_IN_PROGRESS;
     }
 
-    MovementResult MovementManager::Wander(Player* bot, float radius, uint32 duration)
+    MovementResult MovementManager::WanderAround(Player* bot, float radius, uint32 duration)
     {
         if (!bot)
             return MovementResult::MOVEMENT_FAILED;
@@ -385,7 +377,7 @@ namespace PlayerBot
 
         // Store formation data
         {
-            std::unique_lock<std::shared_mutex> lock(_dataLock);
+            std::unique_lock<std::shared_mutex> lock(m_mutex);
             uint32 groupId = bot->GetGroup() ? bot->GetGroup()->GetGUID().GetCounter() : 0;
             if (groupId > 0)
             {
@@ -422,7 +414,7 @@ namespace PlayerBot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it != _botData.end())
         {
@@ -448,17 +440,17 @@ namespace PlayerBot
         if (!bot)
             return false;
 
-        std::shared_lock<std::shared_mutex> lock(_dataLock);
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() && it->second->state.isMoving;
     }
 
-    MovementState const* MovementManager::GetMovementState(Player* bot) const
+    MovementState const* MovementManager::GetMovementStatePtr(Player* bot) const
     {
         if (!bot)
             return nullptr;
 
-        std::shared_lock<std::shared_mutex> lock(_dataLock);
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() ? &it->second->state : nullptr;
     }
@@ -468,7 +460,7 @@ namespace PlayerBot
         if (!bot)
             return nullptr;
 
-        std::shared_lock<std::shared_mutex> lock(_dataLock);
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         return it != _botData.end() ? it->second->currentGenerator : nullptr;
     }
@@ -479,7 +471,7 @@ namespace PlayerBot
         if (!leader || members.empty())
             return false;
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
 
         uint32 groupId = leader->GetGroup() ? leader->GetGroup()->GetGUID().GetCounter() : 0;
         if (groupId == 0)
@@ -518,7 +510,7 @@ namespace PlayerBot
         if (groupId == 0)
             return;
 
-        std::shared_lock<std::shared_mutex> lock(_dataLock);
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
         auto it = _groupFormations.find(groupId);
         if (it == _groupFormations.end() || !it->second.isActive)
             return;
@@ -572,7 +564,7 @@ namespace PlayerBot
             for (size_t i = 1; i < members.size(); ++i)
             {
                 // Other members maintain formation relative to leader
-                success &= (MoveInFormation(members[i], leader, FormationType::FORMATION_COLUMN,
+                success &= (MoveInFormation(members[i], leader, FormationType::COLUMN,
                     static_cast<uint8>(i - 1)) == MovementResult::MOVEMENT_IN_PROGRESS);
             }
         }
@@ -620,20 +612,20 @@ namespace PlayerBot
 
     bool MovementManager::LoadConfig()
     {
-        _maxBotsPerUpdate = sConfigMgr->GetOption<uint32>("Playerbot.Movement.MaxBotsPerUpdate",
+        _maxBotsPerUpdate = sConfigMgr->GetIntDefault("Playerbot.Movement.MaxBotsPerUpdate",
             MovementConstants::MAX_BOTS_PER_UPDATE);
-        _defaultUpdateInterval = sConfigMgr->GetOption<uint32>("Playerbot.Movement.UpdateInterval",
+        _defaultUpdateInterval = sConfigMgr->GetIntDefault("Playerbot.Movement.UpdateInterval",
             MovementConstants::UPDATE_INTERVAL_NORMAL);
-        _defaultFollowDistance = sConfigMgr->GetOption<float>("Playerbot.Movement.FollowDistance",
+        _defaultFollowDistance = sConfigMgr->GetFloatDefault("Playerbot.Movement.FollowDistance",
             MovementConstants::FORMATION_FOLLOW_DIST);
-        _defaultFleeDistance = sConfigMgr->GetOption<float>("Playerbot.Movement.FleeDistance", 20.0f);
-        _formationSpread = sConfigMgr->GetOption<float>("Playerbot.Movement.FormationSpread",
+        _defaultFleeDistance = sConfigMgr->GetFloatDefault("Playerbot.Movement.FleeDistance", 20.0f);
+        _formationSpread = sConfigMgr->GetFloatDefault("Playerbot.Movement.FormationSpread",
             MovementConstants::FORMATION_SPREAD);
-        _enablePathOptimization = sConfigMgr->GetOption<bool>("Playerbot.Movement.EnableOptimization", true);
-        _enableStuckDetection = sConfigMgr->GetOption<bool>("Playerbot.Movement.EnableStuckDetection", true);
-        _pathCacheSize = sConfigMgr->GetOption<uint32>("Playerbot.Movement.PathCacheSize",
+        _enablePathOptimization = sConfigMgr->GetBoolDefault("Playerbot.Movement.EnableOptimization", true);
+        _enableStuckDetection = sConfigMgr->GetBoolDefault("Playerbot.Movement.EnableStuckDetection", true);
+        _pathCacheSize = sConfigMgr->GetIntDefault("Playerbot.Movement.PathCacheSize",
             MovementConstants::PATH_CACHE_SIZE);
-        _pathCacheDuration = sConfigMgr->GetOption<uint32>("Playerbot.Movement.PathCacheDuration",
+        _pathCacheDuration = sConfigMgr->GetIntDefault("Playerbot.Movement.PathCacheDuration",
             MovementConstants::PATH_CACHE_DURATION);
 
         return true;
@@ -647,7 +639,9 @@ namespace PlayerBot
             _pathfinder->SetCacheParameters(_pathCacheSize, _pathCacheDuration);
 
         if (_optimizer)
-            _optimizer->SetOptimizationLevel(_enablePathOptimization ? 2 : 0);
+            _optimizer->SetOptimizationLevel(_enablePathOptimization ?
+                PathOptimizer::OptimizationLevel::OPTIMIZATION_SMOOTH :
+                PathOptimizer::OptimizationLevel::OPTIMIZATION_NONE);
 
         if (_validator)
             _validator->EnableStuckDetection(_enableStuckDetection);
@@ -656,10 +650,54 @@ namespace PlayerBot
     MovementGeneratorPtr MovementManager::CreateGenerator(MovementGeneratorType type,
                                                          MovementPriority priority)
     {
-        // This would create specific generator instances based on type
-        // For now, returning base generator as placeholder
-        // Real implementation would instantiate FollowGenerator, FleeGenerator, etc.
-        return std::make_shared<MovementGenerator>(type, priority);
+        // Create specific concrete generator instances based on type
+        switch (type)
+        {
+        case MovementGeneratorType::MOVEMENT_IDLE:
+            return std::make_shared<IdleMovementGenerator>();
+
+        case MovementGeneratorType::MOVEMENT_POINT:
+            // Default point - will be configured via Initialize
+            return std::make_shared<PointMovementGenerator>(Position(), priority);
+
+        case MovementGeneratorType::MOVEMENT_FOLLOW:
+            // Default follow - will be configured via Initialize
+            return std::make_shared<FollowMovementGenerator>(ObjectGuid::Empty,
+                _defaultFollowDistance, _defaultFollowDistance + 5.0f, 0.0f, priority);
+
+        case MovementGeneratorType::MOVEMENT_CHASE:
+            // Default chase - will be configured via Initialize
+            return std::make_shared<ChaseMovementGenerator>(ObjectGuid::Empty, 0.0f, 0.0f, priority);
+
+        case MovementGeneratorType::MOVEMENT_FLEE:
+            // Default flee - will be configured via Initialize
+            return std::make_shared<FleeMovementGenerator>(ObjectGuid::Empty, _defaultFleeDistance, priority);
+
+        case MovementGeneratorType::MOVEMENT_RANDOM:
+            // Default wander - will be configured via Initialize
+            return std::make_shared<RandomMovementGenerator>(10.0f, 0, priority);
+
+        case MovementGeneratorType::MOVEMENT_FORMATION:
+            // Default formation - will be configured via Initialize
+            {
+                FormationPosition defaultPos;
+                defaultPos.followDistance = _defaultFollowDistance;
+                defaultPos.followAngle = 0.0f;
+                defaultPos.relativeX = 0.0f;
+                defaultPos.relativeY = -_defaultFollowDistance;
+                defaultPos.relativeAngle = M_PI;
+                defaultPos.slot = 0;
+                return std::make_shared<FormationMovementGenerator>(ObjectGuid::Empty, defaultPos, priority);
+            }
+
+        case MovementGeneratorType::MOVEMENT_PATROL:
+            // Default patrol - will be configured via Initialize
+            return std::make_shared<PatrolMovementGenerator>(std::vector<Position>(), true, priority);
+
+        default:
+            TC_LOG_ERROR("playerbot.movement", "Unknown movement generator type: %u", static_cast<uint8>(type));
+            return std::make_shared<IdleMovementGenerator>();
+        }
     }
 
     bool MovementManager::SwitchGenerator(Player* bot, MovementGeneratorPtr newGenerator)
@@ -667,7 +705,7 @@ namespace PlayerBot
         if (!bot || !newGenerator)
             return false;
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it == _botData.end())
         {
@@ -721,7 +759,7 @@ namespace PlayerBot
         if (!bot)
             return;
 
-        std::unique_lock<std::shared_mutex> lock(_dataLock);
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
         auto it = _botData.find(bot->GetGUID());
         if (it != _botData.end())
         {
@@ -765,17 +803,17 @@ namespace PlayerBot
 
         switch (formation)
         {
-        case FormationType::FORMATION_LINE:
+        case FormationType::LINE:
             pos.relativeX = static_cast<float>(slot - totalSlots / 2) * spread;
             pos.relativeY = 0.0f;
             break;
 
-        case FormationType::FORMATION_COLUMN:
+        case FormationType::COLUMN:
             pos.relativeX = 0.0f;
             pos.relativeY = -static_cast<float>(slot + 1) * spread;
             break;
 
-        case FormationType::FORMATION_WEDGE:
+        case FormationType::WEDGE:
             {
                 uint8 row = static_cast<uint8>(sqrt(slot));
                 uint8 col = slot - (row * row);
@@ -784,7 +822,7 @@ namespace PlayerBot
             }
             break;
 
-        case FormationType::FORMATION_CIRCLE:
+        case FormationType::CIRCLE:
             {
                 float angle = (2 * M_PI * slot) / totalSlots;
                 float radius = spread * totalSlots / (2 * M_PI);
@@ -793,7 +831,7 @@ namespace PlayerBot
             }
             break;
 
-        case FormationType::FORMATION_SQUARE:
+        case FormationType::BOX:
             {
                 uint8 side = static_cast<uint8>(sqrt(totalSlots)) + 1;
                 uint8 row = slot / side;

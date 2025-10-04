@@ -14,6 +14,7 @@
 #include "Position.h"
 #include "ObjectGuid.h"
 #include "MovementDefines.h"
+#include "MovementTypes.h"
 #include <memory>
 #include <unordered_map>
 #include <shared_mutex>
@@ -24,72 +25,16 @@ class Player;
 class Unit;
 class Group;
 class PathGenerator;
+class GameObject;
 
-namespace Movement
-{
-    typedef std::vector<Position> PointsArray;
-}
+// Movement namespace typedef removed to avoid conflict with TrinityCore
+// Use Playerbot::PositionVector from core or G3D::Vector3 path conversion
 
 namespace Playerbot
 {
     // Forward declarations
     class MovementGenerator;
     class PathfindingAdapter;
-    class TerrainAnalyzer;
-    class GroupMovementCoordinator;
-    class CollisionAvoidance;
-
-    enum class MovementGeneratorType : uint8
-    {
-        IDLE            = 0,
-        POINT           = 1,
-        CHASE           = 2,
-        FOLLOW          = 3,
-        FLEE            = 4,
-        WANDER          = 5,
-        FORMATION       = 6,
-        PATROL          = 7,
-        CUSTOM          = 8
-    };
-
-    enum class MovementPriority : uint8
-    {
-        NORMAL          = 0,
-        COMBAT          = 1,
-        QUEST           = 2,
-        FORMATION       = 3,
-        EMERGENCY       = 4
-    };
-
-    enum class MovementState : uint8
-    {
-        STOPPED         = 0,
-        MOVING          = 1,
-        PAUSED          = 2,
-        ARRIVING        = 3,
-        FAILED          = 4
-    };
-
-    enum class TerrainType : uint8
-    {
-        GROUND          = 0,
-        WATER           = 1,
-        UNDERWATER      = 2,
-        FLYING          = 3,
-        INDOOR          = 4,
-        MOUNTED         = 5
-    };
-
-    struct MovementRequest
-    {
-        Position destination;
-        float speed = 0.0f;
-        float stopDistance = 0.0f;
-        MovementPriority priority = MovementPriority::NORMAL;
-        uint32 timeoutMs = 30000;
-        bool allowPartialPath = false;
-        bool forceDirect = false;
-    };
 
     struct MovementConfig
     {
@@ -105,8 +50,13 @@ namespace Playerbot
 
     class MovementManager final
     {
+    private:
         MovementManager();
         ~MovementManager();
+
+        // Friend declarations to allow std::unique_ptr to access private constructor/destructor
+        friend std::unique_ptr<MovementManager> std::make_unique<MovementManager>();
+        friend struct std::default_delete<MovementManager>;
 
     public:
         static MovementManager* Instance();
@@ -118,12 +68,11 @@ namespace Playerbot
         // Main update - called from BotAI
         void UpdateMovement(Player* bot, uint32 diff);
 
-        // Basic movement commands
+        // Basic movement commands (legacy interface - returns bool)
         bool MoveTo(Player* bot, Position const& dest, float speed = 0.0f);
         bool MoveTo(Player* bot, float x, float y, float z, float speed = 0.0f);
         bool MoveToUnit(Player* bot, Unit* target, float distance = 0.0f);
         bool Follow(Player* bot, Unit* leader, float minDist = 2.0f, float maxDist = 5.0f);
-        bool Flee(Player* bot, Unit* threat, float distance = 20.0f);
         bool Stop(Player* bot);
         bool Pause(Player* bot, uint32 durationMs = 0);
         bool Resume(Player* bot);
@@ -131,26 +80,24 @@ namespace Playerbot
         // Advanced movement commands
         bool MoveToWithPriority(Player* bot, MovementRequest const& request);
         bool PatrolPath(Player* bot, std::vector<Position> const& waypoints);
-        bool Wander(Player* bot, float radius = 10.0f);
         bool MoveInFormation(Player* bot, Group* group, uint8 position);
 
         // Movement state queries
         bool IsMoving(Player* bot) const;
         bool IsStopped(Player* bot) const;
-        MovementState GetMovementState(Player* bot) const;
         float GetDistanceToDestination(Player* bot) const;
         uint32 GetTimeToDestination(Player* bot) const;
         Position GetDestination(Player* bot) const;
 
         // Pathfinding
-        bool CalculatePath(Player* bot, Position const& dest, Movement::PointsArray& path);
+        bool CalculatePath(Player* bot, Position const& dest, Playerbot::PositionVector& path);
         bool HasValidPath(Player* bot) const;
         void ClearPath(Player* bot);
-        Movement::PointsArray GetCurrentPath(Player* bot) const;
+        Playerbot::PositionVector GetCurrentPath(Player* bot) const;
 
         // Generator management
         void SetMovementGenerator(Player* bot, MovementGeneratorType type);
-        MovementGeneratorType GetCurrentGenerator(Player* bot) const;
+        MovementGeneratorType GetCurrentGeneratorType(Player* bot) const;
         MovementGenerator* GetGenerator(Player* bot) const;
 
         // Terrain handling
@@ -182,25 +129,52 @@ namespace Playerbot
         uint32 GetActiveMovementCount() const { return m_activeMovements; }
         void GetPerformanceMetrics(uint32& avgUpdateTime, uint32& pathCacheHits) const;
 
+        // Movement commands with MovementResult return type
+        void UpdateAll(uint32 diff);
+        MovementResult FollowUnit(Player* bot, Unit* target, float minDist, float maxDist, float angle = 0.0f);
+        MovementResult FleeFrom(Player* bot, Unit* threat, float distance);
+        MovementResult Chase(Player* bot, Unit* target, float range = 0.0f, float angle = 0.0f);
+        MovementResult MoveToPoint(Player* bot, Position const& position, float speed = 0.0f);
+        MovementResult WanderAround(Player* bot, float radius, uint32 duration = 0);
+        MovementResult MoveInFormation(Player* bot, Unit* leader, FormationType formation, uint8 slot);
+        MovementResult Patrol(Player* bot, std::vector<Position> const& waypoints, bool cyclic = true);
+        void StopMovement(Player* bot, bool clearGenerators = false);
+        MovementState const* GetMovementStatePtr(Player* bot) const;
+        MovementGeneratorPtr GetCurrentGenerator(Player* bot) const;
+        bool SetGroupFormation(Player* leader, std::vector<Player*> const& members, FormationType formation);
+        void UpdateGroupMovement(Player* leader, std::vector<Player*> const& members, uint32 diff);
+        bool MoveGroupToPosition(std::vector<Player*> const& members, Position const& destination, bool maintainFormation);
+        void ResetMetrics();
+        void SetMaxBotsPerUpdate(uint32 maxBots);
+        void SetPerformanceMonitoring(bool enable);
+        float GetCPUUsage() const;
+        float GetMemoryUsage() const;
+
     private:
         struct BotMovementData
         {
             std::unique_ptr<MovementGenerator> generator;
-            Movement::PointsArray currentPath;
+            MovementGeneratorPtr currentGenerator; // Shared pointer version
+            MovementGeneratorPtr pendingGenerator;
+            std::vector<MovementGeneratorPtr> generatorHistory;
+
+            Playerbot::PositionVector currentPath;
             Position destination;
             Position lastPosition;
-            MovementState state = MovementState::STOPPED;
-            MovementPriority priority = MovementPriority::NORMAL;
-            TerrainType terrainType = TerrainType::GROUND;
+            MovementState state;
+            Playerbot::MovementPriority priority = Playerbot::MovementPriority::PRIORITY_NORMAL;
+            Playerbot::TerrainType terrainType = Playerbot::TerrainType::TERRAIN_GROUND;
             float speed = 0.0f;
             float stopDistance = 0.0f;
             uint32 lastUpdate = 0;
+            std::chrono::steady_clock::time_point lastUpdateTime;
             uint32 pathUpdateTimer = 0;
             uint32 stuckCheckTimer = 0;
             uint32 timeoutTimer = 0;
             uint32 pausedUntil = 0;
             bool isMoving = false;
             bool needsPathUpdate = false;
+            bool needsUpdate = false;
             bool collisionEnabled = true;
             uint8 currentWaypoint = 0;
             uint8 stuckCounter = 0;
@@ -209,7 +183,7 @@ namespace Playerbot
             struct PathCache
             {
                 Position destination;
-                Movement::PointsArray path;
+                Playerbot::PositionVector path;
                 uint32 timestamp;
             };
             std::deque<PathCache> pathCache;
@@ -230,8 +204,18 @@ namespace Playerbot
         bool ValidateMovement(Player* bot, Position const& dest) const;
         void ApplyTerrainAdjustments(Player* bot, BotMovementData& data);
         void SendMovementPacket(Player* bot, Position const& dest, float speed);
-        Movement::PointsArray* GetCachedPath(BotMovementData& data, Position const& dest);
-        void CachePath(BotMovementData& data, Position const& dest, Movement::PointsArray const& path);
+        Playerbot::PositionVector* GetCachedPath(BotMovementData& data, Position const& dest);
+        void CachePath(BotMovementData& data, Position const& dest, Playerbot::PositionVector const& path);
+
+        // Additional methods for MovementManager.cpp compatibility
+        void ProcessUpdateQueue(uint32 maxUpdates);
+        bool SwitchGenerator(Player* bot, MovementGeneratorPtr newGenerator);
+        MovementGeneratorPtr CreateGenerator(MovementGeneratorType type, MovementPriority priority);
+        void CleanupGenerators(Player* bot);
+        void UpdatePerformanceMetrics(uint64 cpuTime, size_t memoryUsed);
+        FormationPosition CalculateFormationPosition(FormationType formation, uint8 slot, uint8 totalSlots);
+        bool LoadConfig();
+        void ReloadConfig();
 
         // Thread-safe data access
         BotMovementData* GetMovementData(Player* bot);
@@ -240,22 +224,58 @@ namespace Playerbot
     private:
         // Bot movement data storage
         std::unordered_map<ObjectGuid, std::unique_ptr<BotMovementData>> m_botMovement;
+        std::unordered_map<ObjectGuid, std::unique_ptr<BotMovementData>>& _botData = m_botMovement; // Alias for compatibility
         mutable std::shared_mutex m_mutex;
 
         // Subsystems
         std::unique_ptr<PathfindingAdapter> m_pathfinder;
-        std::unique_ptr<TerrainAnalyzer> m_terrainAnalyzer;
-        std::unique_ptr<GroupMovementCoordinator> m_groupCoordinator;
-        std::unique_ptr<CollisionAvoidance> m_collisionAvoidance;
+        std::unique_ptr<PathfindingAdapter>& _pathfinder = m_pathfinder; // Alias for compatibility
+        // TerrainAnalyzer removed - incomplete type, not implemented
+        // GroupMovementCoordinator removed - incomplete type, not implemented
+        // CollisionAvoidance removed - incomplete type, not implemented
+
+        // Additional subsystems needed by cpp
+        std::unique_ptr<class PathOptimizer> _optimizer;
+        std::unique_ptr<class MovementValidator> _validator;
+        std::unique_ptr<class NavMeshInterface> _navMesh;
 
         // Performance tracking
         std::atomic<uint32> m_activeMovements{0};
         std::atomic<uint32> m_lastPathComputeTime{0};
         std::atomic<uint32> m_totalPathComputations{0};
         std::atomic<uint32> m_totalPathCacheHits{0};
+        std::atomic<uint64> _totalCpuMicros{0};
+        std::atomic<uint64> _totalMemoryBytes{0};
 
         // Configuration
         MovementConfig m_config;
+        uint32 _maxBotsPerUpdate{50};
+        uint32 _defaultUpdateInterval{250};
+        float _defaultFollowDistance{5.0f};
+        float _defaultFleeDistance{20.0f};
+        float _formationSpread{3.0f};
+        bool _enablePathOptimization{true};
+        bool _enableStuckDetection{true};
+        uint32 _pathCacheSize{100};
+        uint32 _pathCacheDuration{5000};
+        bool _performanceMonitoring{true};
+
+        // Metrics
+        MovementMetrics _globalMetrics;
+        std::chrono::steady_clock::time_point _lastMetricsUpdate;
+
+        // Group formations
+        struct GroupFormationData
+        {
+            ObjectGuid leaderGuid;
+            FormationType formation;
+            std::unordered_map<ObjectGuid, FormationPosition> positions;
+            bool isActive{false};
+        };
+        std::unordered_map<uint32, GroupFormationData> _groupFormations;
+
+        // Update queue
+        std::priority_queue<std::pair<int32, ObjectGuid>> _updateQueue;
 
         // Singleton instance
         static std::unique_ptr<MovementManager> s_instance;

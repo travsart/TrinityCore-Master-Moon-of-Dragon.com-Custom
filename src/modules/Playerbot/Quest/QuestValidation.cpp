@@ -18,6 +18,7 @@
 #include "Spell.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "ReputationMgr.h"
 #include <sstream>
 #include <iomanip>
 
@@ -34,14 +35,14 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
 {
     if (!bot)
     {
-        LOG_ERROR("playerbot", "QuestValidation::ValidateQuestAcceptance - Null bot pointer");
+        TC_LOG_ERROR("module.playerbot", "QuestValidation::ValidateQuestAcceptance - Null bot pointer");
         return false;
     }
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
     if (!quest)
     {
-        LOG_ERROR("playerbot", "QuestValidation::ValidateQuestAcceptance - Quest {} not found", questId);
+        TC_LOG_ERROR("module.playerbot", "QuestValidation::ValidateQuestAcceptance - Quest {} not found", questId);
         return false;
     }
 
@@ -66,7 +67,11 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
     // Level check
     if (!ValidateLevelRequirements(questId, bot))
     {
-        result.eligibility = QuestEligibility::LEVEL_TOO_LOW;
+        int32 minLevel = bot->GetQuestMinLevel(quest);
+        if (bot->GetLevel() < static_cast<uint32>(minLevel))
+            result.eligibility = QuestEligibility::LEVEL_TOO_LOW;
+        else
+            result.eligibility = QuestEligibility::LEVEL_TOO_HIGH;
         result.errors.push_back("Level requirement not met");
         valid = false;
     }
@@ -185,7 +190,8 @@ QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player*
     // Check in priority order
     if (!ValidateLevelRequirements(questId, bot))
     {
-        if (bot->GetLevel() < quest->GetMinLevel())
+        int32 minLevel = bot->GetQuestMinLevel(quest);
+        if (bot->GetLevel() < static_cast<uint32>(minLevel))
             return QuestEligibility::LEVEL_TOO_LOW;
         else
             return QuestEligibility::LEVEL_TOO_HIGH;
@@ -244,7 +250,8 @@ std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Pl
     if (!ValidateLevelRequirements(questId, bot))
     {
         std::ostringstream oss;
-        oss << "Level requirement: " << (int)quest->GetMinLevel() << " (bot level: " << bot->GetLevel() << ")";
+        int32 minLevel = bot->GetQuestMinLevel(quest);
+        oss << "Level requirement: " << minLevel << " (bot level: " << bot->GetLevel() << ")";
         errors.push_back(oss.str());
     }
 
@@ -318,11 +325,11 @@ bool QuestValidation::ValidateLevelRequirements(uint32 questId, Player* bot)
         return false;
 
     uint32 botLevel = bot->GetLevel();
-    uint32 minLevel = quest->GetMinLevel();
+    int32 minLevel = bot->GetQuestMinLevel(quest);
     uint32 maxLevel = quest->GetMaxLevel();
 
     // Check minimum level
-    if (minLevel > 0 && botLevel < minLevel)
+    if (minLevel > 0 && botLevel < static_cast<uint32>(minLevel))
         return false;
 
     // Check maximum level (if set)
@@ -342,11 +349,11 @@ bool QuestValidation::ValidateClassRequirements(uint32 questId, Player* bot)
         return false;
 
     // Check if quest has class requirements
-    uint32 reqClasses = quest->GetRequiredClasses();
+    uint32 reqClasses = quest->GetAllowableClasses();
     if (reqClasses == 0)
         return true; // No class restriction
 
-    uint32 botClass = bot->getClass();
+    uint32 botClass = bot->GetClass();
     return (reqClasses & (1 << (botClass - 1))) != 0;
 }
 
@@ -360,12 +367,12 @@ bool QuestValidation::ValidateRaceRequirements(uint32 questId, Player* bot)
         return false;
 
     // Check if quest has race requirements
-    uint32 reqRaces = quest->GetRequiredRaces();
-    if (reqRaces == 0)
+    auto allowableRaces = quest->GetAllowableRaces();
+    if (allowableRaces.IsEmpty())
         return true; // No race restriction
 
-    uint32 botRace = bot->getRace();
-    return (reqRaces & (1 << (botRace - 1))) != 0;
+    uint8 botRace = bot->GetRace();
+    return allowableRaces.HasRace(botRace);
 }
 
 bool QuestValidation::ValidateFactionRequirements(uint32 questId, Player* bot)
@@ -391,7 +398,7 @@ bool QuestValidation::ValidateSkillRequirements(uint32 questId, Player* bot)
         return false;
 
     // Check required skill
-    uint32 reqSkill = quest->GetRequiredSkillId();
+    uint32 reqSkill = quest->GetRequiredSkill();
     if (reqSkill == 0)
         return true; // No skill requirement
 
@@ -502,19 +509,19 @@ bool QuestValidation::ValidateInventorySpace(uint32 questId, Player* bot)
     if (!quest)
         return false;
 
-    // Calculate required inventory slots for quest items
-    uint32 requiredSlots = 0;
-
-    // Count quest reward items that go to inventory
+    // Check if bot can store quest reward items
     for (uint8 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
     {
         if (quest->RewardItemId[i] != 0)
-            requiredSlots++;
+        {
+            ItemPosCountVec dest;
+            InventoryResult result = bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, quest->RewardItemId[i], quest->RewardItemCount[i]);
+            if (result != EQUIP_ERR_OK)
+                return false;
+        }
     }
 
-    // Check if bot has enough free bag slots
-    uint32 freeSlots = bot->GetFreeBagSlotCount();
-    return freeSlots >= requiredSlots;
+    return true;
 }
 
 bool QuestValidation::ValidateQuestItemRequirements(uint32 questId, Player* bot)
@@ -591,7 +598,7 @@ bool QuestValidation::IsQuestLogFull(Player* bot)
     if (!bot)
         return true;
 
-    return bot->GetQuestSlotCount() >= MAX_QUEST_LOG_SIZE;
+    return bot->getQuestStatusMap().size() >= MAX_QUEST_LOG_SIZE;
 }
 
 bool QuestValidation::IsQuestRepeatable(uint32 questId, Player* bot)
@@ -801,11 +808,11 @@ bool QuestValidation::ValidateGroupRequirements(uint32 questId, Player* bot)
     if (!quest)
         return false;
 
-    // Check if quest requires a group
-    if (quest->GetType() == QUEST_TYPE_GROUP)
+    // Check if quest suggests group (via SuggestedPlayers field)
+    if (quest->GetSuggestedPlayers() > 1)
     {
         Group* group = bot->GetGroup();
-        if (!group || group->GetMembersCount() < 2)
+        if (!group || group->GetMembersCount() < quest->GetSuggestedPlayers())
             return false;
     }
 
@@ -826,8 +833,9 @@ bool QuestValidation::ValidateRaidQuestRequirements(uint32 questId, Player* bot)
     if (!quest)
         return false;
 
-    // Check if quest requires a raid
-    if (quest->GetType() == QUEST_TYPE_RAID)
+    // Check if quest requires raid (via RAID_GROUP_OK flag means it CAN be done in raid, not that it REQUIRES it)
+    // For simplicity, assume quests with suggested players > 5 might be raid quests
+    if (quest->GetSuggestedPlayers() > 5)
     {
         Group* group = bot->GetGroup();
         if (!group || !group->isRaidGroup())
@@ -920,10 +928,10 @@ bool QuestValidation::ValidateQuestDifficulty(uint32 questId, Player* bot)
 
     // Check if quest is appropriate difficulty for bot level
     uint32 botLevel = bot->GetLevel();
-    uint32 questLevel = quest->GetQuestLevel();
+    int32 questLevel = bot->GetQuestLevel(quest);
 
     // Quest should be within reasonable range
-    int32 levelDiff = questLevel - botLevel;
+    int32 levelDiff = questLevel - static_cast<int32>(botLevel);
     return (levelDiff >= -5 && levelDiff <= 10); // Flexible range
 }
 
@@ -1035,7 +1043,7 @@ std::string QuestValidation::GetDetailedValidationReport(uint32 questId, Player*
         return report.str();
     }
 
-    report << "Quest Validation Report for Quest " << questId << " (" << quest->GetTitle() << ")\n";
+    report << "Quest Validation Report for Quest " << questId << " (" << quest->GetLogTitle() << ")\n";
     report << "Bot: " << (bot ? bot->GetName() : "NULL") << "\n\n";
 
     if (!bot)
@@ -1080,7 +1088,7 @@ void QuestValidation::LogValidationFailure(uint32 questId, Player* bot, const st
 {
     if (bot)
     {
-        LOG_WARN("playerbot", "Quest validation failed for bot {} (quest {}): {}",
+        TC_LOG_WARN("module.playerbot", "Quest validation failed for bot {} (quest {}): {}",
             bot->GetName(), questId, reason);
     }
 }

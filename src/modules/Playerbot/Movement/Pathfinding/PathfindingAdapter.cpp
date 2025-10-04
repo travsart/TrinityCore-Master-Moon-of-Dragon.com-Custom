@@ -11,10 +11,11 @@
 #include "Player.h"
 #include "Map.h"
 #include "MMapFactory.h"
+#include "PhaseShift.h"
 #include "Log.h"
 #include <algorithm>
 
-namespace PlayerBot
+namespace Playerbot
 {
     PathfindingAdapter::PathfindingAdapter()
         : _enableCaching(true), _enableSmoothing(true),
@@ -156,7 +157,7 @@ namespace PlayerBot
         if (range > 0.0f)
         {
             // Adjust destination to maintain range from target
-            float angle = target->GetAngle(bot);
+            float angle = target->GetAbsoluteAngle(bot);
             targetPos.m_positionX += range * cos(angle);
             targetPos.m_positionY += range * sin(angle);
         }
@@ -194,7 +195,7 @@ namespace PlayerBot
             return false;
 
         // Calculate flee direction (opposite of threat)
-        float angle = threat->GetAngle(bot) + M_PI;
+        float angle = threat->GetAbsoluteAngle(bot) + M_PI;
         angle = Position::NormalizeOrientation(angle);
 
         // Try to find a valid flee position
@@ -208,7 +209,7 @@ namespace PlayerBot
             float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
-            bot->GetNearPosition(fleePos, distance, tryAngle);
+            fleePos = bot->GetNearPosition(distance, tryAngle);
 
             // Check if position is valid
             if (IsWalkablePosition(map, fleePos))
@@ -357,7 +358,9 @@ namespace PlayerBot
             return false;
 
         // Check if position has valid ground height
-        float z = map->GetHeight(map->GetPhaseShift(), position.GetPositionX(),
+        // Note: Map doesn't have GetPhaseShift(), use default PhaseShift
+        PhaseShift phaseShift;
+        float z = map->GetHeight(phaseShift, position.GetPositionX(),
             position.GetPositionY(), position.GetPositionZ(), true, 100.0f);
 
         if (z > INVALID_HEIGHT)
@@ -399,7 +402,8 @@ namespace PlayerBot
                 {
                     walkable = testPos;
                     // Adjust Z to ground height
-                    walkable.m_positionZ = map->GetHeight(map->GetPhaseShift(),
+                    PhaseShift phaseShift;
+                    walkable.m_positionZ = map->GetHeight(phaseShift,
                         walkable.GetPositionX(), walkable.GetPositionY(),
                         walkable.GetPositionZ(), true, 100.0f);
                     return true;

@@ -17,8 +17,14 @@
 #include <chrono>
 #include <optional>
 
+// Forward declarations
+class Player;
+
 namespace Playerbot
 {
+    // Constants
+    constexpr uint32 MIN_INTERACTION_DELAY = 100; // Minimum milliseconds between interactions
+
     /**
      * @enum InteractionType
      * @brief Types of NPC interactions bots can perform
@@ -428,7 +434,7 @@ namespace Playerbot
         bool requiredInCombat = false;
         bool requiredOutOfCombat = true;
 
-        bool CheckRequirements(class Player* bot) const;
+        bool CheckRequirements(::Player* bot) const;
     };
 
     // Utility functions

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -12,9 +12,11 @@
 
 #include "InteractionTypes.h"
 #include "Define.h"
+#include "SharedDefines.h"
 #include <unordered_map>
 #include <shared_mutex>
 
+// Forward declarations (global namespace)
 class Player;
 class Creature;
 class GameObject;
@@ -50,7 +52,7 @@ namespace Playerbot
          * @param type The interaction type
          * @return True if all requirements are met
          */
-        bool CanInteract(Player* bot, WorldObject* target, InteractionType type) const;
+        bool CanInteract(::Player* bot, ::WorldObject* target, InteractionType type) const;
 
         /**
          * @brief Check if bot is in valid range for interaction
@@ -59,7 +61,7 @@ namespace Playerbot
          * @param maxRange Optional custom max range
          * @return True if in valid range
          */
-        bool CheckRange(Player* bot, WorldObject* target, float maxRange = 0.0f) const;
+        bool CheckRange(::Player* bot, ::WorldObject* target, float maxRange = 0.0f) const;
 
         /**
          * @brief Check if bot has correct faction for NPC
@@ -67,7 +69,7 @@ namespace Playerbot
          * @param creature The NPC
          * @return True if faction allows interaction
          */
-        bool CheckFaction(Player* bot, Creature* creature) const;
+        bool CheckFaction(::Player* bot, ::Creature* creature) const;
 
         /**
          * @brief Check if bot meets level requirements
@@ -76,7 +78,7 @@ namespace Playerbot
          * @param maxLevel Maximum allowed level (0 = no max)
          * @return True if level is appropriate
          */
-        bool CheckLevel(Player* bot, uint32 minLevel, uint32 maxLevel = 0) const;
+        bool CheckLevel(::Player* bot, uint32 minLevel, uint32 maxLevel = 0) const;
 
         /**
          * @brief Check if bot has required reputation
@@ -85,7 +87,7 @@ namespace Playerbot
          * @param minRank Minimum reputation rank required
          * @return True if reputation is sufficient
          */
-        bool CheckReputation(Player* bot, uint32 factionId, ReputationRank minRank) const;
+        bool CheckReputation(::Player* bot, uint32 factionId, ReputationRank minRank) const;
 
         /**
          * @brief Check if bot has enough money
@@ -93,7 +95,7 @@ namespace Playerbot
          * @param amount Required amount in copper
          * @return True if bot can afford
          */
-        bool CheckMoney(Player* bot, uint32 amount) const;
+        bool CheckMoney(::Player* bot, uint32 amount) const;
 
         /**
          * @brief Check if bot has inventory space
@@ -101,7 +103,7 @@ namespace Playerbot
          * @param slotsNeeded Number of free slots required
          * @return True if enough space
          */
-        bool CheckInventorySpace(Player* bot, uint32 slotsNeeded) const;
+        bool CheckInventorySpace(::Player* bot, uint32 slotsNeeded) const;
 
         /**
          * @brief Check if bot's combat state allows interaction
@@ -109,7 +111,7 @@ namespace Playerbot
          * @param allowInCombat Whether interaction is allowed in combat
          * @return True if combat state is valid
          */
-        bool CheckCombatState(Player* bot, bool allowInCombat = false) const;
+        bool CheckCombatState(::Player* bot, bool allowInCombat = false) const;
 
         /**
          * @brief Check if bot is alive (or dead for spirit healer)
@@ -117,7 +119,7 @@ namespace Playerbot
          * @param requireAlive True if bot must be alive
          * @return True if alive state matches requirement
          */
-        bool CheckAliveState(Player* bot, bool requireAlive = true) const;
+        bool CheckAliveState(::Player* bot, bool requireAlive = true) const;
 
         /**
          * @brief Check if bot has completed required quest
@@ -125,7 +127,7 @@ namespace Playerbot
          * @param questId The quest to check
          * @return True if quest is completed
          */
-        bool CheckQuestStatus(Player* bot, uint32 questId) const;
+        bool CheckQuestStatus(::Player* bot, uint32 questId) const;
 
         /**
          * @brief Check if bot has required item
@@ -134,7 +136,7 @@ namespace Playerbot
          * @param count Required count
          * @return True if bot has enough of the item
          */
-        bool CheckItemRequirement(Player* bot, uint32 itemId, uint32 count = 1) const;
+        bool CheckItemRequirement(::Player* bot, uint32 itemId, uint32 count = 1) const;
 
         /**
          * @brief Check if bot knows required spell
@@ -142,7 +144,7 @@ namespace Playerbot
          * @param spellId The spell to check
          * @return True if bot knows the spell
          */
-        bool CheckSpellKnown(Player* bot, uint32 spellId) const;
+        bool CheckSpellKnown(::Player* bot, uint32 spellId) const;
 
         /**
          * @brief Check if bot has required skill level
@@ -151,7 +153,7 @@ namespace Playerbot
          * @param minValue Minimum skill value required
          * @return True if skill level is sufficient
          */
-        bool CheckSkillLevel(Player* bot, uint32 skillId, uint32 minValue) const;
+        bool CheckSkillLevel(::Player* bot, uint32 skillId, uint32 minValue) const;
 
         // Vendor-specific validations
 
@@ -161,7 +163,7 @@ namespace Playerbot
          * @param vendor The vendor NPC
          * @return True if vendor has useful items
          */
-        bool ValidateVendor(Player* bot, Creature* vendor) const;
+        bool ValidateVendor(::Player* bot, ::Creature* vendor) const;
 
         /**
          * @brief Check if item is worth buying for bot
@@ -169,7 +171,7 @@ namespace Playerbot
          * @param itemId The item to evaluate
          * @return True if item is useful
          */
-        bool ShouldBuyItem(Player* bot, uint32 itemId) const;
+        bool ShouldBuyItem(::Player* bot, uint32 itemId) const;
 
         /**
          * @brief Check if bot should sell item
@@ -177,7 +179,7 @@ namespace Playerbot
          * @param item The item to evaluate
          * @return True if item should be sold
          */
-        bool ShouldSellItem(Player* bot, Item* item) const;
+        bool ShouldSellItem(::Player* bot, ::Item* item) const;
 
         /**
          * @brief Check if bot needs repairs
@@ -185,7 +187,7 @@ namespace Playerbot
          * @param threshold Durability percentage threshold
          * @return True if repairs needed
          */
-        bool NeedsRepair(Player* bot, float threshold = 30.0f) const;
+        bool NeedsRepair(::Player* bot, float threshold = 30.0f) const;
 
         // Trainer-specific validations
 
@@ -195,7 +197,7 @@ namespace Playerbot
          * @param trainer The trainer NPC
          * @return True if trainer has spells for bot
          */
-        bool ValidateTrainer(Player* bot, Creature* trainer) const;
+        bool ValidateTrainer(::Player* bot, ::Creature* trainer) const;
 
         /**
          * @brief Check if bot should learn spell
@@ -203,7 +205,7 @@ namespace Playerbot
          * @param spellInfo The spell to evaluate
          * @return True if spell is worth learning
          */
-        bool ShouldLearnSpell(Player* bot, SpellInfo const* spellInfo) const;
+        bool ShouldLearnSpell(::Player* bot, ::SpellInfo const* spellInfo) const;
 
         /**
          * @brief Check if bot can learn spell
@@ -211,7 +213,7 @@ namespace Playerbot
          * @param spellId The spell to check
          * @return True if bot meets all requirements
          */
-        bool CanLearnSpell(Player* bot, uint32 spellId) const;
+        bool CanLearnSpell(::Player* bot, uint32 spellId) const;
 
         // Flight Master validations
 
@@ -221,7 +223,7 @@ namespace Playerbot
          * @param nodeId The flight node
          * @return True if node is accessible
          */
-        bool CanUseFlight(Player* bot, uint32 nodeId) const;
+        bool CanUseFlight(::Player* bot, uint32 nodeId) const;
 
         /**
          * @brief Check if flight path is discovered
@@ -229,7 +231,7 @@ namespace Playerbot
          * @param nodeId The flight node
          * @return True if node is known
          */
-        bool IsFlightNodeDiscovered(Player* bot, uint32 nodeId) const;
+        bool IsFlightNodeDiscovered(::Player* bot, uint32 nodeId) const;
 
         // Bank validations
 
@@ -238,7 +240,7 @@ namespace Playerbot
          * @param bot The bot player
          * @return True if bank access is allowed
          */
-        bool CanAccessBank(Player* bot) const;
+        bool CanAccessBank(::Player* bot) const;
 
         /**
          * @brief Check if bot should deposit item
@@ -246,7 +248,7 @@ namespace Playerbot
          * @param item The item to evaluate
          * @return True if item should be banked
          */
-        bool ShouldBankItem(Player* bot, Item* item) const;
+        bool ShouldBankItem(::Player* bot, ::Item* item) const;
 
         // Mailbox validations
 
@@ -255,7 +257,7 @@ namespace Playerbot
          * @param bot The bot player
          * @return True if mailbox access is allowed
          */
-        bool CanUseMail(Player* bot) const;
+        bool CanUseMail(::Player* bot) const;
 
         /**
          * @brief Check if mail should be taken
@@ -263,7 +265,7 @@ namespace Playerbot
          * @param mailId The mail to evaluate
          * @return True if mail should be collected
          */
-        bool ShouldTakeMail(Player* bot, uint32 mailId) const;
+        bool ShouldTakeMail(::Player* bot, uint32 mailId) const;
 
         // Complex validation combinations
 
@@ -273,7 +275,7 @@ namespace Playerbot
          * @param requirements The requirements to check
          * @return True if all requirements are met
          */
-        bool ValidateRequirements(Player* bot, const InteractionRequirement& requirements) const;
+        bool ValidateRequirements(::Player* bot, const InteractionRequirement& requirements) const;
 
         /**
          * @brief Get missing requirements for interaction
@@ -282,7 +284,7 @@ namespace Playerbot
          * @param type The interaction type
          * @return List of unmet requirements
          */
-        std::vector<std::string> GetMissingRequirements(Player* bot, WorldObject* target,
+        std::vector<std::string> GetMissingRequirements(::Player* bot, ::WorldObject* target,
                                                         InteractionType type) const;
 
         /**
@@ -291,7 +293,7 @@ namespace Playerbot
          * @param type The interaction type
          * @return Priority score (higher = more important)
          */
-        int32 GetInteractionPriority(Player* bot, InteractionType type) const;
+        int32 GetInteractionPriority(::Player* bot, InteractionType type) const;
 
         // Configuration
 
@@ -326,7 +328,7 @@ namespace Playerbot
          * @param vendor The vendor NPC
          * @return True if requirements are met
          */
-        bool CheckVendorRequirements(Player* bot, Creature* vendor) const;
+        bool CheckVendorRequirements(::Player* bot, ::Creature* vendor) const;
 
         /**
          * @brief Check trainer-specific requirements
@@ -334,7 +336,7 @@ namespace Playerbot
          * @param trainer The trainer NPC
          * @return True if requirements are met
          */
-        bool CheckTrainerRequirements(Player* bot, Creature* trainer) const;
+        bool CheckTrainerRequirements(::Player* bot, ::Creature* trainer) const;
 
         /**
          * @brief Check if interaction is on cooldown
@@ -342,7 +344,7 @@ namespace Playerbot
          * @param type The interaction type
          * @return True if still on cooldown
          */
-        bool IsOnCooldown(Player* bot, InteractionType type) const;
+        bool IsOnCooldown(::Player* bot, InteractionType type) const;
 
         /**
          * @brief Record validation result for metrics

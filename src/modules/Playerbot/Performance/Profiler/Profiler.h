@@ -18,6 +18,7 @@
 #ifndef PLAYERBOT_PROFILER_H
 #define PLAYERBOT_PROFILER_H
 
+#include "Define.h"
 #include <atomic>
 #include <string>
 #include <unordered_map>
@@ -51,6 +52,19 @@ public:
         ~ScopedTimer();
     };
 
+    struct SectionDataSnapshot
+    {
+        uint64 totalTime = 0;
+        uint64 callCount = 0;
+        uint64 minTime = UINT64_MAX;
+        uint64 maxTime = 0;
+
+        double GetAverage() const
+        {
+            return callCount > 0 ? totalTime / static_cast<double>(callCount) : 0.0;
+        }
+    };
+
     struct SectionData
     {
         std::atomic<uint64> totalTime{0};
@@ -58,16 +72,20 @@ public:
         std::atomic<uint64> minTime{UINT64_MAX};
         std::atomic<uint64> maxTime{0};
 
-        double GetAverage() const
+        SectionDataSnapshot GetSnapshot() const
         {
-            uint64 count = callCount.load(std::memory_order_relaxed);
-            return count > 0 ? totalTime.load() / static_cast<double>(count) : 0.0;
+            SectionDataSnapshot snapshot;
+            snapshot.totalTime = totalTime.load(std::memory_order_relaxed);
+            snapshot.callCount = callCount.load(std::memory_order_relaxed);
+            snapshot.minTime = minTime.load(std::memory_order_relaxed);
+            snapshot.maxTime = maxTime.load(std::memory_order_relaxed);
+            return snapshot;
         }
     };
 
     struct ProfileResults
     {
-        std::unordered_map<std::string, SectionData> sections;
+        std::unordered_map<std::string, SectionDataSnapshot> sections;
         size_t totalAllocations{0};
         size_t totalDeallocations{0};
         size_t currentMemoryUsage{0};

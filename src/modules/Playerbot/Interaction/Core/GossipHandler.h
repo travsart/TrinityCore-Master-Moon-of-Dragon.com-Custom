@@ -65,7 +65,7 @@ namespace Playerbot
          * @param desiredType The service type bot wants to reach
          * @return The option index to select, or -1 if none found
          */
-        int32 ProcessGossipMenu(Player* bot, uint32 menuId, WorldObject* target, InteractionType desiredType);
+        int32 ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType);
 
         /**
          * @brief Handle gossip packet from server
@@ -73,7 +73,7 @@ namespace Playerbot
          * @param packet The gossip packet
          * @param desiredType The service type bot wants
          */
-        void HandleGossipPacket(Player* bot, WorldPacket const& packet, InteractionType desiredType);
+        void HandleGossipPacket(::Player* bot, ::WorldPacket const& packet, InteractionType desiredType);
 
         /**
          * @brief Parse gossip options from menu
@@ -81,7 +81,7 @@ namespace Playerbot
          * @param menuId The menu ID
          * @return Vector of parsed gossip options
          */
-        std::vector<GossipMenuOption> ParseGossipMenu(Player* bot, uint32 menuId) const;
+        std::vector<GossipMenuOption> ParseGossipMenu(::Player* bot, uint32 menuId) const;
 
         /**
          * @brief Select best gossip option for desired service
@@ -112,7 +112,7 @@ namespace Playerbot
          * @param option The gossip option requiring special handling
          * @return True if handled successfully
          */
-        bool HandleSpecialGossip(Player* bot, const GossipMenuOption& option);
+        bool HandleSpecialGossip(::Player* bot, const GossipMenuOption& option);
 
         /**
          * @brief Cache a successful gossip path for future use
@@ -148,7 +148,7 @@ namespace Playerbot
          * @param option The gossip option to check
          * @return True if bot has enough money
          */
-        bool CanAffordOption(Player* bot, const GossipMenuOption& option) const;
+        bool CanAffordOption(::Player* bot, const GossipMenuOption& option) const;
 
         /**
          * @brief Generate response for NPC dialog if needed
@@ -156,7 +156,7 @@ namespace Playerbot
          * @param boxText The text prompt from NPC
          * @return Generated response string
          */
-        std::string GenerateResponse(Player* bot, const std::string& boxText) const;
+        std::string GenerateResponse(::Player* bot, const std::string& boxText) const;
 
     private:
         /**

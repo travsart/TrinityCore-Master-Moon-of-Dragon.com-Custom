@@ -113,13 +113,13 @@ void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
     QueryOptimizer& queryOpt = QueryOptimizer::Instance();
     auto queryMetrics = queryOpt.GetMetrics();
     report << "Query Optimizer Statistics:\n";
-    report << "  Total Queries: " << queryMetrics.totalQueries.load() << "\n";
-    report << "  Cached Queries: " << queryMetrics.cachedQueries.load() << "\n";
+    report << "  Total Queries: " << queryMetrics.totalQueries << "\n";
+    report << "  Cached Queries: " << queryMetrics.cachedQueries << "\n";
     report << "  Cache Hit Rate: " << std::fixed << std::setprecision(2)
            << (queryMetrics.GetCacheHitRate() * 100.0) << "%\n";
     report << "  Average Latency: " << std::fixed << std::setprecision(2)
            << queryMetrics.GetAverageLatency() << " us\n";
-    report << "  Slow Queries: " << queryMetrics.slowQueries.load() << "\n\n";
+    report << "  Slow Queries: " << queryMetrics.slowQueries << "\n\n";
 
     // Profiler results (if enabled)
     if (_profilingEnabled.load())
@@ -129,10 +129,10 @@ void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
         for (const auto& [section, data] : profileResults.sections)
         {
             report << "  " << section << ":\n";
-            report << "    Calls: " << data.callCount.load() << "\n";
+            report << "    Calls: " << data.callCount << "\n";
             report << "    Average: " << std::fixed << std::setprecision(2) << data.GetAverage() << " us\n";
-            report << "    Min: " << data.minTime.load() << " us\n";
-            report << "    Max: " << data.maxTime.load() << " us\n";
+            report << "    Min: " << data.minTime << " us\n";
+            report << "    Max: " << data.maxTime << " us\n";
         }
     }
 

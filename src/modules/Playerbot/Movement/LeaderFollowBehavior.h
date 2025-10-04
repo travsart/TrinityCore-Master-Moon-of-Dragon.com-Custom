@@ -58,8 +58,10 @@ enum class FollowMode : uint8
     CUSTOM = 4              // Custom distance set by user
 };
 
-// Formation position preferences
-struct FormationPosition
+// Formation position preferences for follow behavior
+// NOTE: FormationPosition is also defined in MovementTypes.h with different fields
+// This definition is specific to LeaderFollowBehavior and uses different semantics
+struct FollowFormationPosition
 {
     float angle;            // Angle relative to leader (0 = front, PI = behind)
     float distance;         // Distance from leader
@@ -170,7 +172,7 @@ public:
     FormationRole DetermineFormationRole(Player* bot);
     bool UpdateFormationPosition(BotAI* ai);
     void SyncWithFormation(Group* group);
-    FormationPosition GetFormationPosition(FormationRole role);
+    FollowFormationPosition GetFormationPosition(FormationRole role);
 
     // State management
     FollowState GetFollowState() const { return _state; }
@@ -286,7 +288,7 @@ private:
 
     // Formation data
     FormationRole _formationRole = FormationRole::SUPPORT;
-    FormationPosition _formationPos;
+    FollowFormationPosition _formationPos;
     bool _useFormation = true;
     float _formationStrictness = 0.8f;
 

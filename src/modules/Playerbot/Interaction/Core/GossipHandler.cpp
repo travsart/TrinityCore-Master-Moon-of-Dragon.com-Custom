@@ -198,7 +198,7 @@ namespace Playerbot
         return {};
     }
 
-    int32 GossipHandler::ProcessGossipMenu(Player* bot, uint32 menuId, WorldObject* target, InteractionType desiredType)
+    int32 GossipHandler::ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType)
     {
         if (!bot || !target)
             return -1;
@@ -221,7 +221,7 @@ namespace Playerbot
         // Check depth to prevent infinite loops
         if (++session.currentDepth > session.MAX_DEPTH)
         {
-            LOG_WARN("playerbot", "Bot {} reached max gossip depth with NPC {}",
+            TC_LOG_WARN("playerbot", "Bot {} reached max gossip depth with NPC {}",
                      bot->GetName(), target->GetName());
             m_activeSessions.erase(bot->GetGUID());
             return -1;
@@ -245,7 +245,7 @@ namespace Playerbot
         return bestOption;
     }
 
-    void GossipHandler::HandleGossipPacket(Player* bot, WorldPacket const& packet, InteractionType desiredType)
+    void GossipHandler::HandleGossipPacket(::Player* bot, ::WorldPacket const& packet, InteractionType desiredType)
     {
         if (!bot)
             return;
@@ -266,7 +266,7 @@ namespace Playerbot
         }
     }
 
-    std::vector<GossipMenuOption> GossipHandler::ParseGossipMenu(Player* bot, uint32 menuId) const
+    std::vector<GossipMenuOption> GossipHandler::ParseGossipMenu(::Player* bot, uint32 menuId) const
     {
         if (!bot)
             return {};
@@ -274,19 +274,21 @@ namespace Playerbot
         std::vector<GossipMenuOption> options;
 
         // Get gossip menu items from player's current gossip
-        if (GossipMenu const* menu = bot->PlayerTalkClass->GetGossipMenu())
+        // TrinityCore 11.2: GetGossipMenu() returns reference, not pointer
+        GossipMenu const& menu = bot->PlayerTalkClass->GetGossipMenu();
         {
-            for (auto const& item : menu->GetMenuItems())
+            uint32 index = 0;
+            for (auto const& item : menu.GetMenuItems())
             {
                 GossipMenuOption option;
-                option.index = item.OptionIndex;
-                option.icon = item.OptionIcon;
-                option.text = item.Message;
+                option.index = index++;  // Use sequential index
+                option.icon = static_cast<uint8>(item.OptionNpc);  // OptionNpc is the icon type
+                option.text = item.OptionText;
                 option.sender = item.Sender;
-                option.action = item.OptionID;
-                option.boxText = item.BoxMessage;
+                option.action = item.Action;
+                option.boxText = item.BoxText;
                 option.boxMoney = item.BoxMoney;
-                option.coded = item.IsCoded;
+                option.coded = item.BoxCoded;
 
                 options.push_back(option);
             }
@@ -381,7 +383,7 @@ namespace Playerbot
         return (bestMatchCount > 0) ? bestMatch : InteractionType::None;
     }
 
-    bool GossipHandler::HandleSpecialGossip(Player* bot, const GossipMenuOption& option)
+    bool GossipHandler::HandleSpecialGossip(::Player* bot, const GossipMenuOption& option)
     {
         if (!bot)
             return false;
@@ -476,7 +478,7 @@ namespace Playerbot
         return GossipSelectType::Option;
     }
 
-    bool GossipHandler::CanAffordOption(Player* bot, const GossipMenuOption& option) const
+    bool GossipHandler::CanAffordOption(::Player* bot, const GossipMenuOption& option) const
     {
         if (!bot)
             return false;
@@ -484,7 +486,7 @@ namespace Playerbot
         return bot->GetMoney() >= option.boxMoney;
     }
 
-    std::string GossipHandler::GenerateResponse(Player* bot, const std::string& boxText) const
+    std::string GossipHandler::GenerateResponse(::Player* bot, const std::string& boxText) const
     {
         if (!bot || boxText.empty())
             return "";

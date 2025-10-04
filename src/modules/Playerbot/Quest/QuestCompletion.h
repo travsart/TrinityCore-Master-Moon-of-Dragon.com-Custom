@@ -209,10 +209,49 @@ public:
             uint32 completed = questsCompleted.load();
             return started > 0 ? (float)completed / started : 0.0f;
         }
+
+        // Delete copy operations (atomics are not copyable)
+        QuestCompletionMetrics() = default;
+        QuestCompletionMetrics(QuestCompletionMetrics const&) = delete;
+        QuestCompletionMetrics& operator=(QuestCompletionMetrics const&) = delete;
+
+        // Snapshot structure for returning metrics
+        struct Snapshot {
+            uint32 questsStarted;
+            uint32 questsCompleted;
+            uint32 questsFailed;
+            uint32 objectivesCompleted;
+            uint32 stuckInstances;
+            float averageCompletionTime;
+            float completionSuccessRate;
+            float objectiveEfficiency;
+            uint32 totalDistanceTraveled;
+            std::chrono::steady_clock::time_point lastUpdate;
+
+            float GetCompletionRate() const {
+                return questsStarted > 0 ? (float)questsCompleted / questsStarted : 0.0f;
+            }
+        };
+
+        // Create a snapshot of current metrics
+        Snapshot CreateSnapshot() const {
+            Snapshot snapshot;
+            snapshot.questsStarted = questsStarted.load();
+            snapshot.questsCompleted = questsCompleted.load();
+            snapshot.questsFailed = questsFailed.load();
+            snapshot.objectivesCompleted = objectivesCompleted.load();
+            snapshot.stuckInstances = stuckInstances.load();
+            snapshot.averageCompletionTime = averageCompletionTime.load();
+            snapshot.completionSuccessRate = completionSuccessRate.load();
+            snapshot.objectiveEfficiency = objectiveEfficiency.load();
+            snapshot.totalDistanceTraveled = totalDistanceTraveled.load();
+            snapshot.lastUpdate = lastUpdate;
+            return snapshot;
+        }
     };
 
-    QuestCompletionMetrics GetBotCompletionMetrics(uint32 botGuid);
-    QuestCompletionMetrics GetGlobalCompletionMetrics();
+    QuestCompletionMetrics::Snapshot GetBotCompletionMetrics(uint32 botGuid);
+    QuestCompletionMetrics::Snapshot GetGlobalCompletionMetrics();
 
     // Quest data analysis
     std::vector<uint32> GetActiveQuests(Player* bot);

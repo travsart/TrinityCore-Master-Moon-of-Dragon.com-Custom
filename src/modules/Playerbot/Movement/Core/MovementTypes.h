@@ -11,14 +11,21 @@
 #define TRINITY_PLAYERBOT_MOVEMENT_TYPES_H
 
 #include "Define.h"
+#include "ObjectGuid.h"
 #include "Position.h"
 #include <chrono>
 #include <vector>
 #include <memory>
 #include <optional>
 
-namespace PlayerBot
+namespace Playerbot
 {
+    // Forward declarations
+    enum class FormationType : uint8;  // Defined in AI/Combat/FormationManager.h
+
+    // Type aliases for path representations
+    using PositionVector = std::vector<Position>;
+
     /**
      * @enum MovementGeneratorType
      * @brief Types of movement behaviors available to bots
@@ -89,6 +96,32 @@ namespace PlayerBot
         TERRAIN_AIR             = 0x40,
         TERRAIN_VMAP_GROUND     = 0x80
     };
+
+    // Bitwise operators for TerrainType
+    inline constexpr TerrainType operator&(TerrainType lhs, TerrainType rhs)
+    {
+        return static_cast<TerrainType>(static_cast<uint8>(lhs) & static_cast<uint8>(rhs));
+    }
+
+    inline constexpr TerrainType operator|(TerrainType lhs, TerrainType rhs)
+    {
+        return static_cast<TerrainType>(static_cast<uint8>(lhs) | static_cast<uint8>(rhs));
+    }
+
+    inline constexpr TerrainType operator^(TerrainType lhs, TerrainType rhs)
+    {
+        return static_cast<TerrainType>(static_cast<uint8>(lhs) ^ static_cast<uint8>(rhs));
+    }
+
+    inline constexpr TerrainType operator~(TerrainType val)
+    {
+        return static_cast<TerrainType>(~static_cast<uint8>(val));
+    }
+
+    inline constexpr bool HasFlag(TerrainType value, TerrainType flag)
+    {
+        return (static_cast<uint8>(value) & static_cast<uint8>(flag)) != 0;
+    }
 
     /**
      * @enum PathType
@@ -234,20 +267,7 @@ namespace PlayerBot
             followDistance(sqrt(x*x + y*y)), followAngle(atan2(y, x)), slot(slotId) {}
     };
 
-    /**
-     * @enum FormationType
-     * @brief Predefined formation patterns
-     */
-    enum class FormationType : uint8
-    {
-        FORMATION_NONE          = 0,
-        FORMATION_LINE          = 1,
-        FORMATION_COLUMN        = 2,
-        FORMATION_WEDGE         = 3,
-        FORMATION_CIRCLE        = 4,
-        FORMATION_SQUARE        = 5,
-        FORMATION_CUSTOM        = 6
-    };
+    // FormationType removed - use definition from AI/Combat/FormationManager.h to avoid duplication
 
     /**
      * @struct MovementMetrics

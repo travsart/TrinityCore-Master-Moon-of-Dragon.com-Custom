@@ -63,7 +63,7 @@ enum class FormationRole : uint8
 };
 
 // Formation movement states
-enum class MovementState : uint8
+enum class FormationMovementState : uint8
 {
     STATIONARY = 0,         // Formation is stationary
     MOVING = 1,             // Formation is moving
@@ -122,7 +122,7 @@ struct FormationCommand
     FormationType newFormation;
     Position targetPosition;
     float targetOrientation;
-    MovementState movementState;
+    FormationMovementState movementState;
     float movementSpeed;
     uint32 priority;
     uint32 timeoutMs;
@@ -131,7 +131,7 @@ struct FormationCommand
     std::string reason;
 
     FormationCommand() : newFormation(FormationType::NONE), targetOrientation(0.0f),
-                        movementState(MovementState::MOVING), movementSpeed(0.0f),
+                        movementState(FormationMovementState::MOVING), movementSpeed(0.0f),
                         priority(0), timeoutMs(10000), maintainCohesion(true),
                         allowBreaking(false) {}
 };
@@ -245,7 +245,7 @@ public:
 
     // Query methods
     FormationType GetCurrentFormation() const { return _currentFormation; }
-    MovementState GetMovementState() const { return _movementState; }
+    FormationMovementState GetMovementState() const { return _movementState; }
     bool IsFormationLeader() const { return _isLeader; }
     bool IsInFormation() const { return _inFormation; }
     uint32 GetMemberCount() const { return static_cast<uint32>(_members.size()); }
@@ -320,7 +320,7 @@ private:
 
     // Formation state
     FormationType _currentFormation;
-    MovementState _movementState;
+    FormationMovementState _movementState;
     FormationIntegrity _currentIntegrity;
     std::vector<FormationMember> _members;
     std::unordered_map<FormationType, FormationConfig> _formationConfigs;
