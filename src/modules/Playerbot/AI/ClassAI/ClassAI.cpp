@@ -203,15 +203,20 @@ void ClassAI::UpdateTargeting()
     if (::Unit* victim = GetBot()->GetVictim())
         return victim;
 
-    // Priority 2: Selected target
+    // Priority 2: Selected target (if different from victim)
+    // FIX #20: Avoid ObjectAccessor::GetUnit() to prevent TrinityCore deadlock
+    // Check if bot has a selected target that's not the current victim
     ObjectGuid targetGuid = GetBot()->GetTarget();
     if (!targetGuid.IsEmpty())
     {
-        if (::Unit* target = ObjectAccessor::GetUnit(*GetBot(), targetGuid))
+        // Check if victim matches selected target (no ObjectAccessor needed)
+        if (::Unit* victim = GetBot()->GetVictim())
         {
-            if (GetBot()->IsValidAttackTarget(target))
-                return target;
+            if (victim->GetGUID() == targetGuid && GetBot()->IsValidAttackTarget(victim))
+                return victim;
         }
+        // Selected target is different from victim - skip to avoid ObjectAccessor call
+        // GetNearestEnemy() will handle finding a new target
     }
 
     // Priority 3: Nearest hostile
