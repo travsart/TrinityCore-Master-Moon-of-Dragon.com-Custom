@@ -93,6 +93,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ObjectCache.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ObjectCache.h
 
     # ClassAI System - Base and implementations
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.cpp

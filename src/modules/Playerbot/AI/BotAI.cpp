@@ -102,6 +102,11 @@ void BotAI::UpdateAI(uint32 diff)
     if (!_bot || !_bot->IsInWorld())
         return;
 
+    // FIX #19: Refresh ObjectCache ONCE at start to eliminate recursive ObjectAccessor calls
+    // This single call replaces 10-50 ObjectAccessor calls per update, eliminating TrinityCore
+    // std::shared_mutex deadlocks entirely. All subsequent code uses cached pointers.
+    _objectCache.RefreshCache(_bot);
+
     auto startTime = std::chrono::high_resolution_clock::now();
 
     // Track performance
@@ -304,12 +309,11 @@ void BotAI::UpdateCombatState(uint32 diff)
         SetAIState(BotAIState::COMBAT);
 
         // Find initial target
-        ::Unit* target = nullptr;
-        ObjectGuid targetGuid = _bot->GetTarget();
-        if (!targetGuid.IsEmpty())
+        // FIX #19: Use ObjectCache instead of ObjectAccessor to avoid TrinityCore deadlock
+        ::Unit* target = _objectCache.GetTarget();
+        if (target)
         {
-            target = ObjectAccessor::GetUnit(*_bot, targetGuid);
-            TC_LOG_ERROR("module.playerbot", "🎯 Target from GetTarget(): {}", target ? target->GetName() : "null");
+            TC_LOG_ERROR("module.playerbot", "🎯 Target from cache: {}", target->GetName());
         }
 
         if (!target)
@@ -966,7 +970,8 @@ ActionResult BotAI::ExecuteActionInternal(Action* action, ActionContext const& c
     if (!_bot || _currentTarget.IsEmpty())
         return nullptr;
 
-    return ObjectAccessor::GetUnit(*_bot, _currentTarget);
+    // FIX #19: Use ObjectCache instead of ObjectAccessor to avoid TrinityCore deadlock
+    return _objectCache.GetTarget();
 }
 
 // ============================================================================

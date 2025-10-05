@@ -18,6 +18,7 @@
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Strategy/Strategy.h"
+#include "ObjectCache.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -291,6 +292,11 @@ protected:
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
+
+    // CRITICAL FIX #19: ObjectAccessor Deadlock Resolution
+    // Cache for all ObjectAccessor results to eliminate recursive TrinityCore
+    // std::shared_mutex acquisitions. Refreshed once per UpdateAI() cycle.
+    ObjectCache _objectCache;
 
     // Thread safety
     // DEADLOCK FIX #14: Changed from std::shared_mutex to std::recursive_mutex
