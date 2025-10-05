@@ -244,7 +244,7 @@ public:
 
 private:
     // Internal update methods
-    void UpdateFollowTarget(Player* leader);
+    void UpdateFollowTarget(Player* bot, Player* leader);
     void UpdateMovement(BotAI* ai);
     void UpdateFormation(BotAI* ai);
     void UpdateCombatPosition(BotAI* ai);

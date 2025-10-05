@@ -197,28 +197,24 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Bot {} in group, leaderGUID={} ===",
                 bot->GetName(), group->GetLeaderGUID().ToString());
 
-    // CRITICAL FIX: Search group members directly - ObjectAccessor::FindPlayer doesn't find bots
+    // FIX #21: Search group members directly to avoid ObjectAccessor deadlock
+    // OnActivate() is called from BotAI constructor during bot initialization.
+    // Calling ObjectAccessor here can cause deadlock if another thread is using it.
+    // Solution: Use group->GetMembers() which doesn't require ObjectAccessor.
     Player* leader = nullptr;
     ObjectGuid leaderGuid = group->GetLeaderGUID();
 
-    // First try ObjectAccessor (works for real players)
-    leader = ObjectAccessor::FindPlayer(leaderGuid);
-
-    // If not found, search group members (works for bots)
-    if (!leader)
+    // Search group members directly (works for both real players and bots)
+    for (GroupReference const& itr : group->GetMembers())
     {
-        TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Leader not in ObjectAccessor, searching group members ===");
-        for (GroupReference const& itr : group->GetMembers())
+        if (Player* member = itr.GetSource())
         {
-            if (Player* member = itr.GetSource())
+            if (member->GetGUID() == leaderGuid)
             {
-                if (member->GetGUID() == leaderGuid)
-                {
-                    leader = member;
-                    TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Found leader {} in group members ===",
-                                member->GetName());
-                    break;
-                }
+                leader = member;
+                TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Found leader {} in group members ===",
+                            member->GetName());
+                break;
             }
         }
     }
@@ -308,7 +304,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     Player* leader = _followTarget.player;
 
     // Update follow target information
-    UpdateFollowTarget(leader);
+    UpdateFollowTarget(bot, leader);
 
     // Check if we need to teleport
     if (_config.autoTeleport && ShouldTeleportToLeader(bot, leader))
@@ -622,13 +618,11 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
     return result;
 }
 
-void LeaderFollowBehavior::UpdateFollowTarget(Player* leader)
+void LeaderFollowBehavior::UpdateFollowTarget(Player* bot, Player* leader)
 {
-    if (!leader)
-        return;
-
-    Player* bot = _followTarget.player ? ObjectAccessor::FindPlayer(_followTarget.guid) : nullptr;
-    if (!bot)
+    // FIX #21: Bot is now passed as parameter instead of looking it up via ObjectAccessor
+    // This eliminates another potential deadlock source during follow updates
+    if (!bot || !leader)
         return;
 
     _followTarget.lastKnownPosition = leader->GetPosition();
@@ -944,16 +938,14 @@ void LeaderFollowBehavior::HandleLostLeader(BotAI* ai)
     Player* bot = ai->GetBot();
 
     // Try to reacquire leader
-    if (!_followTarget.guid.IsEmpty())
+    // FIX #21: Use _followTarget.player instead of ObjectAccessor lookup
+    if (_followTarget.player)
     {
-        if (Player* leader = ObjectAccessor::FindPlayer(_followTarget.guid))
+        if (CheckLineOfSight(bot, _followTarget.player))
         {
-            if (CheckLineOfSight(bot, leader))
-            {
-                // Reacquired sight
-                SetFollowState(FollowState::FOLLOWING);
-                return;
-            }
+            // Reacquired sight
+            SetFollowState(FollowState::FOLLOWING);
+            return;
         }
     }
 
@@ -966,9 +958,10 @@ void LeaderFollowBehavior::HandleLostLeader(BotAI* ai)
     // Consider teleporting if lost for too long
     if (_followTarget.lostDuration > 10000 && _config.autoTeleport)
     {
-        if (Player* leader = ObjectAccessor::FindPlayer(_followTarget.guid))
+        // FIX #21: Use _followTarget.player instead of ObjectAccessor lookup
+        if (_followTarget.player)
         {
-            TeleportToLeader(bot, leader);
+            TeleportToLeader(bot, _followTarget.player);
         }
     }
 }
