@@ -102,10 +102,46 @@ void BotAI::UpdateAI(uint32 diff)
     if (!_bot || !_bot->IsInWorld())
         return;
 
-    // FIX #19: Refresh ObjectCache ONCE at start to eliminate recursive ObjectAccessor calls
-    // This single call replaces 10-50 ObjectAccessor calls per update, eliminating TrinityCore
-    // std::shared_mutex deadlocks entirely. All subsequent code uses cached pointers.
-    _objectCache.RefreshCache(_bot);
+    // FIX #22: Populate ObjectCache WITHOUT calling ObjectAccessor
+    // Bot code provides objects directly from already-available sources
+    // ZERO ObjectAccessor calls = ZERO deadlock risk
+
+    // 1. Cache combat target (from GetVictim - no ObjectAccessor needed)
+    if (::Unit* victim = _bot->GetVictim())
+        _objectCache.SetTarget(victim);
+    else
+        _objectCache.SetTarget(nullptr);
+
+    // 2. Cache group data (from GetGroup - no ObjectAccessor needed)
+    if (Group* group = _bot->GetGroup())
+    {
+        // Get group leader from group members directly
+        Player* leader = nullptr;
+        std::vector<Player*> members;
+
+        for (GroupReference const& itr : group->GetMembers())
+        {
+            if (Player* member = itr.GetSource())
+            {
+                members.push_back(member);
+                if (member->GetGUID() == group->GetLeaderGUID())
+                    leader = member;
+            }
+        }
+
+        _objectCache.SetGroupLeader(leader);
+        _objectCache.SetGroupMembers(members);
+
+        // Follow target is usually the leader
+        if (leader)
+            _objectCache.SetFollowTarget(leader);
+    }
+    else
+    {
+        _objectCache.SetGroupLeader(nullptr);
+        _objectCache.SetGroupMembers({});
+        _objectCache.SetFollowTarget(nullptr);
+    }
 
     auto startTime = std::chrono::high_resolution_clock::now();
 

@@ -18,173 +18,39 @@ namespace Playerbot
 {
 
 // ============================================================================
-// CACHE REFRESH - CRITICAL: Only place we call ObjectAccessor
+// FIX #22: PASSIVE CACHE POPULATION - Zero ObjectAccessor calls
 // ============================================================================
 
-void ObjectCache::RefreshCache(Player* bot)
+void ObjectCache::SetTarget(::Unit* target)
 {
-    if (!bot)
-    {
-        InvalidateCache();
-        return;
-    }
-
-    uint32 now = getMSTime();
-
-    // Don't refresh if cache is still valid
-    if (!NeedsRefresh(now))
-        return;
-
-    // CRITICAL PERFORMANCE FIX:
-    // This method makes ALL ObjectAccessor calls in ONE BATCH
-    // This is the ONLY place in bot update cycle that acquires ObjectAccessor locks
-    // Result: 95% reduction in lock contention, zero recursive deadlocks
-
+    _cachedTarget = target;
+    _targetGuid = target ? target->GetGUID() : ObjectGuid::Empty;
     _stats.totalRefreshes++;
+}
 
-    // ========================================================================
-    // 1. REFRESH COMBAT TARGET
-    // ========================================================================
+void ObjectCache::SetGroupLeader(Player* leader)
+{
+    _cachedGroupLeader = leader;
+    _groupLeaderGuid = leader ? leader->GetGUID() : ObjectGuid::Empty;
+}
 
-    _targetGuid = bot->GetTarget();
-    if (!_targetGuid.IsEmpty())
+void ObjectCache::SetGroupMembers(std::vector<Player*> const& members)
+{
+    _cachedGroupMembers = members;
+    _groupMemberGuids.clear();
+    _groupMemberGuids.reserve(members.size());
+
+    for (Player* member : members)
     {
-        // SINGLE ObjectAccessor call for combat target
-        _cachedTarget = ObjectAccessor::GetUnit(*bot, _targetGuid);
-
-        // Validate target is actually usable
-        if (!ValidateUnit(_cachedTarget, _targetGuid, bot))
-        {
-            _cachedTarget = nullptr;
-            _targetGuid = ObjectGuid::Empty;
-            _stats.validationFailures++;
-        }
+        if (member)
+            _groupMemberGuids.push_back(member->GetGUID());
     }
-    else
-    {
-        _cachedTarget = nullptr;
-    }
+}
 
-    // ========================================================================
-    // 2. REFRESH GROUP OBJECTS
-    // ========================================================================
-
-    Group* group = bot->GetGroup();
-    if (group)
-    {
-        // 2a. Refresh group leader
-        _groupLeaderGuid = group->GetLeaderGUID();
-        _cachedGroupLeader = ObjectAccessor::FindPlayer(_groupLeaderGuid);
-
-        if (!ValidatePointer(_cachedGroupLeader, _groupLeaderGuid))
-        {
-            _cachedGroupLeader = nullptr;
-            _stats.validationFailures++;
-        }
-
-        // 2b. Refresh group members (batch lookup)
-        _cachedGroupMembers.clear();
-        _groupMemberGuids.clear();
-
-        Group::MemberSlotList const& members = group->GetMemberSlots();
-        _cachedGroupMembers.reserve(members.size());
-        _groupMemberGuids.reserve(members.size());
-
-        for (Group::MemberSlot const& slot : members)
-        {
-            // BATCH ObjectAccessor calls for all group members
-            Player* member = ObjectAccessor::FindPlayer(slot.guid);
-
-            if (ValidatePointer(member, slot.guid))
-            {
-                _cachedGroupMembers.push_back(member);
-                _groupMemberGuids.push_back(slot.guid);
-            }
-            else
-            {
-                _stats.validationFailures++;
-            }
-        }
-    }
-    else
-    {
-        // Not in group - clear group cache
-        _cachedGroupLeader = nullptr;
-        _groupLeaderGuid = ObjectGuid::Empty;
-        _cachedGroupMembers.clear();
-        _groupMemberGuids.clear();
-    }
-
-    // ========================================================================
-    // 3. REFRESH FOLLOW TARGET (for LeaderFollowBehavior)
-    // ========================================================================
-
-    // Follow target is usually group leader, but can be different
-    if (!_followTargetGuid.IsEmpty())
-    {
-        _cachedFollowTarget = ObjectAccessor::GetUnit(*bot, _followTargetGuid);
-
-        if (!ValidateUnit(_cachedFollowTarget, _followTargetGuid, bot))
-        {
-            // Follow target invalid - fall back to group leader
-            if (_cachedGroupLeader)
-            {
-                _cachedFollowTarget = _cachedGroupLeader;
-                _followTargetGuid = _groupLeaderGuid;
-            }
-            else
-            {
-                _cachedFollowTarget = nullptr;
-                _followTargetGuid = ObjectGuid::Empty;
-                _stats.validationFailures++;
-            }
-        }
-    }
-    else if (_cachedGroupLeader)
-    {
-        // No explicit follow target - use group leader
-        _cachedFollowTarget = _cachedGroupLeader;
-        _followTargetGuid = _groupLeaderGuid;
-    }
-    else
-    {
-        _cachedFollowTarget = nullptr;
-    }
-
-    // ========================================================================
-    // 4. REFRESH INTERACTION TARGET (optional - for quest/NPC interactions)
-    // ========================================================================
-
-    if (!_interactionTargetGuid.IsEmpty())
-    {
-        _cachedInteractionTarget = ObjectAccessor::GetWorldObject(*bot, _interactionTargetGuid);
-
-        if (!ValidatePointer(_cachedInteractionTarget, _interactionTargetGuid))
-        {
-            _cachedInteractionTarget = nullptr;
-            _interactionTargetGuid = ObjectGuid::Empty;
-            _stats.validationFailures++;
-        }
-    }
-    else
-    {
-        _cachedInteractionTarget = nullptr;
-    }
-
-    // ========================================================================
-    // 5. UPDATE CACHE TIMESTAMP
-    // ========================================================================
-
-    _lastRefreshTime = now;
-
-    // Log cache refresh (debug only)
-    TC_LOG_TRACE("module.playerbot.cache",
-                 "ObjectCache refreshed for {} - Target: {}, Leader: {}, Members: {}, Validations failed: {}",
-                 bot->GetName(),
-                 _cachedTarget ? _cachedTarget->GetName() : "none",
-                 _cachedGroupLeader ? _cachedGroupLeader->GetName() : "none",
-                 _cachedGroupMembers.size(),
-                 _stats.validationFailures);
+void ObjectCache::SetFollowTarget(::Unit* followTarget)
+{
+    _cachedFollowTarget = followTarget;
+    _followTargetGuid = followTarget ? followTarget->GetGUID() : ObjectGuid::Empty;
 }
 
 void ObjectCache::InvalidateCache()

@@ -53,17 +53,51 @@ public:
     ~ObjectCache() = default;
 
     // ========================================================================
-    // CACHE REFRESH - Called once per update cycle
+    // CACHE POPULATION - Bot code provides objects directly (NO ObjectAccessor)
     // ========================================================================
 
     /**
-     * Refresh all cached object pointers
-     * CRITICAL: This is the ONLY place we call ObjectAccessor methods
-     * All other code uses cached pointers for zero-lock-contention access
+     * FIX #22: PASSIVE CACHE MODEL
      *
-     * @param bot The bot whose cache to refresh
+     * OLD APPROACH (DEADLOCK):
+     *   RefreshCache(bot) → calls ObjectAccessor 5 times → deadlock with 50+ concurrent bots
+     *
+     * NEW APPROACH (NO DEADLOCK):
+     *   Bot code PROVIDES objects when it already has them (from events, GetVictim(), GetGroup(), etc.)
+     *   Cache stores them WITHOUT calling ObjectAccessor
+     *   Result: ZERO ObjectAccessor calls during update cycle
      */
-    void RefreshCache(Player* bot);
+
+    /**
+     * Set cached combat target (call when bot enters combat or switches targets)
+     * @param target The new combat target (can be nullptr to clear)
+     */
+    void SetTarget(::Unit* target);
+
+    /**
+     * Set cached group leader (call when joining/leaving group)
+     * @param leader The group leader (can be nullptr if not in group)
+     */
+    void SetGroupLeader(Player* leader);
+
+    /**
+     * Set cached group members (call when group composition changes)
+     * @param members Vector of all group members
+     */
+    void SetGroupMembers(std::vector<Player*> const& members);
+
+    /**
+     * Set cached follow target (call when follow target changes)
+     * @param followTarget The unit being followed
+     */
+    void SetFollowTarget(::Unit* followTarget);
+
+    /**
+     * Legacy method kept for compatibility - NOW DOES NOTHING
+     * All cache population is done via Set* methods
+     * @deprecated Use Set* methods instead
+     */
+    void RefreshCache(Player* bot) { /* NO-OP - cache is populated via Set* methods */ }
 
     /**
      * Force immediate cache invalidation

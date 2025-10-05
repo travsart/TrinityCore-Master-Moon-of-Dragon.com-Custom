@@ -77,12 +77,15 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    // Check if bot is already added
-    Player* existingBot = ObjectAccessor::FindConnectedPlayer(playerGuid);
-    if (existingBot && existingBot->IsInWorld())
+    // FIX #22: CRITICAL - Eliminate ObjectAccessor call to prevent deadlock
+    // Check if bot is already added by scanning existing sessions (avoids ObjectAccessor lock)
+    for (auto const& [guid, session] : _botSessions)
     {
-        TC_LOG_DEBUG("module.playerbot.session", "🔧 Bot {} already in world", playerGuid.ToString());
-        return false;
+        if (guid == playerGuid && session && session->GetPlayer())
+        {
+            TC_LOG_DEBUG("module.playerbot.session", "🔧 Bot {} already in world (found in _botSessions)", playerGuid.ToString());
+            return false;
+        }
     }
 
     // Get account ID for this character from playerbot database directly

@@ -144,7 +144,36 @@ protected:
      * @param target Combat target
      * @return Preferred combat range
      */
-    virtual float GetOptimalRange(::Unit* target) = 0;
+    virtual float GetOptimalRange(::Unit* target)
+    {
+        // Default implementation for base ClassAI
+        // Melee classes (Warrior, Rogue, DK, etc.) use 5.0f
+        // Ranged/Casters use 25.0f
+        if (!GetBot())
+            return 25.0f;
+
+        uint8 botClass = GetBot()->GetClass();
+        switch (botClass)
+        {
+            case CLASS_WARRIOR:
+            case CLASS_ROGUE:
+            case CLASS_DEATH_KNIGHT:
+            case CLASS_MONK:        // Melee DPS/Tank specs
+                return 5.0f;        // Melee range
+
+            case CLASS_HUNTER:
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+            case CLASS_PRIEST:
+            case CLASS_SHAMAN:
+            case CLASS_DRUID:
+            case CLASS_PALADIN:     // Hybrid, prefer ranged for safety
+                return 25.0f;       // Ranged/casting range
+
+            default:
+                return 25.0f;       // Safe default for unknown classes
+        }
+    }
 
     // ========================================================================
     // UTILITY FUNCTIONS - Helpers for derived classes

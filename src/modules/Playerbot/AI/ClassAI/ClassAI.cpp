@@ -103,20 +103,30 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         TC_LOG_ERROR("module.playerbot", "⚔️ COMBAT MOVEMENT: Bot {} - optimalRange={:.1f}, currentDistance={:.1f}, target={}",
                     GetBot()->GetName(), optimalRange, currentDistance, _currentCombatTarget->GetName());
 
-        // Move to optimal range if too far or too close (for ranged)
-        if (currentDistance > optimalRange + rangeTolerance)
+        // FIX: Only issue movement if not already moving to correct position
+        MotionMaster* mm = GetBot()->GetMotionMaster();
+        bool isChasing = (mm->GetMotionSlotType(MOTION_SLOT_ACTIVE) == CHASE_MOTION_TYPE);
+
+        if (currentDistance > optimalRange + rangeTolerance && !isChasing)
         {
             // Too far - chase target to optimal range
             GetBot()->GetMotionMaster()->MoveChase(_currentCombatTarget, optimalRange);
             TC_LOG_ERROR("module.playerbot", "🏃 CHASE: {} moving closer to {} (distance: {:.1f} -> {:.1f})",
                         GetBot()->GetName(), _currentCombatTarget->GetName(), currentDistance, optimalRange);
         }
-        else if (optimalRange > 10.0f && currentDistance < optimalRange - rangeTolerance)
+        else if (optimalRange > 10.0f && currentDistance < optimalRange - rangeTolerance && !isChasing)
         {
             // Too close for ranged classes - maintain distance
             GetBot()->GetMotionMaster()->MoveChase(_currentCombatTarget, optimalRange);
             TC_LOG_ERROR("module.playerbot", "🔙 BACKUP: {} backing up from {} (distance: {:.1f} -> {:.1f})",
                         GetBot()->GetName(), _currentCombatTarget->GetName(), currentDistance, optimalRange);
+        }
+        else if (isChasing && std::abs(currentDistance - optimalRange) <= rangeTolerance)
+        {
+            // Already at optimal range while chasing - stop movement to allow spell casting
+            GetBot()->GetMotionMaster()->Clear();
+            TC_LOG_ERROR("module.playerbot", "🛑 STOP CHASE: {} reached optimal range {:.1f}yd from {}",
+                        GetBot()->GetName(), currentDistance, _currentCombatTarget->GetName());
         }
         else
         {
