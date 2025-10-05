@@ -28,6 +28,7 @@
 #include "Group.h"
 #include "WorldSession.h"
 #include "MotionMaster.h"
+#include "Movement/BotMovementUtil.h"
 #include "ReputationMgr.h"
 #include <algorithm>
 #include <cmath>
@@ -1162,11 +1163,10 @@ namespace Playerbot
         if (distance <= QUEST_INTERACT_DISTANCE)
             return true;
 
-        // Move to quest giver
-        m_bot->GetMotionMaster()->MovePoint(0, questGiver->GetPositionX(), questGiver->GetPositionY(), questGiver->GetPositionZ());
-
-        // Wait for movement (simplified - real implementation would track movement state)
-        return true;
+        // Move to quest giver using centralized movement utility (prevents infinite loop)
+        Position destination;
+        destination.Relocate(questGiver->GetPositionX(), questGiver->GetPositionY(), questGiver->GetPositionZ());
+        return BotMovementUtil::MoveToPosition(m_bot, destination);
     }
 
     void QuestManager::ShareGroupQuests()

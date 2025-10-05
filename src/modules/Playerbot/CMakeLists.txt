@@ -289,6 +289,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
 
     # Movement System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
 
