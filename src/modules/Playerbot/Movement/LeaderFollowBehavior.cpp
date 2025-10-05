@@ -1209,7 +1209,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
 
     // FIX: Check if bot is already moving to this exact destination
     // Prevents re-issuing movement every frame which cancels the previous movement
-    if (motionMaster->GetMotionSlotType(MOTION_SLOT_ACTIVE) == POINT_MOTION_TYPE)
+    if (motionMaster->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == POINT_MOTION_TYPE)
     {
         // Bot is already moving via MovePoint - check if it's the same destination
         float distToDestination = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());

@@ -105,7 +105,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
         // FIX: Only issue movement if not already moving to correct position
         MotionMaster* mm = GetBot()->GetMotionMaster();
-        bool isChasing = (mm->GetMotionSlotType(MOTION_SLOT_ACTIVE) == CHASE_MOTION_TYPE);
+        bool isChasing = (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == CHASE_MOTION_TYPE);
 
         if (currentDistance > optimalRange + rangeTolerance && !isChasing)
         {
