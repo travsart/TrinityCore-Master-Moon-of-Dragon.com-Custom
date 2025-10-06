@@ -35,6 +35,9 @@ namespace Playerbot
 class Value;
 class GroupInvitationHandler;
 class TargetScanner;
+class QuestManager;
+class TradeManager;
+class GatheringManager;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -186,6 +189,19 @@ public:
     bool IsMoving() const;
 
     // ========================================================================
+    // GAME SYSTEM MANAGERS - Quest, profession, trade management
+    // ========================================================================
+
+    QuestManager* GetQuestManager() { return _questManager.get(); }
+    QuestManager const* GetQuestManager() const { return _questManager.get(); }
+
+    TradeManager* GetTradeManager() { return _tradeManager.get(); }
+    TradeManager const* GetTradeManager() const { return _tradeManager.get(); }
+
+    GatheringManager* GetGatheringManager() { return _gatheringManager.get(); }
+    GatheringManager const* GetGatheringManager() const { return _gatheringManager.get(); }
+
+    // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization
     // ========================================================================
 
@@ -245,6 +261,11 @@ protected:
      */
     void UpdateValues(uint32 diff);
 
+    /**
+     * Update all BehaviorManager-based managers
+     */
+    void UpdateManagers(uint32 diff);
+
     // ========================================================================
     // HELPER METHODS - Utilities for derived classes
     // ========================================================================
@@ -289,6 +310,11 @@ protected:
 
     // Target scanning for autonomous engagement
     std::unique_ptr<TargetScanner> _targetScanner;
+
+    // Game system managers
+    std::unique_ptr<QuestManager> _questManager;
+    std::unique_ptr<TradeManager> _tradeManager;
+    std::unique_ptr<GatheringManager> _gatheringManager;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

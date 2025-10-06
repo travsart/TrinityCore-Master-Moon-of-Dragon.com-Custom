@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "GameTime.h"
 #include "AI/BotAI.h"
+#include "AI/BotAIFactory.h"
 #include "SpellMgr.h"
 #include "Chat/Chat.h"
 #include "Group.h"
@@ -458,20 +459,30 @@ bool BotWorldEntry::InitializeAI()
                 "Initializing AI for bot {}",
                 _characterGuid.ToString());
 
-    // Create and initialize AI
-    BotAI* ai = new BotAI(_player);
+    // CRITICAL FIX: Use BotAIFactory to create class-specific AI (WarriorAI, MageAI, etc.)
+    // instead of base BotAI. This ensures QuestManager and all automation systems are initialized.
+    auto botAI = sBotAIFactory->CreateAI(_player);
+    if (!botAI)
+    {
+        SetError("Failed to create bot AI");
+        return false;
+    }
+
+    BotAI* ai = botAI.get();
 
     // Initialize AI systems
     ai->Reset();
 
-    // Set AI in session for reference
+    // Set AI in session for reference (transfers ownership)
     if (BotSession* botSession = dynamic_cast<BotSession*>(_session.get()))
     {
-        botSession->SetAI(ai);
+        botSession->SetAI(botAI.release());
     }
-
-    // Store AI reference in player
-    _player->SetAI(ai);
+    else
+    {
+        // If not BotSession, store in player directly
+        _player->SetAI(ai);
+    }
 
     // Start AI updates
     ai->OnRespawn();

@@ -13,13 +13,14 @@
 #include "BotAI.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
+#include "Strategy/IdleStrategy.h"
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Group/GroupInvitationHandler.h"
 #include "Movement/LeaderFollowBehavior.h"
-#include "Quest/QuestAutomation.h"
-#include "Social/TradeAutomation.h"
-#include "Social/AuctionAutomation.h"
+#include "Game/QuestManager.h"
+#include "Social/TradeManager.h"
+#include "Professions/GatheringManager.h"
 #include "Combat/TargetScanner.h"
 #include "Player.h"
 #include "Unit.h"
@@ -61,14 +62,12 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize target scanner for autonomous enemy detection
     _targetScanner = std::make_unique<TargetScanner>(_bot);
 
-    // CRITICAL: Activate idle behavior automation systems
-    // These systems are fully implemented but disabled by default - must activate on spawn
-    uint32 botGuid = _bot->GetGUID().GetCounter();
-    QuestAutomation::instance()->SetAutomationActive(botGuid, true);
-    TradeAutomation::instance()->SetAutomationActive(botGuid, true);
-    AuctionAutomation::instance()->SetAutomationActive(botGuid, true);
+    // Initialize all game system managers
+    _questManager = std::make_unique<QuestManager>(_bot, this);
+    _tradeManager = std::make_unique<TradeManager>(_bot, this);
+    _gatheringManager = std::make_unique<GatheringManager>(_bot, this);
 
-    TC_LOG_INFO("module.playerbot", "🤖 BOT AUTOMATION ACTIVATED: {} - Quest/Trade/Auction systems enabled",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering systems ready",
                 _bot->GetName());
 
     // Initialize default strategies for basic functionality
@@ -99,8 +98,40 @@ void BotAI::UpdateAI(uint32 diff)
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
     // No more confusion with DoUpdateAI/UpdateEnhanced
 
+    static uint32 entryCounter = 0;
+    if (++entryCounter % 100 == 0)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 UpdateAI ENTRY: Bot {}, _bot={}, IsInWorld()={}",
+                    _bot ? _bot->GetName() : "NULL", (void*)_bot, _bot ? _bot->IsInWorld() : false);
+    }
+
     if (!_bot || !_bot->IsInWorld())
         return;
+
+    // CRITICAL FIX: Activate appropriate strategies on first update
+    // This ensures bot is fully loaded and group data is available
+    // Only runs ONCE per bot login
+    static std::unordered_set<uint32> _initializedBots;
+    uint32 botGuid = _bot->GetGUID().GetCounter();
+    if (_initializedBots.find(botGuid) == _initializedBots.end())
+    {
+        _initializedBots.insert(botGuid);
+
+        Group* group = _bot->GetGroup();
+        if (group)
+        {
+            // Bot is in a group - activate follow and combat strategies
+            TC_LOG_INFO("module.playerbot.ai", "🔄 First UpdateAI for grouped bot {} - activating group strategies", _bot->GetName());
+            ActivateStrategy("follow");
+            ActivateStrategy("group_combat");
+        }
+        else
+        {
+            // Solo bot - activate idle strategy
+            TC_LOG_INFO("module.playerbot.ai", "🔄 First UpdateAI for solo bot {} - activating idle strategy", _bot->GetName());
+            ActivateStrategy("idle");
+        }
+    }
 
     // FIX #22: Populate ObjectCache WITHOUT calling ObjectAccessor
     // Bot code provides objects directly from already-available sources
@@ -201,10 +232,18 @@ void BotAI::UpdateAI(uint32 diff)
     }
 
     // ========================================================================
-    // PHASE 5: IDLE BEHAVIORS - Only when not in combat or following
+    // PHASE 5: MANAGER UPDATES - Throttled heavyweight operations
     // ========================================================================
 
-    // Update idle behaviors (questing, trading, etc.)
+    // Update all BehaviorManager-based managers
+    // These handle quest, trade, gathering with their own throttling
+    UpdateManagers(diff);
+
+    // ========================================================================
+    // PHASE 6: IDLE BEHAVIORS - Only when not in combat or following
+    // ========================================================================
+
+    // Update idle behaviors (autonomous target scanning, etc.)
     // Only runs when bot is truly idle
     if (!IsInCombat() && !IsFollowing())
     {
@@ -212,7 +251,7 @@ void BotAI::UpdateAI(uint32 diff)
     }
 
     // ========================================================================
-    // PHASE 6: GROUP MANAGEMENT - Check for group changes
+    // PHASE 7: GROUP MANAGEMENT - Check for group changes
     // ========================================================================
 
     // Check if bot left group and trigger cleanup
@@ -226,7 +265,7 @@ void BotAI::UpdateAI(uint32 diff)
     _wasInGroup = isInGroup;
 
     // ========================================================================
-    // PHASE 6: PERFORMANCE TRACKING
+    // PHASE 8: PERFORMANCE TRACKING
     // ========================================================================
 
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -266,6 +305,14 @@ void BotAI::UpdateStrategies(uint32 diff)
     std::vector<std::pair<Strategy*, bool>> strategiesToCheck;
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+        static uint32 activeStrategiesDebugCounter = 0;
+        if (++activeStrategiesDebugCounter % 100 == 0)
+        {
+            TC_LOG_ERROR("module.playerbot", "🔍 ACTIVE STRATEGIES: Bot {} has {} active strategies in _activeStrategies set",
+                        _bot->GetName(), _activeStrategies.size());
+        }
+
         for (auto const& strategyName : _activeStrategies)
         {
             auto it = _strategies.find(strategyName);
@@ -280,28 +327,75 @@ void BotAI::UpdateStrategies(uint32 diff)
     // NOW check IsActive() and update WITHOUT holding any lock
     // IsActive() is thread-safe (atomic), and callbacks can safely call GetStrategy()
     std::vector<Strategy*> strategiesToUpdate;
+
+    static uint32 debugStrategyCounter = 0;
+    bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0); // Log every 10th call instead of 100th
+
     for (auto& [strategy, dummy] : strategiesToCheck)
     {
-        if (strategy && strategy->IsActive(this))
+        if (strategy)
         {
-            strategiesToUpdate.push_back(strategy);
+            bool isActive = strategy->IsActive(this);
+            if (shouldLogStrategy)
+            {
+                TC_LOG_ERROR("module.playerbot.ai", "🎯 STRATEGY CHECK: Bot {} strategy '{}', IsActive()={}",
+                            _bot->GetName(), strategy->GetName(), isActive);
+            }
+
+            if (isActive)
+            {
+                strategiesToUpdate.push_back(strategy);
+                if (shouldLogStrategy)
+                {
+                    TC_LOG_ERROR("module.playerbot", "✅ ADDED TO UPDATE LIST: Bot {} strategy '{}'",
+                                _bot->GetName(), strategy->GetName());
+                }
+            }
+            else
+            {
+                if (shouldLogStrategy)
+                {
+                    TC_LOG_ERROR("module.playerbot", "❌ NOT ACTIVE: Bot {} strategy '{}' - IsActive() returned false",
+                                _bot->GetName(), strategy->GetName());
+                }
+            }
         }
     }
 
+    if (shouldLogStrategy && !strategiesToUpdate.empty())
+    {
+        TC_LOG_ERROR("module.playerbot", "📋 Bot {} will update {} strategies",
+                    _bot->GetName(), strategiesToUpdate.size());
+    }
+
     // Call strategy updates WITHOUT holding ANY lock
+    TC_LOG_ERROR("module.playerbot", "⚡ ABOUT TO UPDATE {} STRATEGIES for bot {}",
+                strategiesToUpdate.size(), _bot->GetName());
+
     for (Strategy* strategy : strategiesToUpdate)
     {
+        TC_LOG_ERROR("module.playerbot", "🔄 LOOP ITERATION: strategy='{}', ptr={}",
+                    strategy->GetName(), (void*)strategy);
+
         // Special handling for follow strategy - needs every frame update
         if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(strategy))
         {
+            TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
         }
         else
         {
             // Other strategies can use their normal update
+            TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
+                        _bot->GetName(), strategy->GetName());
             strategy->UpdateBehavior(this, diff);
+            TC_LOG_ERROR("module.playerbot", "✔️ RETURNED from UpdateBehavior for bot {} strategy '{}'",
+                        _bot->GetName(), strategy->GetName());
         }
     }
+
+    TC_LOG_ERROR("module.playerbot", "✅ FINISHED updating {} strategies for bot {}",
+                strategiesToUpdate.size(), _bot->GetName());
 
     _performanceMetrics.strategiesEvaluated = static_cast<uint32>(strategiesToUpdate.size());
 }
@@ -541,36 +635,12 @@ void BotAI::UpdateIdleBehaviors(uint32 diff)
     }
 
     // ========================================================================
-    // QUEST AND TRADE AUTOMATION
+    // GAME SYSTEM MANAGER UPDATES
     // ========================================================================
 
-    // CRITICAL FIX: Actually call the automation systems that exist but were never connected!
-    // These systems are fully implemented in Quest/, Social/ but UpdateIdleBehaviors was a stub
-
-    // Run quest automation every ~5 seconds (not every frame - too expensive)
-    static uint32 lastQuestUpdate = 0;
-    if (currentTime - lastQuestUpdate > 5000) // 5 second throttle
-    {
-        QuestAutomation::instance()->AutomateQuestPickup(_bot);
-        lastQuestUpdate = currentTime;
-    }
-
-    // Run trade automation every ~10 seconds (vendor visits, repairs, consumables)
-    static uint32 lastTradeUpdate = 0;
-    if (currentTime - lastTradeUpdate > 10000) // 10 second throttle
-    {
-        TradeAutomation::instance()->AutomateVendorInteractions(_bot);
-        TradeAutomation::instance()->AutomateInventoryManagement(_bot);
-        lastTradeUpdate = currentTime;
-    }
-
-    // Run auction house automation every ~30 seconds (market monitoring, buying/selling)
-    static uint32 lastAuctionUpdate = 0;
-    if (currentTime - lastAuctionUpdate > 30000) // 30 second throttle
-    {
-        AuctionAutomation::instance()->AutomateAuctionHouseActivities(_bot);
-        lastAuctionUpdate = currentTime;
-    }
+    // Managers will be updated via UpdateManagers() which is called in UpdateAI()
+    // No need to manually update them here since they inherit from BehaviorManager
+    // and have their own throttling mechanisms
 
     // TODO: Add social interactions (chat, emotes) when implemented
 }
@@ -640,11 +710,22 @@ void BotAI::Reset()
 
 void BotAI::OnGroupJoined(Group* group)
 {
-    if (!group)
-        return;
+    // Get group from bot if not provided (handles login scenario)
+    if (!group && _bot)
+        group = _bot->GetGroup();
 
-    TC_LOG_INFO("playerbot", "Bot {} joined group, activating follow and combat strategies",
-                _bot->GetName());
+    TC_LOG_INFO("module.playerbot.ai", "🚨 OnGroupJoined called for bot {}, provided group={}, bot's group={}",
+                _bot ? _bot->GetName() : "NULL", (void*)group, _bot ? (void*)_bot->GetGroup() : nullptr);
+
+    if (!group)
+    {
+        TC_LOG_INFO("module.playerbot.ai", "❌ OnGroupJoined: No group available for bot {}",
+                    _bot ? _bot->GetName() : "NULL");
+        return;
+    }
+
+    TC_LOG_INFO("module.playerbot.ai", "Bot {} joined group {}, activating follow and combat strategies",
+                _bot->GetName(), (void*)group);
 
     // DEADLOCK FIX #12: This method was acquiring mutex MULTIPLE times:
     // 1. GetStrategy("follow") - shared_lock
@@ -693,26 +774,40 @@ void BotAI::OnGroupJoined(Group* group)
         }
 
         // Activate follow strategy (while still holding lock)
-        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), "follow") == _activeStrategies.end())
         {
-            _activeStrategies.push_back("follow");
+            bool alreadyInList = std::find(_activeStrategies.begin(), _activeStrategies.end(), "follow") != _activeStrategies.end();
             auto it = _strategies.find("follow");
             if (it != _strategies.end())
             {
+                bool wasActive = it->second->IsActive(this);
+
+                if (!alreadyInList)
+                    _activeStrategies.push_back("follow");
+
                 it->second->SetActive(true);
-                strategiesToActivate.push_back(it->second.get());
+
+                // CRITICAL FIX: Call OnActivate if newly added OR not properly initialized
+                if (!alreadyInList || !wasActive)
+                    strategiesToActivate.push_back(it->second.get());
             }
         }
 
         // Activate group combat strategy (while still holding lock)
-        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), "group_combat") == _activeStrategies.end())
         {
-            _activeStrategies.push_back("group_combat");
+            bool alreadyInList = std::find(_activeStrategies.begin(), _activeStrategies.end(), "group_combat") != _activeStrategies.end();
             auto it = _strategies.find("group_combat");
             if (it != _strategies.end())
             {
+                bool wasActive = it->second->IsActive(this);
+
+                if (!alreadyInList)
+                    _activeStrategies.push_back("group_combat");
+
                 it->second->SetActive(true);
-                strategiesToActivate.push_back(it->second.get());
+
+                // CRITICAL FIX: Call OnActivate if newly added OR not properly initialized
+                if (!alreadyInList || !wasActive)
+                    strategiesToActivate.push_back(it->second.get());
             }
         }
 
@@ -737,6 +832,9 @@ void BotAI::OnGroupJoined(Group* group)
         if (strategy)
             strategy->OnActivate(this);
     }
+
+    // Deactivate idle strategy when joining a group
+    DeactivateStrategy("idle");
 
     // Set state to following if not in combat (no lock needed - atomic operation)
     if (!IsInCombat())
@@ -789,6 +887,9 @@ void BotAI::OnGroupLeft()
         if (strategy)
             strategy->OnDeactivate(this);
     }
+
+    // Activate idle strategy when leaving a group
+    ActivateStrategy("idle");
 
     // Set state to idle if not in combat
     if (!IsInCombat())
@@ -875,6 +976,7 @@ void BotAI::ActivateStrategy(std::string const& name)
     // If another thread holds shared_lock and we hold unique_lock, calling OnActivate
     // which tries to acquire another shared_lock will deadlock due to writer-preference
     Strategy* strategy = nullptr;
+    bool needsOnActivate = false;
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
@@ -884,21 +986,32 @@ void BotAI::ActivateStrategy(std::string const& name)
             return;
 
         // Check if already active
-        if (std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end())
-            return;
+        bool alreadyInList = std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end();
+        bool wasActive = it->second->IsActive(this);  // Check BEFORE setting active
 
-        _activeStrategies.push_back(name);
+        if (!alreadyInList)
+        {
+            _activeStrategies.push_back(name);
+        }
 
         // CRITICAL FIX: Set the strategy's internal _active flag so IsActive() returns true
         it->second->SetActive(true);
+
+        // CRITICAL FIX: Call OnActivate if strategy is newly activated OR was never properly initialized
+        // This handles both: new activations and re-activation of strategies that were improperly added
+        needsOnActivate = !alreadyInList || !wasActive;
+
+        TC_LOG_ERROR("module.playerbot.ai", "🔥 ACTIVATED STRATEGY: '{}' for bot {}, alreadyInList={}, wasActive={}, needsOnActivate={}",
+                     name, _bot->GetName(), alreadyInList, wasActive, needsOnActivate);
 
         // Get strategy pointer for callback
         strategy = it->second.get();
     } // RELEASE LOCK BEFORE CALLBACK
 
-    // Call OnActivate hook WITHOUT holding lock
-    if (strategy)
+    // Call OnActivate hook WITHOUT holding lock if needed
+    if (strategy && needsOnActivate)
     {
+        TC_LOG_ERROR("module.playerbot.ai", "🎬 Calling OnActivate() for strategy '{}' on bot {}", name, _bot->GetName());
         strategy->OnActivate(this);
         TC_LOG_DEBUG("playerbot", "Activated strategy '{}' for bot {}", name, _bot->GetName());
     }
@@ -1072,7 +1185,16 @@ void BotAI::InitializeDefaultStrategies()
     auto groupCombat = std::make_unique<GroupCombatStrategy>();
     AddStrategy(std::move(groupCombat));
 
-    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow and group_combat strategies for bot {}", _bot->GetName());
+    // Create idle strategy for solo bot behavior (questing, exploring, etc.)
+    auto idleStrategy = std::make_unique<IdleStrategy>();
+    AddStrategy(std::move(idleStrategy));
+
+    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, and idle strategies for bot {}", _bot->GetName());
+
+    // NOTE: Do NOT activate strategies here!
+    // Strategy activation happens AFTER bot is fully loaded:
+    // - For bots in groups: OnGroupJoined() activates follow/combat (called from BotSession after login)
+    // - For solo bots: First UpdateAI() will activate idle strategy (see UpdateAI start)
 
     // Combat strategies are added by ClassAI
     // Additional strategies can be added based on configuration
@@ -1082,6 +1204,30 @@ void BotAI::UpdateValues(uint32 diff)
 {
     // Update cached values used by triggers and actions
     // This includes distances, health percentages, resource levels, etc.
+}
+
+void BotAI::UpdateManagers(uint32 diff)
+{
+    // Update all BehaviorManager-based managers
+    // Each manager internally throttles its own updates via BehaviorManager::Update()
+
+    if (!_bot || !_bot->IsInWorld())
+        return;
+
+    // Quest manager handles quest acceptance, turn-in, and tracking
+    if (_questManager)
+        _questManager->Update(diff);
+
+    // Trade manager handles vendor interactions, repairs, and consumables
+    if (_tradeManager)
+        _tradeManager->Update(diff);
+
+    // Gathering manager handles mining, herbalism, skinning
+    if (_gatheringManager)
+        _gatheringManager->Update(diff);
+
+    // Note: AuctionManager would be updated here if it was part of BotAI
+    // Currently it's managed separately in the Economy module
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp

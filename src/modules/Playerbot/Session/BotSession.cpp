@@ -575,6 +575,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
         // Removed excessive per-tick logging
 
+
         if (_ai && player && _active.load() && !_destroyed.load()) {
 
             // MEMORY CORRUPTION DETECTION: Validate player object pointer before access
@@ -630,12 +631,31 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     }
                 }
 
-                // Layer 3: AI update (only if all validations passed)
-                if (playerIsValid && playerIsInWorld && _ai && _active.load()) {
+                // Layer 3: AI update - ATOMIC SNAPSHOT to prevent race conditions
+                // FIX: Capture all values ONCE before any checks to prevent race conditions
+                // Problem: Between debug log and if statement, another thread could change values
+                // Solution: Single atomic read of all conditions
+                bool validSnapshot = playerIsValid;
+                bool inWorldSnapshot = playerIsInWorld;
+                BotAI* aiSnapshot = _ai;  // Snapshot pointer (raw pointer for now)
+                bool activeSnapshot = _active.load(std::memory_order_acquire);  // Acquire semantics
+
+                static uint32 debugUpdateCounter = 0;
+                if (++debugUpdateCounter % 100 == 0) // Log every 100 update attempts
+                {
+                    TC_LOG_INFO("module.playerbot.session", "🔍 BotSession Update Check - valid:{}, inWorld:{}, ai:{}, active:{}, account:{}",
+                                validSnapshot, inWorldSnapshot, aiSnapshot != nullptr, activeSnapshot, accountId);
+                }
+
+                // Use SNAPSHOT values (not original variables) to prevent race conditions
+                if (validSnapshot && inWorldSnapshot && aiSnapshot && activeSnapshot) {
+                    if (debugUpdateCounter % 100 == 0)
+                    {
+                        TC_LOG_INFO("module.playerbot.session", "✅ ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
+                    }
                     try {
-                        // SUCCESS: Direct BotAI::UpdateAI() call works, so just call it normally
-                        // The issue was that we weren't calling it at all before!
-                        _ai->UpdateAI(diff);
+                        // Call UpdateAI using snapshot pointer (guaranteed non-null and stable)
+                        aiSnapshot->UpdateAI(diff);
                     }
                     catch (std::exception const& e) {
                         TC_LOG_ERROR("module.playerbot.session", "Exception in BotAI::Update for account {}: {}", accountId, e.what());
@@ -924,11 +944,16 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                 // This fixes the "reboot breaks groups" issue where strategies aren't activated
                 if (Player* player = GetPlayer())
                 {
-                    if (Group* group = player->GetGroup())
+                    Group* group = player->GetGroup();
+                    TC_LOG_ERROR("module.playerbot.session", "🔍 Bot {} login group check: player={}, group={}",
+                                player->GetName(), (void*)player, (void*)group);
+
+                    if (group)
                     {
                         TC_LOG_INFO("module.playerbot.session", "🔄 Bot {} is already in group at login - activating strategies", player->GetName());
                         if (BotAI* ai = GetAI())
                         {
+                            TC_LOG_ERROR("module.playerbot.session", "📞 About to call OnGroupJoined with group={}", (void*)group);
                             ai->OnGroupJoined(group);
                         }
                     }

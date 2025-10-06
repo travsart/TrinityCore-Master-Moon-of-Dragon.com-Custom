@@ -197,13 +197,9 @@ namespace Playerbot
 
     // QuestManager implementation
     QuestManager::QuestManager(Player* bot, BotAI* ai)
-        : m_bot(bot)
-        , m_ai(ai)
-        , m_enabled(true)
+        : BehaviorManager(bot, ai, 2000, "QuestManager")
         , m_currentPhase(QuestPhase::IDLE)
         , m_phaseTimer(0)
-        , m_timeSinceLastUpdate(0)
-        , m_updateInterval(DEFAULT_UPDATE_INTERVAL)
         , m_lastQuestGiverScan(0)
         , m_questGiverScanInterval(QUEST_GIVER_SCAN_INTERVAL)
         , m_lastPriorityCalculation(0)
@@ -217,9 +213,6 @@ namespace Playerbot
         , m_maxTravelDistance(1000)
         , m_minQuestLevel(0.75f)  // 75% of bot level
         , m_maxQuestLevel(1.10f)  // 110% of bot level
-        , m_totalUpdateTime(0)
-        , m_updateCount(0)
-        , m_cpuUsage(0.0f)
         , m_strategy(std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL))
         , m_cache(std::make_unique<QuestCache>())
     {
@@ -227,10 +220,10 @@ namespace Playerbot
 
     QuestManager::~QuestManager()
     {
-        Shutdown();
+        // OnShutdown will be called by BehaviorManager if needed
     }
 
-    void QuestManager::Initialize()
+    bool QuestManager::OnInitialize()
     {
         // Configuration is loaded from constructor defaults
         // Future: Load from PlayerbotConfig when implemented
@@ -241,32 +234,21 @@ namespace Playerbot
         // Initial quest giver scan
         ScanForQuests();
 
-        TC_LOG_DEBUG("bot.playerbot", "QuestManager initialized for bot %s", m_bot->GetName().c_str());
+        TC_LOG_DEBUG("bot.playerbot", "QuestManager initialized for bot %s", GetBot()->GetName().c_str());
+        return true;  // Initialization successful
     }
 
-    void QuestManager::Update(uint32 diff)
+    void QuestManager::OnUpdate(uint32 elapsed)
     {
-        if (!m_enabled || !m_bot || !m_bot->IsInWorld())
-            return;
-
-        StartPerformanceTimer();
-
-        m_timeSinceLastUpdate += diff;
-        if (m_timeSinceLastUpdate < m_updateInterval)
-        {
-            EndPerformanceTimer();
-            return;
-        }
-
-        m_timeSinceLastUpdate = 0;
-        m_phaseTimer += diff;
+        // This method is called by BehaviorManager::Update() at throttled intervals
+        // elapsed is the time since last OnUpdate call
 
         // Update quest cache periodically
         if (getMSTime() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
             UpdateQuestCache();
 
         // Update quest phase state machine
-        UpdateQuestPhase(diff);
+        UpdateQuestPhase(elapsed);
 
         // Update quest progress tracking
         UpdateQuestProgress();
@@ -278,12 +260,14 @@ namespace Playerbot
             m_lastQuestGiverScan = getMSTime();
         }
 
-        EndPerformanceTimer();
-        UpdatePerformanceMetrics();
+        // Update atomic state flags for strategies
+        _hasActiveQuests.store(!m_cache->GetActiveQuests().empty(), std::memory_order_release);
+        _activeQuestCount.store(m_cache->GetActiveQuests().size(), std::memory_order_release);
     }
 
-    void QuestManager::Reset()
+    void QuestManager::OnShutdown()
     {
+        // Clean up all state
         m_currentPhase = QuestPhase::IDLE;
         m_phaseTimer = 0;
         m_questProgress.clear();
@@ -294,14 +278,7 @@ namespace Playerbot
         m_completableQuests.clear();
         InvalidateCache();
 
-        TC_LOG_DEBUG("bot.playerbot", "QuestManager reset for bot %s", m_bot->GetName().c_str());
-    }
-
-    void QuestManager::Shutdown()
-    {
-        m_enabled = false;
-        Reset();
-        TC_LOG_DEBUG("bot.playerbot", "QuestManager shutdown for bot %s", m_bot->GetName().c_str());
+        TC_LOG_DEBUG("bot.playerbot", "QuestManager shutdown for bot %s", GetBot()->GetName().c_str());
     }
 
     bool QuestManager::CanAcceptQuest(uint32 questId) const
@@ -311,7 +288,7 @@ namespace Playerbot
             return false;
 
         // Check if already on quest
-        if (m_bot->GetQuestStatus(questId) != QUEST_STATUS_NONE)
+        if (GetBot()->GetQuestStatus(questId) != QUEST_STATUS_NONE)
             return false;
 
         // Check if quest is ignored
@@ -339,7 +316,7 @@ namespace Playerbot
             return false;
 
         // Use Player API to validate
-        return m_bot->CanAddQuest(quest, true);
+        return GetBot()->CanAddQuest(quest, true);
     }
 
     bool QuestManager::AcceptQuest(uint32 questId, WorldObject* questGiver)
@@ -353,7 +330,7 @@ namespace Playerbot
         {
             for (auto const& giver : m_questGivers)
             {
-                WorldObject* obj = ObjectAccessor::GetWorldObject(*m_bot, giver.guid);
+                WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
                 if (obj)
                 {
                     questGiver = obj;
@@ -363,14 +340,14 @@ namespace Playerbot
         }
 
         // Move to quest giver if too far
-        if (questGiver && m_bot->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
+        if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
         {
             if (!MoveToQuestGiver(questGiver))
                 return false;
         }
 
         // Accept the quest
-        m_bot->AddQuest(quest, questGiver);
+        GetBot()->AddQuest(quest, questGiver);
 
         // Initialize quest progress tracking
         QuestProgress progress;
@@ -383,7 +360,7 @@ namespace Playerbot
         m_stats.questsAccepted++;
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s accepted quest %u: %s",
-            m_bot->GetName().c_str(), questId, quest->GetLogTitle().c_str());
+            GetBot()->GetName().c_str(), questId, quest->GetLogTitle().c_str());
 
         return true;
     }
@@ -395,14 +372,14 @@ namespace Playerbot
             return false;
 
         // Check if quest can be completed
-        if (!m_bot->CanCompleteQuest(questId))
+        if (!GetBot()->CanCompleteQuest(questId))
             return false;
 
         // Complete the quest objectives
-        m_bot->CompleteQuest(questId);
+        GetBot()->CompleteQuest(questId);
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s completed quest %u: %s",
-            m_bot->GetName().c_str(), questId, quest->GetLogTitle().c_str());
+            GetBot()->GetName().c_str(), questId, quest->GetLogTitle().c_str());
 
         return true;
     }
@@ -414,7 +391,7 @@ namespace Playerbot
             return false;
 
         // Check if quest can be rewarded
-        if (!m_bot->CanRewardQuest(quest, true))
+        if (!GetBot()->CanRewardQuest(quest, true))
             return false;
 
         // Find quest giver if not provided
@@ -422,7 +399,7 @@ namespace Playerbot
         {
             for (auto const& giver : m_questGivers)
             {
-                WorldObject* obj = ObjectAccessor::GetWorldObject(*m_bot, giver.guid);
+                WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
                 if (!obj)
                     continue;
 
@@ -444,7 +421,7 @@ namespace Playerbot
         }
 
         // Move to quest giver if too far
-        if (questGiver && m_bot->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
+        if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
         {
             if (!MoveToQuestGiver(questGiver))
                 return false;
@@ -464,7 +441,7 @@ namespace Playerbot
             actualRewardId = quest->RewardChoiceItemId[rewardChoice];
         }
 
-        m_bot->RewardQuest(quest, rewardType, actualRewardId, questGiver, true);
+        GetBot()->RewardQuest(quest, rewardType, actualRewardId, questGiver, true);
 
         // Update progress tracking
         if (auto it = m_questProgress.find(questId); it != m_questProgress.end())
@@ -483,7 +460,7 @@ namespace Playerbot
         UpdateStatistics(quest, true);
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s turned in quest %u: %s (reward choice: %u)",
-            m_bot->GetName().c_str(), questId, quest->GetLogTitle().c_str(), rewardChoice);
+            GetBot()->GetName().c_str(), questId, quest->GetLogTitle().c_str(), rewardChoice);
 
         return true;
     }
@@ -495,11 +472,11 @@ namespace Playerbot
             return false;
 
         // Check if we have the quest
-        if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_NONE)
+        if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_NONE)
             return false;
 
         // Abandon the quest
-        m_bot->AbandonQuest(questId);
+        GetBot()->AbandonQuest(questId);
 
         // Add to ignored list
         m_ignoredQuests.insert(questId);
@@ -516,7 +493,7 @@ namespace Playerbot
         m_stats.questsAbandoned++;
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s abandoned quest %u: %s",
-            m_bot->GetName().c_str(), questId, quest->GetLogTitle().c_str());
+            GetBot()->GetName().c_str(), questId, quest->GetLogTitle().c_str());
 
         return true;
     }
@@ -532,15 +509,15 @@ namespace Playerbot
         ScanItemQuests();
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s found %zu quest givers, %zu available quests, %zu completable quests",
-            m_bot->GetName().c_str(), m_questGivers.size(), m_availableQuests.size(), m_completableQuests.size());
+            GetBot()->GetName().c_str(), m_questGivers.size(), m_availableQuests.size(), m_completableQuests.size());
     }
 
     void QuestManager::ScanCreatureQuestGivers()
     {
         std::list<Creature*> creatures;
-        Trinity::AnyUnitInObjectRangeCheck checker(m_bot, QUEST_GIVER_SCAN_RANGE, true, true);
-        Trinity::CreatureListSearcher searcher(m_bot, creatures, checker);
-        Cell::VisitAllObjects(m_bot, searcher, QUEST_GIVER_SCAN_RANGE);
+        Trinity::AnyUnitInObjectRangeCheck checker(GetBot(), QUEST_GIVER_SCAN_RANGE, true, true);
+        Trinity::CreatureListSearcher searcher(GetBot(), creatures, checker);
+        Cell::VisitAllObjects(GetBot(), searcher, QUEST_GIVER_SCAN_RANGE);
 
         for (Creature* creature : creatures)
         {
@@ -550,7 +527,7 @@ namespace Playerbot
             QuestGiverInfo info;
             info.guid = creature->GetGUID();
             info.entry = creature->GetEntry();
-            info.distance = m_bot->GetDistance(creature);
+            info.distance = GetBot()->GetDistance(creature);
             info.lastCheckTime = getMSTime();
 
             // Check available quests
@@ -566,7 +543,7 @@ namespace Playerbot
             // Check completable quests
             for (uint32 questId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
             {
-                if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+                if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
                     m_completableQuests.push_back(questId);
                     info.completableQuests++;
@@ -581,9 +558,9 @@ namespace Playerbot
     void QuestManager::ScanGameObjectQuestGivers()
     {
         std::list<GameObject*> objects;
-        Trinity::AllWorldObjectsInRange checker(m_bot, QUEST_GIVER_SCAN_RANGE);
-        Trinity::GameObjectListSearcher searcher(m_bot, objects, checker);
-        Cell::VisitAllObjects(m_bot, searcher, QUEST_GIVER_SCAN_RANGE);
+        Trinity::AllWorldObjectsInRange checker(GetBot(), QUEST_GIVER_SCAN_RANGE);
+        Trinity::GameObjectListSearcher searcher(GetBot(), objects, checker);
+        Cell::VisitAllObjects(GetBot(), searcher, QUEST_GIVER_SCAN_RANGE);
 
         for (GameObject* object : objects)
         {
@@ -599,7 +576,7 @@ namespace Playerbot
             QuestGiverInfo info;
             info.guid = object->GetGUID();
             info.entry = object->GetEntry();
-            info.distance = m_bot->GetDistance(object);
+            info.distance = GetBot()->GetDistance(object);
             info.lastCheckTime = getMSTime();
 
             // Check available quests
@@ -615,7 +592,7 @@ namespace Playerbot
             // Check completable quests
             for (uint32 questId : sObjectMgr->GetGOQuestInvolvedRelations(object->GetEntry()))
             {
-                if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+                if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
                     m_completableQuests.push_back(questId);
                     info.completableQuests++;
@@ -632,7 +609,7 @@ namespace Playerbot
         // Check inventory for quest starting items
         for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
         {
-            Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            Item* item = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
             if (!item)
                 continue;
 
@@ -650,7 +627,7 @@ namespace Playerbot
         // Check bags
         for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
         {
-            Bag* pBag = m_bot->GetBagByPos(bag);
+            Bag* pBag = GetBot()->GetBagByPos(bag);
             if (!pBag)
                 continue;
 
@@ -756,7 +733,7 @@ namespace Playerbot
             score *= 1.2f;  // Bonus for dailies
         if (priority.isDungeon && !m_acceptDungeonQuests)
             score *= 0.1f;  // Penalty if not accepting dungeon quests
-        if (priority.isGroupQuest && m_prioritizeGroupQuests && m_bot->GetGroup())
+        if (priority.isGroupQuest && m_prioritizeGroupQuests && GetBot()->GetGroup())
             score *= 1.5f;  // Bonus for group quests when grouped
 
         priority.score = score;
@@ -769,7 +746,7 @@ namespace Playerbot
             return 0.0f;
 
         // Get base XP reward
-        uint32 xp = m_bot->GetQuestXPReward(quest);
+        uint32 xp = GetBot()->GetQuestXPReward(quest);
         if (xp == 0)
             return 0.0f;
 
@@ -782,7 +759,7 @@ namespace Playerbot
         if (!quest)
             return 0.0f;
 
-        uint32 gold = m_bot->GetQuestMoneyReward(quest);
+        uint32 gold = GetBot()->GetQuestMoneyReward(quest);
 
         // Normalize to 0-100 scale (assuming max gold ~100g)
         return std::min(100.0f, gold / 10000.0f);
@@ -872,8 +849,8 @@ namespace Playerbot
         if (!quest)
             return 0.0f;
 
-        int32 botLevel = m_bot->GetLevel();
-        int32 questLevel = m_bot->GetQuestLevel(quest);
+        int32 botLevel = GetBot()->GetLevel();
+        int32 questLevel = GetBot()->GetQuestLevel(quest);
         // There is no GetMinLevel() in Quest API - we use content tuning level scaling
 
         // Calculate level difference
@@ -898,7 +875,7 @@ namespace Playerbot
 
     float QuestManager::CalculateGroupBonus(Quest const* quest) const
     {
-        if (!quest || !m_bot->GetGroup())
+        if (!quest || !GetBot()->GetGroup())
             return 0.0f;
 
         // Check if group quest (has suggested players > 1)
@@ -907,12 +884,12 @@ namespace Playerbot
 
         // Check if other group members have this quest
         uint32 membersWithQuest = 0;
-        Group* group = m_bot->GetGroup();
+        Group* group = GetBot()->GetGroup();
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
             {
-                if (member != m_bot && member->GetQuestStatus(quest->GetQuestId()) != QUEST_STATUS_NONE)
+                if (member != GetBot() && member->GetQuestStatus(quest->GetQuestId()) != QUEST_STATUS_NONE)
                     membersWithQuest++;
             }
         }
@@ -1004,7 +981,7 @@ namespace Playerbot
 
         // Check class restrictions
         uint32 allowableClass = itemTemplate->GetAllowableClass();
-        if (allowableClass && !(allowableClass & m_bot->GetClassMask()))
+        if (allowableClass && !(allowableClass & GetBot()->GetClassMask()))
             return false;
 
         // Check if it's an upgrade
@@ -1013,7 +990,7 @@ namespace Playerbot
             return false;
 
         // Get current item in that slot
-        Item* currentItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        Item* currentItem = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!currentItem)
             return true;  // Empty slot, any item is useful
 
@@ -1023,7 +1000,7 @@ namespace Playerbot
 
     QuestStatus QuestManager::GetQuestStatus(uint32 questId) const
     {
-        return m_bot->GetQuestStatus(questId);
+        return GetBot()->GetQuestStatus(questId);
     }
 
     void QuestManager::UpdateQuestProgress()
@@ -1037,7 +1014,7 @@ namespace Playerbot
             UpdateObjectiveProgress(questId);
 
             // Check if quest is complete
-            if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+            if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
             {
                 progress.isComplete = true;
                 progress.completionPercent = 100.0f;
@@ -1067,7 +1044,7 @@ namespace Playerbot
             if (obj.IsStoringValue())
             {
                 totalObjectives++;
-                uint16 currentCount = m_bot->GetQuestSlotCounter(m_bot->FindQuestSlot(questId), obj.StorageIndex);
+                uint16 currentCount = GetBot()->GetQuestSlotCounter(GetBot()->FindQuestSlot(questId), obj.StorageIndex);
                 int32 requiredCount = obj.Amount;
 
                 if (requiredCount > 0)
@@ -1089,7 +1066,7 @@ namespace Playerbot
 
     bool QuestManager::IsQuestComplete(uint32 questId) const
     {
-        return m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE;
+        return GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE;
     }
 
     float QuestManager::GetQuestCompletionPercent(uint32 questId) const
@@ -1113,7 +1090,7 @@ namespace Playerbot
 
         for (auto const& giver : m_questGivers)
         {
-            WorldObject* obj = ObjectAccessor::GetWorldObject(*m_bot, giver.guid);
+            WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
             if (!obj)
                 continue;
 
@@ -1137,7 +1114,7 @@ namespace Playerbot
 
         for (auto const& giver : m_questGivers)
         {
-            WorldObject* obj = ObjectAccessor::GetWorldObject(*m_bot, giver.guid);
+            WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
             if (!obj)
                 continue;
 
@@ -1159,25 +1136,25 @@ namespace Playerbot
         if (!questGiver)
             return false;
 
-        float distance = m_bot->GetDistance(questGiver);
+        float distance = GetBot()->GetDistance(questGiver);
         if (distance <= QUEST_INTERACT_DISTANCE)
             return true;
 
         // Move to quest giver using centralized movement utility (prevents infinite loop)
         Position destination;
         destination.Relocate(questGiver->GetPositionX(), questGiver->GetPositionY(), questGiver->GetPositionZ());
-        return BotMovementUtil::MoveToPosition(m_bot, destination);
+        return BotMovementUtil::MoveToPosition(GetBot(), destination);
     }
 
     void QuestManager::ShareGroupQuests()
     {
-        if (!m_bot->GetGroup())
+        if (!GetBot()->GetGroup())
             return;
 
         // Share all shareable quests with group
         for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
         {
-            uint32 questId = m_bot->GetQuestSlotQuestId(slot);
+            uint32 questId = GetBot()->GetQuestSlotQuestId(slot);
             if (questId == 0)
                 continue;
 
@@ -1186,12 +1163,12 @@ namespace Playerbot
                 continue;
 
             // Share quest with group members
-            if (WorldSession* session = m_bot->GetSession())
+            if (WorldSession* session = GetBot()->GetSession())
             {
                 // Quest sharing is handled internally by the server when appropriate
                 // For bots, we skip the packet-based approach
                 TC_LOG_DEBUG("bot.playerbot", "Bot %s wants to share quest %u with group",
-                    m_bot->GetName().c_str(), questId);
+                    GetBot()->GetName().c_str(), questId);
             }
         }
     }
@@ -1206,12 +1183,18 @@ namespace Playerbot
             return false;
 
         // Accept shared quest
-        m_bot->AddQuest(quest, nullptr);
+        GetBot()->AddQuest(quest, nullptr);
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s accepted shared quest %u: %s",
-            m_bot->GetName().c_str(), questId, quest->GetLogTitle().c_str());
+            GetBot()->GetName().c_str(), questId, quest->GetLogTitle().c_str());
 
         return true;
+    }
+
+    bool QuestManager::HasActiveQuest(uint32 questId) const
+    {
+        QuestStatus status = GetBot()->GetQuestStatus(questId);
+        return status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_COMPLETE;
     }
 
     void QuestManager::UpdateQuestPhase(uint32 diff)
@@ -1340,7 +1323,7 @@ namespace Playerbot
             }
         }
 
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s accepted %u new quests", m_bot->GetName().c_str(), accepted);
+        TC_LOG_DEBUG("bot.playerbot", "Bot %s accepted %u new quests", GetBot()->GetName().c_str(), accepted);
     }
 
     void QuestManager::TurnInCompletedQuests()
@@ -1356,7 +1339,7 @@ namespace Playerbot
                 completed++;
         }
 
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s turned in %u completed quests", m_bot->GetName().c_str(), completed);
+        TC_LOG_DEBUG("bot.playerbot", "Bot %s turned in %u completed quests", GetBot()->GetName().c_str(), completed);
     }
 
     void QuestManager::AbandonLowPriorityQuests()
@@ -1396,7 +1379,7 @@ namespace Playerbot
         }
 
         if (abandoned > 0)
-            TC_LOG_DEBUG("bot.playerbot", "Bot %s abandoned %u low priority quests", m_bot->GetName().c_str(), abandoned);
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s abandoned %u low priority quests", GetBot()->GetName().c_str(), abandoned);
     }
 
     void QuestManager::ManageQuestLog()
@@ -1447,7 +1430,7 @@ namespace Playerbot
         if (!quest)
             return false;
 
-        int32 levelDiff = m_bot->GetLevel() - m_bot->GetQuestLevel(quest);
+        int32 levelDiff = GetBot()->GetLevel() - GetBot()->GetQuestLevel(quest);
         return levelDiff > 10;  // More than 10 levels below
     }
 
@@ -1457,8 +1440,8 @@ namespace Playerbot
             return false;
 
         // Check content tuning min level if available
-        int32 questLevel = m_bot->GetQuestLevel(quest);
-        return questLevel > m_bot->GetLevel() + 3;
+        int32 questLevel = GetBot()->GetQuestLevel(quest);
+        return questLevel > GetBot()->GetLevel() + 3;
     }
 
     bool QuestManager::HasQuestPrerequisites(Quest const* quest) const
@@ -1469,14 +1452,14 @@ namespace Playerbot
         // Check previous quest requirements
         if (quest->GetPrevQuestId())
         {
-            if (m_bot->GetQuestRewardStatus(std::abs(quest->GetPrevQuestId())) != (quest->GetPrevQuestId() > 0))
+            if (GetBot()->GetQuestRewardStatus(std::abs(quest->GetPrevQuestId())) != (quest->GetPrevQuestId() > 0))
                 return false;
         }
 
         // Check next quest in chain
         if (quest->GetNextQuestId())
         {
-            if (m_bot->GetQuestStatus(std::abs(static_cast<int32>(quest->GetNextQuestId()))) != QUEST_STATUS_NONE)
+            if (GetBot()->GetQuestStatus(std::abs(static_cast<int32>(quest->GetNextQuestId()))) != QUEST_STATUS_NONE)
                 return false;
         }
 
@@ -1489,33 +1472,33 @@ namespace Playerbot
             return false;
 
         // Check race/class requirements
-        if (!quest->GetAllowableRaces().IsEmpty() && !quest->GetAllowableRaces().HasRace(m_bot->GetRace()))
+        if (!quest->GetAllowableRaces().IsEmpty() && !quest->GetAllowableRaces().HasRace(GetBot()->GetRace()))
             return false;
 
-        if (quest->GetAllowableClasses() && !(quest->GetAllowableClasses() & m_bot->GetClassMask()))
+        if (quest->GetAllowableClasses() && !(quest->GetAllowableClasses() & GetBot()->GetClassMask()))
             return false;
 
         // Check skill requirements
         if (quest->GetRequiredSkill())
         {
-            if (!m_bot->HasSkill(quest->GetRequiredSkill()))
+            if (!GetBot()->HasSkill(quest->GetRequiredSkill()))
                 return false;
 
-            if (m_bot->GetSkillValue(quest->GetRequiredSkill()) < quest->GetRequiredSkillValue())
+            if (GetBot()->GetSkillValue(quest->GetRequiredSkill()) < quest->GetRequiredSkillValue())
                 return false;
         }
 
         // Check minimum reputation requirements
         if (quest->GetRequiredMinRepFaction())
         {
-            if (m_bot->GetReputationMgr().GetReputation(quest->GetRequiredMinRepFaction()) < quest->GetRequiredMinRepValue())
+            if (GetBot()->GetReputationMgr().GetReputation(quest->GetRequiredMinRepFaction()) < quest->GetRequiredMinRepValue())
                 return false;
         }
 
         // Check maximum reputation requirements
         if (quest->GetRequiredMaxRepFaction())
         {
-            if (m_bot->GetReputationMgr().GetReputation(quest->GetRequiredMaxRepFaction()) > quest->GetRequiredMaxRepValue())
+            if (GetBot()->GetReputationMgr().GetReputation(quest->GetRequiredMaxRepFaction()) > quest->GetRequiredMaxRepValue())
                 return false;
         }
 
@@ -1527,7 +1510,7 @@ namespace Playerbot
         uint32 usedSlots = 0;
         for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
         {
-            if (m_bot->GetQuestSlotQuestId(slot) != 0)
+            if (GetBot()->GetQuestSlotQuestId(slot) != 0)
                 usedSlots++;
         }
         return MAX_QUEST_LOG_SLOT - usedSlots;
@@ -1557,10 +1540,10 @@ namespace Playerbot
             m_stats.questsCompleted++;
 
             // Update XP earned
-            m_stats.totalXPEarned += m_bot->GetQuestXPReward(quest);
+            m_stats.totalXPEarned += GetBot()->GetQuestXPReward(quest);
 
             // Update gold earned
-            m_stats.totalGoldEarned += m_bot->GetQuestMoneyReward(quest);
+            m_stats.totalGoldEarned += GetBot()->GetQuestMoneyReward(quest);
 
             // Update quest type counters
             if (quest->IsDaily())
@@ -1576,7 +1559,7 @@ namespace Playerbot
 
     void QuestManager::UpdateQuestCache()
     {
-        m_cache->Update(m_bot);
+        m_cache->Update(GetBot());
     }
 
     void QuestManager::InvalidateCache()
@@ -1590,29 +1573,11 @@ namespace Playerbot
         m_lastQuestGiverScan = 0;
     }
 
-    void QuestManager::StartPerformanceTimer()
-    {
-        m_performanceStart = std::chrono::high_resolution_clock::now();
-    }
-
-    void QuestManager::EndPerformanceTimer()
-    {
-        auto end = std::chrono::high_resolution_clock::now();
-        m_lastUpdateDuration = std::chrono::duration_cast<std::chrono::microseconds>(end - m_performanceStart);
-        m_totalUpdateTime += m_lastUpdateDuration;
-        m_updateCount++;
-    }
-
-    void QuestManager::UpdatePerformanceMetrics()
-    {
-        if (m_updateCount > 0)
-        {
-            // Calculate average CPU usage (simplified)
-            auto avgMicros = m_totalUpdateTime.count() / m_updateCount;
-            // Assume 1ms = 1% CPU for this bot (simplified metric)
-            m_cpuUsage = avgMicros / 10000.0f;
-        }
-    }
+    // Performance tracking is handled by BehaviorManager base class
+    // These methods are no longer needed as BehaviorManager provides:
+    // - Automatic performance monitoring in Update()
+    // - GetLastUpdateDuration() for timing information
+    // - Built-in slow update detection and logging
 
     size_t QuestManager::GetMemoryUsage() const
     {

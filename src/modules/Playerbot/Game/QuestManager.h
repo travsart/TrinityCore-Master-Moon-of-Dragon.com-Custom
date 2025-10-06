@@ -11,6 +11,7 @@
 #define TRINITYCORE_BOT_QUEST_MANAGER_H
 
 #include "Define.h"
+#include "AI/BehaviorManager.h"
 #include "ObjectGuid.h"
 #include "QuestDef.h"
 #include <chrono>
@@ -19,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <deque>
+#include <atomic>
 
 class Player;
 class Creature;
@@ -37,26 +39,23 @@ namespace Playerbot
     struct QuestEvaluation;
 
     /**
-     * BotQuestManager - Complete quest automation system for PlayerBots
+     * QuestManager - Complete quest automation system for PlayerBots
      *
+     * Inherits from BehaviorManager for throttled updates and performance optimization.
      * Handles all aspects of quest management including:
      * - Quest discovery and acceptance
      * - Objective tracking and completion
      * - Quest turn-in and reward selection
      * - Strategic quest prioritization
      * - Performance-optimized caching
+     *
+     * Update interval: 2000ms (2 seconds)
      */
-    class QuestManager
+    class TC_GAME_API QuestManager : public BehaviorManager
     {
     public:
         explicit QuestManager(Player* bot, BotAI* ai);
-        ~QuestManager();
-
-        // Core lifecycle methods
-        void Initialize();
-        void Update(uint32 diff);
-        void Reset();
-        void Shutdown();
+        ~QuestManager() override;
 
         // Quest operations
         bool CanAcceptQuest(uint32 questId) const;
@@ -92,14 +91,13 @@ namespace Playerbot
         void ShareGroupQuests();
         bool AcceptSharedQuest(uint32 questId);
 
-        // Performance monitoring
-        float GetCPUUsage() const { return m_cpuUsage; }
-        size_t GetMemoryUsage() const;
-        uint32 GetUpdateCount() const { return m_updateCount; }
+        // Fast atomic state queries (<0.001ms)
+        bool IsQuestingActive() const { return _hasActiveQuests.load(std::memory_order_acquire); }
+        bool HasActiveQuest(uint32 questId) const;
+        uint32 GetActiveQuestCount() const { return _activeQuestCount.load(std::memory_order_acquire); }
 
-        // Configuration
-        bool IsEnabled() const { return m_enabled; }
-        void SetEnabled(bool enabled) { m_enabled = enabled; }
+        // Performance monitoring
+        size_t GetMemoryUsage() const;
 
         // Statistics
         struct Statistics
@@ -116,6 +114,12 @@ namespace Playerbot
         };
 
         Statistics const& GetStatistics() const { return m_stats; }
+
+    protected:
+        // BehaviorManager interface - runs every 2 seconds
+        void OnUpdate(uint32 elapsed) override;
+        bool OnInitialize() override;
+        void OnShutdown() override;
 
     private:
         // Quest phases for state machine
@@ -227,21 +231,17 @@ namespace Playerbot
         void InvalidateCache();
         void ClearQuestGiverCache();
 
-        // Performance tracking
-        void StartPerformanceTimer();
-        void EndPerformanceTimer();
-        void UpdatePerformanceMetrics();
+        // Performance tracking is handled by BehaviorManager base class
+        // See BehaviorManager::Update() for automatic performance monitoring
 
     private:
-        Player* m_bot;
-        BotAI* m_ai;
-        bool m_enabled;
+        // Atomic state flags for fast queries
+        std::atomic<bool> _hasActiveQuests{false};
+        std::atomic<uint32> _activeQuestCount{0};
 
         // State management
         QuestPhase m_currentPhase;
         uint32 m_phaseTimer;
-        uint32 m_timeSinceLastUpdate;
-        uint32 m_updateInterval;
 
         // Quest tracking
         std::unordered_map<uint32, QuestProgress> m_questProgress;
@@ -273,12 +273,6 @@ namespace Playerbot
         float m_minQuestLevel;
         float m_maxQuestLevel;
 
-        // Performance metrics
-        std::chrono::high_resolution_clock::time_point m_performanceStart;
-        std::chrono::microseconds m_lastUpdateDuration;
-        std::chrono::microseconds m_totalUpdateTime;
-        uint32 m_updateCount;
-        float m_cpuUsage;
 
         // Statistics
         Statistics m_stats;

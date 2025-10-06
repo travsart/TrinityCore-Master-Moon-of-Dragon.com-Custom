@@ -25,7 +25,9 @@
 #include "DB2Stores.h"
 #include "Bag.h"
 #include "WorldPacket.h"
+#include "WorldSession.h"
 #include "Opcodes.h"
+#include "SharedDefines.h"
 #include <algorithm>
 #include <numeric>
 
@@ -93,28 +95,78 @@ namespace Playerbot
         return totalTradeTime / successfulTrades;
     }
 
-    // BotTradeManager implementation
-    BotTradeManager::BotTradeManager(BotAI* botAI) :
-        m_botAI(botAI),
-        m_bot(botAI ? botAI->GetBot() : nullptr),
+    // TradeManager implementation
+    TradeManager::TradeManager(Player* bot, BotAI* ai) :
+        BehaviorManager(bot, ai, 5000, "TradeManager"),  // 5 second update interval
         m_securityLevel(TradeSecurity::STANDARD),
         m_autoAcceptGroup(true),
         m_autoAcceptGuild(false),
         m_autoAcceptWhitelist(true),
         m_maxTradeValue(10000 * GOLD),
-        m_maxTradeDistance(TRADE_DISTANCE),
+        m_maxTradeDistance(MAX_TRADE_DISTANCE_YARDS),
         m_updateTimer(0)
     {
         m_lastUpdateTime = std::chrono::steady_clock::now();
     }
 
-    BotTradeManager::~BotTradeManager()
+    TradeManager::~TradeManager()
     {
         if (IsTrading())
             CancelTrade("Bot shutting down");
     }
 
-    bool BotTradeManager::InitiateTrade(Player* target, std::string const& reason)
+    bool TradeManager::OnInitialize()
+    {
+        // Initialize trade state
+        ResetTradeSession();
+        m_updateTimer = 0;
+        m_lastUpdateTime = std::chrono::steady_clock::now();
+
+        // Clear any pending transfers
+        while (!m_pendingTransfers.empty())
+            m_pendingTransfers.pop();
+
+        // Clear pending requests
+        m_pendingRequests.clear();
+
+        // Reset statistics for this session
+        m_statistics = TradeStatistics();
+
+        // Set initial atomic states
+        _isTradingActive.store(false, std::memory_order_release);
+        _needsRepair.store(false, std::memory_order_release);
+        _needsSupplies.store(false, std::memory_order_release);
+
+        TC_LOG_DEBUG("bot.trade", "TradeManager initialized for bot {}",
+            GetBot() ? GetBot()->GetName() : "unknown");
+
+        return true;
+    }
+
+    void TradeManager::OnShutdown()
+    {
+        // Cancel any ongoing trade
+        if (IsTrading())
+            CancelTrade("Manager shutting down");
+
+        // Clear pending transfers
+        while (!m_pendingTransfers.empty())
+            m_pendingTransfers.pop();
+
+        // Clear pending requests
+        m_pendingRequests.clear();
+
+        // Clear distribution plan
+        m_currentDistribution.reset();
+
+        // Reset session
+        ResetTradeSession();
+
+        TC_LOG_DEBUG("bot.trade", "TradeManager shut down for bot {}",
+            GetBot() ? GetBot()->GetName() : "unknown");
+    }
+
+    bool TradeManager::InitiateTrade(Player* target, std::string const& reason)
     {
         if (!target)
             return false;
@@ -122,9 +174,9 @@ namespace Playerbot
         return InitiateTrade(target->GetGUID(), reason);
     }
 
-    bool BotTradeManager::InitiateTrade(ObjectGuid targetGuid, std::string const& reason)
+    bool TradeManager::InitiateTrade(ObjectGuid targetGuid, std::string const& reason)
     {
-        if (!m_bot || !targetGuid)
+        if (!GetBot() || !targetGuid)
             return false;
 
         // Check if already trading
@@ -169,27 +221,23 @@ namespace Playerbot
         m_currentSession.startTime = std::chrono::steady_clock::now();
         SetTradeState(TradeState::INITIATING);
 
-        // Create trade data
-        TradeData* myTrade = new TradeData(m_bot, target);
-        TradeData* theirTrade = new TradeData(target, m_bot);
-
-        m_bot->SetTradeData(myTrade);
-        target->SetTradeData(theirTrade);
+        // Initiate trade (this will create the trade data internally)
+        GetBot()->InitiateTrade(target);
 
         // Send trade status
         WorldPacket data(SMSG_TRADE_STATUS, 12);
-        data << uint32(TRADE_STATUS_BEGIN_TRADE);
+        data << uint32(TRADE_STATUS_INITIATED);
         data << targetGuid;
-        m_bot->GetSession()->SendPacket(&data);
+        GetBot()->GetSession()->SendPacket(&data);
         target->GetSession()->SendPacket(&data);
 
         LogTradeAction("INITIATE", "Trade initiated with " + target->GetName() + " - " + reason);
         return true;
     }
 
-    bool BotTradeManager::AcceptTradeRequest(ObjectGuid requesterGuid)
+    bool TradeManager::AcceptTradeRequest(ObjectGuid requesterGuid)
     {
-        if (!m_bot || !requesterGuid)
+        if (!GetBot() || !requesterGuid)
             return false;
 
         // Check if already trading
@@ -232,7 +280,7 @@ namespace Playerbot
         return InitiateTrade(requester, "Accepting trade request");
     }
 
-    bool BotTradeManager::DeclineTradeRequest(ObjectGuid requesterGuid)
+    bool TradeManager::DeclineTradeRequest(ObjectGuid requesterGuid)
     {
         auto it = m_pendingRequests.find(requesterGuid);
         if (it != m_pendingRequests.end())
@@ -244,7 +292,7 @@ namespace Playerbot
         return false;
     }
 
-    void BotTradeManager::CancelTrade(std::string const& reason)
+    void TradeManager::CancelTrade(std::string const& reason)
     {
         if (!IsTrading())
             return;
@@ -252,12 +300,12 @@ namespace Playerbot
         ProcessTradeCancellation(reason);
     }
 
-    bool BotTradeManager::AcceptTrade()
+    bool TradeManager::AcceptTrade()
     {
-        if (!m_bot || !IsTrading())
+        if (!GetBot() || !IsTrading())
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return false;
 
@@ -288,7 +336,7 @@ namespace Playerbot
             {
                 // Check if trader is the bot's master/owner (would need to be set elsewhere)
                 // For now, we'll allow trades with group leader as owner
-                Group* group = m_bot->GetGroup();
+                Group* group = GetBot()->GetGroup();
                 if (group && group->GetLeaderGUID() == trader->GetGUID())
                     isOwnerTrade = true;
             }
@@ -328,12 +376,12 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::AddItemToTrade(Item* item, uint8 slot)
+    bool TradeManager::AddItemToTrade(Item* item, uint8 slot)
     {
-        if (!m_bot || !item || !IsTrading())
+        if (!GetBot() || !item || !IsTrading())
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return false;
 
@@ -365,8 +413,8 @@ namespace Playerbot
         itemSlot.itemEntry = item->GetEntry();
         itemSlot.itemCount = item->GetCount();
         itemSlot.estimatedValue = EstimateItemValue(item);
-        itemSlot.isQuestItem = item->GetTemplate()->HasFlag(ITEM_FLAG_IS_QUEST_ITEM);
-        itemSlot.isSoulbound = item->GetTemplate()->HasFlag(ITEM_FLAG_IS_BOUND_TO_ACCOUNT);
+        itemSlot.isQuestItem = (item->GetTemplate()->GetStartQuest() != 0);
+        itemSlot.isSoulbound = item->IsSoulBound() || item->GetTemplate()->HasFlag(ITEM_FLAG_IS_BOUND_TO_ACCOUNT);
         itemSlot.quality = ItemQuality(item->GetTemplate()->GetQuality());
 
         m_currentSession.offeredItems.push_back(itemSlot);
@@ -376,9 +424,9 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::AddItemsToTrade(std::vector<Item*> const& items)
+    bool TradeManager::AddItemsToTrade(std::vector<Item*> const& items)
     {
-        if (!m_bot || items.empty() || !IsTrading())
+        if (!GetBot() || items.empty() || !IsTrading())
             return false;
 
         uint32 addedCount = 0;
@@ -395,12 +443,12 @@ namespace Playerbot
         return addedCount > 0;
     }
 
-    bool BotTradeManager::RemoveItemFromTrade(uint8 slot)
+    bool TradeManager::RemoveItemFromTrade(uint8 slot)
     {
-        if (!m_bot || !IsTrading() || slot >= MAX_TRADE_ITEMS)
+        if (!GetBot() || !IsTrading() || slot >= MAX_TRADE_ITEMS)
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return false;
 
@@ -422,12 +470,12 @@ namespace Playerbot
         return false;
     }
 
-    bool BotTradeManager::SetTradeGold(uint64 gold)
+    bool TradeManager::SetTradeGold(uint64 gold)
     {
-        if (!m_bot || !IsTrading())
+        if (!GetBot() || !IsTrading())
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return false;
 
@@ -439,7 +487,7 @@ namespace Playerbot
         }
 
         // Check bot has enough gold
-        if (gold > m_bot->GetMoney())
+        if (gold > GetBot()->GetMoney())
         {
             LogTradeAction("SET_GOLD_FAILED", "Insufficient gold");
             return false;
@@ -454,7 +502,7 @@ namespace Playerbot
         return true;
     }
 
-    void BotTradeManager::OnTradeStarted(Player* trader)
+    void TradeManager::OnTradeStarted(Player* trader)
     {
         if (!trader)
             return;
@@ -466,7 +514,7 @@ namespace Playerbot
         LogTradeAction("TRADE_STARTED", "Trade window opened with " + trader->GetName());
     }
 
-    void BotTradeManager::OnTradeStatusUpdate(TradeData* myTrade, TradeData* theirTrade)
+    void TradeManager::OnTradeStatusUpdate(TradeData* myTrade, TradeData* theirTrade)
     {
         if (!myTrade || !theirTrade)
             return;
@@ -485,8 +533,8 @@ namespace Playerbot
             itemSlot.itemEntry = item->GetEntry();
             itemSlot.itemCount = item->GetCount();
             itemSlot.estimatedValue = EstimateItemValue(item);
-            itemSlot.isQuestItem = item->GetTemplate()->HasFlag(ITEM_FLAG_IS_QUEST_ITEM);
-            itemSlot.isSoulbound = item->GetTemplate()->HasFlag(ITEM_FLAG_IS_BOUND_TO_ACCOUNT);
+            itemSlot.isQuestItem = (item->GetTemplate()->GetStartQuest() != 0);
+            itemSlot.isSoulbound = item->IsSoulBound() || item->GetTemplate()->HasFlag(ITEM_FLAG_IS_BOUND_TO_ACCOUNT);
             itemSlot.quality = ItemQuality(item->GetTemplate()->GetQuality());
 
             m_currentSession.receivedItems.push_back(itemSlot);
@@ -506,25 +554,25 @@ namespace Playerbot
         m_currentSession.lastUpdate = std::chrono::steady_clock::now();
     }
 
-    void BotTradeManager::OnTradeAccepted()
+    void TradeManager::OnTradeAccepted()
     {
         SetTradeState(TradeState::ACCEPTING);
         LogTradeAction("TRADE_ACCEPTED", "Both parties accepted");
     }
 
-    void BotTradeManager::OnTradeCancelled()
+    void TradeManager::OnTradeCancelled()
     {
         ProcessTradeCancellation("Trade cancelled by other party");
     }
 
-    void BotTradeManager::OnTradeCompleted()
+    void TradeManager::OnTradeCompleted()
     {
         ProcessTradeCompletion();
     }
 
-    void BotTradeManager::Update(uint32 diff)
+    void TradeManager::OnUpdate(uint32 elapsed)
     {
-        m_updateTimer += diff;
+        m_updateTimer += elapsed;
 
         // Process pending trade requests
         auto now = std::chrono::steady_clock::now();
@@ -557,7 +605,7 @@ namespace Playerbot
             if (m_updateTimer >= TRADE_UPDATE_INTERVAL)
             {
                 m_updateTimer = 0;
-                ProcessTradeUpdate(diff);
+                ProcessTradeUpdate(elapsed);
             }
 
             // Check for timeout
@@ -590,12 +638,12 @@ namespace Playerbot
         }
     }
 
-    bool BotTradeManager::DistributeLoot(std::vector<Item*> const& items, bool useNeedGreed)
+    bool TradeManager::DistributeLoot(std::vector<Item*> const& items, bool useNeedGreed)
     {
-        if (!m_bot || items.empty())
+        if (!GetBot() || items.empty())
             return false;
 
-        Group* group = m_bot->GetGroup();
+        Group* group = GetBot()->GetGroup();
         if (!group)
         {
             LogTradeAction("DISTRIBUTE_FAILED", "Bot not in group");
@@ -620,11 +668,11 @@ namespace Playerbot
 
             // Find best recipient
             std::vector<Player*> candidates;
-            for (auto member = group->GetFirstMember(); member != nullptr; member = member->next())
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
             {
-                if (Player* player = member->GetSource())
+                if (Player* player = ObjectAccessor::FindPlayer(member.guid))
                 {
-                    if (player != m_bot && CanPlayerUseItem(item, player))
+                    if (player != GetBot() && CanPlayerUseItem(item, player))
                         candidates.push_back(player);
                 }
             }
@@ -645,9 +693,9 @@ namespace Playerbot
         return distributedCount > 0;
     }
 
-    bool BotTradeManager::SendItemToPlayer(Item* item, Player* recipient)
+    bool TradeManager::SendItemToPlayer(Item* item, Player* recipient)
     {
-        if (!item || !recipient || !m_bot)
+        if (!item || !recipient || !GetBot())
             return false;
 
         // Check if we can trade with recipient
@@ -671,9 +719,9 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::RequestItemFromPlayer(uint32 itemEntry, Player* owner)
+    bool TradeManager::RequestItemFromPlayer(uint32 itemEntry, Player* owner)
     {
-        if (!owner || !m_bot || itemEntry == 0)
+        if (!owner || !GetBot() || itemEntry == 0)
             return false;
 
         // Check if owner has the item
@@ -700,9 +748,9 @@ namespace Playerbot
         return InitiateTrade(owner, "Requesting item " + std::to_string(itemEntry));
     }
 
-    bool BotTradeManager::ValidateTradeTarget(Player* target) const
+    bool TradeManager::ValidateTradeTarget(Player* target) const
     {
-        if (!target || !m_bot)
+        if (!target || !GetBot())
             return false;
 
         // Check blacklist
@@ -716,12 +764,12 @@ namespace Playerbot
         if (m_securityLevel >= TradeSecurity::BASIC)
         {
             // Must be in same group or guild
-            Group* myGroup = m_bot->GetGroup();
+            Group* myGroup = GetBot()->GetGroup();
             Group* theirGroup = target->GetGroup();
 
             bool sameGroup = myGroup && theirGroup && myGroup == theirGroup;
-            bool sameGuild = m_bot->GetGuildId() &&
-                           m_bot->GetGuildId() == target->GetGuildId();
+            bool sameGuild = GetBot()->GetGuildId() &&
+                           GetBot()->GetGuildId() == target->GetGuildId();
 
             if (!sameGroup && !sameGuild && !IsWhitelisted(target->GetGUID()))
             {
@@ -731,7 +779,7 @@ namespace Playerbot
         }
 
         // Check if target is the group leader (acting as owner)
-        Group* myGroup = m_bot->GetGroup();
+        Group* myGroup = GetBot()->GetGroup();
         if (myGroup && myGroup->GetLeaderGUID() == target->GetGUID())
             return true;
 
@@ -748,12 +796,12 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::ValidateTradeItems() const
+    bool TradeManager::ValidateTradeItems() const
     {
-        if (!m_bot)
+        if (!GetBot())
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return true;
 
@@ -793,13 +841,13 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::ValidateTradeGold(uint64 amount) const
+    bool TradeManager::ValidateTradeGold(uint64 amount) const
     {
-        if (!m_bot)
+        if (!GetBot())
             return false;
 
         // Check against bot's money
-        if (amount > m_bot->GetMoney())
+        if (amount > GetBot()->GetMoney())
             return false;
 
         // Check against max trade value
@@ -809,22 +857,23 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::EvaluateTradeFairness() const
+    bool TradeManager::EvaluateTradeFairness() const
     {
         if (m_securityLevel == TradeSecurity::NONE)
             return true;
 
         // Allow one-sided trades from group leader (acting as owner)
-        Group* group = m_bot->GetGroup();
+        Group* group = GetBot()->GetGroup();
         if (group && group->GetLeaderGUID() == m_currentSession.traderGuid)
             return true;
 
         // Allow one-sided trades from other group members
         if (group)
         {
-            for (auto member = group->GetFirstMember(); member != nullptr; member = member->next())
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
             {
-                if (member->GetSource() && member->GetSource()->GetGUID() == m_currentSession.traderGuid)
+                Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
+                if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
                     return true;
             }
         }
@@ -833,7 +882,7 @@ namespace Playerbot
         return m_currentSession.IsBalanced(0.3f); // 30% tolerance
     }
 
-    bool BotTradeManager::IsTradeScam() const
+    bool TradeManager::IsTradeScam() const
     {
         if (m_securityLevel < TradeSecurity::STANDARD)
             return false;
@@ -841,7 +890,7 @@ namespace Playerbot
         return CheckForScamPatterns();
     }
 
-    bool BotTradeManager::IsTradeSafe() const
+    bool TradeManager::IsTradeSafe() const
     {
         // Check for dangerous patterns
         if (IsTradeScam())
@@ -858,7 +907,7 @@ namespace Playerbot
         return true;
     }
 
-    uint32 BotTradeManager::EstimateItemValue(Item* item) const
+    uint32 TradeManager::EstimateItemValue(Item* item) const
     {
         if (!item)
             return 0;
@@ -866,7 +915,7 @@ namespace Playerbot
         return EstimateItemValue(item->GetEntry(), item->GetCount());
     }
 
-    uint32 BotTradeManager::EstimateItemValue(uint32 itemEntry, uint32 count) const
+    uint32 TradeManager::EstimateItemValue(uint32 itemEntry, uint32 count) const
     {
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemEntry);
         if (!itemTemplate)
@@ -879,29 +928,29 @@ namespace Playerbot
         return uint32(baseValue * qualityMult * levelMult * count);
     }
 
-    bool BotTradeManager::CanTradeItem(Item* item) const
+    bool TradeManager::CanTradeItem(Item* item) const
     {
-        if (!item || !m_bot)
+        if (!item || !GetBot())
             return false;
 
         ItemTemplate const* proto = item->GetTemplate();
         if (!proto)
             return false;
 
-        // Check if item is tradeable
-        if (proto->HasFlag(ITEM_FLAG_NOT_TRADEABLE))
-            return false;
-
-        // Check if item is bound
+        // Check if item is bound (soulbound items cannot be traded)
         if (item->IsSoulBound())
             return false;
 
-        // Check if item is quest item (usually not tradeable)
-        if (proto->HasFlag(ITEM_FLAG_IS_QUEST_ITEM))
+        // Check if item is conjured (using correct 3.3.5a flag)
+        if (proto->HasFlag(ITEM_FLAG_CONJURED))
             return false;
 
-        // Check if item is conjured
-        if (proto->HasFlag(ITEM_FLAG_IS_CONJURED))
+        // Check if it's a quest item (quest items usually have StartQuest)
+        if (proto->GetStartQuest() != 0)
+            return false;
+
+        // Additional quest item check via bonding
+        if (proto->GetBonding() == BIND_QUEST)
             return false;
 
         // Validate ownership
@@ -911,12 +960,12 @@ namespace Playerbot
         return true;
     }
 
-    uint8 BotTradeManager::GetNextFreeTradeSlot() const
+    uint8 TradeManager::GetNextFreeTradeSlot() const
     {
-        if (!m_bot)
+        if (!GetBot())
             return MAX_TRADE_ITEMS;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return 0;
 
@@ -929,17 +978,17 @@ namespace Playerbot
         return MAX_TRADE_ITEMS;
     }
 
-    std::vector<Item*> BotTradeManager::GetTradableItems() const
+    std::vector<Item*> TradeManager::GetTradableItems() const
     {
         std::vector<Item*> tradableItems;
 
-        if (!m_bot)
+        if (!GetBot())
             return tradableItems;
 
         // Check main inventory
         for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
-            if (Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (Item* item = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
             {
                 if (CanTradeItem(item))
                     tradableItems.push_back(item);
@@ -949,7 +998,7 @@ namespace Playerbot
         // Check bags
         for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         {
-            if (Bag* bag = m_bot->GetBagByPos(i))
+            if (Bag* bag = GetBot()->GetBagByPos(i))
             {
                 for (uint32 j = 0; j < bag->GetBagSize(); ++j)
                 {
@@ -965,7 +1014,7 @@ namespace Playerbot
         return tradableItems;
     }
 
-    void BotTradeManager::SetTradeState(TradeState newState)
+    void TradeManager::SetTradeState(TradeState newState)
     {
         TradeState oldState = m_currentSession.state;
         m_currentSession.state = newState;
@@ -974,18 +1023,18 @@ namespace Playerbot
             " to " + std::to_string(uint8(newState)));
     }
 
-    void BotTradeManager::ResetTradeSession()
+    void TradeManager::ResetTradeSession()
     {
         m_currentSession.Reset();
         m_updateTimer = 0;
     }
 
-    void BotTradeManager::UpdateTradeWindow()
+    void TradeManager::UpdateTradeWindow()
     {
-        if (!m_bot || !IsTrading())
+        if (!GetBot() || !IsTrading())
             return;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         TradeData* theirTrade = myTrade ? myTrade->GetTraderData() : nullptr;
 
         if (myTrade && theirTrade)
@@ -994,7 +1043,7 @@ namespace Playerbot
         }
     }
 
-    bool BotTradeManager::ProcessTradeUpdate(uint32 diff)
+    bool TradeManager::ProcessTradeUpdate(uint32 diff)
     {
         if (!IsTrading())
             return false;
@@ -1008,20 +1057,20 @@ namespace Playerbot
             bool shouldAutoAccept = false;
 
             // Auto-accept from group leader (acting as owner)
-            Group* group = m_bot->GetGroup();
+            Group* group = GetBot()->GetGroup();
             if (group && group->GetLeaderGUID() == m_currentSession.traderGuid)
                 shouldAutoAccept = true;
 
             // Auto-accept from group members
             if (m_autoAcceptGroup && !shouldAutoAccept)
             {
-                Group* group = m_bot->GetGroup();
+                Group* group = GetBot()->GetGroup();
                 if (group)
                 {
-                    for (auto member = group->GetFirstMember(); member != nullptr; member = member->next())
+                    for (Group::MemberSlot const& member : group->GetMemberSlots())
                     {
-                        if (member->GetSource() &&
-                            member->GetSource()->GetGUID() == m_currentSession.traderGuid)
+                        Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
+                        if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
                         {
                             shouldAutoAccept = true;
                             break;
@@ -1034,8 +1083,8 @@ namespace Playerbot
             if (m_autoAcceptGuild && !shouldAutoAccept)
             {
                 Player* trader = ObjectAccessor::FindPlayer(m_currentSession.traderGuid);
-                if (trader && m_bot->GetGuildId() &&
-                    m_bot->GetGuildId() == trader->GetGuildId())
+                if (trader && GetBot()->GetGuildId() &&
+                    GetBot()->GetGuildId() == trader->GetGuildId())
                 {
                     shouldAutoAccept = true;
                 }
@@ -1064,7 +1113,7 @@ namespace Playerbot
         return true;
     }
 
-    uint32 BotTradeManager::CalculateItemBaseValue(ItemTemplate const* itemTemplate) const
+    uint32 TradeManager::CalculateItemBaseValue(ItemTemplate const* itemTemplate) const
     {
         if (!itemTemplate)
             return 0;
@@ -1098,7 +1147,7 @@ namespace Playerbot
         return baseValue;
     }
 
-    float BotTradeManager::GetItemQualityMultiplier(ItemQuality quality) const
+    float TradeManager::GetItemQualityMultiplier(ItemQuality quality) const
     {
         switch (quality)
         {
@@ -1113,7 +1162,7 @@ namespace Playerbot
         }
     }
 
-    float BotTradeManager::GetItemLevelMultiplier(uint32 itemLevel) const
+    float TradeManager::GetItemLevelMultiplier(uint32 itemLevel) const
     {
         if (itemLevel == 0)
             return 1.0f;
@@ -1125,9 +1174,9 @@ namespace Playerbot
         return 1.0f + (levelRatio * 2.0f);
     }
 
-    bool BotTradeManager::IsItemNeededByBot(uint32 itemEntry) const
+    bool TradeManager::IsItemNeededByBot(uint32 itemEntry) const
     {
-        if (!m_bot || !m_botAI)
+        if (!GetBot() || !GetAI())
             return false;
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemEntry);
@@ -1135,7 +1184,7 @@ namespace Playerbot
             return false;
 
         // Check if bot can use the item
-        if (!m_bot->CanUseItem(itemTemplate))
+        if (!GetBot()->CanUseItem(itemTemplate))
             return false;
 
         // Check if it's an upgrade
@@ -1144,15 +1193,15 @@ namespace Playerbot
         return true;
     }
 
-    bool BotTradeManager::IsItemUsableByBot(Item* item) const
+    bool TradeManager::IsItemUsableByBot(Item* item) const
     {
-        if (!item || !m_bot)
+        if (!item || !GetBot())
             return false;
 
-        return m_bot->CanUseItem(item) == EQUIP_ERR_OK;
+        return GetBot()->CanUseItem(item) == EQUIP_ERR_OK;
     }
 
-    Player* BotTradeManager::SelectBestRecipient(Item* item, std::vector<Player*> const& candidates) const
+    Player* TradeManager::SelectBestRecipient(Item* item, std::vector<Player*> const& candidates) const
     {
         if (candidates.empty() || !item)
             return nullptr;
@@ -1176,7 +1225,7 @@ namespace Playerbot
         return bestCandidate;
     }
 
-    uint32 BotTradeManager::CalculateItemPriority(Item* item, Player* player) const
+    uint32 TradeManager::CalculateItemPriority(Item* item, Player* player) const
     {
         if (!item || !player)
             return 0;
@@ -1210,14 +1259,15 @@ namespace Playerbot
             }
         }
 
-        // Check class/spec match
-        if (itemTemplate->IsUsableBySpecialization(player->GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID), player->GetLevel()))
+        // Check class match (3.3.5a doesn't have spec-specific items)
+        // Could check talent trees but that's complex, so just use class
+        if ((itemTemplate->GetAllowableClass() & player->GetClassMask()) != 0)
             priority += 200;
 
         return priority;
     }
 
-    bool BotTradeManager::CanPlayerUseItem(Item* item, Player* player) const
+    bool TradeManager::CanPlayerUseItem(Item* item, Player* player) const
     {
         if (!item || !player)
             return false;
@@ -1225,19 +1275,19 @@ namespace Playerbot
         return player->CanUseItem(item) == EQUIP_ERR_OK;
     }
 
-    void BotTradeManager::BuildLootDistributionPlan(LootDistribution& distribution)
+    void TradeManager::BuildLootDistributionPlan(LootDistribution& distribution)
     {
-        if (!m_bot)
+        if (!GetBot())
             return;
 
-        Group* group = m_bot->GetGroup();
+        Group* group = GetBot()->GetGroup();
         if (!group)
             return;
 
         // Build player priorities
-        for (auto member = group->GetFirstMember(); member != nullptr; member = member->next())
+        for (Group::MemberSlot const& member : group->GetMemberSlots())
         {
-            if (Player* player = member->GetSource())
+            if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
                 distribution.playerPriorities[player->GetGUID()] = 0;
 
@@ -1253,28 +1303,28 @@ namespace Playerbot
         }
     }
 
-    bool BotTradeManager::ValidateTradeDistance(Player* trader) const
+    bool TradeManager::ValidateTradeDistance(Player* trader) const
     {
-        if (!trader || !m_bot)
+        if (!trader || !GetBot())
             return false;
 
-        return m_bot->GetDistance(trader) <= m_maxTradeDistance;
+        return GetBot()->GetDistance(trader) <= m_maxTradeDistance;
     }
 
-    bool BotTradeManager::ValidateTradePermissions(Player* trader) const
+    bool TradeManager::ValidateTradePermissions(Player* trader) const
     {
         return ValidateTradeTarget(trader);
     }
 
-    bool BotTradeManager::ValidateItemOwnership(Item* item) const
+    bool TradeManager::ValidateItemOwnership(Item* item) const
     {
-        if (!item || !m_bot)
+        if (!item || !GetBot())
             return false;
 
-        return item->GetOwnerGUID() == m_bot->GetGUID();
+        return item->GetOwnerGUID() == GetBot()->GetGUID();
     }
 
-    bool BotTradeManager::CheckForScamPatterns() const
+    bool TradeManager::CheckForScamPatterns() const
     {
         // Check for common scam patterns
 
@@ -1304,17 +1354,17 @@ namespace Playerbot
         return false;
     }
 
-    bool BotTradeManager::CheckValueBalance() const
+    bool TradeManager::CheckValueBalance() const
     {
         return m_currentSession.IsBalanced(SCAM_VALUE_THRESHOLD);
     }
 
-    bool BotTradeManager::ExecuteTrade()
+    bool TradeManager::ExecuteTrade()
     {
-        if (!m_bot || !IsTrading())
+        if (!GetBot() || !IsTrading())
             return false;
 
-        TradeData* myTrade = m_bot->GetTradeData();
+        TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
             return false;
 
@@ -1330,7 +1380,7 @@ namespace Playerbot
         return true;
     }
 
-    void BotTradeManager::ProcessTradeCompletion()
+    void TradeManager::ProcessTradeCompletion()
     {
         auto endTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -1347,16 +1397,13 @@ namespace Playerbot
         LogTradeCompletion(true);
         SetTradeState(TradeState::COMPLETED);
 
-        // Clean up trade data
-        if (m_bot)
-        {
-            m_bot->SetTradeData(nullptr);
-        }
+        // Trade data is cleaned up by TradeCancel/trade completion
+        // No need to manually set it in 3.3.5a
 
         ResetTradeSession();
     }
 
-    void BotTradeManager::ProcessTradeCancellation(std::string const& reason)
+    void TradeManager::ProcessTradeCancellation(std::string const& reason)
     {
         // Update statistics
         m_statistics.totalTrades++;
@@ -1366,16 +1413,16 @@ namespace Playerbot
         SetTradeState(TradeState::CANCELLED);
 
         // Send cancel to other party
-        if (m_bot)
+        if (GetBot())
         {
-            m_bot->TradeCancel(true);
-            m_bot->SetTradeData(nullptr);
+            GetBot()->TradeCancel(true);
+            // TradeCancel handles cleaning up m_trade internally
         }
 
         ResetTradeSession();
     }
 
-    void BotTradeManager::HandleTradeError(std::string const& error)
+    void TradeManager::HandleTradeError(std::string const& error)
     {
         m_statistics.totalTrades++;
         m_statistics.failedTrades++;
@@ -1386,18 +1433,18 @@ namespace Playerbot
         CancelTrade(error);
     }
 
-    void BotTradeManager::LogTradeAction(std::string const& action, std::string const& details) const
+    void TradeManager::LogTradeAction(std::string const& action, std::string const& details) const
     {
-        if (!m_bot)
+        if (!GetBot())
             return;
 
         TC_LOG_DEBUG("bot.trade", "Bot {} - {}: {}",
-            m_bot->GetName(), action, details);
+            GetBot()->GetName(), action, details);
     }
 
-    void BotTradeManager::LogTradeItem(Item* item, bool offered) const
+    void TradeManager::LogTradeItem(Item* item, bool offered)
     {
-        if (!item || !m_bot)
+        if (!item || !GetBot())
             return;
 
         ItemTemplate const* itemTemplate = item->GetTemplate();
@@ -1405,22 +1452,22 @@ namespace Playerbot
             return;
 
         TC_LOG_DEBUG("bot.trade", "Bot {} - {} item: {} x{} (value: {})",
-            m_bot->GetName(),
+            GetBot()->GetName(),
             offered ? "Offering" : "Receiving",
             itemTemplate->GetDefaultLocaleName(),
             item->GetCount(),
             EstimateItemValue(item));
     }
 
-    void BotTradeManager::LogTradeCompletion(bool success) const
+    void TradeManager::LogTradeCompletion(bool success)
     {
-        if (!m_bot)
+        if (!GetBot())
             return;
 
         if (success)
         {
             TC_LOG_INFO("bot.trade", "Bot {} completed trade - Gave: {} gold, {} items | Received: {} gold, {} items",
-                m_bot->GetName(),
+                GetBot()->GetName(),
                 m_currentSession.offeredGold,
                 m_currentSession.offeredItems.size(),
                 m_currentSession.receivedGold,
@@ -1429,7 +1476,7 @@ namespace Playerbot
         else
         {
             TC_LOG_INFO("bot.trade", "Bot {} failed trade with {}",
-                m_bot->GetName(),
+                GetBot()->GetName(),
                 m_currentSession.traderGuid.ToString());
         }
     }

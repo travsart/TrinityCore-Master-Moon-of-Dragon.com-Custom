@@ -1,0 +1,44 @@
+PROBLEM IDENTIFIED: Bot AI created but UpdateAI never called!
+
+SYMPTOMS:
+- 28 bots successfully logged in
+- AI instances created (ShamanAI, WarriorAI, etc.)
+- Bots in world and in groups
+- BUT: No movement, no actions, completely idle
+
+ROOT CAUSE:
+BotSession::Update() line 635 condition failing:
+`if (playerIsValid && playerIsInWorld && _ai && _active.load())`
+
+One of these is FALSE:
+- playerIsValid: ???
+- playerIsInWorld: ???
+- _ai: Should be TRUE (AI created in logs)
+- _active: ???
+
+DEBUG PATCH NEEDED:
+Add logging before line 635 in BotSession.cpp:
+
+```cpp
+// Layer 3: AI update (only if all validations passed)
+static uint32 debugUpdateCounter = 0;
+if (++debugUpdateCounter % 100 == 0) // Log every 100 update attempts
+{
+    TC_LOG_INFO("module.playerbot.session", "🔍 BotSession Update Check - playerIsValid:{}, playerIsInWorld:{}, _ai:{}, _active:{}, account:{}",
+                playerIsValid, playerIsInWorld, _ai != nullptr, _active.load(), accountId);
+}
+
+if (playerIsValid && playerIsInWorld && _ai && _active.load()) {
+    if (debugUpdateCounter % 100 == 0)
+    {
+        TC_LOG_INFO("module.playerbot.session", "✅ ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
+    }
+    try {
+        _ai->UpdateAI(diff);
+    }
+```
+
+ALTERNATIVE HYPOTHESIS:
+Maybe `_active` is never set to TRUE after login completes?
+
+Check BotSession::ProcessAsyncLogin() - does it set `_active = true` after successful login?

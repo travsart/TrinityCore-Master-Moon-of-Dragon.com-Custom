@@ -9,7 +9,7 @@
 
 #include "FarmingCoordinator.h"
 #include "ProfessionManager.h"
-#include "GatheringAutomation.h"
+#include "GatheringManager.h"
 #include "Player.h"
 #include "Log.h"
 #include "Map.h"
@@ -356,9 +356,9 @@ void FarmingCoordinator::UpdateFarmingSession(::Player* player, uint32 diff)
         return;
     }
 
-    // Continue gathering via GatheringAutomation
-    // GatheringAutomation::Update() will handle actual node detection and harvesting
-    GatheringAutomation::instance()->Update(player, diff);
+    // Gathering is now handled by GatheringManager via BotAI::UpdateManagers()
+    // The manager is updated automatically for all bots through the BehaviorManager system
+    // No need to call it here
 
     // Update session progress (gather stats from GatheringAutomation)
     // In full implementation, track nodes gathered during this session

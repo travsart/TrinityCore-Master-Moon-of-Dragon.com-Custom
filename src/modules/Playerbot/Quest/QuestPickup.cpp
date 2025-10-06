@@ -383,6 +383,13 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, creatures, check);
     Cell::VisitGridObjects(bot, searcher, scanRadius);
 
+    TC_LOG_DEBUG("playerbot.quest", "🔍 QUEST SCAN: Bot {} found {} creatures in {}y radius",
+                 bot->GetName(), creatures.size(), scanRadius);
+
+    uint32 creatureQuestGiverCount = 0;
+    uint32 questsChecked = 0;
+    uint32 questsRejected = 0;
+
     for (Creature* creature : creatures)
     {
         if (!creature || !creature->IsAlive())
@@ -393,6 +400,10 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
 
         if (questRelations.begin() != questRelations.end())
         {
+            creatureQuestGiverCount++;
+            TC_LOG_DEBUG("playerbot.quest", "   📋 Creature {} (entry {}) has quests",
+                         creature->GetName(), entry);
+
             QuestGiverInfo info(entry, QuestGiverType::NPC_CREATURE, creature->GetPosition());
             info.zoneId = creature->GetZoneId();
             info.areaId = creature->GetAreaId();
@@ -401,14 +412,31 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
             for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
             {
                 Quest const* quest = sObjectMgr->GetQuestTemplate(*it);
+                questsChecked++;
                 if (quest && bot->CanTakeQuest(quest, false))
+                {
+                    TC_LOG_DEBUG("playerbot.quest", "      ✅ Quest {} - CAN TAKE",
+                                 *it);
                     info.availableQuests.push_back(*it);
+                }
+                else
+                {
+                    questsRejected++;
+                    if (quest)
+                        TC_LOG_DEBUG("playerbot.quest", "      ❌ Quest {} - CANNOT TAKE (CanTakeQuest=false)",
+                                     *it);
+                    else
+                        TC_LOG_DEBUG("playerbot.quest", "      ❌ Quest {} - INVALID (no template)", *it);
+                }
             }
 
             if (!info.availableQuests.empty())
                 foundGivers.push_back(info);
         }
     }
+
+    TC_LOG_DEBUG("playerbot.quest", "🔍 CREATURE SCAN SUMMARY: {} creatures scanned, {} quest givers found, {} quests checked, {} rejected",
+                 creatures.size(), creatureQuestGiverCount, questsChecked, questsRejected);
 
     // Scan for game object quest givers
     std::list<GameObject*> gameObjects;

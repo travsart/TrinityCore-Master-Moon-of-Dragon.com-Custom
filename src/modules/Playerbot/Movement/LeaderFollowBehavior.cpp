@@ -176,6 +176,8 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
 
 void LeaderFollowBehavior::OnActivate(BotAI* ai)
 {
+    TC_LOG_ERROR("module.playerbot", "🎬🎬🎬 LeaderFollowBehavior::OnActivate() CALLED for bot {}",
+                 ai && ai->GetBot() ? ai->GetBot()->GetName() : "NULL");
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate START ===");
 
     if (!ai || !ai->GetBot())
@@ -234,8 +236,11 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         return;
     }
 
+    TC_LOG_ERROR("module.playerbot", "🎯 LeaderFollowBehavior::OnActivate: About to call SetFollowTarget({}) for bot {}",
+                 leader->GetName(), bot->GetName());
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Calling SetFollowTarget({}) ===", leader->GetName());
     SetFollowTarget(leader);
+    TC_LOG_ERROR("module.playerbot", "✅ SetFollowTarget() completed for bot {}", bot->GetName());
 
     _currentGroup = group;
     _formationRole = DetermineFormationRole(bot);
@@ -303,6 +308,14 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
 
     Player* bot = ai->GetBot();
     Player* leader = _followTarget.player;
+
+    // CRITICAL DEBUG: Log state at entry
+    static uint32 behaviorCounter = 0;
+    if (++behaviorCounter % 100 == 0)
+    {
+        TC_LOG_ERROR("module.playerbot", "🔧 UpdateFollowBehavior: Bot {} state={}",
+                    bot->GetName(), static_cast<uint8>(_state));
+    }
 
     // Update follow target information
     UpdateFollowTarget(bot, leader);

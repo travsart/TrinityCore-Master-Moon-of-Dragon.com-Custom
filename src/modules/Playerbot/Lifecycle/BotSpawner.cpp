@@ -15,7 +15,7 @@
 #include "BotWorldSessionMgr.h"
 #include "BotResourcePool.h"
 #include "BotAccountMgr.h"
-#include "PlayerbotConfig.h"
+#include "Config/PlayerbotConfig.h"
 #include "PlayerbotDatabase.h"
 #include "BotCharacterDistribution.h"
 #include "BotNameMgr.h"
@@ -285,16 +285,24 @@ LoginDatabasePreparedStatement* BotSpawner::GetSafeLoginPreparedStatement(LoginD
 
 void BotSpawner::LoadConfig()
 {
-    _config.maxBotsTotal = 500;
-    _config.maxBotsPerZone = 50;
-    _config.maxBotsPerMap = 200;
-    _config.spawnBatchSize = 10;
-    _config.spawnDelayMs = 100;
-    _config.enableDynamicSpawning = true;
-    _config.respectPopulationCaps = true;
-    _config.botToPlayerRatio = 2.0f;
+    // CRITICAL FIX: Read from sPlayerbotConfig instead of hardcoded values
+    // This allows playerbots.conf to control spawn behavior
+    _config.maxBotsTotal = sPlayerbotConfig->GetUInt("Playerbot.Spawn.MaxTotal", 80);
+    _config.maxBotsPerZone = sPlayerbotConfig->GetUInt("Playerbot.Spawn.MaxPerZone", 20);
+    _config.maxBotsPerMap = sPlayerbotConfig->GetUInt("Playerbot.Spawn.MaxPerMap", 50);
+    _config.spawnBatchSize = sPlayerbotConfig->GetUInt("Playerbot.Spawn.BatchSize", 5);
+    _config.spawnDelayMs = sPlayerbotConfig->GetUInt("Playerbot.Spawn.DelayMs", 500);
+    _config.enableDynamicSpawning = sPlayerbotConfig->GetBool("Playerbot.Spawn.Dynamic", false);
+    _config.respectPopulationCaps = sPlayerbotConfig->GetBool("Playerbot.Spawn.RespectCaps", true);
+    _config.botToPlayerRatio = sPlayerbotConfig->GetFloat("Playerbot.Spawn.BotToPlayerRatio", 20.0f);
 
-    TC_LOG_DEBUG("module.playerbot.spawner", "Loaded spawn configuration");
+    TC_LOG_INFO("module.playerbot.spawner", "Loaded spawn configuration:");
+    TC_LOG_INFO("module.playerbot.spawner", "  MaxTotal: {}, MaxPerZone: {}, MaxPerMap: {}",
+        _config.maxBotsTotal, _config.maxBotsPerZone, _config.maxBotsPerMap);
+    TC_LOG_INFO("module.playerbot.spawner", "  BatchSize: {}, DelayMs: {}",
+        _config.spawnBatchSize, _config.spawnDelayMs);
+    TC_LOG_INFO("module.playerbot.spawner", "  Dynamic: {}, RespectCaps: {}, BotToPlayerRatio: {}",
+        _config.enableDynamicSpawning, _config.respectPopulationCaps, _config.botToPlayerRatio);
 }
 
 bool BotSpawner::SpawnBot(SpawnRequest const& request)
@@ -1063,12 +1071,13 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
     // Base target on player count and ratio
     uint32 baseTarget = static_cast<uint32>(zone.playerCount * _config.botToPlayerRatio);
 
-    // CRITICAL FIX: Always ensure minimum bots per zone
+    // CRITICAL FIX: Read minimum bots from config
     // This ensures bots spawn even with ratio = 0 or no players
-    uint32 minimumBots = 10; // sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 10);
+    uint32 minimumBots = sPlayerbotConfig->GetUInt("Playerbot.MinimumBotsPerZone", 10);
 
-    // If we have at least 1 player online anywhere, ensure minimum bots
-    if (sWorld->GetActiveSessionCount() > 0)
+    // STATIC SPAWNING: If dynamic spawning is disabled, ALWAYS ensure minimum bots
+    // DYNAMIC SPAWNING: Only spawn minimum if we have players online
+    if (!_config.enableDynamicSpawning || sWorld->GetActiveSessionCount() > 0)
     {
         baseTarget = std::max(baseTarget, minimumBots);
         TC_LOG_INFO("module.playerbot.spawner", "Zone {} - players: {}, ratio: {}, ratio target: {}, minimum: {}, final target: {}",

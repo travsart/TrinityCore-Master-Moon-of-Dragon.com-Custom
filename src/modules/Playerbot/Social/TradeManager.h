@@ -11,6 +11,7 @@
 #define TRINITYCORE_BOT_TRADE_MANAGER_H
 
 #include "Common.h"
+#include "AI/BehaviorManager.h"
 #include "ObjectGuid.h"
 #include "ItemTemplate.h"
 #include "ItemDefines.h"
@@ -22,11 +23,11 @@
 #include <chrono>
 #include <optional>
 #include <queue>
+#include <atomic>
 
 class Player;
 class Item;
 class TradeData;
-class BotAI;
 
 // Type alias for item quality
 using ItemQuality = ItemQualities;
@@ -140,12 +141,24 @@ namespace Playerbot
         std::chrono::milliseconds GetAverageTradeTime() const;
     };
 
-    // Main trade manager class
-    class BotTradeManager
+    /**
+     * TradeManager - Handles all trading, vendor, and repair activities for bots
+     *
+     * Inherits from BehaviorManager for throttled updates and performance optimization.
+     * Manages:
+     * - Player-to-player trading
+     * - Vendor interactions (buying/selling)
+     * - Equipment repair
+     * - Consumable management
+     * - Inventory optimization
+     *
+     * Update interval: 5000ms (5 seconds)
+     */
+    class TC_GAME_API TradeManager : public BehaviorManager
     {
     public:
-        explicit BotTradeManager(BotAI* botAI);
-        ~BotTradeManager();
+        explicit TradeManager(Player* bot, BotAI* ai);
+        ~TradeManager() override;
 
         // Core trade operations
         bool InitiateTrade(Player* target, std::string const& reason = "");
@@ -168,8 +181,10 @@ namespace Playerbot
         void OnTradeCancelled();
         void OnTradeCompleted();
 
-        // Update cycle
-        void Update(uint32 diff);
+        // Fast atomic state queries (<0.001ms)
+        bool IsTradingActive() const { return _isTradingActive.load(std::memory_order_acquire); }
+        bool NeedsRepair() const { return _needsRepair.load(std::memory_order_acquire); }
+        bool NeedsSupplies() const { return _needsSupplies.load(std::memory_order_acquire); }
 
         // Group loot distribution
         bool DistributeLoot(std::vector<Item*> const& items, bool useNeedGreed = true);
@@ -216,6 +231,12 @@ namespace Playerbot
         uint8 GetNextFreeTradeSlot() const;
         std::vector<Item*> GetTradableItems() const;
 
+    protected:
+        // BehaviorManager interface - runs every 5 seconds
+        void OnUpdate(uint32 elapsed) override;
+        bool OnInitialize() override;
+        void OnShutdown() override;
+
     private:
         // Internal state management
         void SetTradeState(TradeState newState);
@@ -250,13 +271,15 @@ namespace Playerbot
         void HandleTradeError(std::string const& error);
 
         // Logging and debugging
-        void LogTradeAction(std::string const& action, std::string const& details = "");
+        void LogTradeAction(std::string const& action, std::string const& details = "") const;
         void LogTradeItem(Item* item, bool offered);
         void LogTradeCompletion(bool success);
 
     private:
-        BotAI* m_botAI;                                         // Bot AI reference
-        Player* m_bot;                                          // Bot player reference
+        // Atomic state flags for fast queries
+        std::atomic<bool> _isTradingActive{false};
+        std::atomic<bool> _needsRepair{false};
+        std::atomic<bool> _needsSupplies{false};
 
         // Current trade session
         TradeSession m_currentSession;                         // Active trade data
@@ -288,7 +311,7 @@ namespace Playerbot
         static constexpr uint32 TRADE_UPDATE_INTERVAL = 1000;  // 1 second
         static constexpr uint32 TRADE_TIMEOUT = 60000;         // 60 seconds
         static constexpr uint32 TRADE_REQUEST_TIMEOUT = 30000; // 30 seconds
-        static constexpr float TRADE_DISTANCE = 10.0f;         // 10 yards
+        static constexpr float MAX_TRADE_DISTANCE_YARDS = 10.0f;  // 10 yards
         static constexpr uint8 MAX_TRADE_ITEMS = 6;           // 6 item slots + gold
         static constexpr float SCAM_VALUE_THRESHOLD = 0.1f;    // 10% value difference
     };

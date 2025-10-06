@@ -66,11 +66,23 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
+    # Phase 2.1: BehaviorManager Base Class - Manager Pattern Foundation
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.h
+
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
+
+    # Phase 2.2: CombatMovementStrategy - Role-based Combat Positioning
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.h
 
     # AI Action System (basic)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.cpp
@@ -401,13 +413,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
 
     # Social Systems - WoW 11.2 Economy Integration
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.h
-    # TradeManager disabled - requires TrinityCore trade API modernization
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
+    # Phase 2.4: Replaced by TradeManager and AuctionManager (BehaviorManager pattern)
+    # TradeManager enabled - now inherits from BehaviorManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
@@ -422,8 +431,9 @@ set(PLAYERBOT_SOURCES
     # Profession System - Complete Crafting + Gathering Automation (Phase 1, 2, 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringAutomation.h
+    # Phase 2.4: Replaced by GatheringManager (BehaviorManager pattern)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
@@ -433,11 +443,11 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
+    # BotAI_Auction_Integration no longer needed - AuctionManager is managed by BotAI
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
 
     # Quest Systems - Dynamic Quest Management
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
+    # Phase 2.4: Replaced by QuestManager (BehaviorManager pattern)
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestPickup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
@@ -555,6 +565,10 @@ source_group("AI" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.h
 )
 
 source_group("AI\\Strategy" FILES
@@ -564,6 +578,8 @@ source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.h
 )
 
 source_group("AI\\Actions" FILES
@@ -699,10 +715,8 @@ source_group("Scripts" FILES
 )
 
 source_group("Social" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionAutomation.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeAutomation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
@@ -719,18 +733,22 @@ source_group("Equipment" FILES
 source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
 )
 
 source_group("Economy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
 )
 
 source_group("Quest" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestAutomation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/DynamicQuestSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/ObjectiveTracker.cpp

@@ -2,6 +2,7 @@
 #define PLAYERBOT_AUCTION_MANAGER_H
 
 #include "Common.h"
+#include "AI/BehaviorManager.h"
 #include "ObjectGuid.h"
 #include "DatabaseEnv.h"
 #include "Duration.h"
@@ -10,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 class Player;
 class Item;
@@ -128,20 +130,34 @@ namespace Playerbot
         }
     };
 
-    // Main auction manager class
-    class BotAuctionManager
+    class BotAI;
+
+    /**
+     * AuctionManager - Complete auction house automation system for bots
+     *
+     * Inherits from BehaviorManager for throttled updates and performance optimization.
+     * Manages:
+     * - Auction house interactions
+     * - Market monitoring and analysis
+     * - Automated buying and selling
+     * - Price optimization
+     * - Market making strategies
+     *
+     * Update interval: 10000ms (10 seconds)
+     */
+    class TC_GAME_API AuctionManager : public BehaviorManager
     {
     public:
-        static BotAuctionManager* instance()
-        {
-            static BotAuctionManager instance;
-            return &instance;
-        }
+        explicit AuctionManager(Player* bot, BotAI* ai);
+        ~AuctionManager() override;
+
+        // Fast atomic state queries (<0.001ms)
+        bool HasActiveAuctions() const { return _hasActiveAuctions.load(std::memory_order_acquire); }
+        bool IsAtAuctionHouse() const { return _isAtAuctionHouse.load(std::memory_order_acquire); }
+        uint32 GetActiveAuctionCount() const { return _activeAuctionCount.load(std::memory_order_acquire); }
 
         // Initialization and configuration
-        void Initialize();
         void LoadConfiguration();
-        void Update(uint32 diff);
 
         // Market scanning and analysis
         void ScanAuctionHouse(Player* bot, uint32 auctionHouseId);
@@ -185,8 +201,6 @@ namespace Playerbot
         void RecordBidPlaced(ObjectGuid botGuid, uint64 bidAmount);
 
         // Configuration getters
-        bool IsEnabled() const { return _enabled; }
-        uint32 GetUpdateInterval() const { return _updateInterval; }
         uint32 GetMaxActiveAuctions() const { return _maxActiveAuctions; }
         uint64 GetMinProfit() const { return _minProfit; }
         AuctionStrategy GetDefaultStrategy() const { return _defaultStrategy; }
@@ -202,11 +216,13 @@ namespace Playerbot
         void SavePriceHistory(uint32 itemId, uint64 price);
         void LoadPriceHistory();
 
+    protected:
+        // BehaviorManager interface - runs every 10 seconds
+        void OnUpdate(uint32 elapsed) override;
+        bool OnInitialize() override;
+        void OnShutdown() override;
+
     private:
-        BotAuctionManager();
-        ~BotAuctionManager() = default;
-        BotAuctionManager(const BotAuctionManager&) = delete;
-        BotAuctionManager& operator=(const BotAuctionManager&) = delete;
 
         // Internal market analysis
         void UpdatePriceData(uint32 itemId, AuctionHouseObject* ah);
@@ -219,12 +235,15 @@ namespace Playerbot
         bool ValidateBidPlacement(Player* bot, uint32 auctionId, uint64 bidAmount);
         uint64 CalculateDepositCost(Player* bot, Item* item, uint32 duration);
 
+        // Atomic state flags for fast queries
+        std::atomic<bool> _hasActiveAuctions{false};
+        std::atomic<bool> _isAtAuctionHouse{false};
+        std::atomic<uint32> _activeAuctionCount{0};
+
         // Thread safety
         mutable std::mutex _mutex;
 
         // Configuration
-        bool _enabled;
-        uint32 _updateInterval;
         uint32 _maxActiveAuctions;
         uint64 _minProfit;
         AuctionStrategy _defaultStrategy;
@@ -248,8 +267,7 @@ namespace Playerbot
         uint32 _marketScanTimer;
         TimePoint _lastPriceUpdate;
     };
-}
 
-#define sBotAuctionMgr Playerbot::BotAuctionManager::instance()
+} // namespace Playerbot
 
 #endif // PLAYERBOT_AUCTION_MANAGER_H

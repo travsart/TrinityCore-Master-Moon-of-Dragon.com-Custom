@@ -28,6 +28,8 @@ if(BUILD_PLAYERBOT_TESTS)
         PerformanceValidator.cpp
         AutomatedTestRunner.cpp
         ProductionValidationDemo.cpp
+        # AI component tests
+        BehaviorManagerTest.cpp
         # Future test files will be added here
     )
 
