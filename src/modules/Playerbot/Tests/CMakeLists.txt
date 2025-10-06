@@ -30,6 +30,7 @@ if(BUILD_PLAYERBOT_TESTS)
         ProductionValidationDemo.cpp
         # AI component tests
         BehaviorManagerTest.cpp
+        Phase2IntegrationTest.cpp
         # Future test files will be added here
     )
 
