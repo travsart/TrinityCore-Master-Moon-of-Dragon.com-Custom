@@ -30,7 +30,6 @@
 
 bool PlayerbotModule::Initialize()
 {
-    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: PlayerbotModule::Initialize() CALLED ===");
     TC_LOG_INFO("server.loading", "Initializing Playerbot Module...");
 
     // Load configuration first
@@ -149,14 +148,13 @@ bool PlayerbotModule::Initialize()
     RegisterHooks();
 
     // Register with the shared ModuleUpdateManager for world updates
-    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: About to register with ModuleUpdateManager ===");
     if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
     {
         _lastError = "Failed to register with ModuleUpdateManager";
-        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: ModuleUpdateManager registration FAILED ===");
+        TC_LOG_ERROR("server.loading", "Playerbot Module: ModuleUpdateManager registration failed");
         return false;
     }
-    TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: ModuleUpdateManager registration SUCCESS ===");
+    TC_LOG_INFO("server.loading", "Playerbot Module: Successfully registered with ModuleUpdateManager");
 
     _initialized = true;
     _enabled = true;
@@ -242,16 +240,8 @@ void PlayerbotModule::UnregisterHooks()
 
 void PlayerbotModule::OnWorldUpdate(uint32 diff)
 {
-    static bool firstCall = true;
-    if (firstCall) {
-        TC_LOG_INFO("server.loading", "=== CLAUDE DEBUG: OnWorldUpdate FIRST CALL - diff={} ===", diff);
-        firstCall = false;
-    }
-
-    if (!_enabled || !_initialized) {
-        TC_LOG_DEBUG("server.loading", "=== CLAUDE DEBUG: OnWorldUpdate skipped - enabled={} initialized={} ===", _enabled, _initialized);
+    if (!_enabled || !_initialized)
         return;
-    }
 
     // CRITICAL SAFETY: Wrap entire update in try-catch to prevent crashes
     try

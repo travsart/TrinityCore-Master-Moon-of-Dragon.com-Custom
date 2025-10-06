@@ -63,21 +63,11 @@ void IdleStrategy::OnDeactivate(BotAI* ai)
 bool IdleStrategy::IsActive(BotAI* ai) const
 {
     if (!ai || !ai->GetBot())
-    {
-        TC_LOG_ERROR("module.playerbot", "⚠️ IdleStrategy::IsActive() - ai or bot is null!");
         return false;
-    }
 
     bool active = _active;
     bool hasGroup = (ai->GetBot()->GetGroup() != nullptr);
     bool result = active && !hasGroup;
-
-    static uint32 debugCounter = 0;
-    if (++debugCounter % 50 == 0)
-    {
-        TC_LOG_ERROR("module.playerbot", "🔎 IdleStrategy::IsActive() for bot {} - _active={}, hasGroup={}, result={}",
-                    ai->GetBot()->GetName(), active, hasGroup, result);
-    }
 
     // Active when not in a group and explicitly activated
     return result;

@@ -21,60 +21,35 @@
 
 PlayerbotWorldScript::PlayerbotWorldScript() : WorldScript("PlayerbotWorldScript")
 {
-    TC_LOG_ERROR("module.playerbot.script", "=== CONSTRUCTOR: PlayerbotWorldScript() ENTRY ===");
     TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript constructor called - script registered");
-    TC_LOG_INFO("module.playerbot.script", "DEBUG: PlayerbotWorldScript created, will test OnStartup/OnUpdate calls");
-    TC_LOG_ERROR("module.playerbot.script", "=== CONSTRUCTOR: PlayerbotWorldScript() EXIT ===");
 }
 
 void PlayerbotWorldScript::OnUpdate(uint32 diff)
 {
     static bool initialized = false;
     static uint32 initRetryCount = 0;
-    static uint32 debugCounter = 0;
-
-    // Debug: Log first few OnUpdate calls
-    if (++debugCounter <= 3)
-    {
-        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: PlayerbotWorldScript::OnUpdate() #{} CALLED ===", debugCounter);
-    }
 
     // Handle deferred initialization - check if Playerbot module is ready
     if (!initialized)
     {
-        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() checking initialization, calling IsPlayerbotEnabled() ===");
-        bool enabled = IsPlayerbotEnabled();
-        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: IsPlayerbotEnabled() returned: {} ===", enabled ? "TRUE" : "FALSE");
-
-        if (!enabled)
+        if (!IsPlayerbotEnabled())
         {
             // Module not ready yet, retry every 100 updates
             if (++initRetryCount % 100 == 0)
             {
                 TC_LOG_DEBUG("module.playerbot.script", "PlayerbotWorldScript: Waiting for Playerbot module initialization (attempt {})", initRetryCount);
             }
-            TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() RETURNING EARLY - not enabled ===");
             return;
         }
 
-        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() PAST enabled check, about to set initialized=true ===");
-
-        // Module is now ready!
-        TC_LOG_ERROR("module.playerbot.script", "PlayerbotWorldScript: Playerbot module now ready - initialization complete");
+        // Module is now ready
+        TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Playerbot module initialized");
         initialized = true;
-
-        TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: OnUpdate() initialized=true SET, initializing performance tracking ===");
 
         // Initialize performance tracking
         _lastMetricUpdate = GameTime::GetGameTimeMS();
         _totalUpdateTime = 0;
         _updateCount = 0;
-    }
-
-    static uint32 logCounter = 0;
-    if (++logCounter % 100000 == 0) // Log every 100k updates (about every 27 minutes)
-    {
-        TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript::OnUpdate called - Update #{}", logCounter);
     }
 
     uint32 startTime = getMSTime();
@@ -132,13 +107,11 @@ void PlayerbotWorldScript::OnConfigLoad(bool reload)
 
 void PlayerbotWorldScript::OnStartup()
 {
-    TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: PlayerbotWorldScript::OnStartup() ENTRY POINT ===");
     TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript::OnStartup called");
 
     // Note: OnStartup is called before Playerbot module initialization,
     // so we defer enabling check to OnUpdate() when module is ready
     TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Deferring initialization to OnUpdate (module loads later)");
-    TC_LOG_ERROR("module.playerbot.script", "=== DEBUG: PlayerbotWorldScript::OnStartup() COMPLETE ===");
 }
 
 void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMask mask)

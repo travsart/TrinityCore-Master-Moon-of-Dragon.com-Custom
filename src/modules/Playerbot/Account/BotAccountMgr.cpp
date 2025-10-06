@@ -34,7 +34,6 @@ namespace Playerbot {
 
 bool BotAccountMgr::Initialize()
 {
-    TC_LOG_INFO("server.loading", "=== BOTACCOUNTMGR INITIALIZE START ===");
     TC_LOG_INFO("module.playerbot.account", "Initializing BotAccountMgr...");
 
     // Load configuration values from playerbots.conf
@@ -68,7 +67,7 @@ bool BotAccountMgr::Initialize()
     }
 
     TC_LOG_INFO("module.playerbot.account",
-        "✅ BotAccountMgr initialized: {} accounts, {} in pool, auto-create: {}",
+        "BotAccountMgr initialized: {} accounts, {} in pool, auto-create: {}",
         _totalAccounts.load(), GetPoolSize(), _autoCreateAccounts.load());
 
     return true;
@@ -228,8 +227,6 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
             emailStream << "bot" << std::setfill('0') << std::setw(6) << (baseCounter + attempt + 1)
                        << "@" << _emailDomain;
             email = emailStream.str();
-            TC_LOG_DEBUG("module.playerbot.account", "=== TRYING EMAIL: {} (base: {}, attempt: {}) ===",
-                        email, baseCounter, attempt);
         }
         else
         {
@@ -671,8 +668,6 @@ std::string BotAccountMgr::GenerateUniqueEmail()
     email << "bot" << std::setfill('0') << std::setw(6) << counter
           << "@" << _emailDomain;
 
-    TC_LOG_INFO("server.loading", "=== GENERATING EMAIL: {} (counter was: {}) ===", email.str(), counter);
-
     return email.str();
 }
 
@@ -709,8 +704,6 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 
 void BotAccountMgr::LoadAccountMetadata()
 {
-
-    TC_LOG_INFO("server.loading", "=== LOADING BOT ACCOUNT METADATA ===");
     TC_LOG_INFO("module.playerbot.account", "Loading bot account metadata...");
 
     // Query existing BattleNet accounts to find bot accounts
@@ -724,8 +717,6 @@ void BotAccountMgr::LoadAccountMetadata()
     {
         // Query BattleNet account table for existing bot accounts
         // Look for emails with pattern like "#@playerbot.local" or "bot%@playerbot.local"
-        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: EXECUTING QUERY TO FIND BOT ACCOUNTS ===");
-
         QueryResult result = LoginDatabase.Query(
             "SELECT ba.id, ba.email, a.id as legacy_account_id "
             "FROM battlenet_accounts ba "
@@ -733,21 +724,14 @@ void BotAccountMgr::LoadAccountMetadata()
             "WHERE ba.email LIKE '%#%' OR ba.email LIKE '%@playerbot.local' "
             "ORDER BY ba.email");
 
-        TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Query executed, result: {} ===", result ? "SUCCESS" : "NULL");
-
         if (result)
         {
-            TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Found results, processing rows ===");
             do
             {
                 Field* fields = result->Fetch();
                 uint32 bnetAccountId = fields[0].GetUInt32();
                 std::string email = fields[1].GetString();
                 uint32 legacyAccountId = fields[2].GetUInt32();
-
-                TC_LOG_ERROR("server.loading",
-                    "=== CLAUDE DEBUG: Row - BNet ID={}, Email={}, Legacy ID={} ===",
-                    bnetAccountId, email, legacyAccountId);
 
                 // Try to extract bot number from different email patterns
                 uint32 botNumber = 0;
@@ -795,8 +779,6 @@ void BotAccountMgr::LoadAccountMetadata()
                     isValidBotAccount = true;
                 }
 
-                TC_LOG_ERROR("server.loading", "=== CLAUDE DEBUG: Pattern matching - botNumber={}, isValid={} ===", botNumber, isValidBotAccount);
-
                 if (isValidBotAccount)
                 {
                     highestBotNumber = std::max(highestBotNumber, botNumber);
@@ -821,15 +803,9 @@ void BotAccountMgr::LoadAccountMetadata()
                         _accounts[bnetAccountId].isInPool = true;  // Mark as in pool
                     }
 
-
-                    TC_LOG_ERROR("server.loading",
-                        "=== CLAUDE DEBUG: LOADED bot account: BNet {}, Email: {}, Legacy: {}, Bot#: {} - ADDED TO POOL ===",
+                    TC_LOG_DEBUG("module.playerbot.account",
+                        "Loaded bot account: BNet {}, Email: {}, Legacy: {}, Bot#: {}",
                         bnetAccountId, email, legacyAccountId, botNumber);
-                }
-                else
-                {
-                    TC_LOG_ERROR("server.loading",
-                        "=== CLAUDE DEBUG: SKIPPED non-bot account: Email={} ===", email);
                 }
             } while (result->NextRow());
         }
@@ -838,9 +814,8 @@ void BotAccountMgr::LoadAccountMetadata()
         _emailCounter.store(highestBotNumber + 1);
         _totalAccounts.store(loadedAccounts);
 
-
         TC_LOG_INFO("module.playerbot.account",
-            "✅ Loaded {} bot account metadata entries, highest bot number: {}, next counter: {}",
+            "Loaded {} bot account metadata entries, highest bot number: {}, next counter: {}",
             loadedAccounts, highestBotNumber, _emailCounter.load());
     }
     catch (const std::exception& e)
