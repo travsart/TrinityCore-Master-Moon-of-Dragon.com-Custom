@@ -1213,24 +1213,57 @@ void BotAI::UpdateManagers(uint32 diff)
     // Update all BehaviorManager-based managers
     // Each manager internally throttles its own updates via BehaviorManager::Update()
 
+    static uint32 updateManagersCallCount = 0;
+    if (++updateManagersCallCount % 10 == 0)
+    {
+        TC_LOG_ERROR("module.playerbot", "🔧 UpdateManagers ENTRY: Bot {}, IsInWorld()={}, _questManager={}, _tradeManager={}, _gatheringManager={}, _auctionManager={}",
+                    _bot ? _bot->GetName() : "NULL",
+                    _bot ? _bot->IsInWorld() : false,
+                    (void*)_questManager.get(),
+                    (void*)_tradeManager.get(),
+                    (void*)_gatheringManager.get(),
+                    (void*)_auctionManager.get());
+    }
+
     if (!_bot || !_bot->IsInWorld())
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ UpdateManagers EARLY RETURN: Bot {} not in world", _bot ? _bot->GetName() : "NULL");
         return;
+    }
 
     // Quest manager handles quest acceptance, turn-in, and tracking
     if (_questManager)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling QuestManager->Update() for bot {}", _bot->GetName());
         _questManager->Update(diff);
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from QuestManager->Update() for bot {}", _bot->GetName());
+    }
 
     // Trade manager handles vendor interactions, repairs, and consumables
     if (_tradeManager)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling TradeManager->Update() for bot {}", _bot->GetName());
         _tradeManager->Update(diff);
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from TradeManager->Update() for bot {}", _bot->GetName());
+    }
 
     // Gathering manager handles mining, herbalism, skinning
     if (_gatheringManager)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling GatheringManager->Update() for bot {}", _bot->GetName());
         _gatheringManager->Update(diff);
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from GatheringManager->Update() for bot {}", _bot->GetName());
+    }
 
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling AuctionManager->Update() for bot {}", _bot->GetName());
         _auctionManager->Update(diff);
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from AuctionManager->Update() for bot {}", _bot->GetName());
+    }
+
+    TC_LOG_ERROR("module.playerbot", "✅ UpdateManagers COMPLETE for bot {}", _bot->GetName());
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp

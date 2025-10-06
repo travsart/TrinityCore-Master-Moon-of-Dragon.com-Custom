@@ -57,21 +57,45 @@ namespace Playerbot
 
     void BehaviorManager::Update(uint32 diff)
     {
+        static uint32 updateCallCounter = 0;
+        bool shouldLog = (++updateCallCounter % 10 == 0);
+
+        if (shouldLog)
+        {
+            TC_LOG_ERROR("module.playerbot", "🔍 [{}] Update() ENTRY: enabled={}, busy={}, bot={}, botInWorld={}",
+                        m_managerName,
+                        m_enabled.load(std::memory_order_acquire),
+                        m_isBusy.load(std::memory_order_acquire),
+                        (void*)m_bot,
+                        m_bot ? m_bot->IsInWorld() : false);
+        }
+
         // Fast path: Skip if disabled (atomic check, <0.001ms)
         if (!m_enabled.load(std::memory_order_acquire))
+        {
+            if (shouldLog)
+                TC_LOG_ERROR("module.playerbot", "❌ [{}] DISABLED - returning early", m_managerName);
             return;
+        }
 
         // Fast path: Skip if currently busy (prevents re-entrance)
         if (m_isBusy.load(std::memory_order_acquire))
+        {
+            if (shouldLog)
+                TC_LOG_ERROR("module.playerbot", "⏳ [{}] BUSY - returning early", m_managerName);
             return;
+        }
 
         // Validate pointers are still valid
         if (!ValidatePointers())
         {
             m_enabled.store(false, std::memory_order_release);
-            TC_LOG_ERROR("module.playerbot", "[{}] Disabled due to invalid pointers", m_managerName);
+            TC_LOG_ERROR("module.playerbot", "❌ [{}] DISABLED due to ValidatePointers() returning false", m_managerName);
             return;
         }
+
+        if (shouldLog)
+            TC_LOG_ERROR("module.playerbot", "✅ [{}] ValidatePointers() passed", m_managerName);
 
         // Handle initialization on first update
         if (!m_initialized.load(std::memory_order_acquire))
@@ -224,25 +248,37 @@ namespace Playerbot
 
     bool BehaviorManager::ValidatePointers() const
     {
+        static uint32 validateCallCounter = 0;
+        bool shouldLog = (++validateCallCounter % 10 == 0);
+
         // Check bot pointer validity
         if (!m_bot)
         {
-            TC_LOG_ERROR("module.playerbot", "[{}] Bot pointer is null", m_managerName);
+            TC_LOG_ERROR("module.playerbot", "❌ [{}] ValidatePointers FAILED: Bot pointer is null", m_managerName);
             return false;
         }
 
         // Check if bot is in world
         if (!m_bot->IsInWorld())
         {
-            TC_LOG_DEBUG("module.playerbot", "[{}] Bot {} is not in world", m_managerName, m_bot->GetName());
+            if (shouldLog)
+            {
+                TC_LOG_ERROR("module.playerbot", "❌ [{}] ValidatePointers FAILED: Bot {} IsInWorld()=false (THIS IS THE PROBLEM!)",
+                            m_managerName, m_bot->GetName());
+            }
             return false;
         }
 
         // Check AI pointer validity
         if (!m_ai)
         {
-            TC_LOG_ERROR("module.playerbot", "[{}] AI pointer is null for bot {}", m_managerName, m_bot->GetName());
+            TC_LOG_ERROR("module.playerbot", "❌ [{}] ValidatePointers FAILED: AI pointer is null for bot {}", m_managerName, m_bot->GetName());
             return false;
+        }
+
+        if (shouldLog)
+        {
+            TC_LOG_ERROR("module.playerbot", "✅ [{}] ValidatePointers PASSED: Bot {} is valid and in world", m_managerName, m_bot->GetName());
         }
 
         return true;
