@@ -21,6 +21,7 @@
 #include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
+#include "Economy/AuctionManager.h"
 #include "Combat/TargetScanner.h"
 #include "Player.h"
 #include "Unit.h"
@@ -66,8 +67,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _questManager = std::make_unique<QuestManager>(_bot, this);
     _tradeManager = std::make_unique<TradeManager>(_bot, this);
     _gatheringManager = std::make_unique<GatheringManager>(_bot, this);
+    _auctionManager = std::make_unique<AuctionManager>(_bot, this);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering systems ready",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction systems ready",
                 _bot->GetName());
 
     // Initialize default strategies for basic functionality
@@ -1226,8 +1228,9 @@ void BotAI::UpdateManagers(uint32 diff)
     if (_gatheringManager)
         _gatheringManager->Update(diff);
 
-    // Note: AuctionManager would be updated here if it was part of BotAI
-    // Currently it's managed separately in the Economy module
+    // Auction manager handles auction house buying, selling, and market scanning
+    if (_auctionManager)
+        _auctionManager->Update(diff);
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp

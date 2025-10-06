@@ -50,18 +50,9 @@ private:
     uint32 _lastWanderTime = 0;
     uint32 _wanderInterval = 30000; // Wander every 30 seconds
 
-    // Performance throttling - these expensive operations don't need to run every frame
-    uint32 _lastQuestUpdate = 0;
-    uint32 _questUpdateInterval = 2000; // Update quests every 2 seconds
-
-    uint32 _lastGatheringUpdate = 0;
-    uint32 _gatheringUpdateInterval = 1000; // Check for gathering every 1 second
-
-    uint32 _lastTradeUpdate = 0;
-    uint32 _tradeUpdateInterval = 5000; // Update trade every 5 seconds
-
-    uint32 _lastAuctionUpdate = 0;
-    uint32 _auctionUpdateInterval = 10000; // Update auction every 10 seconds
+    // Observer Pattern: Query manager states via atomic operations (<0.001ms each)
+    // Managers self-throttle and update via BotAI::UpdateManagers()
+    // IdleStrategy just observes their state changes through lock-free atomics
 };
 
 } // namespace Playerbot

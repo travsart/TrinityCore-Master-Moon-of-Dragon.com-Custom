@@ -38,6 +38,7 @@ class TargetScanner;
 class QuestManager;
 class TradeManager;
 class GatheringManager;
+class AuctionManager;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -201,6 +202,9 @@ public:
     GatheringManager* GetGatheringManager() { return _gatheringManager.get(); }
     GatheringManager const* GetGatheringManager() const { return _gatheringManager.get(); }
 
+    AuctionManager* GetAuctionManager() { return _auctionManager.get(); }
+    AuctionManager const* GetAuctionManager() const { return _auctionManager.get(); }
+
     // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization
     // ========================================================================
@@ -315,6 +319,7 @@ protected:
     std::unique_ptr<QuestManager> _questManager;
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
+    std::unique_ptr<AuctionManager> _auctionManager;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
