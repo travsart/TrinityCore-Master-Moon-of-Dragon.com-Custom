@@ -22,6 +22,7 @@
 #include <memory>
 #include <atomic>
 #include <chrono>
+#include <unordered_map>
 
 namespace Playerbot
 {
@@ -65,7 +66,36 @@ private:
 
     // Combat execution
     void ExecuteFallbackRotation(Unit* target);
+    void ExecuteSpecializationRotation(Unit* target);
     void ActivateBurstCooldowns(Unit* target);
+
+    // Combat behavior integration helpers
+    bool HandleInterrupts(Unit* target);
+    bool HandleDefensives();
+    bool HandleTargetSwitching(Unit*& target);
+    bool HandleAoERotation(Unit* target);
+    bool HandleOffensiveCooldowns(Unit* target);
+    bool HandleRuneAndPowerManagement(Unit* target);
+    void UpdatePresenceIfNeeded();
+
+    // Death Knight specific defensive abilities
+    void UseDefensiveCooldowns();
+    void UseAntiMagicDefenses(Unit* target);
+
+    // Death Knight specific utility
+    bool ShouldUseDeathGrip(Unit* target) const;
+    bool ShouldUseDarkCommand(Unit* target) const;
+    uint32 GetNearbyEnemyCount(float range) const;
+    bool IsInMeleeRange(Unit* target) const;
+
+    // Resource helpers
+    bool HasRunesForSpell(uint32 spellId) const;
+    uint32 GetRunicPowerCost(uint32 spellId) const;
+
+    // Tracking helpers
+    void RecordInterruptAttempt(Unit* target, uint32 spellId, bool success);
+    void RecordAbilityUsage(uint32 spellId);
+    void OnTargetChanged(Unit* newTarget);
 
     // Specialization system
     std::unique_ptr<DeathKnightSpecialization> _specialization;
@@ -91,6 +121,12 @@ private:
     uint32 _diseasesApplied;
     uint32 _lastPresence;
     uint32 _lastHorn;
+    uint32 _lastDeathGrip;
+    uint32 _lastDarkCommand;
+    uint32 _successfulInterrupts;
+
+    // Ability usage tracking
+    std::unordered_map<uint32, uint32> _abilityUsage;
 };
 
 } // namespace Playerbot

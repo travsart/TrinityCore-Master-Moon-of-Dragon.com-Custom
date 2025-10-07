@@ -22,6 +22,7 @@
 #include <chrono>
 #include <mutex>
 #include <queue>
+#include <map>
 
 // Forward declarations
 class AfflictionSpecialization;
@@ -31,7 +32,7 @@ class DestructionSpecialization;
 namespace Playerbot
 {
 
-// Warlock AI implementation with specialization pattern
+// Warlock AI implementation with specialization pattern and full CombatBehaviorIntegration
 class TC_GAME_API WarlockAI : public ClassAI
 {
 public:
@@ -58,11 +59,75 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Specialization system
+    // ========================================================================
+    // CombatBehaviorIntegration Priority System
+    // ========================================================================
+
+    // Priority 1: Interrupts
+    bool HandleInterrupt(Unit* target);
+
+    // Priority 2: Defensives
+    bool HandleDefensives();
+
+    // Priority 3: Movement (instant casts while moving)
+    bool HandleInstantCasts(Unit* target);
+
+    // Priority 4: Pet Management
+    bool HandlePetManagement();
+    bool SummonPet();
+    void HandlePetSpecialAbilities();
+
+    // Priority 5: Target Switching (DoT application)
+    bool ApplyDoTToTarget(Unit* target);
+
+    // Priority 6: Crowd Control
+    bool HandleCrowdControl(Unit* target);
+
+    // Priority 7: AoE
+    bool HandleAoERotation(Unit* target);
+
+    // Priority 8: Offensive Cooldowns
+    bool HandleOffensiveCooldowns(Unit* target);
+
+    // Priority 9: Soul Shard Management
+    void HandleSoulShardManagement();
+    bool HasHealthstone();
+    bool UseHealthstone();
+    bool HasSoulstone();
+
+    // ========================================================================
+    // Combat Utilities
+    // ========================================================================
+
+    // Enemy detection
+    Unit* GetNearestEnemy(float range);
+    uint32 GetNearbyEnemyCount(float range);
+
+    // DoT management
+    bool ApplyCurse(Unit* target);
+    std::map<ObjectGuid, std::map<uint32, uint32>> _dotTracker; // target -> spell -> timestamp
+
+    // Pet ability tracking
+    std::map<uint32, uint32> _petAbilityCooldowns; // ability -> last use time
+
+    // Combat metrics
+    void UpdateCombatMetrics();
+
+    // ========================================================================
+    // Specialization System
+    // ========================================================================
+
     WarlockSpec _currentSpec;
     std::unique_ptr<WarlockSpecialization> _specialization;
 
-    // Enhanced performance tracking
+    void InitializeSpecialization();
+    WarlockSpec DetectCurrentSpecialization();
+    void SwitchSpecialization(WarlockSpec newSpec);
+
+    // ========================================================================
+    // Performance Metrics
+    // ========================================================================
+
     struct WarlockMetrics {
         std::atomic<uint32> manaSpent{0};
         std::atomic<uint32> damageDealt{0};
@@ -87,15 +152,10 @@ private:
 
     std::unordered_map<uint32, std::atomic<uint32>> _abilityUsage;
 
-    // Specialization management
-    void InitializeSpecialization();
-    WarlockSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(WarlockSpec newSpec);
+    // ========================================================================
+    // Warlock-Specific Utilities
+    // ========================================================================
 
-    // Delegation to specialization
-    void DelegateToSpecialization(::Unit* target);
-
-    // Shared warlock utilities
     void UpdateWarlockBuffs();
     void UpdatePetCheck();
     void UpdateSoulShardCheck();
@@ -104,42 +164,54 @@ private:
     void OptimizeManaManagement();
     void ManageLifeTapTiming();
     void OptimizePetPositioning();
-    void HandlePetSpecialAbilities();
     void ManageWarlockCooldowns();
     void OptimizeSoulShardUsage();
     void HandleAoESituations();
     void ManageCurseApplication();
     void OptimizeDoTRotation();
 
-    // Combat system integration
+    // ========================================================================
+    // Combat System Integration
+    // ========================================================================
+
     std::unique_ptr<BotThreatManager> _threatManager;
     std::unique_ptr<TargetSelector> _targetSelector;
     std::unique_ptr<PositionManager> _positionManager;
     std::unique_ptr<InterruptManager> _interruptManager;
+
+    // ========================================================================
+    // Resource Tracking
+    // ========================================================================
 
     // Soul shard tracking
     std::atomic<uint32> _currentSoulShards{0};
     std::queue<uint32> _soulShardHistory;
     mutable std::mutex _soulShardMutex;
 
-    // Pet management enhancement
+    // Pet management
     std::atomic<bool> _petActive{false};
     std::atomic<uint32> _petHealthPercent{0};
     std::chrono::steady_clock::time_point _lastPetCheck;
 
-    // Mana management optimization
+    // Mana management
     float _optimalManaThreshold;
     std::atomic<bool> _lowManaMode{false};
     uint32 _lastLifeTapTime;
 
-    // Enhanced constants
+    // ========================================================================
+    // Constants
+    // ========================================================================
+
     static constexpr uint32 SOUL_SHARD_UPDATE_INTERVAL = 1000; // 1 second
     static constexpr uint32 PET_CHECK_INTERVAL = 2000; // 2 seconds
     static constexpr float LOW_MANA_THRESHOLD = 0.3f; // 30%
     static constexpr float LIFE_TAP_THRESHOLD = 0.8f; // 80% health
     static constexpr uint32 COMBAT_METRICS_UPDATE_INTERVAL = 500; // 0.5 seconds
 
-    // Missing method declarations from implementation
+    // ========================================================================
+    // Helper Methods
+    // ========================================================================
+
     bool HasEnoughMana(uint32 amount);
     uint32 GetMana();
     uint32 GetMaxMana();
@@ -150,7 +222,10 @@ private:
     WarlockSpec GetCurrentSpecialization() const;
     bool ShouldConserveMana();
 
-    // Member variables for implementation
+    // ========================================================================
+    // Tracking Variables
+    // ========================================================================
+
     uint32 _manaSpent;
     uint32 _damageDealt;
     uint32 _soulshardsUsed;

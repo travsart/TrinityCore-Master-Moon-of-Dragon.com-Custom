@@ -45,6 +45,19 @@ protected:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
+    // Combat behavior integration support
+    bool HandleCombatBehaviorPriorities(::Unit* target);
+    bool HandleInterruptPriority(::Unit* target);
+    bool HandleDefensivePriority();
+    bool HandlePositioningPriority(::Unit* target);
+    bool HandleDispelPriority();
+    bool HandleTargetSwitchPriority(::Unit*& target);
+    bool HandleCrowdControlPriority(::Unit* target);
+    bool HandleAoEPriority(::Unit* target);
+    bool HandleCooldownPriority(::Unit* target);
+    bool HandleResourceManagement();
+    bool ExecuteNormalRotation(::Unit* target);
+
 private:
     // Specialization system
     PriestSpec _currentSpec;
@@ -62,7 +75,32 @@ private:
     uint32 _lastFearWard;
     uint32 _lastPsychicScream;
     uint32 _lastInnerFire;
+    uint32 _lastSilence;
+    uint32 _lastMassDispel;
+    uint32 _lastDesperatePrayer;
+    uint32 _lastPowerInfusion;
+    uint32 _lastShadowfiend;
+    uint32 _lastDispersion;
+    uint32 _lastPowerWordBarrier;
     std::unordered_map<ObjectGuid, uint32> _mindControlTargets;
+
+    // Shadow-specific tracking
+    uint32 _lastVoidEruption;
+    uint32 _insanityLevel;
+    uint32 _dotRefreshTime;
+    bool _inVoidForm;
+    std::unordered_map<ObjectGuid, uint32> _shadowWordPainTargets;
+    std::unordered_map<ObjectGuid, uint32> _vampiricTouchTargets;
+
+    // Discipline-specific tracking
+    std::unordered_map<ObjectGuid, uint32> _atonementTargets;
+    uint32 _lastPenance;
+    uint32 _graceStacks;
+
+    // Holy-specific tracking
+    uint32 _lastCircleOfHealing;
+    uint32 _serendipityStacks;
+    uint32 _lastGuardianSpirit;
 
     // Specialization management
     void InitializeSpecialization();
@@ -163,6 +201,22 @@ private:
     bool IsTank(::Unit* unit);
     bool IsHealer(::Unit* unit);
 
+    // Shadow DoT management
+    bool NeedsDoTRefresh(::Unit* target, uint32 spellId);
+    void RefreshDoTs(::Unit* target);
+    bool HasAllDoTs(::Unit* target);
+    void ManageInsanity();
+    void EnterVoidForm();
+    void ExitVoidForm();
+    bool ShouldUseVoidEruption();
+
+    // Discipline Atonement management
+    void ApplyAtonement(::Unit* target);
+    void RefreshAtonements();
+    bool HasAtonement(::Unit* target);
+    uint32 CountAtonementTargets();
+    void UpdatePenanceHealing();
+
     // Performance calculation methods
     uint32 CalculateDamageDealt(::Unit* target) const;
     uint32 CalculateHealingDone() const;
@@ -208,6 +262,7 @@ private:
         CIRCLE_OF_HEALING = 34861,
         BINDING_HEAL = 32546,
         GUARDIAN_SPIRIT = 47788,
+        PRAYER_OF_MENDING = 33076,
 
         // Discipline spells
         POWER_WORD_SHIELD = 17,
@@ -215,6 +270,8 @@ private:
         PAIN_SUPPRESSION = 33206,
         POWER_INFUSION = 10060,
         INNER_FOCUS = 14751,
+        POWER_WORD_BARRIER = 62618,
+        GRACE = 47509,
 
         // Shadow spells
         SHADOW_WORD_PAIN = 589,
@@ -225,9 +282,17 @@ private:
         SHADOW_WORD_DEATH = 32379,
         SHADOWFORM = 15473,
         VAMPIRIC_EMBRACE = 15286,
+        VOID_ERUPTION = 228260,
+        VOID_BOLT = 205448,
+        MIND_SEAR = 48045,
+        SHADOW_CRASH = 205385,
+        SHADOWFIEND = 34433,
+        DISPERSION = 47585,
+        SILENCE = 15487,
 
         // Utility spells
         DISPEL_MAGIC = 527,
+        MASS_DISPEL = 32375,
         CURE_DISEASE = 528,
         ABOLISH_DISEASE = 552,
         PSYCHIC_SCREAM = 8122,
@@ -235,6 +300,8 @@ private:
         SHACKLE_UNDEAD = 9484,
         FADE = 586,
         FEAR_WARD = 6346,
+        DESPERATE_PRAYER = 48173,
+        PURIFY = 527,
 
         // Buffs
         POWER_WORD_FORTITUDE = 21562, // Updated for WoW 11.2

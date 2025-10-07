@@ -140,12 +140,25 @@ private:
     uint32 _lastStealth;
     uint32 _lastVanish;
 
+    // Helper methods for CombatBehaviorIntegration
+    void ExecuteRogueBasicRotation(Unit* target);
+    void RecordInterruptAttempt(Unit* target, uint32 spellId, bool success);
+    void UseDefensiveCooldowns();
+    uint32 GetNearbyEnemyCount(float range) const;
+    void RecordAbilityUsage(uint32 spellId);
+    void OnTargetChanged(Unit* newTarget);
+
     // Missing method declarations from implementation
     void ConsiderStealth();
     // ActivateBurstCooldowns already declared above
     bool HasEnoughEnergy(uint32 amount);
     uint32 GetEnergy();
     uint32 GetComboPoints();
+
+    // Additional variables for integration tracking
+    uint32 _comboPointsGenerated;
+    uint32 _finishersExecuted;
+    uint32 _lastPoison;
 
     // Member variable for positioning
     std::unique_ptr<RogueCombatPositioning> _combatPositioning;

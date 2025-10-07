@@ -31,6 +31,7 @@
 #include "SpellAuras.h"
 #include "SpellDefines.h"
 #include "../BaselineRotationManager.h"
+#include "../../Combat/CombatBehaviorIntegration.h"
 #include <algorithm>
 #include <chrono>
 
@@ -86,7 +87,23 @@ PriestAI::PriestAI(Player* bot) : ClassAI(bot),
     _lastDispel(0),
     _lastFearWard(0),
     _lastPsychicScream(0),
-    _lastInnerFire(0)
+    _lastInnerFire(0),
+    _lastSilence(0),
+    _lastMassDispel(0),
+    _lastDesperatePrayer(0),
+    _lastPowerInfusion(0),
+    _lastShadowfiend(0),
+    _lastDispersion(0),
+    _lastPowerWordBarrier(0),
+    _lastVoidEruption(0),
+    _insanityLevel(0),
+    _dotRefreshTime(0),
+    _inVoidForm(false),
+    _lastPenance(0),
+    _graceStacks(0),
+    _lastCircleOfHealing(0),
+    _serendipityStacks(0),
+    _lastGuardianSpirit(0)
 {
     InitializeSpecialization();
 
@@ -99,7 +116,7 @@ PriestAI::~PriestAI() = default;
 
 void PriestAI::UpdateRotation(::Unit* target)
 {
-    if (!GetBot())
+    if (!GetBot() || !target)
         return;
 
     // Check if bot should use baseline rotation (levels 1-9 or no spec)
@@ -131,27 +148,14 @@ void PriestAI::UpdateRotation(::Unit* target)
 
     // Update shared priest mechanics
     UpdatePriestBuffs();
-    UpdateDispelling();
-    CheckForDebuffs();
 
-    // Handle healing priorities first
-    ::Unit* healTarget = GetBestHealTarget();
-    if (healTarget && ShouldPrioritizeHealing(healTarget))
-    {
-        HealTarget(healTarget);
-        RecordHealingDone(100, healTarget); // Simplified for now
+    // ========================================================================
+    // COMBAT BEHAVIOR INTEGRATION - Full priority system
+    // ========================================================================
+
+    // Execute combat behavior priorities - if any return true, they handled the action
+    if (HandleCombatBehaviorPriorities(target))
         return;
-    }
-
-    // Delegate to specialization for main rotation
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-    }
-    else
-    {
-        DelegateToSpecialization(target);
-    }
 
     // Track combat metrics
     if (GetBot()->IsInCombat())
@@ -1968,6 +1972,1180 @@ uint32 PriestAI::CountUnbuffedGroupMembers(uint32 spellId)
         }
     }
     return nullptr;
+}
+
+// ============================================================================
+// COMBAT BEHAVIOR INTEGRATION IMPLEMENTATION
+// ============================================================================
+
+bool PriestAI::HandleCombatBehaviorPriorities(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors)
+        return ExecuteNormalRotation(target);
+
+    // Priority 1: Interrupts (Silence for Shadow spec)
+    if (HandleInterruptPriority(target))
+        return true;
+
+    // Priority 2: Defensives (Dispersion, Power Word: Shield, Desperate Prayer)
+    if (HandleDefensivePriority())
+        return true;
+
+    // Priority 3: Positioning - Maintain max range for safety
+    if (HandlePositioningPriority(target))
+        return true;
+
+    // Priority 4: Dispel - Mass Dispel, Purify for group members
+    if (HandleDispelPriority())
+        return true;
+
+    // Priority 5: Target Switching - Priority targets
+    if (HandleTargetSwitchPriority(target))
+        return true;
+
+    // Priority 6: Crowd Control - Psychic Scream, Mind Control
+    if (HandleCrowdControlPriority(target))
+        return true;
+
+    // Priority 7: AoE Decisions - Mind Sear, Shadow Crash for Shadow
+    if (HandleAoEPriority(target))
+        return true;
+
+    // Priority 8: Offensive Cooldowns - Void Eruption, Power Infusion, Shadow Fiend
+    if (HandleCooldownPriority(target))
+        return true;
+
+    // Priority 9: Resource Management - Insanity/Mana management
+    if (HandleResourceManagement())
+        return true;
+
+    // Priority 10: Normal Rotation - DoTs, healing, spec-specific
+    return ExecuteNormalRotation(target);
+}
+
+bool PriestAI::HandleInterruptPriority(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->ShouldInterrupt(target))
+        return false;
+
+    // Shadow priests have Silence
+    if (_currentSpec == PriestSpec::SHADOW)
+    {
+        Unit* interruptTarget = behaviors->GetInterruptTarget();
+        if (!interruptTarget)
+            interruptTarget = target;
+
+        if (interruptTarget && interruptTarget->IsNonMeleeSpellCast(false))
+        {
+            // Use Silence
+            if (IsSpellReady(SILENCE) && getMSTime() - _lastSilence > 45000)
+            {
+                if (CastSpell(interruptTarget, SILENCE))
+                {
+                    _lastSilence = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} silenced {}",
+                                 GetBot()->GetName(), interruptTarget->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleDefensivePriority()
+{
+    if (!GetBot())
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->NeedsDefensive())
+        return false;
+
+    float healthPct = GetBot()->GetHealthPct();
+
+    // Emergency: Dispersion for Shadow (90% damage reduction)
+    if (_currentSpec == PriestSpec::SHADOW && healthPct < 20.0f)
+    {
+        if (IsSpellReady(DISPERSION) && getMSTime() - _lastDispersion > 120000)
+        {
+            if (CastSpell(DISPERSION))
+            {
+                _lastDispersion = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Dispersion at {}% health",
+                             GetBot()->GetName(), healthPct);
+                return true;
+            }
+        }
+    }
+
+    // Critical: Power Word: Shield
+    if (healthPct < 30.0f)
+    {
+        if (!HasAura(POWER_WORD_SHIELD) && IsSpellReady(POWER_WORD_SHIELD))
+        {
+            if (CastSpell(GetBot(), POWER_WORD_SHIELD))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} shielded self at {}% health",
+                             GetBot()->GetName(), healthPct);
+                return true;
+            }
+        }
+    }
+
+    // Low health: Desperate Prayer (instant self heal)
+    if (healthPct < 40.0f)
+    {
+        if (IsSpellReady(DESPERATE_PRAYER) && getMSTime() - _lastDesperatePrayer > 120000)
+        {
+            if (CastSpell(GetBot(), DESPERATE_PRAYER))
+            {
+                _lastDesperatePrayer = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Desperate Prayer at {}% health",
+                             GetBot()->GetName(), healthPct);
+                return true;
+            }
+        }
+    }
+
+    // Discipline: Pain Suppression on self or tank
+    if (_currentSpec == PriestSpec::DISCIPLINE && healthPct < 35.0f)
+    {
+        if (IsSpellReady(PAIN_SUPPRESSION))
+        {
+            Unit* psTarget = GetBot();
+            if (Unit* tank = FindGroupTank())
+            {
+                if (tank->GetHealthPct() < 30.0f)
+                    psTarget = tank;
+            }
+
+            if (CastSpell(psTarget, PAIN_SUPPRESSION))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Pain Suppression on {}",
+                             GetBot()->GetName(), psTarget->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Holy: Guardian Spirit
+    if (_currentSpec == PriestSpec::HOLY)
+    {
+        if (IsSpellReady(GUARDIAN_SPIRIT) && getMSTime() - _lastGuardianSpirit > 180000)
+        {
+            Unit* gsTarget = nullptr;
+            if (healthPct < 25.0f)
+                gsTarget = GetBot();
+            else if (Unit* tank = FindGroupTank())
+            {
+                if (tank->GetHealthPct() < 20.0f)
+                    gsTarget = tank;
+            }
+
+            if (gsTarget && CastSpell(gsTarget, GUARDIAN_SPIRIT))
+            {
+                _lastGuardianSpirit = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Guardian Spirit on {}",
+                             GetBot()->GetName(), gsTarget->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Fade to drop aggro
+    if (HasTooMuchThreat())
+    {
+        if (IsSpellReady(FADE))
+        {
+            if (CastSpell(FADE))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Fade to drop threat",
+                             GetBot()->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandlePositioningPriority(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->NeedsRepositioning())
+        return false;
+
+    float currentDistance = GetBot()->GetDistance(target);
+    float optimalRange = GetOptimalRange(target);
+
+    // Too close - need to move back
+    if (currentDistance < 20.0f)
+    {
+        // Use Psychic Scream if enemies are very close
+        if (currentDistance < 8.0f && IsSpellReady(PSYCHIC_SCREAM))
+        {
+            if (getMSTime() - _lastPsychicScream > 30000)
+            {
+                if (CastSpell(PSYCHIC_SCREAM))
+                {
+                    _lastPsychicScream = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Psychic Scream for positioning",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+
+        // Movement handled by BotAI movement strategies
+        // Just ensure we're using instant casts while repositioning
+        if (GetBot()->isMoving())
+        {
+            // Shadow: Shadow Word: Pain, Vampiric Touch (instant with talent)
+            if (_currentSpec == PriestSpec::SHADOW)
+            {
+                if (!target->HasAura(SHADOW_WORD_PAIN) && IsSpellReady(SHADOW_WORD_PAIN))
+                {
+                    CastSpell(target, SHADOW_WORD_PAIN);
+                    return true;
+                }
+            }
+            // Holy/Discipline: Renew, Power Word: Shield
+            else
+            {
+                Unit* healTarget = GetLowestHealthAlly(40.0f);
+                if (healTarget && healTarget->GetHealthPct() < 80.0f)
+                {
+                    if (!healTarget->HasAura(RENEW) && IsSpellReady(RENEW))
+                    {
+                        CastSpell(healTarget, RENEW);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleDispelPriority()
+{
+    if (!GetBot())
+        return false;
+
+    // Check dispel cooldown
+    if (getMSTime() - _lastDispel < 8000)
+        return false;
+
+    Unit* dispelTarget = GetBestDispelTarget();
+    if (!dispelTarget)
+        return false;
+
+    // Mass Dispel for multiple targets or important dispels
+    if (IsSpellReady(MASS_DISPEL) && getMSTime() - _lastMassDispel > 45000)
+    {
+        // Check if multiple allies need dispelling
+        uint32 needsDispelCount = 0;
+        if (Group* group = GetBot()->GetGroup())
+        {
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                {
+                    if (HasDispellableDebuff(player))
+                        needsDispelCount++;
+                }
+            }
+        }
+
+        if (needsDispelCount >= 3)
+        {
+            if (CastSpell(dispelTarget, MASS_DISPEL))
+            {
+                _lastMassDispel = getMSTime();
+                _lastDispel = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Mass Dispel",
+                             GetBot()->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Single target dispel (Dispel Magic for enemies, Purify for allies)
+    if (dispelTarget->IsFriendlyTo(GetBot()))
+    {
+        if (IsSpellReady(PURIFY))
+        {
+            if (CastSpell(dispelTarget, PURIFY))
+            {
+                _lastDispel = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} purified {}",
+                             GetBot()->GetName(), dispelTarget->GetName());
+                return true;
+            }
+        }
+    }
+    else
+    {
+        if (IsSpellReady(DISPEL_MAGIC))
+        {
+            if (CastSpell(dispelTarget, DISPEL_MAGIC))
+            {
+                _lastDispel = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} dispelled magic on {}",
+                             GetBot()->GetName(), dispelTarget->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleTargetSwitchPriority(::Unit*& target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->ShouldSwitchTarget())
+        return false;
+
+    Unit* priorityTarget = behaviors->GetPriorityTarget();
+    if (!priorityTarget || priorityTarget == target)
+        return false;
+
+    // Mind Control the old target if possible (Shadow spec preferred)
+    if (_currentSpec == PriestSpec::SHADOW && target->GetCreatureType() == CREATURE_TYPE_HUMANOID)
+    {
+        if (IsSpellReady(MIND_CONTROL) && _mindControlTargets.empty())
+        {
+            if (CastSpell(target, MIND_CONTROL))
+            {
+                _mindControlTargets[target->GetGUID()] = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} mind controlled {} before switching",
+                             GetBot()->GetName(), target->GetName());
+            }
+        }
+    }
+
+    // Switch to priority target
+    target = priorityTarget;
+    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
+                 GetBot()->GetName(), priorityTarget->GetName());
+
+    // Apply initial debuffs to new target
+    if (_currentSpec == PriestSpec::SHADOW)
+    {
+        RefreshDoTs(target);
+    }
+
+    return true;
+}
+
+bool PriestAI::HandleCrowdControlPriority(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->ShouldUseCrowdControl())
+        return false;
+
+    Unit* ccTarget = behaviors->GetCrowdControlTarget();
+    if (!ccTarget)
+        ccTarget = target;
+
+    // Shackle Undead for undead enemies
+    if (ccTarget->GetCreatureType() == CREATURE_TYPE_UNDEAD)
+    {
+        if (IsSpellReady(SHACKLE_UNDEAD))
+        {
+            if (CastSpell(ccTarget, SHACKLE_UNDEAD))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} shackled undead {}",
+                             GetBot()->GetName(), ccTarget->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Mind Control for humanoids
+    if (ccTarget->GetCreatureType() == CREATURE_TYPE_HUMANOID && _mindControlTargets.empty())
+    {
+        if (IsSpellReady(MIND_CONTROL))
+        {
+            if (CastSpell(ccTarget, MIND_CONTROL))
+            {
+                _mindControlTargets[ccTarget->GetGUID()] = getMSTime();
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} mind controlled {}",
+                             GetBot()->GetName(), ccTarget->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Psychic Scream for emergency CC (multiple melee enemies)
+    if (GetNearestEnemy(8.0f))
+    {
+        uint32 nearbyEnemies = 0;
+        std::list<Unit*> enemies;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(GetBot(), GetBot(), 8.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, checker);
+        Cell::VisitAllObjects(GetBot(), searcher, 8.0f);
+        nearbyEnemies = enemies.size();
+
+        if (nearbyEnemies >= 2 && IsSpellReady(PSYCHIC_SCREAM))
+        {
+            if (getMSTime() - _lastPsychicScream > 30000)
+            {
+                if (CastSpell(PSYCHIC_SCREAM))
+                {
+                    _lastPsychicScream = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Psychic Scream for crowd control",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleAoEPriority(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->ShouldAOE())
+        return false;
+
+    // Count nearby enemies
+    uint32 nearbyEnemies = 0;
+    std::list<Unit*> enemies;
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(GetBot(), GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, checker);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
+    nearbyEnemies = enemies.size();
+
+    // Shadow: Mind Sear for 4+ enemies
+    if (_currentSpec == PriestSpec::SHADOW && nearbyEnemies >= 4)
+    {
+        if (IsSpellReady(MIND_SEAR))
+        {
+            if (CastSpell(target, MIND_SEAR))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} using Mind Sear on {} enemies",
+                             GetBot()->GetName(), nearbyEnemies);
+                return true;
+            }
+        }
+
+        // Shadow Crash for AoE burst
+        if (IsSpellReady(SHADOW_CRASH))
+        {
+            Position aoePos = behaviors->GetOptimalPosition();
+            if (CastSpell(target, SHADOW_CRASH))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} using Shadow Crash",
+                             GetBot()->GetName());
+                return true;
+            }
+        }
+    }
+
+    // Holy: Prayer of Healing for group healing
+    if (_currentSpec == PriestSpec::HOLY)
+    {
+        uint32 injuredCount = 0;
+        if (Group* group = GetBot()->GetGroup())
+        {
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                {
+                    if (player->GetHealthPct() < 75.0f)
+                        injuredCount++;
+                }
+            }
+        }
+
+        if (injuredCount >= 3)
+        {
+            // Circle of Healing for instant group heal
+            if (IsSpellReady(CIRCLE_OF_HEALING) && getMSTime() - _lastCircleOfHealing > 15000)
+            {
+                if (CastSpell(CIRCLE_OF_HEALING))
+                {
+                    _lastCircleOfHealing = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Circle of Healing",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+
+            // Prayer of Healing
+            if (IsSpellReady(PRAYER_OF_HEALING))
+            {
+                if (CastSpell(GetBot(), PRAYER_OF_HEALING))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} casting Prayer of Healing",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Discipline: Power Word: Barrier for raid damage
+    if (_currentSpec == PriestSpec::DISCIPLINE)
+    {
+        if (IsSpellReady(POWER_WORD_BARRIER) && getMSTime() - _lastPowerWordBarrier > 180000)
+        {
+            // Use barrier when multiple allies are taking damage
+            uint32 damagedCount = 0;
+            if (Group* group = GetBot()->GetGroup())
+            {
+                for (Group::MemberSlot const& member : group->GetMemberSlots())
+                {
+                    if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                    {
+                        if (player->GetHealthPct() < 60.0f)
+                            damagedCount++;
+                    }
+                }
+            }
+
+            if (damagedCount >= 3)
+            {
+                if (CastSpell(GetBot(), POWER_WORD_BARRIER))
+                {
+                    _lastPowerWordBarrier = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Power Word: Barrier",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleCooldownPriority(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    auto* behaviors = GetCombatBehaviors();
+    if (!behaviors || !behaviors->ShouldUseCooldowns())
+        return false;
+
+    // Shadow: Void Eruption / Shadow Fiend
+    if (_currentSpec == PriestSpec::SHADOW)
+    {
+        // Void Eruption - Transform into Void Form
+        if (ShouldUseVoidEruption() && IsSpellReady(VOID_ERUPTION))
+        {
+            if (getMSTime() - _lastVoidEruption > 90000)
+            {
+                if (CastSpell(target, VOID_ERUPTION))
+                {
+                    _lastVoidEruption = getMSTime();
+                    EnterVoidForm();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} entered Void Form",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+
+        // Shadowfiend for mana and damage
+        if (GetManaPercent() < 40.0f || behaviors->ShouldUseCooldowns())
+        {
+            if (IsSpellReady(SHADOWFIEND) && getMSTime() - _lastShadowfiend > 180000)
+            {
+                if (CastSpell(target, SHADOWFIEND))
+                {
+                    _lastShadowfiend = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} summoned Shadowfiend",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Discipline/Holy: Power Infusion
+    if (IsSpellReady(POWER_INFUSION) && getMSTime() - _lastPowerInfusion > 120000)
+    {
+        Unit* piTarget = GetBot();
+
+        // Cast on highest DPS in group if available
+        if (Group* group = GetBot()->GetGroup())
+        {
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                {
+                    // Prioritize casters for Power Infusion
+                    if (player->GetPowerType() == POWER_MANA && !IsHealer(player))
+                    {
+                        piTarget = player;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (CastSpell(piTarget, POWER_INFUSION))
+        {
+            _lastPowerInfusion = getMSTime();
+            TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Power Infusion on {}",
+                         GetBot()->GetName(), piTarget->GetName());
+            return true;
+        }
+    }
+
+    // Holy: Divine Hymn for raid healing
+    if (_currentSpec == PriestSpec::HOLY)
+    {
+        uint32 criticallyInjured = 0;
+        if (Group* group = GetBot()->GetGroup())
+        {
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                {
+                    if (player->GetHealthPct() < 40.0f)
+                        criticallyInjured++;
+                }
+            }
+        }
+
+        if (criticallyInjured >= 3 && IsSpellReady(DIVINE_HYMN))
+        {
+            if (CastSpell(DIVINE_HYMN))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} channeling Divine Hymn",
+                             GetBot()->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::HandleResourceManagement()
+{
+    if (!GetBot())
+        return false;
+
+    // Shadow: Insanity management
+    if (_currentSpec == PriestSpec::SHADOW)
+    {
+        ManageInsanity();
+
+        // Exit Void Form if insanity depleted
+        if (_inVoidForm && _insanityLevel <= 0)
+        {
+            ExitVoidForm();
+        }
+
+        // Use Dispersion to extend Void Form
+        if (_inVoidForm && _insanityLevel < 30)
+        {
+            if (IsSpellReady(DISPERSION) && getMSTime() - _lastDispersion > 120000)
+            {
+                if (CastSpell(DISPERSION))
+                {
+                    _lastDispersion = getMSTime();
+                    _insanityLevel += 50; // Dispersion pauses insanity drain
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} used Dispersion to maintain Void Form",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Mana management for healers
+    float manaPercent = GetManaPercent();
+    if (manaPercent < 20.0f)
+    {
+        // Hymn of Hope for mana regeneration
+        if (IsSpellReady(HYMN_OF_HOPE))
+        {
+            if (CastSpell(HYMN_OF_HOPE))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Priest {} channeling Hymn of Hope for mana",
+                             GetBot()->GetName());
+                return true;
+            }
+        }
+
+        // Shadowfiend for mana (all specs can use)
+        if (IsSpellReady(SHADOWFIEND) && getMSTime() - _lastShadowfiend > 180000)
+        {
+            if (Unit* target = GetCurrentTarget())
+            {
+                if (CastSpell(target, SHADOWFIEND))
+                {
+                    _lastShadowfiend = getMSTime();
+                    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} summoned Shadowfiend for mana",
+                                 GetBot()->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool PriestAI::ExecuteNormalRotation(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return false;
+
+    // Check for healing needs first (all specs can emergency heal)
+    Unit* healTarget = GetLowestHealthAlly(40.0f);
+    if (healTarget && healTarget->GetHealthPct() < 50.0f)
+    {
+        // Emergency heal takes priority
+        if (_currentSpec != PriestSpec::SHADOW || healTarget->GetHealthPct() < 30.0f)
+        {
+            HealTarget(healTarget);
+            return true;
+        }
+    }
+
+    // Shadow DPS rotation
+    if (_currentSpec == PriestSpec::SHADOW)
+    {
+        // Maintain Shadowform
+        if (!HasAura(SHADOWFORM) && IsSpellReady(SHADOWFORM))
+        {
+            CastSpell(SHADOWFORM);
+            return true;
+        }
+
+        // Void Bolt in Void Form (replaces Mind Blast)
+        if (_inVoidForm && IsSpellReady(VOID_BOLT))
+        {
+            if (CastSpell(target, VOID_BOLT))
+            {
+                _insanityLevel += 15;
+                return true;
+            }
+        }
+
+        // Maintain DoTs
+        if (!HasAllDoTs(target))
+        {
+            RefreshDoTs(target);
+            return true;
+        }
+
+        // Shadow Word: Death for execute
+        if (target->GetHealthPct() < 20.0f && IsSpellReady(SHADOW_WORD_DEATH))
+        {
+            if (CastSpell(target, SHADOW_WORD_DEATH))
+                return true;
+        }
+
+        // Mind Blast on cooldown
+        if (!_inVoidForm && IsSpellReady(MIND_BLAST))
+        {
+            if (CastSpell(target, MIND_BLAST))
+            {
+                _insanityLevel += 12;
+                return true;
+            }
+        }
+
+        // Mind Flay as filler
+        if (IsSpellReady(MIND_FLAY))
+        {
+            if (CastSpell(target, MIND_FLAY))
+            {
+                _insanityLevel += 6;
+                return true;
+            }
+        }
+    }
+    // Discipline healing/damage rotation
+    else if (_currentSpec == PriestSpec::DISCIPLINE)
+    {
+        // Maintain atonements
+        RefreshAtonements();
+
+        // Penance on cooldown (heal or damage)
+        if (IsSpellReady(PENANCE) && getMSTime() - _lastPenance > 9000)
+        {
+            Unit* penanceTarget = healTarget && healTarget->GetHealthPct() < 70.0f ? healTarget : target;
+            if (CastSpell(penanceTarget, PENANCE))
+            {
+                _lastPenance = getMSTime();
+                if (penanceTarget->IsFriendlyTo(GetBot()))
+                    ApplyAtonement(penanceTarget);
+                return true;
+            }
+        }
+
+        // Power Word: Shield on low health allies
+        if (healTarget && healTarget->GetHealthPct() < 60.0f)
+        {
+            if (!healTarget->HasAura(POWER_WORD_SHIELD) && IsSpellReady(POWER_WORD_SHIELD))
+            {
+                if (CastSpell(healTarget, POWER_WORD_SHIELD))
+                {
+                    ApplyAtonement(healTarget);
+                    return true;
+                }
+            }
+        }
+
+        // Shadow Word: Pain for Atonement healing
+        if (!target->HasAura(SHADOW_WORD_PAIN) && IsSpellReady(SHADOW_WORD_PAIN))
+        {
+            if (CastSpell(target, SHADOW_WORD_PAIN))
+            {
+                _shadowWordPainTargets[target->GetGUID()] = getMSTime();
+                return true;
+            }
+        }
+
+        // Mind Blast for damage/healing
+        if (IsSpellReady(MIND_BLAST))
+        {
+            if (CastSpell(target, MIND_BLAST))
+                return true;
+        }
+
+        // Flash Heal for direct healing
+        if (healTarget && healTarget->GetHealthPct() < 50.0f)
+        {
+            if (IsSpellReady(FLASH_HEAL))
+            {
+                if (CastSpell(healTarget, FLASH_HEAL))
+                {
+                    ApplyAtonement(healTarget);
+                    return true;
+                }
+            }
+        }
+    }
+    // Holy healing rotation
+    else if (_currentSpec == PriestSpec::HOLY)
+    {
+        // Prayer of Mending on cooldown
+        if (IsSpellReady(PRAYER_OF_MENDING))
+        {
+            Unit* pomTarget = FindGroupTank();
+            if (!pomTarget)
+                pomTarget = healTarget;
+
+            if (pomTarget && CastSpell(pomTarget, PRAYER_OF_MENDING))
+                return true;
+        }
+
+        // Circle of Healing for group healing
+        uint32 injuredCount = 0;
+        if (Group* group = GetBot()->GetGroup())
+        {
+            for (Group::MemberSlot const& member : group->GetMemberSlots())
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(GetBot()->GetMap(), member.guid))
+                {
+                    if (player->GetHealthPct() < 80.0f)
+                        injuredCount++;
+                }
+            }
+        }
+
+        if (injuredCount >= 3 && IsSpellReady(CIRCLE_OF_HEALING))
+        {
+            if (getMSTime() - _lastCircleOfHealing > 15000)
+            {
+                if (CastSpell(CIRCLE_OF_HEALING))
+                {
+                    _lastCircleOfHealing = getMSTime();
+                    return true;
+                }
+            }
+        }
+
+        // Maintain Renew on tanks and injured
+        if (healTarget)
+        {
+            if (!healTarget->HasAura(RENEW) && IsSpellReady(RENEW))
+            {
+                if (CastSpell(healTarget, RENEW))
+                    return true;
+            }
+        }
+
+        // Use Serendipity stacks for faster heals
+        if (_serendipityStacks >= 2 && healTarget && healTarget->GetHealthPct() < 60.0f)
+        {
+            if (IsSpellReady(GREATER_HEAL))
+            {
+                if (CastSpell(healTarget, GREATER_HEAL))
+                {
+                    _serendipityStacks = 0;
+                    return true;
+                }
+            }
+        }
+
+        // Flash Heal for quick healing
+        if (healTarget && healTarget->GetHealthPct() < 70.0f)
+        {
+            if (IsSpellReady(FLASH_HEAL))
+            {
+                if (CastSpell(healTarget, FLASH_HEAL))
+                {
+                    _serendipityStacks++;
+                    return true;
+                }
+            }
+        }
+
+        // Heal as efficient option
+        if (healTarget && healTarget->GetHealthPct() < 85.0f)
+        {
+            if (IsSpellReady(HEAL))
+            {
+                if (CastSpell(healTarget, HEAL))
+                    return true;
+            }
+        }
+
+        // Offensive abilities when no healing needed
+        if (!healTarget || healTarget->GetHealthPct() > 90.0f)
+        {
+            // Holy Fire on cooldown
+            if (IsSpellReady(MIND_BLAST))
+            {
+                if (CastSpell(target, MIND_BLAST))
+                    return true;
+            }
+        }
+    }
+
+    // Fallback to wand attack
+    if (target && GetBot()->GetDistance(target) <= 30.0f)
+    {
+        GetBot()->AttackerStateUpdate(target);
+    }
+
+    return false;
+}
+
+// Shadow DoT management implementation
+bool PriestAI::NeedsDoTRefresh(::Unit* target, uint32 spellId)
+{
+    if (!target)
+        return true;
+
+    if (!target->HasAura(spellId))
+        return true;
+
+    // Refresh DoTs at 30% duration
+    if (Aura* aura = target->GetAura(spellId))
+    {
+        int32 duration = aura->GetDuration();
+        int32 maxDuration = aura->GetMaxDuration();
+
+        if (maxDuration > 0)
+        {
+            float remainingPercent = float(duration) / float(maxDuration) * 100.0f;
+            return remainingPercent < 30.0f;
+        }
+    }
+
+    return false;
+}
+
+void PriestAI::RefreshDoTs(::Unit* target)
+{
+    if (!GetBot() || !target)
+        return;
+
+    // Shadow Word: Pain
+    if (NeedsDoTRefresh(target, SHADOW_WORD_PAIN) && IsSpellReady(SHADOW_WORD_PAIN))
+    {
+        if (CastSpell(target, SHADOW_WORD_PAIN))
+        {
+            _shadowWordPainTargets[target->GetGUID()] = getMSTime();
+            _dotRefreshTime = getMSTime();
+        }
+    }
+
+    // Vampiric Touch
+    if (NeedsDoTRefresh(target, VAMPIRIC_TOUCH) && IsSpellReady(VAMPIRIC_TOUCH))
+    {
+        if (CastSpell(target, VAMPIRIC_TOUCH))
+        {
+            _vampiricTouchTargets[target->GetGUID()] = getMSTime();
+            _dotRefreshTime = getMSTime();
+        }
+    }
+
+    // Devouring Plague
+    if (NeedsDoTRefresh(target, DEVOURING_PLAGUE) && IsSpellReady(DEVOURING_PLAGUE))
+    {
+        if (CastSpell(target, DEVOURING_PLAGUE))
+        {
+            _dotRefreshTime = getMSTime();
+        }
+    }
+}
+
+bool PriestAI::HasAllDoTs(::Unit* target)
+{
+    if (!target)
+        return false;
+
+    return target->HasAura(SHADOW_WORD_PAIN) &&
+           target->HasAura(VAMPIRIC_TOUCH) &&
+           target->HasAura(DEVOURING_PLAGUE);
+}
+
+void PriestAI::ManageInsanity()
+{
+    if (!GetBot())
+        return;
+
+    // Insanity drains while in Void Form
+    if (_inVoidForm)
+    {
+        // Drain 1 insanity per second (simplified)
+        if (getMSTime() % 1000 == 0)
+        {
+            _insanityLevel = _insanityLevel > 0 ? _insanityLevel - 1 : 0;
+        }
+    }
+
+    // Cap insanity at 100
+    if (_insanityLevel > 100)
+        _insanityLevel = 100;
+}
+
+void PriestAI::EnterVoidForm()
+{
+    _inVoidForm = true;
+    _insanityLevel = 100;
+    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} entered Void Form with {} insanity",
+                 GetBot()->GetName(), _insanityLevel);
+}
+
+void PriestAI::ExitVoidForm()
+{
+    _inVoidForm = false;
+    _insanityLevel = 0;
+    TC_LOG_DEBUG("module.playerbot.ai", "Priest {} exited Void Form",
+                 GetBot()->GetName());
+}
+
+bool PriestAI::ShouldUseVoidEruption()
+{
+    // Use Void Eruption at 100 insanity or when it's optimal
+    return !_inVoidForm && _insanityLevel >= 90;
+}
+
+// Discipline Atonement management
+void PriestAI::ApplyAtonement(::Unit* target)
+{
+    if (!target)
+        return;
+
+    _atonementTargets[target->GetGUID()] = getMSTime() + 15000; // 15 second duration
+}
+
+void PriestAI::RefreshAtonements()
+{
+    if (!GetBot())
+        return;
+
+    // Clean up expired atonements
+    uint32 currentTime = getMSTime();
+    for (auto it = _atonementTargets.begin(); it != _atonementTargets.end();)
+    {
+        if (it->second < currentTime)
+            it = _atonementTargets.erase(it);
+        else
+            ++it;
+    }
+
+    // Refresh atonements on important targets
+    if (Group* group = GetBot()->GetGroup())
+    {
+        // Priority: Tank > Low health > Others
+        Unit* tank = FindGroupTank();
+        if (tank && !HasAtonement(tank))
+        {
+            if (!tank->HasAura(POWER_WORD_SHIELD) && IsSpellReady(POWER_WORD_SHIELD))
+            {
+                if (CastSpell(tank, POWER_WORD_SHIELD))
+                    ApplyAtonement(tank);
+            }
+        }
+    }
+}
+
+bool PriestAI::HasAtonement(::Unit* target)
+{
+    if (!target)
+        return false;
+
+    auto it = _atonementTargets.find(target->GetGUID());
+    if (it != _atonementTargets.end())
+        {
+        return it->second > getMSTime();
+    }
+    return false;
+}
+
+uint32 PriestAI::CountAtonementTargets()
+{
+    uint32 count = 0;
+    uint32 currentTime = getMSTime();
+
+    for (auto const& pair : _atonementTargets)
+    {
+        if (pair.second > currentTime)
+            count++;
+    }
+
+    return count;
+}
+
+void PriestAI::UpdatePenanceHealing()
+{
+    // Penance heals through Atonement when cast on enemies
+    if (_currentSpec == PriestSpec::DISCIPLINE && CountAtonementTargets() > 0)
+    {
+        // Healing is distributed to atonement targets
+        // This is handled by the spell system itself
+    }
 }
 
 } // namespace Playerbot

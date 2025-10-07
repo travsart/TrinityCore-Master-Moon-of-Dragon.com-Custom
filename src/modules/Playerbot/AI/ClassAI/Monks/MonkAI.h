@@ -605,6 +605,28 @@ private:
     uint32 SelectInterruptAbility();
     void CoordinateGroupInterrupts();
 
+    // New helper methods for CombatBehaviorIntegration
+    bool HasEnoughChi(uint32 amount) const;
+    bool HasEnoughEnergy(uint32 amount) const;
+    void ConsumeChiForAbility(uint32 spellId, uint32 amount);
+    void ConsumeEnergyForAbility(uint32 spellId, uint32 amount);
+    void GenerateChi(uint32 amount);
+    void ManageResourceGeneration(::Unit* target);
+    void UseDefensiveCooldowns();
+    void HandleMobilityAbilities(::Unit* target, const Position& optimalPos);
+    Position CalculateRollDestination(::Unit* target);
+
+    // Specialization-specific rotations
+    void ExecuteWindwalkerRotation(::Unit* target);
+    void ExecuteBrewmasterRotation(::Unit* target);
+    void ExecuteMistweaverRotation(::Unit* target);
+
+    // Helper utilities
+    Unit* GetLowestHealthAlly(float range);
+    uint32 GetNearbyInjuredAlliesCount(float range, float healthThreshold);
+    uint32 GetNearbyEnemyCount(float range) const;
+    void RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success);
+
     // Enhanced constants
     static constexpr uint32 FORM_CHANGE_COOLDOWN = 1500; // 1.5 seconds
     static constexpr uint32 ROLL_COOLDOWN = 20000; // 20 seconds
