@@ -54,6 +54,17 @@ public:
     static bool MoveToTarget(Player* bot, WorldObject* target, uint32 pointId = 0, float minDistanceChange = 0.5f);
 
     /**
+     * Move bot to within specified distance of unit (for interaction, quest givers, etc.)
+     *
+     * @param bot Player bot to move
+     * @param unit Target unit to approach
+     * @param distance Desired distance from unit (e.g., 5.0f for quest giver interaction)
+     * @param pointId Movement point ID (default 0)
+     * @return true if movement initiated, already in range, or already moving there
+     */
+    static bool MoveToUnit(Player* bot, Unit* unit, float distance, uint32 pointId = 0);
+
+    /**
      * Chase target at specific distance with deduplication
      *
      * @param bot Player bot to move

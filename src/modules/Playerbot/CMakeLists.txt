@@ -517,11 +517,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PerformanceManager.h
 
-    # Phase 3: Game System Integration - Movement System
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.h
+    # Phase 3: Game System Integration - Movement System (Strategy-Based Architecture)
+    # MovementManager REMOVED - Movement is handled by strategies using BotMovementUtil
+    # See MOVEMENT_ARCHITECTURE_FINAL.md for rationale
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.h
@@ -830,10 +828,7 @@ source_group("Performance" FILES
 )
 
 source_group("Movement" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementGenerator.h
+    # MovementManager removed - strategy-based architecture
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementTypes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Core/MovementValidator.h

@@ -22,7 +22,7 @@
 #include "ObjectiveTracker.h"
 #include "Movement/LeaderFollowBehavior.h"
 #include "../AI/BotAI.h"
-#include "Movement/Core/MovementManager.h"
+#include "Movement/BotMovementUtil.h"
 #include "Interaction/Core/InteractionManager.h"
 #include "../Combat/TargetSelector.h"
 #include "Config/PlayerbotConfig.h"
@@ -564,7 +564,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
         // Move to NPC if not in range
         if (bot->GetDistance(npc) > QUEST_GIVER_INTERACTION_RANGE)
         {
-            MovementManager::Instance()->MoveToUnit(bot, npc, QUEST_GIVER_INTERACTION_RANGE - 1.0f);
+            BotMovementUtil::MoveToUnit(bot, npc, QUEST_GIVER_INTERACTION_RANGE - 1.0f);
             return;
         }
 
@@ -654,7 +654,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
         // Move to object if not in range
         if (bot->GetDistance(gameObject) > QUEST_GIVER_INTERACTION_RANGE)
         {
-            MovementManager::Instance()->MoveTo(bot, gameObject->GetPosition());
+            BotMovementUtil::MoveToPosition(bot, gameObject->GetPosition());
             return;
         }
 
@@ -811,7 +811,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
         // Follow the escort target
         if (bot->GetDistance(escortTarget) > 10.0f)
         {
-            MovementManager::Instance()->MoveToUnit(bot, escortTarget, 5.0f);
+            BotMovementUtil::MoveToUnit(bot, escortTarget, 5.0f);
         }
 
         // Check if escort is complete (handled by quest system)
@@ -847,8 +847,8 @@ void QuestCompletion::NavigateToObjective(Player* bot, const QuestObjectiveData&
     // Get optimal position for objective
     Position targetPos = GetOptimalObjectivePosition(bot, objective);
 
-    // Use movement manager to navigate
-    MovementManager::Instance()->MoveTo(bot, targetPos);
+    // Use movement utility to navigate
+    BotMovementUtil::MoveToPosition(bot, targetPos);
 
     TC_LOG_DEBUG("playerbot", "QuestCompletion::NavigateToObjective - Bot %s moving to objective for quest %u",
         bot->GetName().c_str(), objective.questId);

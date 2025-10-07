@@ -22,7 +22,7 @@
 #include "ItemTemplate.h"
 #include "QuestPickup.h"
 #include "QuestValidation.h"
-#include "Movement/Core/MovementManager.h"
+#include "Movement/BotMovementUtil.h"
 #include "Interaction/Core/InteractionManager.h"
 #include "../AI/BotAI.h"
 #include "Config/PlayerbotConfig.h"
@@ -452,8 +452,8 @@ bool QuestTurnIn::NavigateToQuestGiver(Player* bot, uint32 questGiverGuid)
     if (it == _questGiverLocations.end())
         return false;
 
-    // Use movement manager to navigate
-    MovementManager::Instance()->MoveTo(bot, it->second);
+    // Use movement utility to navigate
+    BotMovementUtil::MoveToPosition(bot, it->second);
 
     TC_LOG_DEBUG("playerbot", "QuestTurnIn::NavigateToQuestGiver - Bot %s navigating to quest giver %u",
         bot->GetName().c_str(), questGiverGuid);

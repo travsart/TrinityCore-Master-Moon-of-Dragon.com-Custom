@@ -65,6 +65,39 @@ bool BotMovementUtil::MoveToTarget(Player* bot, WorldObject* target, uint32 poin
     return MoveToPosition(bot, destination, pointId, minDistanceChange);
 }
 
+bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32 pointId)
+{
+    if (!bot || !unit)
+        return false;
+
+    // Check if already within desired distance
+    float currentDistance = bot->GetDistance(unit);
+    if (currentDistance <= distance)
+    {
+        TC_LOG_DEBUG("module.playerbot", "✅ BotMovement: Bot {} already within {:.1f}yd of {} (current: {:.1f}yd)",
+                     bot->GetName(), distance, unit->GetName(), currentDistance);
+        return true;
+    }
+
+    // Calculate position at desired distance from unit
+    // Use unit's position and calculate approach vector
+    float targetDistance = std::max(distance - 1.0f, 0.5f); // Stop 1 yard before desired distance
+    float angle = unit->GetOrientation(); // Use unit's facing direction
+
+    Position destination;
+    destination.Relocate(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ());
+
+    // Move backwards from unit position along its facing direction
+    destination.m_positionX -= targetDistance * std::cos(angle);
+    destination.m_positionY -= targetDistance * std::sin(angle);
+
+    TC_LOG_DEBUG("module.playerbot", "🎯 BotMovement: Bot {} moving to within {:.1f}yd of {} at ({:.2f},{:.2f},{:.2f})",
+                 bot->GetName(), distance, unit->GetName(),
+                 destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
+
+    return MoveToPosition(bot, destination, pointId);
+}
+
 bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
 {
     if (!bot || !target)
