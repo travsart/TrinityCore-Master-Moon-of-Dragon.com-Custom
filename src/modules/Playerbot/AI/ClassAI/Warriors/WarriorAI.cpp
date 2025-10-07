@@ -12,6 +12,7 @@
 #include "FuryWarriorRefactored.h"
 #include "ProtectionWarriorRefactored.h"
 #include "../BaselineRotationManager.h"
+#include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Log.h"
 #include "CellImpl.h"
@@ -86,16 +87,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
     // Priority 2: Handle defensives (Shield Wall, Last Stand, etc.)
     if (behaviors && behaviors->NeedsDefensive())
     {
-        // Combat behaviors will select and execute appropriate defensive
-        // Check if defensive was already handled by behavior system
-        if (behaviors->HasExecutedDefensive())
-        {
-            TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} executed defensive cooldown",
-                         GetBot()->GetName());
-            return;
-        }
-
-        // Fallback to manual defensive if behavior system didn't handle it
+        // Use defensive cooldowns when health is critical
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
             return;
@@ -115,7 +107,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
     }
 
     // Priority 4: AoE vs Single-Target decision
-    if (behaviors && behaviors->ShouldUseAoE(3)) // 3+ targets threshold
+    if (behaviors && behaviors->ShouldAOE())
     {
         // Whirlwind for AoE damage
         if (CanUseAbility(WHIRLWIND))

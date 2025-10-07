@@ -193,8 +193,6 @@ private:
 
     // Combat behavior integration helpers
     void ExecuteBasicWarriorRotation(::Unit* target);
-    void RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success);
-    void UseDefensiveCooldowns();
     uint32 GetNearbyEnemyCount(float range) const;
 
     // Enhanced constants

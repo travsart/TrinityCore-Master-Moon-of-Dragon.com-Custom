@@ -8,6 +8,7 @@
  */
 
 #include "MageAI.h"
+#include "../../Combat/CombatBehaviorIntegration.h"
 #include "ArcaneSpecialization.h"
 #include "FireSpecialization.h"
 #include "FrostSpecialization.h"
@@ -286,15 +287,7 @@ void MageAI::UpdateRotation(::Unit* target)
     // Priority 2: Defensives (Ice Block, Ice Barrier, etc.)
     if (behaviors && behaviors->NeedsDefensive())
     {
-        // Check if defensive was already handled by behavior system
-        if (behaviors->HasExecutedDefensive())
-        {
-            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} executed defensive cooldown",
-                         GetBot()->GetName());
-            return;
-        }
-
-        // Manual defensive fallback
+        // Use defensive cooldowns when health is critical
         float healthPct = GetBot()->GetHealthPct();
         if (healthPct < 20.0f)
         {
@@ -349,9 +342,9 @@ void MageAI::UpdateRotation(::Unit* target)
     }
 
     // Priority 5: AoE decision (Flamestrike, Blizzard, Arcane Explosion)
-    if (behaviors && behaviors->ShouldUseAoE(3))
+    if (behaviors && behaviors->ShouldAOE())
     {
-        Position aoeCenter = behaviors->GetAoEPosition();
+        Position aoeCenter = behaviors->GetOptimalPosition();
 
         switch (_currentSpec)
         {
@@ -463,7 +456,7 @@ void MageAI::UpdateRotation(::Unit* target)
     }
 
     // Priority 7: Crowd control for secondary targets
-    if (behaviors && !behaviors->ShouldUseAoE(3)) // Only CC if not AoEing
+    if (behaviors && !behaviors->ShouldAOE()) // Only CC if not AoEing
     {
         ::Unit* polymorphTarget = GetBestPolymorphTarget();
         if (polymorphTarget && polymorphTarget != target && CanPolymorphSafely(polymorphTarget))
