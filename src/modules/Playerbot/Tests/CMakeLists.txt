@@ -31,6 +31,8 @@ if(BUILD_PLAYERBOT_TESTS)
         # AI component tests
         BehaviorManagerTest.cpp
         Phase2IntegrationTest.cpp
+        # Phase 1: State Machine Tests (115 comprehensive tests)
+        Phase1StateMachineTests.cpp
         # Future test files will be added here
     )
 

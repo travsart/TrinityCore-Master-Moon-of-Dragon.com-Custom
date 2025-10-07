@@ -311,4 +311,56 @@ namespace Playerbot
         TC_LOG_WARN("module.playerbot", "[{}] {}", m_managerName, message);
     }
 
+    // ============================================================================
+    // PHASE 7.1: IManagerBase Interface Implementation
+    // ============================================================================
+
+    bool BehaviorManager::Initialize()
+    {
+        // Validate pointers before initialization
+        if (!ValidatePointers())
+        {
+            TC_LOG_ERROR("module.playerbot", "[{}] Initialize() failed: Invalid bot or AI pointers", m_managerName);
+            return false;
+        }
+
+        // Call derived class initialization
+        bool success = OnInitialize();
+
+        if (success)
+        {
+            m_initialized.store(true, std::memory_order_release);
+            TC_LOG_INFO("module.playerbot", "[{}] Initialized successfully for bot {}",
+                        m_managerName, m_bot->GetName());
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot", "[{}] OnInitialize() failed for bot {}",
+                         m_managerName, m_bot->GetName());
+        }
+
+        return success;
+    }
+
+    void BehaviorManager::Shutdown()
+    {
+        // Disable further updates
+        m_enabled.store(false, std::memory_order_release);
+
+        // Call derived class shutdown
+        OnShutdown();
+
+        m_initialized.store(false, std::memory_order_release);
+
+        TC_LOG_INFO("module.playerbot", "[{}] Shutdown complete for bot {}",
+                    m_managerName, m_bot ? m_bot->GetName() : "Unknown");
+    }
+
+    void BehaviorManager::OnEvent(Events::BotEvent const& event)
+    {
+        // Delegate to the virtual OnEventInternal method
+        // Derived classes override OnEventInternal() to handle events
+        OnEventInternal(event);
+    }
+
 } // namespace Playerbot

@@ -72,6 +72,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.h
 
+    # Phase 2.1 Refactoring: BehaviorPriorityManager - Priority-based Behavior Coordination (Fixes Issues #2 & #3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.h
+
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
@@ -89,6 +93,27 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/Action.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions/CommonActions.h
+
+    # Core References System - SafeObjectReference (Issue #4 Fix)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.h
+
+    # Phase 7.1: Manager System Architecture - Observer-Manager Integration Layer
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IManagerBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/ManagerRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/ManagerRegistry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
+
+    # Phase 7.3: Event System - Streamlined Architecture (Legacy code eliminated)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Events/BotEventData.h
+    # BotEventSystem.cpp/h - DELETED (legacy singleton removed)
+    # BotEventHooks.cpp/h - DELETED (1113 lines redundant code eliminated)
+    # Observers (15 files) - DELETED (5000+ lines dead code eliminated)
+    # Event flow now: TrinityCore ScriptMgr → PlayerbotEventScripts → EventDispatcher → Managers
+
+    # Phase 4.1: Script System Integration - Non-Invasive Event Hooks
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotEventScripts.cpp
 
     # AI Trigger System
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.cpp
@@ -417,6 +442,7 @@ set(PLAYERBOT_SOURCES
     # TradeManager enabled - now inherits from BehaviorManager
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
@@ -442,6 +468,7 @@ set(PLAYERBOT_SOURCES
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
     # BotAI_Auction_Integration no longer needed - AuctionManager is managed by BotAI
     # ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
@@ -458,6 +485,7 @@ set(PLAYERBOT_SOURCES
     # Game Systems - Integrated Quest, Inventory, Trade Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
@@ -569,6 +597,8 @@ source_group("AI" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ExampleManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.h
 )
 
 source_group("AI\\Strategy" FILES
@@ -717,6 +747,7 @@ source_group("Scripts" FILES
 source_group("Social" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
@@ -744,6 +775,7 @@ source_group("Professions" FILES
 source_group("Economy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/PlayerbotAuctionConfig.h
     # ${CMAKE_CURRENT_SOURCE_DIR}/Economy/BotAI_Auction_Integration.cpp
 )
@@ -766,6 +798,7 @@ source_group("Quest" FILES
 source_group("Game" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
@@ -846,6 +879,11 @@ target_include_directories(playerbot
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Config
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/References
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events
+        ${CMAKE_CURRENT_SOURCE_DIR}/Events
         ${CMAKE_CURRENT_SOURCE_DIR}/Session
         ${CMAKE_CURRENT_SOURCE_DIR}/Database
         ${CMAKE_CURRENT_SOURCE_DIR}/AI

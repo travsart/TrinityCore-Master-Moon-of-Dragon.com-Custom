@@ -236,6 +236,7 @@ namespace Playerbot
         void OnUpdate(uint32 elapsed) override;
         bool OnInitialize() override;
         void OnShutdown() override;
+        void OnEventInternal(Events::BotEvent const& event) override;
 
     private:
         // Internal state management

@@ -264,6 +264,9 @@ void PlayerbotWorldScript::UpdateMetrics(uint32 updateTime)
 // Forward declaration for playerbot command script
 void AddSC_playerbot_commandscript();
 
+// Forward declaration for Phase 4.1 event scripts
+void AddSC_playerbot_event_scripts();
+
 // Script registration function
 void AddSC_playerbot_world()
 {
@@ -272,5 +275,8 @@ void AddSC_playerbot_world()
     // Register playerbot commands (module-only approach)
     #ifdef BUILD_PLAYERBOT
     AddSC_playerbot_commandscript();
+
+    // Phase 4.1: Register event system scripts (non-invasive hooks)
+    AddSC_playerbot_event_scripts();
     #endif
 }

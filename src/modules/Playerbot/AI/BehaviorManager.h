@@ -19,6 +19,8 @@
 #define TRINITYCORE_BEHAVIOR_MANAGER_H
 
 #include "Define.h"
+#include "Core/Managers/IManagerBase.h"
+#include "Events/BotEventTypes.h"
 #include <atomic>
 #include <string>
 #include <chrono>
@@ -32,6 +34,8 @@ namespace Playerbot
     /**
      * @class BehaviorManager
      * @brief Base class for all bot behavior managers providing throttled update mechanism
+     *
+     * **PHASE 7.1 UPDATE**: Now implements IManagerBase for event-driven architecture integration
      *
      * This class implements a throttling system where Update() is called every frame but
      * OnUpdate() is only invoked at configured intervals. All bot managers (QuestManager,
@@ -63,7 +67,7 @@ namespace Playerbot
      * };
      * @endcode
      */
-    class TC_GAME_API BehaviorManager
+    class TC_GAME_API BehaviorManager : public IManagerBase
     {
     public:
         /**
@@ -165,6 +169,45 @@ namespace Playerbot
         BehaviorManager(BehaviorManager&&) = delete;
         BehaviorManager& operator=(BehaviorManager&&) = delete;
 
+        // ========================================================================
+        // PHASE 7.1: IManagerBase Interface Implementation
+        // ========================================================================
+
+        /**
+         * @brief Initialize the manager (IManagerBase interface)
+         * @return true if initialization successful, false otherwise
+         *
+         * This calls the virtual OnInitialize() method for derived class initialization
+         */
+        bool Initialize() override;
+
+        /**
+         * @brief Shutdown the manager (IManagerBase interface)
+         *
+         * This calls the virtual OnShutdown() method for derived class cleanup
+         */
+        void Shutdown() override;
+
+        /**
+         * @brief Handle an event from the EventDispatcher (IManagerBase interface)
+         * @param event The event to handle
+         *
+         * This method delegates to the virtual OnEventInternal() for derived classes to override.
+         */
+        void OnEvent(Events::BotEvent const& event) override;
+
+        /**
+         * @brief Get the manager's unique identifier (IManagerBase interface)
+         * @return Manager identifier string
+         */
+        std::string GetManagerId() const override { return m_managerName; }
+
+        /**
+         * @brief Check if the manager is currently active (IManagerBase interface)
+         * @return true if active, false otherwise
+         */
+        bool IsActive() const override { return IsEnabled() && IsInitialized(); }
+
     protected:
         /**
          * @brief Virtual method called at throttled intervals for actual work
@@ -199,6 +242,34 @@ namespace Playerbot
          * or when bot is being removed from world.
          */
         virtual void OnShutdown() { }
+
+        /**
+         * @brief Called when an event is dispatched to this manager (Phase 7.1)
+         *
+         * Override this method in derived classes to handle specific events.
+         * Default implementation does nothing - managers opt-in to event handling.
+         *
+         * @param event The event to handle
+         *
+         * Example:
+         * @code
+         * void QuestManager::OnEvent(Events::BotEvent const& event)
+         * {
+         *     switch (event.type)
+         *     {
+         *         case StateMachine::EventType::QUEST_ACCEPTED:
+         *             HandleQuestAccepted(event);
+         *             break;
+         *         case StateMachine::EventType::QUEST_COMPLETED:
+         *             HandleQuestCompleted(event);
+         *             break;
+         *         default:
+         *             break;
+         *     }
+         * }
+         * @endcode
+         */
+        virtual void OnEventInternal(Events::BotEvent const& /*event*/) { }
 
         /**
          * @brief Get the bot player this manager belongs to

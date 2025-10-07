@@ -95,38 +95,18 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         TC_LOG_ERROR("module.playerbot", "🗡️ Calling UpdateRotation for {} with target {}",
                      GetBot()->GetName(), _currentCombatTarget->GetName());
 
-        // COMBAT MOVEMENT: Ensure bot is at optimal range before using abilities
-        // Each spec defines its own optimal range (melee: 5yd, ranged: 20-30yd, healer: 25-40yd)
+        // FIX FOR ISSUE #3: Ensure melee bots continuously face their target
+        // This prevents the "facing wrong direction" bug where melee bots don't attack
+        // NOTE: Combat movement is now handled by CombatMovementStrategy for role-based positioning
         float optimalRange = GetOptimalRange(_currentCombatTarget);
-        float currentDistance = GetBot()->GetDistance(_currentCombatTarget);
-        float rangeTolerance = 2.0f; // Prevent movement jitter
+        if (optimalRange <= 5.0f) // Melee range
+        {
+            GetBot()->SetFacingToObject(_currentCombatTarget);
+        }
 
-        TC_LOG_ERROR("module.playerbot", "⚔️ COMBAT MOVEMENT: Bot {} - optimalRange={:.1f}, currentDistance={:.1f}, target={}",
-                    GetBot()->GetName(), optimalRange, currentDistance, _currentCombatTarget->GetName());
-
-        // Use centralized movement utility to prevent infinite chase loop
-        if (currentDistance > optimalRange + rangeTolerance)
-        {
-            // Too far - chase target to optimal range
-            BotMovementUtil::ChaseTarget(GetBot(), _currentCombatTarget, optimalRange);
-        }
-        else if (optimalRange > 10.0f && currentDistance < optimalRange - rangeTolerance)
-        {
-            // Too close for ranged classes - maintain distance
-            BotMovementUtil::ChaseTarget(GetBot(), _currentCombatTarget, optimalRange);
-        }
-        else if (BotMovementUtil::IsMoving(GetBot()) && std::abs(currentDistance - optimalRange) <= rangeTolerance)
-        {
-            // Already at optimal range while moving - stop to allow spell casting
-            BotMovementUtil::StopMovement(GetBot());
-            TC_LOG_ERROR("module.playerbot", "🛑 STOP: {} reached optimal range {:.1f}yd from {}",
-                        GetBot()->GetName(), currentDistance, _currentCombatTarget->GetName());
-        }
-        else
-        {
-            TC_LOG_ERROR("module.playerbot", "✅ IN RANGE: {} at {:.1f}yd from {} (optimal: {:.1f}yd)",
-                        GetBot()->GetName(), currentDistance, _currentCombatTarget->GetName(), optimalRange);
-        }
+        // NOTE: Combat movement (chase, positioning, range management) is delegated to
+        // CombatMovementStrategy which provides superior role-based positioning.
+        // ClassAI now focuses solely on ability rotation and cooldown management.
 
         // Update class-specific rotation
         UpdateRotation(_currentCombatTarget);
@@ -181,6 +161,22 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} switching target to {}",
                  GetBot()->GetName(), newTarget ? newTarget->GetName() : "none");
+
+    // FIX FOR ISSUE #3: Explicitly set facing for melee combat
+    // Melee bots must face their target to attack properly
+    if (newTarget && GetBot())
+    {
+        float optimalRange = GetOptimalRange(newTarget);
+
+        // Melee classes (optimal range <= 5 yards) need to face target
+        if (optimalRange <= 5.0f)
+        {
+            GetBot()->SetFacingToObject(newTarget);
+            TC_LOG_TRACE("module.playerbot.classai",
+                "Bot {} (melee) now facing target {} (FIX FOR ISSUE #3)",
+                GetBot()->GetName(), newTarget->GetName());
+        }
+    }
 }
 
 // ============================================================================
@@ -207,7 +203,37 @@ void ClassAI::UpdateTargeting()
     if (::Unit* victim = GetBot()->GetVictim())
         return victim;
 
-    // Priority 2: Selected target (if different from victim)
+    // Priority 2: Group leader's target (FIX FOR ISSUE #2)
+    // Bots should assist the group leader's target for coordinated combat
+    if (Group* group = GetBot()->GetGroup())
+    {
+        ObjectGuid leaderGuid = group->GetLeaderGUID();
+
+        // Find leader in group members (avoid ObjectAccessor for thread safety)
+        for (GroupReference const& itr : group->GetMembers())
+        {
+            if (Player* member = itr.GetSource())
+            {
+                if (member->GetGUID() == leaderGuid)
+                {
+                    // Found leader - get their target
+                    if (::Unit* leaderTarget = member->GetVictim())
+                    {
+                        if (GetBot()->IsValidAttackTarget(leaderTarget))
+                        {
+                            TC_LOG_TRACE("module.playerbot.classai",
+                                "Bot {} assisting leader {} target: {} (FIX FOR ISSUE #2)",
+                                GetBot()->GetName(), member->GetName(), leaderTarget->GetName());
+                            return leaderTarget;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // Priority 3: Selected target (if different from victim)
     // FIX #20: Avoid ObjectAccessor::GetUnit() to prevent TrinityCore deadlock
     // Check if bot has a selected target that's not the current victim
     ObjectGuid targetGuid = GetBot()->GetTarget();
@@ -223,7 +249,7 @@ void ClassAI::UpdateTargeting()
         // GetNearestEnemy() will handle finding a new target
     }
 
-    // Priority 3: Nearest hostile
+    // Priority 4: Nearest hostile
     return GetNearestEnemy();
 }
 

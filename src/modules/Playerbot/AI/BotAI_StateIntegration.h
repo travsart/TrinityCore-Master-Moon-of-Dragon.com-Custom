@@ -1,13 +1,11 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * REFACTORED BotAI - Clean Update Chain Architecture
+ * REFACTORED BotAI with State Machine Integration - Fixes Issue #1
  *
- * This refactored version provides:
- * 1. Single, clean update path without DoUpdateAI/UpdateEnhanced confusion
- * 2. Clear separation between base behaviors and combat specialization
- * 3. No throttling that breaks movement/following
- * 4. Proper virtual method hierarchy for class-specific overrides
+ * This version integrates the BotInitStateMachine to properly handle
+ * bot initialization and group joining sequences, fixing the issue where
+ * bots already in groups at login wouldn't follow their leader.
  */
 
 #pragma once
@@ -19,6 +17,8 @@
 #include "Triggers/Trigger.h"
 #include "Strategy/Strategy.h"
 #include "ObjectCache.h"
+#include "Core/StateMachine/BotInitStateMachine.h"
+#include "Core/References/SafeObjectReference.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -32,8 +32,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-class BehaviorPriorityManager;
-enum class BehaviorPriority : uint8_t;
 class Value;
 class GroupInvitationHandler;
 class TargetScanner;
@@ -41,22 +39,6 @@ class QuestManager;
 class TradeManager;
 class GatheringManager;
 class AuctionManager;
-
-namespace Events
-{
-    class CombatEventObserver;
-    class AuraEventObserver;
-    class ResourceEventObserver;
-    class QuestEventObserver;
-    class MovementEventObserver;
-    class TradeEventObserver;
-    class SocialEventObserver;
-    class InstanceEventObserver;
-    class PvPEventObserver;
-    class EventDispatcher;
-}
-
-class ManagerRegistry;
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -103,9 +85,11 @@ public:
      * This is the ONLY method called by BotSession::Update()
      *
      * Update flow:
-     * 1. Update core behaviors (strategies, movement, idle)
-     * 2. Check combat state transitions
-     * 3. If in combat AND derived class exists, call OnCombatUpdate()
+     * 1. Initialize state machine on first update (if needed)
+     * 2. Update state machine until ready
+     * 3. Update core behaviors (strategies, movement, idle)
+     * 4. Check combat state transitions
+     * 5. If in combat AND derived class exists, call OnCombatUpdate()
      *
      * CRITICAL: This method is NOT throttled and runs every frame
      * to ensure smooth movement and responsive behavior
@@ -130,6 +114,51 @@ public:
     virtual void OnCombatUpdate(uint32 diff) {}
 
     // ========================================================================
+    // STATE MACHINE INTEGRATION - NEW for Issue #1 Fix
+    // ========================================================================
+
+    /**
+     * Check if bot is fully initialized (state machine is READY)
+     * @return true if initialization complete
+     */
+    bool IsFullyInitialized() const {
+        return m_initStateMachine && m_initStateMachine->IsReady();
+    }
+
+    /**
+     * Get initialization progress (0.0 - 1.0)
+     * @return Progress percentage
+     */
+    float GetInitProgress() const {
+        return m_initStateMachine ? m_initStateMachine->GetProgress() : 0.0f;
+    }
+
+    /**
+     * Activate base strategies (called by state machine when ready)
+     */
+    void ActivateBaseStrategies();
+
+    // ========================================================================
+    // SAFE OBJECT REFERENCES - NEW for Issue #4 Fix
+    // ========================================================================
+
+    /**
+     * Set group leader using safe reference
+     * @param leader The group leader (may be null)
+     */
+    void SetGroupLeader(Player* leader) {
+        m_groupLeader.Set(leader);
+    }
+
+    /**
+     * Get group leader using safe reference
+     * @return Group leader or nullptr if deleted/offline
+     */
+    Player* GetGroupLeader() const {
+        return m_groupLeader.Get();
+    }
+
+    // ========================================================================
     // STATE TRANSITIONS - Clean lifecycle management
     // ========================================================================
 
@@ -149,10 +178,6 @@ public:
     std::vector<Strategy*> GetActiveStrategies() const;
     void ActivateStrategy(std::string const& name);
     void DeactivateStrategy(std::string const& name);
-
-    // Priority-based strategy selection
-    BehaviorPriorityManager* GetPriorityManager() { return _priorityManager.get(); }
-    BehaviorPriorityManager const* GetPriorityManager() const { return _priorityManager.get(); }
 
     // ========================================================================
     // ACTION EXECUTION - Command pattern implementation
@@ -226,20 +251,6 @@ public:
 
     AuctionManager* GetAuctionManager() { return _auctionManager.get(); }
     AuctionManager const* GetAuctionManager() const { return _auctionManager.get(); }
-
-    // ========================================================================
-    // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
-    // ========================================================================
-
-    Events::EventDispatcher* GetEventDispatcher() { return _eventDispatcher.get(); }
-    Events::EventDispatcher const* GetEventDispatcher() const { return _eventDispatcher.get(); }
-
-    // ========================================================================
-    // PHASE 7.1: MANAGER REGISTRY - Manager lifecycle management
-    // ========================================================================
-
-    ManagerRegistry* GetManagerRegistry() { return _managerRegistry.get(); }
-    ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
 
     // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization
@@ -328,10 +339,15 @@ protected:
     BotAIState _aiState = BotAIState::IDLE;
     ObjectGuid _currentTarget;
 
+    // NEW: State machine for initialization (fixes Issue #1)
+    std::unique_ptr<StateMachine::BotInitStateMachine> m_initStateMachine;
+
+    // NEW: Safe reference to group leader (fixes Issue #4)
+    References::SafePlayerReference m_groupLeader;
+
     // Strategy system
     std::unordered_map<std::string, std::unique_ptr<Strategy>> _strategies;
     std::vector<std::string> _activeStrategies;
-    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
     // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;
@@ -357,10 +373,6 @@ protected:
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<AuctionManager> _auctionManager;
-
-    // Phase 7.1: Event system integration
-    std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
-    std::unique_ptr<ManagerRegistry> _managerRegistry;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
@@ -388,9 +400,6 @@ protected:
     // Performance impact: Negligible - lock contention was already minimal, and
     // recursive_mutex overhead is only a few nanoseconds per acquisition.
     mutable std::recursive_mutex _mutex;
-
-    // Phase 7.3: Legacy observers removed (dead code)
-    // Events now handled by EventDispatcher → Managers architecture
 
     // Debug tracking
     uint32 _lastDebugLogTime = 0;

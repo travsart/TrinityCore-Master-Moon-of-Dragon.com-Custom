@@ -163,9 +163,16 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
         if (group->GetLeaderGUID() == bot->GetGUID())
             return 0.0f;
 
-        // LOW relevance during combat - let ClassAI handle combat movement
+        // CRITICAL FIX FOR ISSUES #2 & #3: ZERO relevance during combat
+        // This prevents follow from interfering with combat positioning and facing
+        // BehaviorPriorityManager will prioritize combat behaviors (priority 100) over follow (priority 0)
         if (bot->IsInCombat())
-            return 10.0f;
+        {
+            TC_LOG_TRACE("module.playerbot.follow",
+                "Bot {} in combat - follow behavior disabled (FIX FOR ISSUE #2 & #3)",
+                bot->GetName());
+            return 0.0f;  // Changed from 10.0f - allows exclusive combat control
+        }
 
         // High relevance for following group leader when not in combat
         return 100.0f;

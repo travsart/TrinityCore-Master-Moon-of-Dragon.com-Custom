@@ -11,6 +11,7 @@
  */
 
 #include "BotAI.h"
+#include "BehaviorPriorityManager.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
 #include "Strategy/IdleStrategy.h"
@@ -23,6 +24,9 @@
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
 #include "Combat/TargetScanner.h"
+// Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
+#include "Core/Events/EventDispatcher.h"
+#include "Core/Managers/ManagerRegistry.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
@@ -57,6 +61,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize performance tracking
     _performanceMetrics.lastUpdate = std::chrono::steady_clock::now();
 
+    // Initialize priority-based behavior manager
+    _priorityManager = std::make_unique<BehaviorPriorityManager>(this);
+
     // Initialize group management
     _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
 
@@ -71,6 +78,97 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 
     TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction systems ready",
                 _bot->GetName());
+
+    // Phase 7.1: Initialize event dispatcher and manager registry
+    _eventDispatcher = std::make_unique<Events::EventDispatcher>(512);  // Initial queue size: 512 events
+    _managerRegistry = std::make_unique<ManagerRegistry>();
+
+    TC_LOG_INFO("module.playerbot", "🔄 EVENT DISPATCHER & MANAGER REGISTRY: {} - Phase 7.1 integration ready",
+                _bot->GetName());
+
+    // Phase 7.3: Legacy Phase 6 observer system removed (dead code)
+    // Events now flow directly: PlayerbotEventScripts → EventDispatcher → Managers
+
+    // Phase 7.1: Register managers with ManagerRegistry and subscribe to events
+    // Events flow: TrinityCore ScriptMgr → PlayerbotEventScripts → EventDispatcher → Managers
+    if (_managerRegistry && _eventDispatcher)
+    {
+        // Note: We can't transfer ownership yet since managers are still used directly
+        // For now, we just initialize them through the registry
+        // Full migration to ManagerRegistry will happen after testing
+
+        // Initialize managers through IManagerBase interface
+        if (_questManager)
+        {
+            _questManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ QuestManager initialized via IManagerBase");
+
+            // Subscribe QuestManager to quest events
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ACCEPTED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_COMPLETED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_TURNED_IN, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ABANDONED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_FAILED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_STATUS_CHANGED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_OBJECTIVE_COMPLETE, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_OBJECTIVE_PROGRESS, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_ITEM_COLLECTED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_CREATURE_KILLED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_EXPLORATION, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REWARD_RECEIVED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REWARD_CHOSEN, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_EXPERIENCE_GAINED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_REPUTATION_GAINED, _questManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::QUEST_CHAIN_ADVANCED, _questManager.get());
+            TC_LOG_INFO("module.playerbot.managers", "🔗 QuestManager subscribed to 16 quest events");
+        }
+
+        if (_tradeManager)
+        {
+            _tradeManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ TradeManager initialized via IManagerBase");
+
+            // Subscribe TradeManager to trade events
+            _eventDispatcher->Subscribe(StateMachine::EventType::TRADE_INITIATED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::TRADE_ACCEPTED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::TRADE_CANCELLED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::TRADE_ITEM_ADDED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::TRADE_GOLD_ADDED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::GOLD_RECEIVED, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::GOLD_SPENT, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::LOW_GOLD_WARNING, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::VENDOR_PURCHASE, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::VENDOR_SALE, _tradeManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::REPAIR_COST, _tradeManager.get());
+            TC_LOG_INFO("module.playerbot.managers", "🔗 TradeManager subscribed to 11 trade/gold events");
+        }
+
+        if (_gatheringManager)
+        {
+            _gatheringManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ GatheringManager initialized via IManagerBase");
+        }
+
+        if (_auctionManager)
+        {
+            _auctionManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ AuctionManager initialized via IManagerBase");
+
+            // Subscribe AuctionManager to auction events
+            _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_BID_PLACED, _auctionManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_WON, _auctionManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_OUTBID, _auctionManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_EXPIRED, _auctionManager.get());
+            _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_SOLD, _auctionManager.get());
+            TC_LOG_INFO("module.playerbot.managers", "🔗 AuctionManager subscribed to 5 auction events");
+        }
+
+        TC_LOG_INFO("module.playerbot.managers",
+            "🎯 PHASE 7.1 INTEGRATION COMPLETE: {} - {} managers initialized, {} events subscribed",
+            _bot->GetName(),
+            (_questManager ? 1 : 0) + (_tradeManager ? 1 : 0) + (_gatheringManager ? 1 : 0) + (_auctionManager ? 1 : 0),
+            16 + 11 + 5); // Quest + Trade + Auction event subscriptions
+    }
 
     // Initialize default strategies for basic functionality
     InitializeDefaultStrategies();
@@ -89,7 +187,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetGUID().ToString());
 }
 
-BotAI::~BotAI() = default;
+BotAI::~BotAI()
+{
+    // Phase 7.3: Legacy observer cleanup removed (dead code)
+    // Managers automatically unsubscribe via EventDispatcher on destruction
+}
 
 // ============================================================================
 // MAIN UPDATE METHOD - CLEAN SINGLE ENTRY POINT
@@ -242,7 +344,12 @@ void BotAI::UpdateAI(uint32 diff)
     UpdateManagers(diff);
 
     // ========================================================================
-    // PHASE 6: IDLE BEHAVIORS - Only when not in combat or following
+    // PHASE 7.3: EVENT SYSTEM - Events processed via EventDispatcher
+    // ========================================================================
+    // Legacy BotEventSystem removed - events now flow through per-bot EventDispatcher
+
+    // ========================================================================
+    // PHASE 7: IDLE BEHAVIORS - Only when not in combat or following
     // ========================================================================
 
     // Update idle behaviors (autonomous target scanning, etc.)
@@ -253,7 +360,7 @@ void BotAI::UpdateAI(uint32 diff)
     }
 
     // ========================================================================
-    // PHASE 7: GROUP MANAGEMENT - Check for group changes
+    // PHASE 8: GROUP MANAGEMENT - Check for group changes
     // ========================================================================
 
     // Check if bot left group and trigger cleanup
@@ -267,7 +374,7 @@ void BotAI::UpdateAI(uint32 diff)
     _wasInGroup = isInGroup;
 
     // ========================================================================
-    // PHASE 8: PERFORMANCE TRACKING
+    // PHASE 9: PERFORMANCE TRACKING
     // ========================================================================
 
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -294,17 +401,11 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    // DEADLOCK FIX #10: The previous fix wasn't complete!
-    // Problem: We acquired shared_lock, checked IsActive(), then released lock
-    // But IsActive() is just an atomic read - the REAL issue is that while holding
-    // shared_lock, if another thread tries to acquire unique_lock (in ActivateStrategy),
-    // and THEN we try to acquire ANOTHER shared_lock via GetStrategy() callback,
-    // we deadlock due to writer-preference in std::shared_mutex.
-    //
-    // Solution: Don't check IsActive() while holding lock. Just collect all strategies
-    // and check active status WITHOUT any mutex (IsActive() is atomic anyway).
+    // ========================================================================
+    // PHASE 1: Collect all active strategies WITHOUT holding lock
+    // ========================================================================
 
-    std::vector<std::pair<Strategy*, bool>> strategiesToCheck;
+    std::vector<Strategy*> strategiesToCheck;
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
@@ -320,67 +421,64 @@ void BotAI::UpdateStrategies(uint32 diff)
             auto it = _strategies.find(strategyName);
             if (it != _strategies.end())
             {
-                // Collect strategy pointer - don't call IsActive yet
-                strategiesToCheck.push_back({it->second.get(), false});
+                strategiesToCheck.push_back(it->second.get());
             }
         }
     } // RELEASE LOCK IMMEDIATELY
 
-    // NOW check IsActive() and update WITHOUT holding any lock
-    // IsActive() is thread-safe (atomic), and callbacks can safely call GetStrategy()
-    std::vector<Strategy*> strategiesToUpdate;
+    // ========================================================================
+    // PHASE 2: Filter active strategies and check IsActive()
+    // ========================================================================
+
+    std::vector<Strategy*> activeStrategies;
 
     static uint32 debugStrategyCounter = 0;
-    bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0); // Log every 10th call instead of 100th
+    bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0);
 
-    for (auto& [strategy, dummy] : strategiesToCheck)
+    for (Strategy* strategy : strategiesToCheck)
     {
-        if (strategy)
+        if (strategy && strategy->IsActive(this))
         {
-            bool isActive = strategy->IsActive(this);
+            activeStrategies.push_back(strategy);
             if (shouldLogStrategy)
             {
-                TC_LOG_ERROR("module.playerbot.ai", "🎯 STRATEGY CHECK: Bot {} strategy '{}', IsActive()={}",
-                            _bot->GetName(), strategy->GetName(), isActive);
-            }
-
-            if (isActive)
-            {
-                strategiesToUpdate.push_back(strategy);
-                if (shouldLogStrategy)
-                {
-                    TC_LOG_ERROR("module.playerbot", "✅ ADDED TO UPDATE LIST: Bot {} strategy '{}'",
-                                _bot->GetName(), strategy->GetName());
-                }
-            }
-            else
-            {
-                if (shouldLogStrategy)
-                {
-                    TC_LOG_ERROR("module.playerbot", "❌ NOT ACTIVE: Bot {} strategy '{}' - IsActive() returned false",
-                                _bot->GetName(), strategy->GetName());
-                }
+                TC_LOG_ERROR("module.playerbot.ai", "🎯 STRATEGY ACTIVE: Bot {} strategy '{}'",
+                            _bot->GetName(), strategy->GetName());
             }
         }
     }
 
-    if (shouldLogStrategy && !strategiesToUpdate.empty())
+    // ========================================================================
+    // PHASE 3: Use BehaviorPriorityManager to select highest priority strategy
+    // ========================================================================
+
+    Strategy* selectedStrategy = nullptr;
+    if (_priorityManager && !activeStrategies.empty())
     {
-        TC_LOG_ERROR("module.playerbot", "📋 Bot {} will update {} strategies",
-                    _bot->GetName(), strategiesToUpdate.size());
+        // Update context (combat state, fleeing, etc.)
+        _priorityManager->UpdateContext();
+
+        // Select highest priority valid strategy
+        selectedStrategy = _priorityManager->SelectActiveBehavior(activeStrategies);
+
+        if (shouldLogStrategy && selectedStrategy)
+        {
+            TC_LOG_ERROR("module.playerbot", "🏆 PRIORITY WINNER: Bot {} selected strategy '{}' from {} candidates",
+                        _bot->GetName(), selectedStrategy->GetName(), activeStrategies.size());
+        }
     }
 
-    // Call strategy updates WITHOUT holding ANY lock
-    TC_LOG_ERROR("module.playerbot", "⚡ ABOUT TO UPDATE {} STRATEGIES for bot {}",
-                strategiesToUpdate.size(), _bot->GetName());
+    // ========================================================================
+    // PHASE 4: Execute the selected strategy
+    // ========================================================================
 
-    for (Strategy* strategy : strategiesToUpdate)
+    if (selectedStrategy)
     {
-        TC_LOG_ERROR("module.playerbot", "🔄 LOOP ITERATION: strategy='{}', ptr={}",
-                    strategy->GetName(), (void*)strategy);
+        TC_LOG_ERROR("module.playerbot", "⚡ EXECUTING: Bot {} strategy '{}'",
+                    _bot->GetName(), selectedStrategy->GetName());
 
         // Special handling for follow strategy - needs every frame update
-        if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(strategy))
+        if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(selectedStrategy))
         {
             TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
@@ -389,17 +487,20 @@ void BotAI::UpdateStrategies(uint32 diff)
         {
             // Other strategies can use their normal update
             TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
-                        _bot->GetName(), strategy->GetName());
-            strategy->UpdateBehavior(this, diff);
+                        _bot->GetName(), selectedStrategy->GetName());
+            selectedStrategy->UpdateBehavior(this, diff);
             TC_LOG_ERROR("module.playerbot", "✔️ RETURNED from UpdateBehavior for bot {} strategy '{}'",
-                        _bot->GetName(), strategy->GetName());
+                        _bot->GetName(), selectedStrategy->GetName());
         }
+
+        _performanceMetrics.strategiesEvaluated = 1;
     }
-
-    TC_LOG_ERROR("module.playerbot", "✅ FINISHED updating {} strategies for bot {}",
-                strategiesToUpdate.size(), _bot->GetName());
-
-    _performanceMetrics.strategiesEvaluated = static_cast<uint32>(strategiesToUpdate.size());
+    else
+    {
+        TC_LOG_ERROR("module.playerbot", "⚠️ NO STRATEGY SELECTED for bot {} (had {} active)",
+                    _bot->GetName(), activeStrategies.size());
+        _performanceMetrics.strategiesEvaluated = 0;
+    }
 }
 
 // ============================================================================
@@ -926,12 +1027,65 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::string name = strategy->GetName();
+    Strategy* strategyPtr = strategy.get();
     _strategies[name] = std::move(strategy);
+
+    // Auto-register with priority manager based on strategy name
+    if (_priorityManager)
+    {
+        BehaviorPriority priority = BehaviorPriority::IDLE; // Default
+        bool exclusive = false;
+
+        // Determine priority from strategy name
+        if (name.find("combat") != std::string::npos || name.find("group_combat") != std::string::npos)
+        {
+            priority = BehaviorPriority::COMBAT;
+            exclusive = true; // Combat gets exclusive control
+        }
+        else if (name == "follow")
+        {
+            priority = BehaviorPriority::FOLLOW;
+        }
+        else if (name.find("flee") != std::string::npos)
+        {
+            priority = BehaviorPriority::FLEEING;
+            exclusive = true;
+        }
+        else if (name.find("cast") != std::string::npos)
+        {
+            priority = BehaviorPriority::CASTING;
+        }
+        else if (name.find("gather") != std::string::npos)
+        {
+            priority = BehaviorPriority::GATHERING;
+        }
+        else if (name.find("trade") != std::string::npos)
+        {
+            priority = BehaviorPriority::TRADING;
+        }
+        else if (name == "idle")
+        {
+            priority = BehaviorPriority::IDLE;
+        }
+
+        _priorityManager->RegisterStrategy(strategyPtr, priority, exclusive);
+
+        TC_LOG_DEBUG("module.playerbot.ai", "Registered strategy '{}' with priority {} (exclusive={})",
+                     name, static_cast<uint8>(priority), exclusive);
+    }
 }
 
 void BotAI::RemoveStrategy(std::string const& name)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    // Unregister from priority manager before removing
+    auto it = _strategies.find(name);
+    if (it != _strategies.end() && _priorityManager)
+    {
+        _priorityManager->UnregisterStrategy(it->second.get());
+    }
+
     _strategies.erase(name);
 
     // Also remove from active strategies
@@ -1191,6 +1345,9 @@ void BotAI::InitializeDefaultStrategies()
     auto idleStrategy = std::make_unique<IdleStrategy>();
     AddStrategy(std::move(idleStrategy));
 
+    // NOTE: Mutual exclusion rules are automatically configured in BehaviorPriorityManager constructor
+    // No need to add them here - they're already set up when _priorityManager is initialized
+
     TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, and idle strategies for bot {}", _bot->GetName());
 
     // NOTE: Do NOT activate strategies here!
@@ -1210,19 +1367,17 @@ void BotAI::UpdateValues(uint32 diff)
 
 void BotAI::UpdateManagers(uint32 diff)
 {
-    // Update all BehaviorManager-based managers
-    // Each manager internally throttles its own updates via BehaviorManager::Update()
+    // Phase 7.1: Integrated EventDispatcher + ManagerRegistry architecture
+    // This replaces the old manual manager update approach with centralized event routing
 
     static uint32 updateManagersCallCount = 0;
     if (++updateManagersCallCount % 10 == 0)
     {
-        TC_LOG_ERROR("module.playerbot", "🔧 UpdateManagers ENTRY: Bot {}, IsInWorld()={}, _questManager={}, _tradeManager={}, _gatheringManager={}, _auctionManager={}",
+        TC_LOG_ERROR("module.playerbot", "🔧 UpdateManagers ENTRY: Bot {}, IsInWorld()={}, EventDispatcher={}, ManagerRegistry={}",
                     _bot ? _bot->GetName() : "NULL",
                     _bot ? _bot->IsInWorld() : false,
-                    (void*)_questManager.get(),
-                    (void*)_tradeManager.get(),
-                    (void*)_gatheringManager.get(),
-                    (void*)_auctionManager.get());
+                    (void*)_eventDispatcher.get(),
+                    (void*)_managerRegistry.get());
     }
 
     if (!_bot || !_bot->IsInWorld())
@@ -1230,6 +1385,56 @@ void BotAI::UpdateManagers(uint32 diff)
         TC_LOG_ERROR("module.playerbot", "❌ UpdateManagers EARLY RETURN: Bot {} not in world", _bot ? _bot->GetName() : "NULL");
         return;
     }
+
+    // ========================================================================
+    // PHASE 7.1: EVENT DISPATCHER - Process queued events first
+    // ========================================================================
+    // Events from observers are queued and dispatched to managers.
+    // This is the bridge between Phase 6 (observers) and Phase 7 (managers).
+    if (_eventDispatcher)
+    {
+        // Process up to 100 events per update cycle to maintain performance
+        uint32 eventsProcessed = _eventDispatcher->ProcessQueue(100);
+
+        if (eventsProcessed > 0)
+        {
+            TC_LOG_TRACE("module.playerbot.events",
+                "Bot {} processed {} events this cycle",
+                _bot->GetName(), eventsProcessed);
+        }
+
+        // Warn if queue is backing up (>500 events indicates processing bottleneck)
+        size_t queueSize = _eventDispatcher->GetQueueSize();
+        if (queueSize > 500)
+        {
+            TC_LOG_WARN("module.playerbot.events",
+                "Bot {} event queue backlog: {} events pending",
+                _bot->GetName(), queueSize);
+        }
+    }
+
+    // ========================================================================
+    // PHASE 7.1: MANAGER REGISTRY - Update all registered managers
+    // ========================================================================
+    // The ManagerRegistry coordinates all manager updates with throttling.
+    // This replaces the old manual update approach for each manager.
+    if (_managerRegistry)
+    {
+        uint32 managersUpdated = _managerRegistry->UpdateAll(diff);
+
+        if (managersUpdated > 0)
+        {
+            TC_LOG_TRACE("module.playerbot.managers",
+                "Bot {} updated {} managers this cycle",
+                _bot->GetName(), managersUpdated);
+        }
+    }
+
+    // ========================================================================
+    // LEGACY: Keep old manager updates for now during Phase 7 transition
+    // ========================================================================
+    // These will be removed once all managers are integrated with IManagerBase
+    // and registered in ManagerRegistry during Phase 7.2-7.6
 
     // Quest manager handles quest acceptance, turn-in, and tracking
     if (_questManager)
