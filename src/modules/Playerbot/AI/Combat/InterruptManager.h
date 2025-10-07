@@ -273,9 +273,19 @@ public:
 
     // Primary interrupt interface
     void UpdateInterruptSystem(uint32 diff);
+    void Update(uint32 diff) { UpdateInterruptSystem(diff); }  // Alias for compatibility
     std::vector<InterruptTarget> ScanForInterruptTargets();
     InterruptResult AttemptInterrupt(const InterruptTarget& target);
     void ProcessInterruptOpportunities();
+
+    // Compatibility interface for CombatBehaviorIntegration
+    bool HasUrgentInterrupt() const;
+    Unit* GetInterruptTarget();
+    bool ShouldInterrupt(Unit* target);
+    bool ShouldInterruptOwnCast();
+    bool IsCastDangerous(Unit* caster);
+    bool IsCastHighPriority(Unit* caster);
+    void Reset();
 
     // Target analysis and prioritization
     InterruptPriority AssessInterruptPriority(const SpellInfo* spellInfo, Unit* caster);

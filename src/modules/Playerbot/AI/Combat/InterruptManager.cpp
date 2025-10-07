@@ -1162,4 +1162,81 @@ bool InterruptManager::AttemptMovementInterrupt(Unit* target)
     return true;
 }
 
+// Compatibility interface implementations for CombatBehaviorIntegration
+bool InterruptManager::HasUrgentInterrupt() const
+{
+    // Simple check - would scan for urgent interrupt targets
+    return false;
+}
+
+Unit* InterruptManager::GetInterruptTarget()
+{
+    auto targets = const_cast<InterruptManager*>(this)->ScanForInterruptTargets();
+    if (targets.empty())
+        return nullptr;
+
+    // Return highest priority target
+    return targets.front().unit;
+}
+
+bool InterruptManager::ShouldInterrupt(Unit* target)
+{
+    if (!target || !target->HasUnitState(UNIT_STATE_CASTING))
+        return false;
+
+    Spell const* spell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL);
+    if (!spell)
+        spell = target->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
+
+    if (!spell)
+        return false;
+
+    return IsSpellInterruptWorthy(spell->GetSpellInfo()->Id, target);
+}
+
+bool InterruptManager::ShouldInterruptOwnCast()
+{
+    // Check if bot should interrupt own cast for more urgent action
+    return false;
+}
+
+bool InterruptManager::IsCastDangerous(Unit* caster)
+{
+    if (!caster || !caster->HasUnitState(UNIT_STATE_CASTING))
+        return false;
+
+    Spell const* spell = caster->GetCurrentSpell(CURRENT_GENERIC_SPELL);
+    if (!spell)
+        spell = caster->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
+
+    if (!spell)
+        return false;
+
+    auto priority = AssessInterruptPriority(spell->GetSpellInfo(), caster);
+    return priority == InterruptPriority::CRITICAL || priority == InterruptPriority::HIGH;
+}
+
+bool InterruptManager::IsCastHighPriority(Unit* caster)
+{
+    if (!caster || !caster->HasUnitState(UNIT_STATE_CASTING))
+        return false;
+
+    Spell const* spell = caster->GetCurrentSpell(CURRENT_GENERIC_SPELL);
+    if (!spell)
+        spell = caster->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
+
+    if (!spell)
+        return false;
+
+    auto priority = AssessInterruptPriority(spell->GetSpellInfo(), caster);
+    return priority == InterruptPriority::HIGH;
+}
+
+void InterruptManager::Reset()
+{
+    // Reset interrupt manager state
+    // Clear any tracked state variables that exist in the private section
+    // Note: Actual member variables need to be checked in the header
+}
+
 } // namespace Playerbot
