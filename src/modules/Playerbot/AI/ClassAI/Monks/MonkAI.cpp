@@ -617,7 +617,7 @@ Position MonkAI::CalculateRollDestination(::Unit* target)
         return GetBot()->GetPosition();
 
     // Roll towards target but not past it
-    float angle = GetBot()->GetAngle(target);
+    float angle = GetBot()->GetAbsoluteAngle(target);
     float distance = std::min(ROLL_DISTANCE, GetBot()->GetDistance(target) - 3.0f);
 
     return GetBot()->GetFirstCollisionPosition(distance, angle);

@@ -37,12 +37,12 @@ enum VengeanceSpells
     FEL_DEVASTATION_SPENDER  = 212084,  // 50 Pain channel (talent)
 
     // Active Mitigation (DEMON_SPIKES, FIERY_BRAND already defined in DemonHunterAI.h)
-    SOUL_BARRIER             = 263648,  // Absorb shield (talent)
+    // SOUL_BARRIER already defined in DemonHunterAI.h
     // METAMORPHOSIS_VENGEANCE already defined in DemonHunterAI.h
 
     // Sigils (SIGIL_OF_FLAME already defined in DemonHunterAI.h)
-    SIGIL_OF_SILENCE         = 202137,  // AoE silence, 1 min CD
-    SIGIL_OF_MISERY          = 207684,  // AoE fear, 1.5 min CD
+    // SIGIL_OF_SILENCE already defined in DemonHunterAI.h
+    // SIGIL_OF_MISERY already defined in DemonHunterAI.h
     SIGIL_OF_CHAINS          = 202138,  // AoE slow, 1.5 min CD
 
     // Threat and Utility

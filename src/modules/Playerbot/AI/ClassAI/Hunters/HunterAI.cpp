@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "Pet.h"
 #include "Group.h"
+#include "CreatureAI.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "WorldSession.h"
@@ -1263,7 +1264,7 @@ void HunterAI::UpdateTracking()
     // TODO: Implement tracking management based on situation
 }
 
-bool HunterAI::HasAnyAspect() const
+bool HunterAI::HasAnyAspect()
 {
     return HasAura(ASPECT_OF_THE_HAWK) ||
            HasAura(ASPECT_OF_THE_MONKEY) ||
@@ -1274,7 +1275,7 @@ bool HunterAI::HasAnyAspect() const
            HasAura(ASPECT_OF_THE_TURTLE);
 }
 
-uint32 HunterAI::GetCurrentAspect() const
+uint32 HunterAI::GetCurrentAspect()
 {
     if (HasAura(ASPECT_OF_THE_DRAGONHAWK)) return ASPECT_OF_THE_DRAGONHAWK;
     if (HasAura(ASPECT_OF_THE_HAWK)) return ASPECT_OF_THE_HAWK;
@@ -1415,17 +1416,31 @@ void HunterAI::LogCombatMetrics()
                  _peakUpdateTime);
 }
 
-Player* HunterAI::GetMainTank() const
+Player* HunterAI::GetMainTank()
 {
     if (!_bot->GetGroup())
         return nullptr;
 
+    Group* group = _bot->GetGroup();
     Player* tank = nullptr;
-    _bot->GetGroup()->DoForAllMembers([&tank](Player* member)
+
+    // Find tank by looking for warriors/paladins/death knights with tank specs
+    // In TrinityCore, we check class + role based on talents/gear
+    for (GroupReference const& itr : group->GetMembers())
     {
-        if (member && member->GetSpecializationRole() == ROLES_TANK)
-            tank = member;
-    });
+        Player* member = itr.GetSource();
+        if (member)
+        {
+            uint8 playerClass = member->GetClass();
+            // Typical tank classes: Warrior, Paladin, Death Knight, Druid (in bear form)
+            if (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
+                playerClass == CLASS_DEATH_KNIGHT || playerClass == CLASS_DRUID)
+            {
+                tank = member;
+                break; // Use first potential tank found
+            }
+        }
+    }
 
     return tank;
 }

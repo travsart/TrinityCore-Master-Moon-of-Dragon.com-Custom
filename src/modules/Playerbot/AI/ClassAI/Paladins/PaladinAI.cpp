@@ -601,9 +601,9 @@ void PaladinAI::UseDefensiveCooldowns()
         Group* group = GetBot()->GetGroup();
         if (group)
         {
-            for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+            for (GroupReference const& itr : group->GetMembers())
             {
-                Player* member = itr->GetSource();
+                Player* member = itr.GetSource();
                 if (member && member != GetBot() && member->GetHealthPct() < 30.0f)
                 {
                     if (CastSpell(member, BLESSING_OF_PROTECTION))
@@ -914,9 +914,9 @@ void PaladinAI::SpendHolyPower(::Unit* target)
                 if (group)
                 {
                     float lowestHealth = 100.0f;
-                    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+                    for (GroupReference const& itr : group->GetMembers())
                     {
-                        Player* member = itr->GetSource();
+                        Player* member = itr.GetSource();
                         if (member && member->GetHealthPct() < lowestHealth)
                         {
                             lowestHealth = member->GetHealthPct();
@@ -1037,9 +1037,9 @@ bool PaladinAI::IsAllyInDanger() const
     if (!group)
         return false;
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (member && member != GetBot() && member->GetHealthPct() < 40.0f)
             return true;
     }
@@ -1060,9 +1060,9 @@ bool PaladinAI::ShouldUseLayOnHands() const
     Group* group = GetBot()->GetGroup();
     if (group)
     {
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             // TODO: Check if member is tank
             if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
                 return true;

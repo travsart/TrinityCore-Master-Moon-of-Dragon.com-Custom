@@ -204,8 +204,8 @@ private:
     // Hunter-specific mechanics
     void ManageAspects();
     void UpdateTracking();
-    bool HasAnyAspect() const;
-    uint32 GetCurrentAspect() const;
+    bool HasAnyAspect(); // Not const - calls non-const HasAura()
+    uint32 GetCurrentAspect(); // Not const - calls non-const HasAura()
     void SwitchToCombatAspect();
     void SwitchToMovementAspect();
     bool ValidateAspectForAbility(uint32 spellId) const;
@@ -223,7 +223,7 @@ private:
     void LogCombatMetrics();
 
     // Helper methods
-    Player* GetMainTank() const;
+    Player* GetMainTank(); // Not const - calls GetClass() on group members
     bool IsTargetDangerous(::Unit* target) const;
     bool ShouldSaveDefensives() const;
     void RecordShotResult(bool hit, bool crit);

@@ -73,18 +73,14 @@ void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
     }
 }
 
-void WarlockAI::DelegateToSpecialization(::Unit* target)
-{
-    if (_specialization)
-        _specialization->UpdateRotation(target);
-}
-
 void WarlockAI::UpdateRotation(::Unit* target)
 {
     if (!target)
         return;
 
-    DelegateToSpecialization(target);
+    // Delegate to specialization implementation
+    if (_specialization)
+        _specialization->UpdateRotation(target);
 }
 
 void WarlockAI::UpdateBuffs()
