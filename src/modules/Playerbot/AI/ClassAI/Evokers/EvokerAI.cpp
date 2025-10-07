@@ -8,6 +8,7 @@
  */
 
 #include "EvokerAI.h"
+#include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Spell.h"
 #include "SpellMgr.h"
@@ -23,6 +24,7 @@
 #include "Cell.h"
 #include "CellImpl.h"
 #include "../BaselineRotationManager.h"
+#include "Log.h"
 
 namespace Playerbot
 {
@@ -116,6 +118,204 @@ void EvokerAI::UpdateRotation(::Unit* target)
     UpdateEmpowermentSystem();
     UpdateAspectManagement();
 
+    // **CombatBehaviorIntegration - 10-Priority System**
+    auto* behaviors = GetCombatBehaviors();
+
+    // Priority 1: Interrupts - Quell (Evoker's interrupt)
+    if (behaviors && behaviors->ShouldInterrupt(target))
+    {
+        ::Unit* interruptTarget = behaviors->GetInterruptTarget();
+        if (interruptTarget && CanUseAbility(SPELL_QUELL))
+        {
+            if (CastSpell(interruptTarget, SPELL_QUELL))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} interrupted {} with Quell",
+                             _bot->GetName(), interruptTarget->GetName());
+                return;
+            }
+        }
+    }
+
+    // Priority 2: Defensives - Obsidian Scales, Renewing Blaze
+    if (behaviors && behaviors->NeedsDefensive())
+    {
+        float healthPct = _bot->GetHealthPct();
+
+        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
+        {
+            if (CastSpell(_bot, OBSIDIAN_SCALES))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Obsidian Scales at {}% health",
+                             _bot->GetName(), healthPct);
+                return;
+            }
+        }
+
+        if (healthPct < 50.0f && CanUseAbility(RENEWING_BLAZE))
+        {
+            if (CastSpell(_bot, RENEWING_BLAZE))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Renewing Blaze at {}% health",
+                             _bot->GetName(), healthPct);
+                return;
+            }
+        }
+
+        // Verdant Embrace for Preservation - teleport to ally and heal
+        if (_specialization == EvokerSpec::PRESERVATION && healthPct < 40.0f && CanUseAbility(VERDANT_EMBRACE))
+        {
+            ::Unit* healTarget = GetLowestHealthAlly();
+            if (healTarget && CastSpell(healTarget, VERDANT_EMBRACE))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Verdant Embrace to escape",
+                             _bot->GetName());
+                return;
+            }
+        }
+    }
+
+    // Priority 3: Positioning - Maintain mid-range (20-25 yards for empowered spells)
+    if (behaviors && behaviors->NeedsRepositioning())
+    {
+        Position optimalPos = behaviors->GetOptimalPosition();
+        float distance = _bot->GetDistance(target);
+
+        // Too close - use Hover to gain distance
+        if (distance < 15.0f && CanUseAbility(HOVER))
+        {
+            if (CastSpell(_bot, HOVER))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Hover to reposition",
+                             _bot->GetName());
+                return;
+            }
+        }
+
+        // Wing Buffet for knockback
+        if (distance < 10.0f && CanUseAbility(WING_BUFFET))
+        {
+            if (CastSpell(_bot, WING_BUFFET))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Wing Buffet for space",
+                             _bot->GetName());
+                return;
+            }
+        }
+    }
+
+    // Priority 4: Target Switching - Switch to priority targets
+    if (behaviors && behaviors->ShouldSwitchTarget())
+    {
+        ::Unit* priorityTarget = behaviors->GetPriorityTarget();
+        if (priorityTarget && priorityTarget != target)
+        {
+            OnTargetChanged(priorityTarget);
+            target = priorityTarget;
+            TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} switching to priority target {}",
+                         _bot->GetName(), priorityTarget->GetName());
+        }
+    }
+
+    // Priority 5: Crowd Control - Sleep Walk, Landslide
+    if (behaviors && behaviors->ShouldUseCrowdControl())
+    {
+        ::Unit* ccTarget = behaviors->GetCrowdControlTarget();
+        if (ccTarget && ccTarget != target)
+        {
+            if (CanUseAbility(SLEEP_WALK))
+            {
+                if (CastSpell(ccTarget, SLEEP_WALK))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} Sleep Walking secondary target",
+                                 _bot->GetName());
+                    return;
+                }
+            }
+        }
+    }
+
+    // Priority 6: AoE Decisions - Pyre, Eternity's Surge based on enemy count
+    if (behaviors && behaviors->ShouldAOE())
+    {
+        if (_specialization == EvokerSpec::DEVASTATION)
+        {
+            // Pyre for AoE with Essence Burst proc
+            if (_essenceBurstStacks > 0 && CanUseAbility(PYRE))
+            {
+                if (CastSpell(target, PYRE))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Pyre for AoE",
+                                 _bot->GetName());
+                    return;
+                }
+            }
+
+            // Eternity's Surge (empowered) for AoE burst
+            if (_essence.current >= 3 && CanUseAbility(ETERNITYS_SURGE))
+            {
+                StartEmpoweredSpell(ETERNITYS_SURGE, EmpowermentLevel::RANK_3, target);
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Eternity's Surge (Rank 3) for AoE",
+                             _bot->GetName());
+                return;
+            }
+        }
+        else if (_specialization == EvokerSpec::PRESERVATION)
+        {
+            // Dream Breath (empowered) for AoE healing
+            if (_essence.current >= 3 && CanUseAbility(DREAM_BREATH))
+            {
+                StartEmpoweredSpell(DREAM_BREATH, EmpowermentLevel::RANK_3, target);
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Dream Breath (Rank 3) for AoE healing",
+                             _bot->GetName());
+                return;
+            }
+
+            // Emerald Blossom for instant AoE heal
+            if (CanUseAbility(EMERALD_BLOSSOM))
+            {
+                if (CastSpell(_bot, EMERALD_BLOSSOM))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Emerald Blossom for AoE healing",
+                                 _bot->GetName());
+                    return;
+                }
+            }
+        }
+    }
+
+    // Priority 7: Offensive Cooldowns - Dragonrage, Tip the Scales
+    if (behaviors && behaviors->ShouldUseCooldowns())
+    {
+        if (_specialization == EvokerSpec::DEVASTATION)
+        {
+            // Dragonrage - major DPS cooldown
+            if (CanUseAbility(SPELL_DRAGONRAGE))
+            {
+                if (CastSpell(_bot, SPELL_DRAGONRAGE))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Dragonrage",
+                                 _bot->GetName());
+                    _dragonrageStacks = 40; // Starts at 40 stacks
+                    return;
+                }
+            }
+        }
+        else if (_specialization == EvokerSpec::PRESERVATION)
+        {
+            // Emerald Communion - major healing cooldown
+            if (CanUseAbility(EMERALD_COMMUNION))
+            {
+                if (CastSpell(_bot, EMERALD_COMMUNION))
+                {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Emerald Communion",
+                                 _bot->GetName());
+                    return;
+                }
+            }
+        }
+    }
+
+    // Priority 8-10: Normal Rotation (spec-specific)
     switch (_specialization)
     {
         case EvokerSpec::DEVASTATION:

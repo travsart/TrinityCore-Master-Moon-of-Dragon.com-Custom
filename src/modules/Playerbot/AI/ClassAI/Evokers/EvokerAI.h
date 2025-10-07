@@ -153,6 +153,8 @@ public:
         TAIL_SWIPE = 368970,
         WING_BUFFET = 357214,
         SLEEP_WALK = 360806,
+        SPELL_QUELL = 351338,       // Interrupt
+        SPELL_DRAGONRAGE = 375087,   // Devastation major cooldown
 
         // Defensive abilities
         OBSIDIAN_SCALES = 363916,
