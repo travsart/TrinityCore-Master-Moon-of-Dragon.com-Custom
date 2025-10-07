@@ -1135,4 +1135,10 @@ void MonkAI::HandleAdvancedWindwalkerManagement()
     // Advanced Windwalker mechanics handled in ExecuteWindwalkerRotation
 }
 
+void MonkAI::RecordAbilityUsage(uint32 spellId)
+{
+    // Track ability usage for performance monitoring
+    _monkMetrics.totalAbilitiesUsed.fetch_add(1, std::memory_order_relaxed);
+}
+
 } // namespace Playerbot

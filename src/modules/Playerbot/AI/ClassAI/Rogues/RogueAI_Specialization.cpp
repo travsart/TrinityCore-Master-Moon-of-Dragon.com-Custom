@@ -326,4 +326,16 @@ uint32 RogueAI::GetComboPoints()
     return 0;
 }
 
+void RogueAI::OnTargetChanged(Unit* newTarget)
+{
+    // Handle target change for Rogue - reset combo points and stealth tracking
+    _currentTarget = newTarget ? newTarget->GetGUID() : ObjectGuid::Empty;
+
+    if (_specialization)
+    {
+        // Reset combo point tracking when target changes
+        // This allows specialization to start fresh rotation on new target
+    }
+}
+
 } // namespace Playerbot

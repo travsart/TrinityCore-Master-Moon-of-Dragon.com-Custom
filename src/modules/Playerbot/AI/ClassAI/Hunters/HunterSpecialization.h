@@ -48,6 +48,7 @@ enum HunterSpells : uint32
 
     // Traps
     FREEZING_TRAP = 1499,
+    ICE_TRAP = 1499,  // Alias for FREEZING_TRAP
     EXPLOSIVE_TRAP = 13813,
     IMMOLATION_TRAP = 13795,
     FROST_TRAP = 13809,
@@ -61,6 +62,7 @@ enum HunterSpells : uint32
     ASPECT_OF_THE_WILD = 20043,
     ASPECT_OF_THE_VIPER = 34074,
     ASPECT_OF_THE_DRAGONHAWK = 61846,
+    ASPECT_OF_THE_TURTLE = 186265,  // Defensive aspect
 
     // Stings
     VIPER_STING = 3034,
@@ -77,13 +79,24 @@ enum HunterSpells : uint32
     TRACK_GIANTS = 19882,
     TRACK_DRAGONKIN = 19880,
     DISENGAGE = 781,
+    HUNTER_DISENGAGE = 781,  // Alias for DISENGAGE
     FEIGN_DEATH = 5384,
     DETERRENCE = 19263,
+    HUNTER_DETERRENCE = 19263,  // Alias for DETERRENCE
+    HUNTER_COUNTER_SHOT = 147362,  // Interrupt
+    COUNTER_SHOT = 147362,  // Alias for HUNTER_COUNTER_SHOT
+    SILENCING_SHOT = 34490,  // Interrupt (alternative)
+    SCATTER_SHOT = 19503,  // Crowd control
+    MASTER_S_CALL = 53271,  // Pet CC break
+    EXHILARATION = 109304,  // Self-heal
 
     // Ranged weapon abilities
     STEADY_SHOT = 34120,
     KILL_SHOT = 53351,
     CHIMERA_SHOT = 53209,
+    VOLLEY = 58434,  // AoE ranged attack
+    BARRAGE = 120360,  // Channeled AoE
+    TRUESHOT = 193526,  // Offensive cooldown
 
     // Melee abilities (Survival)
     RAPTOR_STRIKE = 2973,

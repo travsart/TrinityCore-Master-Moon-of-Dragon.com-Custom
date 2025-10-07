@@ -25,26 +25,7 @@ class RestorationSpecialization;
 namespace Playerbot
 {
 
-// Totem types for management
-enum class TotemType : uint8
-{
-    FIRE = 0,
-    EARTH = 1,
-    WATER = 2,
-    AIR = 3,
-    MAX = 4
-};
-
-// Totem tracking structure
-struct TotemInfo
-{
-    uint32 spellId;
-    uint32 deployTime;
-    Position position;
-    bool isActive;
-
-    TotemInfo() : spellId(0), deployTime(0), isActive(false) {}
-};
+// TotemType and TotemInfo are defined in ShamanSpecialization.h
 
 // Shaman AI implementation with specialization pattern and CombatBehaviorIntegration
 class TC_GAME_API ShamanAI : public ClassAI
@@ -85,8 +66,8 @@ private:
     uint32 _shocksUsed;
     std::unordered_map<uint32, uint32> _abilityUsage;
 
-    // Totem management system
-    std::array<TotemInfo, static_cast<size_t>(TotemType::MAX)> _activeTotems;
+    // Totem management system (5 types: FIRE, EARTH, WATER, AIR, NONE)
+    std::array<TotemInfo, 5> _activeTotems;
     uint32 _lastTotemUpdate;
     uint32 _lastTotemCheck;
 

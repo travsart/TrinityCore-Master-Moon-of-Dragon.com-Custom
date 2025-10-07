@@ -612,9 +612,9 @@ private:
     void ConsumeEnergyForAbility(uint32 spellId, uint32 amount);
     void GenerateChi(uint32 amount);
     void ManageResourceGeneration(::Unit* target);
-    void UseDefensiveCooldowns();
+    // UseDefensiveCooldowns already declared at line 515
     void HandleMobilityAbilities(::Unit* target, const Position& optimalPos);
-    Position CalculateRollDestination(::Unit* target);
+    // CalculateRollDestination already declared at line 481
 
     // Specialization-specific rotations
     void ExecuteWindwalkerRotation(::Unit* target);
@@ -625,7 +625,7 @@ private:
     Unit* GetLowestHealthAlly(float range);
     uint32 GetNearbyInjuredAlliesCount(float range, float healthThreshold);
     uint32 GetNearbyEnemyCount(float range) const;
-    void RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success);
+    // RecordInterruptAttempt already declared at line 588
 
     // Enhanced constants
     static constexpr uint32 FORM_CHANGE_COOLDOWN = 1500; // 1.5 seconds

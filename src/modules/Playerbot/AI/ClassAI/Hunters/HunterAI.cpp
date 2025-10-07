@@ -1355,9 +1355,25 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     float lowestHealth = 100.0f;
 
     // Find best CC target (lowest health add that's not the main target)
+    std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, 30.0f);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, bestTarget, u_check);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     Cell::VisitAllObjects(_bot, searcher, 30.0f);
+
+    // Find the target with lowest health that's not the current main target
+    Unit* currentTarget = _bot->GetVictim();
+    for (Unit* unit : targets)
+    {
+        if (unit && unit != currentTarget && unit->IsAlive())
+        {
+            float healthPct = unit->GetHealthPct();
+            if (healthPct < lowestHealth)
+            {
+                lowestHealth = healthPct;
+                bestTarget = unit;
+            }
+        }
+    }
 
     return bestTarget;
 }

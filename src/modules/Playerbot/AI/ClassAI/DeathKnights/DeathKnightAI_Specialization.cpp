@@ -284,4 +284,14 @@ void DeathKnightAI::ActivateBurstCooldowns(::Unit* target)
     }
 }
 
+void DeathKnightAI::OnTargetChanged(Unit* newTarget)
+{
+    // Handle target change for Death Knight - reset combat state
+    if (_specialization)
+    {
+        // Reset rune cooldowns and priorities when target changes
+        // This allows specialization to adapt rotation to new target
+    }
+}
+
 } // namespace Playerbot

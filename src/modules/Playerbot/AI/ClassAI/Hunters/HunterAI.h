@@ -35,68 +35,7 @@ enum class HunterSpec : uint8
     SURVIVAL = 3
 };
 
-// Hunter spell constants (shared across specs)
-enum HunterCombatSpells : uint32
-{
-    // Core Hunter abilities
-    HUNTER_S_MARK         = 1130,
-    ARCANE_SHOT           = 3044,
-    SERPENT_STING         = 1978,
-    STEADY_SHOT           = 56641,
-    KILL_SHOT             = 53351,
-    HUNTER_DISENGAGE      = 781,
-    HUNTER_DETERRENCE     = 19263,
-    FEIGN_DEATH           = 5384,
-
-    // Interrupts
-    COUNTER_SHOT          = 147362,
-    SILENCING_SHOT        = 34490,
-
-    // Crowd Control
-    FREEZING_TRAP         = 1499,
-    ICE_TRAP              = 13809,
-    SNAKE_TRAP            = 34600,
-    SCATTER_SHOT          = 19503,
-    CONCUSSIVE_SHOT       = 5116,
-    WING_CLIP             = 2974,
-
-    // AoE abilities
-    MULTI_SHOT            = 2643,
-    VOLLEY                = 1510,
-    EXPLOSIVE_SHOT        = 60053,
-    BARRAGE               = 120360,
-
-    // Cooldowns
-    BESTIAL_WRATH         = 19574,
-    RAPID_FIRE            = 3045,
-    TRUESHOT              = 288613,
-    ASPECT_OF_THE_WILD    = 193530,
-
-    // Aspects
-    ASPECT_OF_THE_HAWK    = 13165,
-    ASPECT_OF_THE_MONKEY  = 13163,
-    ASPECT_OF_THE_CHEETAH = 5118,
-    ASPECT_OF_THE_PACK    = 13159,
-    ASPECT_OF_THE_VIPER   = 34074,
-    ASPECT_OF_THE_DRAGONHAWK = 61846,
-    ASPECT_OF_THE_TURTLE  = 186265,
-
-    // Pet management
-    CALL_PET              = 883,
-    DISMISS_PET           = 2641,
-    MEND_PET              = 136,
-    REVIVE_PET            = 982,
-    PET_ATTACK            = 52398,
-    PET_FOLLOW            = 52399,
-    PET_STAY              = 52400,
-    KILL_COMMAND          = 34026,
-    MASTER_S_CALL         = 53271,
-
-    // Defensive
-    EXHILARATION          = 109304,
-    ASPECT_OF_THE_TURTLE  = 186265,
-    TURTLE                = 186265 // Alias
-};
+// Hunter spell constants defined in HunterSpecialization.h (HunterSpells enum)
 
 // Combat metrics structure for performance tracking
 struct HunterCombatMetrics
