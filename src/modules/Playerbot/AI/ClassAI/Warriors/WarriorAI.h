@@ -191,6 +191,12 @@ private:
     void ReduceThreatWhenNeeded();
     void HandleThreatEmergency();
 
+    // Combat behavior integration helpers
+    void ExecuteBasicWarriorRotation(::Unit* target);
+    void RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success);
+    void UseDefensiveCooldowns();
+    uint32 GetNearbyEnemyCount(float range) const;
+
     // Enhanced constants
     static constexpr uint32 STANCE_CHANGE_COOLDOWN = 1000; // 1 second
     static constexpr uint32 CHARGE_MIN_RANGE = 8;

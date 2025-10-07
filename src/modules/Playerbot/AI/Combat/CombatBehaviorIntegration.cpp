@@ -166,8 +166,8 @@ void CombatBehaviorIntegration::UpdatePriorities()
     if (_emergencyMode)
     {
         RecommendedAction emergency;
-        emergency.type = CombatAction::EMERGENCY;
-        emergency.priority = ActionPriority::EMERGENCY;
+        emergency.type = CombatActionType::EMERGENCY;
+        emergency.urgency = ActionUrgency::EMERGENCY;
         emergency.reason = "Emergency mode active";
         emergency.timestamp = getMSTime();
         _actionQueue.push_back(emergency);
@@ -180,8 +180,8 @@ void CombatBehaviorIntegration::UpdatePriorities()
         if (target)
         {
             RecommendedAction interrupt;
-            interrupt.type = CombatAction::INTERRUPT;
-            interrupt.priority = EvaluateInterruptPriority(target);
+            interrupt.type = CombatActionType::INTERRUPT;
+            interrupt.urgency = EvaluateInterruptPriority(target);
             interrupt.target = target;
             interrupt.reason = "Urgent interrupt needed";
             interrupt.timestamp = getMSTime();
@@ -193,8 +193,8 @@ void CombatBehaviorIntegration::UpdatePriorities()
     if (_defensiveManager->NeedsDefensive())
     {
         RecommendedAction defensive;
-        defensive.type = CombatAction::DEFENSIVE;
-        defensive.priority = EvaluateDefensivePriority();
+        defensive.type = CombatActionType::DEFENSIVE;
+        defensive.urgency = EvaluateDefensivePriority();
         defensive.spellId = _defensiveManager->GetRecommendedDefensive();
         defensive.reason = "Defensive ability needed";
         defensive.timestamp = getMSTime();
@@ -205,8 +205,8 @@ void CombatBehaviorIntegration::UpdatePriorities()
     if (_movementIntegration->NeedsUrgentMovement())
     {
         RecommendedAction movement;
-        movement.type = CombatAction::MOVEMENT;
-        movement.priority = EvaluateMovementPriority();
+        movement.type = CombatActionType::MOVEMENT;
+        movement.urgency = EvaluateMovementPriority();
         movement.position = _movementIntegration->GetTargetPosition();
         movement.reason = "Movement required";
         movement.timestamp = getMSTime();
@@ -221,8 +221,8 @@ void CombatBehaviorIntegration::UpdatePriorities()
         if (newTarget && newTarget->GetGUID() != currentTarget)
         {
             RecommendedAction targetSwitch;
-            targetSwitch.type = CombatAction::TARGET_SWITCH;
-            targetSwitch.priority = EvaluateTargetSwitchPriority();
+            targetSwitch.type = CombatActionType::TARGET_SWITCH;
+            targetSwitch.urgency = EvaluateTargetSwitchPriority();
             targetSwitch.target = newTarget;
             targetSwitch.reason = "Priority target available";
             targetSwitch.timestamp = getMSTime();
@@ -240,9 +240,9 @@ void CombatBehaviorIntegration::GenerateRecommendations()
     if (_behaviorManager->ShouldUseConsumables())
     {
         RecommendedAction consumable;
-        consumable.type = CombatAction::CONSUMABLE;
-        consumable.priority = metrics.personalHealthPercent < 40.0f ?
-                              ActionPriority::HIGH : ActionPriority::NORMAL;
+        consumable.type = CombatActionType::CONSUMABLE;
+        consumable.urgency = metrics.personalHealthPercent < 40.0f ?
+                              ActionUrgency::HIGH : ActionUrgency::NORMAL;
         consumable.reason = "Consumable usage recommended";
         consumable.timestamp = getMSTime();
         _actionQueue.push_back(consumable);
@@ -252,9 +252,9 @@ void CombatBehaviorIntegration::GenerateRecommendations()
     if (_behaviorManager->ShouldUseOffensiveCooldowns())
     {
         RecommendedAction cooldown;
-        cooldown.type = CombatAction::COOLDOWN;
-        cooldown.priority = _stateAnalyzer->NeedsBurst() ?
-                            ActionPriority::HIGH : ActionPriority::NORMAL;
+        cooldown.type = CombatActionType::COOLDOWN;
+        cooldown.urgency = _stateAnalyzer->NeedsBurst() ?
+                            ActionUrgency::HIGH : ActionUrgency::NORMAL;
         cooldown.reason = "Offensive cooldowns recommended";
         cooldown.timestamp = getMSTime();
         _actionQueue.push_back(cooldown);
@@ -267,8 +267,8 @@ void CombatBehaviorIntegration::GenerateRecommendations()
         if (ccTarget)
         {
             RecommendedAction cc;
-            cc.type = CombatAction::CROWD_CONTROL;
-            cc.priority = ActionPriority::HIGH;
+            cc.type = CombatActionType::CROWD_CONTROL;
+            cc.urgency = ActionUrgency::HIGH;
             cc.target = ccTarget;
             cc.spellId = _crowdControlManager->GetRecommendedSpell(ccTarget);
             cc.reason = "Crowd control opportunity";
@@ -284,8 +284,8 @@ void CombatBehaviorIntegration::PrioritizeActions()
     std::sort(_actionQueue.begin(), _actionQueue.end(),
         [this](const RecommendedAction& a, const RecommendedAction& b)
         {
-            if (a.priority != b.priority)
-                return a.priority > b.priority;
+            if (a.urgency != b.urgency)
+                return a.urgency > b.urgency;
             return CalculateActionScore(a) > CalculateActionScore(b);
         });
 
@@ -666,69 +666,69 @@ void CombatBehaviorIntegration::OnCombatEnd()
     Reset();
 }
 
-ActionPriority CombatBehaviorIntegration::EvaluateInterruptPriority(Unit* target)
+ActionUrgency CombatBehaviorIntegration::EvaluateInterruptPriority(Unit* target)
 {
     if (!target || !target->HasUnitState(UNIT_STATE_CASTING))
-        return ActionPriority::LOW;
+        return ActionUrgency::LOW;
 
     // Check if cast is dangerous
     if (_interruptManager->IsCastDangerous(target))
-        return ActionPriority::EMERGENCY;
+        return ActionUrgency::EMERGENCY;
 
     // High priority for heals and crowd control
     if (_interruptManager->IsCastHighPriority(target))
-        return ActionPriority::HIGH;
+        return ActionUrgency::HIGH;
 
-    return ActionPriority::NORMAL;
+    return ActionUrgency::NORMAL;
 }
 
-ActionPriority CombatBehaviorIntegration::EvaluateDefensivePriority()
+ActionUrgency CombatBehaviorIntegration::EvaluateDefensivePriority()
 {
     const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     if (metrics.personalHealthPercent < 20.0f)
-        return ActionPriority::EMERGENCY;
+        return ActionUrgency::EMERGENCY;
 
     if (metrics.personalHealthPercent < 40.0f)
-        return ActionPriority::CRITICAL;
+        return ActionUrgency::CRITICAL;
 
     if (_defensiveManager->NeedsDefensive())
-        return ActionPriority::HIGH;
+        return ActionUrgency::HIGH;
 
-    return ActionPriority::NORMAL;
+    return ActionUrgency::NORMAL;
 }
 
-ActionPriority CombatBehaviorIntegration::EvaluateMovementPriority()
+ActionUrgency CombatBehaviorIntegration::EvaluateMovementPriority()
 {
     if (_stateAnalyzer->IsInVoidZone())
-        return ActionPriority::EMERGENCY;
+        return ActionUrgency::EMERGENCY;
 
     if (_movementIntegration->NeedsUrgentMovement())
-        return ActionPriority::CRITICAL;
+        return ActionUrgency::CRITICAL;
 
     if (_stateAnalyzer->NeedsToMoveOut())
-        return ActionPriority::HIGH;
+        return ActionUrgency::HIGH;
 
-    return ActionPriority::NORMAL;
+    return ActionUrgency::NORMAL;
 }
 
-ActionPriority CombatBehaviorIntegration::EvaluateTargetSwitchPriority()
+ActionUrgency CombatBehaviorIntegration::EvaluateTargetSwitchPriority()
 {
     Unit* currentTarget = ObjectAccessor::GetUnit(*_bot, _bot->GetTarget());
     Unit* priorityTarget = _targetManager->GetPriorityTarget();
 
     if (!currentTarget || !priorityTarget)
-        return ActionPriority::LOW;
+        return ActionUrgency::LOW;
 
     // Emergency switch if current target is immune
     if (currentTarget->HasAura(642)) // Divine Shield example
-        return ActionPriority::URGENT;
+        return ActionUrgency::URGENT;
 
     // High priority for dangerous adds
     if (_targetManager->IsHighPriorityTarget(priorityTarget))
-        return ActionPriority::HIGH;
+        return ActionUrgency::HIGH;
 
-    return ActionPriority::NORMAL;
+    return ActionUrgency::NORMAL;
 }
 
 bool CombatBehaviorIntegration::IsManagerReady() const
@@ -744,7 +744,7 @@ void CombatBehaviorIntegration::LogAction(const RecommendedAction& action, bool 
         _bot->GetName(),
         executed ? "executed" : "failed",
         GetActionName(action.type),
-        GetPriorityName(action.priority),
+        GetUrgencyName(action.urgency),
         action.reason);
 }
 
@@ -753,7 +753,7 @@ float CombatBehaviorIntegration::CalculateActionScore(const RecommendedAction& a
     float score = 100.0f;
 
     // Priority weight
-    score *= (1.0f + static_cast<float>(action.priority) * 0.2f);
+    score *= (1.0f + static_cast<float>(action.urgency) * 0.2f);
 
     // Success rate weight
     if (_actionCounts.find(action.type) != _actionCounts.end())

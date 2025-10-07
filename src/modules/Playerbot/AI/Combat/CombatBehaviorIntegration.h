@@ -7,8 +7,7 @@
  * option) any later version.
  */
 
-#ifndef TRINITYCORE_COMBAT_BEHAVIOR_INTEGRATION_H
-#define TRINITYCORE_COMBAT_BEHAVIOR_INTEGRATION_H
+#pragma once
 
 #include "Define.h"
 #include "Position.h"
@@ -37,8 +36,8 @@ namespace Playerbot
     enum class BotRole : uint8;
     struct CombatMetrics;
 
-    // Priority levels for actions
-    enum class ActionPriority : uint8
+    // Urgency levels for combat actions
+    enum class ActionUrgency : uint8
     {
         LOW         = 0,
         NORMAL      = 1,
@@ -49,7 +48,7 @@ namespace Playerbot
     };
 
     // Combat action types for decision making
-    enum class CombatAction : uint8
+    enum class CombatActionType : uint8
     {
         NONE            = 0,
         INTERRUPT       = 1,
@@ -66,15 +65,15 @@ namespace Playerbot
     // Recommended action from the integration system
     struct RecommendedAction
     {
-        CombatAction type;
-        ActionPriority priority;
+        CombatActionType type;
+        ActionUrgency urgency;
         Unit* target;
         uint32 spellId;
         Position position;
         std::string reason;
         uint32 timestamp;
 
-        RecommendedAction() : type(CombatAction::NONE), priority(ActionPriority::NORMAL),
+        RecommendedAction() : type(CombatActionType::NONE), urgency(ActionUrgency::NORMAL),
                              target(nullptr), spellId(0), timestamp(0) {}
     };
 
@@ -168,10 +167,10 @@ namespace Playerbot
         void PrioritizeActions();
 
         // Action evaluation
-        ActionPriority EvaluateInterruptPriority(Unit* target);
-        ActionPriority EvaluateDefensivePriority();
-        ActionPriority EvaluateMovementPriority();
-        ActionPriority EvaluateTargetSwitchPriority();
+        ActionUrgency EvaluateInterruptPriority(Unit* target);
+        ActionUrgency EvaluateDefensivePriority();
+        ActionUrgency EvaluateMovementPriority();
+        ActionUrgency EvaluateTargetSwitchPriority();
 
         // Helper functions
         bool IsManagerReady() const;
@@ -211,52 +210,50 @@ namespace Playerbot
         // Success tracking
         uint32 _successfulActions;
         uint32 _failedActions;
-        std::map<CombatAction, uint32> _actionCounts;
-        std::map<CombatAction, uint32> _actionSuccesses;
+        std::map<CombatActionType, uint32> _actionCounts;
+        std::map<CombatActionType, uint32> _actionSuccesses;
     };
 
     // Inline helper functions for ClassAI integration
-    inline bool RequiresImmediateAction(ActionPriority priority)
+    inline bool RequiresImmediateAction(ActionUrgency urgency)
     {
-        return priority >= ActionPriority::URGENT;
+        return urgency >= ActionUrgency::URGENT;
     }
 
-    inline bool IsEmergencyAction(ActionPriority priority)
+    inline bool IsEmergencyAction(ActionUrgency urgency)
     {
-        return priority >= ActionPriority::EMERGENCY;
+        return urgency >= ActionUrgency::EMERGENCY;
     }
 
-    inline const char* GetActionName(CombatAction action)
+    inline const char* GetActionName(CombatActionType action)
     {
         switch (action)
         {
-            case CombatAction::INTERRUPT: return "Interrupt";
-            case CombatAction::CROWD_CONTROL: return "Crowd Control";
-            case CombatAction::DEFENSIVE: return "Defensive";
-            case CombatAction::MOVEMENT: return "Movement";
-            case CombatAction::TARGET_SWITCH: return "Target Switch";
-            case CombatAction::EMERGENCY: return "Emergency";
-            case CombatAction::CONSUMABLE: return "Consumable";
-            case CombatAction::COOLDOWN: return "Cooldown";
-            case CombatAction::ROTATION: return "Rotation";
+            case CombatActionType::INTERRUPT: return "Interrupt";
+            case CombatActionType::CROWD_CONTROL: return "Crowd Control";
+            case CombatActionType::DEFENSIVE: return "Defensive";
+            case CombatActionType::MOVEMENT: return "Movement";
+            case CombatActionType::TARGET_SWITCH: return "Target Switch";
+            case CombatActionType::EMERGENCY: return "Emergency";
+            case CombatActionType::CONSUMABLE: return "Consumable";
+            case CombatActionType::COOLDOWN: return "Cooldown";
+            case CombatActionType::ROTATION: return "Rotation";
             default: return "None";
         }
     }
 
-    inline const char* GetPriorityName(ActionPriority priority)
+    inline const char* GetUrgencyName(ActionUrgency urgency)
     {
-        switch (priority)
+        switch (urgency)
         {
-            case ActionPriority::LOW: return "Low";
-            case ActionPriority::NORMAL: return "Normal";
-            case ActionPriority::HIGH: return "High";
-            case ActionPriority::URGENT: return "Urgent";
-            case ActionPriority::CRITICAL: return "Critical";
-            case ActionPriority::EMERGENCY: return "Emergency";
+            case ActionUrgency::LOW: return "Low";
+            case ActionUrgency::NORMAL: return "Normal";
+            case ActionUrgency::HIGH: return "High";
+            case ActionUrgency::URGENT: return "Urgent";
+            case ActionUrgency::CRITICAL: return "Critical";
+            case ActionUrgency::EMERGENCY: return "Emergency";
             default: return "Unknown";
         }
     }
 
 } // namespace Playerbot
-
-#endif // TRINITYCORE_COMBAT_BEHAVIOR_INTEGRATION_H

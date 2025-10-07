@@ -15,6 +15,7 @@
 #include "ActionPriority.h"
 #include "CooldownManager.h"
 #include "ResourceManager.h"
+#include "../Combat/CombatBehaviorIntegration.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "Map.h"
@@ -49,6 +50,19 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     _cooldownManager = std::make_unique<CooldownManager>();
     _resourceManager = std::make_unique<ResourceManager>(bot);
 
+    // Initialize unified combat behavior system
+    // This provides advanced combat coordination across all managers
+    try {
+        _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);
+        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
+                     bot ? bot->GetName() : "null");
+    }
+    catch (const std::exception& e) {
+        TC_LOG_ERROR("playerbot.classai", "Failed to initialize CombatBehaviorIntegration for bot {}: {}",
+                     bot ? bot->GetName() : "null", e.what());
+        _combatBehaviors = nullptr;
+    }
+
     TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
                  bot ? bot->GetName() : "null");
 }
@@ -67,15 +81,24 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     if (!GetBot() || !GetBot()->IsAlive())
         return;
 
+    // Update unified combat behavior system
+    // This manages all advanced combat behaviors including interrupts, defensive actions,
+    // crowd control, target prioritization, and emergency responses
+    if (_combatBehaviors)
+    {
+        _combatBehaviors->Update(diff);
+    }
+
     // DIAGNOSTIC: Log that OnCombatUpdate is being called
     static uint32 lastCombatLog = 0;
     uint32 currentTime = getMSTime();
     if (currentTime - lastCombatLog > 2000) // Every 2 seconds
     {
-        TC_LOG_ERROR("module.playerbot", "⚔️ ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms",
+        TC_LOG_ERROR("module.playerbot", "⚔️ ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
                      GetBot()->GetName(),
                      _currentCombatTarget ? _currentCombatTarget->GetName() : "NONE",
-                     _combatTime);
+                     _combatTime,
+                     _combatBehaviors ? "active" : "inactive");
         lastCombatLog = currentTime;
     }
 
@@ -87,7 +110,55 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     UpdateCombatState(diff);
 
     // Update targeting - select best target
-    UpdateTargeting();
+    // If combat behaviors suggest a priority target, use it
+    if (_combatBehaviors)
+    {
+        if (Unit* priorityTarget = _combatBehaviors->GetPriorityTarget())
+        {
+            if (priorityTarget != _currentCombatTarget && GetBot()->IsValidAttackTarget(priorityTarget))
+            {
+                OnTargetChanged(priorityTarget);
+            }
+        }
+        else
+        {
+            UpdateTargeting();
+        }
+    }
+    else
+    {
+        UpdateTargeting();
+    }
+
+    // Check for emergency actions from combat behavior system
+    // These take priority over normal rotation (interrupts, defensives, etc.)
+    if (_combatBehaviors && _combatBehaviors->HandleEmergencies())
+    {
+        // Emergency action was taken, skip normal rotation this update
+        TC_LOG_DEBUG("playerbot.classai", "Bot {} handled emergency action, skipping rotation",
+                     GetBot()->GetName());
+        return;
+    }
+
+    // Check for high-priority combat behaviors before rotation
+    if (_combatBehaviors && _combatBehaviors->HasPendingAction())
+    {
+        RecommendedAction action = _combatBehaviors->GetNextAction();
+        if (RequiresImmediateAction(action.urgency))
+        {
+            bool executed = ExecuteRecommendedAction(action);
+            _combatBehaviors->RecordActionResult(action, executed);
+
+            if (executed && IsEmergencyAction(action.urgency))
+            {
+                // Emergency or critical action executed, skip normal rotation
+                TC_LOG_DEBUG("playerbot.classai", "Bot {} executed {} urgency action: {} ({})",
+                             GetBot()->GetName(), GetUrgencyName(action.urgency),
+                             GetActionName(action.type), action.reason.c_str());
+                return;
+            }
+        }
+    }
 
     // Class-specific combat updates
     if (_currentCombatTarget)
@@ -137,6 +208,14 @@ void ClassAI::OnCombatStart(::Unit* target)
     TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
 
+    // Notify combat behavior system
+    if (_combatBehaviors)
+    {
+        _combatBehaviors->OnCombatStart();
+        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration notified of combat start for bot {}",
+                     GetBot()->GetName());
+    }
+
     // Let BotAI handle base combat start logic
     BotAI::OnCombatStart(target);
 }
@@ -149,6 +228,14 @@ void ClassAI::OnCombatEnd()
     _currentCombatTarget = nullptr;
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
+
+    // Notify combat behavior system
+    if (_combatBehaviors)
+    {
+        _combatBehaviors->OnCombatEnd();
+        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration notified of combat end for bot {}",
+                     GetBot()->GetName());
+    }
 
     // Let BotAI handle base combat end logic
     BotAI::OnCombatEnd();
@@ -567,6 +654,201 @@ void ClassAI::RecordPerformanceMetric(std::string const& metric, uint32 value)
     // Record class-specific performance metrics
     TC_LOG_TRACE("playerbot.performance", "ClassAI metric {} = {} for bot {}",
                  metric, value, GetBot() ? GetBot()->GetName() : "null");
+}
+
+// ============================================================================
+// COMBAT BEHAVIOR INTEGRATION
+// ============================================================================
+
+bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
+{
+    if (!GetBot() || !action.target || action.spellId == 0)
+    {
+        TC_LOG_TRACE("playerbot.classai", "ExecuteRecommendedAction: Invalid parameters - bot={}, target={}, spell={}",
+                     GetBot() ? "valid" : "null", action.target ? "valid" : "null", action.spellId);
+        return false;
+    }
+
+    // Log the recommended action execution attempt
+    TC_LOG_DEBUG("playerbot.classai", "Bot {} executing {} action: spell {} on {} (reason: {})",
+                 GetBot()->GetName(), GetActionName(action.type), action.spellId,
+                 action.target->GetName(), action.reason.c_str());
+
+    // Check if the spell can be used
+    if (!IsSpellUsable(action.spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai", "Bot {} cannot use spell {} - not usable",
+                     GetBot()->GetName(), action.spellId);
+        return false;
+    }
+
+    // Check range to target
+    if (!IsInRange(action.target, action.spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - target out of range",
+                     GetBot()->GetName(), action.spellId);
+
+        // For movement-related actions, we might want to move closer
+        if (action.type == CombatActionType::MOVEMENT)
+        {
+            // Movement is handled by BotAI strategies, just log the need if position is valid
+            if (action.position.m_positionX != 0.0f || action.position.m_positionY != 0.0f)
+            {
+                TC_LOG_DEBUG("playerbot.classai", "Bot {} needs to move to position ({}, {}, {}) for action",
+                             GetBot()->GetName(), action.position.m_positionX,
+                             action.position.m_positionY, action.position.m_positionZ);
+            }
+        }
+        return false;
+    }
+
+    // Check line of sight
+    if (!HasLineOfSight(action.target))
+    {
+        TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - no line of sight",
+                     GetBot()->GetName(), action.spellId);
+        return false;
+    }
+
+    // Handle different action types with appropriate logic
+    bool success = false;
+    switch (action.type)
+    {
+        case CombatActionType::INTERRUPT:
+        {
+            // Interrupt requires special handling - face target quickly
+            GetBot()->SetFacingToObject(action.target);
+            success = CastSpell(action.target, action.spellId);
+            if (success)
+            {
+                TC_LOG_INFO("playerbot.classai", "Bot {} successfully interrupted {} with spell {}",
+                            GetBot()->GetName(), action.target->GetName(), action.spellId);
+            }
+            break;
+        }
+
+        case CombatActionType::DEFENSIVE:
+        {
+            // Defensive actions often target self or allies
+            Unit* defTarget = action.target == GetBot() ? nullptr : action.target;
+            if (defTarget)
+                success = CastSpell(defTarget, action.spellId);
+            else
+                success = CastSpell(action.spellId);  // Self-cast
+
+            if (success)
+            {
+                TC_LOG_INFO("playerbot.classai", "Bot {} activated defensive ability {} on {}",
+                            GetBot()->GetName(), action.spellId,
+                            defTarget ? defTarget->GetName() : "self");
+            }
+            break;
+        }
+
+        case CombatActionType::CROWD_CONTROL:
+        {
+            // CC requires careful targeting
+            if (action.target != _currentCombatTarget)  // Don't CC our main target
+            {
+                success = CastSpell(action.target, action.spellId);
+                if (success)
+                {
+                    TC_LOG_INFO("playerbot.classai", "Bot {} applied crowd control {} to {}",
+                                GetBot()->GetName(), action.spellId, action.target->GetName());
+                }
+            }
+            break;
+        }
+
+        case CombatActionType::EMERGENCY:
+        {
+            // Emergency actions are highest priority - try to force cast
+            success = CastSpell(action.target, action.spellId);
+            if (success)
+            {
+                TC_LOG_WARN("playerbot.classai", "Bot {} executed EMERGENCY action: {} on {}",
+                            GetBot()->GetName(), action.spellId, action.target->GetName());
+            }
+            break;
+        }
+
+        case CombatActionType::COOLDOWN:
+        {
+            // Major cooldowns
+            success = CastSpell(action.target, action.spellId);
+            if (success)
+            {
+                TC_LOG_INFO("playerbot.classai", "Bot {} activated cooldown {} on {}",
+                            GetBot()->GetName(), action.spellId, action.target->GetName());
+            }
+            break;
+        }
+
+        case CombatActionType::TARGET_SWITCH:
+        {
+            // Target switch is handled by OnTargetChanged, just validate
+            if (action.target && action.target != _currentCombatTarget)
+            {
+                OnTargetChanged(action.target);
+                success = true;
+                TC_LOG_INFO("playerbot.classai", "Bot {} switched target to {}",
+                            GetBot()->GetName(), action.target->GetName());
+            }
+            break;
+        }
+
+        case CombatActionType::CONSUMABLE:
+        {
+            // Consumables (potions, healthstones, etc.)
+            // These typically don't have a target or target self
+            success = CastSpell(action.spellId);
+            if (success)
+            {
+                TC_LOG_INFO("playerbot.classai", "Bot {} used consumable {}",
+                            GetBot()->GetName(), action.spellId);
+            }
+            break;
+        }
+
+        case CombatActionType::MOVEMENT:
+        {
+            // Movement is handled by BotAI strategies, log the request
+            TC_LOG_DEBUG("playerbot.classai", "Bot {} requested movement action to ({}, {}, {})",
+                         GetBot()->GetName(), action.position.m_positionX,
+                         action.position.m_positionY, action.position.m_positionZ);
+            // Return true to indicate the request was acknowledged
+            success = true;
+            break;
+        }
+
+        case CombatActionType::ROTATION:
+        default:
+        {
+            // Normal rotation ability
+            success = CastSpell(action.target, action.spellId);
+            if (success)
+            {
+                TC_LOG_TRACE("playerbot.classai", "Bot {} cast rotation spell {} on {}",
+                             GetBot()->GetName(), action.spellId, action.target->GetName());
+            }
+            break;
+        }
+    }
+
+    // Record metrics if successful
+    if (success)
+    {
+        RecordPerformanceMetric("recommended_action_success", 1);
+    }
+    else
+    {
+        RecordPerformanceMetric("recommended_action_fail", 1);
+        TC_LOG_TRACE("playerbot.classai", "Bot {} failed to execute {} action: {} on {}",
+                     GetBot()->GetName(), GetActionName(action.type), action.spellId,
+                     action.target->GetName());
+    }
+
+    return success;
 }
 
 } // namespace Playerbot

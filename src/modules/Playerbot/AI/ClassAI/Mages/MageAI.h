@@ -155,6 +155,7 @@ private:
     bool IsInDanger();
     void FindSafeCastingPosition();
     Position GetSafeCastingPosition(); // Helper method that returns Position
+    uint32 GetNearbyEnemyCount(float range) const;
 
     // Targeting and priorities
     ::Unit* GetBestPolymorphTarget();

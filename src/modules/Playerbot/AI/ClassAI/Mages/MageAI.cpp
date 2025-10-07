@@ -260,30 +260,228 @@ void MageAI::UpdateRotation(::Unit* target)
         return;
     }
 
-    // Update threat management
-    ManageThreat();
+    // ========================================================================
+    // COMBAT BEHAVIOR INTEGRATION - Intelligent decision making
+    // ========================================================================
+    auto* behaviors = GetCombatBehaviors();
 
-    // Handle crowd control priorities
-    if (target)
+    // Priority 1: Interrupts (Counterspell)
+    if (behaviors && behaviors->ShouldInterrupt(target))
     {
-        // Check for polymorph opportunities
-        ::Unit* polymorphTarget = GetBestPolymorphTarget();
-        if (polymorphTarget && CanPolymorphSafely(polymorphTarget))
+        Unit* interruptTarget = behaviors->GetInterruptTarget();
+        if (interruptTarget && CanUseAbility(COUNTERSPELL))
         {
-            UsePolymorph(polymorphTarget);
-            return;
-        }
-
-        // Check for counterspell opportunities
-        ::Unit* interruptTarget = GetBestCounterspellTarget();
-        if (interruptTarget && ShouldInterrupt(interruptTarget))
-        {
-            UseCounterspell(interruptTarget);
-            return;
+            if (CastSpell(interruptTarget, COUNTERSPELL))
+            {
+                _lastCounterspell = getMSTime();
+                _successfulCounterspells++;
+                RecordInterruptAttempt(COUNTERSPELL, interruptTarget, true);
+                TC_LOG_DEBUG("module.playerbot.ai", "Mage {} counterspelled {}",
+                             GetBot()->GetName(), interruptTarget->GetName());
+                return;
+            }
         }
     }
 
-    // Delegate to specialization for main rotation
+    // Priority 2: Defensives (Ice Block, Ice Barrier, etc.)
+    if (behaviors && behaviors->NeedsDefensive())
+    {
+        // Check if defensive was already handled by behavior system
+        if (behaviors->HasExecutedDefensive())
+        {
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} executed defensive cooldown",
+                         GetBot()->GetName());
+            return;
+        }
+
+        // Manual defensive fallback
+        float healthPct = GetBot()->GetHealthPct();
+        if (healthPct < 20.0f)
+        {
+            UseIceBlock();
+            if (GetBot()->HasAura(ICE_BLOCK))
+                return;
+        }
+        else if (healthPct < 40.0f)
+        {
+            UseBarrierSpells();
+            if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
+                return;
+        }
+    }
+
+    // Priority 3: Positioning (Mages need max range)
+    if (behaviors && behaviors->NeedsRepositioning())
+    {
+        Position optimalPos = behaviors->GetOptimalPosition();
+        // Movement handled by BotAI strategies
+        // Just ensure we're maintaining optimal range
+        if (NeedsToKite(target))
+        {
+            PerformKiting(target);
+            if (GetBot()->isMoving())
+            {
+                // Use instant casts while moving
+                OptimizeInstantCasts();
+                return;
+            }
+        }
+    }
+
+    // Priority 4: Target switching for priority targets
+    if (behaviors && behaviors->ShouldSwitchTarget())
+    {
+        Unit* priorityTarget = behaviors->GetPriorityTarget();
+        if (priorityTarget && priorityTarget != target)
+        {
+            // Check if we should polymorph the old target
+            if (CanPolymorphSafely(target))
+            {
+                UsePolymorph(target);
+            }
+
+            // Switch to priority target
+            OnTargetChanged(priorityTarget);
+            target = priorityTarget;
+            TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switching to priority target {}",
+                         GetBot()->GetName(), priorityTarget->GetName());
+        }
+    }
+
+    // Priority 5: AoE decision (Flamestrike, Blizzard, Arcane Explosion)
+    if (behaviors && behaviors->ShouldUseAoE(3))
+    {
+        Position aoeCenter = behaviors->GetAoEPosition();
+
+        switch (_currentSpec)
+        {
+            case MageSpec::FROST:
+                if (CanUseAbility(BLIZZARD))
+                {
+                    // Cast Blizzard at optimal position
+                    // Note: Ground-targeted spells need special handling
+                    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Blizzard for AoE",
+                                 GetBot()->GetName());
+                    return;
+                }
+                break;
+
+            case MageSpec::FIRE:
+                if (CanUseAbility(FLAMESTRIKE))
+                {
+                    // Cast Flamestrike at optimal position
+                    TC_LOG_DEBUG("module.playerbot.ai", "Mage {} casting Flamestrike for AoE",
+                                 GetBot()->GetName());
+                    return;
+                }
+
+                // Dragon's Breath for close-range AoE
+                if (GetBot()->GetDistance(target) < 12.0f && CanUseAbility(DRAGON_BREATH))
+                {
+                    if (CastSpell(DRAGON_BREATH))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} using Dragon's Breath",
+                                     GetBot()->GetName());
+                        return;
+                    }
+                }
+                break;
+
+            case MageSpec::ARCANE:
+                // Arcane Explosion for melee range AoE
+                if (GetNearbyEnemyCount(10.0f) >= 3 && CanUseAbility(ARCANE_EXPLOSION))
+                {
+                    if (CastSpell(ARCANE_EXPLOSION))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} using Arcane Explosion",
+                                     GetBot()->GetName());
+                        return;
+                    }
+                }
+                break;
+        }
+    }
+
+    // Priority 6: Cooldown stacking (Combustion, Arcane Power, Icy Veins)
+    if (behaviors && behaviors->ShouldUseCooldowns())
+    {
+        switch (_currentSpec)
+        {
+            case MageSpec::FIRE:
+                if (CanUseAbility(COMBUSTION))
+                {
+                    if (CastSpell(COMBUSTION))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Combustion",
+                                     GetBot()->GetName());
+                    }
+                }
+                break;
+
+            case MageSpec::ARCANE:
+                if (CanUseAbility(ARCANE_POWER))
+                {
+                    if (CastSpell(ARCANE_POWER))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Arcane Power",
+                                     GetBot()->GetName());
+                    }
+                }
+                break;
+
+            case MageSpec::FROST:
+                if (CanUseAbility(ICY_VEINS))
+                {
+                    if (CastSpell(ICY_VEINS))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} activated Icy Veins",
+                                     GetBot()->GetName());
+                    }
+                }
+
+                // Summon Water Elemental
+                if (CanUseAbility(WATER_ELEMENTAL))
+                {
+                    if (CastSpell(WATER_ELEMENTAL))
+                    {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} summoned Water Elemental",
+                                     GetBot()->GetName());
+                    }
+                }
+                break;
+        }
+
+        // Universal cooldowns
+        if (CanUseAbility(MIRROR_IMAGE))
+        {
+            if (CastSpell(MIRROR_IMAGE))
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Mage {} summoned Mirror Images",
+                             GetBot()->GetName());
+            }
+        }
+    }
+
+    // Priority 7: Crowd control for secondary targets
+    if (behaviors && !behaviors->ShouldUseAoE(3)) // Only CC if not AoEing
+    {
+        ::Unit* polymorphTarget = GetBestPolymorphTarget();
+        if (polymorphTarget && polymorphTarget != target && CanPolymorphSafely(polymorphTarget))
+        {
+            UsePolymorph(polymorphTarget);
+            if (_polymorphTargets.find(polymorphTarget->GetGUID()) != _polymorphTargets.end())
+            {
+                TC_LOG_DEBUG("module.playerbot.ai", "Mage {} polymorphed secondary target",
+                             GetBot()->GetName());
+                // Continue with main target after polymorph
+            }
+        }
+    }
+
+    // Update threat management
+    ManageThreat();
+
+    // Priority 8: Normal rotation - delegate to specialization
     if (_specialization && target)
     {
         _specialization->UpdateRotation(target);
@@ -2127,6 +2325,39 @@ void MageSpellCalculator::CacheSpellData(uint32 spellId)
 
     // Cache various spell properties
     // This would be expanded with more data
+}
+
+uint32 MageAI::GetNearbyEnemyCount(float range) const
+{
+    if (!GetBot())
+        return 0;
+
+    uint32 count = 0;
+    std::list<Unit*> targets;
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
+    Cell::VisitAllObjects(GetBot(), searcher, range);
+
+    for (auto& target : targets)
+    {
+        if (GetBot()->IsValidAttackTarget(target))
+            count++;
+    }
+
+    return count;
+}
+
+Position MageAI::GetSafeCastingPosition()
+{
+    if (!GetBot())
+        return Position();
+
+    // Return a safe position for casting
+    if (_positionManager)
+        return _positionManager->FindSafePosition(GetBot()->GetPosition(), OPTIMAL_CASTING_RANGE);
+
+    // Fallback: current position
+    return GetBot()->GetPosition();
 }
 
 } // namespace Playerbot

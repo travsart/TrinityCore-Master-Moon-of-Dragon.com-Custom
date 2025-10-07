@@ -29,6 +29,8 @@ namespace Playerbot
 class ActionPriorityQueue;
 class CooldownManager;
 class ResourceManager;
+class CombatBehaviorIntegration; // Forward declaration within Playerbot namespace
+struct RecommendedAction; // Forward declaration for combat behavior actions
 
 /**
  * ClassAI - Base class for all class-specific COMBAT AI
@@ -107,6 +109,30 @@ public:
      * @param newTarget New combat target
      */
     virtual void OnTargetChanged(::Unit* newTarget);
+
+    // ========================================================================
+    // COMBAT BEHAVIOR INTEGRATION - Access to unified combat system
+    // ========================================================================
+
+    /**
+     * Get combat behavior integration system
+     * @return Pointer to combat behaviors (nullptr if not initialized)
+     */
+    CombatBehaviorIntegration* GetCombatBehaviors() { return _combatBehaviors.get(); }
+    const CombatBehaviorIntegration* GetCombatBehaviors() const { return _combatBehaviors.get(); }
+
+    /**
+     * Check if combat behaviors are available
+     * @return true if combat behavior system is initialized
+     */
+    bool HasCombatBehaviors() const { return _combatBehaviors != nullptr; }
+
+    /**
+     * Execute a recommended action from the combat behavior system
+     * @param action The recommended action to execute
+     * @return true if the action was successfully executed
+     */
+    bool ExecuteRecommendedAction(const RecommendedAction& action);
 
 protected:
     // ========================================================================
@@ -215,6 +241,9 @@ protected:
     std::unique_ptr<ActionPriorityQueue> _actionQueue;
     std::unique_ptr<CooldownManager> _cooldownManager;
     std::unique_ptr<ResourceManager> _resourceManager;
+
+    // Combat Behavior Integration - Unified combat coordination system
+    std::unique_ptr<CombatBehaviorIntegration> _combatBehaviors;
 
     // ========================================================================
     // COMBAT STATE - Current combat information
