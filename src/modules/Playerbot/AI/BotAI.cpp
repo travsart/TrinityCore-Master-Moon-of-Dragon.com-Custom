@@ -32,6 +32,7 @@
 #include "Group.h"
 #include "ObjectAccessor.h"
 #include "MotionMaster.h"
+#include "WorldSession.h"
 #include "Log.h"
 #include "Timer.h"
 #include <chrono>
@@ -212,30 +213,10 @@ void BotAI::UpdateAI(uint32 diff)
     if (!_bot || !_bot->IsInWorld())
         return;
 
-    // CRITICAL FIX: Activate appropriate strategies on first update
-    // This ensures bot is fully loaded and group data is available
-    // Only runs ONCE per bot login
-    static std::unordered_set<uint32> _initializedBots;
-    uint32 botGuid = _bot->GetGUID().GetCounter();
-    if (_initializedBots.find(botGuid) == _initializedBots.end())
-    {
-        _initializedBots.insert(botGuid);
-
-        Group* group = _bot->GetGroup();
-        if (group)
-        {
-            // Bot is in a group - activate follow and combat strategies
-            TC_LOG_INFO("module.playerbot.ai", "🔄 First UpdateAI for grouped bot {} - activating group strategies", _bot->GetName());
-            ActivateStrategy("follow");
-            ActivateStrategy("group_combat");
-        }
-        else
-        {
-            // Solo bot - activate idle strategy
-            TC_LOG_INFO("module.playerbot.ai", "🔄 First UpdateAI for solo bot {} - activating idle strategy", _bot->GetName());
-            ActivateStrategy("idle");
-        }
-    }
+    // PHASE 0 - Quick Win #3: Periodic group check REMOVED
+    // Now using event-driven GROUP_JOINED/GROUP_LEFT events for instant reactions
+    // Events dispatched in BotSession.cpp (GROUP_JOINED) and BotAI.cpp (GROUP_LEFT)
+    // This eliminates 1-second polling lag
 
     // FIX #22: Populate ObjectCache WITHOUT calling ObjectAccessor
     // Bot code provides objects directly from already-available sources
@@ -256,18 +237,43 @@ void BotAI::UpdateAI(uint32 diff)
 
         for (GroupReference const& itr : group->GetMembers())
         {
-            if (Player* member = itr.GetSource())
+            Player* member = itr.GetSource();
+            if (!member)
+                continue;
+
+            // FIX #3: Comprehensive safety checks to prevent crash when player logs out
+            // Multiple conditions ensure member is fully valid before caching
+            try
             {
+                // Check if member is being destroyed or logging out
+                if (!member->IsInWorld())
+                    continue;
+
+                WorldSession* session = member->GetSession();
+                if (!session)
+                    continue;
+
+                // Check if session is valid and not logging out
+                if (session->PlayerLogout())
+                    continue;
+
+                // Member is safe to cache
                 members.push_back(member);
                 if (member->GetGUID() == group->GetLeaderGUID())
                     leader = member;
+            }
+            catch (...)
+            {
+                // Catch any exceptions during member access (e.g., destroyed objects)
+                TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _bot->GetName());
+                continue;
             }
         }
 
         _objectCache.SetGroupLeader(leader);
         _objectCache.SetGroupMembers(members);
 
-        // Follow target is usually the leader
+        // Follow target is usually the leader (only if leader is online)
         if (leader)
             _objectCache.SetFollowTarget(leader);
     }
@@ -365,10 +371,37 @@ void BotAI::UpdateAI(uint32 diff)
 
     // Check if bot left group and trigger cleanup
     bool isInGroup = (_bot->GetGroup() != nullptr);
-    if (_wasInGroup && !isInGroup)
+
+    // FIX #1: Handle bot joining group on server reboot (was already in group before restart)
+    if (!_wasInGroup && isInGroup)
+    {
+        TC_LOG_INFO("playerbot", "Bot {} detected in group (server reboot or first login), calling OnGroupJoined()",
+                    _bot->GetName());
+
+        // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event
+        if (_eventDispatcher)
+        {
+            Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, _bot->GetGUID());
+            _eventDispatcher->Dispatch(std::move(evt));
+            TC_LOG_INFO("playerbot", "📢 GROUP_JOINED event dispatched for bot {} (reboot detection)", _bot->GetName());
+        }
+
+        OnGroupJoined(_bot->GetGroup());
+    }
+    // FIX #2: Handle bot leaving group
+    else if (_wasInGroup && !isInGroup)
     {
         TC_LOG_INFO("playerbot", "Bot {} left group, calling OnGroupLeft()",
                     _bot->GetName());
+
+        // PHASE 0 - Quick Win #3: Dispatch GROUP_LEFT event for instant cleanup
+        if (_eventDispatcher)
+        {
+            Events::BotEvent evt(StateMachine::EventType::GROUP_LEFT, _bot->GetGUID());
+            _eventDispatcher->Dispatch(std::move(evt));
+            TC_LOG_INFO("playerbot", "📢 GROUP_LEFT event dispatched for bot {}", _bot->GetName());
+        }
+
         OnGroupLeft();
     }
     _wasInGroup = isInGroup;
@@ -533,6 +566,19 @@ void BotAI::UpdateCombatState(uint32 diff)
 {
     bool wasInCombat = IsInCombat();
     bool isInCombat = _bot && _bot->IsInCombat();
+
+    // DIAGNOSTIC: Log combat state every 2 seconds
+    static uint32 lastCombatStateLog = 0;
+    uint32 now = getMSTime();
+    if (now - lastCombatStateLog > 2000)
+    {
+        TC_LOG_ERROR("module.playerbot", "🔍 UpdateCombatState: Bot {} - wasInCombat={}, isInCombat={}, AIState={}, HasVictim={}",
+                     _bot ? _bot->GetName() : "null",
+                     wasInCombat, isInCombat,
+                     static_cast<uint32>(_aiState),
+                     (_bot && _bot->GetVictim()) ? "YES" : "NO");
+        lastCombatStateLog = now;
+    }
 
     // Handle combat state transitions
     if (!wasInCombat && isInCombat)
@@ -769,6 +815,32 @@ void BotAI::OnCombatEnd()
 
     TC_LOG_DEBUG("playerbot", "Bot {} leaving combat", _bot->GetName());
 
+    // FIX #4: Resume following after combat ends (if in group)
+    if (_bot->GetGroup())
+    {
+        TC_LOG_INFO("playerbot", "Bot {} combat ended, resuming follow behavior", _bot->GetName());
+        SetAIState(BotAIState::FOLLOWING);
+
+        // Clear ONLY non-follow movement types to allow follow strategy to take over
+        // Don't clear if already following, as that would cause stuttering
+        MotionMaster* mm = _bot->GetMotionMaster();
+        if (mm)
+        {
+            MovementGeneratorType currentType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+            if (currentType != FOLLOW_MOTION_TYPE && currentType != IDLE_MOTION_TYPE)
+            {
+                TC_LOG_ERROR("playerbot", "🧹 OnCombatEnd: Clearing {} motion type for bot {} to allow follow",
+                            static_cast<uint32>(currentType), _bot->GetName());
+                mm->Clear();
+            }
+        }
+    }
+    else
+    {
+        // Not in group, return to idle
+        SetAIState(BotAIState::IDLE);
+    }
+
     // Strategies don't have OnCombatEnd - combat is handled by ClassAI
     // through the OnCombatUpdate() method
 }
@@ -884,14 +956,19 @@ void BotAI::OnGroupJoined(Group* group)
             {
                 bool wasActive = it->second->IsActive(this);
 
+                TC_LOG_ERROR("playerbot", "🔍 OnGroupJoined: Bot {} follow strategy - alreadyInList={}, wasActive={}",
+                            _bot->GetName(), alreadyInList, wasActive);
+
                 if (!alreadyInList)
                     _activeStrategies.push_back("follow");
 
                 it->second->SetActive(true);
 
-                // CRITICAL FIX: Call OnActivate if newly added OR not properly initialized
-                if (!alreadyInList || !wasActive)
-                    strategiesToActivate.push_back(it->second.get());
+                // CRITICAL FIX: ALWAYS call OnActivate to ensure follow target is set
+                // This handles server restart where bot loads with group but follow not initialized
+                strategiesToActivate.push_back(it->second.get());
+
+                TC_LOG_ERROR("playerbot", "✅ OnGroupJoined: Bot {} queued follow strategy for OnActivate callback", _bot->GetName());
             }
         }
 

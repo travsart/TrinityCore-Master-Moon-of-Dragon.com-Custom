@@ -36,6 +36,8 @@
 #include "GroupMgr.h"
 #include "RealmList.h"
 #include "AuthenticationPackets.h"
+#include "Core/Events/BotEventTypes.h"  // PHASE 0 - Quick Win #3: For GROUP_JOINED event
+#include "Core/Events/EventDispatcher.h"  // PHASE 0 - Quick Win #3: For event dispatch
 
 namespace Playerbot {
 
@@ -1007,17 +1009,10 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         return;
     }
 
-    // Check if bot has AI with group handler
+    // Check if bot has AI
     if (!_ai)
     {
         TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: No AI for bot {}", bot->GetName());
-        return;
-    }
-
-    GroupInvitationHandler* handler = _ai->GetGroupInvitationHandler();
-    if (!handler)
-    {
-        TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: No group handler for bot {}", bot->GetName());
         return;
     }
 
@@ -1158,27 +1153,50 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
             // Verify that the bot now has a group invitation
             if (bot->GetGroupInvite() == inviterGroup)
             {
-                TC_LOG_INFO("module.playerbot.group", "Confirmed: Bot {} now has proper group invitation state set", bot->GetName());
+                TC_LOG_INFO("module.playerbot.group", "✅ Confirmed: Bot {} has group invitation state set", bot->GetName());
 
-                // Create a proper PartyInvite packet for the handler using TrinityCore APIs
-                WorldPackets::Party::PartyInvite partyInvite;
-                partyInvite.Initialize(inviter, static_cast<int32>(proposedRoles), canAccept);
+                // CLEAN APPROACH: Auto-accept and join the group using TrinityCore API
+                // This removes the legacy GroupInvitationHandler fallback path
 
-                // Process the invitation through our handler system
-                if (handler->HandleInvitation(partyInvite))
+                // Accept the invitation by adding bot to the group
+                if (inviterGroup->AddMember(bot))
                 {
-                    TC_LOG_INFO("module.playerbot.group", "Bot {} successfully queued invitation from {} for processing",
-                        bot->GetName(), inviterName);
+                    TC_LOG_INFO("module.playerbot.group", "✅ Bot {} successfully joined group {} (inviter: {})",
+                        bot->GetName(), inviterGroup->GetGUID().ToString(), inviterName);
+
+                    // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event for instant reaction
+                    // This eliminates the 1-second polling lag
+                    if (_ai && _ai->GetEventDispatcher())
+                    {
+                        Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, bot->GetGUID(), inviterGroup->GetLeaderGUID());
+                        _ai->GetEventDispatcher()->Dispatch(std::move(evt));
+                        TC_LOG_INFO("module.playerbot.group", "📢 GROUP_JOINED event dispatched for bot {}", bot->GetName());
+                    }
+
+                    // Activate follow behavior through BotAI lifecycle hook
+                    if (_ai)
+                    {
+                        TC_LOG_ERROR("module.playerbot.group", "🔥 CALLING OnGroupJoined for bot {} with group {}",
+                                    bot->GetName(), (void*)inviterGroup);
+                        _ai->OnGroupJoined(inviterGroup);
+                        TC_LOG_ERROR("module.playerbot.group", "✅ OnGroupJoined COMPLETED for bot {}", bot->GetName());
+                    }
+                    else
+                    {
+                        TC_LOG_ERROR("module.playerbot.group", "❌ CRITICAL: _ai is NULL for bot {}", bot->GetName());
+                    }
+
+                    TC_LOG_INFO("module.playerbot.group", "✅ Bot {} follow behavior activated", bot->GetName());
                 }
                 else
                 {
-                    TC_LOG_DEBUG("module.playerbot.group", "Bot {} rejected invitation from {} during handler processing",
-                        bot->GetName(), inviterName);
+                    TC_LOG_ERROR("module.playerbot.group", "❌ Failed to add bot {} to group {} (AddMember failed)",
+                        bot->GetName(), inviterGroup->GetGUID().ToString());
                 }
             }
             else
             {
-                TC_LOG_ERROR("module.playerbot.group", "Bot {} group invitation state not properly set after AddInvite", bot->GetName());
+                TC_LOG_ERROR("module.playerbot.group", "❌ Bot {} group invitation state not set after AddInvite", bot->GetName());
             }
         }
         else

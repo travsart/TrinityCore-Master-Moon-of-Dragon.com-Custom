@@ -120,7 +120,9 @@ private:
 LeaderFollowBehavior::LeaderFollowBehavior()
     : Strategy("follow")
 {
-    _priority = 200; // High priority for group following
+    // PHASE 0 - Quick Win #2: Follow has LOW priority (50) so combat (100) always wins
+    // Combat must ALWAYS override follow for proper combat behavior
+    _priority = 50;
 }
 
 void LeaderFollowBehavior::InitializeActions()
@@ -219,7 +221,8 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
     {
         if (Player* member = itr.GetSource())
         {
-            if (member->GetGUID() == leaderGuid)
+            // FIX: Only use members that are fully loaded in world
+            if (member->IsInWorld() && member->GetGUID() == leaderGuid)
             {
                 leader = member;
                 TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Found leader {} in group members ===",
@@ -231,7 +234,8 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
 
     if (!leader)
     {
-        TC_LOG_ERROR("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Leader NOT FOUND in ObjectAccessor OR group members ===");
+        TC_LOG_WARN("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Leader NOT FOUND (may not be loaded yet after server restart) - will retry on next update ===");
+        // Don't return here - allow strategy to activate and retry finding leader on next UpdateFollowBehavior
         SetActive(true);
         return;
     }
@@ -306,15 +310,49 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     // REFACTORED: Removed throttled logging - now runs every frame
     // Performance tracking will handle monitoring update frequency
 
-    if (!ai || !ai->GetBot() || !_followTarget.player)
+    static uint32 updateCounter = 0;
+    if (++updateCounter % 100 == 0)
     {
+        TC_LOG_ERROR("module.playerbot", "🔄 UpdateFollowBehavior CALLED {} times", updateCounter);
+    }
+
+    if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ UpdateFollowBehavior: NULL ai or bot");
         return;
     }
 
-    auto startTime = std::chrono::high_resolution_clock::now();
-
     Player* bot = ai->GetBot();
-    Player* leader = _followTarget.player;
+    TC_LOG_ERROR("module.playerbot", "🎯 UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
+                bot->GetName(), static_cast<uint8>(_state),
+                (void*)_followTarget.player, _followTarget.guid.ToString());
+
+    // CRITICAL FIX: Validate leader pointer using ObjectAccessor
+    // Player might have logged out, making _followTarget.player a dangling pointer
+    Player* leader = nullptr;
+    if (!_followTarget.guid.IsEmpty())
+    {
+        leader = ObjectAccessor::FindPlayer(_followTarget.guid);
+    }
+
+    if (!leader)
+    {
+        // Leader logged out or not found - clear follow target and stop
+        if (_followTarget.player != nullptr)
+        {
+            TC_LOG_INFO("module.playerbot", "LeaderFollowBehavior: Leader {} not found (logged out?), stopping follow for bot {}",
+                       _followTarget.guid.ToString(), bot->GetName());
+            ClearFollowTarget();
+            StopMovement(bot);
+            SetFollowState(FollowState::IDLE);
+        }
+        return;
+    }
+
+    // Update cached pointer if it changed
+    _followTarget.player = leader;
+
+    auto startTime = std::chrono::high_resolution_clock::now();
 
     // CRITICAL DEBUG: Log state at entry
     static uint32 behaviorCounter = 0;
@@ -1228,8 +1266,46 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
         return false;
     }
 
-    // Use centralized movement utility to prevent infinite loop
-    return BotMovementUtil::MoveToPosition(bot, destination);
+    // CRITICAL FIX: Use MoveFollow for smooth following, NOT MovePoint which teleports
+    // MoveFollow automatically updates position as leader moves
+    Player* leader = _followTarget.player;
+    if (leader)
+    {
+        // Follow at formation distance - use minDistance from config
+        // Default is 2.0f which is optimal for melee formation
+        float followDist = _config.minDistance;
+
+        // Calculate angle based on formation role to spread bots around leader
+        float followAngle = (_groupPosition * M_PI / 4.0f); // Spread around leader in formation
+
+        // CRITICAL FIX: Only issue MoveFollow if NOT already following
+        // Re-issuing every frame causes speed-up and blinking issues
+        MovementGeneratorType currentType = motionMaster->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+
+        if (currentType != FOLLOW_MOTION_TYPE)
+        {
+            // If there's leftover combat movement (CHASE/POINT), clear it first
+            if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
+            {
+                TC_LOG_ERROR("module.playerbot", "🧹 StartMovement: Clearing leftover {} motion for bot {}",
+                            static_cast<uint32>(currentType), bot->GetName());
+                motionMaster->Clear();
+            }
+
+            motionMaster->MoveFollow(leader, followDist, followAngle);
+
+            TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                        bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
+        }
+        else
+        {
+            TC_LOG_DEBUG("module.playerbot", "⏭️ StartMovement: Bot {} already following, skipping", bot->GetName());
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void LeaderFollowBehavior::StopMovement(Player* bot)

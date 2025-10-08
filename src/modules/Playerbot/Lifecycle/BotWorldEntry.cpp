@@ -563,6 +563,21 @@ bool BotWorldEntry::FinalizeBotActivation()
                "Bot {} is now fully active in world",
                _player->GetName());
 
+    // CRITICAL FIX: Check if bot is already in a group (player logged in while grouped)
+    // If so, activate follow behavior immediately
+    if (Group* group = _player->GetGroup())
+    {
+        TC_LOG_INFO("module.playerbot.worldentry",
+                   "Bot {} is already in group on login, activating follow behavior",
+                   _player->GetName());
+
+        // Get AI and call OnGroupJoined to activate follow
+        if (BotAI* botAI = dynamic_cast<BotAI*>(_player->GetAI()))
+        {
+            botAI->OnGroupJoined(group);
+        }
+    }
+
     TransitionToState(BotWorldEntryState::FULLY_ACTIVE);
     return true;
 }

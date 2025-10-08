@@ -297,14 +297,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ElementalSpecialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI_Specialization.cpp
 
-    # Warlock AI
-    # WarlockAI.cpp removed due to duplicate symbols with WarlockAI_Specialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
+    # Warlock AI - Using enterprise WarlockAI.cpp with BaselineRotationManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/AfflictionSpecialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DestructionSpecialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DemonologySpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI_Specialization.cpp
+    # WarlockAI_Specialization.cpp disabled - using full WarlockAI.cpp implementation
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI_Specialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockSpecialization.cpp
 
     # Warlock Refactored Specializations (Template-based)

@@ -75,12 +75,28 @@ void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
 
 void WarlockAI::UpdateRotation(::Unit* target)
 {
+    TC_LOG_ERROR("module.playerbot", "🔥🔥🔥 WarlockAI_Specialization::UpdateRotation ENTERED!");
+
     if (!target)
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ WarlockAI_Specialization: target is NULL");
         return;
+    }
+
+    TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI_Specialization: Bot {} attacking {}, has spec: {}",
+                 GetBot()->GetName(), target->GetName(), _specialization != nullptr);
 
     // Delegate to specialization implementation
     if (_specialization)
+    {
+        TC_LOG_ERROR("module.playerbot", "⏭️ Delegating to specialization->UpdateRotation()");
         _specialization->UpdateRotation(target);
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from specialization->UpdateRotation()");
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ NO SPECIALIZATION - bot will do nothing!");
+    }
 }
 
 void WarlockAI::UpdateBuffs()

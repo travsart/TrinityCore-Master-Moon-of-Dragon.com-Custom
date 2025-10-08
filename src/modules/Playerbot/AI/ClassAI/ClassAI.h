@@ -134,26 +134,8 @@ public:
      */
     bool ExecuteRecommendedAction(const RecommendedAction& action);
 
-protected:
     // ========================================================================
-    // RESOURCE MANAGEMENT - Class-specific resources
-    // ========================================================================
-
-    /**
-     * Check if bot has enough resources for a spell
-     * @param spellId Spell to check
-     * @return true if sufficient resources
-     */
-    virtual bool HasEnoughResource(uint32 spellId) = 0;
-
-    /**
-     * Consume resources for a spell cast
-     * @param spellId Spell being cast
-     */
-    virtual void ConsumeResource(uint32 spellId) = 0;
-
-    // ========================================================================
-    // POSITIONING - Combat positioning preferences
+    // POSITIONING - Combat positioning preferences (PUBLIC for Strategy access)
     // ========================================================================
 
     /**
@@ -234,6 +216,24 @@ protected:
     bool ShouldMoveToTarget(::Unit* target) const;
     float GetDistanceToTarget(::Unit* target) const;
 
+protected:
+    // ========================================================================
+    // RESOURCE MANAGEMENT - Class-specific resources
+    // ========================================================================
+
+    /**
+     * Check if bot has enough resources for a spell
+     * @param spellId Spell to check
+     * @return true if sufficient resources
+     */
+    virtual bool HasEnoughResource(uint32 spellId) = 0;
+
+    /**
+     * Consume resources for a spell cast
+     * @param spellId Spell being cast
+     */
+    virtual void ConsumeResource(uint32 spellId) = 0;
+
     // ========================================================================
     // COMPONENT MANAGERS - Class-specific systems
     // ========================================================================
@@ -290,37 +290,6 @@ private:
      * @param value Metric value
      */
     void RecordPerformanceMetric(std::string const& metric, uint32 value);
-};
-
-// ========================================================================
-// CLASS AI FACTORY - Creates appropriate AI for each class
-// ========================================================================
-
-class TC_GAME_API ClassAIFactory
-{
-public:
-    /**
-     * Create appropriate ClassAI for a bot based on its class
-     * @param bot Player bot
-     * @return Unique pointer to created ClassAI
-     */
-    static std::unique_ptr<ClassAI> CreateClassAI(Player* bot);
-
-private:
-    // Class-specific creation methods
-    static std::unique_ptr<ClassAI> CreateWarriorAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreatePaladinAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateHunterAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateRogueAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreatePriestAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDeathKnightAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateShamanAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateMageAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateWarlockAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateMonkAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDruidAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDemonHunterAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateEvokerAI(Player* bot);
 };
 
 } // namespace Playerbot

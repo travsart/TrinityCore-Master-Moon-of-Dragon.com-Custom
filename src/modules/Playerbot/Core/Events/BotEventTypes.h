@@ -23,6 +23,7 @@
 #include "ObjectGuid.h"
 #include "Common.h"
 #include "Timer.h"
+#include "GameTime.h"  // PHASE 0 - Quick Win #3: For getMSTime()
 #include <string>
 #include <functional>
 #include <memory>
@@ -239,7 +240,7 @@ namespace Events
         HANDLED,           // Event was processed successfully
         NOT_HANDLED,       // Event was not processed by this handler
         CONSUME,           // Stop propagating event to other handlers
-        ERROR,             // Error occurred during processing
+        ERROR_OCCURRED,    // PHASE 0 - Quick Win #3: Renamed from ERROR to avoid Windows.h macro conflict
         DEFER              // Defer processing to next update cycle
     };
 

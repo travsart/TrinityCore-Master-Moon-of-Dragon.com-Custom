@@ -33,6 +33,9 @@ public:
     void InitializeValues() override;
     float GetRelevance(BotAI* ai) const override;
 
+    // CRITICAL FIX: Only active when bot or group is in combat
+    bool IsActive(BotAI* ai) const override;
+
     // CRITICAL FIX: UpdateBehavior is called every frame, not GetRelevance!
     void UpdateBehavior(BotAI* ai, uint32 diff) override;
 

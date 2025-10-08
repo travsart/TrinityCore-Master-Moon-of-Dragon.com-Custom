@@ -251,30 +251,39 @@ void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
 
 void WarlockAI::UpdateRotation(::Unit* target)
 {
+    // CRITICAL: Use module.playerbot logger to prove function entry
+    TC_LOG_ERROR("module.playerbot", "🔥🔥🔥 WARLOCK UpdateRotation() ENTERED! 🔥🔥🔥");
+
     if (!target)
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ WarlockAI::UpdateRotation - target is NULL");
         return;
+    }
 
     Player* bot = GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ WarlockAI::UpdateRotation - bot is NULL");
         return;
+    }
+
+    TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
+                 bot->GetName(), bot->GetLevel(), target->GetName(), bot->GetDistance(target));
 
     // Check if bot should use baseline rotation (levels 1-9 or no spec)
     if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
     {
+        TC_LOG_ERROR("module.playerbot", "📋 Bot {} using BASELINE rotation (level {})",
+                     bot->GetName(), bot->GetLevel());
+
         static BaselineRotationManager baselineManager;
         baselineManager.HandleAutoSpecialization(bot);
 
-        if (baselineManager.ExecuteBaselineRotation(bot, target))
-            return;
+        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);
+        TC_LOG_ERROR("module.playerbot", "📋 BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
 
-        // Fallback: basic ranged attack
-        if (!bot->IsNonMeleeSpellCast(false))
-        {
-            if (bot->GetDistance(target) <= 35.0f)
-            {
-                bot->AttackerStateUpdate(target);
-            }
-        }
+        // No fallback for casters - if rotation failed, just return
+        // Do NOT use AttackerStateUpdate (melee) for a caster class
         return;
     }
 
@@ -1093,7 +1102,12 @@ bool WarlockAI::UseHealthstone()
     {
         if (Item* item = bot->GetItemByEntry(itemId))
         {
-            bot->UseItem(item, SpellCastTargets());
+            // Use modern TrinityCore CastItemUseSpell API
+            SpellCastTargets targets;
+            targets.SetUnitTarget(bot); // Use healthstone on self
+            bot->CastItemUseSpell(item, targets, ObjectGuid::Empty, nullptr);
+
+            TC_LOG_DEBUG("playerbot.warlock", "Warlock {} used healthstone {}", bot->GetName(), itemId);
             return true;
         }
     }
@@ -1367,10 +1381,11 @@ Position WarlockAI::GetOptimalPosition(::Unit* target)
 float WarlockAI::GetOptimalRange(::Unit* target)
 {
     if (!target)
-        return 30.0f;
+        return 25.0f;
 
     // Warlocks prefer to stay at max casting range
-    return 35.0f; // Slightly less than max to account for movement
+    // Shadow Bolt/Corruption have 30yd max range, stay at 25yd for safety
+    return 25.0f; // Safe distance within spell range, allows for movement
 }
 
 // Warlock-specific utility implementations

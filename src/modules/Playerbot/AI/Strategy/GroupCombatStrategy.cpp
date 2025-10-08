@@ -9,6 +9,7 @@
 
 #include "GroupCombatStrategy.h"
 #include "../BotAI.h"
+#include "../ClassAI/ClassAI.h"  // For ClassAI positioning delegation
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -40,6 +41,19 @@ void GroupCombatStrategy::InitializeValues()
 {
     // No values needed for this simple strategy
     TC_LOG_DEBUG("module.playerbot.strategy", "GroupCombatStrategy: No values");
+}
+
+bool GroupCombatStrategy::IsActive(BotAI* ai) const
+{
+    // CRITICAL FIX: Only active when bot or group is actually in combat
+    // This allows follow strategy to win when out of combat
+    if (!ai || !ai->GetBot())
+        return false;
+
+    Player* bot = ai->GetBot();
+
+    // Active if bot is in combat OR group is in combat
+    return bot->IsInCombat() || IsGroupInCombat(ai);
 }
 
 void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
@@ -101,20 +115,49 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // Set target
             bot->SetTarget(target->GetGUID());
 
-            // CRITICAL FIX: Move toward target BEFORE attacking
-            // Attack() only works if in range, so we must chase first
-            if (!bot->IsInCombat() && !bot->GetVictim())
+            // CRITICAL FIX: Delegate movement to ClassAI for proper positioning
+            // ClassAI knows the bot's optimal range (melee vs ranged)
+
+            float distance = bot->GetDistance(target);
+
+            // Start attacking if not already
+            if (!bot->GetVictim())
             {
-                float distance = bot->GetDistance(target);
+                bot->Attack(target, true);  // Set combat state FIRST
 
-                // Start chasing the target to get in melee range (chase to 2yd to ensure in range)
-                bot->GetMotionMaster()->MoveChase(target, 2.0f);
+                // CRITICAL FIX: Manually set combat flag since Attack() doesn't always do it
+                // TrinityCore only sets combat on first damage, but we need AI to react immediately
+                bot->SetInCombatWith(target);
 
-                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} CHASING {} (distance: {:.1f}yd) to assist {}",
-                            bot->GetName(), target->GetName(), distance, member->GetName());
+                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} starting attack on {} (combat flag set)",
+                            bot->GetName(), target->GetName());
+            }
 
-                // Also call Attack() to set combat state when in range
-                bot->Attack(target, true);  // true = melee attack
+            // ALWAYS update movement while target is alive (even during combat)
+            // This ensures bot follows moving targets
+            if (target->IsAlive())
+            {
+                // Get optimal range from ClassAI (if available)
+                float optimalRange = 5.0f; // Default to melee range
+                if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
+                {
+                    optimalRange = classAI->GetOptimalRange(target);
+                }
+
+                // CRITICAL FIX: Only issue MoveChase if NOT already chasing
+                // Re-issuing every frame causes speed-up and blinking issues
+                MotionMaster* mm = bot->GetMotionMaster();
+                if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
+                {
+                    mm->MoveChase(target, optimalRange);
+
+                    TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
+                                bot->GetName(), target->GetName(), optimalRange, distance);
+                }
+                else
+                {
+                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭️ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
+                }
             }
             break;
         }
@@ -165,6 +208,9 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
 
                         // Also call Attack() to set combat state when in range
                         bot->Attack(target, true);  // true = melee attack
+
+                        // CRITICAL FIX: Manually set combat flag since Attack() doesn't always do it
+                        bot->SetInCombatWith(target);
                     }
                     break;
                 }

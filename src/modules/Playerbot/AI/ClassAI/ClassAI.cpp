@@ -163,8 +163,12 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     // Class-specific combat updates
     if (_currentCombatTarget)
     {
-        TC_LOG_ERROR("module.playerbot", "🗡️ Calling UpdateRotation for {} with target {}",
-                     GetBot()->GetName(), _currentCombatTarget->GetName());
+        TC_LOG_ERROR("module.playerbot", "🗡️ Calling UpdateRotation for {} (class {}) with target {}",
+                     GetBot()->GetName(), GetBot()->GetClass(), _currentCombatTarget->GetName());
+
+        // DIAGNOSTIC: Check if this is actually the derived class
+        const char* className = typeid(*this).name();
+        TC_LOG_ERROR("module.playerbot", "🔍 AI Type: {}", className);
 
         // FIX FOR ISSUE #3: Ensure melee bots continuously face their target
         // This prevents the "facing wrong direction" bug where melee bots don't attack
@@ -179,8 +183,28 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         // CombatMovementStrategy which provides superior role-based positioning.
         // ClassAI now focuses solely on ability rotation and cooldown management.
 
+        TC_LOG_ERROR("module.playerbot", "⏩ About to call UpdateRotation() virtual method");
+        TC_LOG_ERROR("module.playerbot", "⏩ Target valid: {}, target name: {}",
+                     _currentCombatTarget != nullptr,
+                     _currentCombatTarget ? _currentCombatTarget->GetName() : "NULL");
+
         // Update class-specific rotation
-        UpdateRotation(_currentCombatTarget);
+        try
+        {
+            TC_LOG_ERROR("module.playerbot", "⏩⏩⏩ INSIDE TRY BLOCK - calling UpdateRotation");
+            UpdateRotation(_currentCombatTarget);
+            TC_LOG_ERROR("module.playerbot", "⏩⏩⏩ UpdateRotation call completed without exception");
+        }
+        catch (std::exception const& e)
+        {
+            TC_LOG_ERROR("module.playerbot", "❌❌❌ EXCEPTION in UpdateRotation: {}", e.what());
+        }
+        catch (...)
+        {
+            TC_LOG_ERROR("module.playerbot", "❌❌❌ UNKNOWN EXCEPTION in UpdateRotation");
+        }
+
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from UpdateRotation()");
 
         // Update class-specific cooldowns
         UpdateCooldowns(diff);

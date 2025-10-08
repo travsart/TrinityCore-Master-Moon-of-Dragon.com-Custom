@@ -13,6 +13,8 @@
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "Map.h"
+#include "Log.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {
@@ -196,29 +198,76 @@ std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilitie
 bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, BaselineAbility const& ability)
 {
     if (!CanUseAbility(bot, target, ability))
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} cannot use spell {} - failed CanUseAbility check",
+                     bot->GetName(), ability.spellId);
         return false;
+    }
 
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];
     auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())
+    {
+        TC_LOG_TRACE("module.playerbot.baseline", "Spell {} on cooldown for {} ms",
+                     ability.spellId, cdIt->second - getMSTime());
         return false; // On cooldown
+    }
 
     // Cast spell
     // FIX: GetSpellInfo now requires difficulty parameter
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
     if (!spellInfo)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - spell {} not found in SpellMgr",
+                     bot->GetName(), ability.spellId);
         return false;
+    }
+
+    // Check if bot knows the spell
+    if (!bot->HasSpell(ability.spellId))
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} (level {}) does not know spell {}",
+                     bot->GetName(), bot->GetLevel(), ability.spellId);
+        return false;
+    }
 
     // Determine cast target
     ::Unit* castTarget = ability.requiresMelee ? target : (ability.isDefensive ? bot : target);
 
+    TC_LOG_ERROR("module.playerbot.baseline", "🎯 Bot {} attempting to cast spell {} on {}",
+                 bot->GetName(), ability.spellId, castTarget->GetName());
+
+    // CRITICAL FIX: Stop movement before casting spells with cast time
+    // Ranged spells require the caster to be stationary
+    if (!ability.requiresMelee && bot->isMoving())
+    {
+        bot->StopMoving();
+        bot->GetMotionMaster()->Clear();
+        TC_LOG_ERROR("module.playerbot.baseline", "🛑 Stopped bot movement for spell casting");
+    }
+
+    // CRITICAL FIX: Ensure bot is facing the target before casting
+    if (!bot->HasInArc(static_cast<float>(M_PI), castTarget))
+    {
+        bot->SetFacingToObject(castTarget);
+        TC_LOG_ERROR("module.playerbot.baseline", "🎯 Adjusted bot facing towards target");
+    }
+
     // Cast spell using TrinityCore API
-    if (bot->CastSpell(castTarget, ability.spellId, false))
+    SpellCastResult result = bot->CastSpell(castTarget, ability.spellId, false);
+    if (result == SPELL_CAST_OK)
     {
         // Record cooldown
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
+        TC_LOG_ERROR("module.playerbot.baseline", "✅ Bot {} successfully cast spell {} on {}",
+                     bot->GetName(), ability.spellId, castTarget->GetName());
         return true;
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} failed to cast spell {} - result: {}",
+                     bot->GetName(), ability.spellId, static_cast<uint32>(result));
     }
 
     return false;
