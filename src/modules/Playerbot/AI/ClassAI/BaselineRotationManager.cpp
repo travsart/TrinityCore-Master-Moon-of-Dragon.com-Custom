@@ -9,12 +9,14 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "Map.h"
 #include "Log.h"
 #include "GameTime.h"
+#include "Group.h"
 
 namespace Playerbot
 {
@@ -235,6 +237,37 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // Determine cast target
     ::Unit* castTarget = ability.requiresMelee ? target : (ability.isDefensive ? bot : target);
 
+    // CRITICAL: Validate target before casting
+    if (!castTarget || !castTarget->IsInWorld() || !castTarget->IsAlive())
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Invalid cast target (dead or not in world)",
+                     bot->GetName());
+        return false;
+    }
+
+    // For offensive spells, validate target is attackable
+    if (!ability.isDefensive)
+    {
+        // Check basic attack validity - can we attack this type of unit?
+        if (castTarget->HasUnitFlag(UNIT_FLAG_NON_ATTACKABLE) ||
+            castTarget->HasUnitFlag(UNIT_FLAG_UNINTERACTIBLE) ||
+            castTarget->IsFriendlyTo(bot))
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Target {} is friendly or non-attackable",
+                         bot->GetName(), castTarget->GetName());
+            return false;
+        }
+
+        // CRITICAL: Bot must already be in combat with target
+        // Combat initiation is handled by GroupCombatStrategy via bot->Attack()
+        if (!bot->IsHostileTo(castTarget))
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Target {} is not hostile yet (combat not initiated)",
+                         bot->GetName(), castTarget->GetName());
+            return false;
+        }
+    }
+
     TC_LOG_ERROR("module.playerbot.baseline", "🎯 Bot {} attempting to cast spell {} on {}",
                  bot->GetName(), ability.spellId, castTarget->GetName());
 
@@ -255,7 +288,7 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     }
 
     // Cast spell using TrinityCore API
-    SpellCastResult result = bot->CastSpell(castTarget, ability.spellId, false);
+    SpellCastResult result = bot->CastSpell(castTarget, ability.spellId, TRIGGERED_NONE);
     if (result == SPELL_CAST_OK)
     {
         // Record cooldown

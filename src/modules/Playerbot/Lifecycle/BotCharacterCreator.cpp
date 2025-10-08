@@ -328,6 +328,10 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     // Set first login flag
     newChar->SetAtLoginFlag(AT_LOGIN_FIRST);
 
+    // NOTE: Specialization spells are NOT saved to database in modern WoW
+    // They are learned dynamically from DB2 data on each login via LearnSpecializationSpells()
+    // This is by design - see Player::LoadFromDB() line 18356
+
     // Prepare database transactions
     CharacterDatabaseTransaction charTransaction = CharacterDatabase.BeginTransaction();
     LoginDatabaseTransaction loginTransaction = LoginDatabase.BeginTransaction();

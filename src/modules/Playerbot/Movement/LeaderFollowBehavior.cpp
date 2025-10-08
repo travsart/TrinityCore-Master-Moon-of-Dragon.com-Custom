@@ -29,6 +29,8 @@
 #include "World.h"
 #include "WorldSession.h"
 #include <cmath>
+#include <set>
+#include <unordered_map>
 
 namespace Playerbot
 {
@@ -323,9 +325,31 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     }
 
     Player* bot = ai->GetBot();
-    TC_LOG_ERROR("module.playerbot", "🎯 UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
-                bot->GetName(), static_cast<uint8>(_state),
-                (void*)_followTarget.player, _followTarget.guid.ToString());
+
+    // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
+    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+    static std::unordered_map<std::string, uint32> followLogAccumulators;
+    bool isTestBot = testBots.find(bot->GetName()) != testBots.end();
+    bool shouldLog = false;
+
+    if (isTestBot)
+    {
+        std::string botName = bot->GetName();
+        // Throttle by call count (every 1000 calls ~= 50s)
+        followLogAccumulators[botName]++;
+        if (followLogAccumulators[botName] >= 1000)
+        {
+            shouldLog = true;
+            followLogAccumulators[botName] = 0;
+        }
+    }
+
+    if (shouldLog)
+    {
+        TC_LOG_ERROR("module.playerbot", "🎯 UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
+                    bot->GetName(), static_cast<uint8>(_state),
+                    (void*)_followTarget.player, _followTarget.guid.ToString());
+    }
 
     // CRITICAL FIX: Validate leader pointer using ObjectAccessor
     // Player might have logged out, making _followTarget.player a dangling pointer
@@ -354,9 +378,8 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    // CRITICAL DEBUG: Log state at entry
-    static uint32 behaviorCounter = 0;
-    if (++behaviorCounter % 100 == 0)
+    // CRITICAL DEBUG: Log state at entry (already throttled above via shouldLog)
+    if (shouldLog)
     {
         TC_LOG_ERROR("module.playerbot", "🔧 UpdateFollowBehavior: Bot {} state={}",
                     bot->GetName(), static_cast<uint8>(_state));

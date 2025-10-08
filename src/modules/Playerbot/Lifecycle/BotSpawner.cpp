@@ -75,7 +75,6 @@ bool BotSpawner::Initialize()
 
     // Start periodic update timer for automatic spawning
     _lastPopulationUpdate = getMSTime();
-    _lastTargetCalculation = getMSTime();
 
     // Initialize the flag for first player login detection
     _firstPlayerSpawned.store(false);
@@ -90,13 +89,19 @@ bool BotSpawner::Initialize()
         CalculateZoneTargets();
         // NOTE: SpawnToPopulationTarget() will be called when first player is detected
         TC_LOG_INFO("module.playerbot", "BotSpawner: Waiting for first player login to trigger spawning");
+        // Set lastTargetCalculation to prevent immediate re-calculation in Update()
+        _lastTargetCalculation = getMSTime();
     }
     else
     {
         TC_LOG_INFO("module.playerbot", "Static spawning enabled - bots will spawn immediately after world initialization");
         TC_LOG_INFO("module.playerbot", "BotSpawner: Step 4 - CalculateZoneTargets()...");
         CalculateZoneTargets();
-        TC_LOG_INFO("module.playerbot", "BotSpawner: Static spawning mode - immediate spawning will occur in Update()");
+        _initialCalculationDone = true; // Mark that we've done initial calculation
+        TC_LOG_INFO("module.playerbot", "BotSpawner: Static spawning mode - SpawnToPopulationTarget will be called in first Update()");
+        // Set _lastTargetCalculation to 0 to force immediate spawning in Update()
+        // but Update() will skip CalculateZoneTargets() since _initialCalculationDone is true
+        _lastTargetCalculation = 0;
     }
 
     return true;
@@ -213,10 +218,21 @@ void BotSpawner::Update(uint32 /*diff*/)
         }
         else
         {
-            TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
-            CalculateZoneTargets();
-            SpawnToPopulationTarget();
-            TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Completed spawn cycle");
+            // Check if this is the first Update() call and we already did initial calculation in Initialize()
+            if (_initialCalculationDone)
+            {
+                TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Spawning to population targets (initial calculation already done)");
+                SpawnToPopulationTarget();
+                TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Completed spawn cycle");
+                _initialCalculationDone = false; // Reset flag so future cycles recalculate normally
+            }
+            else
+            {
+                TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Recalculating zone targets and spawning to population targets");
+                CalculateZoneTargets();
+                SpawnToPopulationTarget();
+                TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Completed spawn cycle");
+            }
         }
         _lastTargetCalculation = currentTime;
     }
@@ -618,7 +634,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     }
 
     // If no characters found and AutoCreateCharacters is enabled, create one
-    if (availableCharacters.empty() && false) // sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false)
+    if (availableCharacters.empty() && ::PlayerbotConfig::instance()->GetBool("Playerbot.AutoCreateCharacters", true))
     {
         TC_LOG_DEBUG("module.playerbot.spawner",
             "No characters found for account {}, attempting to create new character", accountId);
@@ -684,7 +700,7 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
         }
 
         // Handle auto-character creation if enabled and no characters found
-        if (availableCharacters.empty() && false) // sPlayerbotConfig->GetBool("Playerbot.AutoCreateCharacters", false)
+        if (availableCharacters.empty() && ::PlayerbotConfig::instance()->GetBool("Playerbot.AutoCreateCharacters", true))
         {
             TC_LOG_DEBUG("module.playerbot.spawner",
                 "No characters found for account {}, attempting to create new character", accountId);
@@ -1234,6 +1250,40 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
     try
     {
+        // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character
+        std::string accountQueryStr = fmt::format("SELECT a.id FROM account a WHERE a.id = {} LIMIT 1", accountId);
+        QueryResult accountCheck = LoginDatabase.Query(accountQueryStr.c_str());
+
+        if (!accountCheck)
+        {
+            TC_LOG_ERROR("module.playerbot.spawner",
+                "❌ VALIDATION FAILED: Account {} does not exist in database! Cannot create character.",
+                accountId);
+            return ObjectGuid::Empty;
+        }
+
+        // Check current character count for this account (enforce 10 character limit)
+        std::string charCountQueryStr = fmt::format("SELECT COUNT(*) FROM characters WHERE account = {}", accountId);
+        QueryResult charCountResult = CharacterDatabase.Query(charCountQueryStr.c_str());
+
+        if (charCountResult)
+        {
+            Field* fields = charCountResult->Fetch();
+            uint32 currentCharCount = fields[0].GetUInt32();
+
+            if (currentCharCount >= 10)
+            {
+                TC_LOG_WARN("module.playerbot.spawner",
+                    "❌ Account {} already has {} characters (limit: 10). Cannot create more.",
+                    accountId, currentCharCount);
+                return ObjectGuid::Empty;
+            }
+
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "✅ Account {} validated: exists in database, has {}/10 characters",
+                accountId, currentCharCount);
+        }
+
         // Get race/class distribution
         auto [race, classId] = sBotCharacterDistribution->GetRandomRaceClassByDistribution();
         if (race == RACE_NONE || classId == CLASS_NONE)

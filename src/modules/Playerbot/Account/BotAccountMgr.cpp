@@ -18,7 +18,7 @@
 #include "BotAccountMgr.h"
 #include "AccountMgr.h"
 #include "BattlenetAccountMgr.h"
-#include "PlayerbotConfig.h"
+#include "Config/PlayerbotConfig.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "Util.h"
@@ -29,6 +29,7 @@
 #include <thread>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 namespace Playerbot {
 
@@ -142,25 +143,27 @@ void BotAccountMgr::LoadConfigurationValues()
 {
     TC_LOG_DEBUG("module.playerbot.account", "Loading configuration values...");
 
-    // Load configuration from playerbots.conf - using defaults until config system resolved
-    _maxBotsTotal.store(1000);
-    _autoCreateAccounts.store(false);
-    _accountsToCreate.store(0);
+    // Load configuration from playerbots.conf using PlayerbotConfig
+    _maxBotsTotal.store(::PlayerbotConfig::instance()->GetInt("Playerbot.MaxBots", 1000));
+    _autoCreateAccounts.store(::PlayerbotConfig::instance()->GetBool("Playerbot.AutoCreateAccounts", true));
+    uint32 configuredAccounts = ::PlayerbotConfig::instance()->GetInt("Playerbot.AccountsToCreate", 50);
 
-    // Calculate required accounts based on configuration logic
-    uint32 calculatedAccounts = _maxBotsTotal.load() / 10;
-    uint32 configuredAccounts = _accountsToCreate.load();
+    // AUTO-ADJUSTMENT: If MaxBots > 10 * AccountsToCreate, adjust accounts to the right number
+    // Formula: accounts = ceil(MaxBots / 10.0) to support 10 characters per account
+    uint32 calculatedAccounts = static_cast<uint32>(std::ceil(_maxBotsTotal.load() / 10.0));
 
-    // Use configured value if it's greater than calculated, otherwise use calculated
-    uint32 requiredAccounts = (configuredAccounts > calculatedAccounts) ? configuredAccounts : calculatedAccounts;
+    // Use the maximum of configured and calculated to ensure we have enough accounts
+    uint32 requiredAccounts = std::max(configuredAccounts, calculatedAccounts);
+
+    _accountsToCreate.store(requiredAccounts);  // Store adjusted value
     _requiredAccounts.store(requiredAccounts);
 
     // Set target pool size (keep 25% in pool for instant availability)
     _targetPoolSize.store(std::max(10U, requiredAccounts / 4));
 
-    TC_LOG_INFO("module.playerbot.account",
-        "Configuration loaded: MaxBotsTotal={}, AutoCreate={}, AccountsToCreate={}, Required={}, PoolTarget={}",
-        _maxBotsTotal.load(), _autoCreateAccounts.load(), _accountsToCreate.load(),
+    TC_LOG_ERROR("module.playerbot",
+        "🔧 BotAccountMgr Config: MaxBotsTotal={}, AutoCreate={}, ConfiguredAccounts={}, CalculatedAccounts={}, RequiredAccounts={}, PoolTarget={}",
+        _maxBotsTotal.load(), _autoCreateAccounts.load(), configuredAccounts, calculatedAccounts,
         _requiredAccounts.load(), _targetPoolSize.load());
 }
 
@@ -327,7 +330,7 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
 void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
     std::function<void(std::vector<uint32>)> callback)
 {
-    TC_LOG_INFO("module.playerbot.account", "Creating batch of {} bot accounts...", count);
+    TC_LOG_INFO("module.playerbot.account", "Creating batch of {} bot accounts with throttling (50/sec)...", count);
 
     // Execute in a separate thread to avoid blocking
     std::thread([this, count, callback]()
@@ -337,22 +340,43 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
 
         for (uint32 i = 0; i < count; ++i)
         {
+            // SEQUENTIAL CREATION WITH VALIDATION
             if (uint32 accountId = CreateBotAccount())
             {
-                createdAccounts.push_back(accountId);
+                // VALIDATION: Verify account exists in database before adding to list
+                std::string queryStr = fmt::format(
+                    "SELECT ba.id FROM battlenet_accounts ba "
+                    "LEFT JOIN account a ON a.battlenet_account = ba.id "
+                    "WHERE ba.id = {} LIMIT 1", accountId);
+
+                QueryResult result = LoginDatabase.Query(queryStr.c_str());
+
+                if (result)
+                {
+                    createdAccounts.push_back(accountId);
+                    TC_LOG_DEBUG("module.playerbot.account",
+                        "✅ Account {} created and validated ({}/{})", accountId, i + 1, count);
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.account",
+                        "❌ Account {} creation reported success but not found in database!", accountId);
+                }
             }
             else
             {
                 // If creation fails, we might have hit the limit
+                TC_LOG_WARN("module.playerbot.account",
+                    "Account creation failed at {}/{}, stopping batch", i + 1, count);
                 break;
             }
 
-            // Small delay to avoid overwhelming the system
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // THROTTLING: 50 accounts per second = 20ms delay between accounts
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
 
         TC_LOG_INFO("module.playerbot.account",
-            "Batch creation complete: {}/{} accounts created",
+            "✅ Batch creation complete: {}/{} accounts created and validated",
             createdAccounts.size(), count);
 
         if (callback)

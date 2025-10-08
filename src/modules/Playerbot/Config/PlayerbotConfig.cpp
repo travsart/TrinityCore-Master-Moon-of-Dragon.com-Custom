@@ -434,7 +434,9 @@ void PlayerbotConfig::InitializeLogging()
         return;
     }
 
-    // Apply Playerbot-specific configuration if loaded, and RE-INITIALIZE
+    // Apply Playerbot-specific configuration if loaded
+    // NOTE: We do NOT re-initialize here, as that causes duplicate logger creation
+    // The initial registration already set up the logger correctly
     if (_loaded)
     {
         uint8 configLevel = GetUInt("Playerbot.Log.Level", 4);
@@ -445,16 +447,8 @@ void PlayerbotConfig::InitializeLogging()
 
         if (configLevel <= 5)
         {
-            // Update the configuration
+            // Update the configuration only (don't re-initialize)
             mgr->SetModuleConfig("playerbot", configLevel, configFile);
-
-            // Re-initialize with the new config (this should recreate the logger with correct settings)
-            TC_LOG_DEBUG("module.playerbot.config", "Re-initializing module logging with updated config");
-            if (!mgr->InitializeModuleLogging("playerbot"))
-            {
-                TC_LOG_ERROR("server.loading", "PlayerbotConfig: Failed to re-initialize module logging with updated config");
-                return;
-            }
         }
     }
 

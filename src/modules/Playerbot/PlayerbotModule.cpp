@@ -90,14 +90,27 @@ bool PlayerbotModule::Initialize()
     }
 
     // Initialize Bot Account Manager
+    TC_LOG_INFO("server.loading", "PlayerbotModule: About to call sBotAccountMgr->Initialize()...");
     if (!sBotAccountMgr->Initialize())
     {
         _lastError = "Failed to initialize Bot Account Manager";
+        TC_LOG_ERROR("server.loading", "PlayerbotModule: BotAccountMgr->Initialize() returned FALSE");
         // Check if strict mode is enabled
-        if (sPlayerbotConfig->GetBool("Playerbot.StrictCharacterLimit", true))
+        bool strictMode = sPlayerbotConfig->GetBool("Playerbot.StrictCharacterLimit", true);
+        TC_LOG_ERROR("server.loading", "PlayerbotModule: StrictCharacterLimit = {}", strictMode);
+        if (strictMode)
         {
+            TC_LOG_ERROR("server.loading", "PlayerbotModule: ABORTING initialization due to strict mode");
             return false;
         }
+        else
+        {
+            TC_LOG_WARN("server.loading", "PlayerbotModule: Continuing despite BotAccountMgr failure (strict mode disabled)");
+        }
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", "PlayerbotModule: sBotAccountMgr->Initialize() returned TRUE");
     }
 
     // Initialize Bot Name Manager
@@ -128,12 +141,10 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
-    // Initialize Bot Spawner
-    if (!Playerbot::sBotSpawner->Initialize())
-    {
-        _lastError = "Failed to initialize Bot Spawner";
-        return false;
-    }
+    // NOTE: Bot Spawner initialization is handled by PlayerbotModuleAdapter::OnModuleStartup()
+    // This ensures proper timing - BotSpawner needs the world to be fully loaded, which happens
+    // AFTER this Initialize() function completes. The ModuleManager calls OnModuleStartup()
+    // at the correct time, and it will initialize both BotAccountMgr and BotSpawner.
 
     // Initialize Bot Lifecycle Manager
     //     TC_LOG_INFO("server.loading", "Initializing Bot Lifecycle Manager...");

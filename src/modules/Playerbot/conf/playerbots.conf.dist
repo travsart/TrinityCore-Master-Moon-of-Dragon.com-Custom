@@ -29,6 +29,13 @@
 #        Range:       1-50
 #        Note:        Enforced during character creation
 #
+#    Playerbot.AutoCreateCharacters
+#        Description: Automatically create characters for bot accounts
+#        Default:     1 (enabled)
+#        Note:        When enabled, bot accounts with no characters will
+#                     automatically have a character created using race/class
+#                     distribution from the playerbot_playerbot database
+#
 #    Playerbot.UpdateInterval
 #        Description: Bot update interval in milliseconds
 #        Default:     100
@@ -40,13 +47,43 @@
 #        Default:     1
 #        Note:        Validates bot accounts and character limits
 #
+#    Playerbot.MaxCharactersPerAccount
+#        Description: HARD LIMIT - Maximum characters per bot account
+#        Default:     10
+#        Range:       1-10
+#        Warning:     DO NOT EXCEED 10 - This is a TrinityCore limitation
+#        Note:        Used for validation and account management
+#
+#    Playerbot.StrictCharacterLimit
+#        Description: Enforce character limit strictly on startup
+#        Default:     1 (enabled)
+#        Note:        0 = Allow startup with violations (excess chars disabled)
+#                     1 = Abort startup if any account exceeds limit
+#
+#    Playerbot.ForceLegacyMode
+#        Description: Force legacy playerbot compatibility mode
+#        Default:     0 (disabled)
+#        Note:        Enable only if migrating from old playerbot systems
+#                     May disable some modern features
+#
+#    Playerbot.UseOrchestrator
+#        Description: Use centralized bot orchestration system
+#        Default:     1 (enabled)
+#        Note:        Coordinates bot spawning and lifecycle management
+#                     Disable only for debugging individual components
+#
 ###################################################################################################
 
 Playerbot.Enable = 1
 Playerbot.MaxBots = 100
 Playerbot.MaxBotsPerAccount = 10
+Playerbot.MaxCharactersPerAccount = 10
+Playerbot.AutoCreateCharacters = 1
 Playerbot.UpdateInterval = 100
 Playerbot.StartupValidation = 1
+Playerbot.StrictCharacterLimit = 1
+Playerbot.ForceLegacyMode = 0
+Playerbot.UseOrchestrator = 1
 
 ###################################################################################################
 # AI BEHAVIOR
@@ -121,6 +158,12 @@ Playerbot.AI.RandomFactor = 25
 #        Range:       5-50
 #        Note:        Bots exceeding this may be restarted
 #
+#    Playerbot.Performance.Profiler.Enable
+#        Description: Enable detailed performance profiling
+#        Default:     0 (disabled)
+#        Note:        Tracks detailed timing metrics for bot operations
+#                     Enable only for debugging - adds overhead
+#
 ###################################################################################################
 
 Playerbot.Performance.EnableMonitoring = 1
@@ -128,9 +171,37 @@ Playerbot.Performance.CPUWarningThreshold = 80
 Playerbot.Performance.MemoryWarningThreshold = 1000
 Playerbot.Performance.MaxCPUPerBot = 0.5
 Playerbot.Performance.MaxMemoryPerBot = 10
+Playerbot.Performance.Profiler.Enable = 0
 
 ###################################################################################################
 # DATABASE
+#
+#    Playerbot.Database.Host
+#        Description: MySQL host for playerbot database
+#        Default:     "127.0.0.1"
+#        Note:        Hostname or IP address of playerbot database server
+#                     Uses same connection as main TrinityCore databases
+#
+#    Playerbot.Database.Port
+#        Description: MySQL port for playerbot database
+#        Default:     3306
+#        Note:        Port number for MySQL connection
+#
+#    Playerbot.Database.Name
+#        Description: Database name for playerbot data
+#        Default:     "playerbot_playerbot"
+#        Note:        Name of the playerbot-specific database
+#                     Contains bot accounts, schedules, distributions
+#
+#    Playerbot.Database.User
+#        Description: MySQL username for playerbot database
+#        Default:     "trinity"
+#        Note:        Should have full access to playerbot_playerbot database
+#
+#    Playerbot.Database.Password
+#        Description: MySQL password for playerbot database
+#        Default:     "trinity"
+#        Warning:     Change this for production environments!
 #
 #    Playerbot.Database.EnablePooling
 #        Description: Enable database connection pooling for bots
@@ -162,6 +233,11 @@ Playerbot.Performance.MaxMemoryPerBot = 10
 #
 ###################################################################################################
 
+Playerbot.Database.Host = "127.0.0.1"
+Playerbot.Database.Port = 3306
+Playerbot.Database.Name = "playerbot_playerbot"
+Playerbot.Database.User = "trinity"
+Playerbot.Database.Password = "trinity"
 Playerbot.Database.EnablePooling = 1
 Playerbot.Database.MaxConnections = 10
 Playerbot.Database.QueryTimeout = 30
@@ -328,3 +404,116 @@ Playerbot.Experimental.BotChat = 0
 Playerbot.Experimental.BotEmotes = 0
 Playerbot.Experimental.PathfindingV2 = 0
 Playerbot.Experimental.Features = 0
+
+###################################################################################################
+# SPAWNING & POPULATION
+#
+#    Playerbot.Spawn.Dynamic
+#        Description: Enable dynamic bot spawning based on player population
+#        Default:     1 (enabled)
+#        Note:        Automatically adjusts bot count based on online players
+#                     and zone populations to create a living world feel
+#
+#    Playerbot.Spawn.RespectCaps
+#        Description: Enforce Playerbot.MaxBots limit strictly
+#        Default:     1 (enabled)
+#        Note:        When enabled, will not spawn bots beyond MaxBots
+#                     When disabled, may temporarily exceed for dynamic spawning
+#
+#    Playerbot.Spawn.BotToPlayerRatio
+#        Description: Target ratio of bots to real players
+#        Default:     30.0
+#        Range:       1.0-100.0
+#        Note:        For dynamic spawning: bots_to_spawn = players * ratio
+#                     Example: 2 players * 30.0 = 60 bots
+#
+#    Playerbot.MinimumBotsPerZone
+#        Description: Minimum bots to maintain per populated zone
+#        Default:     10
+#        Range:       0-100
+#        Note:        Ensures zones feel populated even with few players
+#                     0 = No minimum, zones can be empty
+#
+#    Playerbot.RandomBotLevel.Min
+#        Description: Minimum level for randomly created bots
+#        Default:     1
+#        Range:       1-80
+#        Note:        Used when auto-creating characters for bot accounts
+#                     Levels are distributed across this range
+#
+###################################################################################################
+
+Playerbot.Spawn.Dynamic = 1
+Playerbot.Spawn.RespectCaps = 1
+Playerbot.Spawn.BotToPlayerRatio = 30.0
+Playerbot.MinimumBotsPerZone = 10
+Playerbot.RandomBotLevel.Min = 1
+
+###################################################################################################
+# INVENTORY & LOOTING
+#
+#    Playerbot.Inventory.AutoLoot
+#        Description: Bots automatically loot nearby corpses
+#        Default:     1 (enabled)
+#        Note:        Bots will loot mobs they kill and nearby corpses
+#                     Essential for quest progression and gear acquisition
+#
+#    Playerbot.Inventory.AutoEquip
+#        Description: Bots automatically equip better gear
+#        Default:     1 (enabled)
+#        Note:        Compares item stats and equips upgrades automatically
+#                     Considers primary stats, itemlevel, and class needs
+#
+#    Playerbot.Inventory.AutoSell
+#        Description: Bots automatically sell trash items at vendors
+#        Default:     1 (enabled)
+#        Note:        Sells grey (trash) quality items when visiting vendors
+#                     Manages inventory space automatically
+#
+#    Playerbot.Inventory.DestroyTrash
+#        Description: Destroy trash items when inventory full
+#        Default:     1 (enabled)
+#        Note:        If inventory is full and no vendor nearby, destroy trash
+#                     Prevents bots from being unable to loot quest items
+#
+#    Playerbot.Inventory.LootQuestItems
+#        Description: Prioritize looting quest items
+#        Default:     1 (enabled)
+#        Note:        Bots will always attempt to loot quest-related items
+#                     Even if inventory is full, will make space for quest items
+#
+#    Playerbot.Inventory.LootRange
+#        Description: Maximum distance (yards) to loot corpses
+#        Default:     30.0
+#        Range:       5.0-100.0
+#        Note:        How far bots will travel to loot corpses
+#                     Larger values may cause excessive running around
+#
+###################################################################################################
+
+Playerbot.Inventory.AutoLoot = 1
+Playerbot.Inventory.AutoEquip = 1
+Playerbot.Inventory.AutoSell = 1
+Playerbot.Inventory.DestroyTrash = 1
+Playerbot.Inventory.LootQuestItems = 1
+Playerbot.Inventory.LootRange = 30.0
+
+###################################################################################################
+# LOGGING & DEBUGGING
+#
+#    Playerbot.Log.File
+#        Description: Log file name for playerbot-specific logs
+#        Default:     "Playerbot.log"
+#        Note:        Separate from main server logs for easier debugging
+#                     Located in the logs directory
+#
+#    Playerbot.Log.PerformanceMetrics
+#        Description: Log detailed performance metrics
+#        Default:     0 (disabled)
+#        Note:        Logs CPU usage, memory consumption, query times
+#                     Enable for performance debugging - generates large logs
+#
+###################################################################################################
+
+Playerbot.Log.File = "Playerbot.log"
+Playerbot.Log.PerformanceMetrics = 0

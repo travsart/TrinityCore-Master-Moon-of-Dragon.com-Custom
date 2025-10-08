@@ -36,8 +36,6 @@
 #include "Log.h"
 #include "Timer.h"
 #include <chrono>
-#include <set>
-#include <unordered_map>
 
 namespace Playerbot
 {
@@ -205,25 +203,8 @@ void BotAI::UpdateAI(uint32 diff)
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
     // No more confusion with DoUpdateAI/UpdateEnhanced
 
-    // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> updateAILogAccumulators;
-    bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());
-    bool shouldLog = false;
-
-    if (isTestBot)
-    {
-        std::string botName = _bot->GetName();
-        // Throttle by call count (every 1000 calls ~= 50s)
-        updateAILogAccumulators[botName]++;
-        if (updateAILogAccumulators[botName] >= 1000)
-        {
-            shouldLog = true;
-            updateAILogAccumulators[botName] = 0;
-        }
-    }
-
-    if (shouldLog)
+    static uint32 entryCounter = 0;
+    if (++entryCounter % 100 == 0)
     {
         TC_LOG_ERROR("module.playerbot", "🎯 UpdateAI ENTRY: Bot {}, _bot={}, IsInWorld()={}",
                     _bot ? _bot->GetName() : "NULL", (void*)_bot, _bot ? _bot->IsInWorld() : false);
@@ -453,24 +434,6 @@ void BotAI::UpdateStrategies(uint32 diff)
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
 
-    // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> strategyLogAccumulators;
-
-    bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());
-    bool shouldLogStrategy = false;
-
-    if (isTestBot)
-    {
-        std::string botName = _bot->GetName();
-        strategyLogAccumulators[botName] += diff;
-        if (strategyLogAccumulators[botName] >= 50000)
-        {
-            shouldLogStrategy = true;
-            strategyLogAccumulators[botName] = 0;
-        }
-    }
-
     // ========================================================================
     // PHASE 1: Collect all active strategies WITHOUT holding lock
     // ========================================================================
@@ -479,8 +442,8 @@ void BotAI::UpdateStrategies(uint32 diff)
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-        // DEBUG LOGGING THROTTLE: Use shouldLogStrategy from above (already throttled)
-        if (shouldLogStrategy)
+        static uint32 activeStrategiesDebugCounter = 0;
+        if (++activeStrategiesDebugCounter % 100 == 0)
         {
             TC_LOG_ERROR("module.playerbot", "🔍 ACTIVE STRATEGIES: Bot {} has {} active strategies in _activeStrategies set",
                         _bot->GetName(), _activeStrategies.size());
@@ -502,9 +465,8 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     std::vector<Strategy*> activeStrategies;
 
-    // OLD DEBUG CODE REMOVED - now using test bot whitelist throttling above (lines 433-454)
-    // static uint32 debugStrategyCounter = 0;
-    // bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0);
+    static uint32 debugStrategyCounter = 0;
+    bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0);
 
     for (Strategy* strategy : strategiesToCheck)
     {
@@ -545,44 +507,31 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     if (selectedStrategy)
     {
-        if (shouldLogStrategy)
-        {
-            TC_LOG_ERROR("module.playerbot", "⚡ EXECUTING: Bot {} strategy '{}'",
-                        _bot->GetName(), selectedStrategy->GetName());
-        }
+        TC_LOG_ERROR("module.playerbot", "⚡ EXECUTING: Bot {} strategy '{}'",
+                    _bot->GetName(), selectedStrategy->GetName());
 
         // Special handling for follow strategy - needs every frame update
         if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(selectedStrategy))
         {
-            if (shouldLogStrategy)
-                TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
+            TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
         }
         else
         {
             // Other strategies can use their normal update
-            if (shouldLogStrategy)
-            {
-                TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
-                            _bot->GetName(), selectedStrategy->GetName());
-            }
+            TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
+                        _bot->GetName(), selectedStrategy->GetName());
             selectedStrategy->UpdateBehavior(this, diff);
-            if (shouldLogStrategy)
-            {
-                TC_LOG_ERROR("module.playerbot", "✔️ RETURNED from UpdateBehavior for bot {} strategy '{}'",
-                            _bot->GetName(), selectedStrategy->GetName());
-            }
+            TC_LOG_ERROR("module.playerbot", "✔️ RETURNED from UpdateBehavior for bot {} strategy '{}'",
+                        _bot->GetName(), selectedStrategy->GetName());
         }
 
         _performanceMetrics.strategiesEvaluated = 1;
     }
     else
     {
-        if (shouldLogStrategy)
-        {
-            TC_LOG_ERROR("module.playerbot", "⚠️ NO STRATEGY SELECTED for bot {} (had {} active)",
-                        _bot->GetName(), activeStrategies.size());
-        }
+        TC_LOG_ERROR("module.playerbot", "⚠️ NO STRATEGY SELECTED for bot {} (had {} active)",
+                    _bot->GetName(), activeStrategies.size());
         _performanceMetrics.strategiesEvaluated = 0;
     }
 }
@@ -1497,23 +1446,20 @@ void BotAI::UpdateManagers(uint32 diff)
 {
     // Phase 7.1: Integrated EventDispatcher + ManagerRegistry architecture
     // This replaces the old manual manager update approach with centralized event routing
-    // DEBUG LOGGING THROTTLE: Only log every 50 seconds for whitelisted test bots
-    // Using per-bot instance variable instead of static to prevent cross-bot interference
-    _debugLogAccumulator += diff;
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());
-    bool shouldLog = isTestBot && (_debugLogAccumulator >= 50000);
-    if (shouldLog) _debugLogAccumulator = 0;
 
-    if (shouldLog)
+    static uint32 updateManagersCallCount = 0;
+    if (++updateManagersCallCount % 10 == 0)
     {
-        TC_LOG_ERROR("module.playerbot", "🔧 UpdateManagers ENTRY: Bot {}, IsInWorld()={}", _bot->GetName(), _bot->IsInWorld());
+        TC_LOG_ERROR("module.playerbot", "🔧 UpdateManagers ENTRY: Bot {}, IsInWorld()={}, EventDispatcher={}, ManagerRegistry={}",
+                    _bot ? _bot->GetName() : "NULL",
+                    _bot ? _bot->IsInWorld() : false,
+                    (void*)_eventDispatcher.get(),
+                    (void*)_managerRegistry.get());
     }
 
     if (!_bot || !_bot->IsInWorld())
     {
-        if (shouldLog)
-            TC_LOG_ERROR("module.playerbot", "❌ UpdateManagers EARLY RETURN: Bot {} not in world", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "❌ UpdateManagers EARLY RETURN: Bot {} not in world", _bot ? _bot->GetName() : "NULL");
         return;
     }
 
@@ -1570,36 +1516,36 @@ void BotAI::UpdateManagers(uint32 diff)
     // Quest manager handles quest acceptance, turn-in, and tracking
     if (_questManager)
     {
-        // TC_LOG_ERROR("module.playerbot", "🎯 Calling QuestManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling QuestManager->Update() for bot {}", _bot->GetName());
         _questManager->Update(diff);
-        // TC_LOG_ERROR("module.playerbot", "✅ Returned from QuestManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from QuestManager->Update() for bot {}", _bot->GetName());
     }
 
     // Trade manager handles vendor interactions, repairs, and consumables
     if (_tradeManager)
     {
-        // TC_LOG_ERROR("module.playerbot", "🎯 Calling TradeManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling TradeManager->Update() for bot {}", _bot->GetName());
         _tradeManager->Update(diff);
-        // TC_LOG_ERROR("module.playerbot", "✅ Returned from TradeManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from TradeManager->Update() for bot {}", _bot->GetName());
     }
 
     // Gathering manager handles mining, herbalism, skinning
     if (_gatheringManager)
     {
-        // TC_LOG_ERROR("module.playerbot", "🎯 Calling GatheringManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling GatheringManager->Update() for bot {}", _bot->GetName());
         _gatheringManager->Update(diff);
-        // TC_LOG_ERROR("module.playerbot", "✅ Returned from GatheringManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from GatheringManager->Update() for bot {}", _bot->GetName());
     }
 
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
     {
-        // TC_LOG_ERROR("module.playerbot", "🎯 Calling AuctionManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "🎯 Calling AuctionManager->Update() for bot {}", _bot->GetName());
         _auctionManager->Update(diff);
-        // TC_LOG_ERROR("module.playerbot", "✅ Returned from AuctionManager->Update() for bot {}", _bot->GetName());
+        TC_LOG_ERROR("module.playerbot", "✅ Returned from AuctionManager->Update() for bot {}", _bot->GetName());
     }
 
-    // TC_LOG_ERROR("module.playerbot", "✅ UpdateManagers COMPLETE for bot {}", _bot->GetName());
+    TC_LOG_ERROR("module.playerbot", "✅ UpdateManagers COMPLETE for bot {}", _bot->GetName());
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp

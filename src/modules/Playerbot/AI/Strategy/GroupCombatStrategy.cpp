@@ -120,17 +120,20 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
             float distance = bot->GetDistance(target);
 
-            // Start attacking if not already
-            if (!bot->GetVictim())
+            // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
+            // bot->Attack() makes the target hostile but needs to process
+            if (!bot->GetVictim() || bot->GetVictim() != target)
             {
-                bot->Attack(target, true);  // Set combat state FIRST
-
-                // CRITICAL FIX: Manually set combat flag since Attack() doesn't always do it
-                // TrinityCore only sets combat on first damage, but we need AI to react immediately
+                // Initiate combat with target
+                bot->Attack(target, true);
                 bot->SetInCombatWith(target);
 
-                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} starting attack on {} (combat flag set)",
+                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (waiting for hostility)",
                             bot->GetName(), target->GetName());
+
+                // Return to allow combat state to settle - spell casting will happen next frame
+                // This gives TrinityCore time to make target hostile to the bot
+                return;
             }
 
             // ALWAYS update movement while target is alive (even during combat)
@@ -194,23 +197,14 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
                     // Set target
                     bot->SetTarget(target->GetGUID());
 
-                    // CRITICAL FIX: Move toward target BEFORE attacking
-                    // Attack() only works if in range, so we must chase first
+                    // Combat initiation is handled in UpdateBehavior
+                    // Just set target here and return high relevance
                     if (!bot->IsInCombat() && !bot->GetVictim())
                     {
                         float distance = bot->GetDistance(target);
 
-                        // Start chasing the target to get in melee range (chase to 2yd to ensure in range)
-                        bot->GetMotionMaster()->MoveChase(target, 2.0f);
-
-                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy (Relevance): Bot {} CHASING {} (distance: {:.1f}yd) to assist {}",
+                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
                                     bot->GetName(), target->GetName(), distance, member->GetName());
-
-                        // Also call Attack() to set combat state when in range
-                        bot->Attack(target, true);  // true = melee attack
-
-                        // CRITICAL FIX: Manually set combat flag since Attack() doesn't always do it
-                        bot->SetInCombatWith(target);
                     }
                     break;
                 }

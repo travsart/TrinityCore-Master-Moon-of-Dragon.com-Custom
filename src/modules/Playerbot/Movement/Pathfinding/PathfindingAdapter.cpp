@@ -10,7 +10,7 @@
 #include "PathfindingAdapter.h"
 #include "Player.h"
 #include "Map.h"
-#include "MMapFactory.h"
+
 #include "PhaseShift.h"
 #include "Log.h"
 #include <algorithm>

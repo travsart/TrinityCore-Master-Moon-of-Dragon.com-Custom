@@ -203,6 +203,7 @@ private:
     std::atomic<bool> _enabled{true};
     std::atomic<bool> _firstPlayerSpawned{false};
     std::atomic<uint32> _lastRealPlayerCount{0};
+    bool _initialCalculationDone = false; // Track if initial zone calculation happened in Initialize()
 
     static constexpr uint32 POPULATION_UPDATE_INTERVAL = 5000; // 5 seconds
     static constexpr uint32 TARGET_CALCULATION_INTERVAL = 2000; // 2 seconds for faster response

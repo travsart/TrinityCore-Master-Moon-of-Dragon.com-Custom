@@ -394,6 +394,7 @@ protected:
 
     // Debug tracking
     uint32 _lastDebugLogTime = 0;
+    uint32 _debugLogAccumulator = 0; // Per-bot accumulator for manager update logging throttle
 };
 
 // ========================================================================

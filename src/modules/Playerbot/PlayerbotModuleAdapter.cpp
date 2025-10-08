@@ -66,6 +66,8 @@ void PlayerbotModuleAdapter::OnModuleStartup()
         TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Initializing Bot Spawner...");
 
         // Initialize Bot Spawner (moved from PlayerbotModule::Initialize for proper timing)
+        // NOTE: BotAccountMgr is already initialized in PlayerbotModule::Initialize()
+        // which runs earlier during server startup
         if (!Playerbot::sBotSpawner->Initialize())
         {
             TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Failed to initialize Bot Spawner");

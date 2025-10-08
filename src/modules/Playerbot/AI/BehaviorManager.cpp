@@ -21,6 +21,8 @@
 #include "Log.h"
 #include "Timer.h"
 #include <algorithm>
+#include <set>
+#include <unordered_map>
 
 namespace Playerbot
 {
@@ -57,8 +59,26 @@ namespace Playerbot
 
     void BehaviorManager::Update(uint32 diff)
     {
-        static uint32 updateCallCounter = 0;
-        bool shouldLog = (++updateCallCounter % 10 == 0);
+        // DEBUG: Only log for whitelisted test bots to prevent log spam
+        static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+        bool isTestBot = m_bot && (testBots.find(m_bot->GetName()) != testBots.end());
+
+        // Per-bot debug log accumulator (only for test bots)
+        static std::unordered_map<std::string, uint32> debugLogAccumulators;
+        bool shouldLog = false;
+
+        if (isTestBot)
+        {
+            std::string botName = m_bot->GetName();
+            debugLogAccumulators[botName] += diff;
+
+            // Log every 50 seconds per test bot
+            if (debugLogAccumulators[botName] >= 50000)
+            {
+                shouldLog = true;
+                debugLogAccumulators[botName] = 0;
+            }
+        }
 
         if (shouldLog)
         {
@@ -248,8 +268,24 @@ namespace Playerbot
 
     bool BehaviorManager::ValidatePointers() const
     {
-        static uint32 validateCallCounter = 0;
-        bool shouldLog = (++validateCallCounter % 10 == 0);
+        // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
+        static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+        static std::unordered_map<std::string, uint32> validateLogAccumulators;
+
+        bool isTestBot = m_bot && (testBots.find(m_bot->GetName()) != testBots.end());
+        bool shouldLog = false;
+
+        if (isTestBot)
+        {
+            std::string botName = m_bot->GetName();
+            // Note: We can't use diff here, so we throttle by call count instead (every 1000 calls ~= 50s)
+            validateLogAccumulators[botName]++;
+            if (validateLogAccumulators[botName] >= 1000)
+            {
+                shouldLog = true;
+                validateLogAccumulators[botName] = 0;
+            }
+        }
 
         // Check bot pointer validity
         if (!m_bot)

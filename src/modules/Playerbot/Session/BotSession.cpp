@@ -26,6 +26,8 @@
 #include <condition_variable>
 #include <future>
 #include <unordered_set>
+#include <set>
+#include <unordered_map>
 #include <boost/asio/io_context.hpp>
 #include "Chat/Chat.h"
 #include "Database/QueryHolder.h"
@@ -642,8 +644,26 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 BotAI* aiSnapshot = _ai;  // Snapshot pointer (raw pointer for now)
                 bool activeSnapshot = _active.load(std::memory_order_acquire);  // Acquire semantics
 
-                static uint32 debugUpdateCounter = 0;
-                if (++debugUpdateCounter % 100 == 0) // Log every 100 update attempts
+                // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
+                static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+                static std::unordered_map<std::string, uint32> sessionLogAccumulators;
+                Player* botPlayer = GetPlayer();
+                bool isTestBot = botPlayer && (testBots.find(botPlayer->GetName()) != testBots.end());
+                bool shouldLog = false;
+
+                if (isTestBot)
+                {
+                    std::string botName = botPlayer->GetName();
+                    // Throttle by call count (every 1000 calls ~= 50s)
+                    sessionLogAccumulators[botName]++;
+                    if (sessionLogAccumulators[botName] >= 1000)
+                    {
+                        shouldLog = true;
+                        sessionLogAccumulators[botName] = 0;
+                    }
+                }
+
+                if (shouldLog)
                 {
                     TC_LOG_INFO("module.playerbot.session", "🔍 BotSession Update Check - valid:{}, inWorld:{}, ai:{}, active:{}, account:{}",
                                 validSnapshot, inWorldSnapshot, aiSnapshot != nullptr, activeSnapshot, accountId);
@@ -651,7 +671,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
                 // Use SNAPSHOT values (not original variables) to prevent race conditions
                 if (validSnapshot && inWorldSnapshot && aiSnapshot && activeSnapshot) {
-                    if (debugUpdateCounter % 100 == 0)
+                    if (shouldLog)
                     {
                         TC_LOG_INFO("module.playerbot.session", "✅ ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
                     }
@@ -908,6 +928,10 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // Bot-specific initialization
         pCurrChar->SetVirtualPlayerRealm(GetVirtualRealmAddress());
 
+        // NOTE: Specialization spells are NOT saved to database in modern WoW
+        // LoadFromDB() at line 18356 calls LearnSpecializationSpells() which loads spells from DB2 data
+        // This is by design - spells are learned dynamically on each login
+
         // Set the player for this session
         SetPlayer(pCurrChar);
 
@@ -921,7 +945,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to add bot player {} to map", characterGuid.ToString());
             // Try to teleport to homebind if map addition fails
-            AreaTriggerStruct const* at = sObjectMgr->GetGoBackTrigger(pCurrChar->GetMapId());
+            AreaTriggerTeleport const* at = sObjectMgr->GetGoBackTrigger(pCurrChar->GetMapId());
             if (at)
                 pCurrChar->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, pCurrChar->GetOrientation());
             else

@@ -11,7 +11,7 @@
 #include <cmath>
 
 #include "BotScheduler.h"
-#include "PlayerbotConfig.h"
+#include "Config/PlayerbotConfig.h"
 #include "PlayerbotDatabase.h"
 #include "BotSpawner.h"
 #include "Log.h"

@@ -932,7 +932,10 @@ public:
 
 void AddSC_playerbot_event_scripts()
 {
-    new PlayerbotWorldScript();
+    // NOTE: PlayerbotWorldScript is already created in AddSC_playerbot_world()
+    // Do NOT create it here to avoid duplicate registration
+    // new PlayerbotWorldScript(); // REMOVED - causes duplicate OnStartup() calls
+
     new PlayerbotPlayerScript();
     new PlayerbotUnitScript();
     new PlayerbotGroupScript();

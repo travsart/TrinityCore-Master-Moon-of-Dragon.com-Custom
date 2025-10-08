@@ -9,7 +9,6 @@
 
 #include "NavMeshInterface.h"
 #include "Map.h"
-#include "MMapFactory.h"
 #include "MMapManager.h"
 #include "DetourNavMesh.h"
 #include "DetourNavMeshQuery.h"
@@ -565,7 +564,7 @@ namespace Playerbot
         if (!map)
             return nullptr;
 
-        MMAP::MMapManager* mmapManager = MMAP::MMapFactory::createOrGetMMapManager();
+        MMAP::MMapManager* mmapManager = MMAP::MMapManager::instance();
         if (!mmapManager)
             return nullptr;
 
@@ -577,7 +576,7 @@ namespace Playerbot
         if (!map)
             return nullptr;
 
-        MMAP::MMapManager* mmapManager = MMAP::MMapFactory::createOrGetMMapManager();
+        MMAP::MMapManager* mmapManager = MMAP::MMapManager::instance();
         if (!mmapManager)
             return nullptr;
 
