@@ -60,18 +60,19 @@ struct TotemInfo
     Position position;
     uint32 duration;
     uint32 remainingTime;
+    uint32 deployTime;
     uint32 lastPulse;
     bool isActive;
     float effectRadius;
     TotemBehavior behavior;
 
     TotemInfo() : spellId(0), type(TotemType::NONE), totem(nullptr), position(),
-                  duration(0), remainingTime(0), lastPulse(0), isActive(false),
+                  duration(0), remainingTime(0), deployTime(0), lastPulse(0), isActive(false),
                   effectRadius(0.0f), behavior(TotemBehavior::PASSIVE) {}
 
     TotemInfo(uint32 spell, TotemType t, uint32 dur, float radius)
         : spellId(spell), type(t), totem(nullptr), position(), duration(dur),
-          remainingTime(dur), lastPulse(getMSTime()), isActive(false),
+          remainingTime(dur), deployTime(0), lastPulse(getMSTime()), isActive(false),
           effectRadius(radius), behavior(TotemBehavior::PASSIVE) {}
 };
 

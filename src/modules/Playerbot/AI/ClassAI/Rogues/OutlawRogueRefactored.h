@@ -16,9 +16,14 @@
 #include "SpellAuraEffects.h"
 #include "Log.h"
 #include "RogueSpecialization.h"
+#include "RogueResourceTypes.h"
 
 namespace Playerbot
 {
+
+// NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
+// NOTE: EnergyComboResource is defined in RogueResourceTypes.h
+// Outlaw-specific spell IDs defined below
 
 // ============================================================================
 // OUTLAW ROGUE SPELL IDs (WoW 11.2 - The War Within)
@@ -72,42 +77,6 @@ enum OutlawSpells
     GHOSTLY_STRIKE           = 196937,  // Dodge buff
     DREADBLADES              = 343142,  // Spender costs CP instead of energy
     MARKED_FOR_DEATH         = 137619   // Instant 5 CP on target
-};
-
-// Dual resource type for Rogue (shared with Assassination)
-struct EnergyComboResource
-{
-    uint32 energy{0};
-    uint32 comboPoints{0};
-    uint32 maxEnergy{100};
-    uint32 maxComboPoints{5};
-
-    bool available{true};
-    bool Consume(uint32 energyCost) {
-        if (energy >= energyCost) {
-            energy -= energyCost;
-            return true;
-        }
-        return false;
-    }
-    void Regenerate(uint32 diff) {
-        // Resource regeneration logic (simplified)
-        available = true;
-    }
-
-    [[nodiscard]] uint32 GetAvailable() const {
-        return 100; // Simplified - override in specific implementations
-    }
-
-    [[nodiscard]] uint32 GetMax() const {
-        return 100; // Simplified - override in specific implementations
-    }
-
-
-    void Initialize(Player* /*bot*/) {
-        energy = 0;
-        comboPoints = 0;
-    }
 };
 
 // ============================================================================

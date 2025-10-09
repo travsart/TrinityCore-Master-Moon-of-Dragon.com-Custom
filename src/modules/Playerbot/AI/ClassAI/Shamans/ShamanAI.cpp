@@ -15,6 +15,7 @@
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Creature.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
 #include "SpellAuras.h"
@@ -22,6 +23,10 @@
 #include "Group.h"
 #include "Item.h"
 #include "MotionMaster.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
+#include "ObjectAccessor.h"
 #include "Log.h"
 #include <algorithm>
 #include <chrono>
@@ -680,7 +685,7 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
             Unit::AuraApplicationMap const& auras = target->GetAppliedAuras();
             for (auto const& [auraId, aurApp] : auras)
             {
-                if (aurApp->GetBase()->IsPositive() && aurApp->GetBase()->GetSpellInfo()->Dispel == DISPEL_MAGIC)
+                if (aurApp->IsPositive() && aurApp->GetBase()->GetSpellInfo()->Dispel == DISPEL_MAGIC)
                 {
                     hasPurgeableBuff = true;
                     break;
@@ -717,7 +722,7 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
                     Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
                     for (auto const& [auraId, aurApp] : auras)
                     {
-                        if (!aurApp->GetBase()->IsPositive())
+                        if (!aurApp->IsPositive())
                         {
                             uint32 dispelType = aurApp->GetBase()->GetSpellInfo()->Dispel;
                             if (dispelType == DISPEL_CURSE)
@@ -756,7 +761,9 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
 
     // Count nearby enemies
     std::list<Unit*> enemies;
-    GetBot()->GetAttackableUnitListInRange(enemies, 40.0f);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
+    Cell::VisitAllObjects(GetBot(), searcher, 40.0f);
 
     if (enemies.size() < 3)
         return false;
@@ -1069,12 +1076,13 @@ bool ShamanAI::HandleResourceManagement()
             uint32 maelstrom = GetElementalMaelstrom();
 
             // Spend maelstrom if capped
-            if (maelstrom >= 90)
+            if (maelstrom >= 90 && !_currentTarget.IsEmpty())
             {
+                Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
                 // Earth Shock to dump maelstrom
-                if (CanUseAbility(SPELL_EARTH_SHOCK))
+                if (target && CanUseAbility(SPELL_EARTH_SHOCK))
                 {
-                    if (CastSpell(_currentTarget, SPELL_EARTH_SHOCK))
+                    if (CastSpell(target, SPELL_EARTH_SHOCK))
                     {
                         _elementalMaelstrom -= 60;
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} spending maelstrom with Earth Shock",
@@ -1092,12 +1100,13 @@ bool ShamanAI::HandleResourceManagement()
             _maelstromWeaponStacks = GetMaelstromWeaponStacks();
 
             // Use instant cast at 5 stacks
-            if (_maelstromWeaponStacks >= MAELSTROM_WEAPON_MAX)
+            if (_maelstromWeaponStacks >= MAELSTROM_WEAPON_MAX && !_currentTarget.IsEmpty())
             {
+                Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
                 // Instant Lightning Bolt for single target
-                if (CanUseAbility(SPELL_LIGHTNING_BOLT))
+                if (target && CanUseAbility(SPELL_LIGHTNING_BOLT))
                 {
-                    if (CastSpell(_currentTarget, SPELL_LIGHTNING_BOLT))
+                    if (CastSpell(target, SPELL_LIGHTNING_BOLT))
                     {
                         _maelstromWeaponStacks = 0;
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} instant Lightning Bolt with Maelstrom",
@@ -1260,7 +1269,9 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
 
     // Use Chain Lightning if there are multiple targets
     std::list<Unit*> enemies;
-    GetBot()->GetAttackableUnitListInRange(enemies, 30.0f);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 30.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
+    Cell::VisitAllObjects(GetBot(), searcher, 30.0f);
 
     if (enemies.size() >= 2)
     {
@@ -1316,7 +1327,7 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target)
         return true;
 
     // Auto attack
-    if (!GetBot()->IsAutoAttackTarget(target))
+    if (GetBot()->GetVictim() != target)
     {
         GetBot()->Attack(target, true);
     }
@@ -1362,13 +1373,17 @@ bool ShamanAI::HandleLavaLash(::Unit* target)
 
 bool ShamanAI::HandleMaelstromWeapon()
 {
-    if (_maelstromWeaponStacks < MAELSTROM_WEAPON_MAX)
+    if (_maelstromWeaponStacks < MAELSTROM_WEAPON_MAX || _currentTarget.IsEmpty())
+        return false;
+
+    Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+    if (!target)
         return false;
 
     // Use instant Lightning Bolt at 5 stacks
     if (CanUseAbility(SPELL_LIGHTNING_BOLT))
     {
-        if (CastSpell(_currentTarget, SPELL_LIGHTNING_BOLT))
+        if (CastSpell(target, SPELL_LIGHTNING_BOLT))
         {
             _maelstromWeaponStacks = 0;
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} instant Lightning Bolt with Maelstrom Weapon",
@@ -1501,8 +1516,12 @@ bool ShamanAI::NeedsTotemRefresh(TotemType type) const
         return true;
 
     // Totem out of range
-    if (!IsTotemInRange(type, _currentTarget))
-        return true;
+    if (!_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        if (target && !IsTotemInRange(type, target))
+            return true;
+    }
 
     return false;
 }
@@ -1679,18 +1698,29 @@ bool ShamanAI::ShouldUseInstantLightningBolt() const
 bool ShamanAI::ShouldUseAscendance() const
 {
     // Use on boss fights or when multiple enemies
-    if (_currentTarget && _currentTarget->GetMaxHealth() > 1000000)
-        return true;
+    if (!_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        if (target && target->GetMaxHealth() > 1000000)
+            return true;
+    }
 
     std::list<Unit*> enemies;
-    GetBot()->GetAttackableUnitListInRange(enemies, 40.0f);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
+    Cell::VisitAllObjects(GetBot(), searcher, 40.0f);
     return enemies.size() >= 3;
 }
 
 bool ShamanAI::ShouldUseElementalMastery() const
 {
     // Use when we need burst damage
-    return _currentTarget && _currentTarget->GetHealthPct() < 30.0f;
+    if (!_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        return target && target->GetHealthPct() < 30.0f;
+    }
+    return false;
 }
 
 Player* ShamanAI::GetLowestHealthGroupMember() const
@@ -1757,9 +1787,19 @@ bool ShamanAI::HandleCrashLightning()
 
     // Use if multiple enemies nearby
     std::list<Unit*> enemies;
-    GetBot()->GetAttackableUnitListInRange(enemies, 8.0f);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 8.0f);
+    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
+    Cell::VisitAllObjects(GetBot(), searcher, 8.0f);
 
-    if (enemies.size() >= 2 || (_currentTarget && IsInMeleeRange(_currentTarget)))
+    bool shouldUse = enemies.size() >= 2;
+    if (!_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        if (target && IsInMeleeRange(target))
+            shouldUse = true;
+    }
+
+    if (shouldUse)
     {
         if (CastSpell(SPELL_CRASH_LIGHTNING))
         {
@@ -1799,7 +1839,9 @@ bool ShamanAI::HandleEarthquake()
     if (_elementalMaelstrom >= 60)
     {
         std::list<Unit*> enemies;
-        GetBot()->GetAttackableUnitListInRange(enemies, 40.0f);
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
+        Cell::VisitAllObjects(GetBot(), searcher, 40.0f);
 
         if (enemies.size() >= 3)
         {
@@ -2029,7 +2071,7 @@ void ShamanAI::OnCombatStart(::Unit* target)
     // Initialize combat tracking
     _combatTime = 0;
     _inCombat = true;
-    _currentTarget = target;
+    SetTarget(target->GetGUID());
 }
 
 void ShamanAI::OnCombatEnd()
@@ -2057,7 +2099,7 @@ void ShamanAI::OnCombatEnd()
 
     // Reset combat tracking
     _inCombat = false;
-    _currentTarget = nullptr;
+    SetTarget(ObjectGuid::Empty);
 
     // Log performance metrics
     LogCombatMetrics();
@@ -2311,13 +2353,15 @@ void ShamanAI::UpdateTotemCheck()
 
 void ShamanAI::UpdateShockRotation()
 {
-    if (!GetBot() || !_currentTarget)
+    if (!GetBot() || _currentTarget.IsEmpty())
         return;
 
     // Delegate shock rotation to specialization
     if (_specialization)
     {
-        _specialization->UpdateShockRotation(_currentTarget);
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        if (target)
+            _specialization->UpdateShockRotation(target);
     }
 }
 
@@ -2497,8 +2541,12 @@ bool ShamanAI::ShouldUseBloodlust() const
         return false;
 
     // Use in boss fights or when health is critical
-    if (_currentTarget && _currentTarget->GetHealthPct() < 30.0f && _currentTarget->GetMaxHealth() > 100000)
-        return true;
+    if (!_currentTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        if (target && target->GetHealthPct() < 30.0f && target->GetMaxHealth() > 100000)
+            return true;
+    }
 
     // Use when multiple group members are low
     if (Group* group = GetBot()->GetGroup())

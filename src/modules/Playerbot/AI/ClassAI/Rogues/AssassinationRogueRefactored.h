@@ -16,99 +16,14 @@
 #include "SpellAuraEffects.h"
 #include "Log.h"
 #include "RogueSpecialization.h"
+#include "RogueResourceTypes.h"
 
 namespace Playerbot
 {
 
-// ============================================================================
-// ASSASSINATION ROGUE SPELL IDs (WoW 11.2 - The War Within)
-// ============================================================================
-
-enum AssassinationSpells
-{
-    // Stealth and Openers
-    STEALTH                  = 1784,    // Enter stealth
-    GARROTE                  = 703,     // Opener, DoT + silence
-    CHEAP_SHOT               = 1833,    // Opener, stun
-    AMBUSH                   = 8676,    // High damage opener
-
-    // Combo Point Builders
-    MUTILATE                 = 1329,    // 50 Energy, 2 CP
-    POISONED_KNIFE           = 185565,  // 40 Energy, ranged, 1 CP
-    FAN_OF_KNIVES            = 51723,   // 35 Energy, AoE, 1 CP per target
-
-    // Combo Point Spenders
-    ENVENOM                  = 32645,   // Finisher, poison damage
-    RUPTURE                  = 1943,    // Finisher, bleed DoT
-    CRIMSON_TEMPEST          = 121411,  // AoE finisher (talent)
-
-    // Cooldowns
-    VENDETTA                 = 79140,   // 2 min CD, 20 sec damage buff
-    DEATHMARK                = 360194,  // 2 min CD, powerful DoT
-    KINGSBANE                = 192759,  // 1 min CD, stacking poison (talent)
-    EXSANGUINATE             = 200806,  // 45 sec CD, DoT burst (talent)
-
-    // Poisons
-    DEADLY_POISON            = 2823,    // Passive poison application
-    WOUND_POISON             = 8679,    // Healing reduction
-    CRIPPLING_POISON         = 3408,    // Slow
-
-    // Utility
-    VANISH                   = 1856,    // 2 min CD, stealth
-    CLOAK_OF_SHADOWS         = 31224,   // 2 min CD, magic immunity
-    FEINT                    = 1966,    // 15 sec CD, AoE damage reduction
-    KICK                     = 1766,    // Interrupt
-    BLIND                    = 2094,    // CC
-
-    // Buffs/Debuffs
-    SLICE_AND_DICE           = 315496,  // Attack speed buff (baseline)
-    MASTER_ASSASSIN          = 256735,  // Crit buff after stealth
-    ELABORATE_PLANNING       = 193641,  // Finisher buff (talent)
-    BLINDSIDE_PROC           = 121153,  // Free Ambush proc
-
-    // Talents
-    INTERNAL_BLEEDING        = 154953,  // Kidney Shot bleeds
-    IRON_WIRE                = 196861,  // Garrote silence
-    DEEPER_STRATAGEM         = 193531,  // 6 max combo points
-    VIGOR                    = 14983    // Increased max energy
-};
-
-// Dual resource type for Rogue
-struct EnergyComboResource
-{
-    uint32 energy{0};
-    uint32 comboPoints{0};
-    uint32 maxEnergy{100};
-    uint32 maxComboPoints{5};
-
-    // ComplexResource concept requirements
-    bool available{true};
-    bool Consume(uint32 energyCost) {
-        if (energy >= energyCost) {
-            energy -= energyCost;
-            return true;
-        }
-        return false;
-    }
-    void Regenerate(uint32 diff) {
-        // Resource regeneration logic (simplified)
-        available = true;
-    }
-
-    [[nodiscard]] uint32 GetAvailable() const {
-        return 100; // Simplified - override in specific implementations
-    }
-
-    [[nodiscard]] uint32 GetMax() const {
-        return 100; // Simplified - override in specific implementations
-    }
-
-
-    void Initialize(Player* /*bot*/) {
-        energy = 0;
-        comboPoints = 0;
-    }
-};
+// NOTE: Spell IDs are defined in RogueSpecialization.h (included above)
+// NOTE: EnergyComboResource is defined in RogueResourceTypes.h (included above)
+// No need to redefine them here to avoid duplicate definition errors
 
 // ============================================================================
 // ASSASSINATION DOT TRACKER
