@@ -15,6 +15,7 @@
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
 #include "Strategy/IdleStrategy.h"
+#include "Strategy/QuestStrategy.h"
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Group/GroupInvitationHandler.h"
@@ -1469,6 +1470,11 @@ void BotAI::InitializeDefaultStrategies()
     auto groupCombat = std::make_unique<GroupCombatStrategy>();
     AddStrategy(std::move(groupCombat));
 
+    // Create quest strategy for quest objective navigation and completion
+    // This strategy drives bots to quest locations, kills mobs, collects items, and turns in quests
+    auto questStrategy = std::make_unique<QuestStrategy>();
+    AddStrategy(std::move(questStrategy));
+
     // Create idle strategy for solo bot behavior (questing, exploring, etc.)
     auto idleStrategy = std::make_unique<IdleStrategy>();
     AddStrategy(std::move(idleStrategy));
@@ -1476,7 +1482,7 @@ void BotAI::InitializeDefaultStrategies()
     // NOTE: Mutual exclusion rules are automatically configured in BehaviorPriorityManager constructor
     // No need to add them here - they're already set up when _priorityManager is initialized
 
-    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, and idle strategies for bot {}", _bot->GetName());
+    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, quest, and idle strategies for bot {}", _bot->GetName());
 
     // NOTE: Do NOT activate strategies here!
     // Strategy activation happens AFTER bot is fully loaded:

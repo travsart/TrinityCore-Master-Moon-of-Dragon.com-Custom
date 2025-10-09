@@ -83,6 +83,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.h
 
     # Phase 2.2: CombatMovementStrategy - Role-based Combat Positioning
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
