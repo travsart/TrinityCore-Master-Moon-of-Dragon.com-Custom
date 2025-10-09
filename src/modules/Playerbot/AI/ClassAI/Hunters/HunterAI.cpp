@@ -1225,7 +1225,13 @@ void HunterAI::MaintainRange(::Unit* target)
     else if (distance > OPTIMAL_RANGE_MAX)
     {
         // Too far, move closer
-        _bot->GetMotionMaster()->MoveChase(target, OPTIMAL_RANGE_PREFERRED);
+        // CRITICAL FIX: Only issue MoveChase if not already chasing
+        // Re-issuing MoveChase causes speed multiplication bug
+        MotionMaster* mm = _bot->GetMotionMaster();
+        if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
+        {
+            mm->MoveChase(target, OPTIMAL_RANGE_PREFERRED);
+        }
     }
 }
 

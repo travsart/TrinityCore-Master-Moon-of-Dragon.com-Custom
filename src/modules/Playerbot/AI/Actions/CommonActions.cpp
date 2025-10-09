@@ -205,7 +205,13 @@ ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
     float distance = bot->GetDistance(target);
     if (distance > GetRange())
     {
-        bot->GetMotionMaster()->MoveChase(target, GetRange() - 1.0f);
+        // CRITICAL FIX: Only issue MoveChase if not already chasing
+        // Re-issuing MoveChase causes speed multiplication bug (blinking/teleporting)
+        MotionMaster* mm = bot->GetMotionMaster();
+        if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
+        {
+            mm->MoveChase(target, GetRange() - 1.0f);
+        }
     }
 
     _executionCount++;
