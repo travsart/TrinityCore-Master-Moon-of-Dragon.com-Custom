@@ -25,6 +25,9 @@
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
 #include "Combat/TargetScanner.h"
+#include "Equipment/EquipmentManager.h"
+#include "Professions/ProfessionManager.h"
+#include "Advanced/GroupCoordinator.h"
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
@@ -79,8 +82,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _tradeManager = std::make_unique<TradeManager>(_bot, this);
     _gatheringManager = std::make_unique<GatheringManager>(_bot, this);
     _auctionManager = std::make_unique<AuctionManager>(_bot, this);
+    _groupCoordinator = std::make_unique<GroupCoordinator>(_bot, this);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction systems ready",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -165,6 +169,12 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_EXPIRED, _auctionManager.get());
             _eventDispatcher->Subscribe(StateMachine::EventType::AUCTION_SOLD, _auctionManager.get());
             TC_LOG_INFO("module.playerbot.managers", "🔗 AuctionManager subscribed to 5 auction events");
+        }
+
+        if (_groupCoordinator)
+        {
+            _groupCoordinator->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ GroupCoordinator initialized - Dungeon/Raid coordination active");
         }
 
         TC_LOG_INFO("module.playerbot.managers",
@@ -1603,6 +1613,40 @@ void BotAI::UpdateManagers(uint32 diff)
         // TC_LOG_ERROR("module.playerbot", "🎯 Calling AuctionManager->Update() for bot {}", _bot->GetName());
         _auctionManager->Update(diff);
         // TC_LOG_ERROR("module.playerbot", "✅ Returned from AuctionManager->Update() for bot {}", _bot->GetName());
+    }
+
+    // Group coordinator handles group/raid mechanics, role assignment, and coordination
+    if (_groupCoordinator)
+    {
+        _groupCoordinator->Update(diff);
+    }
+
+    // ========================================================================
+    // EQUIPMENT AUTO-EQUIP - Check every 10 seconds
+    // ========================================================================
+    // EquipmentManager is a singleton that handles gear optimization for all bots
+    // Only check periodically to avoid excessive inventory scanning
+    _equipmentCheckTimer += diff;
+    if (_equipmentCheckTimer >= 10000) // 10 seconds
+    {
+        _equipmentCheckTimer = 0;
+
+        // Auto-equip better gear from inventory
+        EquipmentManager::instance()->AutoEquipBestGear(_bot);
+    }
+
+    // ========================================================================
+    // PROFESSION AUTOMATION - Check every 15 seconds
+    // ========================================================================
+    // ProfessionManager handles auto-learning, auto-leveling, and crafting automation
+    // Less frequent checks to avoid excessive profession processing
+    _professionCheckTimer += diff;
+    if (_professionCheckTimer >= 15000) // 15 seconds
+    {
+        _professionCheckTimer = 0;
+
+        // Update profession automation (auto-learn, auto-level, crafting)
+        ProfessionManager::instance()->Update(_bot, diff);
     }
 
     // TC_LOG_ERROR("module.playerbot", "✅ UpdateManagers COMPLETE for bot {}", _bot->GetName());

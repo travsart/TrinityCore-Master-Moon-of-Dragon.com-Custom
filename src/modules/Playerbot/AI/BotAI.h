@@ -41,6 +41,7 @@ class QuestManager;
 class TradeManager;
 class GatheringManager;
 class AuctionManager;
+class GroupCoordinator;
 
 namespace Events
 {
@@ -227,6 +228,9 @@ public:
     AuctionManager* GetAuctionManager() { return _auctionManager.get(); }
     AuctionManager const* GetAuctionManager() const { return _auctionManager.get(); }
 
+    GroupCoordinator* GetGroupCoordinator() { return _groupCoordinator.get(); }
+    GroupCoordinator const* GetGroupCoordinator() const { return _groupCoordinator.get(); }
+
     // ========================================================================
     // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
     // ========================================================================
@@ -357,6 +361,7 @@ protected:
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<AuctionManager> _auctionManager;
+    std::unique_ptr<GroupCoordinator> _groupCoordinator;
 
     // Phase 7.1: Event system integration
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
@@ -364,6 +369,12 @@ protected:
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
+
+    // Equipment auto-equip timer (check every 10 seconds)
+    uint32 _equipmentCheckTimer = 0;
+
+    // Profession automation timer (check every 15 seconds)
+    uint32 _professionCheckTimer = 0;
 
     // CRITICAL FIX #19: ObjectAccessor Deadlock Resolution
     // Cache for all ObjectAccessor results to eliminate recursive TrinityCore
