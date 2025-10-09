@@ -353,8 +353,8 @@ bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveTrack
         return false;
 
     // Check if already at max kills
-    uint32 currentKills = bot->GetQuestObjectiveData(quest, questObjective.StorageIndex);
-    if (currentKills >= questObjective.Amount)
+    uint32 currentKills = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+    if (currentKills >= static_cast<uint32>(questObjective.Amount))
         return false;
 
     return true;

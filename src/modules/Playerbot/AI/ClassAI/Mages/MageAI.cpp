@@ -636,7 +636,8 @@ void MageAI::ConsumeResource(uint32 spellId)
 
     // Track spell cast
     _spellsCast++;
-    RecordSpellCast(spellId, _currentTarget);
+    if (Unit* target = GetTargetUnit())
+        RecordSpellCast(spellId, target);
 }
 
 Position MageAI::GetOptimalPosition(::Unit* target)
@@ -1237,21 +1238,22 @@ void MageAI::UseConeOfCold(const std::vector<::Unit*>& enemies)
 // Positioning and movement
 void MageAI::UpdateMagePositioning()
 {
-    if (!GetBot() || !_currentTarget)
+    Unit* target = GetTargetUnit();
+    if (!GetBot() || !target)
         return;
 
     // Check if we need to reposition
-    if (NeedsToKite(_currentTarget))
+    if (NeedsToKite(target))
     {
-        PerformKiting(_currentTarget);
+        PerformKiting(target);
     }
     else if (IsInDanger())
     {
         FindSafeCastingPosition();
     }
-    else if (!IsAtOptimalRange(_currentTarget))
+    else if (!IsAtOptimalRange(target))
     {
-        MoveToTarget(_currentTarget, GetOptimalRange(_currentTarget));
+        MoveToTarget(target, GetOptimalRange(target));
     }
 }
 
@@ -1346,10 +1348,11 @@ void MageAI::FindSafeCastingPosition()
     ::Unit* bestTarget = nullptr;
     float highestPriority = 0.0f;
 
+    Unit* currentTarget = GetTargetUnit();
     for (auto enemy : enemies)
     {
         // Skip current target
-        if (enemy == _currentTarget)
+        if (currentTarget && enemy == currentTarget)
             continue;
 
         // Check if can be polymorphed
@@ -1566,20 +1569,27 @@ float MageAI::CalculateSpellEfficiency(uint32 spellId)
 
     // Calculate expected damage
     uint32 expectedDamage = 0;
-    switch (spellId)
+    Unit* target = GetTargetUnit();
+    if (target)
     {
-        case FIREBALL:
-            expectedDamage = MageSpellCalculator::CalculateFireballDamage(GetBot(), _currentTarget);
-            break;
-        case FROSTBOLT:
-            expectedDamage = MageSpellCalculator::CalculateFrostboltDamage(GetBot(), _currentTarget);
-            break;
-        case ARCANE_MISSILES:
-            expectedDamage = MageSpellCalculator::CalculateArcaneMissilesDamage(GetBot(), _currentTarget);
-            break;
-        default:
-            expectedDamage = 100; // Default value
-            break;
+        switch (spellId)
+        {
+            case FIREBALL:
+                expectedDamage = MageSpellCalculator::CalculateFireballDamage(GetBot(), target);
+                break;
+            case FROSTBOLT:
+                expectedDamage = MageSpellCalculator::CalculateFrostboltDamage(GetBot(), target);
+                break;
+            case ARCANE_MISSILES:
+                expectedDamage = MageSpellCalculator::CalculateArcaneMissilesDamage(GetBot(), target);
+                break;
+            default:
+                expectedDamage = 100; // Default value
+        }
+    }
+    else
+    {
+        expectedDamage = 100; // Default value if no target
     }
 
     return static_cast<float>(expectedDamage) / manaCost;
@@ -1588,9 +1598,9 @@ float MageAI::CalculateSpellEfficiency(uint32 spellId)
 void MageAI::OptimizeSpellPriorities()
 {
     // Analyze and adjust spell priorities based on effectiveness
-    if (_currentTarget)
+    if (Unit* target = GetTargetUnit())
     {
-        AdaptToTargetResistances(_currentTarget);
+        AdaptToTargetResistances(target);
     }
 }
 
@@ -1798,9 +1808,9 @@ void MageAI::HandleHighThreatSituation()
     ReduceThreat();
 
     // Move away from threat source
-    if (_currentTarget)
+    if (Unit* target = GetTargetUnit())
     {
-        PerformKiting(_currentTarget);
+        PerformKiting(target);
     }
 }
 
@@ -2036,14 +2046,18 @@ void MageAI::HandleMovingTargets(::Unit* target)
 void MageAI::OptimizeInstantCasts()
 {
     // Prioritize instant cast spells
+    Unit* target = GetTargetUnit();
+    if (!target)
+        return;
+
     if (IsSpellReady(FIRE_BLAST))
-        CastSpell(_currentTarget, FIRE_BLAST);
+        CastSpell(target, FIRE_BLAST);
 
     if (_currentSpec == MageSpec::FROST && IsSpellReady(ICE_LANCE))
-        CastSpell(_currentTarget, ICE_LANCE);
+        CastSpell(target, ICE_LANCE);
 
     if (_currentSpec == MageSpec::ARCANE && IsSpellReady(ARCANE_BARRAGE))
-        CastSpell(_currentTarget, ARCANE_BARRAGE);
+        CastSpell(target, ARCANE_BARRAGE);
 }
 
 // Performance optimization
