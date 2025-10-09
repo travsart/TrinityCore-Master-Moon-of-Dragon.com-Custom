@@ -119,21 +119,6 @@ public:
     virtual float GetThreatModifier() const { return 1.0f; }
 };
 
-// Quest strategy base
-class TC_GAME_API QuestStrategy : public Strategy
-{
-public:
-    QuestStrategy(std::string const& name) : Strategy(name) {}
-
-    virtual void InitializeActions() override;
-    virtual void InitializeTriggers() override;
-    virtual float GetRelevance(BotAI* ai) const override;
-
-    // Quest-specific methods
-    virtual Quest const* SelectQuest(BotAI* ai) const;
-    virtual bool ShouldAbandonQuest(Quest const* quest) const;
-};
-
 // Social strategy base
 class TC_GAME_API SocialStrategy : public Strategy
 {

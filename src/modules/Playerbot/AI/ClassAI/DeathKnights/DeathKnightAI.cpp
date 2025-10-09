@@ -1497,7 +1497,7 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
     }
 
     // Empower Rune Weapon when out of runes
-    if (!_runeManager->HasAnyRunes() && CanUseAbility(EMPOWER_RUNE_WEAPON))
+    if (_runeManager->GetTotalAvailableRunes() == 0 && CanUseAbility(EMPOWER_RUNE_WEAPON))
     {
         if (CastSpell(EMPOWER_RUNE_WEAPON))
         {

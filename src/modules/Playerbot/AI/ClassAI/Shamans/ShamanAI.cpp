@@ -17,6 +17,7 @@
 #include "Unit.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
+#include "SpellAuras.h"
 #include "Map.h"
 #include "Group.h"
 #include "Item.h"
@@ -596,7 +597,7 @@ bool ShamanAI::HandleTotemManagement(::Unit* target)
     _lastTotemUpdate = currentTime;
 
     // Check each totem type and deploy if needed
-    for (uint8 i = 0; i < static_cast<uint8>(TotemType::MAX); ++i)
+    for (uint8 i = 0; i < 4; ++i) // 4 totem types: FIRE, EARTH, WATER, AIR
     {
         TotemType type = static_cast<TotemType>(i);
 
@@ -642,7 +643,7 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
                              GetBot()->GetName(), target->GetName());
 
                 // Update target
-                _currentTarget = priorityTarget;
+                SetTarget(priorityTarget->GetGUID());
                 return true;
             }
         }
@@ -655,7 +656,7 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
         {
             if (HandleFlameShock(priorityTarget))
             {
-                _currentTarget = priorityTarget;
+                SetTarget(priorityTarget->GetGUID());
                 return true;
             }
         }

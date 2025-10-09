@@ -169,12 +169,13 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             break;
 
         case QUEST_OBJECTIVE_ITEM:
-        case QUEST_OBJECTIVE_OBJ_INTERACTION:
+        case QUEST_OBJECTIVE_GAMEOBJECT:
             CollectQuestItems(ai, objective);
             break;
 
-        case QUEST_OBJECTIVE_AREA_TRIGGER:
-        case QUEST_OBJECTIVE_EXPLORE:
+        case QUEST_OBJECTIVE_AREATRIGGER:
+        case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
+        case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
             ExploreQuestArea(ai, objective);
             break;
 
@@ -434,7 +435,7 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
 
     QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
 
-    if (questObjective.Type != QUEST_OBJECTIVE_OBJ_INTERACTION)
+    if (questObjective.Type != QUEST_OBJECTIVE_GAMEOBJECT)
         return nullptr;
 
     // Scan for game object with this entry

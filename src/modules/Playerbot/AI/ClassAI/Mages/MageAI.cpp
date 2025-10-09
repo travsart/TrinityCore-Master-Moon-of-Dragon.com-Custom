@@ -25,6 +25,7 @@
 #include "WorldSession.h"
 #include "../CooldownManager.h"
 #include "../BaselineRotationManager.h"
+#include "../../../Movement/BotMovementUtil.h"
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include <algorithm>
@@ -1253,7 +1254,8 @@ void MageAI::UpdateMagePositioning()
     }
     else if (!IsAtOptimalRange(target))
     {
-        MoveToTarget(target, GetOptimalRange(target));
+        float optimalRange = GetOptimalRange(target);
+        BotMovementUtil::MoveToUnit(GetBot(), target, optimalRange);
     }
 }
 

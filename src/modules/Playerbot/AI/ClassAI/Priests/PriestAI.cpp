@@ -28,6 +28,7 @@
 #include "CellImpl.h"
 #include "../CooldownManager.h"
 #include "Spell.h"
+#include "../../../Movement/BotMovementUtil.h"
 #include "SpellAuras.h"
 #include "SpellDefines.h"
 #include "../BaselineRotationManager.h"
@@ -615,7 +616,8 @@ void PriestAI::OptimizeManaUsage()
     {
         if (this->IsSpellReady(34433)) // Shadowfiend
         {
-            this->CastSpell(_currentTarget, 34433);
+            if (Unit* target = GetTargetUnit())
+                this->CastSpell(target, 34433);
         }
     }
 }
@@ -879,7 +881,7 @@ void PriestAI::MaintainHealingPosition()
 
             // Move towards group center but maintain safe distance from enemies
             Position centerPos(avgX, avgY, avgZ);
-            MoveToTarget(nullptr, SAFE_DISTANCE);
+            BotMovementUtil::MoveToPosition(GetBot(), centerPos);
         }
     }
 }
@@ -1374,12 +1376,16 @@ void PriestAI::UpdateShadowWeaving()
     if (!GetBot() || !_currentTarget)
         return;
 
-    uint32 shadowWeavingStacks = GetAuraStacks(15258, _currentTarget); // Shadow Weaving
+    Unit* target = GetTargetUnit();
+    if (!target)
+        return;
+
+    uint32 shadowWeavingStacks = GetAuraStacks(15258, target); // Shadow Weaving
 
     // Maintain 5 stacks of Shadow Weaving
     if (shadowWeavingStacks < 5)
     {
-        this->CastSpell(_currentTarget, MIND_BLAST);
+        this->CastSpell(target, MIND_BLAST);
     }
 }
 
@@ -1422,11 +1428,12 @@ void PriestAI::ManageThreat()
 
 bool PriestAI::HasTooMuchThreat()
 {
-    if (!GetBot() || !_currentTarget)
+    Unit* target = GetTargetUnit();
+    if (!GetBot() || !target)
         return false;
 
     // Check if we have aggro
-    return _currentTarget->GetVictim() == GetBot();
+    return target->GetVictim() == GetBot();
 }
 
 void PriestAI::ReduceThreat()
@@ -2703,7 +2710,7 @@ bool PriestAI::HandleResourceManagement()
         // Shadowfiend for mana (all specs can use)
         if (IsSpellReady(SHADOWFIEND) && getMSTime() - _lastShadowfiend > 180000)
         {
-            if (Unit* target = GetCurrentTarget())
+            if (Unit* target = GetTargetUnit())
             {
                 if (CastSpell(target, SHADOWFIEND))
                 {
