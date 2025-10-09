@@ -12,6 +12,9 @@
 
 #include "Define.h"
 
+// Forward declaration
+class Player;
+
 namespace Playerbot
 {
 
@@ -65,8 +68,19 @@ enum RogueSpells : uint32
     HUNGER_FOR_BLOOD = 51662,
     OVERKILL = 58426,
 
+    // Assassination WoW 11.2 Spells (The War Within)
+    DEATHMARK = 360194,
+    KINGSBANE = 385627,
+    EXSANGUINATE = 200806,
+    POISONED_KNIFE = 185565,
+    CRIMSON_TEMPEST = 121411,
+    SERRATED_BONE_SPIKE = 385424,
+    SEPSIS = 328305,
+    AMPLIFYING_POISON_ASSASSINATION = 381664,
+
     // Assassination Talents
     IMPROVED_SAP = 6687,
+    DEEPER_STRATAGEM = 193531,
     RUTHLESSNESS = 14161,
     SEAL_FATE = 14186,
     VIGOR = 14983,

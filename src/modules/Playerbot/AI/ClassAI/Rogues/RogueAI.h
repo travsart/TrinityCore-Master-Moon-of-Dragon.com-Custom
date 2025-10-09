@@ -31,9 +31,9 @@ namespace Playerbot
 struct RogueMetrics;
 class RogueCombatMetrics;
 class RogueCombatPositioning;
-class AssassinationRogueRefactored;
-class OutlawRogueRefactored;
-class SubtletyRogueRefactored;
+
+// Template-based specialization interface - no longer needed for forward declaration
+// Each spec now uses its own distinct resource type (ComboPointsAssassination, etc.)
 
 // Rogue specializations
 enum class RogueSpec : uint8
@@ -114,8 +114,9 @@ private:
     void ApplyPoisons();
     bool IsFinisher(uint32 spellId) const;
 
-    // Specialization system
-    std::unique_ptr<RogueSpecialization> _specialization;
+    // Specialization system - Template-based Refactored architecture
+    // Uses ClassAI* to hold any spec (Assassination/Outlaw/Subtlety with different resource types)
+    std::unique_ptr<ClassAI> _specialization;
     RogueSpec _detectedSpec;
     void SwitchSpecialization(RogueSpec newSpec);
     void DelegateToSpecialization(::Unit* target);
@@ -159,9 +160,6 @@ private:
     uint32 _comboPointsGenerated;
     uint32 _finishersExecuted;
     uint32 _lastPoison;
-
-    // Member variable for positioning
-    std::unique_ptr<RogueCombatPositioning> _combatPositioning;
 };
 
 } // namespace Playerbot

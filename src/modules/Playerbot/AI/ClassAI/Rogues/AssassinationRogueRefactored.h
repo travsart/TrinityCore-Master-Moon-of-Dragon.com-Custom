@@ -10,20 +10,18 @@
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
-#include "../ResourceTypes.h"
+#include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "RogueSpecialization.h"
-#include "RogueResourceTypes.h"
+#include "RogueSpecialization.h"  // Spell IDs
 
 namespace Playerbot
 {
 
 // NOTE: Spell IDs are defined in RogueSpecialization.h (included above)
-// NOTE: EnergyComboResource is defined in RogueResourceTypes.h (included above)
-// No need to redefine them here to avoid duplicate definition errors
+// NOTE: ComboPointsAssassination is defined in RogueResourceTypes.h (spec-specific resource type)
 
 // ============================================================================
 // ASSASSINATION DOT TRACKER
@@ -114,18 +112,19 @@ private:
 // ASSASSINATION ROGUE REFACTORED
 // ============================================================================
 
-class AssassinationRogueRefactored : public MeleeDpsSpecialization<EnergyComboResource>, public RogueSpecialization
+class AssassinationRogueRefactored : public MeleeDpsSpecialization<ComboPointsAssassination>
 {
 public:
     // Use base class members with type alias for cleaner syntax
-    using Base = MeleeDpsSpecialization<EnergyComboResource>;
+    using Base = MeleeDpsSpecialization<ComboPointsAssassination>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
     using Base::_resource;
+
     explicit AssassinationRogueRefactored(Player* bot)
-        : MeleeDpsSpecialization<EnergyComboResource>(bot)
-        , RogueSpecialization(bot)
+        : MeleeDpsSpecialization<ComboPointsAssassination>(bot)
         , _dotTracker()
         , _inStealth(false)
         , _lastMutilateTime(0)
@@ -197,10 +196,8 @@ public:
         }
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 5.0f; // Melee range
-    }
+    // GetOptimalRange is final in MeleeDpsSpecialization, cannot override
+    // Returns 5.0f melee range by default
 
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -309,7 +306,7 @@ protected:
         {
             if (this->GetBot()->HasSpell(CRIMSON_TEMPEST) && this->CanCastSpell(CRIMSON_TEMPEST, this->GetBot()))
             {
-                this->CastSpell(CRIMSON_TEMPEST, this->GetBot());
+                this->CastSpell(this->GetBot(), CRIMSON_TEMPEST);
                 _dotTracker.ApplyDot(CRIMSON_TEMPEST);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -322,7 +319,7 @@ protected:
         {
             if (this->CanCastSpell(FAN_OF_KNIVES, this->GetBot()))
             {
-                this->CastSpell(FAN_OF_KNIVES, this->GetBot());
+                this->CastSpell(this->GetBot(), FAN_OF_KNIVES);
                 ConsumeEnergy(35);
                 GenerateComboPoints(std::min(enemyCount, 5u)); // 1 CP per target hit
                 return;
@@ -399,16 +396,23 @@ private:
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
+    float GetDistanceToTarget(::Unit* target) const
+    {
+        if (!target || !this->GetBot())
+            return 1000.0f;
+        return this->GetBot()->GetDistance(target);
+    }
+
     void InitializeCooldowns()
     {
-        RegisterCooldown(VENDETTA, 120000);         // 2 min CD
-        RegisterCooldown(DEATHMARK, 120000);        // 2 min CD
-        RegisterCooldown(KINGSBANE, 60000);         // 1 min CD
-        RegisterCooldown(EXSANGUINATE, 45000);      // 45 sec CD
-        RegisterCooldown(VANISH, 120000);           // 2 min CD
-        RegisterCooldown(CLOAK_OF_SHADOWS, 120000); // 2 min CD
-        RegisterCooldown(KICK, 15000);              // 15 sec CD
-        RegisterCooldown(BLIND, 120000);            // 2 min CD
+        this->RegisterCooldown(VENDETTA, 120000);         // 2 min CD
+        this->RegisterCooldown(DEATHMARK, 120000);        // 2 min CD
+        this->RegisterCooldown(KINGSBANE, 60000);         // 1 min CD
+        this->RegisterCooldown(EXSANGUINATE, 45000);      // 45 sec CD
+        this->RegisterCooldown(VANISH, 120000);           // 2 min CD
+        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000); // 2 min CD
+        this->RegisterCooldown(KICK, 15000);              // 15 sec CD
+        this->RegisterCooldown(BLIND, 120000);            // 2 min CD
     }
 
 private:

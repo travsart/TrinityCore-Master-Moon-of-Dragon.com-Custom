@@ -10,21 +10,20 @@
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
-#include "../ResourceTypes.h"
+#include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "RogueSpecialization.h"
-#include "RogueResourceTypes.h"
+#include "RogueSpecialization.h"  // Spell IDs
 
 namespace Playerbot
 {
 
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
-// NOTE: EnergyComboResource is defined in RogueResourceTypes.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
+// NOTE: ComboPointsSubtlety is defined in RogueResourceTypes.h (spec-specific resource type)
 
 // ============================================================================
 // SUBTLETY ROGUE SPELL IDs (WoW 11.2 - The War Within)
@@ -174,18 +173,20 @@ private:
 // SUBTLETY ROGUE REFACTORED
 // ============================================================================
 
-class SubtletyRogueRefactored : public MeleeDpsSpecialization<EnergyComboResource>, public RogueSpecialization
+class SubtletyRogueRefactored : public MeleeDpsSpecialization<ComboPointsSubtlety>
 {
 public:
     // Use base class members with type alias for cleaner syntax
-    using Base = MeleeDpsSpecialization<EnergyComboResource>;
+    using Base = MeleeDpsSpecialization<ComboPointsSubtlety>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
+    using Base::IsBehindTarget;
     using Base::_resource;
+
     explicit SubtletyRogueRefactored(Player* bot)
-        : MeleeDpsSpecialization<EnergyComboResource>(bot)
-        , RogueSpecialization(bot)
+        : MeleeDpsSpecialization<ComboPointsSubtlety>(bot)
         , _shadowDanceTracker()
         , _inStealth(false)
         , _symbolsOfDeathActive(false)
@@ -496,16 +497,16 @@ private:
 
     void InitializeCooldowns()
     {
-        RegisterCooldown(SHADOW_DANCE, 60000);           // 60 sec per charge
-        RegisterCooldown(SYMBOLS_OF_DEATH, 30000);       // 30 sec CD
-        RegisterCooldown(SHADOW_BLADES, 180000);         // 3 min CD
-        RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000); // 1 min CD
-        RegisterCooldown(VANISH, 120000);            // 2 min CD
-        RegisterCooldown(CLOAK_OF_SHADOWS, 120000);  // 2 min CD
-        RegisterCooldown(EVASION, 120000);               // 2 min CD
-        RegisterCooldown(KICK, 15000);               // 15 sec CD
-        RegisterCooldown(BLIND, 120000);             // 2 min CD
-        RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);   // 1 min CD
+        this->RegisterCooldown(SHADOW_DANCE, 60000);           // 60 sec per charge
+        this->RegisterCooldown(SYMBOLS_OF_DEATH, 30000);       // 30 sec CD
+        this->RegisterCooldown(SHADOW_BLADES, 180000);         // 3 min CD
+        this->RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000); // 1 min CD
+        this->RegisterCooldown(VANISH, 120000);            // 2 min CD
+        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000);  // 2 min CD
+        this->RegisterCooldown(EVASION, 120000);               // 2 min CD
+        this->RegisterCooldown(KICK, 15000);               // 15 sec CD
+        this->RegisterCooldown(BLIND, 120000);             // 2 min CD
+        this->RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);   // 1 min CD
     }
 
 private:

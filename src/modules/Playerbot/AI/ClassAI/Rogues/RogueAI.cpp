@@ -9,9 +9,6 @@
 
 #include "RogueAI.h"
 #include "../BaselineRotationManager.h"
-#include "AssassinationSpecialization.h"
-#include "CombatSpecialization.h"
-#include "SubtletySpecialization.h"
 #include "AssassinationRogueRefactored.h"
 #include "OutlawRogueRefactored.h"
 #include "SubtletyRogueRefactored.h"
@@ -172,6 +169,68 @@ private:
     std::vector<ComboPointEvent> _comboPointHistory;
 };
 
+// ============================================================================
+// ROGUE COMBAT POSITIONING IMPLEMENTATION
+// ============================================================================
+
+Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpec spec)
+{
+    if (!target || !_bot)
+        return _bot->GetPosition();
+
+    // Calculate position based on specialization requirements
+    switch (spec)
+    {
+        case RogueSpec::ASSASSINATION:
+        case RogueSpec::SUBTLETY:
+            // Assassination and Subtlety prefer behind target for Backstab/Ambush
+            {
+                float angle = target->GetOrientation() + M_PI; // 180 degrees behind
+                float distance = 3.0f; // Close melee range
+                float x = target->GetPositionX() + distance * std::cos(angle);
+                float y = target->GetPositionY() + distance * std::sin(angle);
+                float z = target->GetPositionZ();
+                return Position(x, y, z, angle);
+            }
+
+        case RogueSpec::COMBAT:
+            // Combat can attack from any angle, prefer frontal positioning
+            {
+                float angle = target->GetOrientation(); // Face to face
+                float distance = 4.0f; // Slightly further for Blade Flurry AoE
+                float x = target->GetPositionX() + distance * std::cos(angle);
+                float y = target->GetPositionY() + distance * std::sin(angle);
+                float z = target->GetPositionZ();
+                return Position(x, y, z, target->GetOrientation());
+            }
+
+        default:
+            return _bot->GetPosition();
+    }
+}
+
+float RogueCombatPositioning::GetOptimalRange(RogueSpec spec) const
+{
+    switch (spec)
+    {
+        case RogueSpec::ASSASSINATION:
+            return 3.0f; // Close range for Mutilate/Envenom
+
+        case RogueSpec::COMBAT:
+            return 5.0f; // Standard melee range, benefits Blade Flurry
+
+        case RogueSpec::SUBTLETY:
+            return 3.5f; // Close range for Backstab/Hemorrhage
+
+        default:
+            return 5.0f; // Default melee range
+    }
+}
+
+// ============================================================================
+// ROGUE AI IMPLEMENTATION
+// ============================================================================
+
 RogueAI::RogueAI(Player* bot) :
     ClassAI(bot),
     _detectedSpec(RogueSpec::ASSASSINATION),
@@ -192,7 +251,6 @@ RogueAI::RogueAI(Player* bot) :
     // Initialize performance tracking
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
-    _energyManager = std::make_unique<EnergyManager>(bot);
     _positioning = new RogueCombatPositioning(bot);
 
     TC_LOG_DEBUG("playerbot", "RogueAI initialized for {} with specialization {}",
@@ -299,9 +357,6 @@ void RogueAI::UpdateRotation(Unit* target)
     }
 
     auto startTime = std::chrono::steady_clock::now();
-
-    // Update energy tracking
-    _energyManager->UpdateEnergyTracking();
 
     // Check if we're on global cooldown
     if (_combatMetrics->IsOnGlobalCooldown())
@@ -1069,11 +1124,9 @@ void RogueAI::UpdateCooldowns(uint32 diff)
     // Delegate to specialization
     if (_specialization)
     {
-        _specialization->UpdateCooldowns(diff);
+        // Template-based specs handle their own cooldowns internally
+        // No UpdateCooldowns method in MeleeDpsSpecialization interface
     }
-
-    // Update energy manager
-    _energyManager->UpdateEnergyTracking();
 }
 
 bool RogueAI::CanUseAbility(uint32 spellId)
@@ -1129,11 +1182,8 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
             return false;
     }
 
-    // Additional checks via specialization
-    if (_specialization)
-    {
-        return _specialization->HasEnoughResource(spellId);
-    }
+    // Note: Specialization has its own resource tracking internally
+    // No need to delegate here as RogueAI handles resource checks above
 
     return true;
 }
@@ -1179,11 +1229,8 @@ void RogueAI::ConsumeResource(uint32 spellId)
         _metrics->totalComboPointsGenerated++;
     }
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->ConsumeResource(spellId);
-    }
+    // Note: Specialization handles its own internal resource consumption
+    // No need to delegate here as RogueAI tracks metrics above
 }
 
 void RogueAI::OnCombatStart(Unit* target)

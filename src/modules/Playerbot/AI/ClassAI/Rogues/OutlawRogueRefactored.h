@@ -10,38 +10,32 @@
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
-#include "../ResourceTypes.h"
+#include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "RogueSpecialization.h"
-#include "RogueResourceTypes.h"
+#include "RogueSpecialization.h"  // Spell IDs
 
 namespace Playerbot
 {
 
-// NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
-// NOTE: EnergyComboResource is defined in RogueResourceTypes.h
-// Outlaw-specific spell IDs defined below
+// NOTE: Common Rogue spell IDs (BLADE_FLURRY, ADRENALINE_RUSH, KILLING_SPREE, etc.) are in RogueSpecialization.h
+// Only Outlaw-UNIQUE spell IDs defined below to avoid duplicate definition errors
+// NOTE: ComboPointsOutlaw is defined in RogueResourceTypes.h (spec-specific resource type)
 
 // ============================================================================
-// OUTLAW ROGUE SPELL IDs (WoW 11.2 - The War Within)
+// OUTLAW ROGUE SPELL IDs (WoW 11.2 - The War Within) - UNIQUE ONLY
 // ============================================================================
 
 enum OutlawSpells
 {
-    // Combo Point Builders
-    SINISTER_STRIKE          = 193315,  // 45 Energy, 1 CP
-    AMBUSH_OUTLAW            = 8676,    // From stealth, 2 CP
+    // WoW 11.2 Outlaw-specific spells
     PISTOL_SHOT              = 185763,  // 40 Energy, ranged, 1 CP
-
-    // Combo Point Spenders
-    DISPATCH                 = 2098,    // Finisher, high damage
     BETWEEN_THE_EYES         = 315341,  // Finisher, stun
-    SLICE_AND_DICE           = 315496,  // Finisher, attack speed buff
+    DISPATCH_OUTLAW          = 2098,    // Finisher, high damage
 
-    // Roll the Bones System
+    // Roll the Bones System (Outlaw unique)
     ROLL_THE_BONES           = 315508,  // 25 Energy, random buff
     BUFF_RUTHLESS_PRECISION  = 193357,  // Crit buff
     BUFF_GRAND_MELEE         = 193358,  // Attack speed buff
@@ -50,32 +44,14 @@ enum OutlawSpells
     BUFF_SKULL_AND_CROSSBONES = 199603, // Attack power buff
     BUFF_BURIED_TREASURE     = 199600,  // Energy regen buff
 
-    // Blade Flurry (AoE)
-    BLADE_FLURRY             = 13877,   // 15 Energy, cleave attacks
-
-    // Major Cooldowns
-    ADRENALINE_RUSH          = 13750,   // 3 min CD, energy regen burst
-    KILLING_SPREE            = 51690,   // 2 min CD, teleport attacks (talent)
+    // Talents (Outlaw specific)
     BLADE_RUSH               = 271877,  // 45 sec CD, charge + AoE (talent)
-
-    // Utility
-    STEALTH_OUTLAW           = 1784,    // Enter stealth
-    VANISH_OUTLAW            = 1856,    // 2 min CD, stealth
-    CLOAK_OF_SHADOWS_OUTLAW  = 31224,   // 2 min CD, magic immunity
-    FEINT_OUTLAW             = 1966,    // 15 sec CD, AoE damage reduction
-    KICK_OUTLAW              = 1766,    // Interrupt
-    GOUGE                    = 1776,    // Incapacitate
-    BLIND_OUTLAW             = 2094,    // CC
-
-    // Finishers
-    CHEAP_SHOT_OUTLAW        = 1833,    // Stun from stealth
-
-    // Procs
     OPPORTUNITY_PROC         = 195627,  // Free Pistol Shot proc
-
-    // Talents
     GHOSTLY_STRIKE           = 196937,  // Dodge buff
     DREADBLADES              = 343142,  // Spender costs CP instead of energy
+
+    // Outlaw-specific utility (not in shared RogueSpecialization.h)
+    FEINT_OUTLAW             = 1966,    // Threat reduction
     MARKED_FOR_DEATH         = 137619   // Instant 5 CP on target
 };
 
@@ -217,18 +193,19 @@ private:
 // OUTLAW ROGUE REFACTORED
 // ============================================================================
 
-class OutlawRogueRefactored : public MeleeDpsSpecialization<EnergyComboResource>, public RogueSpecialization
+class OutlawRogueRefactored : public MeleeDpsSpecialization<ComboPointsOutlaw>
 {
 public:
     // Use base class members with type alias for cleaner syntax
-    using Base = MeleeDpsSpecialization<EnergyComboResource>;
+    using Base = MeleeDpsSpecialization<ComboPointsOutlaw>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
     using Base::_resource;
+
     explicit OutlawRogueRefactored(Player* bot)
-        : MeleeDpsSpecialization<EnergyComboResource>(bot)
-        , RogueSpecialization(bot)
+        : MeleeDpsSpecialization<ComboPointsOutlaw>(bot)
         , _rollTheBonesTracker()
         , _bladeFlurryActive(false)
         , _bladeFlurryEndTime(0)
@@ -284,15 +261,15 @@ public:
         Player* bot = this->GetBot();
 
         // Enter stealth out of combat
-        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH_OUTLAW, bot))
+        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH, bot))
         {
-            this->CastSpell(bot, STEALTH_OUTLAW);
+            this->CastSpell(bot, STEALTH);
         }
 
         // Defensive cooldowns
-        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS_OUTLAW, bot))
+        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, CLOAK_OF_SHADOWS_OUTLAW);
+            this->CastSpell(bot, CLOAK_OF_SHADOWS);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(FEINT_OUTLAW, bot))
@@ -301,10 +278,8 @@ public:
         }
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 5.0f; // Melee range
-    }
+    // GetOptimalRange is final in MeleeDpsSpecialization, cannot override
+    // Returns 5.0f melee range by default
 
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -316,7 +291,7 @@ protected:
         // Priority 1: Adrenaline Rush on cooldown
         if (this->CanCastSpell(ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(ADRENALINE_RUSH, this->GetBot());
+            this->CastSpell(this->GetBot(), ADRENALINE_RUSH);
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = getMSTime() + 20000;
             return;
@@ -327,7 +302,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(ROLL_THE_BONES, this->GetBot());
+                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -350,9 +325,9 @@ protected:
         // Priority 4: Dispatch at 5-6 CP
         if (cp >= (maxCp - 1) && energy >= 35)
         {
-            if (this->CanCastSpell(DISPATCH, target))
+            if (this->CanCastSpell(DISPATCH_OUTLAW, target))
             {
-                this->CastSpell(target, DISPATCH);
+                this->CastSpell(target, DISPATCH_OUTLAW);
                 _lastDispatchTime = getMSTime();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -421,7 +396,7 @@ protected:
         {
             if (this->CanCastSpell(BLADE_FLURRY, this->GetBot()))
             {
-                this->CastSpell(BLADE_FLURRY, this->GetBot());
+                this->CastSpell(this->GetBot(), BLADE_FLURRY);
                 _bladeFlurryActive = true;
                 _bladeFlurryEndTime = getMSTime() + 12000;
                 ConsumeEnergy(15);
@@ -432,7 +407,7 @@ protected:
         // Priority 2: Adrenaline Rush
         if (this->CanCastSpell(ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(ADRENALINE_RUSH, this->GetBot());
+            this->CastSpell(this->GetBot(), ADRENALINE_RUSH);
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = getMSTime() + 20000;
             return;
@@ -443,7 +418,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(ROLL_THE_BONES, this->GetBot());
+                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -470,18 +445,18 @@ protected:
     void ExecuteStealthOpener(::Unit* target)
     {
         // Ambush from stealth for high damage
-        if (this->CanCastSpell(AMBUSH_OUTLAW, target))
+        if (this->CanCastSpell(AMBUSH, target))
         {
-            this->CastSpell(target, AMBUSH_OUTLAW);
+            this->CastSpell(target, AMBUSH);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
         }
 
         // Cheap Shot for control
-        if (this->CanCastSpell(CHEAP_SHOT_OUTLAW, target))
+        if (this->CanCastSpell(CHEAP_SHOT, target))
         {
-            this->CastSpell(target, CHEAP_SHOT_OUTLAW);
+            this->CastSpell(target, CHEAP_SHOT);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -533,17 +508,24 @@ private:
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
+    float GetDistanceToTarget(::Unit* target) const
+    {
+        if (!target || !this->GetBot())
+            return 1000.0f;
+        return this->GetBot()->GetDistance(target);
+    }
+
     void InitializeCooldowns()
     {
-        RegisterCooldown(ADRENALINE_RUSH, 180000);       // 3 min CD
-        RegisterCooldown(KILLING_SPREE, 120000);         // 2 min CD
-        RegisterCooldown(BLADE_RUSH, 45000);             // 45 sec CD
-        RegisterCooldown(VANISH_OUTLAW, 120000);         // 2 min CD
-        RegisterCooldown(CLOAK_OF_SHADOWS_OUTLAW, 120000); // 2 min CD
-        RegisterCooldown(KICK_OUTLAW, 15000);            // 15 sec CD
-        RegisterCooldown(BLIND_OUTLAW, 120000);          // 2 min CD
-        RegisterCooldown(GOUGE, 15000);                  // 15 sec CD
-        RegisterCooldown(MARKED_FOR_DEATH, 60000);       // 1 min CD
+        this->RegisterCooldown(ADRENALINE_RUSH, 180000);       // 3 min CD
+        this->RegisterCooldown(KILLING_SPREE, 120000);         // 2 min CD
+        this->RegisterCooldown(BLADE_RUSH, 45000);             // 45 sec CD
+        this->RegisterCooldown(VANISH, 120000);                // 2 min CD
+        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000);      // 2 min CD
+        this->RegisterCooldown(KICK, 15000);                   // 15 sec CD
+        this->RegisterCooldown(BLIND, 120000);                 // 2 min CD
+        this->RegisterCooldown(GOUGE, 15000);                  // 15 sec CD
+        this->RegisterCooldown(MARKED_FOR_DEATH, 60000);       // 1 min CD
     }
 
 private:

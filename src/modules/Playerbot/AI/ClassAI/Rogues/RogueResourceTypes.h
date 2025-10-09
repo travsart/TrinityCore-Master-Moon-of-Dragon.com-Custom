@@ -102,4 +102,41 @@ struct EnergyComboResource
     }
 };
 
+// ============================================================================
+// SPECIALIZATION-SPECIFIC RESOURCE TYPES
+// ============================================================================
+// Each spec gets its own distinct type to avoid template instantiation conflicts
+// when all three specs are included in the same translation unit (RogueAI.cpp).
+// All specs share the same underlying implementation via inheritance.
+
+/**
+ * @brief Assassination Rogue resource type (Energy + Combo Points)
+ * @note Distinct type for template instantiation: MeleeDpsSpecialization<ComboPointsAssassination>
+ */
+struct ComboPointsAssassination : public EnergyComboResource
+{
+    // Inherits all functionality from EnergyComboResource
+    // Assassination-specific customizations can be added here if needed
+};
+
+/**
+ * @brief Outlaw Rogue resource type (Energy + Combo Points)
+ * @note Distinct type for template instantiation: MeleeDpsSpecialization<ComboPointsOutlaw>
+ */
+struct ComboPointsOutlaw : public EnergyComboResource
+{
+    // Inherits all functionality from EnergyComboResource
+    // Outlaw-specific customizations can be added here if needed
+};
+
+/**
+ * @brief Subtlety Rogue resource type (Energy + Combo Points)
+ * @note Distinct type for template instantiation: MeleeDpsSpecialization<ComboPointsSubtlety>
+ */
+struct ComboPointsSubtlety : public EnergyComboResource
+{
+    // Inherits all functionality from EnergyComboResource
+    // Subtlety-specific customizations can be added here if needed
+};
+
 } // namespace Playerbot
