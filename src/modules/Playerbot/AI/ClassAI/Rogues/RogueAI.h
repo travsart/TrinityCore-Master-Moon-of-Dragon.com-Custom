@@ -12,7 +12,7 @@
 
 #include "../ClassAI.h"
 #include "RogueSpecialization.h"
-#include "EnergyManager.h"
+// #include "EnergyManager.h"  // REMOVED - Legacy file deleted
 #include "Position.h"
 #include "Unit.h"
 #include "../Combat/BotThreatManager.h"
@@ -131,7 +131,7 @@ private:
     RogueMetrics* _metrics;
     RogueCombatMetrics* _combatMetrics;
     RogueCombatPositioning* _positioning;
-    std::unique_ptr<EnergyManager> _energyManager;
+    // std::unique_ptr<EnergyManager> _energyManager;  // REMOVED - Legacy system
 
     // Combat tracking
     uint32 _energySpent;

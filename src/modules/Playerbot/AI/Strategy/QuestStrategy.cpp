@@ -65,7 +65,7 @@ bool QuestStrategy::IsActive(BotAI* ai) const
         return false;
 
     // Check if bot has active quests
-    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
     {
         uint32 questId = bot->GetQuestSlotQuestId(slot);
         if (questId != 0)
@@ -164,7 +164,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     switch (questObjective->Type)
     {
         case QUEST_OBJECTIVE_MONSTER:
-        case QUEST_OBJECTIVE_PLAYER_KILLS:
+        case QUEST_OBJECTIVE_PLAYERKILLS:
             EngageQuestTargets(ai, objective);
             break;
 
@@ -280,7 +280,7 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
     }
 
     // Interact with object
-    bot->PrepareGossipMenu(questObject, questObject->GetGoInfo()->type == GAMEOBJECT_TYPE_QUESTGIVER ? 0 : questObject->GetGOInfo()->entry);
+    bot->PrepareGossipMenu(questObject, questObject->GetGOInfo()->type == GAMEOBJECT_TYPE_QUESTGIVER ? 0 : questObject->GetGOInfo()->entry);
     bot->SendPreparedGossip(questObject);
 
     TC_LOG_DEBUG("module.playerbot.strategy", "QuestStrategy: Bot {} interacting with object {} for quest {}",

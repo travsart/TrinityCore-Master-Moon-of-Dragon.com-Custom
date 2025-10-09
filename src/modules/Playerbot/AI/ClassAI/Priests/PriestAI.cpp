@@ -267,7 +267,7 @@ void PriestAI::OnCombatStart(::Unit* target)
     // Initialize combat tracking
     _combatTime = 0;
     _inCombat = true;
-    _currentTarget = target;
+    _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
 }
 
 void PriestAI::OnCombatEnd()
@@ -292,7 +292,7 @@ void PriestAI::OnCombatEnd()
 
     // Reset combat tracking
     _inCombat = false;
-    _currentTarget = nullptr;
+    _currentTarget = ObjectGuid::Empty;
 
     // Log performance metrics
     AnalyzeHealingEfficiency();

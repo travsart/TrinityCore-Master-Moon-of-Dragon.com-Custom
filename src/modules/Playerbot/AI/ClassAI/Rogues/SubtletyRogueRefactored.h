@@ -23,7 +23,8 @@ namespace Playerbot
 
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: EnergyComboResource is defined in RogueResourceTypes.h
-// Subtlety-specific spell IDs defined below
+// NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
+// Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
 
 // ============================================================================
 // SUBTLETY ROGUE SPELL IDs (WoW 11.2 - The War Within)
@@ -31,47 +32,27 @@ namespace Playerbot
 
 enum SubtletySpells
 {
-    // Combo Point Builders
-    BACKSTAB                 = 53,      // 35 Energy, behind target, 1 CP
-    SHADOWSTRIKE             = 185438,  // From stealth/Shadow Dance, 2 CP
+    // NOTE: Shared spells (BACKSTAB, RUPTURE, STEALTH, VANISH, KICK, etc.) are in RogueSpecialization.h
+    // Only Subtlety-UNIQUE spells defined here to avoid duplicate definitions
+
+    // Combo Point Builders (Unique to Subtlety)
+    SHADOWSTRIKE_SUB         = 185438,  // From stealth/Shadow Dance, 2 CP (unique ID)
     SHURIKEN_STORM           = 197835,  // 35 Energy, AoE, 1 CP per target
 
-    // Combo Point Spenders
-    EVISCERATE               = 196819,  // Finisher, high damage
-    RUPTURE_SUB              = 1943,    // Finisher, bleed DoT
+    // Combo Point Spenders (Unique to Subtlety)
+    EVISCERATE_SUB           = 196819,  // Finisher, high damage (unique Subtlety version)
     BLACK_POWDER             = 319175,  // AoE finisher
     SECRET_TECHNIQUE         = 280719,  // Finisher, teleport attacks (talent)
-
-    // Shadow Dance System
-    SHADOW_DANCE             = 185313,  // 60 sec CD, 3 charges, stealth abilities
-    SYMBOLS_OF_DEATH         = 212283,  // 30 sec CD, damage buff
-
-    // Stealth and Vanish
-    STEALTH_SUB              = 1784,    // Enter stealth
-    VANISH_SUB               = 1856,    // 2 min CD, stealth
-    SHADOWMELD               = 58984,   // Night Elf racial stealth
 
     // Major Cooldowns
     SHADOW_BLADES            = 121471,  // 3 min CD, all attacks generate CP (talent)
     SHURIKEN_TORNADO         = 277925,  // 1 min CD, sustained AoE (talent)
 
     // Shadow Techniques
-    FIND_WEAKNESS            = 91023,   // Debuff after Shadowstrike
     SHADOW_TECHNIQUES_PROC   = 196911,  // Passive extra CP generation
 
-    // Utility
-    KICK_SUB                 = 1766,    // Interrupt
-    CLOAK_OF_SHADOWS_SUB     = 31224,   // 2 min CD, magic immunity
-    EVASION                  = 5277,    // 2 min CD, dodge
-    BLIND_SUB                = 2094,    // CC
-    SAP                      = 6770,    // CC from stealth
-
     // Finisher Buffs
-    SLICE_AND_DICE_SUB       = 315496,  // Attack speed buff
-
-    // Stealth Buffs
-    MASTER_OF_SUBTLETY       = 31223,   // Damage buff after leaving stealth
-    PREMEDITATION            = 343160,  // Slice and Dice on Shadowstrike
+    SLICE_AND_DICE_SUB       = 315496,  // Attack speed buff (unique ID)
 
     // Procs and Buffs
     DANSE_MACABRE            = 393969,  // Buff from spending CP
@@ -254,15 +235,15 @@ public:
         Player* bot = this->GetBot();
 
         // Enter stealth out of combat
-        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH_SUB, bot))
+        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH, bot))
         {
-            this->CastSpell(bot, STEALTH_SUB);
+            this->CastSpell(bot, STEALTH);
         }
 
         // Defensive cooldowns
-        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS_SUB, bot))
+        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, CLOAK_OF_SHADOWS_SUB);
+            this->CastSpell(bot, CLOAK_OF_SHADOWS);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(EVASION, bot))
@@ -271,10 +252,8 @@ public:
         }
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 5.0f; // Melee range
-    }
+    // NOTE: GetOptimalRange is final in base class, cannot override
+    // Melee range (5.0f) is already handled by MeleeDpsSpecialization
 
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -286,7 +265,7 @@ protected:
         // Priority 1: Symbols of Death on cooldown
         if (this->CanCastSpell(SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(SYMBOLS_OF_DEATH, this->GetBot());
+            this->CastSpell(this->GetBot(), SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = getMSTime() + 10000;
             return;
@@ -295,7 +274,7 @@ protected:
         // Priority 2: Shadow Blades on cooldown (talent)
         if (this->CanCastSpell(SHADOW_BLADES, this->GetBot()))
         {
-            this->CastSpell(SHADOW_BLADES, this->GetBot());
+            this->CastSpell(this->GetBot(), SHADOW_BLADES);
             _shadowBladesActive = true;
             _shadowBladesEndTime = getMSTime() + 20000;
             return;
@@ -306,7 +285,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(SHADOW_DANCE, this->GetBot());
+                this->CastSpell(this->GetBot(), SHADOW_DANCE);
                 _shadowDanceTracker.Use();
                 _inStealth = true; // Enables stealth abilities
                 return;
@@ -316,9 +295,9 @@ protected:
         // Priority 4: Shadowstrike from stealth/Shadow Dance
         if (_inStealth && energy >= 40)
         {
-            if (this->CanCastSpell(SHADOWSTRIKE, target))
+            if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE);
+                this->CastSpell(target, SHADOWSTRIKE_SUB);
                 _lastShadowstrikeTime = getMSTime();
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
@@ -344,9 +323,9 @@ protected:
         // Priority 6: Eviscerate finisher at 5-6 CP
         if (cp >= (maxCp - 1) && energy >= 35)
         {
-            if (this->CanCastSpell(EVISCERATE, target))
+            if (this->CanCastSpell(EVISCERATE_SUB, target))
             {
-                this->CastSpell(target, EVISCERATE);
+                this->CastSpell(target, EVISCERATE_SUB);
                 _lastEviscerateTime = getMSTime();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -357,9 +336,9 @@ protected:
         // Priority 7: Rupture if not active
         if (!HasRupture(target) && cp >= 4 && energy >= 25)
         {
-            if (this->CanCastSpell(RUPTURE_SUB, target))
+            if (this->CanCastSpell(RUPTURE, target))
             {
-                this->CastSpell(target, RUPTURE_SUB);
+                this->CastSpell(target, RUPTURE);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -384,9 +363,9 @@ protected:
         // Priority 9: Shadowstrike if can't get behind (less efficient)
         if (energy >= 40 && cp < maxCp)
         {
-            if (this->CanCastSpell(SHADOWSTRIKE, target))
+            if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE);
+                this->CastSpell(target, SHADOWSTRIKE_SUB);
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
                 return;
@@ -403,14 +382,14 @@ protected:
         // Priority 1: Shuriken Tornado (talent, sustained AoE)
         if (this->CanCastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot()))
         {
-            this->CastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot());
+            this->CastSpell(this->GetBot(), SHURIKEN_TORNADO_TALENT);
             return;
         }
 
         // Priority 2: Symbols of Death
         if (this->CanCastSpell(SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(SYMBOLS_OF_DEATH, this->GetBot());
+            this->CastSpell(this->GetBot(), SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = getMSTime() + 10000;
             return;
@@ -421,7 +400,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(SHADOW_DANCE, this->GetBot());
+                this->CastSpell(this->GetBot(), SHADOW_DANCE);
                 _shadowDanceTracker.Use();
                 _inStealth = true;
                 return;
@@ -433,7 +412,7 @@ protected:
         {
             if (this->CanCastSpell(BLACK_POWDER, this->GetBot()))
             {
-                this->CastSpell(BLACK_POWDER, this->GetBot());
+                this->CastSpell(this->GetBot(), BLACK_POWDER);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -445,7 +424,7 @@ protected:
         {
             if (this->CanCastSpell(SHURIKEN_STORM, this->GetBot()))
             {
-                this->CastSpell(SHURIKEN_STORM, this->GetBot());
+                this->CastSpell(this->GetBot(), SHURIKEN_STORM);
                 ConsumeEnergy(35);
                 GenerateComboPoints(std::min(enemyCount, 5u));
                 return;
@@ -512,7 +491,7 @@ private:
     bool HasRupture(::Unit* target) const
     {
         // Simplified - check if target has Rupture aura
-        return target && target->HasAura(RUPTURE_SUB, this->GetBot()->GetGUID());
+        return target && target->HasAura(RUPTURE, this->GetBot()->GetGUID());
     }
 
     void InitializeCooldowns()
@@ -521,11 +500,11 @@ private:
         RegisterCooldown(SYMBOLS_OF_DEATH, 30000);       // 30 sec CD
         RegisterCooldown(SHADOW_BLADES, 180000);         // 3 min CD
         RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000); // 1 min CD
-        RegisterCooldown(VANISH_SUB, 120000);            // 2 min CD
-        RegisterCooldown(CLOAK_OF_SHADOWS_SUB, 120000);  // 2 min CD
+        RegisterCooldown(VANISH, 120000);            // 2 min CD
+        RegisterCooldown(CLOAK_OF_SHADOWS, 120000);  // 2 min CD
         RegisterCooldown(EVASION, 120000);               // 2 min CD
-        RegisterCooldown(KICK_SUB, 15000);               // 15 sec CD
-        RegisterCooldown(BLIND_SUB, 120000);             // 2 min CD
+        RegisterCooldown(KICK, 15000);               // 15 sec CD
+        RegisterCooldown(BLIND, 120000);             // 2 min CD
         RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);   // 1 min CD
     }
 

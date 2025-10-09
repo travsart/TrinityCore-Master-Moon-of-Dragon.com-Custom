@@ -268,24 +268,23 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowSpecialization.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI_Specialization.cpp
 
-    # Rogue AI
-    # RogueAI.cpp has BaselineRotationManager integration - ENABLED
-    # RogueAI_Specialization.cpp disabled to prevent duplicate symbols
+    # Rogue AI - NOW USING TEMPLATE-BASED REFACTORED ARCHITECTURE
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueCombatPositioning.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletySpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/CombatSpecialization.cpp
+    # LEGACY FILES REMOVED (14 files, 123KB deleted):
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueCombatPositioning.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationSpecialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletySpecialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/CombatSpecialization.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI_Specialization.cpp
 
     # Rogue Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationRogueRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/OutlawRogueRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletyRogueRefactored.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueSpecialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueSpecialization.cpp  # REMOVED - Legacy class deleted
 
     # Shaman AI
     # ShamanAI.cpp has BaselineRotationManager integration - ENABLED (added in this commit)
