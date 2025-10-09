@@ -11,6 +11,7 @@
 #include "ElementalSpecialization.h"
 #include "EnhancementSpecialization.h"
 #include "RestorationSpecialization.h"
+#include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Unit.h"
@@ -236,6 +237,25 @@ void ShamanAI::UpdateRotation(::Unit* target)
 {
     if (!GetBot() || !target)
         return;
+
+    Player* bot = GetBot();
+
+    // Check if bot should use baseline rotation (levels 1-9 or no spec)
+    if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
+    {
+        TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} using BASELINE rotation (level {})",
+                     bot->GetName(), bot->GetLevel());
+
+        static BaselineRotationManager baselineManager;
+        baselineManager.HandleAutoSpecialization(bot);
+
+        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);
+        TC_LOG_DEBUG("module.playerbot.shaman", "BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
+
+        // No fallback for casters - if rotation failed, just return
+        // Do NOT use AttackerStateUpdate (melee) for a caster class
+        return;
+    }
 
     // Check if we need to switch specialization
     ShamanSpec newSpec = DetectCurrentSpecialization();
