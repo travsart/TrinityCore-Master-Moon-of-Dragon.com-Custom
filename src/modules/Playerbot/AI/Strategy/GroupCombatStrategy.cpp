@@ -124,6 +124,18 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // bot->Attack() makes the target hostile but needs to process
             if (!bot->GetVictim() || bot->GetVictim() != target)
             {
+                // CRITICAL FIX: DO NOT call SetAIState() here!
+                // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
+                // and set the AI state properly. If we set it here, UpdateCombatState()
+                // immediately overwrites it back to non-combat because bot->IsInCombat()
+                // is still false at this point (race condition).
+                //
+                // The correct flow is:
+                // 1. bot->Attack() + bot->SetInCombatWith() → bot->IsInCombat() becomes true
+                // 2. UpdateCombatState() detects bot->IsInCombat() == true
+                // 3. UpdateCombatState() calls SetAIState(BotAIState::COMBAT)
+                // 4. OnCombatUpdate() is called with spell queue ready
+
                 // Initiate combat with target
                 bot->Attack(target, true);
                 bot->SetInCombatWith(target);

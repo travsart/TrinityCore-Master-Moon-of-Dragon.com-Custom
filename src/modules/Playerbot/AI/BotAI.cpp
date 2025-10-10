@@ -14,6 +14,7 @@
 #include "BehaviorPriorityManager.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
+#include "Strategy/SoloCombatStrategy.h"
 #include "Strategy/SoloStrategy.h"
 #include "Strategy/QuestStrategy.h"
 #include "Strategy/LootStrategy.h"
@@ -35,6 +36,9 @@
 #include "Core/Managers/ManagerRegistry.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "ThreatManager.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
 #include "MotionMaster.h"
@@ -259,21 +263,25 @@ void BotAI::UpdateAI(uint32 diff)
         //    Handles eating, drinking, bandaging when resources low
         ActivateStrategy("rest");
 
-        // 2. Quest strategy (Priority: 70) - HIGH: Quest objectives take priority
+        // 2. Solo Combat strategy (Priority: 70) - HIGH: Combat takes priority
+        //    Handles ALL solo combat (quest, gathering defense, autonomous, trading)
+        ActivateStrategy("solo_combat");
+
+        // 3. Quest strategy (Priority: 50) - MEDIUM: Quest objectives
         //    Handles quest navigation, objective completion, turn-ins
         ActivateStrategy("quest");
 
-        // 3. Loot strategy (Priority: 60) - MEDIUM-HIGH: Loot after combat
+        // 4. Loot strategy (Priority: 45) - MEDIUM: Loot after combat
         //    Handles corpse looting, item pickup, inventory management
         ActivateStrategy("loot");
 
-        // 4. Solo strategy (Priority: 10) - LOWEST: Fallback coordinator
+        // 5. Solo strategy (Priority: 10) - LOWEST: Fallback coordinator
         //    Coordinates all solo behaviors, handles wandering when idle
         ActivateStrategy("solo");
 
         _soloStrategiesActivated = true;
 
-        TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT ACTIVATION: Bot {} activated 4 solo strategies (rest, quest, loot, solo) on first UpdateAI",
+        TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT ACTIVATION: Bot {} activated 5 solo strategies (rest, solo_combat, quest, loot, solo) on first UpdateAI",
                     _bot->GetName());
     }
 
@@ -842,14 +850,47 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                 TC_LOG_DEBUG("playerbot", "Solo bot {} found hostile target {} at distance {:.1f}",
                             _bot->GetName(), bestTarget->GetName(), _bot->GetDistance(bestTarget));
 
-                // CRITICAL FIX: Properly enter combat state
+                // CRITICAL FIX: For neutral mobs, we need to establish threat/combat state
+                // Neutral mobs only become hostile after taking damage OR being put in combat.
+                // The combat system (CombatManager::CanBeginCombat) validates IsFriendlyTo()
+                // and rejects combat if the mob is neutral/friendly.
+                //
+                // Solution: Add threat to the creature, which internally calls SetInCombatWith()
+                // This establishes combat state WITHOUT making the mob immediately chase us,
+                // preserving the "opener window" for ranged spell casters.
+                //
+                // For melee bots: They will approach anyway via SoloCombatStrategy MoveChase
+                // For casters: They get time to cast opener while mob is still standing still
+
+                if (Creature* targetCreature = bestTarget->ToCreature())
+                {
+                    // AddThreat() internally calls SetInCombatWith() if creature has threat list
+                    // This puts both units in combat state but doesn't force immediate engagement
+                    if (targetCreature->CanHaveThreatList())
+                    {
+                        targetCreature->GetThreatManager().AddThreat(_bot, 1.0f);
+                        TC_LOG_ERROR("module.playerbot", "🎯 THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
+                                    _bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
+                    }
+
+                    // NOTE: We do NOT call AttackStart() here!
+                    // AttackStart() would make the mob immediately chase us, ruining caster openers.
+                    // Instead, the mob will engage when:
+                    // - Melee bots approach via SoloCombatStrategy → mob sees them → natural aggro
+                    // - Caster bots cast spell → spell hits → damage triggers DamageTaken() → mob engages
+                    // This preserves the "opener window" mechanic for ranged classes
+                }
+
+                // NOW the creature is hostile, our combat initiation will work
+
                 // 1. Set target
                 _bot->SetTarget(bestTarget->GetGUID());
 
                 // 2. Start combat - this sets victim and initiates auto-attack
                 _bot->Attack(bestTarget, true);
 
-                // 3. CRITICAL: Force bot into combat state (Attack() alone doesn't guarantee this)
+                // 3. Force bot into combat state
+                // SetInCombatWith() will now succeed because creature is hostile
                 _bot->SetInCombatWith(bestTarget);
                 bestTarget->SetInCombatWith(_bot);
 
@@ -857,36 +898,19 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                              _bot->GetName(), bestTarget->GetName(),
                              _bot->IsInCombat(), _bot->GetVictim() != nullptr);
 
-                // CRITICAL FIX: Position ALL classes at optimal range (ranged AND melee)
-                // Previously only ranged classes were positioned, leaving melee at 40+ yards
-                if (_bot->GetClass() == CLASS_HUNTER ||
-                    _bot->GetClass() == CLASS_MAGE ||
-                    _bot->GetClass() == CLASS_WARLOCK ||
-                    _bot->GetClass() == CLASS_PRIEST)
-                {
-                    // Ranged classes: Move to 25-yard optimal range
-                    float optimalRange = 25.0f;
-                    if (_bot->GetDistance(bestTarget) > optimalRange)
-                    {
-                        Position pos = bestTarget->GetNearPosition(optimalRange, 0.0f);
-                        _bot->GetMotionMaster()->MovePoint(0, pos);
-                        TC_LOG_ERROR("module.playerbot", "📍 RANGED POSITIONING: Bot {} moving to {:.1f}yd range",
-                                     _bot->GetName(), optimalRange);
-                    }
-                }
-                else
-                {
-                    // MELEE CLASSES: Move to 5-yard melee range
-                    // Covers: Warrior, Rogue, Paladin, Death Knight, Monk, Druid (feral)
-                    float meleeRange = 5.0f;
-                    if (_bot->GetDistance(bestTarget) > meleeRange)
-                    {
-                        Position pos = bestTarget->GetNearPosition(meleeRange, 0.0f);
-                        _bot->GetMotionMaster()->MovePoint(0, pos);
-                        TC_LOG_ERROR("module.playerbot", "⚔️ MELEE POSITIONING: Bot {} (class {}) moving to {:.1f}yd melee range",
-                                     _bot->GetName(), _bot->GetClass(), meleeRange);
-                    }
-                }
+                // CRITICAL FIX: Do NOT position here using MovePoint!
+                // MovePoint conflicts with SoloCombatStrategy's MoveChase, causing blinking.
+                // Instead, let SoloCombatStrategy handle ALL positioning with MoveChase.
+                //
+                // Flow:
+                // 1. We set combat state (Attack + SetInCombatWith) → IsInCombat() = true
+                // 2. Next frame: SoloCombatStrategy activates (sees IsInCombat() = true)
+                // 3. SoloCombatStrategy issues MoveChase → Smooth continuous movement
+                // 4. ClassAI::OnCombatUpdate() handles spell casting
+                //
+                // This eliminates redundancy and the MovePoint/MoveChase conflict.
+
+                TC_LOG_ERROR("module.playerbot", "✅ Combat initiated - SoloCombatStrategy will handle positioning via MoveChase");
 
                 // This will trigger combat state transition in next update
                 return;
@@ -1553,6 +1577,16 @@ void BotAI::InitializeDefaultStrategies()
     auto groupCombat = std::make_unique<GroupCombatStrategy>();
     AddStrategy(std::move(groupCombat));
 
+    // CRITICAL: Create and register solo combat strategy for solo bot combat (Priority 70)
+    // This strategy handles ALL combat when bot is solo (not in group):
+    //  - Quest combat (kills quest targets)
+    //  - Gathering defense (attacked while gathering)
+    //  - Autonomous combat (bot finds hostile mob)
+    //  - Trading interruption (attacked at vendor)
+    // It provides positioning coordination and lets ClassAI handle spell rotation
+    auto soloCombat = std::make_unique<SoloCombatStrategy>();
+    AddStrategy(std::move(soloCombat));
+
     // Create quest strategy for quest objective navigation and completion
     // This strategy drives bots to quest locations, kills mobs, collects items, and turns in quests
     auto questStrategy = std::make_unique<QuestStrategy>();
@@ -1576,7 +1610,7 @@ void BotAI::InitializeDefaultStrategies()
     // NOTE: Mutual exclusion rules are automatically configured in BehaviorPriorityManager constructor
     // No need to add them here - they're already set up when _priorityManager is initialized
 
-    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, quest, loot, rest, and solo strategies for bot {}", _bot->GetName());
+    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, solo_combat, quest, loot, rest, and solo strategies for bot {}", _bot->GetName());
 
     // NOTE: Do NOT activate strategies here!
     // Strategy activation happens AFTER bot is fully loaded:

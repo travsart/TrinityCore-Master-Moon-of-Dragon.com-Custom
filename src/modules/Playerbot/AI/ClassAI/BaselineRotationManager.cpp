@@ -67,12 +67,34 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
 bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* target)
 {
     if (!bot || !target || !target->IsAlive())
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: Invalid input - bot={}, target={}, target_alive={}",
+                     (void*)bot, (void*)target, target ? target->IsAlive() : false);
         return false;
+    }
+
+    uint8 classId = bot->GetClass();
+    TC_LOG_ERROR("module.playerbot.baseline", "🎯 ExecuteBaselineRotation: Bot {} (class {}) executing baseline rotation",
+                 bot->GetName(), classId);
 
     // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
-    auto abilities = GetBaselineAbilities(bot->GetClass());
-    if (!abilities || abilities->empty())
+    auto abilities = GetBaselineAbilities(classId);
+    if (!abilities)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: NO ABILITIES found for class {} - abilities pointer is NULL!",
+                     classId);
         return false;
+    }
+
+    if (abilities->empty())
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: Abilities vector EMPTY for class {}!",
+                     classId);
+        return false;
+    }
+
+    TC_LOG_ERROR("module.playerbot.baseline", "✅ ExecuteBaselineRotation: Found {} abilities for class {}",
+                 abilities->size(), classId);
 
     // Sort abilities by priority (higher priority first)
     std::vector<BaselineAbility> sorted = *abilities;
@@ -80,13 +102,24 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
         return a.priority > b.priority;
     });
 
+    TC_LOG_ERROR("module.playerbot.baseline", "🔄 ExecuteBaselineRotation: Trying {} abilities in priority order",
+                 sorted.size());
+
     // Try to cast highest priority available ability
     for (auto const& ability : sorted)
     {
+        TC_LOG_ERROR("module.playerbot.baseline", "  → Trying ability spellId={} priority={:.1f}",
+                     ability.spellId, ability.priority);
+
         if (TryCastAbility(bot, target, ability))
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "✅ ExecuteBaselineRotation: Successfully cast spell {}",
+                         ability.spellId);
             return true;
+        }
     }
 
+    TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: NO abilities could be cast!");
     return false;
 }
 
@@ -371,22 +404,45 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
 {
     if (!bot || !target)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ CanUseAbility: bot or target is NULL");
         return false;
+    }
 
     // Level check
     if (bot->GetLevel() < ability.minLevel)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} level {} < required level {} for spell {}",
+                     bot->GetName(), bot->GetLevel(), ability.minLevel, ability.spellId);
         return false;
+    }
 
     // Range check
+    float distance = bot->GetDistance(target);
     if (ability.requiresMelee)
     {
-        if (bot->GetDistance(target) > 5.0f)
+        if (distance > 5.0f)
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} out of melee range ({:.1f}yd > 5.0yd) for spell {}",
+                         bot->GetName(), distance, ability.spellId);
             return false;
+        }
     }
     else
     {
-        if (bot->GetDistance(target) > 30.0f || !bot->IsWithinLOSInMap(target))
+        if (distance > 30.0f)
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} out of spell range ({:.1f}yd > 30.0yd) for spell {}",
+                         bot->GetName(), distance, ability.spellId);
             return false;
+        }
+
+        if (!bot->IsWithinLOSInMap(target))
+        {
+            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} has no LOS to target for spell {}",
+                         bot->GetName(), ability.spellId);
+            return false;
+        }
     }
 
     // Resource check
@@ -414,8 +470,14 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
     }
 
     if (currentResource < ability.resourceCost)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} insufficient resources ({} < {}) for spell {}",
+                     bot->GetName(), currentResource, ability.resourceCost, ability.spellId);
         return false;
+    }
 
+    TC_LOG_ERROR("module.playerbot.baseline", "✅ Bot {} CAN use spell {} (level OK, range {:.1f}yd OK, resources {} OK)",
+                 bot->GetName(), ability.spellId, distance, currentResource);
     return true;
 }
 

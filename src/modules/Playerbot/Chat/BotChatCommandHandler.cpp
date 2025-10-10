@@ -128,13 +128,13 @@ void BotChatCommandHandler::LoadConfiguration()
     // TODO: Load from playerbots.conf when configuration system is complete
     // For now, use sensible defaults
 
-    _commandPrefix = ".bot";
+    _commandPrefix = "@bot";  // Changed from .bot to avoid conflict with Trinity GM commands
     _naturalLanguageEnabled = false; // Disabled until LLM provider is registered
     _maxConcurrentCommands = 5;
-    _debugLogging = false;
+    _debugLogging = true;  // TEMPORARILY ENABLED for debugging
 
-    TC_LOG_DEBUG("playerbot.chat", "BotChatCommandHandler: Configuration loaded - prefix: '{}', NLP: {}",
-        _commandPrefix, _naturalLanguageEnabled.load());
+    TC_LOG_INFO("playerbot.chat", "BotChatCommandHandler: Configuration loaded - prefix: '{}', NLP: {}, Debug: {}",
+        _commandPrefix, _naturalLanguageEnabled.load(), _debugLogging.load());
 }
 
 // ========================================
@@ -245,15 +245,8 @@ void BotChatCommandHandler::SendResponse(CommandContext const& context, CommandR
     data << response.GetText();
     data << uint8(0); // chat tag
 
-    // Send via BotPacketRelay if in group, otherwise send directly
-    if (context.bot->GetGroup() && !context.isWhisper)
-    {
-        BotPacketRelay::RelayToPlayer(context.botSession, &data, context.sender);
-    }
-    else
-    {
-        context.sender->SendDirectMessage(&data);
-    }
+    // Always use BotPacketRelay for reliable message delivery
+    BotPacketRelay::RelayToPlayer(context.botSession, &data, context.sender);
 
     if (_debugLogging)
     {
@@ -274,7 +267,7 @@ CommandResult BotChatCommandHandler::ProcessDirectCommand(CommandContext const& 
     {
         _statistics.invalidSyntax++;
         CommandResponse response;
-        response.SetText("Invalid command syntax. Type '.bot help' for available commands.");
+        response.SetText("Invalid command syntax. Type '@bot help' for available commands.");
         SendResponse(context, response);
         return CommandResult::INVALID_SYNTAX;
     }
@@ -839,7 +832,7 @@ static CommandResult HandleAttackCommand(CommandContext const& context, CommandR
     // TODO: Implement attack logic in BotAI
     if (context.args.empty())
     {
-        response.SetText("Usage: .bot attack <target>");
+        response.SetText("Usage: @bot attack <target>");
         return CommandResult::INVALID_SYNTAX;
     }
 
@@ -872,7 +865,7 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     ChatCommand help;
     help.name = "help";
     help.description = "Display available commands";
-    help.syntax = ".bot help";
+    help.syntax = "@bot help";
     help.permission = CommandPermission::ANYONE;
     help.handler = HandleHelpCommand;
     help.minArgs = 0;
@@ -883,7 +876,7 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     ChatCommand follow;
     follow.name = "follow";
     follow.description = "Make bot follow you";
-    follow.syntax = ".bot follow";
+    follow.syntax = "@bot follow";
     follow.permission = CommandPermission::GROUP_MEMBER;
     follow.handler = HandleFollowCommand;
     follow.aliases = {"f"};
@@ -895,7 +888,7 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     ChatCommand stay;
     stay.name = "stay";
     stay.description = "Make bot stay at current location";
-    stay.syntax = ".bot stay";
+    stay.syntax = "@bot stay";
     stay.permission = CommandPermission::GROUP_MEMBER;
     stay.handler = HandleStayCommand;
     stay.aliases = {"s"};
@@ -907,7 +900,7 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     ChatCommand attack;
     attack.name = "attack";
     attack.description = "Make bot attack target";
-    attack.syntax = ".bot attack <target>";
+    attack.syntax = "@bot attack <target>";
     attack.permission = CommandPermission::GROUP_MEMBER;
     attack.handler = HandleAttackCommand;
     attack.aliases = {"a"};
@@ -920,7 +913,7 @@ void BotChatCommandHandler::RegisterDefaultCommands()
     ChatCommand stats;
     stats.name = "stats";
     stats.description = "Display command statistics";
-    stats.syntax = ".bot stats";
+    stats.syntax = "@bot stats";
     stats.permission = CommandPermission::ANYONE;
     stats.handler = HandleStatsCommand;
     stats.minArgs = 0;

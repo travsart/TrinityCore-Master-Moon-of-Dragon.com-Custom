@@ -746,6 +746,15 @@ void ClassAI::ExecutePendingSpell()
         target = bot; // Self-cast
     }
 
+    // CRITICAL: Face the target before casting (required for spell validation)
+    // Players auto-face when casting, bots need to do it explicitly
+    if (target && target != bot)
+    {
+        bot->SetFacingToObject(target);
+        TC_LOG_ERROR("module.playerbot.classai", "🎯 Bot {} facing target {} before spell cast",
+                    bot->GetName(), target->GetName());
+    }
+
     // Create spell cast targets
     // Mirrors Player::ExecutePendingSpellCastRequest() - Player.cpp:30948-31051
     SpellCastTargets targets;
@@ -774,13 +783,13 @@ void ClassAI::ExecutePendingSpell()
 
     if (result == SPELL_CAST_OK)
     {
-        TC_LOG_DEBUG("module.playerbot.classai", "✅ Bot {} executed queued spell {} on {} - queued for {}ms",
+        TC_LOG_ERROR("module.playerbot.classai", "✅ Bot {} executed queued spell {} on {} - queued for {}ms",
                     bot->GetName(), spellId,
                     target ? target->GetName() : "self", queuedDuration);
     }
     else
     {
-        TC_LOG_DEBUG("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",
+        TC_LOG_ERROR("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",
                     bot->GetName(), spellId,
                     uint32(result), queuedDuration);
     }

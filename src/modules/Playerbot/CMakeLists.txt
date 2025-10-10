@@ -95,6 +95,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.h
 
     # Phase 2.2: CombatMovementStrategy - Role-based Combat Positioning
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
@@ -647,6 +649,8 @@ source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloCombatStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.cpp

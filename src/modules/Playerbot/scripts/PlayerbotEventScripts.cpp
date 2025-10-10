@@ -315,6 +315,10 @@ public:
         WorldSession* botWorldSession = receiver->GetSession();
         Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
 
+        TC_LOG_INFO("playerbot.chat", "OnChat WHISPER: from {} to {} - msg: '{}', botSession={}, IsInit={}",
+            player->GetName(), receiver->GetName(), msg,
+            botSession != nullptr, Playerbot::BotChatCommandHandler::IsInitialized());
+
         if (botSession && Playerbot::BotChatCommandHandler::IsInitialized())
         {
             // Build command context
@@ -331,11 +335,11 @@ public:
             // Process command (this will send response if it's a command)
             Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
 
-            // If command was processed successfully, don't dispatch as event
-            if (result == Playerbot::CommandResult::SUCCESS ||
-                result == Playerbot::CommandResult::ASYNC_PROCESSING)
+            // If message had command prefix, don't dispatch as event (command handler sent response)
+            // Only fall through to event system if it's NOT a command at all
+            if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
             {
-                return;
+                return;  // Command was processed (success/failure/error), skip event dispatch
             }
         }
 
@@ -365,6 +369,10 @@ public:
                 WorldSession* botWorldSession = member->GetSession();
                 Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
 
+                TC_LOG_INFO("playerbot.chat", "OnChat GROUP: from {} to {} - msg: '{}', botSession={}, IsInit={}",
+                    player->GetName(), member->GetName(), msg,
+                    botSession != nullptr, Playerbot::BotChatCommandHandler::IsInitialized());
+
                 if (botSession && Playerbot::BotChatCommandHandler::IsInitialized())
                 {
                     // Build command context
@@ -381,11 +389,11 @@ public:
                     // Process command (this will send response if it's a command)
                     Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
 
-                    // If command was processed successfully, don't dispatch as event
-                    if (result == Playerbot::CommandResult::SUCCESS ||
-                        result == Playerbot::CommandResult::ASYNC_PROCESSING)
+                    // If message had command prefix, don't dispatch as event (command handler sent response)
+                    // Only fall through to event system if it's NOT a command at all
+                    if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
                     {
-                        continue; // Skip event dispatch for this bot
+                        continue; // Command was processed, skip event dispatch for this bot
                     }
                 }
 

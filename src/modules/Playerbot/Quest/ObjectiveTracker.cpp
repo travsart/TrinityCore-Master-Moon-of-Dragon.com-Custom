@@ -50,9 +50,34 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     ObjectiveState state(objective.questId, objective.objectiveIndex);
     state.status = ObjectiveStatus::IN_PROGRESS;
     state.requiredProgress = objective.requiredCount;
-    state.lastKnownPosition = bot->GetPosition();
 
-    // Initialize target detection
+    // CRITICAL FIX: Set objective position to actual quest target location, NOT bot's current position!
+    // Get the spawn location of the quest target (creature/object/etc)
+    Position targetPosition = FindObjectiveTargetLocation(bot, objective);
+
+    // If we found a valid target location, use it. Otherwise, use bot's position as fallback.
+    if (targetPosition.GetExactDist2d(0.0f, 0.0f) > 0.1f)
+    {
+        state.lastKnownPosition = targetPosition;
+        TC_LOG_ERROR("module.playerbot.quest", "🎯 StartTrackingObjective: Bot {} - Using target spawn location ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+                    bot->GetName(),
+                    targetPosition.GetPositionX(), targetPosition.GetPositionY(), targetPosition.GetPositionZ(),
+                    objective.questId, objective.objectiveIndex);
+    }
+    else
+    {
+        state.lastKnownPosition = bot->GetPosition();
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+                    bot->GetName(),
+                    bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
+                    objective.questId, objective.objectiveIndex);
+    }
+
+    // DEADLOCK FIX: Initialize target detection BEFORE locking _trackingMutex
+    // This prevents circular deadlock:
+    //   CleanupInactiveTracking: _trackingMutex → _targetMutex
+    //   StartTrackingObjective: _targetMutex → _trackingMutex (DEADLOCK!)
+    // By calling DetectObjectiveTargets() before the lock, we ensure consistent lock ordering.
     std::vector<uint32> targets = DetectObjectiveTargets(bot, objective);
     state.targetIds = targets;
 
@@ -111,8 +136,11 @@ void ObjectiveTracker::UpdateObjectiveTracking(Player* bot, uint32 diff)
     {
         UpdateObjectiveProgress(bot, state);
 
-        // Check for stuck state
-        if (HasProgressStalled(bot, state.questId, state.objectiveIndex))
+        // Check for stuck state (check directly on state to avoid recursive lock)
+        uint32 currentTime = getMSTime();
+        bool isStalled = (currentTime - state.lastUpdateTime > STUCK_DETECTION_TIME) &&
+                        (state.completionVelocity < STALLED_PROGRESS_THRESHOLD);
+        if (isStalled)
         {
             HandleStuckObjective(bot, state);
         }
@@ -1106,6 +1134,140 @@ void ObjectiveTracker::AssignSpecificTargetToBot(Player* bot, uint32 questId, ui
 
     TC_LOG_DEBUG("playerbot.objectives", "Assigned target {} for objective {} in quest {} to bot {}",
                 targetIndex, objectiveIndex, questId, bot->GetName());
+}
+
+Position ObjectiveTracker::FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective)
+{
+    Position invalidPosition; // Returns 0,0,0 by default
+
+    if (!bot)
+        return invalidPosition;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+        return invalidPosition;
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+    // Find spawn location based on objective type
+    switch (objective.type)
+    {
+        case QuestObjectiveType::KILL_CREATURE:
+        {
+            // Get creature entry ID
+            uint32 creatureEntry = questObjective.ObjectID;
+
+            TC_LOG_ERROR("module.playerbot.quest", "🔍 FindObjectiveTargetLocation: Searching for creature spawn (Entry: {})", creatureEntry);
+
+            // Search creature spawn data for this creature
+            auto const& spawnData = sObjectMgr->GetAllCreatureData();
+
+            float closestDistance = 999999.0f;
+            Position closestSpawnPos;
+
+            for (auto const& pair : spawnData)
+            {
+                CreatureData const& data = pair.second;
+
+                // Check if this spawn matches our target creature
+                if (data.id != creatureEntry)
+                    continue;
+
+                // Check if spawn is on same map as bot
+                if (data.mapId != bot->GetMapId())
+                    continue;
+
+                // Calculate distance from bot
+                float distance = bot->GetExactDist2d(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY());
+
+                TC_LOG_ERROR("module.playerbot.quest", "  📍 Found spawn at ({:.1f}, {:.1f}, {:.1f}) on map {}, distance={:.1f}",
+                            data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY(), data.spawnPoint.GetPositionZ(),
+                            data.mapId, distance);
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestSpawnPos.Relocate(data.spawnPoint.GetPositionX(),
+                                            data.spawnPoint.GetPositionY(),
+                                            data.spawnPoint.GetPositionZ());
+                }
+            }
+
+            if (closestDistance < 999999.0f)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ FindObjectiveTargetLocation: Found closest spawn at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+                            closestSpawnPos.GetPositionX(), closestSpawnPos.GetPositionY(), closestSpawnPos.GetPositionZ(),
+                            closestDistance);
+                return closestSpawnPos;
+            }
+
+            TC_LOG_ERROR("module.playerbot.quest", "❌ FindObjectiveTargetLocation: NO spawn data found for creature entry {}", creatureEntry);
+            break;
+        }
+
+        case QuestObjectiveType::USE_GAMEOBJECT:
+        {
+            // Get game object entry ID
+            uint32 objectEntry = questObjective.ObjectID;
+
+            TC_LOG_ERROR("module.playerbot.quest", "🔍 FindObjectiveTargetLocation: Searching for gameobject spawn (Entry: {})", objectEntry);
+
+            // Search gameobject spawn data
+            auto const& spawnData = sObjectMgr->GetAllGameObjectData();
+
+            float closestDistance = 999999.0f;
+            Position closestSpawnPos;
+
+            for (auto const& pair : spawnData)
+            {
+                GameObjectData const& data = pair.second;
+
+                // Check if this spawn matches our target object
+                if (data.id != objectEntry)
+                    continue;
+
+                // Check if spawn is on same map as bot
+                if (data.mapId != bot->GetMapId())
+                    continue;
+
+                // Calculate distance from bot
+                float distance = bot->GetExactDist2d(data.spawnPoint.GetPositionX(), data.spawnPoint.GetPositionY());
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestSpawnPos.Relocate(data.spawnPoint.GetPositionX(),
+                                            data.spawnPoint.GetPositionY(),
+                                            data.spawnPoint.GetPositionZ());
+                }
+            }
+
+            if (closestDistance < 999999.0f)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ FindObjectiveTargetLocation: Found closest gameobject spawn at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+                            closestSpawnPos.GetPositionX(), closestSpawnPos.GetPositionY(), closestSpawnPos.GetPositionZ(),
+                            closestDistance);
+                return closestSpawnPos;
+            }
+
+            TC_LOG_ERROR("module.playerbot.quest", "❌ FindObjectiveTargetLocation: NO spawn data found for gameobject entry {}", objectEntry);
+            break;
+        }
+
+        case QuestObjectiveType::COLLECT_ITEM:
+        {
+            // For items, we would need to know which creatures drop them
+            // For now, return invalid position - bot will search nearby
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindObjectiveTargetLocation: COLLECT_ITEM objectives not yet supported for position finding");
+            break;
+        }
+
+        default:
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindObjectiveTargetLocation: Unknown objective type {}", static_cast<uint32>(objective.type));
+            break;
+    }
+
+    return invalidPosition;
 }
 
 void ObjectiveTracker::ResolveObjectiveConflicts(Group* group, uint32 questId, uint32 objectiveIndex)
