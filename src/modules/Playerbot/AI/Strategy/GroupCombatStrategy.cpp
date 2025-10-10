@@ -12,6 +12,10 @@
 #include "../ClassAI/ClassAI.h"  // For ClassAI positioning delegation
 #include "Player.h"
 #include "Group.h"
+#include "Unit.h"
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "ThreatManager.h"
 #include "Log.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -136,19 +140,33 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 // 3. UpdateCombatState() calls SetAIState(BotAIState::COMBAT)
                 // 4. OnCombatUpdate() is called with spell queue ready
 
+                // CRITICAL FIX: For neutral mobs, make THEM attack US first
+                // This is the same fix as in autonomous combat (BotAI.cpp lines 858-876)
+                if (Creature* targetCreature = target->ToCreature())
+                {
+                    // Add threat (makes creature turn hostile)
+                    if (targetCreature->CanHaveThreatList())
+                    {
+                        targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
+                        TC_LOG_ERROR("module.playerbot.strategy", "🎯 THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
+                                    bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
+                    }
+
+                    // Make creature's AI attack us (makes it hostile)
+                    if (CreatureAI* ai = targetCreature->AI())
+                    {
+                        ai->AttackStart(bot);
+                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ CREATURE ENGAGED: {} AttackStart() called on bot {}",
+                                    targetCreature->GetName(), bot->GetName());
+                    }
+                }
+
+                // NOW the creature is hostile, our combat initiation will work
+
                 // Initiate combat with target
                 bot->Attack(target, true);
                 bot->SetInCombatWith(target);
-
-                // CRITICAL FIX: For neutral mobs, Attack() alone doesn't make them hostile
-                // We need to establish threat/aggro manually for the target to react
-                if (target->IsCreature() && !target->IsInCombatWith(bot))
-                {
-                    target->SetInCombatWith(bot);
-                    target->GetThreatManager().AddThreat(bot, 1.0f); // Minimal threat to establish aggro
-                    TC_LOG_ERROR("module.playerbot.strategy", "⚔️ Establishing threat/aggro with neutral mob {}",
-                                target->GetName());
-                }
+                target->SetInCombatWith(bot);
 
                 TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
                             bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
