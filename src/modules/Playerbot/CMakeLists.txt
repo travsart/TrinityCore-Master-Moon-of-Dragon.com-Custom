@@ -58,6 +58,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.h
 
+    # Chat system (Phase 4: Complete command processing)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.h
+
     # Database pool (basic implementation)
     # Temporarily disabled: BotDatabasePool (needs API updates)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotDatabasePool.cpp
@@ -766,6 +770,11 @@ source_group("Session" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
 )
 
+source_group("Chat" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.h
+)
+
 source_group("Interfaces" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSession.h
@@ -925,6 +934,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events
         ${CMAKE_CURRENT_SOURCE_DIR}/Events
         ${CMAKE_CURRENT_SOURCE_DIR}/Session
+        ${CMAKE_CURRENT_SOURCE_DIR}/Chat
         ${CMAKE_CURRENT_SOURCE_DIR}/Database
         ${CMAKE_CURRENT_SOURCE_DIR}/AI
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy

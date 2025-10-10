@@ -22,6 +22,7 @@
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotPacketRelay.h"
+#include "Chat/BotChatCommandHandler.h"
 #include "Professions/ProfessionManager.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
@@ -143,10 +144,15 @@ bool PlayerbotModule::Initialize()
         return false;
     }
 
-    // Initialize Bot Packet Relay (Phase 1: Group packet relay for combat logs and chat)
+    // Initialize Bot Packet Relay (Phase 1-3: Group packet relay for combat logs and chat)
     TC_LOG_INFO("server.loading", "Initializing Bot Packet Relay...");
     Playerbot::BotPacketRelay::Initialize();
     TC_LOG_INFO("server.loading", "Bot Packet Relay initialized successfully");
+
+    // Initialize Bot Chat Command Handler (Phase 4: Command processing system)
+    TC_LOG_INFO("server.loading", "Initializing Bot Chat Command Handler...");
+    Playerbot::BotChatCommandHandler::Initialize();
+    TC_LOG_INFO("server.loading", "Bot Chat Command Handler initialized successfully");
 
     // NOTE: Bot Spawner initialization is handled by PlayerbotModuleAdapter::OnModuleStartup()
     // This ensures proper timing - BotSpawner needs the world to be fully loaded, which happens
@@ -206,6 +212,10 @@ void PlayerbotModule::Shutdown()
         //         TC_LOG_INFO("server.loading", "Shutting down Bot Lifecycle Manager...");
         //         BotLifecycleMgr::instance()->Shutdown();
         //
+        // Shutdown Bot Chat Command Handler
+        TC_LOG_INFO("server.loading", "Shutting down Bot Chat Command Handler...");
+        Playerbot::BotChatCommandHandler::Shutdown();
+
         // Shutdown Bot Packet Relay
         TC_LOG_INFO("server.loading", "Shutting down Bot Packet Relay...");
         Playerbot::BotPacketRelay::Shutdown();

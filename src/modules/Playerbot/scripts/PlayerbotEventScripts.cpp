@@ -16,7 +16,7 @@
  */
 
 /*
- * PHASE 4.1: SCRIPT SYSTEM INTEGRATION
+ * PHASE 4: COMPLETE Chat Command System Integration
  *
  * This file integrates the Playerbot Event System with TrinityCore's
  * official script system, providing non-invasive event hook integration.
@@ -26,7 +26,7 @@
  * - Death and resurrection
  * - Group management
  * - Player progression (leveling, talents, reputation)
- * - Social interactions (chat, whispers, emotes)
+ * - Social interactions (chat, whispers, emotes) - NOW WITH COMMAND PROCESSING
  * - Economy (gold, auction house)
  * - Vehicles and mounts
  * - Items and inventory
@@ -34,6 +34,9 @@
  *
  * Performance: Minimal overhead, leverages TrinityCore's native script
  * dispatch system with early-exit checks for non-bot players.
+ *
+ * PHASE 4 NEW: Chat messages are now processed through BotChatCommandHandler
+ * before being dispatched as events, enabling command execution and LLM integration.
  */
 
 #include "ScriptMgr.h"
@@ -56,6 +59,8 @@
 #include "WorldSession.h"
 #include "PlayerAI.h"
 #include "Log.h"
+#include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
+#include "Session/BotSession.h"          // PHASE 4: BotSession for command context
 
 using namespace Playerbot::Events;
 using namespace Playerbot::StateMachine;
@@ -306,7 +311,35 @@ public:
         if (!receiver || !IsBot(receiver))
             return;
 
-        // Phase 7.3: Direct event dispatch - bot received whisper
+        // PHASE 4: Process command through BotChatCommandHandler
+        WorldSession* botWorldSession = receiver->GetSession();
+        Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
+
+        if (botSession && Playerbot::BotChatCommandHandler::IsInitialized())
+        {
+            // Build command context
+            Playerbot::CommandContext context;
+            context.sender = player;
+            context.bot = receiver;
+            context.botSession = botSession;
+            context.message = msg;
+            context.lang = lang;
+            context.isWhisper = true;
+            context.isNaturalLanguage = false;
+            context.timestamp = getMSTime();
+
+            // Process command (this will send response if it's a command)
+            Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
+
+            // If command was processed successfully, don't dispatch as event
+            if (result == Playerbot::CommandResult::SUCCESS ||
+                result == Playerbot::CommandResult::ASYNC_PROCESSING)
+            {
+                return;
+            }
+        }
+
+        // Phase 7.3: Direct event dispatch - bot received whisper (not a command)
         BotEvent event(EventType::WHISPER_RECEIVED,
                        player->GetGUID(),
                        receiver->GetGUID());
@@ -328,6 +361,35 @@ public:
             Player* member = itr.GetSource();
             if (member && IsBot(member) && member != player)
             {
+                // PHASE 4: Process command through BotChatCommandHandler
+                WorldSession* botWorldSession = member->GetSession();
+                Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
+
+                if (botSession && Playerbot::BotChatCommandHandler::IsInitialized())
+                {
+                    // Build command context
+                    Playerbot::CommandContext context;
+                    context.sender = player;
+                    context.bot = member;
+                    context.botSession = botSession;
+                    context.message = msg;
+                    context.lang = lang;
+                    context.isWhisper = false;  // Group chat
+                    context.isNaturalLanguage = false;
+                    context.timestamp = getMSTime();
+
+                    // Process command (this will send response if it's a command)
+                    Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
+
+                    // If command was processed successfully, don't dispatch as event
+                    if (result == Playerbot::CommandResult::SUCCESS ||
+                        result == Playerbot::CommandResult::ASYNC_PROCESSING)
+                    {
+                        continue; // Skip event dispatch for this bot
+                    }
+                }
+
+                // Not a command - dispatch as GROUP_CHAT event
                 BotEvent event(EventType::GROUP_CHAT,
                               player->GetGUID(),
                               member->GetGUID());
