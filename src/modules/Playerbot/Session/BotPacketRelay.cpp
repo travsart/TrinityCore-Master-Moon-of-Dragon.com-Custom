@@ -16,7 +16,7 @@
  */
 
 /*
- * PHASE 1: Bot Packet Relay Implementation
+ * PHASE 1-3 COMPLETE: Bot Packet Relay Implementation
  *
  * This file implements the complete packet relay system for forwarding bot
  * packets to human players in groups. Key features:
@@ -26,6 +26,21 @@
  * - Comprehensive error handling and statistics tracking
  * - Performance optimized for 5000+ concurrent bots
  * - Enterprise-grade logging and debugging support
+ *
+ * PHASE 3: Complete Combat Log Integration (13 opcodes)
+ * - SMSG_SPELL_NON_MELEE_DAMAGE_LOG (spell damage)
+ * - SMSG_SPELL_DAMAGE_SHIELD (thorns, etc.)
+ * - SMSG_ENVIRONMENTAL_DAMAGE_LOG (falling, lava, etc.)
+ * - SMSG_ATTACKER_STATE_UPDATE (melee auto-attacks)
+ * - SMSG_SPELL_HEAL_LOG (direct healing)
+ * - SMSG_SPELL_PERIODIC_AURA_LOG (HoT/DoT ticks)
+ * - SMSG_SPELL_EXECUTE_LOG (spell execution)
+ * - SMSG_SPELL_ENERGIZE_LOG (mana/energy/rage gain)
+ * - SMSG_SPELL_INTERRUPT_LOG (interrupts)
+ * - SMSG_SPELL_DISPELL_LOG (dispels/purges)
+ * - SMSG_SPELL_INSTAKILL_LOG (instant kills)
+ * - SMSG_SPELL_MISS_LOG (dodge, parry, resist)
+ * - SMSG_SPELL_ABSORB_LOG (damage absorption)
  *
  * Performance Characteristics:
  * - Whitelist lookup: O(1) hash set
@@ -519,13 +534,41 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     _relayOpcodes.clear();
 
     // ========================================================================
-    // COMBAT LOG PACKETS
+    // COMBAT LOG PACKETS - PHASE 3 COMPLETE IMPLEMENTATION
     // ========================================================================
-    // These packets make bot damage/healing appear in combat logs and meters
+    // These packets make bot damage/healing/actions appear in combat logs and meters
+    // Reference: CombatLogPackets.h in TrinityCore 11.2
 
+    // Spell Damage (Non-Melee)
+    _relayOpcodes.insert(SMSG_SPELL_NON_MELEE_DAMAGE_LOG);   // Spell damage (fireballs, nukes, etc.)
     _relayOpcodes.insert(SMSG_SPELL_DAMAGE_SHIELD);          // Damage shields (Thorns, etc.)
-    // Note: SMSG_SPELL_NON_MELEE_DAMAGE_LOG not found in grep results
-    // Will need to verify correct opcode names in TrinityCore 11.2
+    _relayOpcodes.insert(SMSG_ENVIRONMENTAL_DAMAGE_LOG);     // Environmental damage (falling, lava, etc.)
+
+    // Melee Combat
+    _relayOpcodes.insert(SMSG_ATTACKER_STATE_UPDATE);        // Melee auto-attacks, special attacks
+
+    // Healing
+    _relayOpcodes.insert(SMSG_SPELL_HEAL_LOG);               // Direct healing spells
+    _relayOpcodes.insert(SMSG_SPELL_PERIODIC_AURA_LOG);      // HoT/DoT ticks (Renew, Corruption, etc.)
+
+    // Spell Effects & Execution
+    _relayOpcodes.insert(SMSG_SPELL_EXECUTE_LOG);            // Spell cast execution log
+
+    // Resource Management
+    _relayOpcodes.insert(SMSG_SPELL_ENERGIZE_LOG);           // Mana/energy/rage gain
+
+    // Combat Actions
+    _relayOpcodes.insert(SMSG_SPELL_INTERRUPT_LOG);          // Spell interrupts (Kick, Counterspell, etc.)
+    _relayOpcodes.insert(SMSG_SPELL_DISPELL_LOG);            // Dispels and purges
+    _relayOpcodes.insert(SMSG_SPELL_INSTAKILL_LOG);          // Instant kill effects
+    _relayOpcodes.insert(SMSG_SPELL_MISS_LOG);               // Spell misses (dodge, parry, resist, etc.)
+
+    // Damage Mitigation
+    _relayOpcodes.insert(SMSG_SPELL_ABSORB_LOG);             // Damage absorption (shields)
+
+    // NOTE: SMSG_SPELL_HEAL_ABSORB_LOG available but not yet added - may add in future
+    // NOTE: SMSG_PROC_RESIST available but not yet added - may add in future
+    // NOTE: SMSG_SPELL_OR_DAMAGE_IMMUNE available but not yet added - may add in future
 
     // ========================================================================
     // CHAT PACKETS
@@ -606,7 +649,20 @@ void BotPacketRelay::UpdateStatistics(uint32 opcode, bool success)
     // Categorize packet for statistics
     switch (opcode)
     {
+        // Combat Log Packets - All types
+        case SMSG_SPELL_NON_MELEE_DAMAGE_LOG:
         case SMSG_SPELL_DAMAGE_SHIELD:
+        case SMSG_ENVIRONMENTAL_DAMAGE_LOG:
+        case SMSG_ATTACKER_STATE_UPDATE:
+        case SMSG_SPELL_HEAL_LOG:
+        case SMSG_SPELL_PERIODIC_AURA_LOG:
+        case SMSG_SPELL_EXECUTE_LOG:
+        case SMSG_SPELL_ENERGIZE_LOG:
+        case SMSG_SPELL_INTERRUPT_LOG:
+        case SMSG_SPELL_DISPELL_LOG:
+        case SMSG_SPELL_INSTAKILL_LOG:
+        case SMSG_SPELL_MISS_LOG:
+        case SMSG_SPELL_ABSORB_LOG:
             _statistics.combatLogPackets++;
             break;
 
@@ -630,7 +686,20 @@ char const* BotPacketRelay::GetPacketCategory(uint32 opcode)
 {
     switch (opcode)
     {
+        // Combat Log Packets - All types
+        case SMSG_SPELL_NON_MELEE_DAMAGE_LOG:
         case SMSG_SPELL_DAMAGE_SHIELD:
+        case SMSG_ENVIRONMENTAL_DAMAGE_LOG:
+        case SMSG_ATTACKER_STATE_UPDATE:
+        case SMSG_SPELL_HEAL_LOG:
+        case SMSG_SPELL_PERIODIC_AURA_LOG:
+        case SMSG_SPELL_EXECUTE_LOG:
+        case SMSG_SPELL_ENERGIZE_LOG:
+        case SMSG_SPELL_INTERRUPT_LOG:
+        case SMSG_SPELL_DISPELL_LOG:
+        case SMSG_SPELL_INSTAKILL_LOG:
+        case SMSG_SPELL_MISS_LOG:
+        case SMSG_SPELL_ABSORB_LOG:
             return "CombatLog";
 
         case SMSG_CHAT:
