@@ -857,19 +857,34 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                              _bot->GetName(), bestTarget->GetName(),
                              _bot->IsInCombat(), _bot->GetVictim() != nullptr);
 
-                // If ranged class, start at range
+                // CRITICAL FIX: Position ALL classes at optimal range (ranged AND melee)
+                // Previously only ranged classes were positioned, leaving melee at 40+ yards
                 if (_bot->GetClass() == CLASS_HUNTER ||
                     _bot->GetClass() == CLASS_MAGE ||
                     _bot->GetClass() == CLASS_WARLOCK ||
                     _bot->GetClass() == CLASS_PRIEST)
                 {
-                    // Move to optimal range instead of melee
-                    float optimalRange = 25.0f; // Standard ranged distance
+                    // Ranged classes: Move to 25-yard optimal range
+                    float optimalRange = 25.0f;
                     if (_bot->GetDistance(bestTarget) > optimalRange)
                     {
-                        // Move closer but stay at range
                         Position pos = bestTarget->GetNearPosition(optimalRange, 0.0f);
                         _bot->GetMotionMaster()->MovePoint(0, pos);
+                        TC_LOG_ERROR("module.playerbot", "📍 RANGED POSITIONING: Bot {} moving to {:.1f}yd range",
+                                     _bot->GetName(), optimalRange);
+                    }
+                }
+                else
+                {
+                    // MELEE CLASSES: Move to 5-yard melee range
+                    // Covers: Warrior, Rogue, Paladin, Death Knight, Monk, Druid (feral)
+                    float meleeRange = 5.0f;
+                    if (_bot->GetDistance(bestTarget) > meleeRange)
+                    {
+                        Position pos = bestTarget->GetNearPosition(meleeRange, 0.0f);
+                        _bot->GetMotionMaster()->MovePoint(0, pos);
+                        TC_LOG_ERROR("module.playerbot", "⚔️ MELEE POSITIONING: Bot {} (class {}) moving to {:.1f}yd melee range",
+                                     _bot->GetName(), _bot->GetClass(), meleeRange);
                     }
                 }
 

@@ -346,49 +346,154 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
 void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ NavigateToObjective: NULL ai or bot");
         return;
+    }
 
     Player* bot = ai->GetBot();
+
+    TC_LOG_ERROR("module.playerbot.quest", "🗺️ NavigateToObjective: Bot {} navigating to quest {} objective {}",
+                 bot->GetName(), objective.questId, objective.objectiveIndex);
 
     // Get objective position from tracker
     Position objectivePos = GetObjectivePosition(ai, objective);
 
+    TC_LOG_ERROR("module.playerbot.quest", "📍 NavigateToObjective: Bot {} - Objective position: ({:.1f}, {:.1f}, {:.1f})",
+                 bot->GetName(),
+                 objectivePos.GetPositionX(), objectivePos.GetPositionY(), objectivePos.GetPositionZ());
+
     if (objectivePos.GetExactDist2d(0.0f, 0.0f) < 0.1f)
     {
-        TC_LOG_DEBUG("module.playerbot.strategy", "QuestStrategy: No valid position for objective {} of quest {}",
-                     objective.objectiveIndex, objective.questId);
+        TC_LOG_ERROR("module.playerbot.quest", "❌ NavigateToObjective: Bot {} - NO VALID position for objective {} of quest {} (position is at origin)",
+                     bot->GetName(), objective.objectiveIndex, objective.questId);
         return;
     }
 
+    float distance = bot->GetExactDist2d(objectivePos.GetPositionX(), objectivePos.GetPositionY());
+    TC_LOG_ERROR("module.playerbot.quest", "🚶 NavigateToObjective: Bot {} moving to objective (distance: {:.1f})",
+                 bot->GetName(), distance);
+
     // Move to objective location
-    MoveToObjectiveLocation(ai, objectivePos);
+    bool moveResult = MoveToObjectiveLocation(ai, objectivePos);
+    TC_LOG_ERROR("module.playerbot.quest", "🚶 NavigateToObjective: Bot {} MoveToObjectiveLocation result: {}",
+                 bot->GetName(), moveResult ? "SUCCESS" : "FAILED");
 }
 
 void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ EngageQuestTargets: NULL ai or bot");
         return;
+    }
 
     Player* bot = ai->GetBot();
+
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 EngageQuestTargets: Bot {} searching for quest targets for quest {} objective {}",
+                 bot->GetName(), objective.questId, objective.objectiveIndex);
 
     // Find quest target near bot
     ::Unit* target = FindQuestTarget(ai, objective);
 
     if (!target)
     {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO target found, navigating to objective area",
+                     bot->GetName());
         // No target found - navigate to objective area
         NavigateToObjective(ai, objective);
         return;
     }
 
+    TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found target {} (Entry: {}) at distance {:.1f}",
+                 bot->GetName(), target->GetName(), target->GetEntry(), bot->GetDistance(target));
+
     // Check if we should engage this target
     if (!ShouldEngageTarget(ai, target, objective))
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - Should NOT engage target {} (already at max kills or wrong target)",
+                     bot->GetName(), target->GetName());
         return;
+    }
 
-    // Set as combat target - GroupCombatStrategy will handle combat
+    TC_LOG_ERROR("module.playerbot.quest", "⚔️ EngageQuestTargets: Bot {} setting combat target to {} (Entry: {})",
+                 bot->GetName(), target->GetName(), target->GetEntry());
+
+    // Set as combat target
     bot->SetTarget(target->GetGUID());
 
-    TC_LOG_DEBUG("module.playerbot.strategy", "QuestStrategy: Bot {} targeting quest mob {} for quest {}",
+    // CRITICAL: Actually initiate combat with the target!
+    // Solution from mod-playerbots: Set bot to combat state, THEN call Attack().
+    // When bot is in combat state, ClassAI/combat rotation will automatically
+    // start casting spells, which will damage the neutral mob and make it hostile.
+    if (!bot->IsInCombat())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚡ EngageQuestTargets: Bot {} not in combat - initiating attack on {} to start combat",
+                     bot->GetName(), target->GetName());
+
+        // CRITICAL: Set bot to COMBAT state BEFORE calling Attack()
+        // This is the key from mod-playerbots AttackAction.cpp:160
+        // When in combat state, ClassAI OnCombatUpdate() will execute rotation
+        // which will cast spells and damage the neutral mob
+
+        // 1. Set Unit combat state (makes Unit::IsInCombat() return true)
+        bot->SetInCombatWith(target);
+
+        // 2. Set BotAI state to COMBAT (triggers BotAI to call ClassAI::OnCombatUpdate())
+        if (ai && ai->GetBot() == bot)
+        {
+            ai->SetAIState(BotAIState::COMBAT);
+        }
+
+        // 3. Now call Attack() to start the swing timer
+        bot->Attack(target, true);
+
+        // 4. CRITICAL: Position ranged classes at optimal range
+        // This mirrors BotAI::UpdateSoloBehaviors (lines 645-659) for autonomous combat
+        // Without this, casters will stand 40+ yards away and never cast spells!
+        if (bot->GetClass() == CLASS_HUNTER ||
+            bot->GetClass() == CLASS_MAGE ||
+            bot->GetClass() == CLASS_WARLOCK ||
+            bot->GetClass() == CLASS_PRIEST)
+        {
+            // Move to optimal range instead of melee
+            float optimalRange = 25.0f; // Standard ranged distance
+            float currentDistance = bot->GetDistance(target);
+
+            TC_LOG_ERROR("module.playerbot.quest", "📏 EngageQuestTargets: Bot {} is RANGED class ({}), currentDistance={:.1f}yd, optimalRange={:.1f}yd",
+                         bot->GetName(), bot->GetClass(), currentDistance, optimalRange);
+
+            if (currentDistance > optimalRange)
+            {
+                // Move closer but stay at range
+                Position pos = target->GetNearPosition(optimalRange, 0.0f);
+                bot->GetMotionMaster()->MovePoint(0, pos);
+
+                TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
+                             bot->GetName(), currentDistance, optimalRange);
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} already in range ({:.1f}yd <= {:.1f}yd), ready to cast",
+                             bot->GetName(), currentDistance, optimalRange);
+            }
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚔️ EngageQuestTargets: Bot {} is MELEE class ({}), no range positioning needed",
+                         bot->GetName(), bot->GetClass());
+        }
+
+        TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} set to combat state and initiated attack on {} - ClassAI will handle rotation",
+                     bot->GetName(), target->GetName());
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "ℹ️ EngageQuestTargets: Bot {} already in combat, letting combat AI handle target {}",
+                     bot->GetName(), target->GetName());
+    }
+
+    TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} successfully engaged quest mob {} for quest {}",
                  bot->GetName(), target->GetName(), objective.questId);
 }
 
@@ -639,8 +744,20 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (targets.empty())
         return nullptr;
 
+    // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
+    // ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter)
+    // - mapId: Bot's current map (NOT 0!)
+    // - entry: Creature entry ID (from quest objective)
+    // - counter: Creature's unique GUID counter (from ScanForKillTargets)
+    uint16 mapId = static_cast<uint16>(bot->GetMapId());
+    uint32 entry = questObjective.ObjectID;
+    uint32 counter = targets[0]; // GUID counter from ScanForKillTargets()
+
+    TC_LOG_ERROR("module.playerbot.quest", "🔧 FindQuestTarget: Creating ObjectGuid with mapId={}, entry={}, counter={}",
+                 mapId, entry, counter);
+
     // Return first target (ObjectAccessor will validate)
-    return ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(0, questObjective.ObjectID, targets[0]));
+    return ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
 }
 
 GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
@@ -665,8 +782,16 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     if (objects.empty())
         return nullptr;
 
+    // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
+    uint16 mapId = static_cast<uint16>(bot->GetMapId());
+    uint32 entry = questObjective.ObjectID;
+    uint32 counter = objects[0];
+
+    TC_LOG_ERROR("module.playerbot.quest", "🔧 FindQuestObject: Creating GameObject GUID with mapId={}, entry={}, counter={}",
+                 mapId, entry, counter);
+
     // Return first object
-    return ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(0, questObjective.ObjectID, objects[0]));
+    return ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
 }
 
 ::Item* QuestStrategy::FindQuestItem(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
