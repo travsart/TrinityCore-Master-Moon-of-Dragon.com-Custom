@@ -158,37 +158,26 @@ bool QuestAcceptanceManager::IsQuestEligible(Quest const* quest) const
     if (!quest || !_bot)
         return false;
 
-    // Already have this quest?
-    if (_bot->GetQuestStatus(quest->GetQuestId()) != QUEST_STATUS_NONE)
+    // CRITICAL FIX: Use TrinityCore's comprehensive quest validation
+    // This includes ALL checks: class, race, level, skills, reputation,
+    // prerequisites, exclusivegroups, conditions table, expansions, etc.
+    // Player::CanTakeQuest() checks everything including the conditions table
+    // which filters quests that require other quests to be completed first.
+    if (!_bot->CanTakeQuest(quest, false))
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "Quest {} '{}' rejected by CanTakeQuest for bot {}",
+                     quest->GetQuestId(), quest->GetLogTitle(), _bot->GetName());
         return false;
+    }
 
-    // Already completed this quest (and can't repeat)?
-    if (_bot->GetQuestRewardStatus(quest->GetQuestId()) && !quest->IsRepeatable())
-        return false;
-
-    // Check basic requirements
-    if (!MeetsLevelRequirement(quest))
-        return false;
-
-    if (!MeetsClassRequirement(quest))
-        return false;
-
-    if (!MeetsRaceRequirement(quest))
-        return false;
-
-    if (!MeetsSkillRequirement(quest))
-        return false;
-
-    if (!MeetsReputationRequirement(quest))
-        return false;
-
+    // Additional bot-specific checks
     // Avoid group quests for solo bots
     if (IsGroupQuest(quest) && !_bot->GetGroup())
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "Quest {} '{}' rejected - group quest for solo bot {}",
+                     quest->GetQuestId(), quest->GetLogTitle(), _bot->GetName());
         return false;
-
-    // Check prerequisites
-    if (!HasPrerequisites(quest))
-        return false;
+    }
 
     return true;
 }

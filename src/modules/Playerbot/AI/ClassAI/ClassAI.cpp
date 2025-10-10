@@ -112,7 +112,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
     // DIAGNOSTIC: Log that OnCombatUpdate is being called
     static uint32 lastCombatLog = 0;
-    if (currentTime - lastCombatLog > 2000) // Every 2 seconds
+    if (currentTime - lastCombatLog > 2000) // Every 2 seconds (reuse currentTime from spell queue check)
     {
         TC_LOG_ERROR("module.playerbot", "⚔️ ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
                      GetBot()->GetName(),

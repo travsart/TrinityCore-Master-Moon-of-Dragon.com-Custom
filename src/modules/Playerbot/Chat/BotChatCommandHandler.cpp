@@ -577,7 +577,7 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
     if (player->GetGuildId() != 0 && player->GetGuildId() == bot->GetGuildId())
     {
         // Same guild
-        if (player->GetRank() < bot->GetRank()) // Lower rank = higher privilege
+        if (player->GetGuildRank() < bot->GetGuildRank()) // Lower rank = higher privilege
             return CommandPermission::GUILD_MEMBER;
     }
 
