@@ -21,6 +21,7 @@
 // #include "Lifecycle/BotLifecycleMgr.h"
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
+#include "Professions/ProfessionManager.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Log.h"
@@ -154,7 +155,12 @@ bool PlayerbotModule::Initialize()
     //         TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
     //         return false;
     //     }
-    // 
+    //
+    // Initialize Profession Manager (must happen before bots are created)
+    TC_LOG_INFO("server.loading", "Initializing Profession Manager...");
+    Playerbot::ProfessionManager::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
+
     // Register hooks with TrinityCore
     RegisterHooks();
 

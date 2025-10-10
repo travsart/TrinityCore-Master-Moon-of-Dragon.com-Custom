@@ -128,12 +128,22 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 bot->Attack(target, true);
                 bot->SetInCombatWith(target);
 
-                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (waiting for hostility)",
-                            bot->GetName(), target->GetName());
+                // CRITICAL FIX: For neutral mobs, Attack() alone doesn't make them hostile
+                // We need to establish threat/aggro manually for the target to react
+                if (target->IsCreature() && !target->IsInCombatWith(bot))
+                {
+                    target->SetInCombatWith(bot);
+                    target->GetThreatManager().AddThreat(bot, 1.0f); // Minimal threat to establish aggro
+                    TC_LOG_ERROR("module.playerbot.strategy", "⚔️ Establishing threat/aggro with neutral mob {}",
+                                target->GetName());
+                }
 
-                // Return to allow combat state to settle - spell casting will happen next frame
-                // This gives TrinityCore time to make target hostile to the bot
-                return;
+                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
+                            bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
+
+                // Don't return - allow ClassAI combat updates to proceed
+                // Note: OnCombatUpdate() is called from BotAI::UpdateAI() when IsInCombat() returns true
+                // bot->IsInCombat() should now be true after SetInCombatWith()
             }
 
             // ALWAYS update movement while target is alive (even during combat)

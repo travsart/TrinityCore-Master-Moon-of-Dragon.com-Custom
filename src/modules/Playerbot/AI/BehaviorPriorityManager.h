@@ -53,7 +53,7 @@ enum class BehaviorPriority : uint8_t {
     GATHERING = 40,      // Resource gathering
     TRADING = 30,        // Trade/merchant
     SOCIAL = 20,         // Chat/emotes
-    IDLE = 10            // Lowest - default behavior
+    SOLO = 10            // Lowest - solo play mode (autonomous questing/gathering/combat)
 };
 
 /**
@@ -69,7 +69,7 @@ struct BehaviorMetadata {
 
     BehaviorMetadata()
         : strategy(nullptr)
-        , priority(BehaviorPriority::IDLE)
+        , priority(BehaviorPriority::SOLO)
         , exclusive(false)
         , allowsLowerPriority(true)
     {}
@@ -97,7 +97,7 @@ struct BehaviorMetadata {
  * Integration with OLD Phase 2:
  * - Uses BehaviorManager's IsEnabled() atomic flags
  * - Respects BehaviorManager's throttling
- * - Works with IdleStrategy observer pattern
+ * - Works with SoloStrategy observer pattern
  *
  * Fixes:
  * - Issue #2: Ensures combat has exclusive control (no follow interference)
@@ -236,7 +236,7 @@ private:
     std::map<BehaviorPriority, std::set<BehaviorPriority>> m_exclusionRules;
 
     // Current active priority
-    BehaviorPriority m_activePriority{BehaviorPriority::IDLE};
+    BehaviorPriority m_activePriority{BehaviorPriority::SOLO};
 
     // Last selected strategy (for transition logging)
     Strategy* m_lastSelectedStrategy{nullptr};

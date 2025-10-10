@@ -14,8 +14,10 @@
 #include "BehaviorPriorityManager.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
-#include "Strategy/IdleStrategy.h"
+#include "Strategy/SoloStrategy.h"
 #include "Strategy/QuestStrategy.h"
+#include "Strategy/LootStrategy.h"
+#include "Strategy/RestStrategy.h"
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Group/GroupInvitationHandler.h"
@@ -243,6 +245,38 @@ void BotAI::UpdateAI(uint32 diff)
     if (!_bot || !_bot->IsInWorld())
         return;
 
+    // ========================================================================
+    // SOLO STRATEGY ACTIVATION - Once per bot after first login
+    // ========================================================================
+    // For bots not in a group, activate solo-relevant strategies on first UpdateAI() call
+    // This ensures solo bots have active strategies and can perform autonomous actions
+    // Group-related strategies (follow, group_combat) are activated in OnGroupJoined()
+    if (!_bot->GetGroup() && !_soloStrategiesActivated)
+    {
+        // Activate all solo-relevant strategies in priority order:
+
+        // 1. Rest strategy (Priority: 90) - HIGHEST: Must rest before doing anything
+        //    Handles eating, drinking, bandaging when resources low
+        ActivateStrategy("rest");
+
+        // 2. Quest strategy (Priority: 70) - HIGH: Quest objectives take priority
+        //    Handles quest navigation, objective completion, turn-ins
+        ActivateStrategy("quest");
+
+        // 3. Loot strategy (Priority: 60) - MEDIUM-HIGH: Loot after combat
+        //    Handles corpse looting, item pickup, inventory management
+        ActivateStrategy("loot");
+
+        // 4. Solo strategy (Priority: 10) - LOWEST: Fallback coordinator
+        //    Coordinates all solo behaviors, handles wandering when idle
+        ActivateStrategy("solo");
+
+        _soloStrategiesActivated = true;
+
+        TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT ACTIVATION: Bot {} activated 4 solo strategies (rest, quest, loot, solo) on first UpdateAI",
+                    _bot->GetName());
+    }
+
     // PHASE 0 - Quick Win #3: Periodic group check REMOVED
     // Now using event-driven GROUP_JOINED/GROUP_LEFT events for instant reactions
     // Events dispatched in BotSession.cpp (GROUP_JOINED) and BotAI.cpp (GROUP_LEFT)
@@ -385,14 +419,14 @@ void BotAI::UpdateAI(uint32 diff)
     // Legacy BotEventSystem removed - events now flow through per-bot EventDispatcher
 
     // ========================================================================
-    // PHASE 7: IDLE BEHAVIORS - Only when not in combat or following
+    // PHASE 7: SOLO BEHAVIORS - Only when bot is in solo play mode
     // ========================================================================
 
-    // Update idle behaviors (autonomous target scanning, etc.)
-    // Only runs when bot is truly idle
+    // Update solo behaviors (questing, gathering, autonomous combat, etc.)
+    // Only runs when bot is in solo play mode (not in group or following)
     if (!IsInCombat() && !IsFollowing())
     {
-        UpdateIdleBehaviors(diff);
+        UpdateSoloBehaviors(diff);
     }
 
     // ========================================================================
@@ -683,7 +717,7 @@ void BotAI::UpdateCombatState(uint32 diff)
         if (_bot->GetGroup() && GetStrategy("follow"))
             SetAIState(BotAIState::FOLLOWING);
         else
-            SetAIState(BotAIState::IDLE);
+            SetAIState(BotAIState::SOLO);
     }
 }
 
@@ -773,12 +807,12 @@ void BotAI::UpdateActions(uint32 diff)
 }
 
 // ============================================================================
-// IDLE BEHAVIORS
+// SOLO BEHAVIORS - Autonomous play when not in group
 // ============================================================================
 
-void BotAI::UpdateIdleBehaviors(uint32 diff)
+void BotAI::UpdateSoloBehaviors(uint32 diff)
 {
-    // Only run idle behaviors when truly idle
+    // Only run solo behaviors when in solo play mode (not grouped/following)
     if (IsInCombat() || IsFollowing())
         return;
 
@@ -899,8 +933,8 @@ void BotAI::OnCombatEnd()
     }
     else
     {
-        // Not in group, return to idle
-        SetAIState(BotAIState::IDLE);
+        // Not in group, return to solo play mode
+        SetAIState(BotAIState::SOLO);
     }
 
     // Strategies don't have OnCombatEnd - combat is handled by ClassAI
@@ -921,7 +955,7 @@ void BotAI::OnDeath()
 
 void BotAI::OnRespawn()
 {
-    SetAIState(BotAIState::IDLE);
+    SetAIState(BotAIState::SOLO);
     Reset();
 
     TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset", _bot->GetName());
@@ -930,7 +964,7 @@ void BotAI::OnRespawn()
 void BotAI::Reset()
 {
     _currentTarget = ObjectGuid::Empty;
-    _aiState = BotAIState::IDLE;
+    _aiState = BotAIState::SOLO;
 
     CancelCurrentAction();
 
@@ -1075,8 +1109,8 @@ void BotAI::OnGroupJoined(Group* group)
             strategy->OnActivate(this);
     }
 
-    // Deactivate idle strategy when joining a group
-    DeactivateStrategy("idle");
+    // Deactivate solo strategy when joining a group
+    DeactivateStrategy("solo");
 
     // Set state to following if not in combat (no lock needed - atomic operation)
     if (!IsInCombat())
@@ -1130,12 +1164,19 @@ void BotAI::OnGroupLeft()
             strategy->OnDeactivate(this);
     }
 
-    // Activate idle strategy when leaving a group
-    ActivateStrategy("idle");
+    // Activate all solo strategies when leaving a group
+    // These are the same strategies activated in UpdateAI() for solo bots
+    ActivateStrategy("rest");    // Priority: 90 - eating/drinking
+    ActivateStrategy("quest");   // Priority: 70 - quest objectives
+    ActivateStrategy("loot");    // Priority: 60 - corpse looting
+    ActivateStrategy("solo");    // Priority: 10 - fallback coordinator
 
-    // Set state to idle if not in combat
+    TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT REACTIVATION: Bot {} reactivated solo strategies after leaving group",
+                _bot->GetName());
+
+    // Set state to solo if not in combat
     if (!IsInCombat())
-        SetAIState(BotAIState::IDLE);
+        SetAIState(BotAIState::SOLO);
 
     _wasInGroup = false;
 }
@@ -1172,7 +1213,7 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
     // Auto-register with priority manager based on strategy name
     if (_priorityManager)
     {
-        BehaviorPriority priority = BehaviorPriority::IDLE; // Default
+        BehaviorPriority priority = BehaviorPriority::SOLO; // Default
         bool exclusive = false;
 
         // Determine priority from strategy name
@@ -1194,6 +1235,23 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         {
             priority = BehaviorPriority::CASTING;
         }
+        else if (name == "quest")
+        {
+            // Quest strategy gets FOLLOW priority (50) to ensure it runs for solo bots
+            // This allows quests to take priority over gathering/trading/social
+            priority = BehaviorPriority::FOLLOW;
+        }
+        else if (name == "loot")
+        {
+            // Loot strategy gets MOVEMENT priority (45) - slightly lower than quest
+            priority = BehaviorPriority::MOVEMENT;
+        }
+        else if (name == "rest")
+        {
+            // Rest strategy gets FLEEING priority (90) - HIGHEST for survival
+            // Bots must rest when health/mana low before doing anything else
+            priority = BehaviorPriority::FLEEING;
+        }
         else if (name.find("gather") != std::string::npos)
         {
             priority = BehaviorPriority::GATHERING;
@@ -1202,9 +1260,9 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         {
             priority = BehaviorPriority::TRADING;
         }
-        else if (name == "idle")
+        else if (name == "solo")
         {
-            priority = BehaviorPriority::IDLE;
+            priority = BehaviorPriority::SOLO;
         }
 
         _priorityManager->RegisterStrategy(strategyPtr, priority, exclusive);
@@ -1485,19 +1543,30 @@ void BotAI::InitializeDefaultStrategies()
     auto questStrategy = std::make_unique<QuestStrategy>();
     AddStrategy(std::move(questStrategy));
 
-    // Create idle strategy for solo bot behavior (questing, exploring, etc.)
-    auto idleStrategy = std::make_unique<IdleStrategy>();
-    AddStrategy(std::move(idleStrategy));
+    // Create loot strategy for corpse looting and item pickup
+    // This strategy drives bots to loot kills and collect valuable items
+    auto lootStrategy = std::make_unique<LootStrategy>();
+    AddStrategy(std::move(lootStrategy));
+
+    // Create rest strategy for eating, drinking, and healing
+    // This strategy drives bots to rest when resources are low
+    auto restStrategy = std::make_unique<RestStrategy>();
+    AddStrategy(std::move(restStrategy));
+
+    // Create solo strategy for solo bot behavior coordination
+    // This strategy coordinates all solo behaviors (questing, gathering, autonomous combat, etc.)
+    auto soloStrategy = std::make_unique<SoloStrategy>();
+    AddStrategy(std::move(soloStrategy));
 
     // NOTE: Mutual exclusion rules are automatically configured in BehaviorPriorityManager constructor
     // No need to add them here - they're already set up when _priorityManager is initialized
 
-    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, quest, and idle strategies for bot {}", _bot->GetName());
+    TC_LOG_INFO("module.playerbot.ai", "✅ Initialized follow, group_combat, quest, loot, rest, and solo strategies for bot {}", _bot->GetName());
 
     // NOTE: Do NOT activate strategies here!
     // Strategy activation happens AFTER bot is fully loaded:
     // - For bots in groups: OnGroupJoined() activates follow/combat (called from BotSession after login)
-    // - For solo bots: First UpdateAI() will activate idle strategy (see UpdateAI start)
+    // - For solo bots: First UpdateAI() will activate solo strategies (see UpdateAI after basic checks)
 
     // Combat strategies are added by ClassAI
     // Additional strategies can be added based on configuration

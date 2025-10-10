@@ -1,13 +1,17 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * Baseline Rotation Manager Implementation - FIXED VERSION
+ * Baseline Rotation Manager Implementation - ENTERPRISE-GRADE VERSION
+ * Uses proper spell queueing system mirroring TrinityCore player behavior
  */
 
 #include "BaselineRotationManager.h"
+#include "ClassAI.h"  // For RequestBotSpellCast() - enterprise spell queueing
+#include "../Session/BotSession.h"  // For BotSession::GetAI() - proper AI accessor
 #include "Player.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "SpellDefines.h"
 #include "Unit.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
@@ -258,13 +262,22 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
             return false;
         }
 
-        // CRITICAL: Bot must already be in combat with target
-        // Combat initiation is handled by GroupCombatStrategy via bot->Attack()
-        if (!bot->IsHostileTo(castTarget))
+        // CRITICAL FIX: Allow first offensive spell to initiate combat
+        // Instead of requiring bot->IsHostileTo() before casting,
+        // we allow the spell cast itself to establish hostility.
+        // This is essential for attacking neutral mobs.
+        //
+        // The spell cast will fail naturally if the target is truly invalid,
+        // so we don't need strict pre-validation here.
+        //
+        // NOTE: We still check for victim to ensure combat has been initiated
+        // by bot->Attack() in GroupCombatStrategy, but we don't require
+        // the hostility relationship to be fully established yet.
+        if (!bot->GetVictim() || bot->GetVictim() != castTarget)
         {
-            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Target {} is not hostile yet (combat not initiated)",
+            TC_LOG_ERROR("module.playerbot.baseline", "⚠️ Bot {} - Target {} not set as victim yet (combat initiation in progress)",
                          bot->GetName(), castTarget->GetName());
-            return false;
+            // Allow the cast to proceed - it will establish the hostility
         }
     }
 
@@ -287,20 +300,69 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         TC_LOG_ERROR("module.playerbot.baseline", "🎯 Adjusted bot facing towards target");
     }
 
-    // Cast spell using TrinityCore API
-    SpellCastResult result = bot->CastSpell(castTarget, ability.spellId, TRIGGERED_NONE);
-    if (result == SPELL_CAST_OK)
+    // ============================================================================
+    // ENTERPRISE-GRADE FIX: Proper Spell Queueing System
+    // ============================================================================
+    // Uses ClassAI::RequestBotSpellCast() which mirrors TrinityCore's player
+    // spell queueing architecture. This provides proper validation timing:
+    //
+    // 1. Spell is QUEUED (can queue within 400ms of GCD/cast completion)
+    // 2. Queue is processed every frame in ClassAI::OnCombatUpdate()
+    // 3. When ready, ExecutePendingSpell() creates Spell object with TRIGGERED_NONE
+    // 4. Spell::prepare() handles validation at EXECUTE time (not queue time!)
+    //
+    // This matches retail WoW behavior:
+    // - Player casts on neutral mob → spell queued → cast starts
+    // - Spell executes → damage applied → mob becomes hostile
+    // - Target validation happens when spell lands, not when queued
+    //
+    // NO MORE WORKAROUNDS - uses proper TrinityCore spell pipeline
+    // See Player.cpp:30904-31051 and ClassAI.cpp:545-748 for implementation
+    // ============================================================================
+
+    // Get bot's AI through BotSession - proper architecture path
+    // Player inherits from Unit which has GetAI() returning UnitAI*
+    // But bots use BotAI/ClassAI stored in BotSession (separate hierarchy)
+    BotSession* botSession = dynamic_cast<BotSession*>(bot->GetSession());
+    if (!botSession)
     {
-        // Record cooldown
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} session is not BotSession",
+                    bot->GetName());
+        return false;
+    }
+
+    BotAI* botAI = botSession->GetAI();
+    if (!botAI)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} has no BotAI",
+                    bot->GetName());
+        return false;
+    }
+
+    // Cast to ClassAI - safe because playerbots in combat use ClassAI
+    ClassAI* classAI = dynamic_cast<ClassAI*>(botAI);
+    if (!classAI)
+    {
+        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} AI is not ClassAI - cannot use spell queue system",
+                    bot->GetName());
+        return false;
+    }
+
+    // Request spell cast through proper queueing system
+    bool queued = classAI->RequestBotSpellCast(ability.spellId, castTarget);
+    if (queued)
+    {
+        // Record cooldown (will be enforced by spell system, but we track for priority logic)
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
-        TC_LOG_ERROR("module.playerbot.baseline", "✅ Bot {} successfully cast spell {} on {}",
+
+        TC_LOG_DEBUG("module.playerbot.baseline", "✅ Bot {} queued spell {} on {} (enterprise-grade queueing)",
                      bot->GetName(), ability.spellId, castTarget->GetName());
         return true;
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} failed to cast spell {} - result: {}",
-                     bot->GetName(), ability.spellId, static_cast<uint32>(result));
+        TC_LOG_TRACE("module.playerbot.baseline", "⚠️ Bot {} failed to queue spell {} - GCD/cast time > 400ms",
+                     bot->GetName(), ability.spellId);
     }
 
     return false;
@@ -579,8 +641,10 @@ void BaselineRotationManager::InitializeShamanBaseline()
 void BaselineRotationManager::InitializeMageBaseline()
 {
     std::vector<BaselineAbility> abilities;
-    abilities.emplace_back(116, 1, 0, 0, 10.0f, false);    // Frostbolt
-    abilities.emplace_back(133, 1, 0, 0, 9.0f, false);     // Fireball
+    // Level 1: Fireball only
+    // Level 4+: Frostbolt becomes available
+    abilities.emplace_back(133, 1, 0, 0, 10.0f, false);     // Fireball (level 1+)
+    abilities.emplace_back(116, 4, 0, 0, 9.0f, false);      // Frostbolt (level 4+)
     _baselineAbilities[CLASS_MAGE] = std::move(abilities);
 }
 

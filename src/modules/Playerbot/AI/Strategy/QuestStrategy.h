@@ -14,11 +14,13 @@
 #include "Movement/BotMovementUtil.h"
 #include "Player.h"
 #include "QuestDef.h"
+#include "../../Game/QuestAcceptanceManager.h"
 
 namespace Playerbot
 {
 
 class BotAI;
+class QuestAcceptanceManager;
 
 /**
  * @brief Quest Strategy - Drives bot movement and actions for quest objectives
@@ -64,6 +66,7 @@ private:
 
     // Core quest execution
     void ProcessQuestObjectives(BotAI* ai);
+    void SearchForQuestGivers(BotAI* ai);
     void NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
     void EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
     void CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
@@ -85,6 +88,21 @@ private:
     GameObject* FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
     ::Item* FindQuestItem(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
 
+    // Quest turn-in system (multi-tier fallback)
+    struct QuestEnderLocation
+    {
+        uint32 npcEntry = 0;
+        Position position;
+        bool foundViaSpawn = false;     // True if found via creature spawn data
+        bool foundViaPOI = false;       // True if found via Quest POI
+        bool requiresSearch = false;    // True if needs area search
+    };
+
+    bool FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnderLocation& location);
+    bool NavigateToQuestEnder(BotAI* ai, QuestEnderLocation const& location);
+    bool CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry);
+    bool CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* questEnder);
+
     // State management
     QuestPhase _currentPhase;
     uint32 _phaseTimer;
@@ -94,10 +112,17 @@ private:
     uint32 _currentObjectiveIndex;
     Position _currentObjectivePosition;
 
+    // Quest giver search throttling (prevent log spam)
+    uint32 _lastQuestGiverSearchTime;
+    uint32 _questGiverSearchFailures;
+
     // Performance tracking
     uint32 _objectivesCompleted;
     uint32 _questsCompleted;
     uint32 _averageObjectiveTime;
+
+    // Quest acceptance manager (enterprise-grade auto-acceptance)
+    std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
 };
 
 } // namespace Playerbot

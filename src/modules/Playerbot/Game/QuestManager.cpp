@@ -30,6 +30,7 @@
 #include "MotionMaster.h"
 #include "Movement/BotMovementUtil.h"
 #include "ReputationMgr.h"
+#include "../Game/QuestAcceptanceManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -299,10 +300,6 @@ namespace Playerbot
         if (GetQuestLogSpace() == 0)
             return false;
 
-        // Check prerequisites
-        if (!MeetsQuestRequirements(quest))
-            return false;
-
         // Check level requirements
         if (IsQuestTooLowLevel(quest) || IsQuestTooHighLevel(quest))
             return false;
@@ -315,8 +312,10 @@ namespace Playerbot
         if (quest->IsRaidQuest(DIFFICULTY_NORMAL) && !m_acceptDungeonQuests)
             return false;
 
-        // Use Player API to validate
-        return GetBot()->CanAddQuest(quest, true);
+        // CRITICAL: Use QuestAcceptanceManager for CORRECT prerequisite checking
+        // This includes quest chain validation (GetPrevQuestId, quest_template_addon)
+        QuestAcceptanceManager acceptanceMgr(const_cast<Player*>(GetBot()));
+        return acceptanceMgr.IsQuestEligible(quest);
     }
 
     bool QuestManager::AcceptQuest(uint32 questId, WorldObject* questGiver)

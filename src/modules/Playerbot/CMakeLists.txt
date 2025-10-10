@@ -81,10 +81,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.h
 
     # Phase 2.2: CombatMovementStrategy - Role-based Combat Positioning
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
@@ -492,6 +496,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestManager_Events.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/QuestAcceptanceManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
@@ -633,8 +639,14 @@ source_group("AI\\Strategy" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/GroupCombatStrategy.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/IdleStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/SoloStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/QuestStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/LootStrategy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/RestStrategy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/CombatMovementStrategy.h
 )

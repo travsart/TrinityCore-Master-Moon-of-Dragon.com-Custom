@@ -343,6 +343,10 @@ private:
     // Performance metrics
     mutable PositionMetrics _metrics;
 
+    // Movement state tracking (for duplicate prevention - Fix #1)
+    Position _lastTargetPosition;
+    uint32 _lastMovePointTime;
+
     // Thread safety
     mutable std::recursive_mutex _mutex;
 

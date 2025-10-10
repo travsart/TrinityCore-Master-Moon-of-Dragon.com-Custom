@@ -68,7 +68,7 @@ struct TriggerResultComparator
 // Enhanced AI state enum
 enum class BotAIState
 {
-    IDLE,
+    SOLO,           // Solo play mode (questing, gathering, autonomous combat)
     COMBAT,
     DEAD,
     TRAVELLING,
@@ -175,7 +175,7 @@ public:
     BotAIState GetAIState() const { return _aiState; }
     void SetAIState(BotAIState state);
     bool IsInCombat() const { return _aiState == BotAIState::COMBAT; }
-    bool IsIdle() const { return _aiState == BotAIState::IDLE; }
+    bool IsSolo() const { return _aiState == BotAIState::SOLO; }
     bool IsFollowing() const { return _aiState == BotAIState::FOLLOWING; }
 
     // ========================================================================
@@ -280,10 +280,10 @@ protected:
     void UpdateMovement(uint32 diff);
 
     /**
-     * Update idle behaviors (questing, trading, etc.)
-     * Only runs when not in combat or following
+     * Update solo behaviors (questing, gathering, trading, autonomous combat)
+     * Only runs when bot is in solo play mode (not in group or following)
      */
-    void UpdateIdleBehaviors(uint32 diff);
+    void UpdateSoloBehaviors(uint32 diff);
 
     /**
      * Check and handle combat state transitions
@@ -329,7 +329,7 @@ protected:
 protected:
     // Core components
     Player* _bot;
-    BotAIState _aiState = BotAIState::IDLE;
+    BotAIState _aiState = BotAIState::SOLO;
     ObjectGuid _currentTarget;
 
     // Strategy system
@@ -352,6 +352,9 @@ protected:
     // Group management
     std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
     bool _wasInGroup = false;
+
+    // Solo strategy activation tracking
+    bool _soloStrategiesActivated = false;
 
     // Target scanning for autonomous engagement
     std::unique_ptr<TargetScanner> _targetScanner;

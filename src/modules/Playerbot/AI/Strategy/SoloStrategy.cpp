@@ -7,7 +7,7 @@
  * option) any later version.
  */
 
-#include "IdleStrategy.h"
+#include "SoloStrategy.h"
 #include "BotAI.h"
 #include "Player.h"
 #include "Log.h"
@@ -19,48 +19,48 @@
 namespace Playerbot
 {
 
-IdleStrategy::IdleStrategy() : Strategy("idle")
+SoloStrategy::SoloStrategy() : Strategy("solo")
 {
     SetPriority(50); // Lower priority than group strategies
 }
 
-void IdleStrategy::InitializeActions()
+void SoloStrategy::InitializeActions()
 {
-    // TODO: Add idle actions (wander, emote, interact)
+    // TODO: Add solo actions (quest, gather, explore, trade)
     // For now, this is a placeholder
 }
 
-void IdleStrategy::InitializeTriggers()
+void SoloStrategy::InitializeTriggers()
 {
-    // TODO: Add idle triggers (boredom, curiosity, etc.)
+    // TODO: Add solo triggers (quest available, resource nearby, etc.)
     // For now, this is a placeholder
 }
 
-void IdleStrategy::InitializeValues()
+void SoloStrategy::InitializeValues()
 {
-    // TODO: Add idle values (preferred activities, personality traits)
+    // TODO: Add solo values (preferred activities, personality traits)
     // For now, this is a placeholder
 }
 
-void IdleStrategy::OnActivate(BotAI* ai)
+void SoloStrategy::OnActivate(BotAI* ai)
 {
     if (!ai || !ai->GetBot())
         return;
 
-    TC_LOG_INFO("module.playerbot", "Idle strategy activated for bot {}", ai->GetBot()->GetName());
+    TC_LOG_INFO("module.playerbot", "Solo strategy activated for bot {}", ai->GetBot()->GetName());
     SetActive(true);
 }
 
-void IdleStrategy::OnDeactivate(BotAI* ai)
+void SoloStrategy::OnDeactivate(BotAI* ai)
 {
     if (!ai || !ai->GetBot())
         return;
 
-    TC_LOG_INFO("module.playerbot", "Idle strategy deactivated for bot {}", ai->GetBot()->GetName());
+    TC_LOG_INFO("module.playerbot", "Solo strategy deactivated for bot {}", ai->GetBot()->GetName());
     SetActive(false);
 }
 
-bool IdleStrategy::IsActive(BotAI* ai) const
+bool SoloStrategy::IsActive(BotAI* ai) const
 {
     if (!ai || !ai->GetBot())
         return false;
@@ -73,7 +73,7 @@ bool IdleStrategy::IsActive(BotAI* ai) const
     return result;
 }
 
-void IdleStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
+void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     if (!ai || !ai->GetBot())
         return;
@@ -83,7 +83,7 @@ void IdleStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // ========================================================================
     // PHASE 2.5: OBSERVER PATTERN IMPLEMENTATION
     // ========================================================================
-    // IdleStrategy observes manager states via atomic queries (<0.001ms each)
+    // SoloStrategy observes manager states via atomic queries (<0.001ms each)
     // Managers self-throttle (1s-10s intervals) via BotAI::UpdateManagers()
     // This achieves <0.1ms UpdateBehavior() performance target
     // ========================================================================
@@ -103,7 +103,7 @@ void IdleStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (activityLogTimer >= 5000)
     {
         TC_LOG_DEBUG("module.playerbot",
-            "IdleStrategy: Bot {} - Questing:{} Gathering:{} Trading:{} Auctions:{} Busy:{}",
+            "SoloStrategy: Bot {} - Questing:{} Gathering:{} Trading:{} Auctions:{} Busy:{}",
             bot->GetName(), isQuesting, isGathering, isTrading, hasAuctions, isBusy);
         activityLogTimer = 0;
     }
@@ -115,7 +115,7 @@ void IdleStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // ========================================================================
     // FALLBACK: SIMPLE WANDERING BEHAVIOR
     // ========================================================================
-    // If no manager is active, bot does basic idle exploration
+    // If no manager is active, bot does basic exploration
     // This is the lowest-priority activity
     // ========================================================================
 
@@ -123,9 +123,9 @@ void IdleStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (currentTime - _lastWanderTime > _wanderInterval)
     {
         // TODO: Implement proper wandering with pathfinding
-        // For now, just log that the bot is truly idle
+        // For now, just log that the bot is truly in solo mode with no active tasks
         TC_LOG_TRACE("module.playerbot",
-            "IdleStrategy: Bot {} is idle (no active managers), considering wandering",
+            "SoloStrategy: Bot {} is in solo mode (no active managers), considering wandering",
             bot->GetName());
 
         _lastWanderTime = currentTime;

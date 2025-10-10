@@ -29,8 +29,8 @@ namespace Playerbot
 
 EnhancedBotAI::EnhancedBotAI(Player* bot) :
     BotAI(bot),
-    _currentState(BotAIState::IDLE),
-    _previousState(BotAIState::IDLE),
+    _currentState(BotAIState::SOLO),
+    _previousState(BotAIState::SOLO),
     _stateTransitionTime(0),
     _debugMode(false),
     _performanceMode(true),
@@ -44,10 +44,10 @@ EnhancedBotAI::EnhancedBotAI(Player* bot) :
     _currentHealthPercent(100.0f),
     _lastRestTime(0),
     _combatUpdateInterval(100),    // 100ms for combat
-    _idleUpdateInterval(500),       // 500ms when idle
+    _soloUpdateInterval(500),       // 500ms in solo mode
     _movementUpdateInterval(250),   // 250ms for movement
     _lastCombatUpdate(0),
-    _lastIdleUpdate(0),
+    _lastSoloUpdate(0),
     _lastMovementUpdate(0),
     _lastGroupUpdate(0),
     _memoryBudgetBytes(10485760),   // 10MB budget
@@ -102,9 +102,9 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
                 _stats.combatUpdates++;
                 break;
 
-            case BotAIState::IDLE:
-                UpdateIdle(diff);
-                _stats.idleUpdates++;
+            case BotAIState::SOLO:
+                UpdateSolo(diff);
+                _stats.soloUpdates++;
                 break;
 
             case BotAIState::TRAVELLING:
@@ -134,7 +134,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
                 // Rest logic
                 if (GetBot()->GetHealthPct() >= 95.0f && GetBot()->GetPowerPct(POWER_MANA) >= 95.0f)
                 {
-                    TransitionToState(BotAIState::IDLE);
+                    TransitionToState(BotAIState::SOLO);
                 }
                 break;
         }
@@ -181,8 +181,8 @@ void EnhancedBotAI::Reset()
 {
     BotAI::Reset();
 
-    _currentState = BotAIState::IDLE;
-    _previousState = BotAIState::IDLE;
+    _currentState = BotAIState::SOLO;
+    _previousState = BotAIState::SOLO;
     _inCombat = false;
     _primaryTarget = nullptr;
     _threatList.clear();
@@ -215,7 +215,7 @@ void EnhancedBotAI::OnRespawn()
 {
     BotAI::OnRespawn();
 
-    TransitionToState(BotAIState::IDLE);
+    TransitionToState(BotAIState::SOLO);
 
     // Reset health and mana tracking
     _currentHealthPercent = GetBot()->GetHealthPct();
@@ -281,7 +281,7 @@ void EnhancedBotAI::OnCombatEnd()
     }
     else
     {
-        TransitionToState(BotAIState::IDLE);
+        TransitionToState(BotAIState::SOLO);
     }
 
     TC_LOG_DEBUG("bot.ai.enhanced", "Combat ended for bot {}", GetBot()->GetName());
@@ -422,10 +422,10 @@ void EnhancedBotAI::UpdateCombat(uint32 diff)
     _lastCombatUpdate = 0;
 }
 
-void EnhancedBotAI::UpdateIdle(uint32 diff)
+void EnhancedBotAI::UpdateSolo(uint32 diff)
 {
-    _lastIdleUpdate += diff;
-    if (_lastIdleUpdate < _idleUpdateInterval)
+    _lastSoloUpdate += diff;
+    if (_lastSoloUpdate < _soloUpdateInterval)
         return;
 
     // Check for combat
@@ -465,7 +465,7 @@ void EnhancedBotAI::UpdateIdle(uint32 diff)
         TransitionToState(BotAIState::RESTING);
     }
 
-    _lastIdleUpdate = 0;
+    _lastSoloUpdate = 0;
 }
 
 void EnhancedBotAI::UpdateMovement(uint32 diff)
@@ -491,7 +491,7 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
             if (distance < 5.0f)
             {
                 GetBot()->GetMotionMaster()->Clear();
-                TransitionToState(BotAIState::IDLE);
+                TransitionToState(BotAIState::SOLO);
             }
             else if (distance > 50.0f)
             {
@@ -738,8 +738,8 @@ void EnhancedBotAI::HandleStateTransition(BotAIState oldState, BotAIState newSta
             _combatUpdateInterval = 100; // Faster updates in combat
             break;
 
-        case BotAIState::IDLE:
-            _idleUpdateInterval = 500; // Slower updates when idle
+        case BotAIState::SOLO:
+            _soloUpdateInterval = 500; // Slower updates in solo mode
             break;
 
         case BotAIState::RESTING:

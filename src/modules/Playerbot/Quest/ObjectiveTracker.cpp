@@ -56,13 +56,15 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     std::vector<uint32> targets = DetectObjectiveTargets(bot, objective);
     state.targetIds = targets;
 
+    size_t objectiveCount = 0;
     {
         std::lock_guard<std::mutex> lock(_trackingMutex);
         _botObjectiveStates[botGuid].push_back(state);
+        objectiveCount = _botObjectiveStates[botGuid].size();
     }
 
-    TC_LOG_DEBUG("playerbot.objectives", "Started tracking objective {} for quest {} for bot {}",
-                objective.objectiveIndex, objective.questId, bot->GetName());
+    TC_LOG_ERROR("module.playerbot.quest", "✅ StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
+                bot->GetName(), objective.questId, objective.objectiveIndex, objectiveCount);
 
     // Update analytics
     _globalAnalytics.objectivesStarted++;
@@ -380,6 +382,9 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
 
     std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
 
+    TC_LOG_ERROR("module.playerbot.quest", "🔢 CalculateObjectivePriorities: Bot {} has {} active objectives",
+                bot->GetName(), activeObjectives.size());
+
     for (const auto& state : activeObjectives)
     {
         ObjectivePriority priority(state.questId, state.objectiveIndex);
@@ -395,6 +400,11 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
                                (priority.difficultyFactor * 0.2f) +
                                (priority.efficiencyFactor * 0.3f) +
                                (priority.proximityFactor * 0.2f);
+
+        TC_LOG_ERROR("module.playerbot.quest", "  📊 Quest {} Objective {}: urgency={:.2f}, difficulty={:.2f}, efficiency={:.2f}, proximity={:.2f}, TOTAL={:.2f}",
+                    state.questId, state.objectiveIndex,
+                    priority.urgencyFactor, priority.difficultyFactor, priority.efficiencyFactor, priority.proximityFactor,
+                    priority.priorityScore);
 
         priorities.push_back(priority);
     }

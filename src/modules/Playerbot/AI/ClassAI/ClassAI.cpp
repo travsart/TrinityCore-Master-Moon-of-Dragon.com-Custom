@@ -81,6 +81,12 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     if (!GetBot() || !GetBot()->IsAlive())
         return;
 
+    // CRITICAL: Execute pending spell if ready (every frame, like players)
+    // This mirrors Player::Update() which calls CanExecutePendingSpellCastRequest()
+    // and ExecutePendingSpellCastRequest() every frame - see Player.cpp:946-947
+    if (CanExecutePendingSpell())
+        ExecutePendingSpell();
+
     // Update unified combat behavior system
     // This manages all advanced combat behaviors including interrupts, defensive actions,
     // crowd control, target prioritization, and emergency responses
@@ -534,6 +540,217 @@ uint32 ClassAI::GetSpellCooldown(uint32 spellId)
 
     auto remaining = GetBot()->GetSpellHistory()->GetRemainingCooldown(spellInfo);
     return remaining.count();
+}
+
+// ============================================================================
+// SPELL QUEUEING SYSTEM - Enterprise-grade spell casting
+// ============================================================================
+// Mirrors TrinityCore's player spell queueing for proper validation timing
+// See Player.cpp:30904-31051 for reference implementation
+
+bool ClassAI::RequestBotSpellCast(uint32 spellId, ::Unit* target)
+{
+    if (!GetBot())
+        return false;
+
+    // Get spell info for validation
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} RequestBotSpellCast: Invalid spell ID {}",
+                    GetBot()->GetName(), spellId);
+        return false;
+    }
+
+    // Check if we can queue this spell (GCD, current cast, etc.)
+    // Mirrors Player::CanRequestSpellCast()
+    if (!CanRequestBotSpellCast(spellId))
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} cannot queue spell {} - GCD/cast time > 400ms",
+                    GetBot()->GetName(), spellId);
+        return false;
+    }
+
+    // Cancel any existing pending spell (like players - only one queued at a time)
+    if (_pendingSpellCastRequest)
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} canceling previous pending spell {} to queue {}",
+                    GetBot()->GetName(), _pendingSpellCastRequest->spellId, spellId);
+        CancelPendingSpell();
+    }
+
+    // Queue the new spell
+    _pendingSpellCastRequest = std::make_unique<BotSpellCastRequest>(spellId, target);
+
+    TC_LOG_DEBUG("module.playerbot.classai", "Bot {} queued spell {} targeting {}",
+                GetBot()->GetName(), spellId,
+                target ? target->GetName() : "self");
+
+    // Try to execute immediately if conditions are met
+    // Mirrors Player::RequestSpellCast() behavior
+    if (CanExecutePendingSpell())
+    {
+        ExecutePendingSpell();
+    }
+
+    return true;
+}
+
+bool ClassAI::CanRequestBotSpellCast(uint32 spellId) const
+{
+    if (!GetBot())
+        return false;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+        return false;
+
+    // Check global cooldown (must be ≤400ms remaining to queue)
+    // Mirrors Player::CanRequestSpellCast() - Player.cpp:30935-30946
+    if (GetBot()->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo) > Milliseconds(SPELL_QUEUE_TIME_WINDOW_MS))
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanRequestBotSpellCast: GCD > 400ms for spell {}",
+                    GetBot()->GetName(), spellId);
+        return false;
+    }
+
+    // Check current spell casts (must be ≤400ms remaining to queue)
+    for (CurrentSpellTypes spellSlot : { CURRENT_MELEE_SPELL, CURRENT_GENERIC_SPELL })
+    {
+        if (Spell const* spell = GetBot()->GetCurrentSpell(spellSlot))
+        {
+            if (Milliseconds(spell->GetRemainingCastTime()) > Milliseconds(SPELL_QUEUE_TIME_WINDOW_MS))
+            {
+                TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanRequestBotSpellCast: Spell cast time > 400ms for spell {}",
+                            GetBot()->GetName(), spellId);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool ClassAI::CanExecutePendingSpell() const
+{
+    if (!_pendingSpellCastRequest)
+        return false;
+
+    if (!GetBot())
+        return false;
+
+    // Generic and melee spells have to wait, channeled spells can be processed immediately
+    // Mirrors Player::CanExecutePendingSpellCastRequest() - Player.cpp:31141-31161
+    if (!GetBot()->GetCurrentSpell(CURRENT_CHANNELED_SPELL) && GetBot()->HasUnitState(UNIT_STATE_CASTING))
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanExecutePendingSpell: Still casting, waiting",
+                    GetBot()->GetName());
+        return false;
+    }
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_pendingSpellCastRequest->spellId,
+                                                          GetBot()->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+        return false;
+
+    // Wait for global cooldown to expire completely (not just ≤400ms)
+    if (GetBot()->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo) > 0ms)
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanExecutePendingSpell: GCD not ready for spell {}",
+                    GetBot()->GetName(), _pendingSpellCastRequest->spellId);
+        return false;
+    }
+
+    return true;
+}
+
+void ClassAI::ExecutePendingSpell()
+{
+    if (!_pendingSpellCastRequest || !GetBot())
+        return;
+
+    Player* bot = GetBot();
+    uint32 spellId = _pendingSpellCastRequest->spellId;
+
+    // Get spell info
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "Bot {} ExecutePendingSpell: Invalid spell ID {}",
+                    bot->GetName(), spellId);
+        CancelPendingSpell();
+        return;
+    }
+
+    // Validate target is still valid
+    ::Unit* target = _pendingSpellCastRequest->target;
+    if (!_pendingSpellCastRequest->isSelfCast)
+    {
+        if (!target || !target->IsInWorld() || target->isDead())
+        {
+            TC_LOG_DEBUG("module.playerbot.classai", "Bot {} ExecutePendingSpell: Target invalid for spell {}, canceling",
+                        bot->GetName(), spellId);
+            CancelPendingSpell();
+            return;
+        }
+    }
+    else
+    {
+        target = bot; // Self-cast
+    }
+
+    // Create spell cast targets
+    // Mirrors Player::ExecutePendingSpellCastRequest() - Player.cpp:30948-31051
+    SpellCastTargets targets;
+    targets.SetUnitTarget(target);
+
+    // CRITICAL: Use TRIGGERED_NONE - no flags, proper validation timing
+    // This is the KEY difference from the workaround approach
+    // Target validation happens in Spell::prepare(), not when queuing
+    TriggerCastFlags triggerFlags = TRIGGERED_NONE;
+
+    // Create Spell object (exactly like players do)
+    // See Player.cpp:31038 - Spell* spell = new Spell(castingUnit, spellInfo, triggerFlag);
+    Spell* spell = new Spell(bot, spellInfo, triggerFlags);
+
+    // Prepare the spell (this is where proper validation happens at the right time)
+    // See Player.cpp:31048 - spell->prepare(targets);
+    // This will handle:
+    // - Resource consumption
+    // - Target validation at execute time (not queue time!)
+    // - Range/LOS checks
+    // - Cast time processing
+    // - Combat state management
+    SpellCastResult result = spell->prepare(targets);
+
+    uint32 queuedDuration = getMSTime() - _pendingSpellCastRequest->queuedAtTime;
+
+    if (result == SPELL_CAST_OK)
+    {
+        TC_LOG_DEBUG("module.playerbot.classai", "✅ Bot {} executed queued spell {} on {} - queued for {}ms",
+                    bot->GetName(), spellId,
+                    target ? target->GetName() : "self", queuedDuration);
+    }
+    else
+    {
+        TC_LOG_DEBUG("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",
+                    bot->GetName(), spellId,
+                    uint32(result), queuedDuration);
+    }
+
+    // Clear pending request
+    _pendingSpellCastRequest = nullptr;
+}
+
+void ClassAI::CancelPendingSpell()
+{
+    if (_pendingSpellCastRequest && GetBot())
+    {
+        TC_LOG_TRACE("module.playerbot.classai", "Bot {} canceled pending spell {}",
+                    GetBot()->GetName(), _pendingSpellCastRequest->spellId);
+    }
+
+    _pendingSpellCastRequest = nullptr;
 }
 
 // ============================================================================

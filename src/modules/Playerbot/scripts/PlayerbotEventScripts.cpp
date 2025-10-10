@@ -534,6 +534,73 @@ public:
 };
 
 // ============================================================================
+// QUEST SCRIPT - Quest Events (Accept, Complete, Objectives)
+// ============================================================================
+
+class PlayerbotQuestScript : public QuestScript
+{
+public:
+    PlayerbotQuestScript() : QuestScript("PlayerbotQuestScript") {}
+
+    void OnQuestStatusChange(Player* player, Quest const* quest, QuestStatus oldStatus, QuestStatus newStatus) override
+    {
+        if (!IsBot(player) || !quest)
+            return;
+
+        // Derive specific event type from status change
+        EventType eventType = EventType::QUEST_STATUS_CHANGED;
+        if (newStatus == QUEST_STATUS_COMPLETE && oldStatus == QUEST_STATUS_INCOMPLETE)
+            eventType = EventType::QUEST_COMPLETED;
+        else if (newStatus == QUEST_STATUS_FAILED)
+            eventType = EventType::QUEST_FAILED;
+
+        BotEvent event(eventType,
+                      player->GetGUID(),
+                      player->GetGUID());
+        event.eventId = quest->GetQuestId();
+        event.priority = 150;
+
+        DispatchToBotEventDispatcher(player, event);
+
+        TC_LOG_DEBUG("module.playerbot.quests",
+            "Bot {} quest status changed: {} ({}) - {} -> {}",
+            player->GetName(), quest->GetQuestId(), quest->GetLogTitle(), uint32(oldStatus), uint32(newStatus));
+    }
+
+    void OnQuestObjectiveChange(Player* player, Quest const* quest, QuestObjective const& objective, int32 oldAmount, int32 newAmount) override
+    {
+        if (!IsBot(player) || !quest)
+            return;
+
+        BotEvent event(EventType::QUEST_OBJECTIVE_PROGRESS,
+                      player->GetGUID(),
+                      player->GetGUID());
+        event.eventId = quest->GetQuestId();
+        event.data = std::to_string(objective.ID) + ":" + std::to_string(newAmount);
+        event.priority = 90;
+
+        DispatchToBotEventDispatcher(player, event);
+
+        // Check if objective completed
+        if (newAmount >= objective.Amount && oldAmount < objective.Amount)
+        {
+            BotEvent completeEvent(EventType::QUEST_OBJECTIVE_COMPLETE,
+                                  player->GetGUID(),
+                                  player->GetGUID());
+            completeEvent.eventId = quest->GetQuestId();
+            completeEvent.data = std::to_string(objective.ID);
+            completeEvent.priority = 110;
+
+            DispatchToBotEventDispatcher(player, completeEvent);
+
+            TC_LOG_DEBUG("module.playerbot.quests",
+                "Bot {} completed objective {} of quest {}",
+                player->GetName(), objective.ID, quest->GetQuestId());
+        }
+    }
+};
+
+// ============================================================================
 // UNIT SCRIPT - Combat Events (Damage & Healing)
 // ============================================================================
 
@@ -937,6 +1004,7 @@ void AddSC_playerbot_event_scripts()
     // new PlayerbotWorldScript(); // REMOVED - causes duplicate OnStartup() calls
 
     new PlayerbotPlayerScript();
+    new PlayerbotQuestScript();
     new PlayerbotUnitScript();
     new PlayerbotGroupScript();
     new PlayerbotVehicleScript();
@@ -951,6 +1019,8 @@ void AddSC_playerbot_event_scripts()
     TC_LOG_INFO("module.playerbot.scripts",
         "   - PlayerScript: 35 player event hooks");
     TC_LOG_INFO("module.playerbot.scripts",
+        "   - QuestScript: 2 quest event hooks");
+    TC_LOG_INFO("module.playerbot.scripts",
         "   - UnitScript: 2 combat event hooks");
     TC_LOG_INFO("module.playerbot.scripts",
         "   - GroupScript: 5 group coordination hooks");
@@ -961,5 +1031,5 @@ void AddSC_playerbot_event_scripts()
     TC_LOG_INFO("module.playerbot.scripts",
         "   - AuctionHouseScript: 3 economy hooks");
     TC_LOG_INFO("module.playerbot.scripts",
-        "   - Total: 51 script hooks active");
+        "   - Total: 53 script hooks active");
 }

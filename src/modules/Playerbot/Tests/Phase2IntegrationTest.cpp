@@ -23,15 +23,15 @@
  * ===========
  * Phase 2.1: BehaviorManager base class (throttled updates, atomic states)
  * Phase 2.4: 4 Managers refactored (Quest, Trade, Gathering, Auction)
- * Phase 2.5: IdleStrategy observer pattern implementation
+ * Phase 2.5: SoloStrategy observer pattern implementation
  *
  * ARCHITECTURE TESTED:
  * ====================
  * - BotAI constructor initializes all 4 managers
  * - BotAI::UpdateManagers() calls manager Update() methods
  * - Managers inherit BehaviorManager and self-throttle
- * - IdleStrategy observes manager states via atomic queries
- * - No manual throttling in IdleStrategy
+ * - SoloStrategy observes manager states via atomic queries
+ * - No manual throttling in SoloStrategy
  * - Complete observer pattern with lock-free atomic operations
  *
  * TEST CATEGORIES:
@@ -47,7 +47,7 @@
  * PERFORMANCE TARGETS:
  * ====================
  * - UpdateManagers() with all 4 managers: <1ms
- * - IdleStrategy UpdateBehavior(): <0.1ms
+ * - SoloStrategy UpdateBehavior(): <0.1ms
  * - Single atomic query: <0.001ms
  * - Manager OnUpdate() when throttled: <0.001ms
  *
@@ -62,7 +62,7 @@
 
 #include "AI/BotAI.h"
 #include "AI/BehaviorManager.h"
-#include "AI/Strategy/IdleStrategy.h"
+#include "AI/Strategy/SoloStrategy.h"
 #include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
@@ -207,14 +207,14 @@ protected:
         // Create BotAI with all 4 managers
         mockAI = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(mockPlayer.get()));
 
-        // Create IdleStrategy for observer pattern tests
-        idleStrategy = std::make_unique<IdleStrategy>();
+        // Create SoloStrategy for observer pattern tests
+        soloStrategy = std::make_unique<SoloStrategy>();
     }
 
     void TearDown() override
     {
         // Clean up in reverse order
-        idleStrategy.reset();
+        soloStrategy.reset();
         mockAI.reset();
         mockPlayer.reset();
     }
@@ -242,7 +242,7 @@ protected:
 
     std::unique_ptr<MockPlayer> mockPlayer;
     std::unique_ptr<MockBotAI> mockAI;
-    std::unique_ptr<IdleStrategy> idleStrategy;
+    std::unique_ptr<SoloStrategy> soloStrategy;
 };
 
 // ============================================================================
@@ -341,17 +341,17 @@ TEST_F(Phase2IntegrationTest, Initialization_AllManagers_InitializedAfterFirstUp
 // ============================================================================
 
 /**
- * @test IdleStrategy can query all 4 manager states atomically
+ * @test SoloStrategy can query all 4 manager states atomically
  */
-TEST_F(Phase2IntegrationTest, ObserverPattern_IdleStrategy_QueriesAllManagerStates)
+TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategy_QueriesAllManagerStates)
 {
     // Initialize managers
     SimulateTime(10000, 100);
 
-    // Cast to BotAI* for IdleStrategy
+    // Cast to BotAI* for SoloStrategy
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
-    // IdleStrategy should be able to query all manager states
+    // SoloStrategy should be able to query all manager states
     bool questingActive = ai->GetQuestManager() && ai->GetQuestManager()->IsQuestingActive();
     bool gatheringActive = ai->GetGatheringManager() && ai->GetGatheringManager()->IsGathering();
     bool tradingActive = ai->GetTradeManager() && ai->GetTradeManager()->IsTradingActive();
@@ -392,32 +392,32 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_AtomicQueries_UnderOneMicrosecond)
 }
 
 /**
- * @test IdleStrategy UpdateBehavior() completes in <0.1ms
+ * @test SoloStrategy UpdateBehavior() completes in <0.1ms
  */
-TEST_F(Phase2IntegrationTest, ObserverPattern_IdleStrategyUpdate_UnderOneHundredMicroseconds)
+TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategyUpdate_UnderOneHundredMicroseconds)
 {
     // Initialize managers
     SimulateTime(10000, 100);
 
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
-    // Measure IdleStrategy UpdateBehavior() performance
+    // Measure SoloStrategy UpdateBehavior() performance
     auto duration = MeasureTimeMicroseconds([&]() {
         for (int i = 0; i < 100; ++i)
         {
-            idleStrategy->UpdateBehavior(ai, 16); // 16ms typical frame time
+            soloStrategy->UpdateBehavior(ai, 16); // 16ms typical frame time
         }
     });
 
     // Average should be under 100 microseconds (0.1ms)
     double avgMicroseconds = static_cast<double>(duration) / 100.0;
-    EXPECT_LT(avgMicroseconds, 100.0) << "IdleStrategy UpdateBehavior took " << avgMicroseconds << "us on average";
+    EXPECT_LT(avgMicroseconds, 100.0) << "SoloStrategy UpdateBehavior took " << avgMicroseconds << "us on average";
 }
 
 /**
  * @test Observer doesn't interfere with manager updates
  */
-TEST_F(Phase2IntegrationTest, ObserverPattern_IdleStrategyQueries_DoNotBlockManagerUpdates)
+TEST_F(Phase2IntegrationTest, ObserverPattern_SoloStrategyQueries_DoNotBlockManagerUpdates)
 {
     // Initialize managers
     SimulateTime(10000, 100);
@@ -426,10 +426,10 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_IdleStrategyQueries_DoNotBlockMana
 
     uint32 questUpdatesBefore = mockAI->GetQuestManager()->GetUpdateInterval();
 
-    // Query states from IdleStrategy while managers are updating
+    // Query states from SoloStrategy while managers are updating
     for (int i = 0; i < 100; ++i)
     {
-        idleStrategy->UpdateBehavior(ai, 16);
+        soloStrategy->UpdateBehavior(ai, 16);
         mockAI->UpdateManagers(100); // Update managers
     }
 
@@ -480,7 +480,7 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_LockFree_NoDeadlocks)
     std::thread observerThread([&]() {
         while (!testComplete.load())
         {
-            idleStrategy->UpdateBehavior(ai, 16);
+            soloStrategy->UpdateBehavior(ai, 16);
             observerQueries.fetch_add(1);
         }
     });
@@ -888,9 +888,9 @@ TEST_F(Phase2IntegrationTest, Performance_UpdateManagers_AllFourManagersUnderOne
 }
 
 /**
- * @test IdleStrategy UpdateBehavior under 100 microseconds (0.1ms)
+ * @test SoloStrategy UpdateBehavior under 100 microseconds (0.1ms)
  */
-TEST_F(Phase2IntegrationTest, Performance_IdleStrategy_UpdateBehaviorUnderHundredMicroseconds)
+TEST_F(Phase2IntegrationTest, Performance_SoloStrategy_UpdateBehaviorUnderHundredMicroseconds)
 {
     // Initialize managers
     SimulateTime(10000, 100);
@@ -901,13 +901,13 @@ TEST_F(Phase2IntegrationTest, Performance_IdleStrategy_UpdateBehaviorUnderHundre
     auto duration = MeasureTimeMicroseconds([&]() {
         for (int i = 0; i < 1000; ++i)
         {
-            idleStrategy->UpdateBehavior(ai, 16);
+            soloStrategy->UpdateBehavior(ai, 16);
         }
     });
 
     // Average should be under 100 microseconds (0.1ms)
     double avgMicroseconds = static_cast<double>(duration) / 1000.0;
-    EXPECT_LT(avgMicroseconds, 100.0) << "IdleStrategy UpdateBehavior took " << avgMicroseconds << "us on average";
+    EXPECT_LT(avgMicroseconds, 100.0) << "SoloStrategy UpdateBehavior took " << avgMicroseconds << "us on average";
 }
 
 /**
@@ -1144,7 +1144,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_MemoryOrdering_Correct)
         writerDone.store(true, std::memory_order_release);
     });
 
-    // Reader thread (simulates IdleStrategy queries)
+    // Reader thread (simulates SoloStrategy queries)
     std::thread reader([&]() {
         while (!writerDone.load(std::memory_order_acquire))
         {
@@ -1424,10 +1424,10 @@ TEST_F(Phase2IntegrationTest, Scenario_FullLifecycle_OneMinuteRuntime)
     {
         mockAI->UpdateManagers(16);
 
-        // Every second, query states from IdleStrategy
+        // Every second, query states from SoloStrategy
         if (frame % 60 == 0)
         {
-            idleStrategy->UpdateBehavior(ai, 16);
+            soloStrategy->UpdateBehavior(ai, 16);
         }
     }
 

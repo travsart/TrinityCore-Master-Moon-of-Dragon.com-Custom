@@ -33,6 +33,29 @@ class CombatBehaviorIntegration; // Forward declaration within Playerbot namespa
 struct RecommendedAction; // Forward declaration for combat behavior actions
 
 /**
+ * Bot spell cast request - minimal structure for queueing bot spell casts
+ * Mirrors player queueing architecture but without network packet overhead
+ *
+ * Unlike Player::SpellCastRequest (which contains WorldPackets data), this
+ * contains only the essential information needed to create a Spell object
+ * and call Spell::prepare().
+ */
+struct BotSpellCastRequest
+{
+    uint32 spellId;              // Spell to cast
+    ::Unit* target;              // Target unit (can be nullptr for self-cast)
+    uint32 queuedAtTime;         // getMSTime() when queued (for diagnostics)
+    bool isSelfCast;             // True if self-targeted spell
+
+    BotSpellCastRequest(uint32 spell, ::Unit* tgt = nullptr)
+        : spellId(spell)
+        , target(tgt)
+        , queuedAtTime(getMSTime())
+        , isSelfCast(tgt == nullptr)
+    {}
+};
+
+/**
  * ClassAI - Base class for all class-specific COMBAT AI
  *
  * CRITICAL DESIGN PRINCIPLES:
@@ -135,6 +158,62 @@ public:
     bool ExecuteRecommendedAction(const RecommendedAction& action);
 
     // ========================================================================
+    // SPELL QUEUEING SYSTEM - Enterprise-grade spell casting
+    // ========================================================================
+    // Mirrors TrinityCore's player spell queueing architecture for proper
+    // validation timing. Allows spells to be queued within 400ms of GCD/cast
+    // completion, with target validation happening at execute time (not queue time).
+    //
+    // This solves the neutral mob problem: Player casts on neutral mob ->
+    // spell queued -> cast animation starts -> spell executes -> damage applied ->
+    // mob becomes hostile. Target validation happens in Spell::prepare() after
+    // combat is established, not when the spell is queued.
+    //
+    // USAGE: All ClassAI subclasses MUST use RequestBotSpellCast() instead of
+    // direct CastSpell() calls. This ensures consistent behavior across all bots.
+    // ========================================================================
+
+    /**
+     * Request a spell cast using proper queueing system
+     * Mirrors Player::RequestSpellCast() behavior
+     *
+     * @param spellId Spell to cast
+     * @param target Target unit (nullptr for self-cast)
+     * @return true if spell was queued successfully
+     */
+    bool RequestBotSpellCast(uint32 spellId, ::Unit* target = nullptr);
+
+    /**
+     * Check if a spell can be queued right now
+     * Mirrors Player::CanRequestSpellCast() logic
+     *
+     * @param spellId Spell to check
+     * @return true if spell can be queued (GCD/cast time ≤400ms remaining)
+     */
+    bool CanRequestBotSpellCast(uint32 spellId) const;
+
+    /**
+     * Check if queued spell can be executed now
+     * Called every frame from OnCombatUpdate()
+     *
+     * @return true if pending spell is ready to execute
+     */
+    bool CanExecutePendingSpell() const;
+
+    /**
+     * Execute the pending spell using TrinityCore's Spell object
+     * Creates new Spell(), calls prepare(), uses TRIGGERED_NONE
+     * This is where proper target validation occurs
+     */
+    void ExecutePendingSpell();
+
+    /**
+     * Cancel pending spell cast request
+     * Used when target becomes invalid or bot dies
+     */
+    void CancelPendingSpell();
+
+    // ========================================================================
     // POSITIONING - Combat positioning preferences (PUBLIC for Strategy access)
     // ========================================================================
 
@@ -176,7 +255,7 @@ public:
             case CLASS_SHAMAN:
             case CLASS_DRUID:
             case CLASS_PALADIN:     // Hybrid, prefer ranged for safety
-                return 25.0f;       // Ranged/casting range
+                return 12.0f;       // Group dungeon range (close to group, safe from melee)
 
             default:
                 return 25.0f;       // Safe default for unknown classes
@@ -244,6 +323,19 @@ protected:
 
     // Combat Behavior Integration - Unified combat coordination system
     std::unique_ptr<CombatBehaviorIntegration> _combatBehaviors;
+
+    // ========================================================================
+    // SPELL QUEUEING STATE - Pending spell cast request
+    // ========================================================================
+
+    // Pending spell cast request (only one at a time, like players)
+    // Mirrors Player::_pendingSpellCastRequest architecture
+    std::unique_ptr<BotSpellCastRequest> _pendingSpellCastRequest;
+
+    // Spell queue window in milliseconds (matches TrinityCore player system)
+    // Spells can be queued when GCD or current cast has ≤400ms remaining
+    // See Player.cpp:30933 - static constexpr Milliseconds SPELL_QUEUE_TIME_WINDOW = 400ms;
+    static constexpr uint32 SPELL_QUEUE_TIME_WINDOW_MS = 400;
 
     // ========================================================================
     // COMBAT STATE - Current combat information

@@ -23,7 +23,7 @@ struct EnhancedAIStats
 {
     uint32 totalUpdates = 0;
     uint32 combatUpdates = 0;
-    uint32 idleUpdates = 0;
+    uint32 soloUpdates = 0;
 
     std::chrono::microseconds totalUpdateTime{0};
     std::chrono::microseconds avgUpdateTime{0};
@@ -40,7 +40,7 @@ struct EnhancedAIStats
     {
         totalUpdates = 0;
         combatUpdates = 0;
-        idleUpdates = 0;
+        soloUpdates = 0;
         totalUpdateTime = std::chrono::microseconds{0};
         avgUpdateTime = std::chrono::microseconds{0};
         maxUpdateTime = std::chrono::microseconds{0};
@@ -113,7 +113,7 @@ public:
 protected:
     // Internal update methods
     void UpdateCombat(uint32 diff);
-    void UpdateIdle(uint32 diff);
+    void UpdateSolo(uint32 diff);
     void UpdateMovement(uint32 diff);
     void UpdateGroupCoordination(uint32 diff);
     void UpdateQuesting(uint32 diff);
@@ -191,12 +191,12 @@ private:
 
     // Update intervals (ms)
     uint32 _combatUpdateInterval;
-    uint32 _idleUpdateInterval;
+    uint32 _soloUpdateInterval;
     uint32 _movementUpdateInterval;
 
     // Timers
     uint32 _lastCombatUpdate;
-    uint32 _lastIdleUpdate;
+    uint32 _lastSoloUpdate;
     uint32 _lastMovementUpdate;
     uint32 _lastGroupUpdate;
 

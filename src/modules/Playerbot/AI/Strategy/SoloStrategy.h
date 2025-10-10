@@ -15,21 +15,25 @@ namespace Playerbot
 {
 
 /**
- * IdleStrategy - Default strategy for solo bots
+ * SoloStrategy - Default strategy for solo bots
  *
- * Provides basic idle behavior for bots not in a group:
- * - Wander around spawn area
- * - Interact with nearby objects/NPCs
- * - Eventually will support questing, exploration, trading
+ * Provides autonomous behavior for bots not in a group:
+ * - Quest completion and progression
+ * - Resource gathering (mining, herbalism, skinning)
+ * - Autonomous combat with target acquisition
+ * - Profession training and usage
+ * - Trading and auction house activities
+ * - World exploration
  *
  * This strategy is always active for solo bots and provides
- * a foundation for autonomous bot behavior.
+ * a foundation for autonomous bot behavior. The name "Solo" reflects
+ * that the bot is actively playing the game independently, not idle.
  */
-class TC_GAME_API IdleStrategy : public Strategy
+class TC_GAME_API SoloStrategy : public Strategy
 {
 public:
-    IdleStrategy();
-    ~IdleStrategy() override = default;
+    SoloStrategy();
+    ~SoloStrategy() override = default;
 
     // Strategy interface
     void InitializeActions() override;
@@ -52,7 +56,7 @@ private:
 
     // Observer Pattern: Query manager states via atomic operations (<0.001ms each)
     // Managers self-throttle and update via BotAI::UpdateManagers()
-    // IdleStrategy just observes their state changes through lock-free atomics
+    // SoloStrategy just observes their state changes through lock-free atomics
 };
 
 } // namespace Playerbot

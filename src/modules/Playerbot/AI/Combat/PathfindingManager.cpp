@@ -17,6 +17,8 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "PhaseShift.h"
+#include "PhasingHandler.h"
 #include <algorithm>
 #include <cmath>
 
@@ -764,8 +766,10 @@ float PathfindingManager::GetTerrainSlope(const Position& pos)
     if (!map)
         return 0.0f;
 
-    float currentZ = map->GetHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
-    float forwardZ = map->GetHeight(pos.GetPositionX() + 1.0f, pos.GetPositionY(), pos.GetPositionZ());
+    // FIX #4: PHASESHIFT API CORRECTIONS - Add PhaseShift parameter
+    PhaseShift const& phaseShift = _bot->GetPhaseShift();
+    float currentZ = map->GetHeight(phaseShift, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+    float forwardZ = map->GetHeight(phaseShift, pos.GetPositionX() + 1.0f, pos.GetPositionY(), pos.GetPositionZ());
 
     return std::abs(forwardZ - currentZ);
 }
@@ -811,7 +815,9 @@ bool PathfindingUtils::IsPositionOnGround(const Position& pos, Map* map)
     if (!map)
         return false;
 
-    float groundZ = map->GetHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+    // FIX #4: PHASESHIFT API CORRECTIONS - Use empty PhaseShift for static utility
+    float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(),
+                                    pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
     return std::abs(pos.GetPositionZ() - groundZ) <= 2.0f;
 }
 
@@ -820,8 +826,11 @@ bool PathfindingUtils::CanWalkBetween(const Position& a, const Position& b, Map*
     if (!map)
         return false;
 
-    return map->isInLineOfSight(a.GetPositionX(), a.GetPositionY(), a.GetPositionZ(),
-                              b.GetPositionX(), b.GetPositionY(), b.GetPositionZ());
+    // FIX #4: PHASESHIFT API CORRECTIONS - Use empty PhaseShift for static utility
+    return map->isInLineOfSight(PhasingHandler::GetEmptyPhaseShift(),
+                              a.GetPositionX(), a.GetPositionY(), a.GetPositionZ(),
+                              b.GetPositionX(), b.GetPositionY(), b.GetPositionZ(),
+                              LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
 }
 
 std::vector<Position> PathfindingUtils::RemoveRedundantWaypoints(const std::vector<Position>& waypoints)

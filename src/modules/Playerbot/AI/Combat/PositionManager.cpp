@@ -31,7 +31,7 @@ namespace Playerbot
 PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
     : _bot(bot), _threatManager(threatManager), _updateInterval(DEFAULT_UPDATE_INTERVAL),
       _lastUpdate(0), _positionTolerance(POSITION_TOLERANCE), _maxCandidates(MAX_CANDIDATES),
-      _lastZoneUpdate(0)
+      _lastZoneUpdate(0), _lastMovePointTime(0)
 {
     if (!_bot)
     {
@@ -57,6 +57,15 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
 
     try
     {
+        // FIX #3: SPELL CASTING COORDINATION - Don't move while casting
+        if (_bot->IsNonMeleeSpellCast(false))
+        {
+            result.failureReason = "Bot is casting, movement would interrupt spell";
+            TC_LOG_DEBUG("playerbot.position", "⏸️ Bot {} - Movement blocked, currently casting",
+                         _bot->GetName());
+            return result;
+        }
+
         uint32 currentTime = getMSTime();
         if (currentTime - _lastUpdate < _updateInterval && !context.emergencyMode)
         {
@@ -192,7 +201,42 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         result.requiresJump = true;
     }
 
+    // FIX #1: DUPLICATE MOVEMENT PREVENTION - Check if already moving to same position
+    // This prevents the infinite movement cancellation bug (60+ MovePoint calls/second)
+    uint32 currentTime = getMSTime();
+    float distanceToLastTarget = _lastTargetPosition.GetExactDist(&targetPos);
+
+    if (distanceToLastTarget < _positionTolerance && (currentTime - _lastMovePointTime) < 500)
+    {
+        // Already moving to same destination - don't re-issue command within 500ms
+        result.success = true;
+        result.failureReason = "Already moving to target position";
+
+        TC_LOG_DEBUG("playerbot.position", "⏭️ Bot {} - Duplicate movement prevented, already moving to ({:.2f}, {:.2f}, {:.2f})",
+                     _bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+
+        return result;
+    }
+
+    // Issue new movement command
     _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+
+    // FIX #5: SPEED CONTROL SYSTEM - Apply sprint for critical/emergency movement
+    if (result.requiresSprint)
+    {
+        // Increase movement speed for urgent repositioning
+        // Note: TrinityCore handles speed through auras/spells, not direct modification
+        // This is a marker for future sprint ability integration
+        TC_LOG_DEBUG("playerbot.position", "🏃 Bot {} - Sprint required for urgent movement (priority: {})",
+                     _bot->GetName(), static_cast<uint8>(priority));
+
+        // Future: Trigger sprint ability here if available
+        // For now, just log the requirement - ClassAI should handle sprint abilities
+    }
+
+    // Update tracking state
+    _lastTargetPosition = targetPos;
+    _lastMovePointTime = currentTime;
 
     result.success = true;
     _metrics.movementCommands++;

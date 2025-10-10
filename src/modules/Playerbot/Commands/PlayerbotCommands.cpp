@@ -329,7 +329,7 @@ public:
         if (botAI)
         {
             botAI->StopMovement();
-            botAI->SetAIState(Playerbot::BotAIState::IDLE);
+            botAI->SetAIState(Playerbot::BotAIState::SOLO);
             handler->PSendSysMessage("Bot '%s' is now staying.", botName.c_str());
         }
         else
