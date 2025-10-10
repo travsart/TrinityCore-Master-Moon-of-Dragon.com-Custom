@@ -387,7 +387,7 @@ struct at_wakemara_bioeletric_blast : AreaTriggerAI
             at->GetCaster()->CastSpell(target, SPELL_ELECTRIFIED_GROUND_AT_DAMAGE, true);
     }
 
-    void OnUnitExit(Unit* target) override
+    void OnUnitExit(Unit* target, AreaTriggerExitReason /*reason*/) override
     {
         if (target->IsPlayer())
             target->RemoveAura(SPELL_ELECTRIFIED_GROUND_AT_DAMAGE);
