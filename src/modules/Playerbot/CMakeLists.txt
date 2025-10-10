@@ -55,6 +55,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.h
 
     # Database pool (basic implementation)
     # Temporarily disabled: BotDatabasePool (needs API updates)
@@ -758,6 +760,8 @@ source_group("Session" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
 )

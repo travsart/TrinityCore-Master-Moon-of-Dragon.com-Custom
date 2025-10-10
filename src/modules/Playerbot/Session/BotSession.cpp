@@ -3,6 +3,7 @@
  */
 
 #include "BotSession.h"
+#include "BotPacketRelay.h"
 #include "AccountMgr.h"
 #include "Log.h"
 #include "WorldPacket.h"
@@ -496,7 +497,11 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
         HandleGroupInvitation(*packet);
     }
 
-    // Simple packet handling - just store in outgoing queue
+    // PHASE 1: Relay packets to human group members
+    // This enables bot damage/chat to appear in human combat logs and chat
+    BotPacketRelay::RelayToGroupMembers(this, packet);
+
+    // Store packet in outgoing queue for debugging/logging
     std::lock_guard<std::recursive_timed_mutex> lock(_packetMutex);
 
     // Create a copy of the packet

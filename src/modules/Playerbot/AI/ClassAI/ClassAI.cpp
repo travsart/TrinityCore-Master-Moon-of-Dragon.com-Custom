@@ -84,8 +84,23 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     // CRITICAL: Execute pending spell if ready (every frame, like players)
     // This mirrors Player::Update() which calls CanExecutePendingSpellCastRequest()
     // and ExecutePendingSpellCastRequest() every frame - see Player.cpp:946-947
+
+    // DIAGNOSTIC: Log spell queue check
+    static uint32 lastSpellQueueLog = 0;
+    uint32 currentTime = getMSTime();
+    if (currentTime - lastSpellQueueLog > 500) // Every 500ms
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 OnCombatUpdate: Checking spell queue for bot {} - hasPending={}",
+                    GetBot()->GetName(), _pendingSpellCastRequest != nullptr);
+        lastSpellQueueLog = currentTime;
+    }
+
     if (CanExecutePendingSpell())
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "✅ OnCombatUpdate: Calling ExecutePendingSpell for bot {}",
+                    GetBot()->GetName());
         ExecutePendingSpell();
+    }
 
     // Update unified combat behavior system
     // This manages all advanced combat behaviors including interrupts, defensive actions,
@@ -97,7 +112,6 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
     // DIAGNOSTIC: Log that OnCombatUpdate is being called
     static uint32 lastCombatLog = 0;
-    uint32 currentTime = getMSTime();
     if (currentTime - lastCombatLog > 2000) // Every 2 seconds
     {
         TC_LOG_ERROR("module.playerbot", "⚔️ ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
@@ -633,33 +647,66 @@ bool ClassAI::CanRequestBotSpellCast(uint32 spellId) const
 
 bool ClassAI::CanExecutePendingSpell() const
 {
+    // DIAGNOSTIC: Log every check to trace execution flow
     if (!_pendingSpellCastRequest)
-        return false;
-
-    if (!GetBot())
-        return false;
-
-    // Generic and melee spells have to wait, channeled spells can be processed immediately
-    // Mirrors Player::CanExecutePendingSpellCastRequest() - Player.cpp:31141-31161
-    if (!GetBot()->GetCurrentSpell(CURRENT_CHANNELED_SPELL) && GetBot()->HasUnitState(UNIT_STATE_CASTING))
     {
-        TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanExecutePendingSpell: Still casting, waiting",
-                    GetBot()->GetName());
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO PENDING REQUEST");
         return false;
     }
+
+    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} has pending spell {} queued",
+                GetBot() ? GetBot()->GetName() : "NULL", _pendingSpellCastRequest->spellId);
+
+    if (!GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO BOT");
+        return false;
+    }
+
+    // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots
+    // Unlike players who have packet-driven spell casting, bots queue spells
+    // and then ExecutePendingSpell() calls Spell::prepare() which sets the state.
+    // Checking for UNIT_STATE_CASTING creates a catch-22 where the bot waits
+    // forever for a spell to finish that never started.
+    //
+    // For bots, we only need to check:
+    // 1. Is there actually a spell currently being cast? (GetCurrentSpell)
+    // 2. Is GCD ready?
+    //
+    // If no current spell and GCD is ready, execute the pending spell.
+
+    // Check if bot is currently casting a different spell
+    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
+                    GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
+        return false;
+    }
+
+    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} NOT casting, checking GCD", GetBot()->GetName());
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_pendingSpellCastRequest->spellId,
                                                           GetBot()->GetMap()->GetDifficultyID());
     if (!spellInfo)
-        return false;
-
-    // Wait for global cooldown to expire completely (not just ≤400ms)
-    if (GetBot()->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo) > 0ms)
     {
-        TC_LOG_TRACE("module.playerbot.classai", "Bot {} CanExecutePendingSpell: GCD not ready for spell {}",
-                    GetBot()->GetName(), _pendingSpellCastRequest->spellId);
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: INVALID SPELL INFO for spell {}",
+                    _pendingSpellCastRequest->spellId);
         return false;
     }
+
+    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Spell info valid, checking GCD");
+
+    // Wait for global cooldown to expire completely (not just ≤400ms)
+    auto gcdRemaining = GetBot()->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo);
+    if (gcdRemaining > 0ms)
+    {
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} GCD NOT READY ({} ms remaining) for spell {}",
+                    GetBot()->GetName(), gcdRemaining.count(), _pendingSpellCastRequest->spellId);
+        return false;
+    }
+
+    TC_LOG_ERROR("module.playerbot.classai", "✅ CanExecutePendingSpell: Bot {} READY TO EXECUTE spell {}",
+                GetBot()->GetName(), _pendingSpellCastRequest->spellId);
 
     return true;
 }
