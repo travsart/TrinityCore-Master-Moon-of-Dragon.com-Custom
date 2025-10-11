@@ -237,7 +237,7 @@ struct boss_wekemara : public BossAI
         {
         case NPC_SPAWN_OF_WEKEMARA:
         {
-            // Die Methode UpdatePosition erwartet vermutlich die vollständigen Positionsdaten.
+            // Die Methode UpdatePosition erwartet vermutlich die vollstÃ¤ndigen Positionsdaten.
             // Nutze die SetPosition-Methode, um die Z-Koordinate und die Orientierung zu setzen.
             Position pos = summon->GetPosition();
             pos.m_positionZ = PosZ;
