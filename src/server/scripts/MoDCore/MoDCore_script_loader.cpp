@@ -16,9 +16,10 @@ void Add_MoDCore_EasternKingdomsScripts();
 /* < ######### Continents ######### */
 
 /* ######### CUSTOM ######## > */
-void Add_MoDCore_SolocraftScripts();
-void Add_MoDCore_ScheduledShutdownScripts();
+void AddSC_MoDCore_SolocraftScripts();
+void AddSC_MoDCore_ScheduledShutdownScripts();
 void AddSC_MoDCore_global_chat();
+void AddSC_MoDCore_buff_commandscript();
 /* < ######### CUSTOM ######### */
 
 void AddMoDCoreScripts()
@@ -30,9 +31,10 @@ void AddMoDCoreScripts()
     /* < ######### Continents ######### */
 
     /* ######### CUSTOM ######## > */
-    Add_MoDCore_SolocraftScripts();
-    Add_MoDCore_ScheduledShutdownScripts();
+    AddSC_MoDCore_SolocraftScripts();
+    AddSC_MoDCore_ScheduledShutdownScripts();
 	AddSC_MoDCore_global_chat();
+    AddSC_MoDCore_buff_commandscript();
     /* < ######### CUSTOM ######### */
 }
 
