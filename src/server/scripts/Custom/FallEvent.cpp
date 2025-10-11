@@ -198,7 +198,7 @@ public:
             EVENT_END = 2
         };
 
-        // Methoden zum Hinzufügen und Entfernen von GameObjects.
+        // Methoden zum HinzufÃ¼gen und Entfernen von GameObjects.
         void AddDespawnedObject(GameObject* go)
         {
             if (go)
@@ -248,7 +248,7 @@ public:
                 Events.ScheduleEvent(EVENT_END, Milliseconds(FinalEventDelay));  // Letztes Objekt-Event.
                 break;
             default:
-                uint32 timer = 25000 + (data - 2) * 10000;  // Angepasster Timer für andere Objekte.
+                uint32 timer = 25000 + (data - 2) * 10000;  // Angepasster Timer fÃ¼r andere Objekte.
                 Events.ScheduleEvent(EVENT_ACTIVATE, Milliseconds(timer));
                 break;
             }
@@ -259,8 +259,8 @@ public:
             switch (eventId)
             {
             case EVENT_ACTIVATE:
-                AddDespawnedObject(me);  // Objekt zur Despawn-Liste hinzufügen.
-                me->PlayDirectSound(ObjectSoundID);  // Ton für das Objekt abspielen.
+                AddDespawnedObject(me);  // Objekt zur Despawn-Liste hinzufÃ¼gen.
+                me->PlayDirectSound(ObjectSoundID);  // Ton fÃ¼r das Objekt abspielen.
                 me->DespawnOrUnsummon();
                 TC_LOG_ERROR("scripts", "FallObject with GUID {} has been despawned.", me->GetGUID());
                 break;
