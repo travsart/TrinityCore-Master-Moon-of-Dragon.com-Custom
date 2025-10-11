@@ -125,6 +125,7 @@ public:
         BroadcastGlobal(msg);
         return true;
     }
+
     std::vector<Trinity::ChatCommands::ChatCommandBuilder> GetCommands() const override
     {
         static std::vector<Trinity::ChatCommands::ChatCommandBuilder> chatSubCommands;
@@ -137,7 +138,6 @@ public:
 
         return { Trinity::ChatCommands::ChatCommandBuilder("chat", chatSubCommands) };
     }
-
 };
 
 
@@ -170,7 +170,7 @@ public:
     }
 };
 
-void AddSC_MoDCore_global_chat()
+void Add_MoDCore_global_chat()
 {
     new global_chat_commandscript();
     new global_chat_playerscript();

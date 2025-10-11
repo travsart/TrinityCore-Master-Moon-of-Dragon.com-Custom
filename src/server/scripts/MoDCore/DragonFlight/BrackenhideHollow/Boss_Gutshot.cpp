@@ -52,7 +52,7 @@ public:
     {
         Boss_Gutshoot186116AI(Creature* creature) : ScriptedAI(creature) { }
 
-        EventMap events; // <-- Hinzugefügt
+        EventMap events; // <-- HinzugefÃ¼gt
 
         void Reset() override
         {

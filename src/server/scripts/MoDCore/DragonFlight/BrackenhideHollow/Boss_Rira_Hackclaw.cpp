@@ -53,7 +53,7 @@ public:
     {
         npc_rira_hackclawAI(Creature* creature) : ScriptedAI(creature, DATA_RIRA_HACKLAW) { }
 
-        EventMap events; // <-- Hinzugefügt
+        EventMap events; // <-- HinzugefÃ¼gt
 
         void Reset() override
         {

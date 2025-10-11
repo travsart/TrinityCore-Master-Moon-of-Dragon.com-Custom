@@ -675,7 +675,7 @@ public:
 
     struct npc_crate_mineAI : public ScriptedAI
     {
-        npc_crate_mineAI(Creature* creature) : ScriptedAI(creature), Phase(0), EntryTime(0), bSummoned(false) // Initialisierung hinzugefügt
+        npc_crate_mineAI(Creature* creature) : ScriptedAI(creature), Phase(0), EntryTime(0), bSummoned(false) // Initialisierung hinzugefÃ¼gt
         {
         }
 
@@ -1134,7 +1134,7 @@ public:
     struct npc_shadowy_towerAI : public ScriptedAI
     {
         npc_shadowy_towerAI(Creature* creature)
-            : ScriptedAI(creature), Phase(0), SummonTimer(0), bSumm(false), bSumm1(false), bSumm2(false), bExit(false) // Initialisierung hinzugefügt
+            : ScriptedAI(creature), Phase(0), SummonTimer(0), bSumm(false), bSumm1(false), bSumm2(false), bExit(false) // Initialisierung hinzugefÃ¼gt
         {
         }
 
@@ -2055,7 +2055,7 @@ public:
 class npc_hungry_hobo : public CreatureScript
 {
 public:
-    npc_hungry_hobo() : CreatureScript("npc_hungry_hobo") {}
+    npc_hungry_hobo() : CreatureScript("npc_hungry_hobo"){}
 
     CreatureAI* GetAI(Creature* creature) const override
     {
@@ -2064,7 +2064,10 @@ public:
 
     struct npc_hungry_hoboAI : public ScriptedAI
     {
-        npc_hungry_hoboAI(Creature* creature) : ScriptedAI(creature) {}
+        npc_hungry_hoboAI(Creature* creature)
+            : ScriptedAI(creature), count(0), Miam(2000) // Initialisierung der Membervariablen in der Initialisierungsliste
+        {
+        }
 
         uint8 count;
         uint32 Miam;

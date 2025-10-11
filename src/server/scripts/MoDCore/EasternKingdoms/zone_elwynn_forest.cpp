@@ -91,7 +91,7 @@ public:
             float orientation = unit->GetOrientation();
             pos.m_positionX += dist * std::cos(orientation);
             pos.m_positionY += dist * std::sin(orientation);
-            // Z bleibt unverändert, kann aber bei Bedarf angepasst werden
+            // Z bleibt unverÃ¤ndert, kann aber bei Bedarf angepasst werden
         }
 
         void Reset() override
@@ -195,7 +195,7 @@ public:
     struct npc_training_dummy_start_zonesAI : CritterAI
     {
         npc_training_dummy_start_zonesAI(Creature* creature)
-            : CritterAI(creature), resetTimer(0) // Initialisierung hinzugefügt
+            : CritterAI(creature), resetTimer(0) // Initialisierung hinzugefÃ¼gt
         {
         }
 
@@ -284,7 +284,7 @@ public:
             if (resetTimer <= diff)
             {
                 EnterEvadeMode(static_cast<EvadeReason>(EVADE_REASON_OTHER));
-                // Füge dies am Anfang der Datei hinzu, z.B. nach den anderen enums
+                // FÃ¼ge dies am Anfang der Datei hinzu, z.B. nach den anderen enums
                 resetTimer = 5000;
             }
             else
@@ -796,7 +796,7 @@ void DamageTaken(Unit* attacker, uint32& damage, DamageEffectType /*damageType*/
                 }
                 break;
 
-            // Füge [[fallthrough]] hinzu, um die Warnung zu beheben
+            // FÃ¼ge [[fallthrough]] hinzu, um die Warnung zu beheben
             case EVENT_BLOODY_STRIKE:
                  if (_isEating)
                  {

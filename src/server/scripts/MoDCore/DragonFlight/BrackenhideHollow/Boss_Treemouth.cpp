@@ -47,8 +47,8 @@ public:
         boss_treemouthAI(Creature* creature)
             : ScriptedAI(creature), events(), instance(nullptr), summons(creature) {
         }
-        EventMap events; // <-- Hinzugefügt
-        InstanceScript* instance; // <-- Hinzugefügt
+        EventMap events; // <-- HinzugefÃ¼gt
+        InstanceScript* instance; // <-- HinzugefÃ¼gt
         SummonList summons;
 
         void Reset() override

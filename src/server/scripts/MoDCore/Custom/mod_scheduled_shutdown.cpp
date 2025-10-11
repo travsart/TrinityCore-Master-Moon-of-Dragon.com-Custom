@@ -63,7 +63,7 @@ public:
         }
         else
         {
-            alreadyExecuted = false; // Reset für den nächsten Tag
+            alreadyExecuted = false; // Reset fÃ¼r den nÃ¤chsten Tag
         }
     }
 

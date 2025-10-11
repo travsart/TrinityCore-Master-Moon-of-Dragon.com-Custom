@@ -805,7 +805,7 @@ public:
             // Ersetze diese Zeile:
             // player->TeleportTo(MAP_BLASTED_LANDS_PHASED, blastedlandsteleportpos);
 
-            // Mit dieser, die die Parameter korrekt auflöst:
+            // Mit dieser, die die Parameter korrekt auflÃ¶st:
             player->TeleportTo(MAP_BLASTED_LANDS_PHASED, blastedlandsteleportpos.GetPositionX(), blastedlandsteleportpos.GetPositionY(), blastedlandsteleportpos.GetPositionZ(), blastedlandsteleportpos.GetOrientation());
         }
         return true;
@@ -925,7 +925,7 @@ public:
             // Ersetze diese Zeile:
             //me->AI()->SetGUID(player->GetGUID());
 
-            // Mit dieser, die den fehlenden zweiten Parameter ergänzt:
+            // Mit dieser, die den fehlenden zweiten Parameter ergÃ¤nzt:
             me->AI()->SetGUID(player->GetGUID(), 0);
             me->SetFaction(FACTION_TEMPLATE_FLAG_PVP);
             me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);

@@ -44,7 +44,7 @@ enum
 //150101
 struct npc_jaina_150101 : public ScriptedAI
 {
-    npc_jaina_150101(Creature* c) : ScriptedAI(c) { }
+    npc_jaina_150101(Creature* c) : ScriptedAI(c), portal_prepared(false) { }
 
     void OnQuestAccept(Player* player, Quest const* quest) override
     {
@@ -207,7 +207,7 @@ const Position handler_spawn_at_selector_pos = { 555.200f, -180.898f, -194.454f,
 //152671
 struct boss_wekemara : public BossAI
 {
-    boss_wekemara(Creature* creature) : BossAI(creature, DATA_WEKEMARA) { }
+    boss_wekemara(Creature* creature) : BossAI(creature, DATA_WEKEMARA), submerged(false), charges(0) { }
 
     void Reset() override
     {
@@ -425,12 +425,16 @@ struct go_glimmering_chest : public GameObjectAI
     bool OnGossipHello(Player* player) override
     {
         me->SetFlag(GO_FLAG_IN_USE);
+
+        // Belohnungen unmittelbar (kleine Verzögerung beibehalten)
         me->GetScheduler().Schedule(100ms, [player](TaskContext /*context*/)
             {
                 player->ModifyCurrency(1560, 26, CurrencyGainSource::Cheat, CurrencyDestroyReason::Cheat);
                 player->ModifyCurrency(1721, 5, CurrencyGainSource::Cheat, CurrencyDestroyReason::Cheat);
                 player->ModifyCurrency(1587, 16, CurrencyGainSource::Cheat, CurrencyDestroyReason::Cheat);
             });
+
+        // Truhe 15s entfernen, nach 30s wieder hinzufügen
         me->GetScheduler().Schedule(15s, [this](TaskContext /*context*/)
             {
                 me->RemoveFromWorld();
@@ -439,17 +443,15 @@ struct go_glimmering_chest : public GameObjectAI
             {
                 me->AddToWorld();
             });
-        if (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE || (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE))
+
+        // Einmal den Queststatus für beide Fraktionen prüfen
+        if (player->GetQuestStatus(QUEST_SCRYING_STONES_ALLIANCE) == QUEST_STATUS_INCOMPLETE || (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE))
+        {
             player->KilledMonsterCredit(154373);
-
-        if (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE || (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE))
             player->KilledMonsterCredit(154399);
-
-        if (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE || (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE))
             player->KilledMonsterCredit(154410);
-
-        if (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE || (player->GetQuestStatus(QUEST_SCRYING_STONES_HORDE) == QUEST_STATUS_INCOMPLETE))
             player->KilledMonsterCredit(154411);
+        }
 
         return false;
     }

@@ -69,7 +69,7 @@ public:
             }
             catch (...)
             {
-                // Ungültige Eingabe ignorieren
+                // UngÃ¼ltige Eingabe ignorieren
             }
         }
     }
