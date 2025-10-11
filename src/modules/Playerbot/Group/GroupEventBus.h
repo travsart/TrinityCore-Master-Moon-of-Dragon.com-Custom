@@ -55,7 +55,8 @@ enum class GroupEventType : uint8
 
     // Combat coordination
     TARGET_ICON_CHANGED,        // Raid target icon assigned/cleared
-    RAID_MARKER_CHANGED,        // World raid marker placed/removed
+    RAID_MARKER_CHANGED,        // World raid marker placed/removed (legacy name)
+    WORLD_MARKER_CHANGED,       // World raid marker placed/removed (new name for clarity)
     ASSIST_TARGET_CHANGED,      // Main assist target changed
 
     // Loot and distribution
@@ -76,6 +77,11 @@ enum class GroupEventType : uint8
     // Communication
     PING_RECEIVED,              // Ping notification (unit or location)
     COMMAND_RESULT,             // Group command execution result
+
+    // Status updates
+    GROUP_LIST_UPDATE,          // Group member list updated
+    MEMBER_STATS_CHANGED,       // Member health/mana/stats changed
+    INVITE_DECLINED,            // Group invite was declined
 
     // Internal events
     STATE_UPDATE_REQUIRED,      // Full state synchronization needed

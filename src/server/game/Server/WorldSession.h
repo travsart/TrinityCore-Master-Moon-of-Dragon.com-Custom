@@ -989,6 +989,13 @@ class TC_GAME_API WorldSession
 
         virtual void SendPacket(WorldPacket const* packet, bool forced = false);
 
+#ifdef BUILD_PLAYERBOT
+        // Typed packet overload for playerbot packet sniffer
+        // Allows bots to access typed packet data before serialization
+        template<typename PacketType>
+        void SendPacket(PacketType const& typedPacket, bool forced = false);
+#endif
+
         void SendNotification(char const* format, ...) ATTR_PRINTF(2, 3);
         void SendNotification(uint32 stringId, ...);
         void SendPetNameInvalid(uint32 error, std::string const& name, Optional<DeclinedName> const& declinedName);
@@ -2049,6 +2056,26 @@ class TC_GAME_API WorldSession
         WorldSession(WorldSession const& right) = delete;
         WorldSession& operator=(WorldSession const& right) = delete;
 };
+
+#ifdef BUILD_PLAYERBOT
+// Template implementation for typed packet sending
+// Must be in header for template instantiation
+
+#include "../../../../modules/Playerbot/Network/PlayerbotPacketSniffer.h"
+#include "../../../../modules/Playerbot/Core/PlayerBotHooks.h"
+
+template<typename PacketType>
+void WorldSession::SendPacket(PacketType const& typedPacket, bool forced)
+{
+    // Notify playerbot packet sniffer BEFORE serialization
+    if (_player && Playerbot::PlayerBotHooks::IsPlayerBot(_player))
+        Playerbot::PlayerbotPacketSniffer::OnTypedPacket(this, typedPacket);
+
+    // Call existing SendPacket with serialized packet
+    SendPacket(typedPacket.Write(), forced);
+}
+
+#endif // BUILD_PLAYERBOT
 
 #endif
 /// @}

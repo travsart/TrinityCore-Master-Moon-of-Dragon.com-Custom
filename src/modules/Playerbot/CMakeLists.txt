@@ -353,6 +353,16 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.h
 
+    # Network Packet Sniffer - Centralized Event Detection System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
+
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.h
@@ -741,6 +751,17 @@ source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.h
+)
+
+source_group("Network" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
 )
 
 source_group("Movement" FILES

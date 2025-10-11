@@ -27,6 +27,7 @@
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
+#include "Network/PlayerbotPacketSniffer.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -174,6 +175,11 @@ bool PlayerbotModule::Initialize()
     Playerbot::ProfessionManager::instance()->Initialize();
     TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
 
+    // Initialize Packet Sniffer (centralized event detection system)
+    TC_LOG_INFO("server.loading", "Initializing Packet Sniffer...");
+    Playerbot::PlayerbotPacketSniffer::Initialize();
+    TC_LOG_INFO("server.loading", "Packet Sniffer initialized successfully");
+
     // Register hooks with TrinityCore
     RegisterHooks();
 
@@ -220,6 +226,10 @@ void PlayerbotModule::Shutdown()
         // Shutdown Bot Packet Relay
         TC_LOG_INFO("server.loading", "Shutting down Bot Packet Relay...");
         Playerbot::BotPacketRelay::Shutdown();
+
+        // Shutdown Packet Sniffer
+        TC_LOG_INFO("server.loading", "Shutting down Packet Sniffer...");
+        Playerbot::PlayerbotPacketSniffer::Shutdown();
 
         // Shutdown Bot World Session Manager
         TC_LOG_INFO("server.loading", "Shutting down Bot World Session Manager...");
