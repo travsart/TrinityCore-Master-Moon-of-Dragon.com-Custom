@@ -170,7 +170,7 @@ public:
     }
 };
 
-void Add_MoDCore_global_chat()
+void AddSC_MoDCore_global_chat()
 {
     new global_chat_commandscript();
     new global_chat_playerscript();

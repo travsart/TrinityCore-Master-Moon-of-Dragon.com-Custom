@@ -75,7 +75,7 @@ private:
     bool alreadyExecuted = false;
 };
 
-void Add_MoDCore_ScheduledShutdownScripts()
+void AddSC_MoDCore_ScheduledShutdownScripts()
 {
     new ScheduledShutdown();
 }

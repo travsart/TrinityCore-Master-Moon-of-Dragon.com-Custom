@@ -837,7 +837,7 @@ private:
     std::map<uint32, float> _unitDifficulty;
 };
 
-void Add_MoDCore_SolocraftScripts()
+void AddSC_MoDCore_SolocraftScripts()
 {
     new SolocraftConfig();
     new SolocraftAnnounce();
