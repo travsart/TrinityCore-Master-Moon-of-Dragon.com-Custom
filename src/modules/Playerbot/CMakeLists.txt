@@ -343,6 +343,16 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
 
+    # Group Event System - Event-Driven Architecture for Group Coordination
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.h
+
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.h
@@ -723,6 +733,14 @@ source_group("AI\\Utilities" FILES
 source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.h
 )
 
 source_group("Movement" FILES
@@ -945,6 +963,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Actions
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers
         ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values
+        ${CMAKE_CURRENT_SOURCE_DIR}/Group
         ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
         ${CMAKE_CURRENT_SOURCE_DIR}/Economy

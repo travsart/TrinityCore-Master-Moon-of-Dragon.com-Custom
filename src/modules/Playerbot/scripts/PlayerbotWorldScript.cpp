@@ -267,6 +267,9 @@ void AddSC_playerbot_commandscript();
 // Forward declaration for Phase 4.1 event scripts
 void AddSC_playerbot_event_scripts();
 
+// Forward declaration for group event scripts
+void AddSC_PlayerbotGroupScripts();
+
 // Script registration function
 void AddSC_playerbot_world()
 {
@@ -278,5 +281,8 @@ void AddSC_playerbot_world()
 
     // Phase 4.1: Register event system scripts (non-invasive hooks)
     AddSC_playerbot_event_scripts();
+
+    // Group Event System: Register group event handlers (ScriptMgr + polling)
+    AddSC_PlayerbotGroupScripts();
     #endif
 }

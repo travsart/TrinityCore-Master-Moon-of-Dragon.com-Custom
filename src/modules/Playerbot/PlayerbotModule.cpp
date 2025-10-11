@@ -26,6 +26,7 @@
 #include "Professions/ProfessionManager.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
+#include "Group/GroupEventBus.h"
 #include "Log.h"
 #include "GitRevision.h"
 
@@ -310,6 +311,9 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
 
     // Update PlayerbotCharacterDBInterface to process sync queue
     sPlayerbotCharDB->Update(diff);
+
+    // Update GroupEventBus to process pending group events
+    Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
 
     }
     catch (std::exception const& ex)
