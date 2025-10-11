@@ -14,9 +14,15 @@
 #include "ObjectGuid.h"
 #include <chrono>
 #include <string>
+#include <vector>
+#include <unordered_map>
+#include <mutex>
+#include <functional>
 
 namespace Playerbot
 {
+
+class BotAI;
 
 enum class LootEventType : uint8
 {
@@ -56,8 +62,35 @@ public:
     static LootEventBus* instance();
     bool PublishEvent(LootEvent const& event);
 
+    // Subscription management
+    using EventHandler = std::function<void(LootEvent const&)>;
+
+    void Subscribe(BotAI* subscriber, std::vector<LootEventType> const& types);
+    void SubscribeAll(BotAI* subscriber);
+    void Unsubscribe(BotAI* subscriber);
+
+    // Direct callback subscriptions (for systems without BotAI)
+    uint32 SubscribeCallback(EventHandler handler, std::vector<LootEventType> const& types);
+    void UnsubscribeCallback(uint32 subscriptionId);
+
 private:
     LootEventBus() = default;
+
+    void DeliverEvent(LootEvent const& event);
+
+    std::unordered_map<LootEventType, std::vector<BotAI*>> _subscribers;
+    std::vector<BotAI*> _globalSubscribers;
+
+    struct CallbackSubscription
+    {
+        uint32 id;
+        EventHandler handler;
+        std::vector<LootEventType> types;
+    };
+    std::vector<CallbackSubscription> _callbackSubscriptions;
+    uint32 _nextCallbackId = 1;
+
+    mutable std::mutex _subscriberMutex;
 };
 
 } // namespace Playerbot
