@@ -14,9 +14,16 @@
 #include "ObjectGuid.h"
 #include <chrono>
 #include <string>
+#include <vector>
+#include <unordered_map>
+#include <queue>
+#include <mutex>
+#include <atomic>
 
 namespace Playerbot
 {
+
+class BotAI;
 
 enum class CooldownEventType : uint8
 {
@@ -29,9 +36,19 @@ enum class CooldownEventType : uint8
     MAX_COOLDOWN_EVENT
 };
 
+enum class CooldownEventPriority : uint8
+{
+    CRITICAL = 0,
+    HIGH = 1,
+    MEDIUM = 2,
+    LOW = 3,
+    BATCH = 4
+};
+
 struct CooldownEvent
 {
     CooldownEventType type;
+    CooldownEventPriority priority;
     ObjectGuid casterGuid;
     uint32 spellId;
     uint32 itemId;
@@ -39,18 +56,100 @@ struct CooldownEvent
     uint32 cooldownMs;
     int32 modRateMs;
     std::chrono::steady_clock::time_point timestamp;
+    std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
+    bool IsExpired() const;
     std::string ToString() const;
+
+    // Helper constructors
+    static CooldownEvent SpellCooldownStart(ObjectGuid caster, uint32 spellId, uint32 cooldownMs);
+    static CooldownEvent SpellCooldownClear(ObjectGuid caster, uint32 spellId);
+    static CooldownEvent ItemCooldownStart(ObjectGuid caster, uint32 itemId, uint32 cooldownMs);
+
+    // Priority comparison for priority queue
+    bool operator<(CooldownEvent const& other) const
+    {
+        return priority > other.priority; // Higher priority = lower value
+    }
 };
 
 class TC_GAME_API CooldownEventBus
 {
 public:
     static CooldownEventBus* instance();
+
+    // Event publishing
     bool PublishEvent(CooldownEvent const& event);
+
+    // Subscription management
+    bool Subscribe(BotAI* subscriber, std::vector<CooldownEventType> const& types);
+    bool SubscribeAll(BotAI* subscriber);
+    void Unsubscribe(BotAI* subscriber);
+
+    // Event processing
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0);
+    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff);
+    void ClearUnitEvents(ObjectGuid unitGuid);
+
+    // Status queries
+    uint32 GetPendingEventCount() const;
+    uint32 GetSubscriberCount() const;
+
+    // Diagnostics
+    void DumpSubscribers() const;
+    void DumpEventQueue() const;
+    std::vector<CooldownEvent> GetQueueSnapshot() const;
+
+    // Statistics
+    struct Statistics
+    {
+        std::atomic<uint64_t> totalEventsPublished{0};
+        std::atomic<uint64_t> totalEventsProcessed{0};
+        std::atomic<uint64_t> totalEventsDropped{0};
+        std::atomic<uint64_t> totalDeliveries{0};
+        std::atomic<uint64_t> averageProcessingTimeUs{0};
+        std::atomic<uint32_t> peakQueueSize{0};
+        std::chrono::steady_clock::time_point startTime;
+
+        void Reset();
+        std::string ToString() const;
+    };
+
+    Statistics const& GetStatistics() const { return _stats; }
+
 private:
-    CooldownEventBus() = default;
+    CooldownEventBus();
+    ~CooldownEventBus();
+
+    // Event delivery
+    bool DeliverEvent(BotAI* subscriber, CooldownEvent const& event);
+    bool ValidateEvent(CooldownEvent const& event) const;
+    uint32 CleanupExpiredEvents();
+    void UpdateMetrics(std::chrono::microseconds processingTime);
+    void LogEvent(CooldownEvent const& event, std::string const& action) const;
+
+    // Event queue
+    std::priority_queue<CooldownEvent> _eventQueue;
+    mutable std::mutex _queueMutex;
+
+    // Subscriber management
+    std::unordered_map<CooldownEventType, std::vector<BotAI*>> _subscribers;
+    std::vector<BotAI*> _globalSubscribers;
+    mutable std::mutex _subscriberMutex;
+
+    // Configuration
+    static constexpr uint32 MAX_QUEUE_SIZE = 10000;
+    static constexpr uint32 CLEANUP_INTERVAL = 30000; // 30 seconds
+    static constexpr uint32 MAX_SUBSCRIBERS_PER_EVENT = 5000;
+
+    // Timers
+    uint32 _cleanupTimer = 0;
+    uint32 _metricsUpdateTimer = 0;
+
+    // Statistics
+    Statistics _stats;
+    uint32 _maxQueueSize = MAX_QUEUE_SIZE;
 };
 
 } // namespace Playerbot
