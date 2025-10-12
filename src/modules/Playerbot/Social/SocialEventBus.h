@@ -75,6 +75,14 @@ struct SocialEvent
     std::chrono::steady_clock::time_point timestamp;
     std::chrono::steady_clock::time_point expiryTime;
 
+    // Additional fields for various event types
+    std::string senderName;
+    std::string channel;
+    uint32 emoteId = 0;
+    uint32 achievementId = 0;
+    uint64 guildId = 0;
+    uint8 tradeStatus = 0;
+
     bool IsValid() const;
     bool IsExpired() const;
     std::string ToString() const;
@@ -83,6 +91,12 @@ struct SocialEvent
     static SocialEvent ChatReceived(ObjectGuid player, ObjectGuid target, std::string msg, ChatMsg type);
     static SocialEvent WhisperReceived(ObjectGuid player, ObjectGuid target, std::string msg);
     static SocialEvent GroupInvite(ObjectGuid player, ObjectGuid inviter);
+    static SocialEvent MessageChat(ObjectGuid player, ObjectGuid target, std::string senderName, std::string msg, ChatMsg type, Language lang, std::string channel, uint32 achievementId);
+    static SocialEvent EmoteReceived(ObjectGuid player, ObjectGuid target, uint32 emoteId);
+    static SocialEvent TextEmoteReceived(ObjectGuid player, ObjectGuid target, uint32 emoteId);
+    static SocialEvent GuildInviteReceived(ObjectGuid player, ObjectGuid target, std::string inviterName, uint64 guildId);
+    static SocialEvent GuildEventReceived(ObjectGuid player, uint64 guildId, std::string message);
+    static SocialEvent TradeStatusChanged(ObjectGuid partner, ObjectGuid player, uint8 status);
 
     // Priority comparison for priority queue
     bool operator<(SocialEvent const& other) const

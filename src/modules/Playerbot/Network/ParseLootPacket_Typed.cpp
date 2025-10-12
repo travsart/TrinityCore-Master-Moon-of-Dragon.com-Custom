@@ -10,7 +10,7 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "LootEventBus.h"
+#include "../Loot/LootEventBus.h"
 #include "LootPackets.h"
 #include "Log.h"
 
@@ -19,7 +19,7 @@ namespace Playerbot
 
 // ================================================================================================
 // TYPED PACKET HANDLERS - LOOT CATEGORY
-// Full implementation of all 13 loot packets
+// Full implementation of all 11 loot packet handlers
 // ================================================================================================
 
 void ParseTypedLootResponse(WorldSession* session, WorldPackets::Loot::LootResponse const& packet)
@@ -33,14 +33,14 @@ void ParseTypedLootResponse(WorldSession* session, WorldPackets::Loot::LootRespo
 
     LootEvent event;
     event.type = LootEventType::LOOT_WINDOW_OPENED;
-    event.lootGuid = packet.Owner;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
-    event.itemCount = 0;
-    event.money = packet.Coins;
-    event.slot = 0;
-    event.rollType = 0;
+    event.priority = LootEventPriority::HIGH;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.Owner;  // The object being looted
+    event.itemEntry = 0;
+    event.itemCount = packet.Items.size();
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -59,14 +59,14 @@ void ParseTypedLootReleaseResponse(WorldSession* session, WorldPackets::Loot::Lo
 
     LootEvent event;
     event.type = LootEventType::LOOT_WINDOW_CLOSED;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = 0;
     event.itemCount = 0;
-    event.money = 0;
-    event.slot = 0;
-    event.rollType = 0;
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -85,14 +85,14 @@ void ParseTypedLootRemoved(WorldSession* session, WorldPackets::Loot::LootRemove
 
     LootEvent event;
     event.type = LootEventType::LOOT_REMOVED;
-    event.lootGuid = packet.Owner;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.Owner;
+    event.itemEntry = 0;  // Slot ID is in packet.LootListID
     event.itemCount = 0;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = 0;
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -111,45 +111,19 @@ void ParseTypedLootMoneyNotify(WorldSession* session, WorldPackets::Loot::LootMo
 
     LootEvent event;
     event.type = LootEventType::LOOT_MONEY_RECEIVED;
-    event.lootGuid = ObjectGuid::Empty;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
-    event.itemCount = 0;
-    event.money = packet.Money;
-    event.slot = 0;
-    event.rollType = 0;
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = ObjectGuid::Empty;
+    event.itemEntry = 0;
+    event.itemCount = packet.Money;  // Store copper amount in itemCount
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_MONEY_NOTIFY (typed): {} copper, soleLooter={}",
         bot->GetName(), packet.Money, packet.SoleLooter);
-}
-
-void ParseTypedLootSlotChanged(WorldSession* session, WorldPackets::Loot::LootSlotChanged const& packet)
-{
-    if (!session)
-        return;
-
-    Player* bot = session->GetPlayer();
-    if (!bot)
-        return;
-
-    LootEvent event;
-    event.type = LootEventType::LOOT_SLOT_CHANGED;
-    event.lootGuid = packet.Owner;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
-    event.itemCount = 0;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-
-    LootEventBus::instance()->PublishEvent(event);
-
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_SLOT_CHANGED (typed): slot={}",
-        bot->GetName(), packet.LootListID);
 }
 
 void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLootRoll const& packet)
@@ -163,22 +137,22 @@ void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLoo
 
     LootEvent event;
     event.type = LootEventType::LOOT_ROLL_STARTED;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = packet.Item.ItemID;
+    event.priority = LootEventPriority::HIGH;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = 0;
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::milliseconds(packet.RollTime);
 
     LootEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received START_LOOT_ROLL (typed): item={} x{}, rollTime={}ms",
-        bot->GetName(), packet.Item.ItemID, packet.Item.Quantity, packet.RollTime);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received START_LOOT_ROLL (typed): item={} x{}",
+        bot->GetName(), packet.Item.Loot.ItemID, packet.Item.Quantity);
 }
 
-void ParseTypedLootRoll(WorldSession* session, WorldPackets::Loot::LootRoll const& packet)
+void ParseTypedLootRoll(WorldSession* session, WorldPackets::Loot::LootRollBroadcast const& packet)
 {
     if (!session)
         return;
@@ -189,14 +163,14 @@ void ParseTypedLootRoll(WorldSession* session, WorldPackets::Loot::LootRoll cons
 
     LootEvent event;
     event.type = LootEventType::LOOT_ROLL_CAST;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = packet.Player;
-    event.itemId = 0;
-    event.itemCount = 0;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = static_cast<uint8>(packet.RollType);
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = packet.Player;  // The player who rolled
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = packet.Item.Loot.ItemID;
+    event.itemCount = packet.Roll;  // Store roll value in itemCount
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -215,19 +189,19 @@ void ParseTypedLootRollWon(WorldSession* session, WorldPackets::Loot::LootRollWo
 
     LootEvent event;
     event.type = LootEventType::LOOT_ROLL_WON;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = packet.Player;
-    event.itemId = packet.Item.ItemID;
+    event.priority = LootEventPriority::HIGH;
+    event.looterGuid = packet.Winner;  // The player who won
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = static_cast<uint8>(packet.RollType);
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ROLL_WON (typed): player={}, item={}, roll={}",
-        bot->GetName(), packet.Player.ToString(), packet.Item.ItemID, packet.Roll);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ROLL_WON (typed): winner={}, item={}, roll={}",
+        bot->GetName(), packet.Winner.ToString(), packet.Item.Loot.ItemID, packet.Roll);
 }
 
 void ParseTypedLootAllPassed(WorldSession* session, WorldPackets::Loot::LootAllPassed const& packet)
@@ -241,19 +215,19 @@ void ParseTypedLootAllPassed(WorldSession* session, WorldPackets::Loot::LootAllP
 
     LootEvent event;
     event.type = LootEventType::LOOT_ALL_PASSED;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = packet.Item.ItemID;
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
-    event.money = 0;
-    event.slot = packet.LootListID;
-    event.rollType = 0;
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ALL_PASSED (typed): item={}",
-        bot->GetName(), packet.Item.ItemID);
+        bot->GetName(), packet.Item.Loot.ItemID);
 }
 
 void ParseTypedMasterLootCandidateList(WorldSession* session, WorldPackets::Loot::MasterLootCandidateList const& packet)
@@ -267,14 +241,14 @@ void ParseTypedMasterLootCandidateList(WorldSession* session, WorldPackets::Loot
 
     LootEvent event;
     event.type = LootEventType::MASTER_LOOT_LIST;
-    event.lootGuid = packet.LootObj;
-    event.playerGuid = bot->GetGUID();
-    event.itemId = 0;
-    event.itemCount = 0;
-    event.money = 0;
-    event.slot = 0;
-    event.rollType = 0;
+    event.priority = LootEventPriority::MEDIUM;
+    event.looterGuid = bot->GetGUID();
+    event.itemGuid = packet.LootObj;
+    event.itemEntry = 0;
+    event.itemCount = packet.Players.size();
+    event.lootType = LootType::CORPSE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -293,7 +267,7 @@ void ParseTypedLootList(WorldSession* session, WorldPackets::Loot::LootList cons
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_LIST (typed): owner={}, master={}",
         bot->GetName(), packet.Owner.ToString(),
-        packet.Master.IsEmpty() ? "none" : packet.Master.ToString());
+        packet.Master.has_value() ? packet.Master.value().ToString() : "none");
 }
 
 // ================================================================================================
@@ -306,15 +280,14 @@ void RegisterLootPacketHandlers()
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootReleaseResponse>(&ParseTypedLootReleaseResponse);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootRemoved>(&ParseTypedLootRemoved);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootMoneyNotify>(&ParseTypedLootMoneyNotify);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootSlotChanged>(&ParseTypedLootSlotChanged);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::StartLootRoll>(&ParseTypedStartLootRoll);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootRoll>(&ParseTypedLootRoll);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootRollBroadcast>(&ParseTypedLootRoll);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootRollWon>(&ParseTypedLootRollWon);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootAllPassed>(&ParseTypedLootAllPassed);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::MasterLootCandidateList>(&ParseTypedMasterLootCandidateList);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Loot::LootList>(&ParseTypedLootList);
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Loot packet typed handlers", 11);
+    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Loot packet typed handlers", 10);
 }
 
 } // namespace Playerbot

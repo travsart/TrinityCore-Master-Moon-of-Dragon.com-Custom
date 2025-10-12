@@ -37,6 +37,7 @@
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Player.h"
+#include "ObjectAccessor.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Log.h"
@@ -209,9 +210,9 @@ void BotAI::ProcessCombatInterrupt(CombatEvent const& event)
     if (!caster || !caster->IsHostileTo(_bot))
         return;
 
-    // Check if spell is interruptible
+    // Check if spell is interruptible (WoW 11.2: check InterruptFlags)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(event.spellId, DIFFICULTY_NONE);
-    if (!spellInfo || !spellInfo->IsInterruptible())
+    if (!spellInfo || spellInfo->InterruptFlags == SpellInterruptFlags::None)
         return;
 
     TC_LOG_TRACE("playerbot.events.combat", "Bot {}: Detected interruptible cast {} from {}",
@@ -303,12 +304,12 @@ void BotAI::OnLootEvent(LootEvent const& event)
 
         case LootEventType::LOOT_ITEM_RECEIVED:
             TC_LOG_DEBUG("playerbot.events.loot", "Bot {}: Received item {} x{}",
-                _bot->GetName(), event.itemId, event.itemCount);
+                _bot->GetName(), event.itemEntry, event.itemCount);
             break;
 
         case LootEventType::LOOT_MONEY_RECEIVED:
             TC_LOG_TRACE("playerbot.events.loot", "Bot {}: Received {} copper",
-                _bot->GetName(), event.money);
+                _bot->GetName(), event.itemCount);
             break;
 
         default:
@@ -327,7 +328,7 @@ void BotAI::ProcessLootRoll(LootEvent const& event)
     // - Group loot rules
 
     TC_LOG_DEBUG("playerbot.events.loot", "Bot {}: Loot roll started for item {}",
-        _bot->GetName(), event.itemId);
+        _bot->GetName(), event.itemEntry);
 
     // For now, default to greed on everything
     // ClassAI can override for smarter rolling
@@ -360,9 +361,9 @@ void BotAI::ProcessQuestProgress(QuestEvent const& event)
 
     switch (event.type)
     {
-        case QuestEventType::QUEST_OFFERED:
+        case QuestEventType::QUEST_CONFIRM_ACCEPT:
             // Auto-accept appropriate quests
-            TC_LOG_DEBUG("playerbot.events.quest", "Bot {}: Quest {} offered",
+            TC_LOG_DEBUG("playerbot.events.quest", "Bot {}: Quest {} offered for acceptance",
                 _bot->GetName(), event.questId);
             break;
 
@@ -372,9 +373,9 @@ void BotAI::ProcessQuestProgress(QuestEvent const& event)
                 _bot->GetName(), event.questId);
             break;
 
-        case QuestEventType::QUEST_OBJECTIVE_PROGRESS:
+        case QuestEventType::QUEST_OBJECTIVE_COMPLETE:
             // Track quest progress
-            TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest {} progress update",
+            TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest {} objective progress",
                 _bot->GetName(), event.questId);
             break;
 
@@ -402,12 +403,12 @@ void BotAI::OnResourceEvent(ResourceEvent const& event)
         case ResourceEventType::POWER_UPDATE:
             // Track power levels for resource management
             TC_LOG_TRACE("playerbot.events.resource", "Bot {}: Unit {} power update",
-                _bot->GetName(), event.unitGuid.ToString());
+                _bot->GetName(), event.playerGuid.ToString());
             break;
 
         case ResourceEventType::BREAK_TARGET:
             // Target selection broken, need new target
-            if (event.unitGuid == _bot->GetGUID())
+            if (event.playerGuid == _bot->GetGUID())
             {
                 TC_LOG_DEBUG("playerbot.events.resource", "Bot {}: Target broken",
                     _bot->GetName());
@@ -424,11 +425,14 @@ void BotAI::ProcessLowHealthAlert(ResourceEvent const& event)
     if (!_bot || event.type != ResourceEventType::HEALTH_UPDATE)
         return;
 
-    // Check if health is critically low
-    if (!event.IsLowHealth(30.0f))
+    // Calculate health percentage
+    float healthPercent = event.maxAmount > 0 ? (static_cast<float>(event.amount) / event.maxAmount * 100.0f) : 0.0f;
+
+    // Check if health is critically low (below 30%)
+    if (healthPercent > 30.0f)
         return;
 
-    Unit* target = ObjectAccessor::GetUnit(*_bot, event.unitGuid);
+    Unit* target = ObjectAccessor::GetUnit(*_bot, event.playerGuid);
     if (!target)
         return;
 
@@ -439,7 +443,7 @@ void BotAI::ProcessLowHealthAlert(ResourceEvent const& event)
     TC_LOG_DEBUG("playerbot.events.resource", "Bot {}: LOW HEALTH ALERT - {} at {:.1f}%",
         _bot->GetName(),
         target->GetName(),
-        event.GetHealthPercent());
+        healthPercent);
 
     // Note: Actual healing response is handled by ClassAI (healers)
     // or defensive cooldown usage (self-healing)
@@ -458,10 +462,10 @@ void BotAI::OnSocialEvent(SocialEvent const& event)
     {
         case SocialEventType::MESSAGE_CHAT:
             // Process chat messages for commands
-            if (event.IsWhisper() && event.targetGuid == _bot->GetGUID())
+            if (event.chatType == ChatMsg::CHAT_MSG_WHISPER && event.targetGuid == _bot->GetGUID())
             {
                 TC_LOG_DEBUG("playerbot.events.social", "Bot {}: Whisper from {}: {}",
-                    _bot->GetName(), event.senderName, event.message);
+                    _bot->GetName(), event.playerGuid.ToString(), event.message);
                 // TODO: Parse for bot commands
             }
             break;
@@ -469,7 +473,7 @@ void BotAI::OnSocialEvent(SocialEvent const& event)
         case SocialEventType::GUILD_INVITE_RECEIVED:
             // Handle guild invites
             TC_LOG_DEBUG("playerbot.events.social", "Bot {}: Guild invite from {}",
-                _bot->GetName(), event.senderGuid.ToString());
+                _bot->GetName(), event.playerGuid.ToString());
             // TODO: Auto-accept guild invites from master
             break;
 

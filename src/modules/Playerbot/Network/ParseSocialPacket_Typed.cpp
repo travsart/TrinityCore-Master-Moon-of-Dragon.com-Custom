@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "SocialEventBus.h"
+#include "../Social/SocialEventBus.h"
 #include "ChatPackets.h"
 #include "GuildPackets.h"
 #include "TradePackets.h"
@@ -36,8 +36,8 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
         bot->GetGUID(),
         packet.SenderName,
         packet.ChatText,
-        packet.SlashCmd,          // ChatMsg enum
-        packet._Language,
+        static_cast<ChatMsg>(packet.SlashCmd),  // WoW 11.2: SlashCmd is uint8, cast to ChatMsg enum
+        static_cast<Language>(packet._Language),
         packet._Channel,
         packet.AchievementID
     );
@@ -167,7 +167,7 @@ void ParseTypedTradeStatus(WorldSession* session, WorldPackets::Trade::TradeStat
         return;
 
     SocialEvent event = SocialEvent::TradeStatusChanged(
-        packet.PartnerGuid,
+        packet.Partner,  // WoW 11.2: Field is Partner, not PartnerGuid
         bot->GetGUID(),
         static_cast<uint8>(packet.Status)
     );
@@ -175,7 +175,7 @@ void ParseTypedTradeStatus(WorldSession* session, WorldPackets::Trade::TradeStat
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRADE_STATUS (typed): partner={}, status={}",
-        bot->GetName(), packet.PartnerGuid.ToString(), uint32(packet.Status));
+        bot->GetName(), packet.Partner.ToString(), static_cast<uint32>(packet.Status));
 }
 
 /**

@@ -10,8 +10,9 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "QuestEventBus.h"
+#include "../Quest/QuestEventBus.h"
 #include "QuestPackets.h"
+#include "QueryPackets.h"  // WoW 11.2: QuestPOIQueryResponse is in Query namespace
 #include "Log.h"
 
 namespace Playerbot
@@ -33,17 +34,19 @@ void ParseTypedQuestGiverStatus(WorldSession* session, WorldPackets::Quest::Ques
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_GIVER_STATUS;
-    event.npcGuid = packet.QuestGiver.Guid;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = 0;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_STATUS (typed): npc={}, status={}",
-        bot->GetName(), packet.QuestGiver.Guid.ToString(), static_cast<uint32>(packet.StatusFlags));
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_STATUS (typed): npc={}",
+        bot->GetName(), packet.QuestGiver.Guid.ToString());
 }
 
 void ParseTypedQuestGiverQuestListMessage(WorldSession* session, WorldPackets::Quest::QuestGiverQuestListMessage const& packet)
@@ -57,17 +60,19 @@ void ParseTypedQuestGiverQuestListMessage(WorldSession* session, WorldPackets::Q
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_LIST_RECEIVED;
-    event.npcGuid = packet.QuestGiverGUID;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = 0;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_LIST (typed): {} quests available",
-        bot->GetName(), packet.QuestDataContainers.size());
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_LIST (typed): npc={}",
+        bot->GetName(), packet.QuestGiverGUID.ToString());
 }
 
 void ParseTypedQuestGiverQuestDetails(WorldSession* session, WorldPackets::Quest::QuestGiverQuestDetails const& packet)
@@ -81,12 +86,14 @@ void ParseTypedQuestGiverQuestDetails(WorldSession* session, WorldPackets::Quest
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_DETAILS_RECEIVED;
-    event.npcGuid = packet.QuestGiverGUID;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -105,12 +112,14 @@ void ParseTypedQuestGiverRequestItems(WorldSession* session, WorldPackets::Quest
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_REQUEST_ITEMS;
-    event.npcGuid = packet.QuestGiverGUID;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -129,17 +138,19 @@ void ParseTypedQuestGiverOfferRewardMessage(WorldSession* session, WorldPackets:
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_OFFER_REWARD;
-    event.npcGuid = packet.QuestGiverGUID;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
-    event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.questId = packet.QuestData.QuestID;  // WoW 11.2: QuestID is in nested QuestData
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_OFFER_REWARD (typed): quest={}",
-        bot->GetName(), packet.QuestID);
+        bot->GetName(), packet.QuestData.QuestID);
 }
 
 void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Quest::QuestGiverQuestComplete const& packet)
@@ -153,12 +164,14 @@ void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Ques
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_COMPLETED;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::HIGH;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::COMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -177,12 +190,14 @@ void ParseTypedQuestGiverQuestFailed(WorldSession* session, WorldPackets::Quest:
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_FAILED;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::HIGH;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::COMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -201,12 +216,14 @@ void ParseTypedQuestUpdateAddCreditSimple(WorldSession* session, WorldPackets::Q
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_CREDIT_ADDED;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = packet.ObjectID;
-    event.creditCount = 1;
+    event.objectiveId = packet.ObjectID;
+    event.objectiveCount = 1;
+    event.state = QuestState::INCOMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -225,12 +242,14 @@ void ParseTypedQuestUpdateAddCredit(WorldSession* session, WorldPackets::Quest::
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_CREDIT_ADDED;
-    event.npcGuid = packet.VictimGUID;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = packet.ObjectID;
-    event.creditCount = packet.Count;
+    event.objectiveId = packet.ObjectID;
+    event.objectiveCount = packet.Count;
+    event.state = QuestState::INCOMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -249,12 +268,14 @@ void ParseTypedQuestUpdateComplete(WorldSession* session, WorldPackets::Quest::Q
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_OBJECTIVE_COMPLETE;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::HIGH;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::COMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -262,29 +283,7 @@ void ParseTypedQuestUpdateComplete(WorldSession* session, WorldPackets::Quest::Q
         bot->GetName(), packet.QuestID);
 }
 
-void ParseTypedQuestUpdateFailed(WorldSession* session, WorldPackets::Quest::QuestUpdateFailed const& packet)
-{
-    if (!session)
-        return;
-
-    Player* bot = session->GetPlayer();
-    if (!bot)
-        return;
-
-    QuestEvent event;
-    event.type = QuestEventType::QUEST_UPDATE_FAILED;
-    event.npcGuid = ObjectGuid::Empty;
-    event.playerGuid = bot->GetGUID();
-    event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-
-    QuestEventBus::instance()->PublishEvent(event);
-
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_UPDATE_FAILED (typed): quest={}",
-        bot->GetName(), packet.QuestID);
-}
+// QuestUpdateFailed packet doesn't exist in WoW 11.2 - removed
 
 void ParseTypedQuestUpdateFailedTimer(WorldSession* session, WorldPackets::Quest::QuestUpdateFailedTimer const& packet)
 {
@@ -297,12 +296,14 @@ void ParseTypedQuestUpdateFailedTimer(WorldSession* session, WorldPackets::Quest
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_UPDATE_FAILED;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::HIGH;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::COMPLETE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -321,12 +322,14 @@ void ParseTypedQuestConfirmAccept(WorldSession* session, WorldPackets::Quest::Qu
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_CONFIRM_ACCEPT;
-    event.npcGuid = packet.InitiatedBy;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = packet.QuestID;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -334,7 +337,7 @@ void ParseTypedQuestConfirmAccept(WorldSession* session, WorldPackets::Quest::Qu
         bot->GetName(), packet.QuestID);
 }
 
-void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Quest::QuestPOIQueryResponse const& packet)
+void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query::QuestPOIQueryResponse const& packet)  // WoW 11.2: In Query namespace
 {
     if (!session)
         return;
@@ -345,17 +348,19 @@ void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Quest:
 
     QuestEvent event;
     event.type = QuestEventType::QUEST_POI_RECEIVED;
-    event.npcGuid = ObjectGuid::Empty;
+    event.priority = QuestEventPriority::MEDIUM;
     event.playerGuid = bot->GetGUID();
     event.questId = 0;
-    event.creditEntry = 0;
-    event.creditCount = 0;
+    event.objectiveId = 0;
+    event.objectiveCount = 0;
+    event.state = QuestState::NONE;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_POI_QUERY_RESPONSE (typed): {} POIs",
-        bot->GetName(), packet.QuestPOIData.size());
+        bot->GetName(), packet.QuestPOIDataStats.size());  // WoW 11.2: Field is QuestPOIDataStats, not QuestPOIData
 }
 
 // ================================================================================================
@@ -374,12 +379,12 @@ void RegisterQuestPacketHandlers()
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateAddCreditSimple>(&ParseTypedQuestUpdateAddCreditSimple);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateAddCredit>(&ParseTypedQuestUpdateAddCredit);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateComplete>(&ParseTypedQuestUpdateComplete);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateFailed>(&ParseTypedQuestUpdateFailed);
+    // QuestUpdateFailed doesn't exist in WoW 11.2 - removed
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestUpdateFailedTimer>(&ParseTypedQuestUpdateFailedTimer);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestConfirmAccept>(&ParseTypedQuestConfirmAccept);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Quest::QuestPOIQueryResponse>(&ParseTypedQuestPOIQueryResponse);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Query::QuestPOIQueryResponse>(&ParseTypedQuestPOIQueryResponse);  // WoW 11.2: Moved to Query namespace
 
-    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Quest packet typed handlers", 14);
+    TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Quest packet typed handlers", 13);
 }
 
 } // namespace Playerbot

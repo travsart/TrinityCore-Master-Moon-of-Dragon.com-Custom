@@ -10,9 +10,10 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "CombatEventBus.h"
+#include "../Combat/CombatEventBus.h"
 #include "SpellPackets.h"
 #include "CombatPackets.h"
+#include "CombatLogPackets.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -36,9 +37,14 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
     if (!bot)
         return;
 
+    // WoW 11.2: TargetGUID removed, extract from Target.Unit or HitTargets[0]
+    ObjectGuid targetGuid = packet.Cast.Target.Unit;
+    if (targetGuid.IsEmpty() && !packet.Cast.HitTargets.empty())
+        targetGuid = packet.Cast.HitTargets[0];
+
     CombatEvent event = CombatEvent::SpellCastStart(
         packet.Cast.CasterGUID,
-        packet.Cast.TargetGUID,
+        targetGuid,
         packet.Cast.SpellID,
         packet.Cast.CastTime
     );
@@ -46,7 +52,7 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
     CombatEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_START (typed): caster={}, target={}, spell={}, castTime={}ms",
-        bot->GetName(), packet.Cast.CasterGUID.ToString(), packet.Cast.TargetGUID.ToString(),
+        bot->GetName(), packet.Cast.CasterGUID.ToString(), targetGuid.ToString(),
         packet.Cast.SpellID, packet.Cast.CastTime);
 }
 
@@ -63,16 +69,21 @@ void ParseTypedSpellGo(WorldSession* session, WorldPackets::Spells::SpellGo cons
     if (!bot)
         return;
 
+    // WoW 11.2: TargetGUID removed, extract from Target.Unit or HitTargets[0]
+    ObjectGuid targetGuid = packet.Cast.Target.Unit;
+    if (targetGuid.IsEmpty() && !packet.Cast.HitTargets.empty())
+        targetGuid = packet.Cast.HitTargets[0];
+
     CombatEvent event = CombatEvent::SpellCastGo(
         packet.Cast.CasterGUID,
-        packet.Cast.TargetGUID,
+        targetGuid,
         packet.Cast.SpellID
     );
 
     CombatEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_GO (typed): caster={}, spell={}",
-        bot->GetName(), packet.Cast.CasterGUID.ToString(), packet.Cast.SpellID);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_GO (typed): caster={}, target={}, spell={}",
+        bot->GetName(), packet.Cast.CasterGUID.ToString(), targetGuid.ToString(), packet.Cast.SpellID);
 }
 
 /**
@@ -140,7 +151,7 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
 /**
  * Spell Energize - Typed Handler
  */
-void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::Spells::SpellEnergizeLog const& packet)
+void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::CombatLog::SpellEnergizeLog const& packet)
 {
     if (!session)
         return;
@@ -173,7 +184,7 @@ void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::Spells::SpellE
  * Spell Interrupt - Typed Handler
  * CRITICAL for interrupt coordination
  */
-void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::Spells::SpellInterruptLog const& packet)
+void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::CombatLog::SpellInterruptLog const& packet)
 {
     if (!session)
         return;
@@ -186,20 +197,20 @@ void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::Spells::Spell
         packet.Caster,
         packet.Victim,
         packet.InterruptedSpellID,
-        packet.InterruptingSpellID
+        packet.SpellID  // WoW 11.2: Field is SpellID, not InterruptingSpellID
     );
 
     CombatEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_INTERRUPT (typed): interrupter={}, victim={}, interruptedSpell={}, interruptSpell={}",
         bot->GetName(), packet.Caster.ToString(), packet.Victim.ToString(),
-        packet.InterruptedSpellID, packet.InterruptingSpellID);
+        packet.InterruptedSpellID, packet.SpellID);
 }
 
 /**
  * Spell Dispel - Typed Handler
  */
-void ParseTypedSpellDispel(WorldSession* session, WorldPackets::Spells::SpellDispellLog const& packet)
+void ParseTypedSpellDispel(WorldSession* session, WorldPackets::CombatLog::SpellDispellLog const& packet)
 {
     if (!session)
         return;
@@ -214,7 +225,7 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::Spells::SpellDis
         CombatEvent event;
         event.type = CombatEventType::SPELL_DISPELLED;
         event.priority = CombatEventPriority::HIGH;
-        event.casterGuid = packet.DispellerGUID;
+        event.casterGuid = packet.CasterGUID;  // WoW 11.2: Field is CasterGUID, not DispellerGUID
         event.targetGuid = packet.TargetGUID;
         event.victimGuid = packet.TargetGUID;
         event.spellId = packet.DispelledBySpellID;
@@ -228,7 +239,7 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::Spells::SpellDis
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_DISPEL (typed): dispeller={}, target={}, dispelSpell={}, count={}",
-        bot->GetName(), packet.DispellerGUID.ToString(), packet.TargetGUID.ToString(),
+        bot->GetName(), packet.CasterGUID.ToString(), packet.TargetGUID.ToString(),
         packet.DispelledBySpellID, packet.DispellData.size());
 }
 
@@ -257,8 +268,9 @@ void ParseTypedAttackStart(WorldSession* session, WorldPackets::Combat::AttackSt
 
 /**
  * Attack Stop - Typed Handler
+ * WoW 11.2: Server packet is SAttackStop, not AttackStop (which is client packet)
  */
-void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::AttackStop const& packet)
+void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::SAttackStop const& packet)
 {
     if (!session)
         return;
@@ -267,16 +279,17 @@ void ParseTypedAttackStop(WorldSession* session, WorldPackets::Combat::AttackSto
     if (!bot)
         return;
 
+    // WoW 11.2: SAttackStop only has Attacker and Victim, no NowDead field
     CombatEvent event = CombatEvent::AttackStop(
         packet.Attacker,
         packet.Victim,
-        packet.NowDead
+        false  // NowDead field doesn't exist in WoW 11.2
     );
 
     CombatEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received ATTACK_STOP (typed): attacker={}, victim={}, nowDead={}",
-        bot->GetName(), packet.Attacker.ToString(), packet.Victim.ToString(), packet.NowDead);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received ATTACK_STOP (typed): attacker={}, victim={}",
+        bot->GetName(), packet.Attacker.ToString(), packet.Victim.ToString());
 }
 
 /**
@@ -322,11 +335,11 @@ void RegisterCombatPacketHandlers()
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellGo>(&ParseTypedSpellGo);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellFailure>(&ParseTypedSpellFailure);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellFailedOther>(&ParseTypedSpellFailedOther);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellEnergizeLog>(&ParseTypedSpellEnergize);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellInterruptLog>(&ParseTypedSpellInterrupt);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Spells::SpellDispellLog>(&ParseTypedSpellDispel);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::CombatLog::SpellEnergizeLog>(&ParseTypedSpellEnergize);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::CombatLog::SpellInterruptLog>(&ParseTypedSpellInterrupt);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::CombatLog::SpellDispellLog>(&ParseTypedSpellDispel);
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::AttackStart>(&ParseTypedAttackStart);
-    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::AttackStop>(&ParseTypedAttackStop);
+    PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::SAttackStop>(&ParseTypedAttackStop);  // WoW 11.2: SAttackStop is server packet
     PlayerbotPacketSniffer::RegisterTypedHandler<WorldPackets::Combat::AIReaction>(&ParseTypedAIReaction);
 
     TC_LOG_INFO("playerbot", "PlayerbotPacketSniffer: Registered {} Combat packet typed handlers", 10);

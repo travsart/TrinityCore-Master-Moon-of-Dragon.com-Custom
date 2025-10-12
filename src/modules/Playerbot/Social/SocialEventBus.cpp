@@ -17,106 +17,143 @@ namespace Playerbot
 {
 
 // Factory methods
-SocialEvent SocialEvent::MessageChat(ObjectGuid senderGuid, ObjectGuid targetGuid,
-    std::string senderName, std::string message, uint32 chatType, uint32 language,
-    std::string channelName, uint32 achievementId)
+SocialEvent SocialEvent::ChatReceived(ObjectGuid player, ObjectGuid target, std::string msg, ChatMsg type)
 {
     SocialEvent event;
     event.type = SocialEventType::MESSAGE_CHAT;
-    event.senderGuid = senderGuid;
-    event.targetGuid = targetGuid;
-    event.senderName = std::move(senderName);
-    event.message = std::move(message);
-    event.chatType = chatType;
-    event.language = language;
-    event.channelName = std::move(channelName);
-    event.achievementId = achievementId;
-    event.emoteId = 0;
-    event.guildId = 0;
-    event.tradeStatus = 0;
+    event.priority = SocialEventPriority::MEDIUM;
+    event.playerGuid = player;
+    event.targetGuid = target;
+    event.message = std::move(msg);
+    event.chatType = type;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
     return event;
 }
 
-SocialEvent SocialEvent::EmoteReceived(ObjectGuid senderGuid, ObjectGuid targetGuid, uint32 emoteId)
+SocialEvent SocialEvent::WhisperReceived(ObjectGuid player, ObjectGuid target, std::string msg)
+{
+    SocialEvent event;
+    event.type = SocialEventType::MESSAGE_CHAT;
+    event.priority = SocialEventPriority::HIGH;
+    event.playerGuid = player;
+    event.targetGuid = target;
+    event.message = std::move(msg);
+    event.chatType = ChatMsg::CHAT_MSG_WHISPER;
+    event.language = Language::LANG_UNIVERSAL;
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    return event;
+}
+
+SocialEvent SocialEvent::GroupInvite(ObjectGuid player, ObjectGuid inviter)
+{
+    SocialEvent event;
+    event.type = SocialEventType::GUILD_INVITE_RECEIVED;  // Generic invite event
+    event.priority = SocialEventPriority::HIGH;
+    event.playerGuid = player;
+    event.targetGuid = inviter;
+    event.message = "";
+    event.chatType = ChatMsg::CHAT_MSG_PARTY;
+    event.language = Language::LANG_UNIVERSAL;
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(60);
+    return event;
+}
+
+SocialEvent SocialEvent::MessageChat(ObjectGuid player, ObjectGuid target, std::string senderName, std::string msg, ChatMsg type, Language lang, std::string channel, uint32 achievementId)
+{
+    SocialEvent event;
+    event.type = SocialEventType::MESSAGE_CHAT;
+    event.priority = (type == ChatMsg::CHAT_MSG_WHISPER) ? SocialEventPriority::HIGH : SocialEventPriority::MEDIUM;
+    event.playerGuid = player;
+    event.targetGuid = target;
+    event.senderName = std::move(senderName);
+    event.message = std::move(msg);
+    event.chatType = type;
+    event.language = lang;
+    event.channel = std::move(channel);
+    event.achievementId = achievementId;
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    return event;
+}
+
+SocialEvent SocialEvent::EmoteReceived(ObjectGuid player, ObjectGuid target, uint32 emoteId)
 {
     SocialEvent event;
     event.type = SocialEventType::EMOTE_RECEIVED;
-    event.senderGuid = senderGuid;
-    event.targetGuid = targetGuid;
+    event.priority = SocialEventPriority::LOW;
+    event.playerGuid = player;
+    event.targetGuid = target;
     event.emoteId = emoteId;
-    event.chatType = 0;
-    event.language = 0;
-    event.achievementId = 0;
-    event.guildId = 0;
-    event.tradeStatus = 0;
+    event.chatType = ChatMsg::CHAT_MSG_SAY;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
     return event;
 }
 
-SocialEvent SocialEvent::TextEmoteReceived(ObjectGuid senderGuid, ObjectGuid targetGuid, uint32 emoteId)
+SocialEvent SocialEvent::TextEmoteReceived(ObjectGuid player, ObjectGuid target, uint32 emoteId)
 {
     SocialEvent event;
     event.type = SocialEventType::TEXT_EMOTE_RECEIVED;
-    event.senderGuid = senderGuid;
-    event.targetGuid = targetGuid;
+    event.priority = SocialEventPriority::LOW;
+    event.playerGuid = player;
+    event.targetGuid = target;
     event.emoteId = emoteId;
-    event.chatType = 0;
-    event.language = 0;
-    event.achievementId = 0;
-    event.guildId = 0;
-    event.tradeStatus = 0;
+    event.chatType = ChatMsg::CHAT_MSG_SAY;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(10);
     return event;
 }
 
-SocialEvent SocialEvent::GuildInviteReceived(ObjectGuid inviterGuid, ObjectGuid botGuid,
-    std::string inviterName, uint32 guildId)
+SocialEvent SocialEvent::GuildInviteReceived(ObjectGuid player, ObjectGuid target, std::string inviterName, uint64 guildId)
 {
     SocialEvent event;
     event.type = SocialEventType::GUILD_INVITE_RECEIVED;
-    event.senderGuid = inviterGuid;
-    event.targetGuid = botGuid;
+    event.priority = SocialEventPriority::HIGH;
+    event.playerGuid = player;
+    event.targetGuid = target;
     event.senderName = std::move(inviterName);
     event.guildId = guildId;
-    event.chatType = 0;
-    event.language = 0;
-    event.emoteId = 0;
-    event.achievementId = 0;
-    event.tradeStatus = 0;
+    event.chatType = ChatMsg::CHAT_MSG_GUILD;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(60);
     return event;
 }
 
-SocialEvent SocialEvent::GuildEventReceived(ObjectGuid botGuid, uint32 guildId, std::string message)
+SocialEvent SocialEvent::GuildEventReceived(ObjectGuid player, uint64 guildId, std::string message)
 {
     SocialEvent event;
     event.type = SocialEventType::GUILD_EVENT_RECEIVED;
-    event.targetGuid = botGuid;
+    event.priority = SocialEventPriority::MEDIUM;
+    event.playerGuid = player;
+    event.targetGuid = ObjectGuid::Empty;
     event.guildId = guildId;
     event.message = std::move(message);
-    event.chatType = 0;
-    event.language = 0;
-    event.emoteId = 0;
-    event.achievementId = 0;
-    event.tradeStatus = 0;
+    event.chatType = ChatMsg::CHAT_MSG_GUILD;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);
     return event;
 }
 
-SocialEvent SocialEvent::TradeStatusChanged(ObjectGuid traderGuid, ObjectGuid botGuid, uint8 tradeStatus)
+SocialEvent SocialEvent::TradeStatusChanged(ObjectGuid partner, ObjectGuid player, uint8 status)
 {
     SocialEvent event;
     event.type = SocialEventType::TRADE_STATUS_CHANGED;
-    event.senderGuid = traderGuid;
-    event.targetGuid = botGuid;
-    event.tradeStatus = tradeStatus;
-    event.chatType = 0;
-    event.language = 0;
-    event.emoteId = 0;
-    event.guildId = 0;
-    event.achievementId = 0;
+    event.priority = SocialEventPriority::HIGH;
+    event.playerGuid = player;
+    event.targetGuid = partner;
+    event.tradeStatus = status;
+    event.chatType = ChatMsg::CHAT_MSG_SAY;
+    event.language = Language::LANG_UNIVERSAL;
     event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(60);
     return event;
 }
 
@@ -128,19 +165,24 @@ bool SocialEvent::IsValid() const
     switch (type)
     {
         case SocialEventType::MESSAGE_CHAT:
-            return !senderGuid.IsEmpty() && !message.empty();
+            return !playerGuid.IsEmpty() && !message.empty();
         case SocialEventType::EMOTE_RECEIVED:
         case SocialEventType::TEXT_EMOTE_RECEIVED:
-            return !senderGuid.IsEmpty() && emoteId > 0;
+            return !playerGuid.IsEmpty();
         case SocialEventType::GUILD_INVITE_RECEIVED:
-            return !senderGuid.IsEmpty() && !targetGuid.IsEmpty();
+            return !playerGuid.IsEmpty() && !targetGuid.IsEmpty();
         case SocialEventType::GUILD_EVENT_RECEIVED:
-            return !targetGuid.IsEmpty() && guildId > 0;
+            return !playerGuid.IsEmpty();
         case SocialEventType::TRADE_STATUS_CHANGED:
-            return !targetGuid.IsEmpty();
+            return !playerGuid.IsEmpty();
         default:
             return false;
     }
+}
+
+bool SocialEvent::IsExpired() const
+{
+    return std::chrono::steady_clock::now() > expiryTime;
 }
 
 std::string SocialEvent::ToString() const
@@ -151,25 +193,30 @@ std::string SocialEvent::ToString() const
     switch (type)
     {
         case SocialEventType::MESSAGE_CHAT:
-            oss << "MESSAGE_CHAT, sender=" << senderName << ", type=" << chatType
-                << ", msg=" << message.substr(0, 50);
-            if (!channelName.empty())
-                oss << ", channel=" << channelName;
+            oss << "MESSAGE_CHAT, player=" << playerGuid.ToString()
+                << ", target=" << targetGuid.ToString()
+                << ", type=" << static_cast<uint32>(chatType)
+                << ", msg=" << (message.length() > 50 ? message.substr(0, 50) + "..." : message);
             break;
         case SocialEventType::EMOTE_RECEIVED:
-            oss << "EMOTE_RECEIVED, sender=" << senderGuid.ToString() << ", emote=" << emoteId;
+            oss << "EMOTE_RECEIVED, player=" << playerGuid.ToString()
+                << ", target=" << targetGuid.ToString();
             break;
         case SocialEventType::TEXT_EMOTE_RECEIVED:
-            oss << "TEXT_EMOTE_RECEIVED, sender=" << senderGuid.ToString() << ", emote=" << emoteId;
+            oss << "TEXT_EMOTE_RECEIVED, player=" << playerGuid.ToString()
+                << ", target=" << targetGuid.ToString();
             break;
         case SocialEventType::GUILD_INVITE_RECEIVED:
-            oss << "GUILD_INVITE_RECEIVED, inviter=" << senderName << ", guild=" << guildId;
+            oss << "GUILD_INVITE_RECEIVED, player=" << playerGuid.ToString()
+                << ", inviter=" << targetGuid.ToString();
             break;
         case SocialEventType::GUILD_EVENT_RECEIVED:
-            oss << "GUILD_EVENT_RECEIVED, guild=" << guildId << ", msg=" << message;
+            oss << "GUILD_EVENT_RECEIVED, player=" << playerGuid.ToString()
+                << ", msg=" << message;
             break;
         case SocialEventType::TRADE_STATUS_CHANGED:
-            oss << "TRADE_STATUS_CHANGED, trader=" << senderGuid.ToString() << ", status=" << uint32(tradeStatus);
+            oss << "TRADE_STATUS_CHANGED, player=" << playerGuid.ToString()
+                << ", trader=" << targetGuid.ToString();
             break;
         default:
             oss << "UNKNOWN";
@@ -186,32 +233,50 @@ SocialEventBus* SocialEventBus::instance()
     return &instance;
 }
 
+SocialEventBus::SocialEventBus()
+{
+    TC_LOG_INFO("playerbot", "SocialEventBus: Initialized");
+}
+
+SocialEventBus::~SocialEventBus()
+{
+    TC_LOG_INFO("playerbot", "SocialEventBus: Shutdown");
+}
+
 bool SocialEventBus::PublishEvent(SocialEvent const& event)
 {
-    if (!event.IsValid())
+    if (!ValidateEvent(event))
     {
         TC_LOG_ERROR("playerbot.events", "SocialEventBus: Invalid event rejected: {}", event.ToString());
+        _stats.totalEventsDropped.fetch_add(1, std::memory_order_relaxed);
         return false;
     }
 
-    // Update statistics
+    std::lock_guard<std::mutex> lock(_queueMutex);
+
+    if (_eventQueue.size() >= MAX_QUEUE_SIZE)
     {
-        std::lock_guard<std::mutex> lock(_subscriberMutex);
-        ++_eventCounts[event.type];
-        ++_totalEventsPublished;
+        TC_LOG_WARN("playerbot.events", "SocialEventBus: Queue full, dropping event: {}", event.ToString());
+        _stats.totalEventsDropped.fetch_add(1, std::memory_order_relaxed);
+        return false;
     }
 
-    // Deliver to subscribers
-    DeliverEvent(event);
+    _eventQueue.push(event);
+    _stats.totalEventsPublished.fetch_add(1, std::memory_order_relaxed);
 
-    TC_LOG_TRACE("playerbot.events", "SocialEventBus: Published event: {}", event.ToString());
+    uint32 queueSize = static_cast<uint32>(_eventQueue.size());
+    uint32 currentPeak = _stats.peakQueueSize.load(std::memory_order_relaxed);
+    while (queueSize > currentPeak &&
+           !_stats.peakQueueSize.compare_exchange_weak(currentPeak, queueSize, std::memory_order_relaxed));
+
+    LogEvent(event, "Published");
     return true;
 }
 
-void SocialEventBus::Subscribe(BotAI* subscriber, std::vector<SocialEventType> const& types)
+bool SocialEventBus::Subscribe(BotAI* subscriber, std::vector<SocialEventType> const& types)
 {
     if (!subscriber)
-        return;
+        return false;
 
     std::lock_guard<std::mutex> lock(_subscriberMutex);
 
@@ -221,25 +286,28 @@ void SocialEventBus::Subscribe(BotAI* subscriber, std::vector<SocialEventType> c
         if (std::find(typeSubscribers.begin(), typeSubscribers.end(), subscriber) == typeSubscribers.end())
         {
             typeSubscribers.push_back(subscriber);
-            TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber {} registered for type {}",
-                static_cast<void*>(subscriber), uint32(type));
+            TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber registered for type {}",
+                static_cast<uint32>(type));
         }
     }
+
+    return true;
 }
 
-void SocialEventBus::SubscribeAll(BotAI* subscriber)
+bool SocialEventBus::SubscribeAll(BotAI* subscriber)
 {
     if (!subscriber)
-        return;
+        return false;
 
     std::lock_guard<std::mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
         _globalSubscribers.push_back(subscriber);
-        TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber {} registered for ALL events",
-            static_cast<void*>(subscriber));
+        TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber registered for ALL events");
     }
+
+    return true;
 }
 
 void SocialEventBus::Unsubscribe(BotAI* subscriber)
@@ -259,49 +327,127 @@ void SocialEventBus::Unsubscribe(BotAI* subscriber)
     _globalSubscribers.erase(std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end());
 
-    TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber {} unregistered", static_cast<void*>(subscriber));
+    TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Subscriber unregistered");
 }
 
-uint32 SocialEventBus::SubscribeCallback(EventHandler handler, std::vector<SocialEventType> const& types)
+uint32 SocialEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    if (!handler)
-        return 0;
+    auto startTime = std::chrono::high_resolution_clock::now();
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    uint32 processed = 0;
+    std::vector<SocialEvent> eventsToDeliver;
 
-    CallbackSubscription sub;
-    sub.id = _nextCallbackId++;
-    sub.handler = std::move(handler);
-    sub.types = types;
+    {
+        std::lock_guard<std::mutex> lock(_queueMutex);
 
-    _callbackSubscriptions.push_back(std::move(sub));
+        while (!_eventQueue.empty() && (maxEvents == 0 || processed < maxEvents))
+        {
+            SocialEvent event = _eventQueue.top();
+            _eventQueue.pop();
 
-    TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Callback {} registered for {} types",
-        sub.id, types.size());
+            if (event.IsExpired())
+            {
+                _stats.totalEventsDropped.fetch_add(1, std::memory_order_relaxed);
+                continue;
+            }
 
-    return sub.id;
+            eventsToDeliver.push_back(event);
+            processed++;
+        }
+    }
+
+    // Deliver events outside the lock
+    for (auto const& event : eventsToDeliver)
+    {
+        if (DeliverEvent(nullptr, event))
+            _stats.totalEventsProcessed.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    // Update cleanup timer
+    _cleanupTimer += diff;
+    if (_cleanupTimer >= CLEANUP_INTERVAL)
+    {
+        CleanupExpiredEvents();
+        _cleanupTimer = 0;
+    }
+
+    // Update metrics
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    UpdateMetrics(duration);
+
+    return processed;
 }
 
-void SocialEventBus::UnsubscribeCallback(uint32 subscriptionId)
+uint32 SocialEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
+{
+    // Process events for specific unit
+    return ProcessEvents(diff, 0);
+}
+
+void SocialEventBus::ClearUnitEvents(ObjectGuid unitGuid)
+{
+    std::lock_guard<std::mutex> lock(_queueMutex);
+
+    // Remove all events for this unit
+    std::priority_queue<SocialEvent> newQueue;
+    while (!_eventQueue.empty())
+    {
+        SocialEvent event = _eventQueue.top();
+        _eventQueue.pop();
+
+        if (event.playerGuid != unitGuid && event.targetGuid != unitGuid)
+            newQueue.push(event);
+    }
+
+    _eventQueue = std::move(newQueue);
+}
+
+uint32 SocialEventBus::GetPendingEventCount() const
+{
+    std::lock_guard<std::mutex> lock(_queueMutex);
+    return static_cast<uint32>(_eventQueue.size());
+}
+
+uint32 SocialEventBus::GetSubscriberCount() const
 {
     std::lock_guard<std::mutex> lock(_subscriberMutex);
-
-    _callbackSubscriptions.erase(
-        std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
-            [subscriptionId](CallbackSubscription const& sub) { return sub.id == subscriptionId; }),
-        _callbackSubscriptions.end());
-
-    TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Callback {} unregistered", subscriptionId);
+    uint32 count = static_cast<uint32>(_globalSubscribers.size());
+    for (auto const& [type, subscribers] : _subscribers)
+        count += static_cast<uint32>(subscribers.size());
+    return count;
 }
 
-uint64 SocialEventBus::GetEventCount(SocialEventType type) const
+void SocialEventBus::DumpSubscribers() const
 {
     std::lock_guard<std::mutex> lock(_subscriberMutex);
-    auto it = _eventCounts.find(type);
-    return it != _eventCounts.end() ? it->second : 0;
+    TC_LOG_INFO("playerbot.events", "SocialEventBus: {} global subscribers", _globalSubscribers.size());
+    for (auto const& [type, subscribers] : _subscribers)
+        TC_LOG_INFO("playerbot.events", "  Type {}: {} subscribers", static_cast<uint32>(type), subscribers.size());
 }
 
-void SocialEventBus::DeliverEvent(SocialEvent const& event)
+void SocialEventBus::DumpEventQueue() const
+{
+    std::lock_guard<std::mutex> lock(_queueMutex);
+    TC_LOG_INFO("playerbot.events", "SocialEventBus: {} events in queue", _eventQueue.size());
+}
+
+std::vector<SocialEvent> SocialEventBus::GetQueueSnapshot() const
+{
+    std::vector<SocialEvent> snapshot;
+    std::lock_guard<std::mutex> lock(_queueMutex);
+
+    std::priority_queue<SocialEvent> queueCopy = _eventQueue;
+    while (!queueCopy.empty())
+    {
+        snapshot.push_back(queueCopy.top());
+        queueCopy.pop();
+    }
+
+    return snapshot;
+}
+
+bool SocialEventBus::DeliverEvent(BotAI* subscriber, SocialEvent const& event)
 {
     std::lock_guard<std::mutex> lock(_subscriberMutex);
 
@@ -309,28 +455,93 @@ void SocialEventBus::DeliverEvent(SocialEvent const& event)
     auto it = _subscribers.find(event.type);
     if (it != _subscribers.end())
     {
-        for (auto subscriber : it->second)
+        for (auto sub : it->second)
         {
-            if (subscriber)
-                subscriber->OnSocialEvent(event);
+            if (sub)
+            {
+                sub->OnSocialEvent(event);
+                _stats.totalDeliveries.fetch_add(1, std::memory_order_relaxed);
+            }
         }
     }
 
     // Deliver to global subscribers
-    for (auto subscriber : _globalSubscribers)
+    for (auto sub : _globalSubscribers)
     {
-        if (subscriber)
-            subscriber->OnSocialEvent(event);
-    }
-
-    // Deliver to callback subscriptions
-    for (auto const& sub : _callbackSubscriptions)
-    {
-        if (sub.types.empty() || std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
+        if (sub)
         {
-            sub.handler(event);
+            sub->OnSocialEvent(event);
+            _stats.totalDeliveries.fetch_add(1, std::memory_order_relaxed);
         }
     }
+
+    return true;
+}
+
+bool SocialEventBus::ValidateEvent(SocialEvent const& event) const
+{
+    return event.IsValid();
+}
+
+uint32 SocialEventBus::CleanupExpiredEvents()
+{
+    std::lock_guard<std::mutex> lock(_queueMutex);
+
+    std::priority_queue<SocialEvent> newQueue;
+    uint32 removed = 0;
+
+    while (!_eventQueue.empty())
+    {
+        SocialEvent event = _eventQueue.top();
+        _eventQueue.pop();
+
+        if (!event.IsExpired())
+            newQueue.push(event);
+        else
+            removed++;
+    }
+
+    _eventQueue = std::move(newQueue);
+
+    if (removed > 0)
+        TC_LOG_DEBUG("playerbot.events", "SocialEventBus: Cleaned up {} expired events", removed);
+
+    return removed;
+}
+
+void SocialEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+{
+    uint64_t timeUs = processingTime.count();
+    _stats.averageProcessingTimeUs.store(timeUs, std::memory_order_relaxed);
+}
+
+void SocialEventBus::LogEvent(SocialEvent const& event, std::string const& action) const
+{
+    TC_LOG_TRACE("playerbot.events", "SocialEventBus: {} event: {}", action, event.ToString());
+}
+
+void SocialEventBus::Statistics::Reset()
+{
+    totalEventsPublished.store(0);
+    totalEventsProcessed.store(0);
+    totalEventsDropped.store(0);
+    totalDeliveries.store(0);
+    averageProcessingTimeUs.store(0);
+    peakQueueSize.store(0);
+    startTime = std::chrono::steady_clock::now();
+}
+
+std::string SocialEventBus::Statistics::ToString() const
+{
+    std::ostringstream oss;
+    oss << "SocialEventBus Statistics:\n";
+    oss << "  Published: " << totalEventsPublished.load() << "\n";
+    oss << "  Processed: " << totalEventsProcessed.load() << "\n";
+    oss << "  Dropped: " << totalEventsDropped.load() << "\n";
+    oss << "  Deliveries: " << totalDeliveries.load() << "\n";
+    oss << "  Avg Process Time: " << averageProcessingTimeUs.load() << " μs\n";
+    oss << "  Peak Queue Size: " << peakQueueSize.load();
+    return oss.str();
 }
 
 } // namespace Playerbot

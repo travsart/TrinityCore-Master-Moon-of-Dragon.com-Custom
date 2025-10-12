@@ -5,7 +5,7 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "CooldownEventBus.h"
+#include "../Cooldown/CooldownEventBus.h"
 #include "SpellPackets.h"
 #include "ItemPackets.h"
 #include "Log.h"
@@ -27,7 +27,7 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         CooldownEvent event;
         event.type = CooldownEventType::SPELL_COOLDOWN_START;
         event.casterGuid = packet.Caster;
-        event.spellId = cooldownEntry.SpellID;
+        event.spellId = cooldownEntry.SrecID;  // WoW 11.2: Field is SrecID, not SpellID
         event.itemId = 0;
         event.category = 0;
         event.cooldownMs = cooldownEntry.ForcedCooldown;
@@ -77,8 +77,8 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
 
     CooldownEvent event;
     event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;
-    event.casterGuid = packet.CasterGUID;
-    event.spellId = packet.SpellID;
+    event.casterGuid = bot->GetGUID();  // WoW 11.2: ClearCooldown has no CasterGUID field, use bot GUID
+    event.spellId = static_cast<uint32>(packet.SpellID);
     event.itemId = 0;
     event.category = 0;
     event.cooldownMs = 0;
@@ -87,8 +87,8 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
 
     CooldownEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received CLEAR_COOLDOWN (typed): spell={}",
-        bot->GetName(), packet.SpellID);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received CLEAR_COOLDOWN (typed): spell={}, isPet={}",
+        bot->GetName(), packet.SpellID, packet.IsPet);
 }
 
 void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::ClearCooldowns const& packet)
@@ -100,12 +100,12 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
     if (!bot)
         return;
 
-    for (uint32 spellId : packet.SpellIDs)
+    for (int32 spellId : packet.SpellID)  // WoW 11.2: Field is SpellID (singular), not SpellIDs (plural)
     {
         CooldownEvent event;
         event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;
         event.casterGuid = bot->GetGUID();
-        event.spellId = spellId;
+        event.spellId = static_cast<uint32>(spellId);
         event.itemId = 0;
         event.category = 0;
         event.cooldownMs = 0;
@@ -116,7 +116,7 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received CLEAR_COOLDOWNS (typed): {} spells",
-        bot->GetName(), packet.SpellIDs.size());
+        bot->GetName(), packet.SpellID.size());
 }
 
 void ParseTypedModifyCooldown(WorldSession* session, WorldPackets::Spells::ModifyCooldown const& packet)
