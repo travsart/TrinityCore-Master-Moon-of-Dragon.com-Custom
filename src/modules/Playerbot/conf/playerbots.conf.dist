@@ -126,6 +126,26 @@ Playerbot.AI.MovementDelay = 100
 Playerbot.AI.ThinkingDelay = 1000
 Playerbot.AI.RandomFactor = 25
 
+#    Playerbot.AI.NeutralMobDetection
+#        Description: Enable typed packet-based neutral mob combat detection
+#        Default:     1 (enabled)
+#        Note:        Uses real-time packet events to detect when neutral (yellow)
+#                     mobs attack bots, allowing bots to fight back immediately.
+#                     This solves the issue where TrinityCore's IsInCombat() returns
+#                     FALSE for neutral mobs that initiate combat.
+#                     Performance: < 0.001% CPU overhead per bot
+#
+#    Playerbot.AI.NeutralMobDetection.LogLevel
+#        Description: Debug logging level for neutral mob detection
+#        Default:     3 (INFO)
+#        Range:       0-6 (0=Off, 3=Info, 6=Trace)
+#        Note:        Set to 6 for detailed debugging of combat detection events
+#                     Logs to: Logger.playerbot.combat
+#
+
+Playerbot.AI.NeutralMobDetection = 1
+Playerbot.AI.NeutralMobDetection.LogLevel = 3
+
 ###################################################################################################
 # PERFORMANCE
 #

@@ -490,6 +490,9 @@ protected:
     void ProcessQuestProgress(QuestEvent const& event);
     void ProcessAuraDispel(AuraEvent const& event);
 
+    // Combat entry helper for neutral mob detection
+    void EnterCombatWithTarget(::Unit* target);
+
     // Event bus subscription management
     void SubscribeToEventBuses();
     void UnsubscribeFromEventBuses();

@@ -169,28 +169,90 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
     if (!_bot)
         return;
 
+    ObjectGuid botGuid = _bot->GetGUID();
+
     switch (event.type)
     {
         case CombatEventType::SPELL_CAST_START:
             // Check for interruptible enemy casts
             ProcessCombatInterrupt(event);
+
+            // NEUTRAL MOB DETECTION: Bot is being targeted by hostile spell
+            if (event.targetGuid == botGuid && !_bot->IsInCombat())
+            {
+                Unit* caster = ObjectAccessor::GetUnit(*_bot, event.casterGuid);
+                if (caster)
+                {
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(event.spellId, DIFFICULTY_NONE);
+                    if (spellInfo && !spellInfo->IsPositive())  // Hostile spell
+                    {
+                        TC_LOG_DEBUG("playerbot.combat",
+                            "Bot {} detected neutral mob {} casting hostile spell {} via SPELL_CAST_START",
+                            _bot->GetName(), caster->GetName(), event.spellId);
+                        EnterCombatWithTarget(caster);
+                    }
+                }
+            }
             break;
 
         case CombatEventType::ATTACK_START:
-            // Track when combat starts
-            if (event.casterGuid == _bot->GetGUID())
+            // Track when bot initiates combat
+            if (event.casterGuid == botGuid)
             {
                 if (_aiState != BotAIState::COMBAT)
                     SetAIState(BotAIState::COMBAT);
+            }
+
+            // NEUTRAL MOB DETECTION: Bot is being attacked
+            if (event.victimGuid == botGuid && !_bot->IsInCombat())
+            {
+                Unit* attacker = ObjectAccessor::GetUnit(*_bot, event.casterGuid);
+                if (attacker)
+                {
+                    TC_LOG_DEBUG("playerbot.combat",
+                        "Bot {} detected neutral mob {} attacking via ATTACK_START",
+                        _bot->GetName(), attacker->GetName());
+                    EnterCombatWithTarget(attacker);
+                }
             }
             break;
 
         case CombatEventType::ATTACK_STOP:
             // Track when combat ends
-            if (event.casterGuid == _bot->GetGUID())
+            if (event.casterGuid == botGuid)
             {
                 if (_aiState == BotAIState::COMBAT && !_bot->IsInCombat())
                     SetAIState(BotAIState::SOLO);
+            }
+            break;
+
+        case CombatEventType::AI_REACTION:
+            // NEUTRAL MOB DETECTION: NPC became hostile and is targeting bot
+            if (event.amount > 0)  // Positive reaction = hostile
+            {
+                Unit* mob = ObjectAccessor::GetUnit(*_bot, event.casterGuid);
+                if (mob && mob->GetVictim() == _bot && !_bot->IsInCombat())
+                {
+                    TC_LOG_DEBUG("playerbot.combat",
+                        "Bot {} detected neutral mob {} became hostile via AI_REACTION",
+                        _bot->GetName(), mob->GetName());
+                    EnterCombatWithTarget(mob);
+                }
+            }
+            break;
+
+        case CombatEventType::SPELL_DAMAGE_TAKEN:
+            // NEUTRAL MOB DETECTION: Catch-all for damage received
+            if (event.victimGuid == botGuid && !_bot->IsInCombat())
+            {
+                Unit* attacker = ObjectAccessor::GetUnit(*_bot, event.casterGuid);
+                if (attacker)
+                {
+                    TC_LOG_DEBUG("playerbot.combat",
+                        "Bot {} detected damage from neutral mob {} via SPELL_DAMAGE_TAKEN",
+                        _bot->GetName(), attacker->GetName());
+                    EnterCombatWithTarget(attacker);
+                }
             }
             break;
 
@@ -220,6 +282,39 @@ void BotAI::ProcessCombatInterrupt(CombatEvent const& event)
 
     // Note: Actual interrupt logic is handled by ClassAI combat rotations
     // This is just event detection and logging
+}
+
+void BotAI::EnterCombatWithTarget(::Unit* target)
+{
+    if (!_bot || !target)
+        return;
+
+    // Prevent duplicate combat entry
+    if (_bot->IsInCombat() && _bot->GetVictim() == target)
+        return;
+
+    TC_LOG_INFO("playerbot.combat", "Bot {} force-entering combat with {} (GUID: {})",
+        _bot->GetName(), target->GetName(), target->GetGUID().ToString());
+
+    // 1. Set combat state manually (required for neutral mobs)
+    _bot->SetInCombatWith(target);
+    target->SetInCombatWith(_bot);
+
+    // 2. Attack the target
+    _bot->Attack(target, true);
+
+    // 3. Update threat if target has threat list
+    if (target->CanHaveThreatList())
+    {
+        target->GetThreatManager().AddThreat(_bot, 1.0f);
+    }
+
+    // 4. Notify AI systems
+    _currentTarget = target->GetGUID();
+    SetAIState(BotAIState::COMBAT);
+
+    // 5. Trigger combat start notification
+    OnCombatStart(target);
 }
 
 // ============================================================================
