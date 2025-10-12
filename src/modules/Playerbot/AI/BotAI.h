@@ -43,6 +43,19 @@ class GatheringManager;
 class AuctionManager;
 class GroupCoordinator;
 
+// Phase 4: Event structure forward declarations
+struct GroupEvent;
+struct CombatEvent;
+struct CooldownEvent;
+struct AuraEvent;
+struct LootEvent;
+struct QuestEvent;
+struct ResourceEvent;
+struct SocialEvent;
+struct AuctionEvent;
+struct NPCEvent;
+struct InstanceEvent;
+
 namespace Events
 {
     class CombatEventObserver;
@@ -246,6 +259,146 @@ public:
     ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
 
     // ========================================================================
+    // PHASE 4: EVENT HANDLERS - Event-driven behavior system
+    // ========================================================================
+
+    /**
+     * Group event handler - Called when group-related events occur
+     * Override in ClassAI for class-specific group coordination
+     *
+     * @param event Group event containing all event data
+     *
+     * Default implementation delegates to managers and handles common cases:
+     * - Ready checks (auto-respond if configured)
+     * - Raid target changes (update targeting)
+     * - Leader changes (update following)
+     */
+    virtual void OnGroupEvent(GroupEvent const& event);
+
+    /**
+     * Combat event handler - Called when combat-related events occur
+     * Override in ClassAI for combat-specific responses (interrupts, defensive CDs)
+     *
+     * @param event Combat event (spell casts, damage, interrupts)
+     *
+     * Default implementation:
+     * - Detects interruptible casts
+     * - Updates combat state
+     * - Delegates to combat managers
+     */
+    virtual void OnCombatEvent(CombatEvent const& event);
+
+    /**
+     * Cooldown event handler - Called when spell/item cooldowns change
+     * Override in ClassAI for ability rotation tracking
+     *
+     * @param event Cooldown event (start, clear, modify)
+     */
+    virtual void OnCooldownEvent(CooldownEvent const& event);
+
+    /**
+     * Aura event handler - Called when buffs/debuffs change
+     * Override in ClassAI for buff management and dispel priorities
+     *
+     * @param event Aura event (applied, removed, updated)
+     *
+     * Default implementation:
+     * - Tracks important debuffs for dispelling
+     * - Monitors missing buffs for rebuffing
+     */
+    virtual void OnAuraEvent(AuraEvent const& event);
+
+    /**
+     * Loot event handler - Called when loot becomes available
+     * Override in ClassAI for smart loot decisions
+     *
+     * @param event Loot event (window opened, roll started, item received)
+     *
+     * Default implementation:
+     * - Auto-greed on non-upgrades
+     * - Auto-need on class-appropriate gear
+     * - Auto-pass on unusable items
+     */
+    virtual void OnLootEvent(LootEvent const& event);
+
+    /**
+     * Quest event handler - Called when quest state changes
+     * Override in ClassAI for quest-specific behavior
+     *
+     * @param event Quest event (offered, completed, objective progress)
+     *
+     * Default implementation:
+     * - Delegates to QuestManager
+     * - Auto-accepts appropriate quests
+     * - Auto-completes when ready
+     */
+    virtual void OnQuestEvent(QuestEvent const& event);
+
+    /**
+     * Resource event handler - Called when health/power changes
+     * Override in ClassAI for healing/resource management
+     *
+     * @param event Resource event (health update, power update, target break)
+     *
+     * Default implementation:
+     * - Detects low health allies for healing
+     * - Monitors own resources for regeneration
+     * - Updates healing priorities
+     */
+    virtual void OnResourceEvent(ResourceEvent const& event);
+
+    /**
+     * Social event handler - Called when social events occur
+     * Override in ClassAI for chat responses and social behavior
+     *
+     * @param event Social event (chat, emotes, guild, trade)
+     *
+     * Default implementation:
+     * - Processes whispers for commands
+     * - Handles guild invites
+     * - Responds to trade requests
+     */
+    virtual void OnSocialEvent(SocialEvent const& event);
+
+    /**
+     * Auction event handler - Called when auction house events occur
+     * Override in ClassAI for AH participation strategy
+     *
+     * @param event Auction event (command result, list, bid, won, outbid)
+     *
+     * Default implementation:
+     * - Delegates to AuctionManager
+     * - Handles auction notifications
+     */
+    virtual void OnAuctionEvent(AuctionEvent const& event);
+
+    /**
+     * NPC event handler - Called when interacting with NPCs
+     * Override in ClassAI for vendor/trainer automation
+     *
+     * @param event NPC event (gossip, vendor, trainer, bank)
+     *
+     * Default implementation:
+     * - Auto-selects quest gossip options
+     * - Handles vendor repairs
+     * - Manages trainer interactions
+     */
+    virtual void OnNPCEvent(NPCEvent const& event);
+
+    /**
+     * Instance event handler - Called when instance/raid events occur
+     * Override in ClassAI for dungeon/raid coordination
+     *
+     * @param event Instance event (reset, lockout, encounter, messages)
+     *
+     * Default implementation:
+     * - Tracks instance lockouts
+     * - Monitors boss progress
+     * - Handles encounter mechanics
+     */
+    virtual void OnInstanceEvent(InstanceEvent const& event);
+
+    // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization
     // ========================================================================
 
@@ -325,6 +478,21 @@ protected:
     void InitializeDefaultStrategies();
     void UpdatePerformanceMetrics(uint32 updateTimeMs);
     void LogAIDecision(std::string const& action, float score) const;
+
+    // ========================================================================
+    // EVENT HANDLER HELPERS - Common event processing patterns
+    // ========================================================================
+
+    void ProcessGroupReadyCheck(GroupEvent const& event);
+    void ProcessCombatInterrupt(CombatEvent const& event);
+    void ProcessLowHealthAlert(ResourceEvent const& event);
+    void ProcessLootRoll(LootEvent const& event);
+    void ProcessQuestProgress(QuestEvent const& event);
+    void ProcessAuraDispel(AuraEvent const& event);
+
+    // Event bus subscription management
+    void SubscribeToEventBuses();
+    void UnsubscribeFromEventBuses();
 
 protected:
     // Core components

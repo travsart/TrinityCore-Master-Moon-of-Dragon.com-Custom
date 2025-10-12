@@ -196,6 +196,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize default triggers
     sBotAIFactory->InitializeDefaultTriggers(this);
 
+    // Phase 4: Subscribe to all event buses for comprehensive event handling
+    SubscribeToEventBuses();
+
     // Check if bot is already in a group (e.g., after server restart)
     if (_bot->GetGroup())
     {
@@ -209,6 +212,9 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 
 BotAI::~BotAI()
 {
+    // Phase 4: CRITICAL - Unsubscribe from all event buses to prevent dangling pointers
+    UnsubscribeFromEventBuses();
+
     // Phase 7.3: Legacy observer cleanup removed (dead code)
     // Managers automatically unsubscribe via EventDispatcher on destruction
 }

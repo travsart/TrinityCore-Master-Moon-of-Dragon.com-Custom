@@ -656,9 +656,9 @@ bool GroupEventBus::DeliverEvent(BotAI* subscriber, GroupEvent const& event)
 
     try
     {
-        // Call the event handler on BotAI
-        // This will be implemented when we create GroupEventHandler
-        // For now, just log delivery
+        // Phase 4: Call virtual event handler on BotAI
+        subscriber->OnGroupEvent(event);
+
         TC_LOG_TRACE("module.playerbot.group", "GroupEventBus: Delivered event {} to subscriber {}",
             event.ToString(), static_cast<void*>(subscriber));
         return true;

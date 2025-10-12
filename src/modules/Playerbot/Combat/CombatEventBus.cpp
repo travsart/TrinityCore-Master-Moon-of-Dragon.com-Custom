@@ -362,7 +362,8 @@ bool CombatEventBus::DeliverEvent(BotAI* subscriber, CombatEvent const& event)
 
     try
     {
-        // TODO: Call event handler when implemented
+        // Phase 4: Call virtual event handler on BotAI
+        subscriber->OnCombatEvent(event);
         TC_LOG_TRACE("module.playerbot.combat", "CombatEventBus: Delivered event to subscriber");
         return true;
     }
