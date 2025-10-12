@@ -202,6 +202,16 @@ private:
 
     // Register category-specific typed handlers (defined in Parse*Packet_Typed.cpp files)
     friend void RegisterGroupPacketHandlers();
+    friend void RegisterCombatPacketHandlers();
+    friend void RegisterCooldownPacketHandlers();
+    friend void RegisterAuraPacketHandlers();
+    friend void RegisterLootPacketHandlers();
+    friend void RegisterQuestPacketHandlers();
+    friend void RegisterResourcePacketHandlers();
+    friend void RegisterSocialPacketHandlers();
+    friend void RegisterAuctionPacketHandlers();
+    friend void RegisterNPCPacketHandlers();
+    friend void RegisterInstancePacketHandlers();
 };
 
 // Template implementation (must be in header)

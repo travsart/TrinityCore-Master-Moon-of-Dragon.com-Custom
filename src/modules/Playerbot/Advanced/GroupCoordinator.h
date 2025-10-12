@@ -144,6 +144,10 @@ namespace Playerbot
         void CoordinateGroupRecovery();
         bool ShouldWaitForGroup() const;
 
+        // Group event handlers (called from BotAI_EventHandlers.cpp)
+        void OnTargetIconChanged(struct GroupEvent const& event);
+        void OnGroupCompositionChanged(struct GroupEvent const& event);
+
         // Configuration
         bool IsEnabled() const { return m_enabled; }
         void SetEnabled(bool enabled) { m_enabled = enabled; }

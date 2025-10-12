@@ -40,14 +40,14 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
     event.priority = EventPriority::HIGH;
     event.groupGuid = packet.PartyGUID;
     event.sourceGuid = packet.InitiatorGUID;
-    event.data1 = static_cast<uint32>(packet.Duration.count());  // Duration in milliseconds
+    event.data1 = static_cast<uint32>(Milliseconds(packet.Duration).count());  // Duration in milliseconds (WoW 11.2 API)
     event.data2 = static_cast<uint32>(packet.PartyIndex);
     event.timestamp = std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_STARTED (typed): initiator={}, duration={}ms, partyIndex={}",
-        bot->GetName(), packet.InitiatorGUID.ToString(), packet.Duration.count(), packet.PartyIndex);
+        bot->GetName(), packet.InitiatorGUID.ToString(), Milliseconds(packet.Duration).count(), packet.PartyIndex);
 }
 
 /**
@@ -64,7 +64,7 @@ void ParseTypedReadyCheckResponse(WorldSession* session, WorldPackets::Party::Re
 
     GroupEvent event;
     event.type = GroupEventType::READY_CHECK_RESPONSE;
-    event.priority = EventPriority::NORMAL;
+    event.priority = EventPriority::MEDIUM;
     event.groupGuid = packet.PartyGUID;
     event.targetGuid = packet.Player;
     event.data1 = packet.IsReady ? 1 : 0;
@@ -90,16 +90,16 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
 
     GroupEvent event;
     event.type = GroupEventType::READY_CHECK_COMPLETED;
-    event.priority = EventPriority::NORMAL;
+    event.priority = EventPriority::MEDIUM;
     event.groupGuid = packet.PartyGUID;
-    event.data1 = packet.ReadyCount;
-    event.data2 = packet.NotReadyCount;
+    event.data1 = 0;  // WoW 11.2: ReadyCount no longer in packet
+    event.data2 = 0;  // WoW 11.2: NotReadyCount no longer in packet
     event.timestamp = std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
-    TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_COMPLETED (typed): ready={}, notReady={}",
-        bot->GetName(), packet.ReadyCount, packet.NotReadyCount);
+    TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_COMPLETED (typed): partyGuid={}",
+        bot->GetName(), packet.PartyGUID.ToString());
 }
 
 /**
@@ -141,16 +141,16 @@ void ParseTypedRaidTargetUpdateAll(WorldSession* session, WorldPackets::Party::S
     if (!bot)
         return;
 
-    // Publish individual events for each target icon
-    for (size_t i = 0; i < packet.TargetIcons.size() && i < 8; ++i)
+    // Publish individual events for each target icon (WoW 11.2: vector of pairs)
+    for (auto const& [symbolIndex, targetGuid] : packet.TargetIcons)
     {
-        if (!packet.TargetIcons[i].IsEmpty())
+        if (!targetGuid.IsEmpty())  // Check if target is valid
         {
             GroupEvent event;
             event.type = GroupEventType::TARGET_ICON_CHANGED;
-            event.priority = EventPriority::NORMAL;
-            event.targetGuid = packet.TargetIcons[i];
-            event.data1 = static_cast<uint32>(i);  // Symbol index
+            event.priority = EventPriority::MEDIUM;
+            event.targetGuid = targetGuid;
+            event.data1 = static_cast<uint32>(symbolIndex);  // Explicit symbol index from pair
             event.data2 = static_cast<uint32>(packet.PartyIndex);
             event.timestamp = std::chrono::steady_clock::now();
 

@@ -13,6 +13,7 @@
 #include "GroupEventBus.h"
 #include "Log.h"
 #include "BotSession.h"
+#include "ObjectAccessor.h"
 #include <sstream>
 
 namespace Playerbot
@@ -480,9 +481,9 @@ uint32 PlayerBotHooks::GetBotCountInGroup(Group const* group)
 
     uint32 botCount = 0;
 
-    for (GroupReference const* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (auto const& slot : group->GetMemberSlots())
     {
-        if (Player* member = ref->GetSource())
+        if (Player* member = ObjectAccessor::FindPlayer(slot.guid))
         {
             if (IsPlayerBot(member))
                 ++botCount;

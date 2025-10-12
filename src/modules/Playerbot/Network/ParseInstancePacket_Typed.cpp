@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "InstanceEventBus.h"
+#include "../Instance/InstanceEventBus.h"
 #include "InstancePackets.h"
 #include "Player.h"
 #include "WorldSession.h"

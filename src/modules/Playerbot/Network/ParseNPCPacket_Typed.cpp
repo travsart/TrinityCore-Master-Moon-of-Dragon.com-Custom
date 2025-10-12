@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "NPCEventBus.h"
+#include "../NPC/NPCEventBus.h"
 #include "NPCPackets.h"
 #include "BankPackets.h"
 #include "PetitionPackets.h"

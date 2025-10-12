@@ -112,6 +112,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/References/SafeObjectReference.h
 
+    # Core Integration Hooks
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHooks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHooks.h
+
     # Phase 7.1: Manager System Architecture - Observer-Manager Integration Layer
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IManagerBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/ManagerRegistry.cpp
@@ -356,14 +360,14 @@ set(PLAYERBOT_SOURCES
     # Network Packet Sniffer - Centralized Event Detection System
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
 
-    # Phase 2: Typed Packet Handlers (WoW 11.2 Solution)
+    # Phase 2: Typed Packet Handlers (WoW 11.2 Solution - Legacy system fully replaced)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseResourcePacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseSocialPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp
@@ -788,12 +792,12 @@ source_group("Group" FILES
 source_group("Network" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseGroupPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCombatPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseCooldownPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseResourcePacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseSocialPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp

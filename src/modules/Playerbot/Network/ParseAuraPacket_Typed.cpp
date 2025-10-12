@@ -5,7 +5,7 @@
 #include "PlayerbotPacketSniffer.h"
 #include "WorldSession.h"
 #include "Player.h"
-#include "AuraEventBus.h"
+#include "../Aura/AuraEventBus.h"
 #include "SpellPackets.h"
 #include "Log.h"
 
@@ -23,12 +23,16 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
 
     for (auto const& auraInfo : packet.Auras)
     {
+        // WoW 11.2: AuraInfo structure changed
+        // - AuraDataChanged → AuraData.has_value() (Optional<AuraDataInfo>)
+        // - SpellID → AuraData->SpellID (nested in AuraDataInfo)
+
         AuraEvent event;
-        event.type = auraInfo.AuraDataChanged ? AuraEventType::AURA_UPDATED : AuraEventType::AURA_APPLIED;
+        event.type = auraInfo.AuraData.has_value() ? AuraEventType::AURA_UPDATED : AuraEventType::AURA_REMOVED;
         event.targetGuid = packet.UnitGUID;
-        event.spellId = auraInfo.SpellID;
+        event.spellId = auraInfo.AuraData.has_value() ? auraInfo.AuraData->SpellID : 0;
         event.auraSlot = auraInfo.Slot;
-        event.stackCount = 1;
+        event.stackCount = auraInfo.AuraData.has_value() ? auraInfo.AuraData->Applications : 0;
         event.timestamp = std::chrono::steady_clock::now();
 
         AuraEventBus::instance()->PublishEvent(event);

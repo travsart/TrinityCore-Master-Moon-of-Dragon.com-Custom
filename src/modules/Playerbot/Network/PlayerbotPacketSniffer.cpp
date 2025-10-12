@@ -172,130 +172,15 @@ PacketCategory PlayerbotPacketSniffer::CategorizePacket(OpcodeServer opcode)
 
 void PlayerbotPacketSniffer::InitializeOpcodeMapping()
 {
-    // GROUP category opcodes
-    _packetCategoryMap[SMSG_READY_CHECK_STARTED] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_READY_CHECK_RESPONSE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_READY_CHECK_COMPLETED] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_RAID_TARGET_UPDATE_SINGLE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_RAID_TARGET_UPDATE_ALL] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_RAID_MARKERS_CHANGED] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_GROUP_NEW_LEADER] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_PARTY_UPDATE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_PARTY_MEMBER_FULL_STATE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_PARTY_MEMBER_PARTIAL_STATE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_GROUP_DESTROYED] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_RAID_INSTANCE_MESSAGE] = PacketCategory::GROUP;
-    _packetCategoryMap[SMSG_GROUP_DECLINE] = PacketCategory::GROUP;
+    // DEPRECATED: Opcode-based packet routing is no longer used in WoW 11.2
+    // All packet handling now occurs via typed packet handlers registered in
+    // Register*PacketHandlers() functions (see Parse*Packet_Typed.cpp files)
+    //
+    // This function is kept for backward compatibility but does nothing.
+    // The CategorizePacket() function will always return PacketCategory::UNKNOWN
+    // and typed packets are intercepted before reaching OnPacketSend().
 
-    // COMBAT category opcodes
-    _packetCategoryMap[SMSG_SPELL_START] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_GO] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_FAILURE] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_FAILED_OTHER] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_DAMAGE] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_ENERGIZE] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_HEAL] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_PERIODICAURALOG] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_INTERRUPT_LOG] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_SPELL_DISPELL_LOG] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSTART] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSTOP] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSWING_NOTINRANGE] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSWING_BADFACING] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSWING_DEADTARGET] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_ATTACKSWING_CANT_ATTACK] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_COMBAT_EVENT_FAILED] = PacketCategory::COMBAT;
-    _packetCategoryMap[SMSG_AI_REACTION] = PacketCategory::COMBAT;
-
-    // COOLDOWN category opcodes
-    _packetCategoryMap[SMSG_SPELL_COOLDOWN] = PacketCategory::COOLDOWN;
-    _packetCategoryMap[SMSG_COOLDOWN_EVENT] = PacketCategory::COOLDOWN;
-    _packetCategoryMap[SMSG_CLEAR_COOLDOWN] = PacketCategory::COOLDOWN;
-    _packetCategoryMap[SMSG_CLEAR_COOLDOWNS] = PacketCategory::COOLDOWN;
-    _packetCategoryMap[SMSG_MODIFY_COOLDOWN] = PacketCategory::COOLDOWN;
-    _packetCategoryMap[SMSG_ITEM_COOLDOWN] = PacketCategory::COOLDOWN;
-
-    // LOOT category opcodes
-    _packetCategoryMap[SMSG_LOOT_RESPONSE] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_RELEASE_RESPONSE] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_REMOVED] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_MONEY_NOTIFY] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_ITEM_NOTIFY] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_CLEAR_MONEY] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_LIST] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_SLOT_CHANGED] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_START_LOOT_ROLL] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_ROLL] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_ROLL_WON] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_ALL_PASSED] = PacketCategory::LOOT;
-    _packetCategoryMap[SMSG_LOOT_MASTER_LIST] = PacketCategory::LOOT;
-
-    // QUEST category opcodes (WoW 11.2 naming)
-    _packetCategoryMap[SMSG_QUEST_GIVER_STATUS] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_QUEST_LIST_MESSAGE] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_QUEST_DETAILS] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_REQUEST_ITEMS] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_OFFER_REWARD_MESSAGE] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_QUEST_COMPLETE] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_GIVER_QUEST_FAILED] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_UPDATE_ADD_CREDIT_SIMPLE] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_UPDATE_ADD_CREDIT] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_UPDATE_COMPLETE] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_UPDATE_FAILED] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_UPDATE_FAILED_TIMER] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_CONFIRM_ACCEPT] = PacketCategory::QUEST;
-    _packetCategoryMap[SMSG_QUEST_POI_QUERY_RESPONSE] = PacketCategory::QUEST;
-
-    // AURA category opcodes (WoW 11.2)
-    _packetCategoryMap[SMSG_AURA_UPDATE] = PacketCategory::AURA;
-    _packetCategoryMap[SMSG_SET_FLAT_SPELL_MODIFIER] = PacketCategory::AURA;
-    _packetCategoryMap[SMSG_SET_PCT_SPELL_MODIFIER] = PacketCategory::AURA;
-    _packetCategoryMap[SMSG_DISPEL_FAILED] = PacketCategory::AURA;
-    _packetCategoryMap[SMSG_CANCEL_AUTO_REPEAT] = PacketCategory::AURA;
-    _packetCategoryMap[SMSG_AURA_POINTS_DEPLETED] = PacketCategory::AURA;
-
-    // RESOURCE category opcodes
-    _packetCategoryMap[SMSG_HEALTH_UPDATE] = PacketCategory::RESOURCE;
-    _packetCategoryMap[SMSG_POWER_UPDATE] = PacketCategory::RESOURCE;
-    _packetCategoryMap[SMSG_BREAK_TARGET] = PacketCategory::RESOURCE;
-
-    // SOCIAL category opcodes
-    _packetCategoryMap[SMSG_MESSAGECHAT] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_CHAT] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_EMOTE] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_TEXT_EMOTE] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_GUILD_INVITE] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_GUILD_EVENT] = PacketCategory::SOCIAL;
-    _packetCategoryMap[SMSG_TRADE_STATUS] = PacketCategory::SOCIAL;
-
-    // AUCTION category opcodes
-    _packetCategoryMap[SMSG_AUCTION_COMMAND_RESULT] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_LIST_RESULT] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_OWNER_LIST_RESULT] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_BIDDER_NOTIFICATION] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_OWNER_NOTIFICATION] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_REMOVED_NOTIFICATION] = PacketCategory::AUCTION;
-    _packetCategoryMap[SMSG_AUCTION_LIST_PENDING_SALES] = PacketCategory::AUCTION;
-
-    // NPC category opcodes
-    _packetCategoryMap[SMSG_GOSSIP_MESSAGE] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_GOSSIP_COMPLETE] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_LIST_INVENTORY] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_TRAINER_LIST] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_TRAINER_SERVICE] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_SHOW_BANK] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_SPIRIT_HEALER_CONFIRM] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_PETITION_SHOW_LIST] = PacketCategory::NPC;
-    _packetCategoryMap[SMSG_PETITION_SHOW_SIGNATURES] = PacketCategory::NPC;
-
-    // INSTANCE category opcodes
-    _packetCategoryMap[SMSG_INSTANCE_RESET] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_INSTANCE_RESET_FAILED] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_UPDATE_INSTANCE_ENCOUNTER_UNIT] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_RAID_INSTANCE_INFO] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_RAID_GROUP_ONLY] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_INSTANCE_SAVE_CREATED] = PacketCategory::INSTANCE;
-    _packetCategoryMap[SMSG_RAID_INSTANCE_MESSAGE] = PacketCategory::INSTANCE;
+    TC_LOG_DEBUG("playerbot", "PlayerbotPacketSniffer: Opcode mapping skipped (using typed packet handlers)");
 }
 
 // Category-specific parsers (deprecated - all handling now via typed handlers)

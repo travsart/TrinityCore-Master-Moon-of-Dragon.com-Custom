@@ -221,15 +221,8 @@ namespace Playerbot
         m_currentSession.startTime = std::chrono::steady_clock::now();
         SetTradeState(TradeState::INITIATING);
 
-        // Initiate trade (this will create the trade data internally)
+        // Initiate trade (this will create the trade data internally and send packets)
         GetBot()->InitiateTrade(target);
-
-        // Send trade status
-        WorldPacket data(SMSG_TRADE_STATUS, 12);
-        data << uint32(TRADE_STATUS_INITIATED);
-        data << targetGuid;
-        GetBot()->GetSession()->SendPacket(&data);
-        target->GetSession()->SendPacket(&data);
 
         LogTradeAction("INITIATE", "Trade initiated with " + target->GetName() + " - " + reason);
         return true;

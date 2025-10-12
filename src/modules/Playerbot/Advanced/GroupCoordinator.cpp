@@ -23,6 +23,7 @@
 #include "QuestDef.h"
 #include "SharedDefines.h"
 #include "Loot/Loot.h"
+#include "Group/GroupEventBus.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -1131,6 +1132,71 @@ namespace Playerbot
         memory += m_bossStrategies.size() * sizeof(BossStrategy);
         memory += m_readyMembers.size() * sizeof(ObjectGuid);
         return memory;
+    }
+
+    // Group Event Handlers (called from BotAI_EventHandlers.cpp)
+    void GroupCoordinator::OnTargetIconChanged(GroupEvent const& event)
+    {
+        if (!m_enabled || !m_bot || !IsInGroup())
+            return;
+
+        // Handle raid target icon changes
+        // Event contains targetGuid and iconId in data1
+        uint8 targetIconId = static_cast<uint8>(event.data1);
+        TC_LOG_DEBUG("bot.playerbot", "Bot %s received target icon change (Icon: %u)",
+            m_bot->GetName().c_str(), targetIconId);
+
+        // If this is our current target and icon was changed, update our targeting priority
+        if (event.targetGuid == m_groupTarget)
+        {
+            // High priority icons (Skull, Cross) should be focused
+            if (targetIconId == 0 || targetIconId == 1) // Skull or Cross
+            {
+                Unit* target = ObjectAccessor::GetUnit(*m_bot, event.targetGuid);
+                if (target && target->IsAlive())
+                {
+                    FocusTarget(target);
+                    TC_LOG_DEBUG("bot.playerbot", "Bot %s focusing high-priority marked target",
+                        m_bot->GetName().c_str());
+                }
+            }
+        }
+    }
+
+    void GroupCoordinator::OnGroupCompositionChanged(GroupEvent const& event)
+    {
+        if (!m_enabled || !m_bot || !IsInGroup())
+            return;
+
+        // Handle member join/leave events
+        TC_LOG_DEBUG("bot.playerbot", "Bot %s received group composition change (Type: %u)",
+            m_bot->GetName().c_str(), static_cast<uint32>(event.type));
+
+        // Analyze new group composition
+        GroupComposition comp = AnalyzeGroupComposition();
+
+        // Log composition changes
+        TC_LOG_DEBUG("bot.playerbot", "Bot %s group composition - Tanks: %u, Healers: %u, DPS: %u, Total: %u, Balanced: %s",
+            m_bot->GetName().c_str(), comp.tanks, comp.healers, comp.dps, comp.total,
+            comp.isBalanced ? "Yes" : "No");
+
+        // If group became unbalanced, consider suggesting role changes
+        if (!comp.isBalanced)
+        {
+            GroupRole neededRole = GetNeededRole();
+            if (CanFillRole(neededRole) && neededRole != m_assignedRole)
+            {
+                TC_LOG_DEBUG("bot.playerbot", "Bot %s could fill needed role %u (current: %u)",
+                    m_bot->GetName().c_str(), static_cast<uint32>(neededRole),
+                    static_cast<uint32>(m_assignedRole));
+            }
+        }
+
+        // If new member joined, check if we should share quests
+        if (event.type == GroupEventType::MEMBER_JOINED && m_autoShareQuests)
+        {
+            SyncGroupQuests();
+        }
     }
 
 } // namespace Playerbot

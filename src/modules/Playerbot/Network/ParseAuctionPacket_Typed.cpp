@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotPacketSniffer.h"
-#include "AuctionEventBus.h"
+#include "../Auction/AuctionEventBus.h"
 #include "AuctionHousePackets.h"
 #include "Player.h"
 #include "WorldSession.h"
