@@ -48,6 +48,11 @@ void PlayerbotPacketSniffer::Initialize()
     RegisterAuraPacketHandlers();
     RegisterLootPacketHandlers();
     RegisterQuestPacketHandlers();
+    RegisterResourcePacketHandlers();
+    RegisterSocialPacketHandlers();
+    RegisterAuctionPacketHandlers();
+    RegisterNPCPacketHandlers();
+    RegisterInstancePacketHandlers();
 
     // Initialize statistics
     _totalPackets.store(0);

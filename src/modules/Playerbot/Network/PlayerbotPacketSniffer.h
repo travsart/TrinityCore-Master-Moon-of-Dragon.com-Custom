@@ -32,6 +32,11 @@ void RegisterCooldownPacketHandlers();
 void RegisterAuraPacketHandlers();
 void RegisterLootPacketHandlers();
 void RegisterQuestPacketHandlers();
+void RegisterResourcePacketHandlers();
+void RegisterSocialPacketHandlers();
+void RegisterAuctionPacketHandlers();
+void RegisterNPCPacketHandlers();
+void RegisterInstancePacketHandlers();
 
 /**
  * @enum PacketCategory

@@ -363,6 +363,25 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
 
+    # Phase 2: Typed Packet Handlers (WoW 11.2 Solution)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseResourcePacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseSocialPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseNPCPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
+
+    # Phase 2: Event Buses (Resource, Social, Auction, NPC, Instance)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
+
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.h
@@ -762,11 +781,41 @@ source_group("Network" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseLootPacket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseQuestPacket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuraPacket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseResourcePacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseSocialPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseAuctionPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseNPCPacket_Typed.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
 )
 
 source_group("Movement" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+)
+
+source_group("Resource" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
+)
+
+source_group("Social" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
+)
+
+source_group("Auction" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
+)
+
+source_group("NPC" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
+)
+
+source_group("Instance" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
 )
 
 source_group("Account" FILES
