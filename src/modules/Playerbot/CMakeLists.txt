@@ -370,7 +370,17 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseNPCPacket_Typed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
 
-    # Phase 2: Event Buses (Resource, Social, Auction, NPC, Instance)
+    # Phase 4: Complete Event Bus System (All 11 Buses)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
@@ -381,6 +391,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
+
+    # Phase 4: BotAI Event Handler Integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_EventHandlers.cpp
 
     # Movement System
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.cpp
@@ -816,6 +829,31 @@ source_group("NPC" FILES
 source_group("Instance" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
+)
+
+source_group("Combat" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
+)
+
+source_group("Cooldown" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
+)
+
+source_group("Aura" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
+)
+
+source_group("Loot" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
+)
+
+source_group("Quest" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.h
 )
 
 source_group("Account" FILES
