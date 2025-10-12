@@ -16,8 +16,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <queue>
 #include <mutex>
-#include <functional>
+#include <atomic>
 
 namespace Playerbot
 {
@@ -32,31 +33,50 @@ enum class ResourceEventType : uint8
     MAX_RESOURCE_EVENT
 };
 
+enum class ResourceEventPriority : uint8
+{
+    CRITICAL = 0,
+    HIGH = 1,
+    MEDIUM = 2,
+    LOW = 3,
+    BATCH = 4
+};
+
+enum class Powers : uint8
+{
+    POWER_MANA = 0,
+    POWER_RAGE = 1,
+    POWER_FOCUS = 2,
+    POWER_ENERGY = 3,
+    POWER_RUNIC_POWER = 6
+};
+
 struct ResourceEvent
 {
     ResourceEventType type;
-    ObjectGuid unitGuid;        // Unit whose resources changed
-    ObjectGuid playerGuid;      // Player (bot) observing the change
-    uint32 health;
-    uint32 maxHealth;
-    int32 power;                // Can be negative for some power types
-    int32 maxPower;
-    uint8 powerType;            // Powers enum (Mana, Rage, Energy, etc.)
+    ResourceEventPriority priority;
+    ObjectGuid playerGuid;
+    Powers powerType;
+    int32 amount;
+    int32 maxAmount;
+    bool isRegen;
     std::chrono::steady_clock::time_point timestamp;
-
-    // Factory methods for type-safe event creation
-    static ResourceEvent HealthUpdate(ObjectGuid unitGuid, ObjectGuid playerGuid, uint32 health, uint32 maxHealth);
-    static ResourceEvent PowerUpdate(ObjectGuid unitGuid, ObjectGuid playerGuid, int32 power, int32 maxPower, uint8 powerType);
-    static ResourceEvent BreakTarget(ObjectGuid unitGuid, ObjectGuid playerGuid);
+    std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
+    bool IsExpired() const;
     std::string ToString() const;
 
-    // Helper methods
-    float GetHealthPercent() const { return maxHealth > 0 ? (health * 100.0f) / maxHealth : 0.0f; }
-    float GetPowerPercent() const { return maxPower > 0 ? (power * 100.0f) / maxPower : 0.0f; }
-    bool IsLowHealth(float threshold = 30.0f) const { return GetHealthPercent() < threshold; }
-    bool IsLowPower(float threshold = 20.0f) const { return GetPowerPercent() < threshold; }
+    // Helper constructors
+    static ResourceEvent PowerChanged(ObjectGuid player, Powers type, int32 amt, int32 max);
+    static ResourceEvent PowerRegen(ObjectGuid player, Powers type, int32 amt);
+    static ResourceEvent PowerDrained(ObjectGuid player, Powers type, int32 amt);
+
+    // Priority comparison for priority queue
+    bool operator<(ResourceEvent const& other) const
+    {
+        return priority > other.priority;
+    }
 };
 
 class TC_GAME_API ResourceEventBus
@@ -64,46 +84,80 @@ class TC_GAME_API ResourceEventBus
 public:
     static ResourceEventBus* instance();
 
+    // Event publishing
     bool PublishEvent(ResourceEvent const& event);
 
     // Subscription management
-    using EventHandler = std::function<void(ResourceEvent const&)>;
-
-    void Subscribe(BotAI* subscriber, std::vector<ResourceEventType> const& types);
-    void SubscribeAll(BotAI* subscriber);
+    bool Subscribe(BotAI* subscriber, std::vector<ResourceEventType> const& types);
+    bool SubscribeAll(BotAI* subscriber);
     void Unsubscribe(BotAI* subscriber);
 
-    // Direct callback subscriptions (for systems without BotAI)
-    uint32 SubscribeCallback(EventHandler handler, std::vector<ResourceEventType> const& types);
-    void UnsubscribeCallback(uint32 subscriptionId);
+    // Event processing
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0);
+    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff);
+    void ClearUnitEvents(ObjectGuid unitGuid);
+
+    // Status queries
+    uint32 GetPendingEventCount() const;
+    uint32 GetSubscriberCount() const;
+
+    // Diagnostics
+    void DumpSubscribers() const;
+    void DumpEventQueue() const;
+    std::vector<ResourceEvent> GetQueueSnapshot() const;
 
     // Statistics
-    uint64 GetTotalEventsPublished() const { return _totalEventsPublished; }
-    uint64 GetEventCount(ResourceEventType type) const;
+    struct Statistics
+    {
+        std::atomic<uint64_t> totalEventsPublished{0};
+        std::atomic<uint64_t> totalEventsProcessed{0};
+        std::atomic<uint64_t> totalEventsDropped{0};
+        std::atomic<uint64_t> totalDeliveries{0};
+        std::atomic<uint64_t> averageProcessingTimeUs{0};
+        std::atomic<uint32_t> peakQueueSize{0};
+        std::chrono::steady_clock::time_point startTime;
+
+        void Reset();
+        std::string ToString() const;
+    };
+
+    Statistics const& GetStatistics() const { return _stats; }
 
 private:
-    ResourceEventBus() = default;
+    ResourceEventBus();
+    ~ResourceEventBus();
 
-    void DeliverEvent(ResourceEvent const& event);
+    // Event delivery
+    bool DeliverEvent(BotAI* subscriber, ResourceEvent const& event);
+    bool ValidateEvent(ResourceEvent const& event) const;
+    uint32 CleanupExpiredEvents();
+    void UpdateMetrics(std::chrono::microseconds processingTime);
+    void LogEvent(ResourceEvent const& event, std::string const& action) const;
 
+    // Event queue
+    std::priority_queue<ResourceEvent> _eventQueue;
+    mutable std::mutex _queueMutex;
+
+    // Subscriber management
     std::unordered_map<ResourceEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers;
-
-    struct CallbackSubscription
-    {
-        uint32 id;
-        EventHandler handler;
-        std::vector<ResourceEventType> types;
-    };
-    std::vector<CallbackSubscription> _callbackSubscriptions;
-    uint32 _nextCallbackId = 1;
-
-    std::unordered_map<ResourceEventType, uint64> _eventCounts;
-    uint64 _totalEventsPublished = 0;
-
     mutable std::mutex _subscriberMutex;
+
+    // Configuration
+    static constexpr uint32 MAX_QUEUE_SIZE = 10000;
+    static constexpr uint32 CLEANUP_INTERVAL = 30000;
+    static constexpr uint32 MAX_SUBSCRIBERS_PER_EVENT = 5000;
+
+    // Timers
+    uint32 _cleanupTimer = 0;
+    uint32 _metricsUpdateTimer = 0;
+
+    // Statistics
+    Statistics _stats;
+    uint32 _maxQueueSize = MAX_QUEUE_SIZE;
 };
 
 } // namespace Playerbot
 
 #endif // PLAYERBOT_RESOURCE_EVENT_BUS_H
+
