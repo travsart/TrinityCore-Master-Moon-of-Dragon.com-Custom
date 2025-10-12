@@ -21,57 +21,51 @@ namespace Playerbot
 // AuraEvent Helper Constructors
 // ============================================================================
 
-AuraEvent AuraEvent::AuraApplied(ObjectGuid target, ObjectGuid caster, uint32 spellId, uint8 stacks, bool harmful)
+AuraEvent AuraEvent::SpellAuraStart(ObjectGuid caster, uint32 spellId, uint32 auraMs)
 {
     AuraEvent event;
-    event.type = AuraEventType::AURA_APPLIED;
-    event.priority = harmful ? AuraEventPriority::HIGH : AuraEventPriority::MEDIUM;
-    event.targetGuid = target;
-    event.casterGuid = caster;
-    event.spellId = spellId;
-    event.auraSlot = 0;
-    event.stackCount = stacks;
-    event.duration = 0;
-    event.isBuff = !harmful;
-    event.isHarmful = harmful;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
-    return event;
-}
-
-AuraEvent AuraEvent::AuraRemoved(ObjectGuid target, uint32 spellId)
-{
-    AuraEvent event;
-    event.type = AuraEventType::AURA_REMOVED;
+    event.type = AuraEventType::SPELL_AURA_START;
     event.priority = AuraEventPriority::MEDIUM;
-    event.targetGuid = target;
-    event.casterGuid = ObjectGuid::Empty;
+    event.targetGuid = caster;
     event.spellId = spellId;
-    event.auraSlot = 0;
-    event.stackCount = 0;
-    event.duration = 0;
-    event.isBuff = false;
-    event.isHarmful = false;
+    event.itemId = 0;
+    event.category = 0;
+    event.auraMs = auraMs;
+    event.modRateMs = 0;
     event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.expiryTime = event.timestamp + std::chrono::milliseconds(auraMs + 5000);
     return event;
 }
 
-AuraEvent AuraEvent::AuraUpdated(ObjectGuid target, uint32 spellId, uint8 stacks)
+AuraEvent AuraEvent::SpellAuraClear(ObjectGuid caster, uint32 spellId)
 {
     AuraEvent event;
-    event.type = AuraEventType::AURA_UPDATED;
-    event.priority = AuraEventPriority::LOW;
-    event.targetGuid = target;
-    event.casterGuid = ObjectGuid::Empty;
+    event.type = AuraEventType::SPELL_AURA_CLEAR;
+    event.priority = AuraEventPriority::HIGH;
+    event.targetGuid = caster;
     event.spellId = spellId;
-    event.auraSlot = 0;
-    event.stackCount = stacks;
-    event.duration = 0;
-    event.isBuff = false;
-    event.isHarmful = false;
+    event.itemId = 0;
+    event.category = 0;
+    event.auraMs = 0;
+    event.modRateMs = 0;
     event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    return event;
+}
+
+AuraEvent AuraEvent::ItemAuraStart(ObjectGuid caster, uint32 itemId, uint32 auraMs)
+{
+    AuraEvent event;
+    event.type = AuraEventType::ITEM_AURA_START;
+    event.priority = AuraEventPriority::MEDIUM;
+    event.targetGuid = caster;
+    event.spellId = 0;
+    event.itemId = itemId;
+    event.category = 0;
+    event.auraMs = auraMs;
+    event.modRateMs = 0;
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::milliseconds(auraMs + 5000);
     return event;
 }
 
@@ -95,10 +89,10 @@ std::string AuraEvent::ToString() const
 {
     std::ostringstream oss;
     oss << "[AuraEvent] Type: " << static_cast<uint32>(type)
-        << ", Target: " << targetGuid.ToString()
+        << ", Caster: " << targetGuid.ToString()
         << ", Spell: " << spellId
-        << ", Stacks: " << static_cast<uint32>(stackCount)
-        << ", Harmful: " << isHarmful;
+        << ", Item: " << itemId
+        << ", Duration: " << auraMs << "ms";
     return oss.str();
 }
 
@@ -127,6 +121,7 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
 {
     if (!ValidateEvent(event))
     {
+        TC_LOG_ERROR("module.playerbot.aura", "AuraEventBus: Invalid event rejected: {}", event.ToString());
         _stats.totalEventsDropped++;
         return false;
     }
@@ -135,6 +130,8 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
         std::lock_guard<std::mutex> lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
+            TC_LOG_WARN("module.playerbot.aura", "AuraEventBus: Event queue full ({} events), dropping event: {}",
+                _eventQueue.size(), event.ToString());
             _stats.totalEventsDropped++;
             return false;
         }
@@ -157,19 +154,36 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
 bool AuraEventBus::Subscribe(BotAI* subscriber, std::vector<AuraEventType> const& types)
 {
     if (!subscriber)
+    {
+        TC_LOG_ERROR("module.playerbot.aura", "AuraEventBus: Null subscriber attempted to subscribe");
         return false;
+    }
 
     std::lock_guard<std::mutex> lock(_subscriberMutex);
 
     for (AuraEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
+
         if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        {
+            TC_LOG_WARN("module.playerbot.aura", "AuraEventBus: Subscriber already registered for event type {}",
+                static_cast<uint32>(type));
             continue;
+        }
+
         if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
+        {
+            TC_LOG_ERROR("module.playerbot.aura", "AuraEventBus: Too many subscribers for event type {} (max {})",
+                static_cast<uint32>(type), MAX_SUBSCRIBERS_PER_EVENT);
             return false;
+        }
+
         subscriberList.push_back(subscriber);
     }
+
+    TC_LOG_DEBUG("module.playerbot.aura", "AuraEventBus: Subscriber {} registered for {} event types",
+        static_cast<void*>(subscriber), types.size());
 
     return true;
 }
@@ -177,14 +191,24 @@ bool AuraEventBus::Subscribe(BotAI* subscriber, std::vector<AuraEventType> const
 bool AuraEventBus::SubscribeAll(BotAI* subscriber)
 {
     if (!subscriber)
+    {
+        TC_LOG_ERROR("module.playerbot.aura", "AuraEventBus: Null subscriber attempted to subscribe to all");
         return false;
+    }
 
     std::lock_guard<std::mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    {
+        TC_LOG_WARN("module.playerbot.aura", "AuraEventBus: Subscriber already registered for all events");
         return false;
+    }
 
     _globalSubscribers.push_back(subscriber);
+
+    TC_LOG_DEBUG("module.playerbot.aura", "AuraEventBus: Subscriber {} registered for all events",
+        static_cast<void*>(subscriber));
+
     return true;
 }
 
@@ -207,6 +231,9 @@ void AuraEventBus::Unsubscribe(BotAI* subscriber)
         std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
+
+    TC_LOG_DEBUG("module.playerbot.aura", "AuraEventBus: Subscriber {} unsubscribed from all events",
+        static_cast<void*>(subscriber));
 }
 
 uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
@@ -233,6 +260,7 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
             if (event.IsExpired())
             {
+                LogEvent(event, "Expired");
                 _stats.totalEventsDropped++;
                 continue;
             }
@@ -249,9 +277,11 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
         {
             std::lock_guard<std::mutex> lock(_subscriberMutex);
+
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
+
             globalSubs = _globalSubscribers;
         }
 
@@ -268,6 +298,7 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         }
 
         _stats.totalEventsProcessed++;
+        LogEvent(event, "Processed");
     }
 
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -303,6 +334,9 @@ void AuraEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
     for (AuraEvent const& event : remainingEvents)
         _eventQueue.push(event);
+
+    TC_LOG_DEBUG("module.playerbot.aura", "AuraEventBus: Cleared all events for unit {}",
+        unitGuid.ToString());
 }
 
 uint32 AuraEventBus::GetPendingEventCount() const
@@ -332,7 +366,9 @@ bool AuraEventBus::DeliverEvent(BotAI* subscriber, AuraEvent const& event)
     {
         // Phase 4: Call virtual event handler on BotAI
         subscriber->OnAuraEvent(event);
-        TC_LOG_TRACE("module.playerbot.aura", "AuraEventBus: Delivered event to subscriber");
+
+        TC_LOG_TRACE("module.playerbot.aura", "AuraEventBus: Delivered event {} to subscriber {}",
+            event.ToString(), static_cast<void*>(subscriber));
         return true;
     }
     catch (std::exception const& e)
@@ -362,11 +398,20 @@ uint32 AuraEventBus::CleanupExpiredEvents()
         if (!event.IsExpired())
             validEvents.push_back(event);
         else
+        {
             cleanedCount++;
+            _stats.totalEventsDropped++;
+        }
     }
 
     for (AuraEvent const& event : validEvents)
         _eventQueue.push(event);
+
+    if (cleanedCount > 0)
+    {
+        TC_LOG_DEBUG("module.playerbot.aura", "AuraEventBus: Cleaned up {} expired events",
+            cleanedCount);
+    }
 
     return cleanedCount;
 }
@@ -387,13 +432,23 @@ void AuraEventBus::LogEvent(AuraEvent const& event, std::string const& action) c
 void AuraEventBus::DumpSubscribers() const
 {
     std::lock_guard<std::mutex> lock(_subscriberMutex);
-    TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Subscribers: {} global ===", _globalSubscribers.size());
+
+    TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Subscribers Dump ===");
+    TC_LOG_INFO("module.playerbot.aura", "Global subscribers: {}", _globalSubscribers.size());
+
+    for (auto const& [type, subscriberList] : _subscribers)
+    {
+        TC_LOG_INFO("module.playerbot.aura", "Event {}: {} subscribers",
+            static_cast<uint32>(type), subscriberList.size());
+    }
 }
 
 void AuraEventBus::DumpEventQueue() const
 {
     std::lock_guard<std::mutex> lock(_queueMutex);
-    TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Queue: {} events ===", _eventQueue.size());
+
+    TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Queue Dump ===");
+    TC_LOG_INFO("module.playerbot.aura", "Queue size: {}", _eventQueue.size());
 }
 
 std::vector<AuraEvent> AuraEventBus::GetQueueSnapshot() const
