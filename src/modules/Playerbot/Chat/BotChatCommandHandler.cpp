@@ -29,7 +29,10 @@
 #include "BotChatCommandHandler.h"
 #include "Session/BotSession.h"
 #include "Session/BotPacketRelay.h"
+#include "AI/BotAI.h"
 #include "Player.h"
+#include "Unit.h"
+#include "UnitAI.h"
 #include "Group.h"
 #include "Guild.h"
 #include "Chat.h"
@@ -815,28 +818,137 @@ static CommandResult HandleHelpCommand(CommandContext const& context, CommandRes
 
 static CommandResult HandleFollowCommand(CommandContext const& context, CommandResponse& response)
 {
-    // TODO: Implement follow logic in BotAI
+    if (!context.bot || !context.sender || !context.botSession)
+    {
+        response.SetText("Error: Invalid bot, sender, or bot session");
+        return CommandResult::INTERNAL_ERROR;
+    }
+
+    // Get bot AI from BotSession (not from Player::GetAI())
+    BotAI* botAI = context.botSession->GetAI();
+    if (!botAI)
+    {
+        response.SetText("Error: Bot has no AI");
+        return CommandResult::INTERNAL_ERROR;
+    }
+
+    // Follow the command sender
+    botAI->Follow(context.sender, 5.0f);  // 5 yard follow distance
+    botAI->SetAIState(BotAIState::FOLLOWING);
+
     response.SetText("Following " + context.sender->GetName());
+
+    TC_LOG_INFO("playerbot.chat", "Bot {} following player {} via command",
+        context.bot->GetName(), context.sender->GetName());
+
     return CommandResult::SUCCESS;
 }
 
 static CommandResult HandleStayCommand(CommandContext const& context, CommandResponse& response)
 {
-    // TODO: Implement stay logic in BotAI
+    if (!context.bot || !context.botSession)
+    {
+        response.SetText("Error: Invalid bot or bot session");
+        return CommandResult::INTERNAL_ERROR;
+    }
+
+    // Get bot AI from BotSession (not from Player::GetAI())
+    BotAI* botAI = context.botSession->GetAI();
+    if (!botAI)
+    {
+        response.SetText("Error: Bot has no AI");
+        return CommandResult::INTERNAL_ERROR;
+    }
+
+    // Stop all movement
+    botAI->StopMovement();
+
+    // Set AI state to IDLE to prevent autonomous movement
+    // Bot will stand still at current location
+    botAI->SetAIState(BotAIState::RESTING); // Using RESTING state as "idle/stay" state
+
     response.SetText("Staying here.");
+
+    TC_LOG_INFO("playerbot.chat", "Bot {} staying at current position via command",
+        context.bot->GetName());
+
     return CommandResult::SUCCESS;
 }
 
 static CommandResult HandleAttackCommand(CommandContext const& context, CommandResponse& response)
 {
-    // TODO: Implement attack logic in BotAI
-    if (context.args.empty())
+    if (!context.bot || !context.sender || !context.botSession)
     {
-        response.SetText("Usage: @bot attack <target>");
-        return CommandResult::INVALID_SYNTAX;
+        response.SetText("Error: Invalid bot, sender, or bot session");
+        return CommandResult::INTERNAL_ERROR;
     }
 
-    response.SetText("Attacking " + context.args[0]);
+    // Get bot AI from BotSession (not from Player::GetAI())
+    BotAI* botAI = context.botSession->GetAI();
+    if (!botAI)
+    {
+        response.SetText("Error: Bot has no AI");
+        return CommandResult::INTERNAL_ERROR;
+    }
+
+    // Determine target - either from sender's current target or from argument
+    ::Unit* target = nullptr;
+
+    if (context.args.empty())
+    {
+        // No argument provided - use sender's current target
+        target = context.sender->GetSelectedUnit();
+        if (!target)
+        {
+            response.SetText("You must have a target selected or provide target name");
+            return CommandResult::INVALID_SYNTAX;
+        }
+    }
+    else
+    {
+        // Argument provided - try to find target by name
+        // For now, just use sender's target (name-based targeting requires world search)
+        // TODO: Implement name-based target search in future enhancement
+        target = context.sender->GetSelectedUnit();
+        if (!target)
+        {
+            response.SetText("Target not found. Please select a target first.");
+            return CommandResult::INVALID_SYNTAX;
+        }
+    }
+
+    // Validate target
+    if (!context.bot->IsValidAttackTarget(target))
+    {
+        response.SetText("Invalid target - cannot attack " + target->GetName());
+        return CommandResult::EXECUTION_FAILED;
+    }
+
+    // Check if target is too far away
+    float distance = context.bot->GetDistance(target);
+    if (distance > 100.0f) // Max attack initiation range
+    {
+        response.SetText("Target too far away (" + std::to_string(static_cast<int>(distance)) + " yards)");
+        return CommandResult::EXECUTION_FAILED;
+    }
+
+    // Set target
+    context.bot->SetTarget(target->GetGUID());
+    botAI->SetTarget(target->GetGUID());
+
+    // Initiate attack
+    context.bot->Attack(target, true); // melee attack = true
+
+    // Set bot in combat state
+    context.bot->SetInCombatWith(target);
+    target->SetInCombatWith(context.bot);
+    botAI->SetAIState(BotAIState::COMBAT);
+
+    response.SetText("Attacking " + target->GetName());
+
+    TC_LOG_INFO("playerbot.chat", "Bot {} attacking {} via command (distance: {:.1f})",
+        context.bot->GetName(), target->GetName(), distance);
+
     return CommandResult::SUCCESS;
 }
 

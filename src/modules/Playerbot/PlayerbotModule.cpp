@@ -24,6 +24,7 @@
 #include "Session/BotPacketRelay.h"
 #include "Chat/BotChatCommandHandler.h"
 #include "Professions/ProfessionManager.h"
+#include "Quest/QuestHubDatabase.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
@@ -174,6 +175,17 @@ bool PlayerbotModule::Initialize()
     TC_LOG_INFO("server.loading", "Initializing Profession Manager...");
     Playerbot::ProfessionManager::instance()->Initialize();
     TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
+
+    // Initialize Quest Hub Database (spatial clustering of quest givers for efficient pathfinding)
+    TC_LOG_INFO("server.loading", "Initializing Quest Hub Database...");
+    if (!Playerbot::QuestHubDatabase::Instance().Initialize())
+    {
+        _lastError = "Failed to initialize Quest Hub Database";
+        TC_LOG_ERROR("server.loading", "Playerbot Module: {}", _lastError);
+        return false;
+    }
+    TC_LOG_INFO("server.loading", "Quest Hub Database initialized successfully - {} quest hubs loaded",
+        Playerbot::QuestHubDatabase::Instance().GetQuestHubCount());
 
     // Initialize Packet Sniffer (centralized event detection system)
     TC_LOG_INFO("server.loading", "Initializing Packet Sniffer...");

@@ -30,6 +30,8 @@ struct VendorItem;
 namespace Playerbot
 {
     class BotAI;
+    class VendorInteractionManager;
+    class FlightMasterManager;
 
     /**
      * NPCInteractionManager - Automated NPC interaction system for PlayerBots
@@ -259,6 +261,12 @@ namespace Playerbot
         Player* m_bot;
         BotAI* m_ai;
         bool m_enabled;
+
+        // Vendor interaction subsystem
+        std::unique_ptr<VendorInteractionManager> m_vendorManager;
+
+        // Flight master interaction subsystem
+        std::unique_ptr<FlightMasterManager> m_flightMasterManager;
 
         // Interaction state
         InteractionPhase m_currentPhase;

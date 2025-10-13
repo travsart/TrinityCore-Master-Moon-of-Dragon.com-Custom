@@ -1441,6 +1441,20 @@ void BotSpawner::CheckAndSpawnForPlayers()
     if (!_enabled.load() || !_config.enableDynamicSpawning)
         return;
 
+    // DEADLOCK FIX: Prevent reentrant calls that cause mutex deadlocks
+    bool expected = false;
+    if (!_inCheckAndSpawn.compare_exchange_strong(expected, true))
+    {
+        TC_LOG_TRACE("module.playerbot.spawner", "CheckAndSpawnForPlayers already running, skipping reentrant call");
+        return;
+    }
+
+    // RAII guard to ensure flag is reset even if exception occurs
+    struct ScopeGuard {
+        std::atomic<bool>& flag;
+        ~ScopeGuard() { flag.store(false); }
+    } guard{_inCheckAndSpawn};
+
     // Count real (non-bot) players
     uint32 activeSessions = sWorld->GetActiveAndQueuedSessionCount();
     uint32 botSessions = Playerbot::sBotWorldSessionMgr->GetBotCount();

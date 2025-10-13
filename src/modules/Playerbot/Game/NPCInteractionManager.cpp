@@ -8,7 +8,9 @@
  */
 
 #include "NPCInteractionManager.h"
-#include "BotAI.h"
+#include "../Interaction/VendorInteractionManager.h"
+#include "../Interaction/FlightMasterManager.h"
+#include "../AI/BotAI.h"
 #include "Player.h"
 #include "Creature.h"
 #include "ObjectAccessor.h"
@@ -25,6 +27,7 @@
 #include "CellImpl.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "DB2Stores.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -44,6 +47,7 @@ namespace Playerbot
         : m_bot(bot)
         , m_ai(ai)
         , m_enabled(true)
+        , m_vendorManager(nullptr)
         , m_currentPhase(InteractionPhase::IDLE)
         , m_phaseTimer(0)
         , m_lastNPCScan(0)
@@ -62,6 +66,13 @@ namespace Playerbot
         , m_cpuUsage(0.0f)
     {
         m_currentInteraction.timeout = INTERACTION_TIMEOUT;
+
+        // Initialize vendor interaction manager
+        if (m_bot)
+        {
+            m_vendorManager = std::make_unique<VendorInteractionManager>(m_bot);
+            m_flightMasterManager = std::make_unique<FlightMasterManager>(m_bot);
+        }
     }
 
     NPCInteractionManager::~NPCInteractionManager()
@@ -252,31 +263,26 @@ namespace Playerbot
 
     bool NPCInteractionManager::BuyFromVendor(Creature* vendor, std::vector<uint32> const& itemsToBuy)
     {
-        if (!vendor || itemsToBuy.empty())
+        if (!vendor || itemsToBuy.empty() || !m_vendorManager)
             return false;
 
-        bool boughtAny = false;
+        // Use VendorInteractionManager for full TrinityCore API integration
+        uint32 purchasedCount = m_vendorManager->PurchaseItems(vendor, itemsToBuy);
 
-        for (uint32 itemId : itemsToBuy)
+        if (purchasedCount > 0)
         {
-            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
-            if (!itemTemplate)
-                continue;
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully purchased %u items from vendor %u",
+                m_bot->GetName().c_str(), purchasedCount, vendor->GetEntry());
 
-            // Check if we can afford it
-            uint32 price = itemTemplate->GetBuyPrice();
-            if (m_bot->GetMoney() < price)
-                continue;
+            // Update statistics
+            auto vendorStats = m_vendorManager->GetStatistics();
+            m_stats.itemsBought = vendorStats.itemsPurchased;
+            m_stats.totalGoldSpent = vendorStats.totalGoldSpent;
 
-            // Try to buy the item
-            // Simplified - actual vendor purchase would require VendorItemData lookup
-            // For now, just record the intention
-            TC_LOG_DEBUG("bot.playerbot", "Bot %s would buy item %u from vendor (not implemented)",
-                m_bot->GetName().c_str(), itemId);
-            boughtAny = false;
+            return true;
         }
 
-        return boughtAny;
+        return false;
     }
 
     bool NPCInteractionManager::SellToVendor(Creature* vendor)
@@ -340,14 +346,21 @@ namespace Playerbot
 
     bool NPCInteractionManager::RestockReagents(Creature* vendor)
     {
-        if (!vendor)
+        if (!vendor || !m_vendorManager)
             return false;
 
-        std::vector<uint32> requiredReagents = GetRequiredReagents();
-        if (requiredReagents.empty())
-            return false;
+        // Use VendorInteractionManager's smart purchase system
+        // which automatically handles reagents at CRITICAL priority
+        uint32 purchasedCount = m_vendorManager->SmartPurchase(vendor);
 
-        return BuyFromVendor(vendor, requiredReagents);
+        if (purchasedCount > 0)
+        {
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Restocked reagents/consumables (%u items purchased)",
+                m_bot->GetName().c_str(), purchasedCount);
+            return true;
+        }
+
+        return false;
     }
 
     // Trainer Interactions
@@ -448,30 +461,67 @@ namespace Playerbot
 
     bool NPCInteractionManager::InteractWithFlightMaster(Creature* flightMaster)
     {
-        if (!flightMaster || !CanInteractWithNPC(flightMaster))
+        if (!flightMaster || !CanInteractWithNPC(flightMaster) || !m_flightMasterManager)
             return false;
 
-        // Simple implementation - just discover the flight path
         if (!StartInteraction(flightMaster))
             return false;
 
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s interacted with flight master %u",
-            m_bot->GetName().c_str(), flightMaster->GetEntry());
+        bool success = false;
+
+        // Learn flight path at this location
+        if (m_flightMasterManager->LearnFlightPath(flightMaster))
+        {
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Learned new flight path at flight master %u",
+                m_bot->GetName().c_str(), flightMaster->GetEntry());
+            success = true;
+        }
+
+        // Attempt smart flight to best destination
+        if (m_flightMasterManager->SmartFlight(flightMaster))
+        {
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully initiated smart flight from flight master %u",
+                m_bot->GetName().c_str(), flightMaster->GetEntry());
+
+            // Update statistics
+            auto flightStats = m_flightMasterManager->GetStatistics();
+            m_stats.flightsTaken = flightStats.flightsTaken;
+            m_stats.totalGoldSpent += flightStats.totalGoldSpent;
+
+            success = true;
+        }
 
         EndInteraction();
-        return true;
+        return success;
     }
 
     bool NPCInteractionManager::FlyToLocation(Creature* flightMaster, uint32 destinationNode)
     {
-        if (!flightMaster || !IsFlightMaster(flightMaster))
+        if (!flightMaster || !IsFlightMaster(flightMaster) || !m_flightMasterManager)
             return false;
 
-        // This would require TaxiPath integration - simplified for now
-        TC_LOG_DEBUG("bot.playerbot", "Bot %s attempting to fly to node %u",
-            m_bot->GetName().c_str(), destinationNode);
+        // Use FlightMasterManager for full TrinityCore taxi system integration
+        bool success = m_flightMasterManager->FlyToDestination(flightMaster, destinationNode);
 
-        return false; // Not implemented yet
+        if (success)
+        {
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully initiated flight to node %u",
+                m_bot->GetName().c_str(), destinationNode);
+
+            // Update statistics
+            auto flightStats = m_flightMasterManager->GetStatistics();
+            m_stats.flightsTaken = flightStats.flightsTaken;
+            m_stats.totalGoldSpent += flightStats.totalGoldSpent;
+
+            RecordFlight(flightStats.totalGoldSpent - (m_stats.totalGoldSpent - flightStats.totalGoldSpent));
+        }
+        else
+        {
+            TC_LOG_DEBUG("bot.playerbot", "Bot %s: Failed to initiate flight to node %u",
+                m_bot->GetName().c_str(), destinationNode);
+        }
+
+        return success;
     }
 
     bool NPCInteractionManager::InteractWithAuctioneer(Creature* auctioneer)
@@ -1237,25 +1287,64 @@ namespace Playerbot
         return memory;
     }
 
-    // Flight Master Logic (stubs for future implementation)
+    // Flight Master Logic
     std::vector<uint32> NPCInteractionManager::GetKnownFlightPaths() const
     {
-        return {};
+        if (!m_flightMasterManager)
+            return {};
+
+        return m_flightMasterManager->GetKnownFlightPaths();
     }
 
     uint32 NPCInteractionManager::FindBestFlightDestination(Creature* flightMaster) const
     {
+        if (!flightMaster || !m_flightMasterManager)
+            return 0;
+
+        // Use FlightMasterManager to evaluate and find best destination
+        uint32 currentNode = m_flightMasterManager->GetCurrentTaxiNode(flightMaster);
+        if (currentNode == 0)
+            return 0;
+
+        // Get all reachable destinations
+        auto destinations = m_flightMasterManager->GetReachableDestinations(flightMaster);
+        if (destinations.empty())
+            return 0;
+
+        // Return first known reachable destination
+        for (auto const& dest : destinations)
+        {
+            if (dest.isKnown && dest.nodeId != currentNode)
+                return dest.nodeId;
+        }
+
         return 0;
     }
 
     bool NPCInteractionManager::HasFlightPath(uint32 nodeId) const
     {
-        return false;
+        if (!m_flightMasterManager)
+            return false;
+
+        return m_flightMasterManager->IsFlightPathKnown(nodeId);
     }
 
     float NPCInteractionManager::CalculateFlightPriority(uint32 nodeId) const
     {
-        return 0.0f;
+        if (!m_flightMasterManager || nodeId == 0)
+            return 0.0f;
+
+        // Get taxi node entry
+        TaxiNodesEntry const* nodeEntry = sTaxiNodesStore.LookupEntry(nodeId);
+        if (!nodeEntry)
+            return 0.0f;
+
+        // Calculate priority
+        FlightMasterManager::DestinationPriority priority =
+            m_flightMasterManager->CalculateDestinationPriority(nodeId, nodeEntry);
+
+        // Convert priority enum to float (lower = higher priority)
+        return static_cast<float>(priority);
     }
 
     bool NPCInteractionManager::MoveToPosition(float x, float y, float z)

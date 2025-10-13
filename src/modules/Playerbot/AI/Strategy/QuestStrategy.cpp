@@ -19,6 +19,7 @@
 #include "World.h"
 #include "Creature.h"
 #include "../../Game/QuestAcceptanceManager.h"
+#include "../../Quest/QuestHubDatabase.h"
 
 namespace Playerbot
 {
@@ -967,8 +968,71 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
             bot->GetName(), _questGiverSearchFailures,
             std::min(30u, 5u * (1u << (_questGiverSearchFailures - 1))));
 
-        // TODO: Implement pathfinding to known quest hubs based on bot level
-        // For now, bot will just idle until a quest giver is nearby
+        // PATHFINDING TO QUEST HUBS: Navigate to appropriate quest hub for bot's level
+        TC_LOG_ERROR("module.playerbot.quest",
+            "🗺️ SearchForQuestGivers: Bot {} has no nearby quest givers - searching quest hub database for appropriate quest hubs",
+            bot->GetName());
+
+        // Get quest hubs appropriate for this bot's level and faction
+        auto& hubDb = QuestHubDatabase::Instance();
+        if (!hubDb.IsInitialized())
+        {
+            TC_LOG_ERROR("module.playerbot.quest",
+                "⚠️ SearchForQuestGivers: QuestHubDatabase not initialized, cannot navigate to quest hubs");
+            return;
+        }
+
+        auto questHubs = hubDb.GetQuestHubsForPlayer(bot, 3); // Get top 3 suitable hubs
+
+        if (questHubs.empty())
+        {
+            TC_LOG_ERROR("module.playerbot.quest",
+                "⚠️ SearchForQuestGivers: Bot {} - No appropriate quest hubs found for level {} (zone {}, faction {})",
+                bot->GetName(), bot->GetLevel(), bot->GetZoneId(), bot->GetTeamId());
+            return;
+        }
+
+        // Get nearest quest hub
+        QuestHub const* nearestHub = questHubs[0]; // Already sorted by suitability (includes distance)
+
+        TC_LOG_ERROR("module.playerbot.quest",
+            "✅ SearchForQuestGivers: Bot {} found quest hub '{}' at distance {:.1f} yards (Level range: {}-{}, {} quests available)",
+            bot->GetName(), nearestHub->name, nearestHub->GetDistanceFrom(bot),
+            nearestHub->minLevel, nearestHub->maxLevel, nearestHub->questIds.size());
+
+        // Check if hub is already within range
+        float hubDistance = nearestHub->GetDistanceFrom(bot);
+        if (hubDistance < 10.0f)
+        {
+            TC_LOG_ERROR("module.playerbot.quest",
+                "⚠️ SearchForQuestGivers: Bot {} already at quest hub '{}' but no quest givers found - may be phasing issue",
+                bot->GetName(), nearestHub->name);
+            return;
+        }
+
+        // Navigate to quest hub using existing PathfindingAdapter
+        TC_LOG_ERROR("module.playerbot.quest",
+            "🚶 SearchForQuestGivers: Bot {} navigating to quest hub '{}' at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f} yards",
+            bot->GetName(), nearestHub->name,
+            nearestHub->location.GetPositionX(), nearestHub->location.GetPositionY(), nearestHub->location.GetPositionZ(),
+            hubDistance);
+
+        // Use BotMovementUtil for navigation (integrates with existing pathfinding)
+        bool moveResult = BotMovementUtil::MoveToPosition(bot, nearestHub->location);
+
+        if (moveResult)
+        {
+            TC_LOG_ERROR("module.playerbot.quest",
+                "✅ SearchForQuestGivers: Bot {} successfully started pathfinding to quest hub '{}' ({} quest givers expected)",
+                bot->GetName(), nearestHub->name, nearestHub->creatureIds.size());
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.quest",
+                "❌ SearchForQuestGivers: Bot {} failed to start pathfinding to quest hub '{}'",
+                bot->GetName(), nearestHub->name);
+        }
+
         return;
     }
 

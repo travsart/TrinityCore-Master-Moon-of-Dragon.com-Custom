@@ -550,26 +550,206 @@ std::vector<Position> GroupFormation::GenerateLooseFormation(uint32 memberCount,
 // Placeholder implementations for other formation generators
 std::vector<Position> GroupFormation::GenerateWedgeFormation(uint32 memberCount, float spacing) const
 {
-    // TODO: Implement wedge formation algorithm
-    return GenerateLooseFormation(memberCount, spacing);
+    std::vector<Position> positions;
+
+    if (memberCount == 0)
+        return positions;
+
+    // Leader at point of wedge
+    positions.emplace_back(0, 0, 0);
+
+    if (memberCount == 1)
+        return positions;
+
+    // Arrange members in V-shape behind leader
+    // Each row has 2 members (left and right wing)
+    for (uint32 i = 1; i < memberCount; ++i)
+    {
+        uint32 row = (i + 1) / 2;  // Which row behind leader (1, 1, 2, 2, 3, 3, ...)
+        float xOffset = ((i % 2 == 0) ? 1.0f : -1.0f) * row * spacing * 0.8f;  // Alternating sides
+        float yOffset = -row * spacing * 1.2f;  // Behind leader, progressively further back
+
+        positions.emplace_back(xOffset, yOffset, 0);
+    }
+
+    return positions;
 }
 
 std::vector<Position> GroupFormation::GenerateDiamondFormation(uint32 memberCount, float spacing) const
 {
-    // TODO: Implement diamond formation algorithm
-    return GenerateLooseFormation(memberCount, spacing);
+    std::vector<Position> positions;
+
+    if (memberCount == 0)
+        return positions;
+
+    // Single member - place at center
+    if (memberCount == 1)
+    {
+        positions.emplace_back(0, 0, 0);
+        return positions;
+    }
+
+    // Diamond formation: Front, Left, Right, Back, then fill center and expand outward
+    // Position 0: Front point
+    positions.emplace_back(0, spacing * 1.5f, 0);
+
+    if (memberCount > 1)
+        positions.emplace_back(-spacing * 1.5f, 0, 0);  // Left point
+
+    if (memberCount > 2)
+        positions.emplace_back(spacing * 1.5f, 0, 0);   // Right point
+
+    if (memberCount > 3)
+        positions.emplace_back(0, -spacing * 1.5f, 0);  // Back point
+
+    if (memberCount > 4)
+        positions.emplace_back(0, 0, 0);                // Center
+
+    // Fill remaining members in expanding diamond layers
+    for (uint32 i = 5; i < memberCount; ++i)
+    {
+        uint32 layer = (i - 5) / 4 + 2;  // Layer number (2, 3, 4, ...)
+        uint32 posInLayer = (i - 5) % 4;  // Position within layer (0-3)
+        float layerDist = spacing * 1.5f * layer;
+
+        switch (posInLayer)
+        {
+            case 0: positions.emplace_back(0, layerDist, 0); break;              // Front
+            case 1: positions.emplace_back(-layerDist, 0, 0); break;             // Left
+            case 2: positions.emplace_back(layerDist, 0, 0); break;              // Right
+            case 3: positions.emplace_back(0, -layerDist, 0); break;             // Back
+        }
+    }
+
+    return positions;
 }
 
 std::vector<Position> GroupFormation::GenerateDefensiveSquare(uint32 memberCount, float spacing) const
 {
-    // TODO: Implement defensive square algorithm
-    return GenerateLooseFormation(memberCount, spacing);
+    std::vector<Position> positions;
+
+    if (memberCount == 0)
+        return positions;
+
+    // Single member - place at center
+    if (memberCount == 1)
+    {
+        positions.emplace_back(0, 0, 0);
+        return positions;
+    }
+
+    // Calculate square size based on member count
+    // For a square perimeter: 4 members per side minimum
+    uint32 membersPerSide = std::max(2u, static_cast<uint32>(std::ceil(std::sqrt(static_cast<float>(memberCount)))));
+    float sideLength = (membersPerSide - 1) * spacing;
+    float halfSide = sideLength / 2.0f;
+
+    uint32 placedMembers = 0;
+
+    // Place members on perimeter first (clockwise from top-left)
+    // Top side (left to right)
+    for (uint32 i = 0; i < membersPerSide && placedMembers < memberCount; ++i, ++placedMembers)
+    {
+        float x = -halfSide + i * spacing;
+        positions.emplace_back(x, halfSide, 0);
+    }
+
+    // Right side (top to bottom, excluding corners already placed)
+    for (uint32 i = 1; i < membersPerSide - 1 && placedMembers < memberCount; ++i, ++placedMembers)
+    {
+        float y = halfSide - i * spacing;
+        positions.emplace_back(halfSide, y, 0);
+    }
+
+    // Bottom side (right to left, excluding right corner)
+    for (uint32 i = 0; i < membersPerSide && placedMembers < memberCount; ++i, ++placedMembers)
+    {
+        float x = halfSide - i * spacing;
+        positions.emplace_back(x, -halfSide, 0);
+    }
+
+    // Left side (bottom to top, excluding both corners)
+    for (uint32 i = 1; i < membersPerSide - 1 && placedMembers < memberCount; ++i, ++placedMembers)
+    {
+        float y = -halfSide + i * spacing;
+        positions.emplace_back(-halfSide, y, 0);
+    }
+
+    // Fill interior if there are remaining members
+    // Place them in a grid pattern inside the square
+    if (placedMembers < memberCount)
+    {
+        uint32 interiorRows = membersPerSide - 2;
+        if (interiorRows > 0)
+        {
+            for (uint32 row = 0; row < interiorRows && placedMembers < memberCount; ++row)
+            {
+                for (uint32 col = 0; col < interiorRows && placedMembers < memberCount; ++col, ++placedMembers)
+                {
+                    float x = -halfSide + (col + 1) * spacing;
+                    float y = halfSide - (row + 1) * spacing;
+                    positions.emplace_back(x, y, 0);
+                }
+            }
+        }
+    }
+
+    return positions;
 }
 
 std::vector<Position> GroupFormation::GenerateArrowFormation(uint32 memberCount, float spacing) const
 {
-    // TODO: Implement arrow formation algorithm
-    return GenerateLooseFormation(memberCount, spacing);
+    std::vector<Position> positions;
+
+    if (memberCount == 0)
+        return positions;
+
+    // Leader at tip of arrow
+    positions.emplace_back(0, 0, 0);
+
+    if (memberCount == 1)
+        return positions;
+
+    // Arrow formation: Arrowhead shape optimized for forward movement
+    // Positions expand in width as they go back from the tip
+    // Shape: Single tip, then progressively wider rows
+
+    uint32 placedMembers = 1;  // Leader already placed
+    uint32 currentRow = 1;
+    float currentYOffset = -spacing * 1.2f;  // Start behind leader
+
+    while (placedMembers < memberCount)
+    {
+        // Calculate how many members in this row (increases with each row)
+        // Row 1: 2 members, Row 2: 3 members, Row 3: 4 members, etc.
+        uint32 membersInRow = std::min(currentRow + 1, memberCount - placedMembers);
+
+        // Calculate width for this row
+        float rowWidth = membersInRow * spacing * 0.7f;
+
+        // Place members in this row, centered horizontally
+        for (uint32 i = 0; i < membersInRow && placedMembers < memberCount; ++i, ++placedMembers)
+        {
+            float xOffset;
+            if (membersInRow == 1)
+            {
+                xOffset = 0;  // Center position
+            }
+            else
+            {
+                // Distribute evenly across row width
+                xOffset = -rowWidth / 2.0f + (i * rowWidth / (membersInRow - 1));
+            }
+
+            positions.emplace_back(xOffset, currentYOffset, 0);
+        }
+
+        // Move to next row
+        currentRow++;
+        currentYOffset -= spacing * 1.2f;
+    }
+
+    return positions;
 }
 
 void GroupFormation::PerformFormationSmoothing()
