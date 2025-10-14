@@ -203,6 +203,11 @@ private:
     uint32 _lastWeaponCheck;
     uint32 _lastRotationUpdate;
 
+    // Stance hysteresis tracking (prevents rapid stance toggling)
+    WarriorStance _lastRecommendedStance;
+    bool _isInDefensiveHysteresis;  // True when in defensive due to low health
+    bool _isInBerserkerHysteresis;  // True when in berserker due to execute phase
+
     // Enhanced execute phase tracking
     std::atomic<bool> _inExecutePhase{false};
     uint32 _executePhaseStartTime;

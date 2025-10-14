@@ -28,6 +28,9 @@ ArmsSpecialization::ArmsSpecialization(Player* bot)
     , _lastStanceCheck(0)
     , _lastWeaponCheck(0)
     , _lastRotationUpdate(0)
+    , _lastRecommendedStance(WarriorStance::BATTLE)
+    , _isInDefensiveHysteresis(false)
+    , _isInBerserkerHysteresis(false)
     , _inExecutePhase(false)
     , _executePhaseStartTime(0)
 {
@@ -213,6 +216,11 @@ void ArmsSpecialization::OnCombatEnd()
     _inExecutePhase = false;
     _cooldowns.clear();
     _deepWoundsTimers.clear();
+
+    // Reset stance hysteresis flags
+    _isInDefensiveHysteresis = false;
+    _isInBerserkerHysteresis = false;
+    _lastRecommendedStance = WarriorStance::BATTLE;
 }
 
 bool ArmsSpecialization::HasEnoughResource(uint32 spellId)
@@ -290,15 +298,67 @@ WarriorStance ArmsSpecialization::GetOptimalStance(::Unit* target)
     if (!target)
         return WarriorStance::BATTLE;
 
-    // Use defensive stance if low health
-    if (_bot->GetHealthPct() < 30.0f)
+    float healthPct = _bot->GetHealthPct();
+    bool targetInExecuteRange = IsInExecutePhase(target);
+
+    // HYSTERESIS LOGIC: Prevent rapid stance toggling by using deadband thresholds
+    //
+    // Problem: Without hysteresis, bot rapidly switches stances when:
+    // - Health fluctuates around 30% (e.g., 29% → 31% → 29% → 31%)
+    // - Target health crosses 20% threshold multiple times
+    // Each stance switch calls CastSpell(), which interrupts movement and triggers GCD
+    //
+    // Solution: Use different thresholds for entering and exiting special stances:
+    // - Enter defensive at 30%, but don't exit until 40% (10% hysteresis band)
+    // - Enter berserker at 20%, but don't exit until 25% (5% hysteresis band)
+
+    // Check if we should ENTER defensive stance (low health)
+    if (healthPct < 30.0f)
+    {
+        _isInDefensiveHysteresis = true;
+        _isInBerserkerHysteresis = false;  // Clear berserker if entering defensive
+        _lastRecommendedStance = WarriorStance::DEFENSIVE;
         return WarriorStance::DEFENSIVE;
+    }
 
-    // Use berserker stance for execute phase
-    if (IsInExecutePhase(target))
+    // Check if we should STAY IN defensive stance (hysteresis band)
+    if (_isInDefensiveHysteresis && healthPct < 40.0f)
+    {
+        // Stay in defensive until health recovers to 40%
+        _lastRecommendedStance = WarriorStance::DEFENSIVE;
+        return WarriorStance::DEFENSIVE;
+    }
+
+    // Exit defensive hysteresis - health recovered above 40%
+    if (_isInDefensiveHysteresis && healthPct >= 40.0f)
+    {
+        _isInDefensiveHysteresis = false;
+    }
+
+    // Check if we should ENTER berserker stance (execute phase)
+    if (targetInExecuteRange)
+    {
+        _isInBerserkerHysteresis = true;
+        _lastRecommendedStance = WarriorStance::BERSERKER;
         return WarriorStance::BERSERKER;
+    }
 
-    // Default to battle stance for Arms
+    // Check if we should STAY IN berserker stance (hysteresis band)
+    if (_isInBerserkerHysteresis && target->GetHealthPct() < 25.0f)
+    {
+        // Stay in berserker until target recovers above 25%
+        _lastRecommendedStance = WarriorStance::BERSERKER;
+        return WarriorStance::BERSERKER;
+    }
+
+    // Exit berserker hysteresis - target health recovered above 25%
+    if (_isInBerserkerHysteresis && target->GetHealthPct() >= 25.0f)
+    {
+        _isInBerserkerHysteresis = false;
+    }
+
+    // Default to battle stance for Arms (no hysteresis needed)
+    _lastRecommendedStance = WarriorStance::BATTLE;
     return WarriorStance::BATTLE;
 }
 
