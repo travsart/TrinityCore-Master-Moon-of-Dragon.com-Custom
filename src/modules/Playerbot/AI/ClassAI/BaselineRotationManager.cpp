@@ -253,18 +253,6 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         }
     }
 
-    // Stop movement for ranged spells (preserves chase motion generator)
-    if (!ability.requiresMelee && bot->isMoving())
-    {
-        bot->StopMoving();
-    }
-
-    // Ensure bot is facing the target before casting
-    if (!bot->HasInArc(static_cast<float>(M_PI), castTarget))
-    {
-        bot->SetFacingToObject(castTarget);
-    }
-
     // ============================================================================
     // ENTERPRISE-GRADE FIX: Proper Spell Queueing System
     // ============================================================================

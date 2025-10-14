@@ -746,6 +746,18 @@ void ClassAI::ExecutePendingSpell()
         target = bot; // Self-cast
     }
 
+    // CRITICAL: Stop movement for ranged spells (but preserve chase motion generator)
+    // Only stop movement when actually casting, not during validation
+    // This prevents the flickering caused by calling StopMoving() every frame during ability checks
+    // A spell is considered "ranged" if its max range > 5 yards (melee range)
+    float maxRange = spellInfo->GetMaxRange(false, bot, nullptr);
+    if (bot->isMoving() && maxRange > 5.0f)
+    {
+        bot->StopMoving();
+        TC_LOG_DEBUG("module.playerbot.classai", "Bot {} stopped movement for ranged spell cast (range: {:.1f}yd)",
+                    bot->GetName(), maxRange);
+    }
+
     // CRITICAL: Face the target before casting (required for spell validation)
     // Players auto-face when casting, bots need to do it explicitly
     if (target && target != bot)
