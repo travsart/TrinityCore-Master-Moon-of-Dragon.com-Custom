@@ -236,6 +236,13 @@ std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilitie
 
 bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, BaselineAbility const& ability)
 {
+    // DIAGNOSTIC: Log entry to TryCastAbility to confirm bot/target validity
+    TC_LOG_ERROR("module.playerbot.baseline",
+        "🔧 TryCastAbility: Bot={} ({}) Target={} ({}) Spell={}",
+        bot ? bot->GetName() : "NULL", (void*)bot,
+        target ? target->GetName() : "NULL", (void*)target,
+        ability.spellId);
+
     if (!CanUseAbility(bot, target, ability))
     {
         TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} cannot use spell {} - failed CanUseAbility check",
@@ -409,6 +416,12 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
         return false;
     }
 
+    // DIAGNOSTIC: Log entry to CanUseAbility with all validation parameters
+    TC_LOG_ERROR("module.playerbot.baseline",
+        "🔍 CanUseAbility START: Bot {} checking spell {} - botLevel={}, reqLevel={}, distance={:.1f}yd, requiresMelee={}, target={}",
+        bot->GetName(), ability.spellId, bot->GetLevel(), ability.minLevel,
+        bot->GetDistance(target), ability.requiresMelee, target->GetName());
+
     // Level check
     if (bot->GetLevel() < ability.minLevel)
     {
@@ -446,33 +459,39 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
     }
 
     // Resource check
+    // CRITICAL FIX: TrinityCore stores RAGE internally as tenths (multiply by 10)
+    // Example: rage 20 is stored as 200, rage 100 is stored as 1000
+    // We need to convert ability cost to internal format for comparison
     uint32 currentResource = 0;
-    // FIX: use GetClass() not getClass()
-    switch (bot->GetClass())
+    uint32 requiredResource = ability.resourceCost;
+
+    // Get bot's actual power type (MANA, RAGE, ENERGY, etc.)
+    Powers powerType = bot->GetPowerType();
+
+    // Get current power value for the bot's actual power type
+    currentResource = bot->GetPower(powerType);
+
+    // RAGE is stored internally as tenths - multiply cost by 10 for correct comparison
+    if (powerType == POWER_RAGE)
     {
-        case CLASS_WARRIOR:
-        case CLASS_DRUID: // In some forms
-            currentResource = bot->GetPower(POWER_RAGE);
-            break;
-        case CLASS_ROGUE:
-        case CLASS_MONK:
-            currentResource = bot->GetPower(POWER_ENERGY);
-            break;
-        case CLASS_HUNTER:
-            currentResource = bot->GetPower(POWER_FOCUS);
-            break;
-        case CLASS_DEATH_KNIGHT:
-            currentResource = bot->GetPower(POWER_RUNIC_POWER);
-            break;
-        default:
-            currentResource = bot->GetPower(POWER_MANA);
-            break;
+        requiredResource *= 10;
     }
 
-    if (currentResource < ability.resourceCost)
+    // DIAGNOSTIC: Log power type and value
+    TC_LOG_ERROR("module.playerbot.baseline", "🔬 POWER CHECK: Bot {} class={} powerType={} ({}) checking for spell {} - currentResource={}, requiredResource={}",
+                 bot->GetName(), static_cast<uint32>(bot->GetClass()),
+                 static_cast<int32>(powerType),
+                 powerType == POWER_MANA ? "MANA" :
+                 powerType == POWER_RAGE ? "RAGE" :
+                 powerType == POWER_ENERGY ? "ENERGY" :
+                 powerType == POWER_FOCUS ? "FOCUS" :
+                 powerType == POWER_RUNIC_POWER ? "RUNIC_POWER" : "OTHER",
+                 ability.spellId, currentResource, requiredResource);
+
+    if (currentResource < requiredResource)
     {
         TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} insufficient resources ({} < {}) for spell {}",
-                     bot->GetName(), currentResource, ability.resourceCost, ability.spellId);
+                     bot->GetName(), currentResource, requiredResource, ability.spellId);
         return false;
     }
 
