@@ -46,9 +46,9 @@ namespace Trinity
         auto it = _registeredModules.find(moduleName);
         if (it != _registeredModules.end())
         {
-            TC_LOG_INFO("server.loading", "ModuleUpdateManager: Unregistered module '{}' (processed {} updates, avg time: {}ms)",
+            TC_LOG_INFO("server.loading", "ModuleUpdateManager: Unregistered module '{}' (processed {} updates, avg time: {:.3f}ms)",
                        moduleName, it->second.updateCount,
-                       it->second.updateCount > 0 ? (it->second.totalUpdateTime / it->second.updateCount) : 0);
+                       it->second.updateCount > 0 ? (it->second.totalUpdateTime / static_cast<double>(it->second.updateCount) / 1000.0) : 0.0);
             _registeredModules.erase(it);
         }
     }
