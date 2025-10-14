@@ -116,6 +116,11 @@ private:
     uint32 _lastQuestGiverSearchTime;
     uint32 _questGiverSearchFailures;
 
+    // Quest area wandering (for respawn waiting)
+    uint32 _lastWanderTime;
+    uint32 _currentWanderPointIndex;
+    std::vector<Position> _questAreaWanderPoints;
+
     // Performance tracking
     uint32 _objectivesCompleted;
     uint32 _questsCompleted;
@@ -123,6 +128,11 @@ private:
 
     // Quest acceptance manager (enterprise-grade auto-acceptance)
     std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
+
+    // Helper methods for area wandering
+    bool ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
+    void InitializeQuestAreaWandering(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
+    void WanderInQuestArea(BotAI* ai);
 };
 
 } // namespace Playerbot

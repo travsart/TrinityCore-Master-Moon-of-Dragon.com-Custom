@@ -33,6 +33,8 @@ QuestStrategy::QuestStrategy()
     , _currentObjectiveIndex(0)
     , _lastQuestGiverSearchTime(0)
     , _questGiverSearchFailures(0)
+    , _lastWanderTime(0)
+    , _currentWanderPointIndex(0)
     , _objectivesCompleted(0)
     , _questsCompleted(0)
     , _averageObjectiveTime(0)
@@ -270,11 +272,30 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         if (priority.questId == 0)
         {
             // Still no objectives - bot has only autocomplete/scripted quests with no trackable objectives
-            // Fall back to searching for new quests instead of idling
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ ProcessQuestObjectives: Bot {} has NO trackable objectives (only autocomplete/scripted quests), searching for new quests",
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ ProcessQuestObjectives: Bot {} has NO trackable objectives (only autocomplete/scripted quests)",
                          bot->GetName());
 
-            // Search for quest givers to get quests with actual objectives
+            // CRITICAL FIX: Check if any of these quests are COMPLETE and ready to turn in
+            // Don't fall back to searching for new quests if we have completed quests!
+            for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
+            {
+                uint32 questId = bot->GetQuestSlotQuestId(slot);
+                if (questId == 0)
+                    continue;
+
+                // Check if quest is complete
+                if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "✅ ProcessQuestObjectives: Bot {} has COMPLETE autocomplete quest {} - turning it in!",
+                                 bot->GetName(), questId);
+                    TurnInQuest(ai, questId);
+                    return;
+                }
+            }
+
+            // No completed quests - fall back to searching for new quests
+            TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no completed quests, searching for new quests",
+                         bot->GetName());
             SearchForQuestGivers(ai);
             return;
         }
@@ -375,8 +396,29 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveSt
     TC_LOG_ERROR("module.playerbot.quest", "🚶 NavigateToObjective: Bot {} moving to objective (distance: {:.1f})",
                  bot->GetName(), distance);
 
-    // Move to objective location
-    bool moveResult = MoveToObjectiveLocation(ai, objectivePos);
+    // CRITICAL FIX: Add randomness to prevent all bots standing at exact same spot
+    // When moving to quest POI (waiting for respawns), spread bots out in a radius
+    // This prevents bot clumping and looks more natural
+    Position randomizedPos = objectivePos;
+
+    // Generate random offset within 15-yard radius
+    // Use bot GUID as seed for deterministic but unique positioning per bot
+    uint32 botSeed = bot->GetGUID().GetCounter();
+    float randomAngle = (botSeed % 360) * (M_PI / 180.0f); // Convert bot GUID to angle
+    float randomDistance = 5.0f + ((botSeed % 1000) / 1000.0f) * 10.0f; // 5-15 yards
+
+    randomizedPos.Relocate(
+        objectivePos.GetPositionX() + cos(randomAngle) * randomDistance,
+        objectivePos.GetPositionY() + sin(randomAngle) * randomDistance,
+        objectivePos.GetPositionZ()
+    );
+
+    TC_LOG_ERROR("module.playerbot.quest", "🎲 NavigateToObjective: Bot {} - Randomized position offset: angle={:.1f}°, distance={:.1f}yd → ({:.1f}, {:.1f}, {:.1f})",
+                 bot->GetName(), randomAngle * (180.0f / M_PI), randomDistance,
+                 randomizedPos.GetPositionX(), randomizedPos.GetPositionY(), randomizedPos.GetPositionZ());
+
+    // Move to randomized objective location
+    bool moveResult = MoveToObjectiveLocation(ai, randomizedPos);
     TC_LOG_ERROR("module.playerbot.quest", "🚶 NavigateToObjective: Bot {} MoveToObjectiveLocation result: {}",
                  bot->GetName(), moveResult ? "SUCCESS" : "FAILED");
 }
@@ -399,10 +441,93 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
 
     if (!target)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO target found, navigating to objective area",
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO hostile target found",
                      bot->GetName());
-        // No target found - navigate to objective area
-        NavigateToObjective(ai, objective);
+
+        // CRITICAL FIX: Check if this is a FRIENDLY NPC interaction quest (like Quest 28809)
+        // FindQuestTarget returns nullptr for friendly NPCs to prevent attacking them
+        // We need to check if there's a friendly NPC nearby that matches the objective
+        Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+        if (quest && objective.objectiveIndex < quest->Objectives.size())
+        {
+            QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+            // Scan for friendly NPCs with this entry in range
+            std::list<Creature*> nearbyCreatures;
+            bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 50.0f);
+
+            for (Creature* creature : nearbyCreatures)
+            {
+                if (!creature || !creature->IsAlive())
+                    continue;
+
+                // Check if this is a FRIENDLY NPC (not hostile to bot)
+                if (!bot->IsHostileTo(creature))
+                {
+                    float distance = bot->GetDistance(creature);
+                    TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) at distance {:.1f}",
+                                 bot->GetName(), creature->GetName(), questObjective.ObjectID, distance);
+
+                    // Check if in interaction range
+                    if (distance <= INTERACTION_DISTANCE)
+                    {
+                        // INTERACT with the friendly NPC using spell click (right-click interaction)
+                        TC_LOG_ERROR("module.playerbot.quest", "🤝 EngageQuestTargets: Bot {} INTERACTING with friendly NPC {} for quest {} (using HandleSpellClick)",
+                                     bot->GetName(), creature->GetName(), objective.questId);
+
+                        // Right-click on the NPC triggers HandleSpellClick
+                        // This is used for quest NPCs like "Injured Stormwind Infantry" that have npc_spellclick_spells
+                        creature->HandleSpellClick(bot);
+
+                        TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} sent spell click interaction to {} - quest objective should progress",
+                                     bot->GetName(), creature->GetName());
+                        return;
+                    }
+                    else
+                    {
+                        // Move closer to the friendly NPC
+                        TC_LOG_ERROR("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} moving to friendly NPC {} (distance: {:.1f} > INTERACTION_DISTANCE)",
+                                     bot->GetName(), creature->GetName(), distance);
+
+                        Position npcPos;
+                        npcPos.Relocate(creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ());
+                        BotMovementUtil::MoveToPosition(bot, npcPos);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // No friendly NPC found either - wait for respawns or navigate to quest area
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO target found (waiting for respawns)",
+                     bot->GetName());
+
+        // CRITICAL FIX: Check if quest has an area to wander in
+        // If quest has multiple POI points defining an area, wander through it to search for spawns
+        // Otherwise, just move to the single POI point with randomness
+        if (ShouldWanderInQuestArea(ai, objective))
+        {
+            // Initialize wandering if not already done
+            if (_questAreaWanderPoints.empty())
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "🗺️ EngageQuestTargets: Bot {} - Initializing quest area wandering",
+                             bot->GetName());
+                InitializeQuestAreaWandering(ai, objective);
+            }
+
+            // Wander through quest area to find respawns
+            TC_LOG_ERROR("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} - Wandering in quest area to search for spawns",
+                         bot->GetName());
+            WanderInQuestArea(ai);
+        }
+        else
+        {
+            // No quest area - just navigate to objective POI with randomness
+            TC_LOG_ERROR("module.playerbot.quest", "📍 EngageQuestTargets: Bot {} - No quest area, navigating to objective POI",
+                         bot->GetName());
+            NavigateToObjective(ai, objective);
+        }
+
         return;
     }
 
@@ -757,8 +882,27 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     TC_LOG_ERROR("module.playerbot.quest", "🔧 FindQuestTarget: Creating ObjectGuid with mapId={}, entry={}, counter={}",
                  mapId, entry, counter);
 
-    // Return first target (ObjectAccessor will validate)
-    return ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+    // Get the unit
+    ::Unit* target = ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+
+    // CRITICAL FIX: Check if this is a FRIENDLY NPC that requires interaction instead of killing
+    // Quest 28809 type bug: Type 0 (QUEST_OBJECTIVE_MONSTER) can be used for friendly NPCs
+    // that need interaction (e.g., "Injured Soldier revived")
+    // We should NOT attack friendly NPCs - return nullptr so bot uses TALKTO logic instead
+    if (target && target->ToCreature())
+    {
+        Creature* creature = target->ToCreature();
+
+        // Check if creature is friendly to the bot's faction
+        if (!bot->IsHostileTo(creature))
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: NPC {} (Entry: {}) is FRIENDLY (faction {}), should use TALKTO logic, not attack!",
+                         creature->GetName(), entry, creature->GetFaction());
+            return nullptr;  // Return nullptr so bot doesn't attack friendly NPC
+        }
+    }
+
+    return target;
 }
 
 GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
@@ -1441,6 +1585,148 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
     _questsCompleted++;
 
     return true;
+}
+
+// ========================================================================
+// QUEST AREA WANDERING SYSTEM - Patrol while waiting for respawns
+// ========================================================================
+
+bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+{
+    if (!ai || !ai->GetBot())
+        return false;
+
+    Player* bot = ai->GetBot();
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+
+    if (!quest || objective.objectiveIndex >= quest->Objectives.size())
+        return false;
+
+    // Check if quest has area data (QuestPOI with multiple points)
+    QuestPOIData const* poiData = sObjectMgr->GetQuestPOIData(objective.questId);
+
+    if (!poiData || poiData->Blobs.empty())
+        return false;
+
+    // Find blob for current objective and map
+    for (auto const& blob : poiData->Blobs)
+    {
+        if (blob.MapID == static_cast<int32>(bot->GetMapId()) &&
+            blob.ObjectiveIndex == static_cast<int32>(objective.objectiveIndex))
+        {
+            // Area wandering is only useful if there are multiple points defining a region
+            if (blob.Points.size() >= 2)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ ShouldWanderInQuestArea: Quest {} objective {} has {} POI points - wandering enabled",
+                             objective.questId, objective.objectiveIndex, blob.Points.size());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+        return;
+
+    Player* bot = ai->GetBot();
+
+    // Clear existing wander points
+    _questAreaWanderPoints.clear();
+    _currentWanderPointIndex = 0;
+
+    // Get quest POI data
+    QuestPOIData const* poiData = sObjectMgr->GetQuestPOIData(objective.questId);
+
+    if (!poiData || poiData->Blobs.empty())
+        return;
+
+    // Find blob for current objective and map
+    for (auto const& blob : poiData->Blobs)
+    {
+        if (blob.MapID == static_cast<int32>(bot->GetMapId()) &&
+            blob.ObjectiveIndex == static_cast<int32>(objective.objectiveIndex))
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "🗺️ InitializeQuestAreaWandering: Bot {} - Found quest area with {} POI points",
+                         bot->GetName(), blob.Points.size());
+
+            // Convert POI points to wander positions
+            for (auto const& point : blob.Points)
+            {
+                Position pos;
+                pos.Relocate(static_cast<float>(point.X), static_cast<float>(point.Y), static_cast<float>(point.Z));
+                _questAreaWanderPoints.push_back(pos);
+
+                TC_LOG_ERROR("module.playerbot.quest", "📍 Wander point {}: ({:.1f}, {:.1f}, {:.1f})",
+                             _questAreaWanderPoints.size(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+            }
+
+            // Start at a random point based on bot GUID (deterministic but unique per bot)
+            if (!_questAreaWanderPoints.empty())
+            {
+                _currentWanderPointIndex = bot->GetGUID().GetCounter() % _questAreaWanderPoints.size();
+                TC_LOG_ERROR("module.playerbot.quest", "🎲 Bot {} starting wander at point {} of {}",
+                             bot->GetName(), _currentWanderPointIndex, _questAreaWanderPoints.size());
+            }
+
+            break;
+        }
+    }
+}
+
+void QuestStrategy::WanderInQuestArea(BotAI* ai)
+{
+    if (!ai || !ai->GetBot())
+        return;
+
+    Player* bot = ai->GetBot();
+
+    // Check if wandering is initialized
+    if (_questAreaWanderPoints.empty())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ WanderInQuestArea: Bot {} - No wander points initialized",
+                     bot->GetName());
+        return;
+    }
+
+    // Throttle wandering - only move to next point every 10 seconds
+    uint32 currentTime = getMSTime();
+    constexpr uint32 WANDER_INTERVAL_MS = 10000; // 10 seconds
+
+    if (currentTime - _lastWanderTime < WANDER_INTERVAL_MS)
+    {
+        // Still waiting - don't wander yet
+        return;
+    }
+
+    // Update wander time
+    _lastWanderTime = currentTime;
+
+    // Check if bot is already at current wander point
+    Position const& currentWanderPoint = _questAreaWanderPoints[_currentWanderPointIndex];
+    float distance = bot->GetExactDist2d(currentWanderPoint.GetPositionX(), currentWanderPoint.GetPositionY());
+
+    if (distance < 10.0f)
+    {
+        // Reached current point - move to next point
+        _currentWanderPointIndex = (_currentWanderPointIndex + 1) % _questAreaWanderPoints.size();
+
+        TC_LOG_ERROR("module.playerbot.quest", "✅ WanderInQuestArea: Bot {} reached wander point, moving to next point {} of {}",
+                     bot->GetName(), _currentWanderPointIndex, _questAreaWanderPoints.size());
+    }
+
+    // Move to current wander point
+    Position const& targetPoint = _questAreaWanderPoints[_currentWanderPointIndex];
+
+    TC_LOG_ERROR("module.playerbot.quest", "🚶 WanderInQuestArea: Bot {} wandering to point {} at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+                 bot->GetName(), _currentWanderPointIndex,
+                 targetPoint.GetPositionX(), targetPoint.GetPositionY(), targetPoint.GetPositionZ(),
+                 bot->GetExactDist2d(targetPoint.GetPositionX(), targetPoint.GetPositionY()));
+
+    BotMovementUtil::MoveToPosition(bot, targetPoint);
 }
 
 } // namespace Playerbot

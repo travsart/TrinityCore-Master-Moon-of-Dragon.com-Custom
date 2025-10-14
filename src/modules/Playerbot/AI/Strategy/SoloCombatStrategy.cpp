@@ -156,6 +156,20 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // POSITIONING LOGIC - Move to optimal combat range
     // ========================================================================
 
+    // CRITICAL: Do NOT interfere with movement if bot has active spell-based movement
+    // Many spells have movement effects that must not be interrupted:
+    // - Charge, Heroic Leap (UNIT_STATE_CHARGING)
+    // - Blink, Leap (UNIT_STATE_JUMPING)
+    // - Any spell cast (UNIT_STATE_CASTING)
+    // Clearing MotionMaster during these states will interrupt the spell effect
+    if (bot->HasUnitState(UNIT_STATE_CASTING | UNIT_STATE_CHARGING | UNIT_STATE_JUMPING))
+    {
+        TC_LOG_TRACE("module.playerbot.strategy",
+            "SoloCombatStrategy: Bot {} has spell movement state (casting/charging/jumping), skipping movement management",
+            bot->GetName());
+        return;
+    }
+
     // Get optimal range for this bot's class/spec
     float optimalRange = GetOptimalCombatRange(ai, target);
     float currentDistance = bot->GetDistance(target);
@@ -194,8 +208,15 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         currentMotion == IDLE_MOTION_TYPE ? "IDLE" : "OTHER",
         currentDistance, optimalRange);
 
-    // CRITICAL FIX: Only issue MoveChase if NOT already chasing
-    // Re-issuing every frame causes speed-up and blinking issues
+    // CRITICAL: Do NOT interfere with CHASE motion!
+    // The MotionMaster's ChaseMovementGenerator handles positioning automatically.
+    // If we keep clearing and re-issuing MoveChase, we create a "stuttering" effect
+    // where the bot walks 2 yards, gets reset, walks 2 yards, gets reset, etc.
+    //
+    // The REAL issue is that ClassAI or other systems might be issuing conflicting
+    // movement commands. Let MotionMaster handle chase positioning naturally.
+    //
+    // Only issue MoveChase if bot is NOT already chasing
     if (currentMotion != CHASE_MOTION_TYPE)
     {
         // Start chasing target at optimal range
@@ -207,10 +228,10 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
     else
     {
-        // Already chasing - just let it continue
-        // MotionMaster will handle distance adjustments automatically
-        TC_LOG_ERROR("module.playerbot.strategy",
-            "✅ SoloCombatStrategy: Bot {} ALREADY CHASING {} (distance {:.1f}/{:.1f}yd) - skipping MoveChase",
+        // Already chasing - DON'T interfere! Let MotionMaster handle it.
+        // ChaseMovementGenerator will automatically adjust position as the bot/target moves.
+        TC_LOG_TRACE("module.playerbot.strategy",
+            "✅ SoloCombatStrategy: Bot {} ALREADY CHASING {} (distance {:.1f}/{:.1f}yd) - letting MotionMaster handle positioning",
             bot->GetName(), target->GetName(), currentDistance, optimalRange);
     }
 

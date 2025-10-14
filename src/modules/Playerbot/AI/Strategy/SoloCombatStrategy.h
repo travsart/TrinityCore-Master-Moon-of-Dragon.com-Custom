@@ -107,6 +107,9 @@ private:
      *  - Hybrid classes: ClassAI determines optimal range based on spec
      */
     float GetOptimalCombatRange(BotAI* ai, Unit* target) const;
+
+    // Throttling timer for MoveChase re-issue (prevents stutter)
+    uint32 _lastMoveChaseReissue = 0;
 };
 
 } // namespace Playerbot
