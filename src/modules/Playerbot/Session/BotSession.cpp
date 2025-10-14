@@ -41,6 +41,7 @@
 #include "AuthenticationPackets.h"
 #include "Core/Events/BotEventTypes.h"  // PHASE 0 - Quick Win #3: For GROUP_JOINED event
 #include "Core/Events/EventDispatcher.h"  // PHASE 0 - Quick Win #3: For event dispatch
+#include "PhasingHandler.h"  // For bot phase initialization
 
 namespace Playerbot {
 
@@ -958,7 +959,33 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         }
 
         ObjectAccessor::AddObject(pCurrChar);
+
+        // CRITICAL FIX: Following TrinityCore "golden source" pattern (CharacterHandler.cpp:1299)
+        // SendInitialPacketsAfterAddToMap() internally calls:
+        //   - PhasingHandler::OnMapChange(this) at Player.cpp:24805
+        // This happens AFTER AddPlayerToMap(), matching real player login flow
         pCurrChar->SendInitialPacketsAfterAddToMap();
+
+        // CRITICAL FIX: Set PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME for bots
+        // Real players get this flag when they send CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE packet (MovementHandler.cpp:886)
+        // Bots don't have network clients, so they never send this packet
+        // Without this flag, Player::CanNeverSee() returns TRUE, making bots unable to see ANY objects
+        // See Player.cpp:24131 - returns !HasPlayerLocalFlag(PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME) || WorldObject::CanNeverSee()
+        pCurrChar->SetPlayerLocalFlag(PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME);
+        TC_LOG_INFO("module.playerbot.session", "✅ Set PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME for bot {} (enables object visibility)", pCurrChar->GetName());
+
+        // DIAGNOSTIC: Log phase information after SendInitialPacketsAfterAddToMap
+        PhaseShift const& phaseShift = pCurrChar->GetPhaseShift();
+        std::string botPhases = "";
+        for (auto const& phaseRef : phaseShift.GetPhases())
+        {
+            if (!botPhases.empty()) botPhases += ",";
+            botPhases += std::to_string(phaseRef.Id);
+        }
+        if (botPhases.empty()) botPhases = "NONE";
+
+        TC_LOG_INFO("module.playerbot.session", "✅ Bot {} phase initialization complete (TrinityCore pattern) - Phases: [{}]",
+            pCurrChar->GetName(), botPhases);
 
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
 
