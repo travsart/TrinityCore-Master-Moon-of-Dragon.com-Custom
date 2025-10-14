@@ -1486,12 +1486,10 @@ void BotSpawner::CheckAndSpawnForPlayers()
                 TC_LOG_INFO("module.playerbot.spawner", "🎮 First player detected - initiating initial bot spawn");
             }
 
-            // Update zone populations to trigger spawning
-            UpdatePopulationTargets();
-            CalculateZoneTargets();
-
-            // Spawn bots immediately
-            SpawnToPopulationTarget();
+            // DEADLOCK FIX: Force immediate spawn cycle by resetting timer
+            // This allows Update() to handle spawning on next cycle WITHOUT recursive calls
+            _lastTargetCalculation = 0; // Force immediate spawn in next Update() cycle
+            TC_LOG_INFO("module.playerbot.spawner", "🎮 Spawn cycle timer reset - bots will spawn in next Update()");
         }
     }
 
