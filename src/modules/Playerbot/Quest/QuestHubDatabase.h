@@ -311,31 +311,18 @@ namespace Playerbot
         ~QuestHubDatabase() = default;
 
         /**
-         * @brief Loads quest givers from the database
+         * @brief Loads quest givers from database into temporary storage
          *
-         * Queries the creature_template table for NPCs with npcflag UNIT_NPC_FLAG_QUESTGIVER
-         * and loads their spawn positions from creature table.
-         *
-         * @return Number of quest givers loaded
-         *
-         * Performance: O(n) database query, ~50ms typical
+         * Performance: O(n) where n = quest giver count
+         *              ~50ms typical
          */
         uint32 LoadQuestGiversFromDB();
 
         /**
-         * @brief Clusters quest givers into logical quest hubs
+         * @brief Clusters quest givers into spatial hubs using DBSCAN algorithm
          *
-         * Uses a density-based spatial clustering algorithm (DBSCAN) to group
-         * nearby quest givers into hubs.
-         *
-         * Parameters:
-         * - Epsilon (search radius): 75 yards
-         * - MinPoints (minimum cluster size): 2 quest givers
-         *
-         * @return Number of quest hubs created
-         *
-         * Performance: O(n²) worst case, O(n log n) typical
-         *              ~30ms for 2000 quest givers
+         * Performance: O(n²) worst case for DBSCAN
+         *              ~200ms typical for 2669 quest givers
          */
         uint32 ClusterQuestGiversIntoHubs();
 
@@ -376,8 +363,14 @@ namespace Playerbot
         void ValidateHubData();
 
     private:
+        /// Forward declaration for internal use
+        struct QuestGiverData;
+
         /// All quest hubs (primary storage)
         std::vector<QuestHub> _questHubs;
+
+        /// Temporary storage for quest giver data during initialization
+        std::vector<QuestGiverData> _tempQuestGivers;
 
         /// Fast lookup by hub ID
         std::unordered_map<uint32, size_t> _hubIdToIndex;

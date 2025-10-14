@@ -361,7 +361,8 @@ namespace Playerbot
     // Private Helper Methods
     // ============================================================================
 
-    struct QuestGiverData
+    // Define the QuestGiverData structure (forward-declared in header)
+    struct QuestHubDatabase::QuestGiverData
     {
         uint32 creatureEntry;
         Position position;
@@ -371,16 +372,15 @@ namespace Playerbot
 
     uint32 QuestHubDatabase::LoadQuestGiversFromDB()
     {
-        std::vector<QuestGiverData> questGivers;
+        _tempQuestGivers.clear();
 
-        // Query creature spawns that are quest givers
+        // Query creature spawns that are quest givers (ALL MAPS - including expansions)
         QueryResult result = WorldDatabase.Query(
             "SELECT c.guid, c.id, c.position_x, c.position_y, c.position_z, "
             "c.map, ct.faction, COALESCE(c.zoneId, 0) as zoneId "
             "FROM creature c "
             "INNER JOIN creature_template ct ON c.id = ct.entry "
-            "WHERE ct.npcflag & 2 != 0 " // UNIT_NPC_FLAG_QUESTGIVER
-            "AND c.map < 2 " // Only Azeroth (0 = Eastern Kingdoms, 1 = Kalimdor)
+            "WHERE ct.npcflag & 2 != 0" // UNIT_NPC_FLAG_QUESTGIVER
         );
 
         if (!result)
@@ -390,6 +390,9 @@ namespace Playerbot
         }
 
         uint32 count = 0;
+        std::unordered_map<uint32, uint32> zoneDistribution;
+        std::unordered_map<uint32, uint32> mapDistribution;
+
         do
         {
             Field* fields = result->Fetch();
@@ -404,55 +407,108 @@ namespace Playerbot
             data.zoneId = fields[7].GetUInt32();
             data.factionTemplate = fields[6].GetUInt32();
 
-            questGivers.push_back(data);
+            _tempQuestGivers.push_back(data);
             ++count;
+
+            // Track distribution
+            zoneDistribution[data.zoneId]++;
+            uint32 mapId = fields[5].GetUInt32();
+            mapDistribution[mapId]++;
 
         } while (result->NextRow());
 
-        // Store quest givers temporarily for clustering
-        // We'll use a member variable to pass data between methods
-        struct TempData
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Loaded {} quest givers from database", count);
+
+        // Log map distribution with expansion names
+        std::vector<std::pair<uint32, uint32>> mapCounts(mapDistribution.begin(), mapDistribution.end());
+        std::sort(mapCounts.begin(), mapCounts.end(),
+            [](auto const& a, auto const& b) { return a.second > b.second; });
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Quest giver distribution across {} maps:", mapCounts.size());
+        for (size_t i = 0; i < std::min(size_t(10), mapCounts.size()); ++i)
         {
-            std::vector<QuestGiverData> questGivers;
-        };
-        static TempData tempData;
-        tempData.questGivers = std::move(questGivers);
+            std::string mapName;
+            switch (mapCounts[i].first)
+            {
+                case 0: mapName = "Eastern Kingdoms"; break;
+                case 1: mapName = "Kalimdor"; break;
+                case 530: mapName = "Outland"; break;
+                case 571: mapName = "Northrend"; break;
+                case 654: mapName = "Pandaria"; break;
+                case 648: mapName = "Broken Isles"; break;
+                case 646: mapName = "Broken Isles (Dalaran)"; break;
+                case 1643: mapName = "Ardenweald"; break;
+                case 1220: mapName = "Broken Shore"; break;
+                default: mapName = "Map " + std::to_string(mapCounts[i].first); break;
+            }
+            TC_LOG_INFO("playerbot", "  {}: {} quest givers", mapName, mapCounts[i].second);
+        }
+
+        // Log top 5 zones by quest giver count
+        std::vector<std::pair<uint32, uint32>> zoneCounts(zoneDistribution.begin(), zoneDistribution.end());
+        std::sort(zoneCounts.begin(), zoneCounts.end(),
+            [](auto const& a, auto const& b) { return a.second > b.second; });
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Top zones by quest giver count:");
+        for (size_t i = 0; i < std::min(size_t(5), zoneCounts.size()); ++i)
+        {
+            TC_LOG_INFO("playerbot", "  Zone {}: {} quest givers", zoneCounts[i].first, zoneCounts[i].second);
+        }
+
+        // Log sample positions
+        if (count > 0)
+        {
+            TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Sample quest giver positions:");
+            for (size_t i = 0; i < std::min(size_t(5), _tempQuestGivers.size()); ++i)
+            {
+                TC_LOG_DEBUG("playerbot", "  Entry {} at ({:.2f}, {:.2f}, {:.2f}) in zone {}",
+                    _tempQuestGivers[i].creatureEntry,
+                    _tempQuestGivers[i].position.GetPositionX(),
+                    _tempQuestGivers[i].position.GetPositionY(),
+                    _tempQuestGivers[i].position.GetPositionZ(),
+                    _tempQuestGivers[i].zoneId);
+            }
+        }
 
         return count;
     }
 
     uint32 QuestHubDatabase::ClusterQuestGiversIntoHubs()
     {
-        // Retrieve temporary data
-        struct TempData
-        {
-            std::vector<QuestGiverData> questGivers;
-        };
-        static TempData tempData;
+        TC_LOG_ERROR("playerbot", "QuestHubDatabase: !!!!! CLUSTER FUNCTION ENTERED - _tempQuestGivers.size() = {} !!!!!", _tempQuestGivers.size());
 
-        if (tempData.questGivers.empty())
+        if (_tempQuestGivers.empty())
+        {
+            TC_LOG_ERROR("playerbot", "QuestHubDatabase: No quest giver data to cluster!");
             return 0;
+        }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Starting DBSCAN clustering on {} quest givers",
+            _tempQuestGivers.size());
 
         // DBSCAN clustering parameters
         constexpr float EPSILON = 75.0f;  // 75 yards search radius
         constexpr uint32 MIN_POINTS = 2;  // Minimum 2 quest givers per hub
 
-        std::vector<bool> visited(tempData.questGivers.size(), false);
-        std::vector<int32> clusterIds(tempData.questGivers.size(), -1); // -1 = noise
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Clustering parameters - EPSILON={} yards, MIN_POINTS={}",
+            EPSILON, MIN_POINTS);
+
+        std::vector<bool> visited(_tempQuestGivers.size(), false);
+        std::vector<int32> clusterIds(_tempQuestGivers.size(), -1); // -1 = noise
         int32 currentClusterId = 0;
 
         // Lambda: Find neighbors within EPSILON
         auto findNeighbors = [&](size_t index) -> std::vector<size_t>
         {
             std::vector<size_t> neighbors;
-            Position const& pos = tempData.questGivers[index].position;
+            Position const& pos = _tempQuestGivers[index].position;
 
-            for (size_t i = 0; i < tempData.questGivers.size(); ++i)
+            for (size_t i = 0; i < _tempQuestGivers.size(); ++i)
             {
                 if (i == index)
                     continue;
 
-                Position const& otherPos = tempData.questGivers[i].position;
+                Position const& otherPos = _tempQuestGivers[i].position;
                 float dx = pos.GetPositionX() - otherPos.GetPositionX();
                 float dy = pos.GetPositionY() - otherPos.GetPositionY();
                 float distance = std::sqrt(dx * dx + dy * dy);
@@ -464,8 +520,23 @@ namespace Playerbot
             return neighbors;
         };
 
+        // Sample neighbor counts for diagnostic
+        std::vector<size_t> sampleNeighborCounts;
+        for (size_t i = 0; i < std::min(size_t(10), _tempQuestGivers.size()); ++i)
+        {
+            sampleNeighborCounts.push_back(findNeighbors(i).size());
+        }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Sample neighbor counts for first 10 quest givers:");
+        for (size_t i = 0; i < sampleNeighborCounts.size(); ++i)
+        {
+            TC_LOG_INFO("playerbot", "  QuestGiver {}: {} neighbors within {} yards",
+                i, sampleNeighborCounts[i], EPSILON);
+        }
+
         // DBSCAN algorithm
-        for (size_t i = 0; i < tempData.questGivers.size(); ++i)
+        uint32 noiseCount = 0;
+        for (size_t i = 0; i < _tempQuestGivers.size(); ++i)
         {
             if (visited[i])
                 continue;
@@ -477,11 +548,14 @@ namespace Playerbot
             {
                 // Mark as noise (singleton quest giver)
                 clusterIds[i] = -1;
+                ++noiseCount;
                 continue;
             }
 
             // Start new cluster
             clusterIds[i] = currentClusterId;
+            TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Started cluster {} with {} initial neighbors",
+                currentClusterId, neighbors.size());
 
             // Expand cluster
             for (size_t j = 0; j < neighbors.size(); ++j)
@@ -509,22 +583,54 @@ namespace Playerbot
             ++currentClusterId;
         }
 
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: DBSCAN clustering complete - {} clusters formed, {} noise points",
+            currentClusterId, noiseCount);
+
         // Create QuestHub objects from clusters
         std::unordered_map<int32, std::vector<size_t>> clusterMap;
+        uint32 noisePoints = 0;
+
         for (size_t i = 0; i < clusterIds.size(); ++i)
         {
             if (clusterIds[i] >= 0)
+            {
                 clusterMap[clusterIds[i]].push_back(i);
+            }
+            else
+            {
+                // This is a singleton/noise point - excluded from hubs as intended
+                ++noisePoints;
+            }
+        }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Cluster analysis - {} real clusters formed, {} singleton quest givers excluded",
+            currentClusterId, noisePoints);
+
+        if (currentClusterId == 0)
+        {
+            TC_LOG_ERROR("playerbot", "QuestHubDatabase: No quest hubs were formed by clustering!");
+            TC_LOG_ERROR("playerbot", "QuestHubDatabase: This indicates EPSILON ({} yards) may be too small, or quest givers are too far apart", 75.0f);
+            TC_LOG_ERROR("playerbot", "QuestHubDatabase: Consider increasing EPSILON or investigating quest giver spatial distribution");
+            return 0;
         }
 
         uint32 hubId = 1;
         for (auto const& [clusterId, indices] : clusterMap)
         {
+            // PROPER IMPLEMENTATION: Only create hubs from actual clusters (not singletons)
+            // This maintains the purpose of QuestHubDatabase: directing bots to EFFICIENT LEVELING HUBS
             if (indices.size() < MIN_POINTS)
+            {
+                TC_LOG_WARN("playerbot", "QuestHubDatabase: Skipping cluster {} with only {} quest givers (minimum {})",
+                    clusterId, indices.size(), MIN_POINTS);
                 continue;
+            }
 
             QuestHub hub;
             hub.hubId = hubId++;
+
+            TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Creating hub {} from {} quest givers (cluster ID: {})",
+                hub.hubId, indices.size(), clusterId);
 
             // Calculate center position (average of all quest giver positions)
             float sumX = 0.0f, sumY = 0.0f, sumZ = 0.0f;
@@ -533,7 +639,7 @@ namespace Playerbot
 
             for (size_t idx : indices)
             {
-                QuestGiverData const& qg = tempData.questGivers[idx];
+                QuestGiverData const& qg = _tempQuestGivers[idx];
                 sumX += qg.position.GetPositionX();
                 sumY += qg.position.GetPositionY();
                 sumZ += qg.position.GetPositionZ();
@@ -556,7 +662,7 @@ namespace Playerbot
             float maxDist = 0.0f;
             for (size_t idx : indices)
             {
-                Position const& pos = tempData.questGivers[idx].position;
+                Position const& pos = _tempQuestGivers[idx].position;
                 float dx = pos.GetPositionX() - hub.location.GetPositionX();
                 float dy = pos.GetPositionY() - hub.location.GetPositionY();
                 float dist = std::sqrt(dx * dx + dy * dy);
@@ -578,22 +684,43 @@ namespace Playerbot
 
     void QuestHubDatabase::LoadQuestDataForHubs()
     {
-        for (auto& hub : _questHubs)
-        {
-            if (hub.creatureIds.empty())
-                continue;
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Loading quest data for {} hubs...", _questHubs.size());
 
-            // Build IN clause for SQL query
+        // OPTIMIZATION: Collect ALL unique creature IDs from ALL hubs in a single pass
+        std::set<uint32> allCreatureIds;
+        for (auto const& hub : _questHubs)
+        {
+            allCreatureIds.insert(hub.creatureIds.begin(), hub.creatureIds.end());
+        }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Querying quest data for {} unique creatures across all hubs...",
+            allCreatureIds.size());
+
+        // Build map of creature ID -> quest data
+        // Tuple format: (questId, contentTuningId, unused, allowableRaces)
+        std::unordered_map<uint32, std::vector<std::tuple<uint32, uint32, uint32, uint64>>> creatureQuests;
+
+        // BATCH QUERIES: Split large IN clause into chunks of 100 creatures to avoid crashes
+        constexpr size_t BATCH_SIZE = 100;
+        std::vector<uint32> creatureIdVec(allCreatureIds.begin(), allCreatureIds.end());
+
+        for (size_t batchStart = 0; batchStart < creatureIdVec.size(); batchStart += BATCH_SIZE)
+        {
+            size_t batchEnd = std::min(batchStart + BATCH_SIZE, creatureIdVec.size());
+            size_t batchCount = batchEnd - batchStart;
+
+            // Build IN clause for this batch
             std::string creatureList;
-            for (size_t i = 0; i < hub.creatureIds.size(); ++i)
+            for (size_t i = batchStart; i < batchEnd; ++i)
             {
-                if (i > 0)
+                if (i != batchStart)
                     creatureList += ",";
-                creatureList += std::to_string(hub.creatureIds[i]);
+                creatureList += std::to_string(creatureIdVec[i]);
             }
 
-            // Query quests offered by creatures in this hub
-            std::string query = "SELECT DISTINCT qr.quest, qt.MinLevel, qt.QuestLevel, qt.AllowableRaces "
+            // Execute query for this batch
+            // WoW 11.2: Level info is in DB2 via ContentTuningID, not in quest_template columns
+            std::string query = "SELECT DISTINCT qr.id, qr.quest, qt.ContentTuningID, qt.AllowableRaces "
                                "FROM creature_queststarter qr "
                                "INNER JOIN quest_template qt ON qr.quest = qt.ID "
                                "WHERE qr.id IN (" + creatureList + ")";
@@ -601,60 +728,93 @@ namespace Playerbot
             QueryResult result = WorldDatabase.Query(query.c_str());
 
             if (!result)
+            {
+                TC_LOG_DEBUG("playerbot", "QuestHubDatabase: No quest data found for batch {} ({} creatures)",
+                    (batchStart / BATCH_SIZE) + 1, batchCount);
                 continue;
+            }
 
-            uint32 minLevel = 255;
-            uint32 maxLevel = 0;
-            std::set<uint32> uniqueQuests;
-
+            // Process results from this batch
             do
             {
                 Field* fields = result->Fetch();
 
-                uint32 questId = fields[0].GetUInt32();
-                uint32 questMinLevel = fields[1].GetUInt32();
-                uint32 questLevel = fields[2].GetUInt32();
-                uint32 allowableRaces = fields[3].GetUInt32();
+                uint32 creatureId = fields[0].GetUInt32();
+                uint32 questId = fields[1].GetUInt32();
+                uint32 contentTuningId = fields[2].GetUInt32();
+                uint64 allowableRaces = fields[3].GetUInt64();
 
-                uniqueQuests.insert(questId);
-
-                // Update level range
-                minLevel = std::min(minLevel, questMinLevel);
-                maxLevel = std::max(maxLevel, questLevel);
-
-                // Update faction mask based on allowable races
-                // WoW race bits: Alliance (1,3,4,7,11,22,25,29,32,34,37), Horde (2,5,6,8,9,10,26,27,28,31,35,36)
-                if (allowableRaces == 0 || allowableRaces == 0xFFFFFFFF)
-                {
-                    hub.factionMask |= 0x07; // All factions
-                }
-                else
-                {
-                    // Simplified faction detection
-                    bool hasAlliance = (allowableRaces & 0x0000044D) != 0; // Alliance race bits
-                    bool hasHorde = (allowableRaces & 0x000002B2) != 0;    // Horde race bits
-
-                    if (hasAlliance)
-                        hub.factionMask |= 0x01;
-                    if (hasHorde)
-                        hub.factionMask |= 0x02;
-                }
+                // Store ContentTuningID instead of min/max level (will use TrinityCore APIs later)
+                creatureQuests[creatureId].emplace_back(questId, contentTuningId, 0, allowableRaces);
 
             } while (result->NextRow());
 
+            TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Processed batch {} of {} ({} creatures)",
+                (batchStart / BATCH_SIZE) + 1, (creatureIdVec.size() + BATCH_SIZE - 1) / BATCH_SIZE, batchCount);
+        }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Retrieved quest data for {} creatures, now populating hubs...",
+            creatureQuests.size());
+
+        // Now populate each hub with its quest data (in-memory lookup, very fast!)
+        uint32 hubsProcessed = 0;
+        for (auto& hub : _questHubs)
+        {
+            if (hub.creatureIds.empty())
+                continue;
+
+            std::set<uint32> uniqueQuests;
+
+            // Lookup quest data for each creature in this hub (fast in-memory operation)
+            for (uint32 creatureId : hub.creatureIds)
+            {
+                auto it = creatureQuests.find(creatureId);
+                if (it == creatureQuests.end())
+                    continue;
+
+                // Tuple format: (questId, contentTuningId, unused, allowableRaces)
+                for (auto const& [questId, contentTuningId, unused, allowableRaces] : it->second)
+                {
+                    uniqueQuests.insert(questId);
+
+                    // Update faction mask based on allowable races
+                    if (allowableRaces == 0 || allowableRaces == 0xFFFFFFFFFFFFFFFF)
+                    {
+                        hub.factionMask |= 0x07; // All factions
+                    }
+                    else
+                    {
+                        // Simplified faction detection
+                        bool hasAlliance = (allowableRaces & 0x0000044D) != 0; // Alliance race bits
+                        bool hasHorde = (allowableRaces & 0x000002B2) != 0;    // Horde race bits
+
+                        if (hasAlliance)
+                            hub.factionMask |= 0x01;
+                        if (hasHorde)
+                            hub.factionMask |= 0x02;
+                    }
+                }
+            }
+
             // Assign quest data to hub
             hub.questIds.assign(uniqueQuests.begin(), uniqueQuests.end());
-            hub.minLevel = (minLevel != 255) ? minLevel : 1;
-            hub.maxLevel = maxLevel;
+
+            // WoW 11.2: Level ranges are determined dynamically via ContentTuningID in DB2
+            // For initial hub classification, use zone-based approximations
+            // This will be refined at runtime when bots query for appropriate hubs
+            hub.minLevel = 1;
+            hub.maxLevel = 70; // Max level in WoW 11.2
 
             // Refine hub name with zone info if available
             if (hub.zoneId > 0)
             {
-                // Note: In production, we'd query AreaTable.dbc for zone name
-                // For now, use generic name with zone ID
                 hub.name = "Quest Hub (Zone " + std::to_string(hub.zoneId) + ")";
             }
+
+            ++hubsProcessed;
         }
+
+        TC_LOG_INFO("playerbot", "QuestHubDatabase: Completed loading quest data for {} hubs", hubsProcessed);
     }
 
     void QuestHubDatabase::BuildSpatialIndex()
