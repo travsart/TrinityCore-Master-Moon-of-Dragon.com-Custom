@@ -324,13 +324,14 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     TC_LOG_ERROR("module.playerbot.baseline", "🎯 Bot {} attempting to cast spell {} on {}",
                  bot->GetName(), ability.spellId, castTarget->GetName());
 
-    // CRITICAL FIX: Stop movement before casting spells with cast time
-    // Ranged spells require the caster to be stationary
+    // MOVEMENT FIX: Stop movement for ranged spells, but DON'T clear motion generators
+    // MotionMaster()->Clear() removes ALL motion including chase, causing bot to reset to start position
+    // StopMoving() pauses movement temporarily without destroying the motion generator stack
     if (!ability.requiresMelee && bot->isMoving())
     {
         bot->StopMoving();
-        bot->GetMotionMaster()->Clear();
-        TC_LOG_ERROR("module.playerbot.baseline", "🛑 Stopped bot movement for spell casting");
+        // REMOVED: bot->GetMotionMaster()->Clear(); - This was causing the reset-to-start issue
+        TC_LOG_ERROR("module.playerbot.baseline", "🛑 Stopped bot movement for spell casting (motion generators preserved)");
     }
 
     // CRITICAL FIX: Ensure bot is facing the target before casting
