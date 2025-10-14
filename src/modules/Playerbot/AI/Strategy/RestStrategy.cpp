@@ -475,7 +475,11 @@ bool RestStrategy::EatFood(BotAI* ai, Item* food)
     // Use the food item
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
-    bot->CastItemUseSpell(food, targets, ObjectGuid::Empty, nullptr);
+
+    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
+    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
+    int32 misc[2] = { 0, 0 };
+    bot->CastItemUseSpell(food, targets, ObjectGuid::Empty, misc);
 
     _foodConsumed++;
     return true;
@@ -491,7 +495,11 @@ bool RestStrategy::DrinkWater(BotAI* ai, Item* drink)
     // Use the drink item
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
-    bot->CastItemUseSpell(drink, targets, ObjectGuid::Empty, nullptr);
+
+    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
+    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
+    int32 misc[2] = { 0, 0 };
+    bot->CastItemUseSpell(drink, targets, ObjectGuid::Empty, misc);
 
     _drinkConsumed++;
     return true;
@@ -507,7 +515,11 @@ bool RestStrategy::UseBandage(BotAI* ai, Item* bandage)
     // Use bandage on self
     SpellCastTargets targets;
     targets.SetUnitTarget(bot);
-    bot->CastItemUseSpell(bandage, targets, ObjectGuid::Empty, nullptr);
+
+    // CRITICAL FIX: Pass valid misc array instead of nullptr to prevent crash
+    // Player::CastItemUseSpell accesses misc[0] and misc[1] without null check
+    int32 misc[2] = { 0, 0 };
+    bot->CastItemUseSpell(bandage, targets, ObjectGuid::Empty, misc);
 
     _bandagesUsed++;
     return true;
