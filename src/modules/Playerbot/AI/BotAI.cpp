@@ -46,6 +46,8 @@
 #include "WorldSession.h"
 #include "Log.h"
 #include "Timer.h"
+#include "DatabaseEnv.h"
+#include "QueryResult.h"
 #include <chrono>
 #include <set>
 #include <unordered_map>
@@ -203,12 +205,94 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Phase 4: Subscribe to all event buses for comprehensive event handling
     SubscribeToEventBuses();
 
-    // Check if bot is already in a group (e.g., after server restart)
-    if (_bot->GetGroup())
+    // Check if bot is already in a VALID group (e.g., after server restart)
+    // CRITICAL FIX: Groups should persist if there's at least one real player character
+    // who has been offline for less than 1 hour. This applies to all group sizes:
+    // - 2-person groups (1 player + 1 bot)
+    // - 5-person dungeon groups (1 player + 4 bots)
+    // - 40-person raid groups (1 player + 39 bots)
+    // If all players are offline for > 1 hour, disband the group
+    if (Group* group = _bot->GetGroup())
     {
-        TC_LOG_INFO("playerbot", "Bot {} already in group on initialization, activating follow strategy",
-                    _bot->GetName());
-        OnGroupJoined(_bot->GetGroup());
+        bool hasValidPlayer = false;
+        ObjectGuid playerGuidToCheck = ObjectGuid::Empty;
+
+        // Check all group members for a real player character
+        for (GroupReference const& itr : group->GetMembers())
+        {
+            Player* member = itr.GetSource();
+            if (!member)
+                continue;
+
+            // Skip if this is a bot
+            if (Playerbot::PlayerBotHooks::IsPlayerBot(member))
+                continue;
+
+            // Found a real player character
+            // Check if they're online OR offline for less than 1 hour
+            if (member->IsInWorld())
+            {
+                // Player is currently online
+                hasValidPlayer = true;
+                TC_LOG_INFO("playerbot", "Bot {} group validation: Found online player {} in group",
+                            _bot->GetName(), member->GetName());
+                break;
+            }
+            else
+            {
+                // Player is offline - need to check logout time from database
+                playerGuidToCheck = member->GetGUID();
+                TC_LOG_INFO("playerbot", "Bot {} group validation: Found offline player {} - will check logout time",
+                            _bot->GetName(), member->GetName());
+                break;
+            }
+        }
+
+        // If we found an offline player, check their logout time via database query
+        if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
+        {
+            // Query the characters database for logout_time
+            QueryResult result = CharacterDatabase.PQuery(
+                "SELECT logout_time FROM characters WHERE guid = {}", playerGuidToCheck.GetCounter());
+
+            if (result)
+            {
+                Field* fields = result->Fetch();
+                uint64 logoutTime = fields[0].GetUInt64();
+                uint64 currentTime = static_cast<uint64>(time(nullptr));
+                uint64 timeSinceLogout = currentTime - logoutTime;
+
+                // 1 hour = 3600 seconds
+                if (timeSinceLogout < 3600)
+                {
+                    hasValidPlayer = true;
+                    TC_LOG_INFO("playerbot", "Bot {} group validation: Player offline for {}s (< 1 hour), group persists",
+                                _bot->GetName(), timeSinceLogout);
+                }
+                else
+                {
+                    TC_LOG_INFO("playerbot", "Bot {} group validation: Player offline for {}s (> 1 hour), group invalid",
+                                _bot->GetName(), timeSinceLogout);
+                }
+            }
+        }
+
+        if (hasValidPlayer)
+        {
+            // Valid group with active or recently logged out player
+            TC_LOG_INFO("playerbot", "Bot {} in valid group (members: {}), activating follow strategy",
+                        _bot->GetName(), group->GetMembersCount());
+            OnGroupJoined(group);
+        }
+        else
+        {
+            // No valid player found - all offline > 1 hour or only bots
+            TC_LOG_WARN("playerbot", "Bot {} group has no valid player (all offline > 1 hour), disbanding group",
+                        _bot->GetName());
+            // Leave the invalid group
+            _bot->RemoveFromGroup();
+            _aiState = BotAIState::SOLO; // Explicitly set to SOLO
+        }
     }
 
     TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetGUID().ToString());
@@ -232,28 +316,22 @@ void BotAI::UpdateAI(uint32 diff)
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
     // No more confusion with DoUpdateAI/UpdateEnhanced
 
-    // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> updateAILogAccumulators;
-    bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());
-    bool shouldLog = false;
+    // DIAGNOSTIC: Log UpdateAI entry for first bot only, once per 10 seconds
+    static uint32 lastUpdateLog = 0;
+    static bool loggedFirstBot = false;
+    uint32 now = getMSTime();
 
-    if (isTestBot)
+    if (!loggedFirstBot || (now - lastUpdateLog > 10000))
     {
-        std::string botName = _bot->GetName();
-        // Throttle by call count (every 1000 calls ~= 50s)
-        updateAILogAccumulators[botName]++;
-        if (updateAILogAccumulators[botName] >= 1000)
-        {
-            shouldLog = true;
-            updateAILogAccumulators[botName] = 0;
-        }
-    }
-
-    if (shouldLog)
-    {
-        TC_LOG_ERROR("module.playerbot", "🎯 UpdateAI ENTRY: Bot {}, _bot={}, IsInWorld()={}",
-                    _bot ? _bot->GetName() : "NULL", (void*)_bot, _bot ? _bot->IsInWorld() : false);
+        TC_LOG_INFO("module.playerbot", "✅ UpdateAI active: Bot {} (ID: {}), InWorld={}, InCombat={}, InGroup={}, Strategies={}",
+                    _bot->GetName(),
+                    _bot->GetGUID().GetCounter(),
+                    _bot->IsInWorld(),
+                    _bot->IsInCombat(),
+                    _bot->GetGroup() != nullptr,
+                    _activeStrategies.size());
+        lastUpdateLog = now;
+        loggedFirstBot = true;
     }
 
     if (!_bot || !_bot->IsInWorld())
@@ -267,32 +345,20 @@ void BotAI::UpdateAI(uint32 diff)
     // Group-related strategies (follow, group_combat) are activated in OnGroupJoined()
     if (!_bot->GetGroup() && !_soloStrategiesActivated)
     {
+        TC_LOG_INFO("module.playerbot.ai", "🎯 ACTIVATING SOLO STRATEGIES: Bot {} (not in group, first UpdateAI)",
+                    _bot->GetName());
+
         // Activate all solo-relevant strategies in priority order:
-
-        // 1. Rest strategy (Priority: 90) - HIGHEST: Must rest before doing anything
-        //    Handles eating, drinking, bandaging when resources low
         ActivateStrategy("rest");
-
-        // 2. Solo Combat strategy (Priority: 70) - HIGH: Combat takes priority
-        //    Handles ALL solo combat (quest, gathering defense, autonomous, trading)
         ActivateStrategy("solo_combat");
-
-        // 3. Quest strategy (Priority: 50) - MEDIUM: Quest objectives
-        //    Handles quest navigation, objective completion, turn-ins
         ActivateStrategy("quest");
-
-        // 4. Loot strategy (Priority: 45) - MEDIUM: Loot after combat
-        //    Handles corpse looting, item pickup, inventory management
         ActivateStrategy("loot");
-
-        // 5. Solo strategy (Priority: 10) - LOWEST: Fallback coordinator
-        //    Coordinates all solo behaviors, handles wandering when idle
         ActivateStrategy("solo");
 
         _soloStrategiesActivated = true;
 
-        TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT ACTIVATION: Bot {} activated 5 solo strategies (rest, solo_combat, quest, loot, solo) on first UpdateAI",
-                    _bot->GetName());
+        TC_LOG_INFO("module.playerbot.ai", "✅ SOLO BOT ACTIVATION COMPLETE: Bot {} - {} strategies active",
+                    _bot->GetName(), _activeStrategies.size());
     }
 
     // PHASE 0 - Quick Win #3: Periodic group check REMOVED
@@ -446,9 +512,33 @@ void BotAI::UpdateAI(uint32 diff)
 
     // Update solo behaviors (questing, gathering, autonomous combat, etc.)
     // Only runs when bot is in solo play mode (not in group or following)
+
+    // DIAGNOSTIC: Log why UpdateSoloBehaviors might not be running
+    static uint32 lastSoloBehaviorLog = 0;
+    uint32 soloCheckTime = getMSTime();
+    if (soloCheckTime - lastSoloBehaviorLog > 5000) // Every 5 seconds
+    {
+        TC_LOG_ERROR("module.playerbot", "🔍 UpdateSoloBehaviors check: Bot {} - IsInCombat()={}, IsFollowing()={}, _aiState={}, InGroup={}",
+                     _bot->GetName(),
+                     IsInCombat(),
+                     IsFollowing(),
+                     static_cast<uint32>(_aiState),
+                     _bot->GetGroup() != nullptr);
+        lastSoloBehaviorLog = soloCheckTime;
+    }
+
     if (!IsInCombat() && !IsFollowing())
     {
+        TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateSoloBehaviors for bot {}", _bot->GetName());
         UpdateSoloBehaviors(diff);
+    }
+    else
+    {
+        if (soloCheckTime - lastSoloBehaviorLog < 100) // Only log once per 5-second window
+        {
+            TC_LOG_ERROR("module.playerbot", "⚠️ SKIPPING UpdateSoloBehaviors for bot {} - IsInCombat={}, IsFollowing={}",
+                         _bot->GetName(), IsInCombat(), IsFollowing());
+        }
     }
 
     // ========================================================================

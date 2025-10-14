@@ -177,6 +177,9 @@ public:
     void UpdateBotTracking(Player* bot, uint32 diff);
     void CleanupInactiveTracking();
 
+    // Position finding (PUBLIC - used by QuestStrategy for dynamic position refresh)
+    Position FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective);
+
 private:
     ObjectiveTracker();
     ~ObjectiveTracker() = default;
@@ -225,7 +228,6 @@ private:
     uint32 GetCurrentObjectiveProgress(Player* bot, const Quest* quest, uint32 objectiveIndex);
     uint32 AssignObjectiveToGroupMember(Group* group, Player* member, uint32 questId);
     void AssignSpecificTargetToBot(Player* bot, uint32 questId, uint32 objectiveIndex, uint32 targetIndex);
-    Position FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective);
 
     // Priority calculation helpers
     float CalculateUrgencyFactor(Player* bot, const ObjectiveState& state);

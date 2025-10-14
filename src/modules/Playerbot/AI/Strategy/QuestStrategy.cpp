@@ -18,6 +18,7 @@
 #include "ObjectMgr.h"
 #include "World.h"
 #include "Creature.h"
+#include "DatabaseEnv.h"
 #include "../../Game/QuestAcceptanceManager.h"
 #include "../../Quest/QuestHubDatabase.h"
 
@@ -342,6 +343,34 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             break;
 
         case QUEST_OBJECTIVE_ITEM:
+        {
+            // CRITICAL FIX: ITEM objectives can require either:
+            // 1. Looting from killed creatures (check creature_loot_template)
+            // 2. Interacting with GameObjects (check gameobject_loot_template)
+            // We need to check which one and route appropriately!
+
+            // Check if item comes from creature loot
+            bool isLootFromCreature = IsItemFromCreatureLoot(questObjective->ObjectID);
+
+            if (isLootFromCreature)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "⚔️ ProcessQuestObjectives: Bot {} - Item {} comes from CREATURE LOOT, calling EngageQuestTargets for quest {}",
+                             bot->GetName(), questObjective->ObjectID, objective.questId);
+
+                // Route to EngageQuestTargets to kill the creature that drops this item
+                EngageQuestTargets(ai, objective);
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "📦 ProcessQuestObjectives: Bot {} - Item {} comes from GAMEOBJECT or ground loot, calling CollectQuestItems for quest {}",
+                             bot->GetName(), questObjective->ObjectID, objective.questId);
+
+                // Route to CollectQuestItems for GameObject interaction
+                CollectQuestItems(ai, objective);
+            }
+            break;
+        }
+
         case QUEST_OBJECTIVE_GAMEOBJECT:
             TC_LOG_ERROR("module.playerbot.quest", "📦 ProcessQuestObjectives: Bot {} - Calling CollectQuestItems for quest {}",
                          bot->GetName(), objective.questId);
@@ -452,9 +481,9 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
         {
             QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
 
-            // Scan for friendly NPCs with this entry in range
+            // Scan for friendly NPCs with this entry in range (300 yards to match hostile creature scan)
             std::list<Creature*> nearbyCreatures;
-            bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 50.0f);
+            bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 300.0f);
 
             for (Creature* creature : nearbyCreatures)
             {
@@ -467,6 +496,21 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                     float distance = bot->GetDistance(creature);
                     TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) at distance {:.1f}",
                                  bot->GetName(), creature->GetName(), questObjective.ObjectID, distance);
+
+                    // CRITICAL: Check if objective is already complete BEFORE interacting
+                    // GetQuestObjectiveData returns the current progress count for this objective
+                    uint32 currentProgress = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+                    uint32 requiredAmount = static_cast<uint32>(questObjective.Amount);
+
+                    if (currentProgress >= requiredAmount)
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} OBJECTIVE COMPLETE ({} / {}) - skipping interaction with {}",
+                                     bot->GetName(), currentProgress, requiredAmount, creature->GetName());
+                        return;  // Objective complete - stop interacting
+                    }
+
+                    TC_LOG_ERROR("module.playerbot.quest", "📊 EngageQuestTargets: Bot {} objective progress: {} / {} - interaction needed",
+                                 bot->GetName(), currentProgress, requiredAmount);
 
                     // Check if in interaction range
                     if (distance <= INTERACTION_DISTANCE)
@@ -844,8 +888,57 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (!ai || !ai->GetBot())
         return Position();
 
-    // Return cached position from objective state
-    return objective.lastKnownPosition;
+    Player* bot = ai->GetBot();
+
+    // Get cached position from ObjectiveTracker (set by StartTrackingObjective)
+    Position cachedPos = objective.lastKnownPosition;
+
+    // CRITICAL FIX: Check if cached position is VALID (not at origin 0,0,0 and not at bot's position)
+    // If cached position is at origin or at bot's current position, it means FindObjectiveTargetLocation
+    // failed to find spawn data and fell back to bot position. In this case, we need to re-query.
+    bool isValidSpawnPosition = cachedPos.GetExactDist2d(0.0f, 0.0f) > 0.1f &&  // Not at origin
+                                cachedPos.GetExactDist2d(bot->GetPositionX(), bot->GetPositionY()) > 1.0f;  // Not at bot position
+
+    if (!isValidSpawnPosition)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ GetObjectivePosition: Bot {} - Cached position ({:.1f}, {:.1f}, {:.1f}) is INVALID (at origin or bot position)",
+                     bot->GetName(),
+                     cachedPos.GetPositionX(), cachedPos.GetPositionY(), cachedPos.GetPositionZ());
+
+        // Re-query position with QuestPOI fallback
+        Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+        if (quest && objective.objectiveIndex < quest->Objectives.size())
+        {
+            QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+            TC_LOG_ERROR("module.playerbot.quest", "🔄 GetObjectivePosition: Re-querying objective location with QuestPOI fallback...");
+
+            QuestObjectiveData objData(objective.questId, objective.objectiveIndex,
+                                      static_cast<QuestObjectiveType>(questObjective.Type),
+                                      questObjective.ObjectID, questObjective.Amount);
+
+            Position newPos = ObjectiveTracker::instance()->FindObjectiveTargetLocation(bot, objData);
+
+            // Check if we got a valid position
+            if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ GetObjectivePosition: Found NEW position ({:.1f}, {:.1f}, {:.1f}) via re-query",
+                             newPos.GetPositionX(), newPos.GetPositionY(), newPos.GetPositionZ());
+                return newPos;
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "❌ GetObjectivePosition: Re-query FAILED, returning cached position anyway");
+            }
+        }
+    }
+
+    // Cached position is valid - return it
+    TC_LOG_ERROR("module.playerbot.quest", "✅ GetObjectivePosition: Bot {} using cached spawn position ({:.1f}, {:.1f}, {:.1f})",
+                 bot->GetName(),
+                 cachedPos.GetPositionX(), cachedPos.GetPositionY(), cachedPos.GetPositionZ());
+
+    return cachedPos;
 }
 
 ::Unit* QuestStrategy::FindQuestTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
@@ -864,11 +957,20 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (questObjective.Type != QUEST_OBJECTIVE_MONSTER)
         return nullptr;
 
-    // Scan for creature with this entry
-    std::vector<uint32> targets = ObjectiveTracker::instance()->ScanForKillTargets(bot, questObjective.ObjectID, 50.0f);
+    // CRITICAL FIX: Increase scan radius to 300 yards to match spawn distances
+    // FindObjectiveTargetLocation found spawns at 226-297 yards away, so 50 yards was way too small
+    std::vector<uint32> targets = ObjectiveTracker::instance()->ScanForKillTargets(bot, questObjective.ObjectID, 300.0f);
 
     if (targets.empty())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: Bot {} - NO targets found in 300-yard scan for entry {}",
+                     bot->GetName(), questObjective.ObjectID);
+
+        // FALLBACK: Bot should move closer to spawn locations from FindObjectiveTargetLocation
+        // The caller (EngageQuestTargets) will handle navigation to objective.lastKnownPosition
+        // which contains the spawn location from StartTrackingObjective
         return nullptr;
+    }
 
     // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
     // ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter)
@@ -921,11 +1023,19 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     if (questObjective.Type != QUEST_OBJECTIVE_GAMEOBJECT)
         return nullptr;
 
-    // Scan for game object with this entry
-    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, questObjective.ObjectID, 50.0f);
+    // CRITICAL FIX: Increase scan radius to 200 yards (user reported GameObjects are >50 yards away)
+    // Quest GameObjects can spawn far from quest POI markers, so we need a large scan radius
+    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, questObjective.ObjectID, 200.0f);
+
+    TC_LOG_ERROR("module.playerbot.quest", "🔍 FindQuestObject: Bot {} scanning for GameObject entry {} within 200 yards - found {} objects",
+                 bot->GetName(), questObjective.ObjectID, objects.size());
 
     if (objects.empty())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestObject: Bot {} - NO GameObjects found in 200-yard scan for entry {}",
+                     bot->GetName(), questObjective.ObjectID);
         return nullptr;
+    }
 
     // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
     uint16 mapId = static_cast<uint16>(bot->GetMapId());
@@ -936,7 +1046,21 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
                  mapId, entry, counter);
 
     // Return first object
-    return ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
+    GameObject* gameObject = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
+
+    if (!gameObject)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ FindQuestObject: ObjectAccessor returned NULL for GameObject (mapId={}, entry={}, counter={}) - object might not be spawned/accessible",
+                     mapId, entry, counter);
+        return nullptr;
+    }
+
+    TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Bot {} found GameObject {} (Entry: {}) at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
+                 bot->GetName(), gameObject->GetName(), entry,
+                 gameObject->GetPositionX(), gameObject->GetPositionY(), gameObject->GetPositionZ(),
+                 bot->GetDistance(gameObject));
+
+    return gameObject;
 }
 
 ::Item* QuestStrategy::FindQuestItem(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
@@ -1727,6 +1851,52 @@ void QuestStrategy::WanderInQuestArea(BotAI* ai)
                  bot->GetExactDist2d(targetPoint.GetPositionX(), targetPoint.GetPositionY()));
 
     BotMovementUtil::MoveToPosition(bot, targetPoint);
+}
+
+bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
+{
+    // Check if this item is dropped by creatures in creature_loot_template
+    // This determines whether we need to kill creatures (EngageQuestTargets)
+    // or interact with GameObjects (CollectQuestItems)
+
+    TC_LOG_DEBUG("module.playerbot.quest", "🔍 IsItemFromCreatureLoot: Checking if item {} comes from creature loot", itemId);
+
+    // PERFORMANCE: Use static cache to avoid repeated database queries
+    // Key: itemId, Value: isCreatureLoot
+    static std::unordered_map<uint32, bool> itemLootCache;
+    static std::mutex cacheMutex;
+
+    // Check cache first for performance
+    {
+        std::lock_guard<std::mutex> lock(cacheMutex);
+        auto cacheIt = itemLootCache.find(itemId);
+        if (cacheIt != itemLootCache.end())
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "✅ IsItemFromCreatureLoot: Item {} found in cache, isCreatureLoot={}",
+                         itemId, cacheIt->second);
+            return cacheIt->second;
+        }
+    }
+
+    // Cache miss - query database
+    TC_LOG_DEBUG("module.playerbot.quest", "🔍 IsItemFromCreatureLoot: Item {} NOT in cache, querying creature_loot_template", itemId);
+
+    // Query creature_loot_template to check if this item is dropped by creatures
+    // We only need to know if ANY creature drops this item (not which creatures)
+    QueryResult result = WorldDatabase.PQuery("SELECT 1 FROM creature_loot_template WHERE Item = {} LIMIT 1", itemId);
+
+    bool isCreatureLoot = (result != nullptr);
+
+    // Cache the result for future queries (thread-safe)
+    {
+        std::lock_guard<std::mutex> lock(cacheMutex);
+        itemLootCache[itemId] = isCreatureLoot;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.quest", "📊 IsItemFromCreatureLoot: Item {} {} creature loot (database query complete, result cached)",
+                 itemId, isCreatureLoot ? "IS" : "is NOT");
+
+    return isCreatureLoot;
 }
 
 } // namespace Playerbot

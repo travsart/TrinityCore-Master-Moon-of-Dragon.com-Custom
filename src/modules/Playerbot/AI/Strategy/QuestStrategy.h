@@ -133,6 +133,9 @@ private:
     bool ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
     void InitializeQuestAreaWandering(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
     void WanderInQuestArea(BotAI* ai);
+
+    // Item loot source detection
+    bool IsItemFromCreatureLoot(uint32 itemId) const;
 };
 
 } // namespace Playerbot

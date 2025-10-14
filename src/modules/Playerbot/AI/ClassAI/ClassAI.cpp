@@ -746,17 +746,16 @@ void ClassAI::ExecutePendingSpell()
         target = bot; // Self-cast
     }
 
-    // CRITICAL: Stop movement for ranged spells (but preserve chase motion generator)
-    // Only stop movement when actually casting, not during validation
-    // This prevents the flickering caused by calling StopMoving() every frame during ability checks
-    // A spell is considered "ranged" if its max range > 5 yards (melee range)
-    float maxRange = spellInfo->GetMaxRange(false, bot, nullptr);
-    if (bot->isMoving() && maxRange > 5.0f)
-    {
-        bot->StopMoving();
-        TC_LOG_DEBUG("module.playerbot.classai", "Bot {} stopped movement for ranged spell cast (range: {:.1f}yd)",
-                    bot->GetName(), maxRange);
-    }
+    // CRITICAL FIX: Don't call StopMoving() manually - causes position desync
+    // TrinityCore's spell system automatically handles movement interruption via Spell::CheckCast()
+    // When we manually call StopMoving(), it clears the movement spline which causes:
+    // 1. Client shows movement (2-6 yards)
+    // 2. Server clears spline and resets position
+    // 3. Client teleports back (the "blink back" bug)
+    //
+    // The spell system will interrupt movement if needed during Spell::prepare()
+    // This is handled in Spell::CheckCast() → SPELL_FAILED_MOVING
+    // Let the spell system do its job - don't interfere with movement here
 
     // CRITICAL: Face the target before casting (required for spell validation)
     // Players auto-face when casting, bots need to do it explicitly

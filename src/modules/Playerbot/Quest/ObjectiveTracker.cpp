@@ -1041,8 +1041,10 @@ void ObjectiveTracker::RefreshObjectiveState(Player* bot, ObjectiveState& state)
     state.currentProgress = currentProgress;
     state.lastUpdateTime = getMSTime();
 
-    // Update position
-    state.lastKnownPosition = bot->GetPosition();
+    // CRITICAL FIX: Do NOT update position here!
+    // lastKnownPosition stores the QUEST TARGET spawn location (set in StartTrackingObjective),
+    // NOT the bot's current position. Overwriting this causes distance 0.0 bugs!
+    // The position should only be set when the objective is first tracked.
 
     // Reset stuck state if progress was made
     if (currentProgress > 0 && state.isStuck)
@@ -1251,6 +1253,35 @@ Position ObjectiveTracker::FindObjectiveTargetLocation(Player* bot, const QuestO
             }
 
             TC_LOG_ERROR("module.playerbot.quest", "❌ FindObjectiveTargetLocation: NO spawn data found for gameobject entry {}", objectEntry);
+
+            // FALLBACK: Try QuestPOI data if GameObject spawn data not found
+            TC_LOG_ERROR("module.playerbot.quest", "🔍 FindObjectiveTargetLocation: Trying QuestPOI fallback for quest {}", objective.questId);
+
+            QuestPOIData const* poiData = sObjectMgr->GetQuestPOIData(objective.questId);
+            if (poiData && !poiData->Blobs.empty())
+            {
+                // Find blob for current objective and map
+                for (auto const& blob : poiData->Blobs)
+                {
+                    if (blob.MapID == static_cast<int32>(bot->GetMapId()) &&
+                        blob.ObjectiveIndex == static_cast<int32>(objective.objectiveIndex))
+                    {
+                        if (!blob.Points.empty())
+                        {
+                            // Use the first POI point
+                            QuestPOIBlobPoint const& point = blob.Points[0];
+                            Position poiPos;
+                            poiPos.Relocate(static_cast<float>(point.X), static_cast<float>(point.Y), static_cast<float>(point.Z));
+
+                            TC_LOG_ERROR("module.playerbot.quest", "✅ FindObjectiveTargetLocation: Using QuestPOI position ({:.1f}, {:.1f}, {:.1f})",
+                                        poiPos.GetPositionX(), poiPos.GetPositionY(), poiPos.GetPositionZ());
+                            return poiPos;
+                        }
+                    }
+                }
+            }
+
+            TC_LOG_ERROR("module.playerbot.quest", "❌ FindObjectiveTargetLocation: NO QuestPOI data found either");
             break;
         }
 
