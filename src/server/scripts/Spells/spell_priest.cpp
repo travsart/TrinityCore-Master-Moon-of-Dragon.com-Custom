@@ -1238,6 +1238,9 @@ class spell_pri_evangelism : public SpellScript
         Unit* caster = GetCaster();
         Unit* target = GetHitUnit();
 
+        if (!caster || !target)
+            return;
+
         Aura* atonementAura = caster->HasAura(SPELL_PRIEST_TRINITY)
             ? target->GetAura(SPELL_PRIEST_TRINITY_EFFECT, caster->GetGUID())
             : target->GetAura(SPELL_PRIEST_ATONEMENT_EFFECT, caster->GetGUID());
