@@ -473,15 +473,20 @@ bool BotWorldEntry::InitializeAI()
     // Initialize AI systems
     ai->Reset();
 
-    // Set AI in session for reference (transfers ownership)
+    // CRITICAL FIX: ALWAYS register AI with Player so Unit::UpdateAI() can find it!
+    // The Unit system calls GetAI()->UpdateAI(diff) every frame - if GetAI() returns nullptr,
+    // the bot will never update and will stand idle doing nothing.
+    _player->SetAI(ai);
+
+    // ALSO store AI in session for reference (session owns the AI memory)
     if (BotSession* botSession = dynamic_cast<BotSession*>(_session.get()))
     {
         botSession->SetAI(botAI.release());
     }
     else
     {
-        // If not BotSession, store in player directly
-        _player->SetAI(ai);
+        // If not BotSession, transfer ownership to player
+        botAI.release(); // Player now owns the AI
     }
 
     // Start AI updates
