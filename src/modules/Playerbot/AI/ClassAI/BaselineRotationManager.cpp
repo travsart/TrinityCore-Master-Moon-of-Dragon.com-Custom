@@ -68,33 +68,17 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
 {
     if (!bot || !target || !target->IsAlive())
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: Invalid input - bot={}, target={}, target_alive={}",
-                     (void*)bot, (void*)target, target ? target->IsAlive() : false);
         return false;
     }
 
     uint8 classId = bot->GetClass();
-    TC_LOG_ERROR("module.playerbot.baseline", "🎯 ExecuteBaselineRotation: Bot {} (class {}) executing baseline rotation",
-                 bot->GetName(), classId);
 
-    // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
+    // Get baseline abilities for bot's class
     auto abilities = GetBaselineAbilities(classId);
-    if (!abilities)
+    if (!abilities || abilities->empty())
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: NO ABILITIES found for class {} - abilities pointer is NULL!",
-                     classId);
         return false;
     }
-
-    if (abilities->empty())
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: Abilities vector EMPTY for class {}!",
-                     classId);
-        return false;
-    }
-
-    TC_LOG_ERROR("module.playerbot.baseline", "✅ ExecuteBaselineRotation: Found {} abilities for class {}",
-                 abilities->size(), classId);
 
     // Sort abilities by priority (higher priority first)
     std::vector<BaselineAbility> sorted = *abilities;
@@ -102,24 +86,15 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
         return a.priority > b.priority;
     });
 
-    TC_LOG_ERROR("module.playerbot.baseline", "🔄 ExecuteBaselineRotation: Trying {} abilities in priority order",
-                 sorted.size());
-
     // Try to cast highest priority available ability
     for (auto const& ability : sorted)
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "  → Trying ability spellId={} priority={:.1f}",
-                     ability.spellId, ability.priority);
-
         if (TryCastAbility(bot, target, ability))
         {
-            TC_LOG_ERROR("module.playerbot.baseline", "✅ ExecuteBaselineRotation: Successfully cast spell {}",
-                         ability.spellId);
             return true;
         }
     }
 
-    TC_LOG_ERROR("module.playerbot.baseline", "❌ ExecuteBaselineRotation: NO abilities could be cast!");
     return false;
 }
 
@@ -236,17 +211,8 @@ std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilitie
 
 bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, BaselineAbility const& ability)
 {
-    // DIAGNOSTIC: Log entry to TryCastAbility to confirm bot/target validity
-    TC_LOG_ERROR("module.playerbot.baseline",
-        "🔧 TryCastAbility: Bot={} ({}) Target={} ({}) Spell={}",
-        bot ? bot->GetName() : "NULL", (void*)bot,
-        target ? target->GetName() : "NULL", (void*)target,
-        ability.spellId);
-
     if (!CanUseAbility(bot, target, ability))
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} cannot use spell {} - failed CanUseAbility check",
-                     bot->GetName(), ability.spellId);
         return false;
     }
 
@@ -260,85 +226,43 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         return false; // On cooldown
     }
 
-    // Cast spell
-    // FIX: GetSpellInfo now requires difficulty parameter
+    // Cast spell - validate spell exists and bot knows it
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
-    if (!spellInfo)
+    if (!spellInfo || !bot->HasSpell(ability.spellId))
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - spell {} not found in SpellMgr",
-                     bot->GetName(), ability.spellId);
-        return false;
-    }
-
-    // Check if bot knows the spell
-    if (!bot->HasSpell(ability.spellId))
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} (level {}) does not know spell {}",
-                     bot->GetName(), bot->GetLevel(), ability.spellId);
         return false;
     }
 
     // Determine cast target
     ::Unit* castTarget = ability.requiresMelee ? target : (ability.isDefensive ? bot : target);
 
-    // CRITICAL: Validate target before casting
+    // Validate target before casting
     if (!castTarget || !castTarget->IsInWorld() || !castTarget->IsAlive())
     {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Invalid cast target (dead or not in world)",
-                     bot->GetName());
         return false;
     }
 
     // For offensive spells, validate target is attackable
     if (!ability.isDefensive)
     {
-        // Check basic attack validity - can we attack this type of unit?
         if (castTarget->HasUnitFlag(UNIT_FLAG_NON_ATTACKABLE) ||
             castTarget->HasUnitFlag(UNIT_FLAG_UNINTERACTIBLE) ||
             castTarget->IsFriendlyTo(bot))
         {
-            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} - Target {} is friendly or non-attackable",
-                         bot->GetName(), castTarget->GetName());
             return false;
-        }
-
-        // CRITICAL FIX: Allow first offensive spell to initiate combat
-        // Instead of requiring bot->IsHostileTo() before casting,
-        // we allow the spell cast itself to establish hostility.
-        // This is essential for attacking neutral mobs.
-        //
-        // The spell cast will fail naturally if the target is truly invalid,
-        // so we don't need strict pre-validation here.
-        //
-        // NOTE: We still check for victim to ensure combat has been initiated
-        // by bot->Attack() in GroupCombatStrategy, but we don't require
-        // the hostility relationship to be fully established yet.
-        if (!bot->GetVictim() || bot->GetVictim() != castTarget)
-        {
-            TC_LOG_ERROR("module.playerbot.baseline", "⚠️ Bot {} - Target {} not set as victim yet (combat initiation in progress)",
-                         bot->GetName(), castTarget->GetName());
-            // Allow the cast to proceed - it will establish the hostility
         }
     }
 
-    TC_LOG_ERROR("module.playerbot.baseline", "🎯 Bot {} attempting to cast spell {} on {}",
-                 bot->GetName(), ability.spellId, castTarget->GetName());
-
-    // MOVEMENT FIX: Stop movement for ranged spells, but DON'T clear motion generators
-    // MotionMaster()->Clear() removes ALL motion including chase, causing bot to reset to start position
-    // StopMoving() pauses movement temporarily without destroying the motion generator stack
+    // Stop movement for ranged spells (preserves chase motion generator)
     if (!ability.requiresMelee && bot->isMoving())
     {
         bot->StopMoving();
-        // REMOVED: bot->GetMotionMaster()->Clear(); - This was causing the reset-to-start issue
-        TC_LOG_ERROR("module.playerbot.baseline", "🛑 Stopped bot movement for spell casting (motion generators preserved)");
     }
 
-    // CRITICAL FIX: Ensure bot is facing the target before casting
+    // Ensure bot is facing the target before casting
     if (!bot->HasInArc(static_cast<float>(M_PI), castTarget))
     {
         bot->SetFacingToObject(castTarget);
-        TC_LOG_ERROR("module.playerbot.baseline", "🎯 Adjusted bot facing towards target");
     }
 
     // ============================================================================
@@ -361,33 +285,18 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // See Player.cpp:30904-31051 and ClassAI.cpp:545-748 for implementation
     // ============================================================================
 
-    // Get bot's AI through BotSession - proper architecture path
-    // Player inherits from Unit which has GetAI() returning UnitAI*
-    // But bots use BotAI/ClassAI stored in BotSession (separate hierarchy)
+    // Get bot's AI through BotSession
     BotSession* botSession = dynamic_cast<BotSession*>(bot->GetSession());
     if (!botSession)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} session is not BotSession",
-                    bot->GetName());
         return false;
-    }
 
     BotAI* botAI = botSession->GetAI();
     if (!botAI)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} has no BotAI",
-                    bot->GetName());
         return false;
-    }
 
-    // Cast to ClassAI - safe because playerbots in combat use ClassAI
     ClassAI* classAI = dynamic_cast<ClassAI*>(botAI);
     if (!classAI)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} AI is not ClassAI - cannot use spell queue system",
-                    bot->GetName());
         return false;
-    }
 
     // Request spell cast through proper queueing system
     bool queued = classAI->RequestBotSpellCast(ability.spellId, castTarget);
@@ -395,15 +304,7 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     {
         // Record cooldown (will be enforced by spell system, but we track for priority logic)
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
-
-        TC_LOG_DEBUG("module.playerbot.baseline", "✅ Bot {} queued spell {} on {} (enterprise-grade queueing)",
-                     bot->GetName(), ability.spellId, castTarget->GetName());
         return true;
-    }
-    else
-    {
-        TC_LOG_TRACE("module.playerbot.baseline", "⚠️ Bot {} failed to queue spell {} - GCD/cast time > 400ms",
-                     bot->GetName(), ability.spellId);
     }
 
     return false;
@@ -412,92 +313,38 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
 {
     if (!bot || !target)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ CanUseAbility: bot or target is NULL");
         return false;
-    }
-
-    // DIAGNOSTIC: Log entry to CanUseAbility with all validation parameters
-    TC_LOG_ERROR("module.playerbot.baseline",
-        "🔍 CanUseAbility START: Bot {} checking spell {} - botLevel={}, reqLevel={}, distance={:.1f}yd, requiresMelee={}, target={}",
-        bot->GetName(), ability.spellId, bot->GetLevel(), ability.minLevel,
-        bot->GetDistance(target), ability.requiresMelee, target->GetName());
 
     // Level check
     if (bot->GetLevel() < ability.minLevel)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} level {} < required level {} for spell {}",
-                     bot->GetName(), bot->GetLevel(), ability.minLevel, ability.spellId);
         return false;
-    }
 
     // Range check
     float distance = bot->GetDistance(target);
     if (ability.requiresMelee)
     {
         if (distance > 5.0f)
-        {
-            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} out of melee range ({:.1f}yd > 5.0yd) for spell {}",
-                         bot->GetName(), distance, ability.spellId);
             return false;
-        }
     }
     else
     {
         if (distance > 30.0f)
-        {
-            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} out of spell range ({:.1f}yd > 30.0yd) for spell {}",
-                         bot->GetName(), distance, ability.spellId);
             return false;
-        }
 
         if (!bot->IsWithinLOSInMap(target))
-        {
-            TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} has no LOS to target for spell {}",
-                         bot->GetName(), ability.spellId);
             return false;
-        }
     }
 
-    // Resource check
-    // CRITICAL FIX: TrinityCore stores RAGE internally as tenths (multiply by 10)
-    // Example: rage 20 is stored as 200, rage 100 is stored as 1000
-    // We need to convert ability cost to internal format for comparison
-    uint32 currentResource = 0;
+    // Resource check (RAGE is stored internally as tenths)
+    uint32 currentResource = bot->GetPower(bot->GetPowerType());
     uint32 requiredResource = ability.resourceCost;
 
-    // Get bot's actual power type (MANA, RAGE, ENERGY, etc.)
-    Powers powerType = bot->GetPowerType();
-
-    // Get current power value for the bot's actual power type
-    currentResource = bot->GetPower(powerType);
-
-    // RAGE is stored internally as tenths - multiply cost by 10 for correct comparison
-    if (powerType == POWER_RAGE)
-    {
+    if (bot->GetPowerType() == POWER_RAGE)
         requiredResource *= 10;
-    }
-
-    // DIAGNOSTIC: Log power type and value
-    TC_LOG_ERROR("module.playerbot.baseline", "🔬 POWER CHECK: Bot {} class={} powerType={} ({}) checking for spell {} - currentResource={}, requiredResource={}",
-                 bot->GetName(), static_cast<uint32>(bot->GetClass()),
-                 static_cast<int32>(powerType),
-                 powerType == POWER_MANA ? "MANA" :
-                 powerType == POWER_RAGE ? "RAGE" :
-                 powerType == POWER_ENERGY ? "ENERGY" :
-                 powerType == POWER_FOCUS ? "FOCUS" :
-                 powerType == POWER_RUNIC_POWER ? "RUNIC_POWER" : "OTHER",
-                 ability.spellId, currentResource, requiredResource);
 
     if (currentResource < requiredResource)
-    {
-        TC_LOG_ERROR("module.playerbot.baseline", "❌ Bot {} insufficient resources ({} < {}) for spell {}",
-                     bot->GetName(), currentResource, requiredResource, ability.spellId);
         return false;
-    }
 
-    TC_LOG_ERROR("module.playerbot.baseline", "✅ Bot {} CAN use spell {} (level OK, range {:.1f}yd OK, resources {} OK)",
-                 bot->GetName(), ability.spellId, distance, currentResource);
     return true;
 }
 
