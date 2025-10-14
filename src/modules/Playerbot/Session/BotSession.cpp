@@ -18,6 +18,7 @@
 #include "Map.h"
 #include "MapManager.h"
 #include "AI/BotAI.h"
+#include "Lifecycle/DeathRecoveryManager.h"  // For death recovery check at login
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
 // BotAIFactory is declared in BotAI.h
@@ -1013,6 +1014,25 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                         {
                             TC_LOG_ERROR("module.playerbot.session", "📞 About to call OnGroupJoined with group={}", (void*)group);
                             ai->OnGroupJoined(group);
+                        }
+                    }
+
+                    // CRITICAL FIX: Check if bot is dead at login and trigger death recovery
+                    // This fixes server restart where dead bots don't resurrect
+                    if (player->isDead())
+                    {
+                        TC_LOG_INFO("module.playerbot.session", "💀 Bot {} is dead at login - triggering death recovery", player->GetName());
+                        if (BotAI* ai = GetAI())
+                        {
+                            if (ai->GetDeathRecoveryManager())
+                            {
+                                TC_LOG_INFO("module.playerbot.session", "📞 Calling OnDeath to initialize death recovery for bot {}", player->GetName());
+                                ai->GetDeathRecoveryManager()->OnDeath();
+                            }
+                            else
+                            {
+                                TC_LOG_ERROR("module.playerbot.session", "❌ DeathRecoveryManager not initialized for dead bot {}", player->GetName());
+                            }
                         }
                     }
                 }
