@@ -137,7 +137,8 @@ namespace Playerbot
         Battlemaster = 7,
         Petition    = 8,
         Tabard      = 9,
-        Custom      = 10
+        Custom      = 10,
+        Resurrect   = 11  // Spirit healer resurrection
     };
 
     /**

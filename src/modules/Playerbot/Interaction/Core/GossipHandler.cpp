@@ -100,6 +100,13 @@ namespace Playerbot
             "tame", "feed", "care"
         };
 
+        // Spirit healer keywords
+        m_serviceKeywords[InteractionType::SpiritHealer] = {
+            "resurrect", "spirit", "healer", "death", "graveyard", "grave",
+            "return", "life", "release", "revive", "rebirth", "corpse",
+            "restore", "risen", "dead", "soul", "afterlife"
+        };
+
         // Icon mappings (GOSSIP_ICON_*)
         m_iconMappings[0] = GossipSelectType::Option;      // GOSSIP_ICON_CHAT
         m_iconMappings[1] = GossipSelectType::Vendor;      // GOSSIP_ICON_VENDOR
@@ -318,7 +325,8 @@ namespace Playerbot
                     (desiredType == InteractionType::Trainer && iconType == GossipSelectType::Trainer) ||
                     (desiredType == InteractionType::FlightMaster && iconType == GossipSelectType::Taxi) ||
                     (desiredType == InteractionType::Bank && iconType == GossipSelectType::Bank) ||
-                    (desiredType == InteractionType::Battlemaster && iconType == GossipSelectType::Battlemaster))
+                    (desiredType == InteractionType::Battlemaster && iconType == GossipSelectType::Battlemaster) ||
+                    (desiredType == InteractionType::SpiritHealer && iconType == GossipSelectType::Resurrect))
                 {
                     return static_cast<int32>(i);  // Immediate match
                 }

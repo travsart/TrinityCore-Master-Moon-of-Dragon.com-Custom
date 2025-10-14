@@ -122,7 +122,8 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
                 break;
 
             case BotAIState::DEAD:
-                // Wait for resurrection
+                // Death recovery is handled by BotAI::UpdateAI() -> DeathRecoveryManager
+                // This includes spirit release, corpse run, and spirit healer interaction
                 break;
 
             case BotAIState::FLEEING:

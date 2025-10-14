@@ -42,6 +42,7 @@ class TradeManager;
 class GatheringManager;
 class AuctionManager;
 class GroupCoordinator;
+class DeathRecoveryManager;
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -243,6 +244,13 @@ public:
 
     GroupCoordinator* GetGroupCoordinator() { return _groupCoordinator.get(); }
     GroupCoordinator const* GetGroupCoordinator() const { return _groupCoordinator.get(); }
+
+    // ========================================================================
+    // DEATH RECOVERY - Resurrection management
+    // ========================================================================
+
+    DeathRecoveryManager* GetDeathRecoveryManager() { return _deathRecoveryManager.get(); }
+    DeathRecoveryManager const* GetDeathRecoveryManager() const { return _deathRecoveryManager.get(); }
 
     // ========================================================================
     // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
@@ -536,6 +544,9 @@ protected:
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<GroupCoordinator> _groupCoordinator;
+
+    // Death recovery system
+    std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
     // Phase 7.1: Event system integration
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;

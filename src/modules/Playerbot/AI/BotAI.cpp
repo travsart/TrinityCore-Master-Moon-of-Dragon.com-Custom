@@ -34,6 +34,7 @@
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
+#include "Lifecycle/DeathRecoveryManager.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Creature.h"
@@ -90,7 +91,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _auctionManager = std::make_unique<AuctionManager>(_bot, this);
     _groupCoordinator = std::make_unique<GroupCoordinator>(_bot, this);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group systems ready",
+    // Initialize death recovery system
+    _deathRecoveryManager = std::make_unique<DeathRecoveryManager>(_bot, this);
+
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -422,6 +426,10 @@ void BotAI::UpdateAI(uint32 diff)
     // ========================================================================
     // PHASE 5: MANAGER UPDATES - Throttled heavyweight operations
     // ========================================================================
+
+    // Update death recovery system (if dead or in recovery)
+    if (_deathRecoveryManager)
+        _deathRecoveryManager->Update(diff);
 
     // Update all BehaviorManager-based managers
     // These handle quest, trade, gathering with their own throttling
@@ -995,7 +1003,11 @@ void BotAI::OnDeath()
     while (!_actionQueue.empty())
         _actionQueue.pop();
 
-    TC_LOG_DEBUG("playerbots.ai", "Bot {} died, AI state reset", _bot->GetName());
+    // Initiate death recovery process
+    if (_deathRecoveryManager)
+        _deathRecoveryManager->OnDeath();
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} died, AI state reset, death recovery initiated", _bot->GetName());
 }
 
 void BotAI::OnRespawn()
@@ -1003,7 +1015,11 @@ void BotAI::OnRespawn()
     SetAIState(BotAIState::SOLO);
     Reset();
 
-    TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset", _bot->GetName());
+    // Complete death recovery process
+    if (_deathRecoveryManager)
+        _deathRecoveryManager->OnResurrection();
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset, death recovery completed", _bot->GetName());
 }
 
 void BotAI::Reset()

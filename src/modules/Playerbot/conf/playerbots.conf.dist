@@ -537,3 +537,111 @@ Playerbot.Inventory.LootRange = 30.0
 
 Playerbot.Log.File = "Playerbot.log"
 Playerbot.Log.PerformanceMetrics = 0
+
+###################################################################################################
+# DEATH RECOVERY & RESURRECTION
+#
+#    Playerbot.Death.AutoRelease
+#        Description: Automatically release spirit when bot dies
+#        Default:     1 (enabled)
+#        Note:        Bots will automatically release spirit and become ghosts
+#                     If disabled, bots will wait at corpse indefinitely
+#
+#    Playerbot.Death.ReleaseDelay
+#        Description: Delay before releasing spirit (seconds)
+#        Default:     5
+#        Range:       0-60
+#        Note:        Simulates human decision time before releasing
+#                     0 = instant release (not realistic)
+#
+#    Playerbot.Death.PreferCorpseRun
+#        Description: Prefer corpse run over spirit healer when possible
+#        Default:     1 (enabled)
+#        Note:        Bots will run to corpse to avoid resurrection sickness
+#                     Only use spirit healer if corpse is too far
+#
+#    Playerbot.Death.MaxCorpseRunDistance
+#        Description: Maximum distance (yards) for corpse run
+#        Default:     200.0
+#        Range:       50.0-500.0
+#        Note:        If corpse is farther than this, use spirit healer instead
+#                     Prevents extremely long corpse runs
+#
+#    Playerbot.Death.CorpseInteractionRange
+#        Description: Distance (yards) to interact with corpse
+#        Default:     5.0
+#        Range:       3.0-10.0
+#        Note:        How close bot must be to resurrect at corpse
+#                     Default matches TrinityCore interaction range
+#
+#    Playerbot.Death.AutoSpiritHealer
+#        Description: Automatically use spirit healer if corpse run not viable
+#        Default:     1 (enabled)
+#        Note:        When enabled, bots will use spirit healer automatically
+#                     When disabled, bots will wait for manual intervention
+#
+#    Playerbot.Death.SpiritHealerSearchRadius
+#        Description: Search radius (yards) for spirit healers
+#        Default:     150.0
+#        Range:       50.0-300.0
+#        Note:        How far to search for spirit healer NPCs at graveyards
+#                     Larger values may find more distant spirit healers
+#
+#    Playerbot.Death.AllowBattleResurrection
+#        Description: Allow resurrection in battlegrounds/arenas
+#        Default:     1 (enabled)
+#        Note:        In battlegrounds, bots can resurrect at spirit healers
+#                     without resurrection sickness penalty
+#
+#    Playerbot.Death.NavigationUpdateInterval
+#        Description: Navigation update frequency during corpse run (ms)
+#        Default:     500
+#        Range:       100-2000
+#        Note:        How often to update movement when running to corpse
+#                     Lower = smoother movement, higher CPU usage
+#
+#    Playerbot.Death.DistanceCheckInterval
+#        Description: Distance check frequency during corpse run (ms)
+#        Default:     1000
+#        Range:       500-5000
+#        Note:        How often to check distance to corpse/spirit healer
+#                     Lower = more responsive, higher CPU usage
+#
+#    Playerbot.Death.SkipResurrectionSickness
+#        Description: Skip resurrection sickness for bot testing
+#        Default:     0 (disabled)
+#        Range:       0-1
+#        Warning:     FOR TESTING ONLY - Violates game mechanics
+#        Note:        When enabled, bots won't get resurrection sickness
+#                     from spirit healer resurrections. Should only be used
+#                     in development/testing environments.
+#
+#    Playerbot.Death.ResurrectionTimeout
+#        Description: Maximum time (seconds) to wait for resurrection
+#        Default:     300
+#        Range:       60-600
+#        Note:        If resurrection fails after this time, force respawn
+#                     Prevents bots from being stuck dead indefinitely
+#
+#    Playerbot.Death.LogRecovery
+#        Description: Enable detailed death recovery logging
+#        Default:     1 (enabled)
+#        Note:        Logs all death recovery events for debugging
+#                     Helps track resurrection issues
+#                     Logs to: Logger.playerbot.death
+#
+###################################################################################################
+
+Playerbot.Death.AutoRelease = 1
+Playerbot.Death.ReleaseDelay = 5
+Playerbot.Death.PreferCorpseRun = 1
+Playerbot.Death.MaxCorpseRunDistance = 200.0
+Playerbot.Death.CorpseInteractionRange = 5.0
+Playerbot.Death.AutoSpiritHealer = 1
+Playerbot.Death.SpiritHealerSearchRadius = 150.0
+Playerbot.Death.AllowBattleResurrection = 1
+Playerbot.Death.NavigationUpdateInterval = 500
+Playerbot.Death.DistanceCheckInterval = 1000
+Playerbot.Death.SkipResurrectionSickness = 0
+Playerbot.Death.ResurrectionTimeout = 300
+Playerbot.Death.LogRecovery = 1
