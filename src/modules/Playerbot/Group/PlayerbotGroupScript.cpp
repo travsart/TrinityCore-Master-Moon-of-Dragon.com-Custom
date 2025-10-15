@@ -19,11 +19,7 @@
 namespace Playerbot
 {
 
-// Static member initialization
-std::unordered_map<ObjectGuid, PlayerbotGroupScript::GroupState> PlayerbotGroupScript::_groupStates;
-std::mutex PlayerbotGroupScript::_groupStatesMutex;
-PlayerbotGroupScript::PollStatistics PlayerbotGroupScript::_pollStats;
-std::mutex PlayerbotGroupScript::_pollStatsMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // ============================================================================
 // PLAYERBOTGROUPSCRIPT IMPLEMENTATION

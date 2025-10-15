@@ -137,9 +137,7 @@ namespace
     };
 }
 
-// Static member definitions
-std::unordered_map<uint32, CooldownStackingOptimizer::CooldownData> CooldownStackingOptimizer::s_defaultCooldowns;
-bool CooldownStackingOptimizer::s_defaultsInitialized = false;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR

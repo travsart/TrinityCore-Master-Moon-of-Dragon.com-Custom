@@ -19,17 +19,7 @@
 namespace Playerbot
 {
 
-// Static member initialization
-std::unordered_map<OpcodeServer, PacketCategory> PlayerbotPacketSniffer::_packetCategoryMap;
-bool PlayerbotPacketSniffer::_initialized = false;
-std::atomic<uint64_t> PlayerbotPacketSniffer::_totalPackets{0};
-std::array<std::atomic<uint64_t>, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> PlayerbotPacketSniffer::_categoryPackets{};
-std::atomic<uint64_t> PlayerbotPacketSniffer::_totalProcessTimeUs{0};
-std::atomic<uint64_t> PlayerbotPacketSniffer::_peakProcessTimeUs{0};
-std::chrono::steady_clock::time_point PlayerbotPacketSniffer::_startTime;
-
-// Typed packet handler registry (WoW 11.2)
-std::unordered_map<std::type_index, PlayerbotPacketSniffer::TypedPacketHandler> PlayerbotPacketSniffer::_typedPacketHandlers;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 void PlayerbotPacketSniffer::Initialize()
 {

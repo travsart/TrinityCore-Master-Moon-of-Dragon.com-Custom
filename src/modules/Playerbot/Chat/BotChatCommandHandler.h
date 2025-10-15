@@ -452,18 +452,18 @@ private:
     static bool ValidateArgumentCount(CommandContext const& context, ChatCommand const& command);
 
     // State
-    static std::atomic<bool> _initialized;
-    static std::unordered_map<std::string, ChatCommand> _commands;
-    static std::unordered_map<ObjectGuid, std::unordered_map<std::string, CommandCooldown>> _cooldowns;
-    static std::shared_ptr<LLMProvider> _llmProvider;
-    static std::string _commandPrefix;
-    static std::atomic<bool> _naturalLanguageEnabled;
-    static std::atomic<uint32> _maxConcurrentCommands;
-    static std::atomic<bool> _debugLogging;
-    static Statistics _statistics;
-    static std::mutex _commandsMutex;
-    static std::mutex _cooldownsMutex;
-    static std::mutex _llmMutex;
+    static inline std::atomic<bool> _initialized{false};
+    static inline std::unordered_map<std::string, ChatCommand> _commands;
+    static inline std::unordered_map<ObjectGuid, std::unordered_map<std::string, CommandCooldown>> _cooldowns;
+    static inline std::shared_ptr<LLMProvider> _llmProvider;
+    static inline std::string _commandPrefix = ".bot";
+    static inline std::atomic<bool> _naturalLanguageEnabled{false};
+    static inline std::atomic<uint32> _maxConcurrentCommands{5};
+    static inline std::atomic<bool> _debugLogging{false};
+    static inline Statistics _statistics;
+    static inline std::mutex _commandsMutex;
+    static inline std::mutex _cooldownsMutex;
+    static inline std::mutex _llmMutex;
 };
 
 } // namespace Playerbot

@@ -148,7 +148,10 @@ void DeathRecoveryManager::OnDeath()
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!ValidateBotState())
+    {
+        TC_LOG_ERROR("playerbot.death", "💀 OnDeath: ValidateBotState FAILED!");
         return;
+    }
 
     m_stats.RecordDeath();
     m_deathTime = std::chrono::steady_clock::now();
@@ -158,10 +161,19 @@ void DeathRecoveryManager::OnDeath()
     m_releaseTimer = m_config.autoReleaseDelayMs;
     m_retryCount = 0;
 
-    TransitionToState(DeathRecoveryState::JUST_DIED, "Bot died");
-
-    TC_LOG_INFO("playerbot.death", "Bot {} died, initiating death recovery. Auto-release in {}s",
-        m_bot->GetName(), m_config.autoReleaseDelayMs / 1000.0f);
+    // Check if bot is already a ghost (TrinityCore auto-releases spirit on death)
+    if (IsGhost())
+    {
+        TC_LOG_ERROR("playerbot.death", "💀 Bot {} DIED! Already a ghost, skipping spirit release. IsAlive={}, IsGhost={}",
+            m_bot->GetName(), m_bot->IsAlive(), IsGhost());
+        TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Bot died as ghost");
+    }
+    else
+    {
+        TC_LOG_ERROR("playerbot.death", "💀 Bot {} DIED! Initiating death recovery. Auto-release in {}s. IsAlive={}, IsGhost={}",
+            m_bot->GetName(), m_config.autoReleaseDelayMs / 1000.0f, m_bot->IsAlive(), IsGhost());
+        TransitionToState(DeathRecoveryState::JUST_DIED, "Bot died");
+    }
 }
 
 void DeathRecoveryManager::OnResurrection()
@@ -217,6 +229,7 @@ void DeathRecoveryManager::Update(uint32 diff)
 
     if (!ValidateBotState())
     {
+        TC_LOG_ERROR("playerbot.death", "❌ Bot {} Update: ValidateBotState FAILED!", m_bot ? m_bot->GetName() : "nullptr");
         HandleResurrectionFailure("Bot state validation failed");
         return;
     }
@@ -224,8 +237,32 @@ void DeathRecoveryManager::Update(uint32 diff)
     // Check for timeout
     if (IsResurrectionTimedOut())
     {
+        TC_LOG_ERROR("playerbot.death", "⏰ Bot {} Update: Resurrection TIMED OUT!", m_bot->GetName());
         HandleResurrectionFailure("Resurrection timed out");
         return;
+    }
+
+    // CLEANUP FIX: Detect bots stuck in old failed state before ghost flag fix
+    // Old bug signature: State=RESURRECTION_FAILED (10) with IsGhost=false
+    // These bots need to be force-resurrected immediately to unstick them
+    // Note: Don't check IsAlive() here because ForceResurrection will reset state to NOT_DEAD,
+    // and ResurrectPlayer() doesn't set IsAlive instantly, which would cause repeated triggering
+    if (m_state.load() == DeathRecoveryState::RESURRECTION_FAILED && !IsGhost())
+    {
+        TC_LOG_ERROR("playerbot.death", "🚨 Bot {} STUCK in old failed state (State=10, IsGhost=false) - FORCE RESURRECTING!",
+            m_bot->GetName());
+        ForceResurrection(ResurrectionMethod::SPIRIT_HEALER);
+        return;
+    }
+
+    // Log state every 5 seconds
+    static uint32 logTimer = 0;
+    logTimer += diff;
+    if (logTimer >= 5000)
+    {
+        logTimer = 0;
+        TC_LOG_ERROR("playerbot.death", "🔄 Bot {} Update: State={}, IsAlive={}, IsGhost={}",
+            m_bot->GetName(), static_cast<int>(m_state.load()), m_bot->IsAlive(), IsGhost());
     }
 
     // Handle current state
@@ -276,24 +313,34 @@ void DeathRecoveryManager::HandleJustDied(uint32 diff)
     if (m_releaseTimer > diff)
     {
         m_releaseTimer -= diff;
+        if (m_releaseTimer % 1000 < diff) // Log every second
+        {
+            TC_LOG_ERROR("playerbot.death", "⏳ Bot {} waiting to release spirit... {:.1f}s remaining",
+                m_bot->GetName(), m_releaseTimer / 1000.0f);
+        }
         return;
     }
 
     // Check if bot already released (manually or by another system)
     if (IsGhost())
     {
+        TC_LOG_ERROR("playerbot.death", "👻 Bot {} already a ghost, proceeding to decision phase", m_bot->GetName());
         TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Already ghost");
         return;
     }
 
     // Release spirit
+    TC_LOG_ERROR("playerbot.death", "🚀 Bot {} auto-release timer expired, releasing spirit...", m_bot->GetName());
     TransitionToState(DeathRecoveryState::RELEASING_SPIRIT, "Auto-release timer expired");
 }
 
 void DeathRecoveryManager::HandleReleasingSpirit(uint32 diff)
 {
+    TC_LOG_ERROR("playerbot.death", "🌟 Bot {} attempting to release spirit... IsGhost={}", m_bot->GetName(), IsGhost());
+
     if (ExecuteReleaseSpirit())
     {
+        TC_LOG_ERROR("playerbot.death", "✅ Bot {} spirit released successfully! IsGhost={}", m_bot->GetName(), IsGhost());
         TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Spirit released successfully");
     }
     else
@@ -303,30 +350,38 @@ void DeathRecoveryManager::HandleReleasingSpirit(uint32 diff)
         if (m_stateTimer > 2000) // Retry every 2 seconds
         {
             m_stateTimer = 0;
-            LogDebug("Retrying spirit release");
+            TC_LOG_ERROR("playerbot.death", "🔄 Bot {} retrying spirit release (IsGhost={})", m_bot->GetName(), IsGhost());
         }
     }
 }
 
 void DeathRecoveryManager::HandleGhostDeciding(uint32 diff)
 {
+    TC_LOG_ERROR("playerbot.death", "🤔 Bot {} deciding resurrection method...", m_bot->GetName());
+
     // Check for special cases first (battlegrounds, arenas, etc)
     if (CheckSpecialResurrectionCases())
+    {
+        TC_LOG_ERROR("playerbot.death", "🎮 Bot {} in special zone, using special resurrection", m_bot->GetName());
         return;
+    }
 
     // Make resurrection decision
     DecideResurrectionMethod();
 
     if (m_method == ResurrectionMethod::CORPSE_RUN)
     {
+        TC_LOG_ERROR("playerbot.death", "🏃 Bot {} chose CORPSE RUN (distance: {:.1f}y)", m_bot->GetName(), GetCorpseDistance());
         TransitionToState(DeathRecoveryState::RUNNING_TO_CORPSE, "Chose corpse run");
     }
     else if (m_method == ResurrectionMethod::SPIRIT_HEALER)
     {
+        TC_LOG_ERROR("playerbot.death", "👼 Bot {} chose SPIRIT HEALER", m_bot->GetName());
         TransitionToState(DeathRecoveryState::FINDING_SPIRIT_HEALER, "Chose spirit healer");
     }
     else
     {
+        TC_LOG_ERROR("playerbot.death", "❌ Bot {} FAILED to decide resurrection method!", m_bot->GetName());
         HandleResurrectionFailure("Failed to decide resurrection method");
     }
 }
@@ -342,16 +397,20 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
 
         if (m_corpseDistance < 0.0f)
         {
+            TC_LOG_ERROR("playerbot.death", "🔴 Bot {} CRITICAL: Lost corpse location during corpse run!", m_bot->GetName());
             HandleResurrectionFailure("Lost corpse location");
             return;
         }
 
-        LogDebug("Distance to corpse: " + std::to_string(m_corpseDistance) + " yards");
+        TC_LOG_INFO("playerbot.death", "📏 Bot {} distance to corpse: {:.1f} yards (resurrection range: {})",
+            m_bot->GetName(), m_corpseDistance, CORPSE_RESURRECTION_RANGE);
     }
 
     // Check if in range
     if (IsInCorpseRange())
     {
+        TC_LOG_INFO("playerbot.death", "✅ Bot {} reached corpse! Distance: {:.1f} yards",
+            m_bot->GetName(), m_corpseDistance);
         TransitionToState(DeathRecoveryState::AT_CORPSE, "Reached corpse");
         return;
     }
@@ -363,12 +422,17 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
 
     if (timeSinceLastNav >= m_config.navigationUpdateInterval)
     {
+        TC_LOG_DEBUG("playerbot.death", "🗺️  Bot {} updating navigation to corpse (distance: {:.1f}y)",
+            m_bot->GetName(), m_corpseDistance);
+
         if (NavigateToCorpse())
         {
             m_lastNavigationUpdate = now;
         }
         else
         {
+            TC_LOG_ERROR("playerbot.death", "🔴 Bot {} CRITICAL: Failed to navigate to corpse!",
+                m_bot->GetName());
             HandleResurrectionFailure("Failed to navigate to corpse");
         }
     }
@@ -495,14 +559,26 @@ void DeathRecoveryManager::HandleResurrecting(uint32 diff)
     // Check if bot is now alive
     if (m_bot->IsAlive())
     {
+        TC_LOG_INFO("playerbot.death", "🎉 Bot {} IS ALIVE! Calling OnResurrection()...",
+            m_bot->GetName());
         OnResurrection();
         return;
     }
 
     // Wait for resurrection to complete (max 30 seconds)
     m_stateTimer += diff;
+
+    // Log waiting status every 5 seconds
+    if (m_stateTimer % 5000 < diff)
+    {
+        TC_LOG_WARN("playerbot.death", "⏳ Bot {} waiting for resurrection... ({:.1f}s elapsed, IsAlive={})",
+            m_bot->GetName(), m_stateTimer / 1000.0f, m_bot->IsAlive());
+    }
+
     if (m_stateTimer > 30000)
     {
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} CRITICAL: Resurrection did not complete after 30 seconds! (IsAlive={})",
+            m_bot->GetName(), m_bot->IsAlive());
         HandleResurrectionFailure("Resurrection did not complete");
     }
 }
@@ -636,10 +712,22 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     if (IsGhost())
         return true;
 
-    // TrinityCore API: Release spirit
+    // CRITICAL FIX: Must call BuildPlayerRepop() first to:
+    // 1. Create corpse
+    // 2. Apply ghost aura (spell 8326)
+    // 3. Set ghost state properly
+    m_bot->BuildPlayerRepop();
+
+    // CRITICAL FIX #2: Explicitly set PLAYER_FLAGS_GHOST for bots
+    // The ghost aura (spell 8326) should set this flag, but it doesn't work reliably for bots
+    // Bot Player objects need explicit flag setting instead of relying on aura effects
+    m_bot->SetPlayerFlag(PLAYER_FLAGS_GHOST);
+
+    // Then teleport to graveyard
     m_bot->RepopAtGraveyard();
 
-    TC_LOG_DEBUG("playerbot.death", "Bot {} released spirit", m_bot->GetName());
+    TC_LOG_ERROR("playerbot.death", "✅ Bot {} released spirit (corpse created, ghost flag SET, teleported to graveyard). IsGhost={}",
+        m_bot->GetName(), IsGhost());
     return true;
 }
 
@@ -664,14 +752,30 @@ bool DeathRecoveryManager::NavigateToCorpse()
 
 bool DeathRecoveryManager::InteractWithCorpse()
 {
-    if (!m_bot || !IsInCorpseRange())
+    if (!m_bot)
+    {
+        TC_LOG_ERROR("playerbot.death", "🔴 InteractWithCorpse: Bot is nullptr!");
         return false;
+    }
+
+    if (!IsInCorpseRange())
+    {
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} InteractWithCorpse FAILED: Not in corpse range! Distance: {:.1f} yards (need <= {})",
+            m_bot->GetName(), m_corpseDistance, CORPSE_RESURRECTION_RANGE);
+        return false;
+    }
+
+    TC_LOG_INFO("playerbot.death", "⚰️  Bot {} calling ResurrectPlayer() at corpse (distance: {:.1f}y)...",
+        m_bot->GetName(), m_corpseDistance);
 
     // TrinityCore API: Resurrect at corpse
     m_bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness
     m_bot->SpawnCorpseBones();
 
-    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at corpse", m_bot->GetName());
+    bool isAlive = m_bot->IsAlive();
+    TC_LOG_INFO("playerbot.death", "✅ Bot {} ResurrectPlayer() called! IsAlive() = {}",
+        m_bot->GetName(), isAlive ? "TRUE" : "FALSE");
+
     return true;
 }
 

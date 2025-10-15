@@ -427,6 +427,12 @@ private:
     std::condition_variable _shutdownCv;
     std::mutex _shutdownMutex;
 
+    // CRITICAL FIX: Deferred worker creation to prevent startup crash
+    // Workers are not created in constructor, but lazily on first Submit() call
+    // This prevents worker threads from starting before World is fully initialized
+    std::atomic<bool> _workersCreated{false};
+    std::mutex _workerCreationMutex;
+
 public:
     explicit ThreadPool(Configuration config = {});
     ~ThreadPool();
@@ -444,7 +450,58 @@ public:
      */
     template<typename Func, typename... Args>
     auto Submit(TaskPriority priority, Func&& func, Args&&... args)
-        -> std::future<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>>;
+        -> std::future<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>>
+    {
+        using ReturnType = std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>;
+
+        if (_shutdown.load(std::memory_order_relaxed))
+        {
+            throw std::runtime_error("ThreadPool is shutting down");
+        }
+
+        // CRITICAL FIX: Ensure workers are created (lazy initialization on first Submit)
+        EnsureWorkersCreated();
+
+        // Create packaged task
+        auto boundFunc = std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
+        auto packagedTask = std::make_shared<std::packaged_task<ReturnType()>>(std::move(boundFunc));
+        std::future<ReturnType> future = packagedTask->get_future();
+
+        // Create task wrapper
+        auto task = new ConcreteTask<std::function<void()>>(
+            [packagedTask]() { (*packagedTask)(); },
+            priority
+        );
+
+        // Update metrics
+        _metrics.totalSubmitted.fetch_add(1, std::memory_order_relaxed);
+        size_t priorityIndex = static_cast<size_t>(priority);
+        _metrics.tasksByPriority[priorityIndex].fetch_add(1, std::memory_order_relaxed);
+
+        // Select worker and submit
+        uint32 workerId = SelectWorkerLeastLoaded();
+        WorkerThread* worker = _workers[workerId].get();
+
+        if (!worker->SubmitLocal(task, priority))
+        {
+            // Local queue full, try another worker
+            workerId = SelectWorkerRoundRobin();
+            worker = _workers[workerId].get();
+
+            if (!worker->SubmitLocal(task, priority))
+            {
+                // All workers busy
+                _metrics.totalFailed.fetch_add(1, std::memory_order_relaxed);
+                delete task;
+                throw std::runtime_error("All worker queues are full");
+            }
+        }
+
+        // Wake worker if sleeping
+        worker->Wake();
+
+        return future;
+    }
 
     /**
      * @brief Submit batch of tasks efficiently
@@ -529,6 +586,17 @@ private:
     uint32 SelectWorkerRoundRobin();
     uint32 SelectWorkerLeastLoaded();
     void RecordTaskCompletion(Task* task);
+
+    /**
+     * @brief Create worker threads on first use (lazy initialization)
+     *
+     * CRITICAL FIX: Deferred worker creation to prevent startup crash.
+     * Workers are created lazily on first Submit() call instead of in constructor.
+     * This ensures World is fully initialized before worker threads start running.
+     *
+     * Thread-safe: Uses double-checked locking with atomic flag and mutex.
+     */
+    void EnsureWorkersCreated();
 
     std::atomic<uint32> _nextWorker{0};
 };

@@ -58,6 +58,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketRelay.h
 
+    # Enterprise Session Management (Phase 2: 5000 Bot Scalability)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPriorityManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPriorityManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPerformanceMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPerformanceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotHealthCheck.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotHealthCheck.h
+
     # Chat system (Phase 4: Complete command processing)
     ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Chat/BotChatCommandHandler.h
@@ -437,8 +445,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
+    # DUPLICATE FIX: Lifecycle/BotPerformanceMonitor conflicts with Session/BotPerformanceMonitor
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
 
@@ -903,8 +912,9 @@ source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnOrchestrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotResourcePool.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
+    # DUPLICATE FIX: Lifecycle/BotPerformanceMonitor conflicts with Session/BotPerformanceMonitor
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.cpp

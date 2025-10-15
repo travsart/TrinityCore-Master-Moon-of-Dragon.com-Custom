@@ -29,6 +29,7 @@
 #include "Log.h"
 #include "Map.h"
 #include "SpellAuras.h"
+#include "../../Core/PlayerBotHooks.h"
 #include <algorithm>
 
 LFGBotSelector::LFGBotSelector()
@@ -66,11 +67,11 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
         return false;
 
     // Must be a bot
-    if (!bot->IsBot())
+    if (!Playerbot::PlayerBotHooks::IsPlayerBot(bot))
         return false;
 
-    // Must be online
-    if (!bot->GetSession() || !bot->GetSession()->IsConnected())
+    // Must be online (have a valid session)
+    if (!bot->GetSession())
         return false;
 
     // Must not be in a group
@@ -293,14 +294,26 @@ std::vector<Player*> LFGBotSelector::GetAllOnlineBots()
 {
     std::vector<Player*> bots;
 
-    // Iterate through all online players
-    ObjectAccessor::GetPlayers().forEach([&bots](Player* player)
+    // Iterate through all online sessions
+    for (auto const& [accountId, session] : sWorld->GetAllSessions())
     {
-        if (player && player->IsBot() && player->GetSession() && player->IsInWorld())
-        {
-            bots.push_back(player);
-        }
-    });
+        if (!session)
+            continue;
+
+        Player* player = session->GetPlayer();
+        if (!player)
+            continue;
+
+        // Check if this is a bot
+        if (!Playerbot::PlayerBotHooks::IsPlayerBot(player))
+            continue;
+
+        // Check if bot is in world
+        if (!player->IsInWorld())
+            continue;
+
+        bots.push_back(player);
+    }
 
     TC_LOG_TRACE("module.playerbot.lfg", "LFGBotSelector::GetAllOnlineBots - Found {} online bots", bots.size());
 

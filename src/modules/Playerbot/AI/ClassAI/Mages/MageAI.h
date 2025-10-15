@@ -323,7 +323,47 @@ public:
     };
 
     // Spell school mappings
-    static const std::unordered_map<uint32, MageSchool> _spellSchools;
+    static inline const std::unordered_map<uint32, MageSchool> _spellSchools = {
+        // Arcane spells
+        {ARCANE_MISSILES, MageSchool::ARCANE},
+        {ARCANE_BLAST, MageSchool::ARCANE},
+        {ARCANE_BARRAGE, MageSchool::ARCANE},
+        {ARCANE_ORB, MageSchool::ARCANE},
+        {ARCANE_POWER, MageSchool::ARCANE},
+        {ARCANE_INTELLECT, MageSchool::ARCANE},
+        {ARCANE_EXPLOSION, MageSchool::ARCANE},
+
+        // Fire spells
+        {FIREBALL, MageSchool::FIRE},
+        {FIRE_BLAST, MageSchool::FIRE},
+        {PYROBLAST, MageSchool::FIRE},
+        {FLAMESTRIKE, MageSchool::FIRE},
+        {SCORCH, MageSchool::FIRE},
+        {COMBUSTION, MageSchool::FIRE},
+        {LIVING_BOMB, MageSchool::FIRE},
+        {DRAGON_BREATH, MageSchool::FIRE},
+
+        // Frost spells
+        {FROSTBOLT, MageSchool::FROST},
+        {ICE_LANCE, MageSchool::FROST},
+        {FROZEN_ORB, MageSchool::FROST},
+        {BLIZZARD, MageSchool::FROST},
+        {CONE_OF_COLD, MageSchool::FROST},
+        {ICY_VEINS, MageSchool::FROST},
+        {WATER_ELEMENTAL, MageSchool::FROST},
+        {ICE_BARRIER, MageSchool::FROST},
+        {FROST_NOVA, MageSchool::FROST},
+        {FROST_ARMOR, MageSchool::FROST},
+
+        // Generic utility spells
+        {POLYMORPH, MageSchool::GENERIC},
+        {COUNTERSPELL, MageSchool::GENERIC},
+        {BLINK, MageSchool::GENERIC},
+        {INVISIBILITY, MageSchool::GENERIC},
+        {ICE_BLOCK, MageSchool::GENERIC},
+        {MAGE_ARMOR, MageSchool::GENERIC},
+        {MOLTEN_ARMOR, MageSchool::GENERIC}
+    };
 };
 
 // Utility class for mage spell calculations
@@ -357,10 +397,10 @@ public:
 
 private:
     // Cache for spell data
-    static std::unordered_map<uint32, uint32> _baseDamageCache;
-    static std::unordered_map<uint32, uint32> _manaCostCache;
-    static std::unordered_map<uint32, uint32> _castTimeCache;
-    static std::mutex _cacheMutex;
+    static inline std::unordered_map<uint32, uint32> _baseDamageCache;
+    static inline std::unordered_map<uint32, uint32> _manaCostCache;
+    static inline std::unordered_map<uint32, uint32> _castTimeCache;
+    static inline std::mutex _cacheMutex;
 
     static void CacheSpellData(uint32 spellId);
 };

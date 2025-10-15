@@ -1743,10 +1743,7 @@ uint32 PriestAI::CalculateManaUsage() const
     return 100;
 }
 
-// PriestHealCalculator implementation
-std::unordered_map<uint32, uint32> PriestHealCalculator::_baseHealCache;
-std::unordered_map<uint32, float> PriestHealCalculator::_efficiencyCache;
-std::mutex PriestHealCalculator::_cacheMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 uint32 PriestHealCalculator::CalculateHealAmount(uint32 spellId, Player* caster, ::Unit* target)
 {

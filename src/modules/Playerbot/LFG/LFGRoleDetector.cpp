@@ -21,7 +21,6 @@
 #include "ItemTemplate.h"
 #include "LFGMgr.h"
 #include "Log.h"
-#include "DBCStores.h"
 #include "SharedDefines.h"
 
 LFGRoleDetector::LFGRoleDetector()
@@ -54,7 +53,7 @@ uint8 LFGRoleDetector::DetectPlayerRole(Player* player)
         return gearRole;
 
     // Priority 3: Use class default
-    uint8 classRole = GetDefaultRoleForClass(player->getClass());
+    uint8 classRole = GetDefaultRoleForClass(player->GetClass());
     return classRole;
 }
 
@@ -77,7 +76,7 @@ bool LFGRoleDetector::CanPerformRole(Player* player, uint8 role)
     if (!player)
         return false;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     switch (role)
     {
@@ -108,10 +107,10 @@ uint8 LFGRoleDetector::GetBestRoleForPlayer(Player* player)
     uint32 dpsScore = CalculateDPSScore(player);
 
     // Find highest score
-    if (tankScore > healerScore && tankScore > dpsScore && ClassCanTank(player->getClass()))
+    if (tankScore > healerScore && tankScore > dpsScore && ClassCanTank(player->GetClass()))
         return lfg::PLAYER_ROLE_TANK;
 
-    if (healerScore > tankScore && healerScore > dpsScore && ClassCanHeal(player->getClass()))
+    if (healerScore > tankScore && healerScore > dpsScore && ClassCanHeal(player->GetClass()))
         return lfg::PLAYER_ROLE_HEALER;
 
     return lfg::PLAYER_ROLE_DAMAGE; // Default to DPS
@@ -123,7 +122,7 @@ uint8 LFGRoleDetector::GetAllPerformableRoles(Player* player)
         return lfg::PLAYER_ROLE_NONE;
 
     uint8 roles = lfg::PLAYER_ROLE_NONE;
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     if (ClassCanTank(playerClass))
         roles |= lfg::PLAYER_ROLE_TANK;
@@ -160,7 +159,8 @@ uint8 LFGRoleDetector::DetectRoleFromSpec(Player* player)
         return lfg::PLAYER_ROLE_NONE;
 
     // Get active specialization
-    uint32 specId = player->GetPrimarySpecialization();
+    // GetPrimarySpecialization returns ChrSpecialization which is a numeric type
+    uint32 specId = static_cast<uint32>(player->GetPrimarySpecialization());
     if (specId == 0)
         return lfg::PLAYER_ROLE_NONE;
 
@@ -179,7 +179,7 @@ uint8 LFGRoleDetector::DetectRoleFromGear(Player* player)
     // Require significant score difference to make a determination
     const uint32 THRESHOLD = 100;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     // Check for tank gear
     if (tankScore > healerScore + THRESHOLD && tankScore > dpsScore + THRESHOLD && ClassCanTank(playerClass))
@@ -260,17 +260,17 @@ uint32 LFGRoleDetector::CalculateHealerScore(Player* player)
         return 0;
 
     // Only healing classes can get healer score
-    if (!ClassCanHeal(player->getClass()))
+    if (!ClassCanHeal(player->GetClass()))
         return 0;
 
     uint32 score = 0;
 
     // Base score from stats
     score += player->GetStat(STAT_INTELLECT) / 2;         // Intellect for spell power
-    score += player->GetStat(STAT_SPIRIT) * 3;            // Spirit is primary healer stat (in classic/early expansions)
+    // Note: STAT_SPIRIT removed in modern WoW, using Intellect as primary healer stat
     score += player->GetRatingBonusValue(CR_HASTE_SPELL) * 2; // Spell haste
     score += player->GetRatingBonusValue(CR_CRIT_SPELL);      // Spell crit
-    score += player->GetTotalSpellPowerValue(SPELL_SCHOOL_MASK_ALL) / 2; // Spell power
+    score += player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ALL) / 2; // Spell power
 
     // Bonus for healing-specific gear
     // In real implementation, would check for +healing stats on gear
@@ -300,7 +300,7 @@ uint32 LFGRoleDetector::CalculateDPSScore(Player* player)
     spellScore += player->GetStat(STAT_INTELLECT);
     spellScore += player->GetRatingBonusValue(CR_CRIT_SPELL) * 2;
     spellScore += player->GetRatingBonusValue(CR_HASTE_SPELL) * 2;
-    spellScore += player->GetTotalSpellPowerValue(SPELL_SCHOOL_MASK_SPELL) / 2;
+    spellScore += player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL) / 2;
 
     // Use higher of the two
     score = std::max(physicalScore, spellScore);

@@ -1036,7 +1036,7 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
 
     std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, enemies, u_check);
+    Trinity::UnitListSearcher searcher(_bot, enemies, u_check);
     Cell::VisitAllObjects(_bot, searcher, range);
     return enemies.size();
 }

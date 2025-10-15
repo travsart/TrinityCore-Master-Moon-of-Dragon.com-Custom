@@ -84,6 +84,19 @@ private:
     mutable std::mutex _sessionsMutex;
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _enabled{false};
+
+    // ENTERPRISE-GRADE PERFORMANCE SYSTEM (Phase 2)
+    // Tracks ticks for priority scheduling
+    uint32 _tickCounter{0};
+
+    // DEPRECATED: Simple rotation (Phase 1) - kept for fallback
+    // Use enterprise priority system for optimal 5000 bot performance
+    uint32 _updateRotationIndex{0};
+    static constexpr uint32 MAX_BOTS_PER_UPDATE = 100;
+
+    // ENTERPRISE SYSTEM: Priority-based update management
+    // Managed by BotPriorityManager, BotPerformanceMonitor, and BotHealthCheck
+    bool _enterpriseMode{true};  // Toggle between simple and enterprise mode
 };
 
 // Global instance accessor

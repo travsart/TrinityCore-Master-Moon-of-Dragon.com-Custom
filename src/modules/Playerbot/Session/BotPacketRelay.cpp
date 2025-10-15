@@ -73,11 +73,7 @@ namespace Playerbot {
 // STATIC DATA MEMBERS
 // ============================================================================
 
-std::atomic<bool> BotPacketRelay::_initialized{false};
-std::unordered_set<uint32> BotPacketRelay::_relayOpcodes;
-std::mutex BotPacketRelay::_opcodesMutex;
-BotPacketRelay::RelayStatistics BotPacketRelay::_statistics;
-std::atomic<bool> BotPacketRelay::_debugLogging{false};
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // ============================================================================
 // INITIALIZATION & LIFECYCLE

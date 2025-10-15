@@ -141,6 +141,7 @@
 #include "WorldSession.h"
 #include "WorldStateMgr.h"
 #include "WorldStatePackets.h"
+#include "../../modules/Playerbot/Core/PlayerBotHooks.h"
 #include <boost/dynamic_bitset.hpp>
 #include <G3D/g3dmath.h>
 #include <sstream>
@@ -1175,6 +1176,10 @@ void Player::setDeathState(DeathState s)
 
         // reset all death criterias
         FailCriteria(CriteriaFailEvent::Death, 0);
+
+        // PLAYERBOT HOOK: Notify bots of death
+        if (Playerbot::PlayerBotHooks::OnPlayerDeath)
+            Playerbot::PlayerBotHooks::OnPlayerDeath(this);
     }
 
     Unit::setDeathState(s);
@@ -4437,6 +4442,10 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
             }
         }
     }
+
+    // PLAYERBOT HOOK: Notify bots of resurrection
+    if (Playerbot::PlayerBotHooks::OnPlayerResurrected)
+        Playerbot::PlayerBotHooks::OnPlayerResurrected(this);
 }
 
 void Player::KillPlayer()

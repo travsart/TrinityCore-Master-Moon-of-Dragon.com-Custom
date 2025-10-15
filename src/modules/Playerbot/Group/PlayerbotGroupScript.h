@@ -167,8 +167,8 @@ private:
     };
 
     // State cache: GroupGUID → GroupState
-    static std::unordered_map<ObjectGuid, GroupState> _groupStates;
-    static std::mutex _groupStatesMutex;
+    static inline std::unordered_map<ObjectGuid, GroupState> _groupStates;
+    static inline std::mutex _groupStatesMutex;
 
     // Polling helper functions
     static void CheckLootMethodChange(Group* group, GroupState& state);
@@ -200,8 +200,8 @@ private:
         std::string ToString() const;
     };
 
-    static PollStatistics _pollStats;
-    static std::mutex _pollStatsMutex;
+    static inline PollStatistics _pollStats;
+    static inline std::mutex _pollStatsMutex;
 };
 
 /**

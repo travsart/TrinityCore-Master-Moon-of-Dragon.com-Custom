@@ -31,6 +31,7 @@
 #include "Network/PlayerbotPacketSniffer.h"
 #include "Log.h"
 #include "GitRevision.h"
+#include <chrono>
 
 // Module state - using inline static in header for DLL compatibility
 
@@ -319,23 +320,60 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
         loginTriggered = true;
     }
 
+    // PERFORMANCE PROFILING: Track time for each manager
+    auto timeStart = std::chrono::high_resolution_clock::now();
+    auto lastTime = timeStart;
+
     // Update BotAccountMgr for thread-safe callback processing
     sBotAccountMgr->Update(diff);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto accountTime = std::chrono::duration_cast<std::chrono::microseconds>(t1 - lastTime).count();
+    lastTime = t1;
 
     // Update BotSpawner for automatic character creation and management
     Playerbot::sBotSpawner->Update(diff);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto spawnerTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - lastTime).count();
+    lastTime = t2;
 
     // Update BotSessionMgr for active bot session processing (legacy)
     sBotSessionMgr->UpdateAllSessions(diff);
+    auto t3 = std::chrono::high_resolution_clock::now();
+    auto sessionMgrTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - lastTime).count();
+    lastTime = t3;
 
     // Update BotWorldSessionMgr for native TrinityCore login sessions
     Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    auto worldSessionTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - lastTime).count();
+    lastTime = t4;
 
     // Update PlayerbotCharacterDBInterface to process sync queue
     sPlayerbotCharDB->Update(diff);
+    auto t5 = std::chrono::high_resolution_clock::now();
+    auto charDBTime = std::chrono::duration_cast<std::chrono::microseconds>(t5 - lastTime).count();
+    lastTime = t5;
 
     // Update GroupEventBus to process pending group events
     Playerbot::GroupEventBus::instance()->ProcessEvents(diff);
+    auto t6 = std::chrono::high_resolution_clock::now();
+    auto groupEventTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - lastTime).count();
+
+    // Calculate total time
+    auto totalUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(t6 - timeStart).count();
+
+    // Log if total time exceeds 100ms
+    if (totalUpdateTime > 100000) // 100ms in microseconds
+    {
+        TC_LOG_WARN("module.playerbot.performance", "PERFORMANCE: OnWorldUpdate took {:.2f}ms - Account:{:.2f}ms, Spawner:{:.2f}ms, SessionMgr:{:.2f}ms, WorldSession:{:.2f}ms, CharDB:{:.2f}ms, GroupEvent:{:.2f}ms",
+            totalUpdateTime / 1000.0f,
+            accountTime / 1000.0f,
+            spawnerTime / 1000.0f,
+            sessionMgrTime / 1000.0f,
+            worldSessionTime / 1000.0f,
+            charDBTime / 1000.0f,
+            groupEventTime / 1000.0f);
+    }
 
     }
     catch (std::exception const& ex)

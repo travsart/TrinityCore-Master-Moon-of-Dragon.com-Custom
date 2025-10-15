@@ -13,6 +13,7 @@
 #include "GroupEventBus.h"
 #include "Log.h"
 #include "BotSession.h"
+#include "BotAI.h"
 #include "ObjectAccessor.h"
 #include <sstream>
 
@@ -23,26 +24,7 @@ namespace Playerbot
 bool PlayerBotHooks::_initialized = false;
 PlayerBotHooks::HookStatistics PlayerBotHooks::_stats;
 
-// Hook function pointers (initially null)
-std::function<void(Group*, Player*)> PlayerBotHooks::OnGroupMemberAdded = nullptr;
-std::function<void(Group*, ObjectGuid, RemoveMethod)> PlayerBotHooks::OnGroupMemberRemoved = nullptr;
-std::function<void(Group*, ObjectGuid)> PlayerBotHooks::OnGroupLeaderChanged = nullptr;
-std::function<void(Group*)> PlayerBotHooks::OnGroupDisbanding = nullptr;
-std::function<void(Group*, bool)> PlayerBotHooks::OnGroupRaidConverted = nullptr;
-std::function<void(Group*, ObjectGuid, uint8)> PlayerBotHooks::OnSubgroupChanged = nullptr;
-std::function<void(Group*, LootMethod)> PlayerBotHooks::OnLootMethodChanged = nullptr;
-std::function<void(Group*, uint8)> PlayerBotHooks::OnLootThresholdChanged = nullptr;
-std::function<void(Group*, ObjectGuid)> PlayerBotHooks::OnMasterLooterChanged = nullptr;
-std::function<void(Group*, ObjectGuid, bool)> PlayerBotHooks::OnAssistantChanged = nullptr;
-std::function<void(Group*, ObjectGuid)> PlayerBotHooks::OnMainTankChanged = nullptr;
-std::function<void(Group*, ObjectGuid)> PlayerBotHooks::OnMainAssistChanged = nullptr;
-std::function<void(Group*, uint8, ObjectGuid)> PlayerBotHooks::OnRaidTargetIconChanged = nullptr;
-std::function<void(Group*, uint32, uint32, float, float, float)> PlayerBotHooks::OnRaidMarkerChanged = nullptr;
-std::function<void(Group*, ObjectGuid, uint32)> PlayerBotHooks::OnReadyCheckStarted = nullptr;
-std::function<void(Group*, ObjectGuid, bool)> PlayerBotHooks::OnReadyCheckResponse = nullptr;
-std::function<void(Group*, bool, uint32, uint32)> PlayerBotHooks::OnReadyCheckCompleted = nullptr;
-std::function<void(Group*, Difficulty)> PlayerBotHooks::OnDifficultyChanged = nullptr;
-std::function<void(Group*, uint32, bool)> PlayerBotHooks::OnInstanceBind = nullptr;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 void PlayerBotHooks::Initialize()
 {
@@ -432,7 +414,60 @@ void PlayerBotHooks::RegisterHooks()
         GroupEventBus::instance()->PublishEvent(event);
     };
 
-    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered", 19);
+    // PLAYER LIFECYCLE HOOKS
+    OnPlayerDeath = [](Player* player)
+    {
+        if (!player)
+            return;
+
+        // Only handle bot deaths
+        if (!IsPlayerBot(player))
+            return;
+
+        IncrementHookCall("OnPlayerDeath");
+
+        // Get bot's AI and call OnDeath
+        if (WorldSession* session = player->GetSession())
+        {
+            if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+            {
+                if (BotAI* ai = botSession->GetAI())
+                {
+                    ai->OnDeath();
+                    TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Bot {} died, OnDeath() called",
+                        player->GetName());
+                }
+            }
+        }
+    };
+
+    OnPlayerResurrected = [](Player* player)
+    {
+        if (!player)
+            return;
+
+        // Only handle bot resurrections
+        if (!IsPlayerBot(player))
+            return;
+
+        IncrementHookCall("OnPlayerResurrected");
+
+        // Get bot's AI and call OnRespawn
+        if (WorldSession* session = player->GetSession())
+        {
+            if (BotSession* botSession = dynamic_cast<BotSession*>(session))
+            {
+                if (BotAI* ai = botSession->GetAI())
+                {
+                    ai->OnRespawn();
+                    TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Bot {} resurrected, OnRespawn() called",
+                        player->GetName());
+                }
+            }
+        }
+    };
+
+    TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All {} hook functions registered", 21);
 }
 
 void PlayerBotHooks::UnregisterHooks()
@@ -457,6 +492,8 @@ void PlayerBotHooks::UnregisterHooks()
     OnReadyCheckCompleted = nullptr;
     OnDifficultyChanged = nullptr;
     OnInstanceBind = nullptr;
+    OnPlayerDeath = nullptr;
+    OnPlayerResurrected = nullptr;
 
     TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: All hook functions unregistered");
 }
@@ -524,6 +561,10 @@ void PlayerBotHooks::IncrementHookCall(const char* hookName)
         ++_stats.targetIconCalls;
     else if (hook == "OnDifficultyChanged")
         ++_stats.difficultyCalls;
+    else if (hook == "OnPlayerDeath")
+        ++_stats.playerDeathCalls;
+    else if (hook == "OnPlayerResurrected")
+        ++_stats.playerResurrectedCalls;
 }
 
 PlayerBotHooks::HookStatistics const& PlayerBotHooks::GetStatistics()
@@ -555,7 +596,9 @@ std::string PlayerBotHooks::HookStatistics::ToString() const
         << ", Loot Changed: " << lootMethodChangedCalls
         << ", Ready Checks: " << readyCheckCalls
         << ", Target Icons: " << targetIconCalls
-        << ", Difficulty: " << difficultyCalls;
+        << ", Difficulty: " << difficultyCalls
+        << ", Player Deaths: " << playerDeathCalls
+        << ", Player Resurrected: " << playerResurrectedCalls;
     return oss.str();
 }
 
@@ -571,6 +614,8 @@ void PlayerBotHooks::HookStatistics::Reset()
     readyCheckCalls = 0;
     targetIconCalls = 0;
     difficultyCalls = 0;
+    playerDeathCalls = 0;
+    playerResurrectedCalls = 0;
 }
 
 } // namespace Playerbot

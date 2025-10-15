@@ -368,8 +368,8 @@ private:
     static constexpr size_t MAX_DAMAGE_HISTORY = 20;
 
     // Static cooldown database
-    static std::unordered_map<uint32, CooldownData> s_defaultCooldowns;
-    static bool s_defaultsInitialized;
+    static inline std::unordered_map<uint32, CooldownData> s_defaultCooldowns;
+    static inline bool s_defaultsInitialized = false;
 
     /**
      * Initialize default cooldown database

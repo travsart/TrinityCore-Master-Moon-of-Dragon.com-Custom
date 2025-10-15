@@ -434,10 +434,10 @@ public:
 
 private:
     // Cache for evoker calculations
-    static std::unordered_map<uint32, uint32> _damageCache;
-    static std::unordered_map<uint32, uint32> _healingCache;
-    static std::unordered_map<EmpowermentLevel, uint32> _empowermentCache;
-    static std::mutex _cacheMutex;
+    static inline std::unordered_map<uint32, uint32> _damageCache;
+    static inline std::unordered_map<uint32, uint32> _healingCache;
+    static inline std::unordered_map<EmpowermentLevel, uint32> _empowermentCache;
+    static inline std::mutex _cacheMutex;
 
     static void CacheEvokerData();
 };

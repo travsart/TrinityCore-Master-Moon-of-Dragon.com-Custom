@@ -185,12 +185,11 @@ private:
      * @brief Calculate which roles are needed to complete a group
      *
      * @param humanRoles The roles covered by human player(s)
-     * @param dungeonType The type of content (5-man, 10-man raid, etc.)
      * @param tanksNeeded Output: Number of tanks needed
      * @param healersNeeded Output: Number of healers needed
      * @param dpsNeeded Output: Number of DPS needed
      */
-    void CalculateNeededRoles(uint8 humanRoles, lfg::LfgType dungeonType,
+    void CalculateNeededRoles(uint8 humanRoles,
                               uint8& tanksNeeded, uint8& healersNeeded, uint8& dpsNeeded) const;
 
     /**
@@ -219,14 +218,6 @@ private:
      * @return true if dungeon found, false otherwise
      */
     bool GetDungeonLevelRange(uint32 dungeonId, uint8& minLevel, uint8& maxLevel) const;
-
-    /**
-     * @brief Get the type of dungeon (5-man, raid, etc.)
-     *
-     * @param dungeonId The dungeon ID
-     * @return The dungeon type
-     */
-    lfg::LfgType GetDungeonType(uint32 dungeonId) const;
 
     /**
      * @brief Register a bot assignment to a human player

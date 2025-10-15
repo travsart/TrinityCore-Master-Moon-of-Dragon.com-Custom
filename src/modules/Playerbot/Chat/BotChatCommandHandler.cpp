@@ -51,18 +51,7 @@ namespace Playerbot
 // Static Member Initialization
 // ========================================
 
-std::atomic<bool> BotChatCommandHandler::_initialized{false};
-std::unordered_map<std::string, ChatCommand> BotChatCommandHandler::_commands;
-std::unordered_map<ObjectGuid, std::unordered_map<std::string, CommandCooldown>> BotChatCommandHandler::_cooldowns;
-std::shared_ptr<LLMProvider> BotChatCommandHandler::_llmProvider;
-std::string BotChatCommandHandler::_commandPrefix = ".bot";
-std::atomic<bool> BotChatCommandHandler::_naturalLanguageEnabled{false};
-std::atomic<uint32> BotChatCommandHandler::_maxConcurrentCommands{5};
-std::atomic<bool> BotChatCommandHandler::_debugLogging{false};
-BotChatCommandHandler::Statistics BotChatCommandHandler::_statistics;
-std::mutex BotChatCommandHandler::_commandsMutex;
-std::mutex BotChatCommandHandler::_cooldownsMutex;
-std::mutex BotChatCommandHandler::_llmMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // ========================================
 // Lifecycle Management

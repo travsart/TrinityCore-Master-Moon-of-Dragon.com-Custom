@@ -35,49 +35,7 @@
 namespace Playerbot
 {
 
-// Initialize spell school mappings
-const std::unordered_map<uint32, MageSchool> MageAI::_spellSchools = {
-    // Arcane spells
-    {ARCANE_MISSILES, MageSchool::ARCANE},
-    {ARCANE_BLAST, MageSchool::ARCANE},
-    {ARCANE_BARRAGE, MageSchool::ARCANE},
-    {ARCANE_ORB, MageSchool::ARCANE},
-    {ARCANE_POWER, MageSchool::ARCANE},
-    {ARCANE_INTELLECT, MageSchool::ARCANE},
-    {ARCANE_EXPLOSION, MageSchool::ARCANE},
-    // Fire spells
-    {FIREBALL, MageSchool::FIRE},
-    {FIRE_BLAST, MageSchool::FIRE},
-    {PYROBLAST, MageSchool::FIRE},
-    {FLAMESTRIKE, MageSchool::FIRE},
-    {SCORCH, MageSchool::FIRE},
-    {COMBUSTION, MageSchool::FIRE},
-    {LIVING_BOMB, MageSchool::FIRE},
-    {DRAGON_BREATH, MageSchool::FIRE},
-    // Frost spells
-    {FROSTBOLT, MageSchool::FROST},
-    {ICE_LANCE, MageSchool::FROST},
-    {FROZEN_ORB, MageSchool::FROST},
-    {BLIZZARD, MageSchool::FROST},
-    {CONE_OF_COLD, MageSchool::FROST},
-    {ICY_VEINS, MageSchool::FROST},
-    {WATER_ELEMENTAL, MageSchool::FROST},
-    {ICE_BARRIER, MageSchool::FROST},
-    // Generic/utility spells
-    {POLYMORPH, MageSchool::GENERIC},
-    {FROST_NOVA, MageSchool::GENERIC},
-    {COUNTERSPELL, MageSchool::GENERIC},
-    {BLINK, MageSchool::GENERIC},
-    {INVISIBILITY, MageSchool::GENERIC},
-    {ICE_BLOCK, MageSchool::GENERIC},
-    {MANA_SHIELD, MageSchool::GENERIC}
-};
-
-// Static member initialization for MageSpellCalculator
-std::unordered_map<uint32, uint32> MageSpellCalculator::_baseDamageCache;
-std::unordered_map<uint32, uint32> MageSpellCalculator::_manaCostCache;
-std::unordered_map<uint32, uint32> MageSpellCalculator::_castTimeCache;
-std::mutex MageSpellCalculator::_cacheMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // Talent IDs for specialization detection
 enum MageTalents

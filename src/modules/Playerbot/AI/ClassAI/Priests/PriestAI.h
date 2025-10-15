@@ -344,9 +344,9 @@ public:
 
 private:
     // Cache for healing calculations
-    static std::unordered_map<uint32, uint32> _baseHealCache;
-    static std::unordered_map<uint32, float> _efficiencyCache;
-    static std::mutex _cacheMutex;
+    static inline std::unordered_map<uint32, uint32> _baseHealCache;
+    static inline std::unordered_map<uint32, float> _efficiencyCache;
+    static inline std::mutex _cacheMutex;
 
     static void CacheHealData(uint32 spellId);
 };

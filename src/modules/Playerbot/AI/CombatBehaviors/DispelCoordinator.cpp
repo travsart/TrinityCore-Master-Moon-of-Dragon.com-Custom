@@ -68,14 +68,7 @@ namespace {
     bool IsHealer(Player const* p) { return GetPlayerRole(p) == BOT_ROLE_HEALER; }
 }
 
-// ============================================================================
-// Static Database Definitions
-// ============================================================================
-
-std::unordered_map<uint32, DispelCoordinator::DebuffData> DispelCoordinator::s_debuffDatabase;
-std::unordered_map<uint32, DispelCoordinator::PurgeableBuff> DispelCoordinator::s_purgeDatabase;
-bool DispelCoordinator::s_databaseInitialized = false;
-std::mutex DispelCoordinator::s_databaseMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // ============================================================================
 // Class-specific Dispel Spell IDs

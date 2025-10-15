@@ -390,8 +390,8 @@ private:
     Player* _bot;
 
     // Interrupt database (static, shared across all managers)
-    static std::unordered_map<uint32, InterruptableSpell> s_interruptDatabase;
-    static bool s_databaseInitialized;
+    static inline std::unordered_map<uint32, InterruptableSpell> s_interruptDatabase;
+    static inline bool s_databaseInitialized = false;
 
     // Interrupter tracking
     std::vector<InterrupterBot> _interrupters;

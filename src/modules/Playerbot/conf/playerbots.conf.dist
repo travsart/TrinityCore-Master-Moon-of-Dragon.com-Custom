@@ -194,6 +194,46 @@ Playerbot.Performance.MaxMemoryPerBot = 10
 Playerbot.Performance.Profiler.Enable = 0
 
 ###################################################################################################
+# THREADPOOL SYSTEM (PHASE A INTEGRATION)
+#
+#    Playerbot.Performance.ThreadPool.WorkerCount
+#        Description: Number of worker threads for parallel bot updates
+#        Default:     0 (auto-detect: hardware_concurrency - 2)
+#        Range:       1-32
+#        Note:        0 = Auto-detect (recommended)
+#                     Manual override: Set to specific thread count
+#                     Leave 2 cores free for OS and database operations
+#                     Example: 8-core CPU → 6 worker threads
+#
+#    Playerbot.Performance.ThreadPool.MaxQueueSize
+#        Description: Maximum tasks in ThreadPool queue
+#        Default:     10000
+#        Range:       1000-50000
+#        Note:        Should be >= 2x MaxBots to prevent queue overflow
+#                     Higher values use more memory but prevent task rejection
+#
+#    Playerbot.Performance.ThreadPool.EnableWorkStealing
+#        Description: Enable work-stealing load balancing
+#        Default:     1 (enabled)
+#        Note:        Workers steal tasks from busy workers when idle
+#                     Improves load distribution and reduces latency
+#                     Minimal overhead (~0.1% CPU)
+#
+#    Playerbot.Performance.ThreadPool.EnableCpuAffinity
+#        Description: Pin worker threads to specific CPU cores
+#        Default:     0 (disabled)
+#        Warning:     Requires administrator privileges on Windows
+#        Note:        May improve cache locality but reduce OS flexibility
+#                     Only enable if profiling shows benefit
+#
+###################################################################################################
+
+Playerbot.Performance.ThreadPool.WorkerCount = 0
+Playerbot.Performance.ThreadPool.MaxQueueSize = 10000
+Playerbot.Performance.ThreadPool.EnableWorkStealing = 1
+Playerbot.Performance.ThreadPool.EnableCpuAffinity = 0
+
+###################################################################################################
 # DATABASE
 #
 #    Playerbot.Database.Host

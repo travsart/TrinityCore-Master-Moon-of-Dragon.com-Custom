@@ -441,10 +441,10 @@ private:
     // Static Database Members
     // ========================================================================
 
-    static std::unordered_map<uint32, DebuffData> s_debuffDatabase;
-    static std::unordered_map<uint32, PurgeableBuff> s_purgeDatabase;
-    static bool s_databaseInitialized;
-    static std::mutex s_databaseMutex;
+    static inline std::unordered_map<uint32, DebuffData> s_debuffDatabase;
+    static inline std::unordered_map<uint32, PurgeableBuff> s_purgeDatabase;
+    static inline bool s_databaseInitialized = false;
+    static inline std::mutex s_databaseMutex;
 };
 
 } // namespace Playerbot

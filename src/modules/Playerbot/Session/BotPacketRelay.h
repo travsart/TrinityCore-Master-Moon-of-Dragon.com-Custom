@@ -353,17 +353,17 @@ private:
     // ========================================================================
 
     // Initialization state
-    static std::atomic<bool> _initialized;
+    static inline std::atomic<bool> _initialized{false};
 
     // Relay opcode whitelist (thread-safe for reads after initialization)
-    static std::unordered_set<uint32> _relayOpcodes;
-    static std::mutex _opcodesMutex;
+    static inline std::unordered_set<uint32> _relayOpcodes;
+    static inline std::mutex _opcodesMutex;
 
     // Statistics
-    static RelayStatistics _statistics;
+    static inline RelayStatistics _statistics;
 
     // Debug logging
-    static std::atomic<bool> _debugLogging;
+    static inline std::atomic<bool> _debugLogging{false};
 
     // Deleted constructors (static class)
     BotPacketRelay() = delete;

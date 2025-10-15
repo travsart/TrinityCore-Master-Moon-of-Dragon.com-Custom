@@ -26,9 +26,7 @@
 namespace Playerbot
 {
 
-// Static member definitions
-std::unordered_map<uint32, InterruptRotationManager::InterruptableSpell> InterruptRotationManager::s_interruptDatabase;
-bool InterruptRotationManager::s_databaseInitialized = false;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 // Interrupt spell IDs for all classes
 enum InterruptSpells : uint32

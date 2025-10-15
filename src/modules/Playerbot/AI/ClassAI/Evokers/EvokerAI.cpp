@@ -1518,10 +1518,6 @@ void EchoController::OptimizeEchoPlacement()
     // Echo optimization logic
 }
 
-// Cache static variables
-std::unordered_map<uint32, uint32> EvokerCalculator::_damageCache;
-std::unordered_map<uint32, uint32> EvokerCalculator::_healingCache;
-std::unordered_map<EmpowermentLevel, uint32> EvokerCalculator::_empowermentCache;
-std::mutex EvokerCalculator::_cacheMutex;
+// Static member definitions moved to header with inline to fix DLL linkage (C2491)
 
 } // namespace Playerbot

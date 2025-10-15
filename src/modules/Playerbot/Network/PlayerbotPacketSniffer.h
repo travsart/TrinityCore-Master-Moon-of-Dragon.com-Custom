@@ -180,22 +180,22 @@ private:
     static void ParseInstancePacket(WorldSession* session, WorldPacket const& packet);
 
     // Opcode → Category mapping
-    static std::unordered_map<OpcodeServer, PacketCategory> _packetCategoryMap;
-    static bool _initialized;
+    static inline std::unordered_map<OpcodeServer, PacketCategory> _packetCategoryMap;
+    static inline bool _initialized = false;
 
     // Performance tracking
-    static std::atomic<uint64_t> _totalPackets;
-    static std::array<std::atomic<uint64_t>, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> _categoryPackets;
-    static std::atomic<uint64_t> _totalProcessTimeUs;
-    static std::atomic<uint64_t> _peakProcessTimeUs;
-    static std::chrono::steady_clock::time_point _startTime;
+    static inline std::atomic<uint64_t> _totalPackets{0};
+    static inline std::array<std::atomic<uint64_t>, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> _categoryPackets{};
+    static inline std::atomic<uint64_t> _totalProcessTimeUs{0};
+    static inline std::atomic<uint64_t> _peakProcessTimeUs{0};
+    static inline std::chrono::steady_clock::time_point _startTime;
 
     // Initialize opcode mapping
     static void InitializeOpcodeMapping();
 
     // Typed packet handlers (WoW 11.2)
     using TypedPacketHandler = std::function<void(WorldSession*, void const*)>;
-    static std::unordered_map<std::type_index, TypedPacketHandler> _typedPacketHandlers;
+    static inline std::unordered_map<std::type_index, TypedPacketHandler> _typedPacketHandlers;
 
     template<typename PacketType>
     static void RegisterTypedHandler(void (*handler)(WorldSession*, PacketType const&));

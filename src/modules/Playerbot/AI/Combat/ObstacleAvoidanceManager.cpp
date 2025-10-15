@@ -18,6 +18,8 @@
 #include "CellImpl.h"
 #include "Creature.h"
 #include "Pet.h"
+#include "DynamicObject.h"
+#include "SpellInfo.h"
 #include <algorithm>
 #include <cmath>
 
@@ -800,8 +802,123 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
 
 void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles)
 {
-    // Environmental hazards would be detected through spell effects, ground conditions, etc.
-    // This is a placeholder for environmental hazard detection
+    if (!_bot || !_bot->IsInWorld())
+        return;
+
+    // Scan for area triggers and persistent area auras (fire, poison, etc.)
+    std::list<DynamicObject*> dynamicObjects;
+    Trinity::AllWorldObjectsInRange checker(_bot, context.scanRadius);
+    Trinity::WorldObjectSearcher<Trinity::AllWorldObjectsInRange> searcher(_bot, dynamicObjects, checker);
+    Cell::VisitAllObjects(_bot, searcher, context.scanRadius);
+
+    for (DynamicObject* dynObj : dynamicObjects)
+    {
+        if (!dynObj || !dynObj->IsInWorld())
+            continue;
+
+        // Check if this is a damaging effect (fire, poison, etc.)
+        SpellInfo const* spellInfo = dynObj->GetSpellInfo();
+        if (!spellInfo)
+            continue;
+
+        // Check if spell has harmful effects
+        bool isDamaging = false;
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        {
+            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_SCHOOL_DAMAGE ||
+                spellInfo->Effects[i].Effect == SPELL_EFFECT_ENVIRONMENTAL_DAMAGE ||
+                spellInfo->Effects[i].Effect == SPELL_EFFECT_HEALTH_LEECH ||
+                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
+                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
+            {
+                isDamaging = true;
+                break;
+            }
+        }
+
+        if (!isDamaging)
+            continue;
+
+        // Create hazard obstacle
+        ObstacleInfo hazard;
+        hazard.guid = dynObj->GetGUID();
+        hazard.object = dynObj;
+        hazard.position = dynObj->GetPosition();
+        hazard.type = ObstacleType::TEMPORARY_HAZARD;
+        hazard.radius = dynObj->GetRadius();
+        hazard.height = 2.0f;  // Assume 2 yard height for ground effects
+        hazard.isMoving = false;
+        hazard.isTemporary = true;
+        hazard.priority = ObstaclePriority::HIGH;  // Damaging effects are high priority
+        hazard.name = spellInfo->SpellName[0];
+        hazard.firstDetected = getMSTime();
+        hazard.lastSeen = hazard.firstDetected;
+        hazard.expirationTime = dynObj->GetDuration() > 0 ? getMSTime() + dynObj->GetDuration() : getMSTime() + 60000;
+        hazard.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(hazard.radius, GetBotRadius(), 2.0f);  // Extra safety margin
+        hazard.recommendedBehavior = AvoidanceBehavior::DIRECT_AVOIDANCE;
+
+        obstacles.push_back(hazard);
+
+        TC_LOG_DEBUG("playerbot.obstacle", "Bot {} detected environmental hazard: {} (radius: {:.1f}y) at ({:.1f}, {:.1f})",
+                     _bot->GetName(), hazard.name, hazard.radius,
+                     hazard.position.GetPositionX(), hazard.position.GetPositionY());
+    }
+
+    // Also scan for GameObject hazards (fires, traps, etc.)
+    std::list<GameObject*> nearbyObjects;
+    Trinity::AllGameObjectsInRange objectCheck(_bot, context.scanRadius);
+    Trinity::GameObjectSearcher<Trinity::AllGameObjectsInRange> objectSearcher(_bot, nearbyObjects, objectCheck);
+    Cell::VisitAllObjects(_bot, objectSearcher, context.scanRadius);
+
+    for (GameObject* obj : nearbyObjects)
+    {
+        if (!obj || !obj->IsInWorld())
+            continue;
+
+        // Check for hazardous GameObject types
+        bool isHazard = false;
+        switch (obj->GetGoType())
+        {
+            case GAMEOBJECT_TYPE_TRAP:
+                isHazard = true;
+                break;
+            case GAMEOBJECT_TYPE_SPELL_FOCUS:
+                // Some spell focus objects create damaging zones
+                isHazard = obj->GetGoInfo()->spellFocus.focusId != 0;
+                break;
+            case GAMEOBJECT_TYPE_AURA_GENERATOR:
+                isHazard = true;  // Aura generators often create harmful effects
+                break;
+            default:
+                break;
+        }
+
+        if (!isHazard)
+            continue;
+
+        // Create hazard obstacle for GameObject
+        ObstacleInfo hazard;
+        hazard.guid = obj->GetGUID();
+        hazard.object = obj;
+        hazard.position = obj->GetPosition();
+        hazard.type = ObstacleType::TEMPORARY_HAZARD;
+        hazard.radius = std::max(obj->GetDisplayScale() * 2.0f, 3.0f);  // Minimum 3 yard radius
+        hazard.height = obj->GetDisplayScale() * 2.0f;
+        hazard.isMoving = false;
+        hazard.isTemporary = false;  // GameObjects persist until despawned
+        hazard.priority = ObstaclePriority::HIGH;
+        hazard.name = obj->GetName();
+        hazard.firstDetected = getMSTime();
+        hazard.lastSeen = hazard.firstDetected;
+        hazard.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(hazard.radius, GetBotRadius(), 2.0f);
+        hazard.recommendedBehavior = AvoidanceBehavior::DIRECT_AVOIDANCE;
+
+        obstacles.push_back(hazard);
+
+        TC_LOG_DEBUG("playerbot.obstacle", "Bot {} detected GameObject hazard: {} (type: {}, radius: {:.1f}y) at ({:.1f}, {:.1f})",
+                     _bot->GetName(), hazard.name, uint32(obj->GetGoType()), hazard.radius,
+                     hazard.position.GetPositionX(), hazard.position.GetPositionY());
+    }
 }
 
 float ObstacleAvoidanceManager::EstimateObstacleClearanceTime(const ObstacleInfo& obstacle)

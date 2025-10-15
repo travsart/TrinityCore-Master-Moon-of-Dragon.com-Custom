@@ -381,8 +381,101 @@ private:
     std::vector<StateHistoryEntry> _history;
     static constexpr uint32 MAX_HISTORY_SIZE = 50;
 
-    // Transition validation table
-    static const std::unordered_map<GroupState, std::vector<GroupStateTransition>> _validTransitions;
+    // Transition validation table (inline to avoid DLL linkage issues)
+    static inline const std::unordered_map<GroupState, std::vector<GroupStateTransition>> _validTransitions = {
+        // NOT_IN_GROUP can only receive invites or be forced
+        {GroupState::NOT_IN_GROUP, {
+            GroupStateTransition::RECEIVE_INVITE
+        }},
+
+        // INVITED can accept, decline, or timeout
+        {GroupState::INVITED, {
+            GroupStateTransition::ACCEPT_INVITE,
+            GroupStateTransition::DECLINE_INVITE,
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // FORMING can gain members to become ACTIVE or disband
+        {GroupState::FORMING, {
+            GroupStateTransition::MEMBER_JOINED,      // → ACTIVE (3+ members)
+            GroupStateTransition::MEMBER_LEFT,        // → stay FORMING or NOT_IN_GROUP
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // ACTIVE is the main state with many transitions
+        {GroupState::ACTIVE, {
+            GroupStateTransition::MEMBER_LEFT,        // → FORMING (< 3 members)
+            GroupStateTransition::CONVERT_TO_RAID,    // → RAID_FORMING (5+ members)
+            GroupStateTransition::ENTER_COMBAT,       // → IN_COMBAT
+            GroupStateTransition::READY_CHECK_START,  // → READY_CHECK
+            GroupStateTransition::ZONE_INTO_INSTANCE, // → ENTERING_INSTANCE
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // RAID_FORMING can become RAID_ACTIVE or drop back to ACTIVE
+        {GroupState::RAID_FORMING, {
+            GroupStateTransition::RAID_READY,         // → RAID_ACTIVE (10+ members)
+            GroupStateTransition::MEMBER_LEFT,        // → ACTIVE or FORMING
+            GroupStateTransition::CONVERT_TO_PARTY,   // → ACTIVE
+            GroupStateTransition::ENTER_COMBAT,
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // RAID_ACTIVE has raid-specific transitions
+        {GroupState::RAID_ACTIVE, {
+            GroupStateTransition::CONVERT_TO_PARTY,   // → ACTIVE (< 10 members)
+            GroupStateTransition::ENTER_COMBAT,       // → IN_COMBAT
+            GroupStateTransition::READY_CHECK_START,  // → READY_CHECK
+            GroupStateTransition::ZONE_INTO_INSTANCE, // → ENTERING_INSTANCE
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // READY_CHECK can complete or be cancelled
+        {GroupState::READY_CHECK, {
+            GroupStateTransition::READY_CHECK_COMPLETE, // → PREPARING_FOR_COMBAT
+            GroupStateTransition::ENTER_COMBAT,       // → IN_COMBAT (pull during ready check)
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // PREPARING_FOR_COMBAT transitions to combat or cancels
+        {GroupState::PREPARING_FOR_COMBAT, {
+            GroupStateTransition::READY_FOR_PULL,     // → ACTIVE or RAID_ACTIVE
+            GroupStateTransition::ENTER_COMBAT,       // → IN_COMBAT
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // IN_COMBAT can only leave combat or disband
+        {GroupState::IN_COMBAT, {
+            GroupStateTransition::LEAVE_COMBAT,       // → ACTIVE or RAID_ACTIVE
+            GroupStateTransition::START_DISBAND       // Wipe
+        }},
+
+        // ENTERING_INSTANCE can enter or fail
+        {GroupState::ENTERING_INSTANCE, {
+            GroupStateTransition::INSTANCE_ENTERED,   // → IN_INSTANCE
+            GroupStateTransition::LEAVE_INSTANCE,     // → ACTIVE or RAID_ACTIVE (failed to enter)
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // IN_INSTANCE can clear, leave, or wipe
+        {GroupState::IN_INSTANCE, {
+            GroupStateTransition::INSTANCE_CLEARED,   // → INSTANCE_COMPLETE
+            GroupStateTransition::LEAVE_INSTANCE,     // → ACTIVE or RAID_ACTIVE
+            GroupStateTransition::ENTER_COMBAT,       // → IN_COMBAT (in instance)
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // INSTANCE_COMPLETE can leave instance
+        {GroupState::INSTANCE_COMPLETE, {
+            GroupStateTransition::LEAVE_INSTANCE,     // → ACTIVE or RAID_ACTIVE
+            GroupStateTransition::START_DISBAND
+        }},
+
+        // DISBANDING can only complete
+        {GroupState::DISBANDING, {
+            GroupStateTransition::COMPLETE_DISBAND    // → NOT_IN_GROUP
+        }}
+    };
 };
 
 /**

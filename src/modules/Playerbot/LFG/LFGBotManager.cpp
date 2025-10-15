@@ -26,6 +26,8 @@
 #include "ObjectAccessor.h"
 #include "World.h"
 #include "Group.h"
+#include "GroupMgr.h"
+#include "../Core/PlayerBotHooks.h"
 
 // Constructor
 LFGBotManager::LFGBotManager()
@@ -131,7 +133,7 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
     }
 
     // Only process human players
-    if (player->IsBot())
+    if (Playerbot::PlayerBotHooks::IsPlayerBot(player))
         return;
 
     if (dungeons.empty())
@@ -143,20 +145,9 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
 
     ObjectGuid playerGuid = player->GetGUID();
 
-    // Get the first dungeon to determine type and level requirements
-    uint32 dungeonId = *dungeons.begin();
-    lfg::LfgType dungeonType = GetDungeonType(dungeonId);
-
-    if (dungeonType == lfg::LFG_TYPE_NONE)
-    {
-        TC_LOG_WARN("module.playerbot", "LFGBotManager::OnPlayerJoinQueue - Unknown dungeon type for dungeon {}",
-                    dungeonId);
-        return;
-    }
-
-    // Calculate needed roles
+    // Calculate needed roles (assuming 5-man dungeon composition)
     uint8 tanksNeeded = 0, healersNeeded = 0, dpsNeeded = 0;
-    CalculateNeededRoles(playerRole, dungeonType, tanksNeeded, healersNeeded, dpsNeeded);
+    CalculateNeededRoles(playerRole, tanksNeeded, healersNeeded, dpsNeeded);
 
     uint8 totalNeeded = tanksNeeded + healersNeeded + dpsNeeded;
 
@@ -421,10 +412,6 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
         return 0;
     }
 
-    // Calculate exact numbers needed
-    lfg::LfgType dungeonType = GetDungeonType(dungeonId);
-    uint8 tanksNeeded = 0, healersNeeded = 0, dpsNeeded = 0;
-
     // Determine what roles the human player has
     Player* humanPlayer = ObjectAccessor::FindPlayer(playerGuid);
     if (!humanPlayer)
@@ -433,8 +420,10 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
         return 0;
     }
 
+    // Calculate exact numbers needed (assuming 5-man dungeon composition)
+    uint8 tanksNeeded = 0, healersNeeded = 0, dpsNeeded = 0;
     uint8 humanRole = sLFGMgr->GetRoles(playerGuid);
-    CalculateNeededRoles(humanRole, dungeonType, tanksNeeded, healersNeeded, dpsNeeded);
+    CalculateNeededRoles(humanRole, tanksNeeded, healersNeeded, dpsNeeded);
 
     uint32 botsQueued = 0;
 
@@ -612,36 +601,14 @@ void LFGBotManager::CleanupStaleAssignments()
     }
 }
 
-void LFGBotManager::CalculateNeededRoles(uint8 humanRoles, lfg::LfgType dungeonType,
+void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
                                           uint8& tanksNeeded, uint8& healersNeeded, uint8& dpsNeeded) const
 {
-    tanksNeeded = 0;
-    healersNeeded = 0;
-    dpsNeeded = 0;
-
     // Standard 5-man dungeon composition
-    if (dungeonType == lfg::LFG_TYPE_DUNGEON || dungeonType == lfg::LFG_TYPE_HEROIC || dungeonType == lfg::LFG_TYPE_RANDOM)
-    {
-        tanksNeeded = lfg::LFG_TANKS_NEEDED;      // 1
-        healersNeeded = lfg::LFG_HEALERS_NEEDED;  // 1
-        dpsNeeded = lfg::LFG_DPS_NEEDED;          // 3
-    }
-    // Raid composition (simplified - adjust based on raid size)
-    else if (dungeonType == lfg::LFG_TYPE_RAID)
-    {
-        // 10-man raid: 2 tanks, 2-3 healers, 5-6 DPS
-        tanksNeeded = 2;
-        healersNeeded = 2;
-        dpsNeeded = 6;
-    }
-    else
-    {
-        // Unknown dungeon type, use 5-man default
-        TC_LOG_WARN("module.playerbot", "LFGBotManager::CalculateNeededRoles - Unknown dungeon type {}, using 5-man default", dungeonType);
-        tanksNeeded = 1;
-        healersNeeded = 1;
-        dpsNeeded = 3;
-    }
+    // TODO: Add support for raid composition based on dungeon type
+    tanksNeeded = lfg::LFG_TANKS_NEEDED;      // 1
+    healersNeeded = lfg::LFG_HEALERS_NEEDED;  // 1
+    dpsNeeded = lfg::LFG_DPS_NEEDED;          // 3
 
     // Subtract roles filled by human player
     if (humanRoles & lfg::PLAYER_ROLE_TANK)
@@ -684,13 +651,13 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
         return false;
     }
 
-    // Validate role for bot's class
-    uint8 validatedRole = sLFGMgr->FilterClassRoles(bot, role);
-    if (validatedRole == lfg::PLAYER_ROLE_NONE)
+    // Validate role for bot's class using LFGRoleDetector
+    if (!sLFGRoleDetector->CanPerformRole(bot, role))
     {
         TC_LOG_WARN("module.playerbot", "LFGBotManager::QueueBot - Bot {} cannot perform role {}", bot->GetName(), role);
         return false;
     }
+    uint8 validatedRole = role;
 
     // Create a mutable copy of dungeons for JoinLfg
     lfg::LfgDungeonSet dungeonsCopy = dungeons;
@@ -731,11 +698,6 @@ bool LFGBotManager::GetDungeonLevelRange(uint32 dungeonId, uint8& minLevel, uint
     maxLevel = 60; // Default range
 
     return true;
-}
-
-lfg::LfgType LFGBotManager::GetDungeonType(uint32 dungeonId) const
-{
-    return sLFGMgr->GetDungeonType(dungeonId);
 }
 
 void LFGBotManager::RegisterBotAssignment(ObjectGuid humanGuid, ObjectGuid botGuid, uint8 role,
