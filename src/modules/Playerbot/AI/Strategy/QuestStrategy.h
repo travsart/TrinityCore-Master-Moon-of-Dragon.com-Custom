@@ -73,6 +73,9 @@ private:
     void ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
     void TurnInQuest(BotAI* ai, uint32 questId);
 
+    // Quest item usage system (for quests that require using items on targets)
+    void UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
+
     // Objective analysis
     ObjectiveTracker::ObjectivePriority GetCurrentObjective(BotAI* ai) const;
     bool HasActiveObjectives(BotAI* ai) const;
@@ -136,6 +139,9 @@ private:
 
     // Item loot source detection
     bool IsItemFromCreatureLoot(uint32 itemId) const;
+
+    // NPC interaction detection (distinguish "talk to" NPCs from "killable neutral" mobs)
+    bool RequiresSpellClickInteraction(uint32 creatureEntry) const;
 };
 
 } // namespace Playerbot

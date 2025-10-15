@@ -22,8 +22,11 @@
 #include "GameObject.h"
 #include "Item.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
+#include "SharedDefines.h"
 #include "../../Game/QuestAcceptanceManager.h"
 #include "../../Quest/QuestHubDatabase.h"
+#include <limits>
 
 namespace Playerbot
 {
@@ -860,39 +863,150 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         return;
     }
 
-    // Get the GameObject
+    // IMPROVEMENT: Find the nearest valid (spawned and usable) GameObject
+    // This distributes bots across multiple gameobjects and handles despawned objects
     uint16 mapId = static_cast<uint16>(bot->GetMapId());
-    uint32 counter = objects[0];
+    GameObject* targetObject = nullptr;
+    float nearestDistance = std::numeric_limits<float>::max();
+    uint32 validObjectsFound = 0;
 
-    GameObject* targetObject = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, targetObjectId, counter));
+    for (uint32 counter : objects)
+    {
+        GameObject* go = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, targetObjectId, counter));
+
+        if (!go)
+            continue;
+
+        // Check if GameObject is spawned and usable
+        if (!go->isSpawned())
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject counter={} is NOT spawned (despawned), skipping",
+                         counter);
+            continue;
+        }
+
+        // Check if GameObject is ready (not on cooldown/respawn timer)
+        if (go->GetGoState() != GO_STATE_READY)
+        {
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject counter={} state={} (not ready), skipping",
+                         counter, go->GetGoState());
+            continue;
+        }
+
+        validObjectsFound++;
+
+        // Find nearest valid GameObject
+        float distance = bot->GetDistance(go);
+        if (distance < nearestDistance)
+        {
+            nearestDistance = distance;
+            targetObject = go;
+        }
+    }
 
     if (!targetObject)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Failed to get GameObject (mapId={}, entry={}, counter={})",
-                     mapId, targetObjectId, counter);
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: No valid (spawned & ready) GameObject {} found ({} total scanned, {} were invalid)",
+                     targetObjectId, objects.size(), objects.size() - validObjectsFound);
+
+        // All gameobjects might be despawned/used - navigate to objective area to wait for respawn
         NavigateToObjective(ai, objective);
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found target GameObject {} at ({:.1f}, {:.1f}, {:.1f})",
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found nearest valid GameObject {} at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}yd ({} valid of {} total)",
                  targetObject->GetEntry(),
-                 targetObject->GetPositionX(), targetObject->GetPositionY(), targetObject->GetPositionZ());
+                 targetObject->GetPositionX(), targetObject->GetPositionY(), targetObject->GetPositionZ(),
+                 nearestDistance, validObjectsFound, objects.size());
 
-    // CRITICAL: Calculate SAFE distance from target
-    // For fire GameObjects, we need to be close enough to use the item but NOT so close we take damage
-    // Item use range: typically 10-30 yards
-    // Fire damage range: typically 5-10 yards (need to check GameObject bounds)
+    // CRITICAL: Calculate SAFE distance from target based on GameObject type and damage radius
+    // We need to detect if the GameObject causes damage and how large the damage area is
 
+    GameObjectTemplate const* goInfo = targetObject->GetGOInfo();
+    float damageRadius = 0.0f;
+    bool causesDamage = false;
+
+    // Detect damage-causing GameObjects and their radius
+    if (goInfo)
+    {
+        switch (goInfo->type)
+        {
+            case GAMEOBJECT_TYPE_TRAP: // Type 6 - Traps (like "Bonfire Damage")
+            {
+                // For traps: data1 is lockId, data2 is radius, data3 is spellId
+                damageRadius = static_cast<float>(goInfo->trap.radius);
+                causesDamage = (goInfo->trap.spell != 0); // Has damage spell
+
+                TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: GameObject is TRAP type - radius={:.1f}yd, spellId={}, causes damage={}",
+                             damageRadius, goInfo->trap.spell, causesDamage);
+                break;
+            }
+            case GAMEOBJECT_TYPE_SPELL_FOCUS: // Type 8 - Spell Focus (like "Fire", "Campfire")
+            {
+                // For spell focus: data0 is spellFocusType, data1 is radius, data2 is linkedTrap
+                damageRadius = static_cast<float>(goInfo->spellFocus.radius);
+
+                // Check if linked to a trap GameObject (indicates it causes damage)
+                if (goInfo->spellFocus.linkedTrap != 0)
+                {
+                    causesDamage = true;
+                    TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: GameObject is SPELL_FOCUS with LINKED TRAP {} - radius={:.1f}yd",
+                                 goInfo->spellFocus.linkedTrap, damageRadius);
+                }
+                else
+                {
+                    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: GameObject is SPELL_FOCUS without trap - radius={:.1f}yd, safe",
+                                 damageRadius);
+                }
+                break;
+            }
+            case GAMEOBJECT_TYPE_AURA_GENERATOR: // Type 30 - Aura Generator
+            {
+                // For aura generator: data1 is radius, data2/data4 are auraID1/auraID2
+                damageRadius = static_cast<float>(goInfo->auraGenerator.radius);
+                causesDamage = (goInfo->auraGenerator.auraID1 != 0 || goInfo->auraGenerator.auraID2 != 0);
+
+                TC_LOG_ERROR("module.playerbot.quest", "🔮 UseQuestItemOnTarget: GameObject is AURA_GENERATOR - radius={:.1f}yd, auraID1={}, auraID2={}, causes damage={}",
+                             damageRadius, goInfo->auraGenerator.auraID1, goInfo->auraGenerator.auraID2, causesDamage);
+                break;
+            }
+            default:
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "ℹ️ UseQuestItemOnTarget: GameObject type {} - assuming safe, no damage detection",
+                             goInfo->type);
+                break;
+            }
+        }
+    }
+
+    // Calculate safe positioning
     float gameObjectScale = targetObject->GetObjectScale();
-    float gameObjectRadius = gameObjectScale * 2.0f; // Approximate collision radius
+    float baseRadius = damageRadius > 0.0f ? damageRadius : (gameObjectScale * 2.0f);
 
-    // Safe distance: GameObject radius + 7 yards for item usage range
-    float safeDistance = gameObjectRadius + 7.0f;
+    // Safe distance calculation:
+    // - If causes damage: damage radius + 3 yards safety buffer + item use margin
+    // - If no damage: just use reasonable item casting distance
+    float safeDistance;
+    if (causesDamage && damageRadius > 0.0f)
+    {
+        // Stay OUTSIDE damage radius with safety buffer
+        safeDistance = damageRadius + 3.0f; // 3 yard safety buffer outside damage zone
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject CAUSES DAMAGE - staying {:.1f}yd outside damage radius ({:.1f}yd + 3yd safety)",
+                     safeDistance, damageRadius);
+    }
+    else
+    {
+        // No damage - can get closer
+        safeDistance = baseRadius + 5.0f; // Standard item use distance
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: GameObject SAFE - using standard distance {:.1f}yd",
+                     safeDistance);
+    }
+
     float minSafeDistance = safeDistance;
     float maxUseDistance = 30.0f; // Maximum range for item usage
 
-    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: GameObject scale={:.1f}, radius={:.1f}yd, safe distance={:.1f}yd",
-                 gameObjectScale, gameObjectRadius, safeDistance);
+    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: GameObject scale={:.1f}, damage radius={:.1f}yd, safe distance={:.1f}yd",
+                 gameObjectScale, damageRadius, safeDistance);
 
     // Calculate bot's current distance to target
     float currentDistance = bot->GetDistance(targetObject);
@@ -942,9 +1056,40 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         return;
     }
 
-    // Bot is in safe range - face target and use item
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in safe range ({:.1f}yd), facing target and using item {}",
-                 bot->GetName(), currentDistance, questItemId);
+    // FIRE DAMAGE EVASION: Check bot health and retreat if taking damage
+    float healthPercent = (bot->GetHealth() * 100.0f) / bot->GetMaxHealth();
+    if (healthPercent < 70.0f)
+    {
+        // Bot is taking significant damage - move away to safer distance
+        TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: Bot {} health LOW ({:.1f}%) - RETREATING from fire damage!",
+                     bot->GetName(), healthPercent);
+
+        // Move further away (increase safe distance by 5 yards)
+        float retreatDistance = safeDistance + 5.0f;
+        float angleToBot = targetObject->GetRelativeAngle(bot);
+
+        Position retreatPos;
+        targetObject->GetNearPoint(bot, retreatPos.m_positionX, retreatPos.m_positionY, retreatPos.m_positionZ,
+                                   retreatDistance, angleToBot);
+
+        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: RETREATING to safer position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
+                     retreatPos.GetPositionX(), retreatPos.GetPositionY(), retreatPos.GetPositionZ(), retreatDistance);
+
+        BotMovementUtil::MoveToPosition(bot, retreatPos);
+        return;
+    }
+
+    // Bot is in safe range and healthy - stop, face target, and use item
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in safe range ({:.1f}yd), health {:.1f}%, preparing to use item {}",
+                 bot->GetName(), currentDistance, healthPercent, questItemId);
+
+    // CRITICAL: Stop all movement before using the item (required for spell casting)
+    bot->StopMoving();
+    bot->GetMotionMaster()->Clear();
+    bot->GetMotionMaster()->MoveIdle();
+
+    TC_LOG_ERROR("module.playerbot.quest", "🛑 UseQuestItemOnTarget: Bot {} stopped moving",
+                 bot->GetName());
 
     // Face the target GameObject
     bot->SetFacingToObject(targetObject);
@@ -952,20 +1097,50 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     TC_LOG_ERROR("module.playerbot.quest", "👁️ UseQuestItemOnTarget: Bot {} now facing target GameObject {}",
                  bot->GetName(), targetObject->GetEntry());
 
-    // Use the quest item on the target using TrinityCore's CastItemUseSpell
-    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Using item {} on GameObject {}",
-                 questItemId, targetObject->GetEntry());
+    // Get the spell ID from the quest item
+    // Quest items trigger spells through their ItemEffect entries
+    uint32 spellId = 0;
+    for (ItemEffectEntry const* itemEffect : questItem->GetEffects())
+    {
+        if (itemEffect->TriggerType == ITEM_SPELLTRIGGER_ON_USE)
+        {
+            spellId = itemEffect->SpellID;
+            break;
+        }
+    }
 
-    // Create spell cast targets for the GameObject
-    SpellCastTargets targets;
-    targets.SetTargetMask(TARGET_FLAG_GAMEOBJECT);
-    targets.SetGOTarget(targetObject);
+    if (spellId == 0)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Quest item {} has no ON_USE spell!",
+                     questItemId);
+        return;
+    }
 
-    // Cast the item use spell (this triggers the quest item effect)
-    bot->CastItemUseSpell(questItem, targets, ObjectGuid::Empty, nullptr);
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Quest item {} triggers spell {}",
+                 questItemId, spellId);
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} used quest item {} on GameObject {} - objective should progress",
-                 bot->GetName(), questItemId, targetObject->GetEntry());
+    // Get spell info for validation
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Invalid spell ID {} for item {}",
+                     spellId, questItemId);
+        return;
+    }
+
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Casting spell {} on GameObject {} (entry {})",
+                 spellId, targetObject->GetGUID().ToString(), targetObject->GetEntry());
+
+    // Cast the spell with the item as the source and GameObject as target
+    // Use CastSpellExtraArgs to pass the item that's being used
+    CastSpellExtraArgs args;
+    args.SetCastItem(questItem);
+    args.SetOriginalCaster(bot->GetGUID());
+
+    bot->CastSpell(targetObject, spellId, args);
+
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GameObject {} - objective should progress",
+                 bot->GetName(), spellId, questItemId, targetObject->GetEntry());
 }
 
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
