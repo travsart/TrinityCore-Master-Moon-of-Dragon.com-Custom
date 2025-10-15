@@ -661,6 +661,14 @@ set(PLAYERBOT_SOURCES
 
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
+
+    # LFG System - Looking For Group Bot Management
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
 )
 
 # Group sources for IDE organization
@@ -1063,6 +1071,15 @@ source_group("Commands" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
 )
 
+source_group("LFG" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotSelector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGRoleDetector.h
+)
+
 source_group("Tests" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Tests/TargetScannerTest.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Tests/QuestHubDatabaseTest.cpp
@@ -1103,6 +1120,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
         ${CMAKE_CURRENT_SOURCE_DIR}/Economy
+        ${CMAKE_CURRENT_SOURCE_DIR}/LFG
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
     PRIVATE
