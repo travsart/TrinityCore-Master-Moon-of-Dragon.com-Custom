@@ -261,9 +261,17 @@ private:
     std::mutex _wakeMutex;
     std::condition_variable _wakeCv;
 
+    // Thread initialization state
+    std::atomic<bool> _initialized{false};
+
 public:
     WorkerThread(ThreadPool* pool, uint32 workerId, uint32 cpuCore);
     ~WorkerThread();
+
+    /**
+     * @brief Start the worker thread (deferred start after construction)
+     */
+    void Start();
 
     /**
      * @brief Main worker loop
@@ -432,6 +440,10 @@ private:
     // This prevents worker threads from starting before World is fully initialized
     std::atomic<bool> _workersCreated{false};
     std::mutex _workerCreationMutex;
+
+    // Async initialization support for non-blocking startup
+    std::future<void> _initFuture;
+    std::atomic<bool> _asyncInitInProgress{false};
 
 public:
     explicit ThreadPool(Configuration config = {});

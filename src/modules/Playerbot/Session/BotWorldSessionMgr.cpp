@@ -422,7 +422,9 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
-    // Only use ThreadPool after at least one bot has completed login (server is ready)
+    // ThreadPool enabled with CPU affinity removed to prevent 60s hang
+    // CPU affinity (SetThreadAffinityMask) was causing blocking during thread creation
+    // Workers now create without affinity and OS scheduler handles CPU assignment
     bool useThreadPool = serverReady && !sessionsToUpdate.empty();
     std::vector<std::future<void>> futures;
 
