@@ -19,6 +19,9 @@
 #include "World.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
+#include "GameObject.h"
+#include "Item.h"
+#include "SpellInfo.h"
 #include "../../Game/QuestAcceptanceManager.h"
 #include "../../Quest/QuestHubDatabase.h"
 
@@ -337,9 +340,24 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     {
         case QUEST_OBJECTIVE_MONSTER:
         case QUEST_OBJECTIVE_PLAYERKILLS:
-            TC_LOG_ERROR("module.playerbot.quest", "⚔️ ProcessQuestObjectives: Bot {} - Calling EngageQuestTargets for quest {}",
-                         bot->GetName(), objective.questId);
-            EngageQuestTargets(ai, objective);
+            // CRITICAL: Type 0 (QUEST_OBJECTIVE_MONSTER) can mean EITHER:
+            // 1. Kill target (normal case)
+            // 2. Use quest item on target (e.g., Quest 26391 - use item 58362 on fire GameObject)
+            //
+            // Detect "use item on target" quests by checking if quest has StartItem
+            // (item given when quest is accepted and required for objective)
+            if (quest->GetSrcItemId() != 0)
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - Quest {} is USE ITEM quest (StartItem={}), calling UseQuestItemOnTarget",
+                             bot->GetName(), objective.questId, quest->GetSrcItemId());
+                UseQuestItemOnTarget(ai, objective);
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "⚔️ ProcessQuestObjectives: Bot {} - Quest {} is KILL TARGET quest, calling EngageQuestTargets",
+                             bot->GetName(), objective.questId);
+                EngageQuestTargets(ai, objective);
+            }
             break;
 
         case QUEST_OBJECTIVE_ITEM:
@@ -493,8 +511,17 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                 // Check if this is a FRIENDLY NPC (not hostile to bot)
                 if (!bot->IsHostileTo(creature))
                 {
+                    // CRITICAL: Only interact with NPCs that have spell click data
+                    // Neutral mobs WITHOUT spell click should be attacked, not interacted with!
+                    if (!RequiresSpellClickInteraction(questObjective.ObjectID))
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Mob {} (Entry: {}) is neutral but has NO spell click - should be ATTACKED, not interacted with!",
+                                     creature->GetName(), questObjective.ObjectID);
+                        continue;  // Skip this creature - it should be attacked via FindQuestTarget(), not interacted with
+                    }
+
                     float distance = bot->GetDistance(creature);
-                    TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) at distance {:.1f}",
+                    TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) with spell click at distance {:.1f}",
                                  bot->GetName(), creature->GetName(), questObjective.ObjectID, distance);
 
                     // CRITICAL: Check if objective is already complete BEFORE interacting
@@ -756,6 +783,191 @@ void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState
     NavigateToObjective(ai, objective);
 }
 
+void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+{
+    if (!ai || !ai->GetBot())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: NULL ai or bot");
+        return;
+    }
+
+    Player* bot = ai->GetBot();
+
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Bot {} using quest item for quest {} objective {}",
+                 bot->GetName(), objective.questId, objective.objectiveIndex);
+
+    // Get quest and verify it has a source item
+    Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
+    if (!quest || quest->GetSrcItemId() == 0)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Quest {} has NO source item!",
+                     objective.questId);
+        return;
+    }
+
+    uint32 questItemId = quest->GetSrcItemId();
+    TC_LOG_ERROR("module.playerbot.quest", "📦 UseQuestItemOnTarget: Quest {} requires item {} to complete objective",
+                 objective.questId, questItemId);
+
+    // Check if bot has the quest item
+    Item* questItem = bot->GetItemByEntry(questItemId);
+    if (!questItem)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Bot {} does NOT have quest item {}!",
+                     bot->GetName(), questItemId);
+        return;
+    }
+
+    // Get objective details
+    if (objective.objectiveIndex >= quest->Objectives.size())
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Invalid objective index {}",
+                     objective.objectiveIndex);
+        return;
+    }
+
+    QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+
+    // Check if objective is already complete
+    uint32 currentProgress = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+    uint32 requiredAmount = static_cast<uint32>(questObjective.Amount);
+
+    if (currentProgress >= requiredAmount)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Objective COMPLETE ({} / {}), nothing to do",
+                     currentProgress, requiredAmount);
+        return;
+    }
+
+    TC_LOG_ERROR("module.playerbot.quest", "📊 UseQuestItemOnTarget: Progress: {} / {} - need to use item {} more times",
+                 currentProgress, requiredAmount, requiredAmount - currentProgress);
+
+    // Find the target GameObject (e.g., fire for Quest 26391)
+    uint32 targetObjectId = questObjective.ObjectID;
+
+    // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
+    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, targetObjectId, 200.0f);
+
+    TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
+                 targetObjectId, objects.size());
+
+    if (objects.empty())
+    {
+        // No target found - navigate to objective area
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: NO target GameObject {} found, navigating to objective area",
+                     targetObjectId);
+        NavigateToObjective(ai, objective);
+        return;
+    }
+
+    // Get the GameObject
+    uint16 mapId = static_cast<uint16>(bot->GetMapId());
+    uint32 counter = objects[0];
+
+    GameObject* targetObject = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, targetObjectId, counter));
+
+    if (!targetObject)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Failed to get GameObject (mapId={}, entry={}, counter={})",
+                     mapId, targetObjectId, counter);
+        NavigateToObjective(ai, objective);
+        return;
+    }
+
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found target GameObject {} at ({:.1f}, {:.1f}, {:.1f})",
+                 targetObject->GetEntry(),
+                 targetObject->GetPositionX(), targetObject->GetPositionY(), targetObject->GetPositionZ());
+
+    // CRITICAL: Calculate SAFE distance from target
+    // For fire GameObjects, we need to be close enough to use the item but NOT so close we take damage
+    // Item use range: typically 10-30 yards
+    // Fire damage range: typically 5-10 yards (need to check GameObject bounds)
+
+    float gameObjectScale = targetObject->GetObjectScale();
+    float gameObjectRadius = gameObjectScale * 2.0f; // Approximate collision radius
+
+    // Safe distance: GameObject radius + 7 yards for item usage range
+    float safeDistance = gameObjectRadius + 7.0f;
+    float minSafeDistance = safeDistance;
+    float maxUseDistance = 30.0f; // Maximum range for item usage
+
+    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: GameObject scale={:.1f}, radius={:.1f}yd, safe distance={:.1f}yd",
+                 gameObjectScale, gameObjectRadius, safeDistance);
+
+    // Calculate bot's current distance to target
+    float currentDistance = bot->GetDistance(targetObject);
+
+    TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: Bot distance to target={:.1f}yd (safe range: {:.1f}-{:.1f}yd)",
+                 currentDistance, minSafeDistance, maxUseDistance);
+
+    // Check if bot is in safe range
+    if (currentDistance < minSafeDistance)
+    {
+        // TOO CLOSE - move away to safe distance
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO CLOSE to target ({:.1f}yd < {:.1f}yd safe distance) - MOVING AWAY",
+                     bot->GetName(), currentDistance, minSafeDistance);
+
+        // Calculate position AWAY from target at safe distance
+        // Get angle from target to bot
+        float angleToBot = targetObject->GetRelativeAngle(bot);
+
+        // Create position at safe distance in that direction
+        Position safePos;
+        targetObject->GetNearPoint(bot, safePos.m_positionX, safePos.m_positionY, safePos.m_positionZ,
+                                   safeDistance, angleToBot);
+
+        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: Moving AWAY to safe position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
+                     safePos.GetPositionX(), safePos.GetPositionY(), safePos.GetPositionZ(), safeDistance);
+
+        BotMovementUtil::MoveToPosition(bot, safePos);
+        return;
+    }
+    else if (currentDistance > maxUseDistance)
+    {
+        // TOO FAR - move closer to safe distance
+        TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: Bot {} TOO FAR from target ({:.1f}yd > {:.1f}yd max use distance) - MOVING CLOSER",
+                     bot->GetName(), currentDistance, maxUseDistance);
+
+        // Calculate position TOWARD target at safe distance
+        float angleFromBot = bot->GetRelativeAngle(targetObject);
+
+        Position closePos;
+        bot->GetNearPoint(bot, closePos.m_positionX, closePos.m_positionY, closePos.m_positionZ,
+                          safeDistance, angleFromBot);
+
+        TC_LOG_ERROR("module.playerbot.quest", "🏃 UseQuestItemOnTarget: Moving CLOSER to safe position ({:.1f}, {:.1f}, {:.1f}) at distance {:.1f}yd",
+                     closePos.GetPositionX(), closePos.GetPositionY(), closePos.GetPositionZ(), safeDistance);
+
+        BotMovementUtil::MoveToPosition(bot, closePos);
+        return;
+    }
+
+    // Bot is in safe range - face target and use item
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} in safe range ({:.1f}yd), facing target and using item {}",
+                 bot->GetName(), currentDistance, questItemId);
+
+    // Face the target GameObject
+    bot->SetFacingToObject(targetObject);
+
+    TC_LOG_ERROR("module.playerbot.quest", "👁️ UseQuestItemOnTarget: Bot {} now facing target GameObject {}",
+                 bot->GetName(), targetObject->GetEntry());
+
+    // Use the quest item on the target using TrinityCore's CastItemUseSpell
+    TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Using item {} on GameObject {}",
+                 questItemId, targetObject->GetEntry());
+
+    // Create spell cast targets for the GameObject
+    SpellCastTargets targets;
+    targets.SetTargetMask(TARGET_FLAG_GAMEOBJECT);
+    targets.SetGOTarget(targetObject);
+
+    // Cast the item use spell (this triggers the quest item effect)
+    bot->CastItemUseSpell(questItem, targets, ObjectGuid::Empty, nullptr);
+
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} used quest item {} on GameObject {} - objective should progress",
+                 bot->GetName(), questItemId, targetObject->GetEntry());
+}
+
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
 {
     if (!ai || !ai->GetBot())
@@ -987,20 +1199,40 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     // Get the unit
     ::Unit* target = ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
 
-    // CRITICAL FIX: Check if this is a FRIENDLY NPC that requires interaction instead of killing
-    // Quest 28809 type bug: Type 0 (QUEST_OBJECTIVE_MONSTER) can be used for friendly NPCs
-    // that need interaction (e.g., "Injured Soldier revived")
-    // We should NOT attack friendly NPCs - return nullptr so bot uses TALKTO logic instead
+    // CRITICAL FIX: Distinguish between "talk to" NPCs and "attackable neutral" mobs
+    // Type 0 (QUEST_OBJECTIVE_MONSTER) can be used for TWO different quest mechanics:
+    //
+    // 1. "Talk To" NPCs (e.g., Quest 28809 "Injured Soldier" - mob 50047):
+    //    - Has npc_spellclick_spells entry
+    //    - Not hostile but requires HandleSpellClick() interaction
+    //    - Should NOT be attacked
+    //
+    // 2. "Attackable Neutral" Mobs (e.g., mob 49871 "Blackrock Worg"):
+    //    - NO npc_spellclick_spells entry
+    //    - Neutral faction but CAN be attacked
+    //    - Should be killed for quest credit
+    //
+    // The key distinction: Check npc_spellclick_spells, NOT hostility!
     if (target && target->ToCreature())
     {
         Creature* creature = target->ToCreature();
 
-        // Check if creature is friendly to the bot's faction
+        // If creature is not hostile, check if it requires spell click interaction
         if (!bot->IsHostileTo(creature))
         {
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: NPC {} (Entry: {}) is FRIENDLY (faction {}), should use TALKTO logic, not attack!",
-                         creature->GetName(), entry, creature->GetFaction());
-            return nullptr;  // Return nullptr so bot doesn't attack friendly NPC
+            // Check if this NPC has spell click data
+            if (RequiresSpellClickInteraction(entry))
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: NPC {} (Entry: {}) requires SPELL CLICK interaction, not attack! Returning nullptr for TALKTO logic.",
+                             creature->GetName(), entry);
+                return nullptr;  // Return nullptr so bot uses TALKTO logic in EngageQuestTargets()
+            }
+            else
+            {
+                TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestTarget: Mob {} (Entry: {}) is NEUTRAL but ATTACKABLE (no spell click data), will be attacked!",
+                             creature->GetName(), entry);
+                // Fall through - return this target for attack even though it's neutral
+            }
         }
     }
 
@@ -1897,6 +2129,50 @@ bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
                  itemId, isCreatureLoot ? "IS" : "is NOT");
 
     return isCreatureLoot;
+}
+
+bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
+{
+    // Check if this creature has spell click interaction configured
+    // NPCs with spell click are "talk to" NPCs (e.g., "Injured Soldier" Quest 28809)
+    // NPCs without spell click are attackable mobs (even if neutral, e.g., "Blackrock Worg" mob 49871)
+
+    TC_LOG_DEBUG("module.playerbot.quest", "🔍 RequiresSpellClickInteraction: Checking creature entry {}", creatureEntry);
+
+    // PERFORMANCE: Use static cache to avoid repeated database queries
+    static std::unordered_map<uint32, bool> spellClickCache;
+    static std::mutex cacheMutex;
+
+    // Check cache first
+    {
+        std::lock_guard<std::mutex> lock(cacheMutex);
+        auto cacheIt = spellClickCache.find(creatureEntry);
+        if (cacheIt != spellClickCache.end())
+        {
+            TC_LOG_DEBUG("module.playerbot.quest", "✅ RequiresSpellClickInteraction: Creature {} found in cache, hasSpellClick={}",
+                         creatureEntry, cacheIt->second);
+            return cacheIt->second;
+        }
+    }
+
+    // Cache miss - query database
+    TC_LOG_DEBUG("module.playerbot.quest", "🔍 RequiresSpellClickInteraction: Creature {} NOT in cache, querying npc_spellclick_spells", creatureEntry);
+
+    // Query npc_spellclick_spells to check if this NPC has spell click interaction
+    QueryResult result = WorldDatabase.PQuery("SELECT 1 FROM npc_spellclick_spells WHERE npc_entry = {} LIMIT 1", creatureEntry);
+
+    bool hasSpellClick = (result != nullptr);
+
+    // Cache the result
+    {
+        std::lock_guard<std::mutex> lock(cacheMutex);
+        spellClickCache[creatureEntry] = hasSpellClick;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.quest", "📊 RequiresSpellClickInteraction: Creature {} {} spell click interaction (database query complete, result cached)",
+                 creatureEntry, hasSpellClick ? "HAS" : "does NOT have");
+
+    return hasSpellClick;
 }
 
 } // namespace Playerbot
