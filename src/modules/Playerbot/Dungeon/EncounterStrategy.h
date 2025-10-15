@@ -24,14 +24,85 @@ namespace Playerbot
 {
 
 /**
- * @brief Comprehensive encounter strategy system for dungeon boss fights
+ * @brief Static generic library for dungeon encounter mechanics
  *
- * This system provides detailed strategies for specific dungeon encounters,
- * including mechanics handling, positioning, and role-specific instructions.
+ * This class provides STATIC GENERIC METHODS for common dungeon mechanics.
+ * These methods are used as fallbacks when no specific dungeon script exists.
+ *
+ * ARCHITECTURE:
+ * - All mechanic handlers are STATIC PUBLIC methods
+ * - Called by DungeonScript base class default implementations
+ * - Called by DungeonScriptMgr when no script exists
+ * - Called by individual dungeon scripts that want generic behavior
+ *
+ * THREE-LEVEL FALLBACK SYSTEM:
+ * 1. Custom dungeon script (specific implementation)
+ * 2. DungeonScript base class (calls these generic methods)
+ * 3. Direct call to these generic methods (no script exists)
  */
 class TC_GAME_API EncounterStrategy
 {
 public:
+    // ============================================================================
+    // STATIC GENERIC MECHANIC HANDLERS (Public API)
+    // ============================================================================
+
+    /**
+     * Generic interrupt handler
+     * Prioritizes: Heals > Damage > CC
+     * Uses class-specific interrupt spells
+     */
+    static void HandleGenericInterrupts(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic ground effect avoidance
+     * Detects dangerous DynamicObjects and moves away
+     */
+    static void HandleGenericGroundAvoidance(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic add kill priority
+     * Prioritizes: Healers > Casters > Low Health > Melee
+     */
+    static void HandleGenericAddPriority(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic positioning
+     * Tank: Front of boss
+     * Melee: Behind boss
+     * Ranged: 20-30 yards away
+     * Healer: Safe distance
+     */
+    static void HandleGenericPositioning(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic dispel mechanic
+     * Prioritizes harmful debuffs on players
+     */
+    static void HandleGenericDispel(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic movement mechanic
+     * Maintains optimal range for role
+     */
+    static void HandleGenericMovement(::Player* player, ::Creature* boss);
+
+    /**
+     * Generic spread mechanic
+     * Players spread apart by specified distance
+     */
+    static void HandleGenericSpread(::Player* player, ::Creature* boss, float distance);
+
+    /**
+     * Generic stack mechanic
+     * Players stack on designated position (usually tank)
+     */
+    static void HandleGenericStack(::Player* player, ::Creature* boss);
+
+    // ============================================================================
+    // LEGACY SINGLETON SYSTEM (Deprecated - kept for compatibility)
+    // ============================================================================
+
     static EncounterStrategy* instance();
 
     // Core strategy management
