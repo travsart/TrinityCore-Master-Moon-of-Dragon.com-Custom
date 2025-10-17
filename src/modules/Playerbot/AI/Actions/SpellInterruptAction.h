@@ -21,8 +21,11 @@ class Player;
 namespace Playerbot
 {
 
-class InterruptCoordinator;
+class InterruptCoordinatorFixed;
 struct InterruptAssignment;
+
+// Type alias for backward compatibility
+using InterruptCoordinator = InterruptCoordinatorFixed;
 
 /**
  * Context data for spell interrupt actions

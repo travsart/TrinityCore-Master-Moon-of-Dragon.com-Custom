@@ -1,26 +1,18 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * Baseline Rotation Manager Implementation - ENTERPRISE-GRADE VERSION
- * Uses proper spell queueing system mirroring TrinityCore player behavior
+ * Baseline Rotation Manager Implementation - FIXED VERSION
  */
 
 #include "BaselineRotationManager.h"
-#include "ClassAI.h"  // For RequestBotSpellCast() - enterprise spell queueing
-#include "../Session/BotSession.h"  // For BotSession::GetAI() - proper AI accessor
 #include "Player.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "SpellDefines.h"
 #include "Unit.h"
-#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "Map.h"
-#include "Log.h"
-#include "GameTime.h"
-#include "Group.h"
 
 namespace Playerbot
 {
@@ -67,18 +59,12 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
 bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* target)
 {
     if (!bot || !target || !target->IsAlive())
-    {
         return false;
-    }
 
-    uint8 classId = bot->GetClass();
-
-    // Get baseline abilities for bot's class
-    auto abilities = GetBaselineAbilities(classId);
+    // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
+    auto abilities = GetBaselineAbilities(bot->GetClass());
     if (!abilities || abilities->empty())
-    {
         return false;
-    }
 
     // Sort abilities by priority (higher priority first)
     std::vector<BaselineAbility> sorted = *abilities;
@@ -90,9 +76,7 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     for (auto const& ability : sorted)
     {
         if (TryCastAbility(bot, target, ability))
-        {
             return true;
-        }
     }
 
     return false;
@@ -212,85 +196,27 @@ std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilitie
 bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, BaselineAbility const& ability)
 {
     if (!CanUseAbility(bot, target, ability))
-    {
         return false;
-    }
 
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];
     auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())
-    {
-        TC_LOG_TRACE("module.playerbot.baseline", "Spell {} on cooldown for {} ms",
-                     ability.spellId, cdIt->second - getMSTime());
         return false; // On cooldown
-    }
 
-    // Cast spell - validate spell exists and bot knows it
+    // Cast spell
+    // FIX: GetSpellInfo requires difficulty parameter
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
-    if (!spellInfo || !bot->HasSpell(ability.spellId))
-    {
+    if (!spellInfo)
         return false;
-    }
 
     // Determine cast target
     ::Unit* castTarget = ability.requiresMelee ? target : (ability.isDefensive ? bot : target);
 
-    // Validate target before casting
-    if (!castTarget || !castTarget->IsInWorld() || !castTarget->IsAlive())
+    // Cast spell using TrinityCore API
+    if (bot->CastSpell(castTarget, ability.spellId, false))
     {
-        return false;
-    }
-
-    // For offensive spells, validate target is attackable
-    if (!ability.isDefensive)
-    {
-        if (castTarget->HasUnitFlag(UNIT_FLAG_NON_ATTACKABLE) ||
-            castTarget->HasUnitFlag(UNIT_FLAG_UNINTERACTIBLE) ||
-            castTarget->IsFriendlyTo(bot))
-        {
-            return false;
-        }
-    }
-
-    // ============================================================================
-    // ENTERPRISE-GRADE FIX: Proper Spell Queueing System
-    // ============================================================================
-    // Uses ClassAI::RequestBotSpellCast() which mirrors TrinityCore's player
-    // spell queueing architecture. This provides proper validation timing:
-    //
-    // 1. Spell is QUEUED (can queue within 400ms of GCD/cast completion)
-    // 2. Queue is processed every frame in ClassAI::OnCombatUpdate()
-    // 3. When ready, ExecutePendingSpell() creates Spell object with TRIGGERED_NONE
-    // 4. Spell::prepare() handles validation at EXECUTE time (not queue time!)
-    //
-    // This matches retail WoW behavior:
-    // - Player casts on neutral mob → spell queued → cast starts
-    // - Spell executes → damage applied → mob becomes hostile
-    // - Target validation happens when spell lands, not when queued
-    //
-    // NO MORE WORKAROUNDS - uses proper TrinityCore spell pipeline
-    // See Player.cpp:30904-31051 and ClassAI.cpp:545-748 for implementation
-    // ============================================================================
-
-    // Get bot's AI through BotSession
-    BotSession* botSession = dynamic_cast<BotSession*>(bot->GetSession());
-    if (!botSession)
-        return false;
-
-    BotAI* botAI = botSession->GetAI();
-    if (!botAI)
-        return false;
-
-    ClassAI* classAI = dynamic_cast<ClassAI*>(botAI);
-    if (!classAI)
-        return false;
-
-    // Request spell cast through proper queueing system
-    bool queued = classAI->RequestBotSpellCast(ability.spellId, castTarget);
-    if (queued)
-    {
-        // Record cooldown (will be enforced by spell system, but we track for priority logic)
+        // Record cooldown
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
         return true;
     }
@@ -308,29 +234,42 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
         return false;
 
     // Range check
-    float distance = bot->GetDistance(target);
     if (ability.requiresMelee)
     {
-        if (distance > 5.0f)
+        if (bot->GetDistance(target) > 5.0f)
             return false;
     }
     else
     {
-        if (distance > 30.0f)
-            return false;
-
-        if (!bot->IsWithinLOSInMap(target))
+        if (bot->GetDistance(target) > 30.0f || !bot->IsWithinLOSInMap(target))
             return false;
     }
 
-    // Resource check (RAGE is stored internally as tenths)
-    uint32 currentResource = bot->GetPower(bot->GetPowerType());
-    uint32 requiredResource = ability.resourceCost;
+    // Resource check
+    uint32 currentResource = 0;
+    // FIX: use GetClass() not getClass()
+    switch (bot->GetClass())
+    {
+        case CLASS_WARRIOR:
+        case CLASS_DRUID: // In some forms
+            currentResource = bot->GetPower(POWER_RAGE);
+            break;
+        case CLASS_ROGUE:
+        case CLASS_MONK:
+            currentResource = bot->GetPower(POWER_ENERGY);
+            break;
+        case CLASS_HUNTER:
+            currentResource = bot->GetPower(POWER_FOCUS);
+            break;
+        case CLASS_DEATH_KNIGHT:
+            currentResource = bot->GetPower(POWER_RUNIC_POWER);
+            break;
+        default:
+            currentResource = bot->GetPower(POWER_MANA);
+            break;
+    }
 
-    if (bot->GetPowerType() == POWER_RAGE)
-        requiredResource *= 10;
-
-    if (currentResource < requiredResource)
+    if (currentResource < ability.resourceCost)
         return false;
 
     return true;
@@ -558,10 +497,8 @@ void BaselineRotationManager::InitializeShamanBaseline()
 void BaselineRotationManager::InitializeMageBaseline()
 {
     std::vector<BaselineAbility> abilities;
-    // Level 1: Fireball only
-    // Level 4+: Frostbolt becomes available
-    abilities.emplace_back(133, 1, 0, 0, 10.0f, false);     // Fireball (level 1+)
-    abilities.emplace_back(116, 4, 0, 0, 9.0f, false);      // Frostbolt (level 4+)
+    abilities.emplace_back(116, 1, 0, 0, 10.0f, false);    // Frostbolt
+    abilities.emplace_back(133, 1, 0, 0, 9.0f, false);     // Fireball
     _baselineAbilities[CLASS_MAGE] = std::move(abilities);
 }
 

@@ -14,9 +14,9 @@
 #include <shared_mutex>
 #include <atomic>
 #include <thread>
+#include <memory>
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/concurrent_queue.h>
-#include <folly/concurrency/ConcurrentHashMap.h>
 
 namespace Playerbot
 {
@@ -84,9 +84,9 @@ namespace Threading
     template<typename T>
     using ConcurrentQueue = tbb::concurrent_queue<T>;
 
-    // Use folly concurrent hash map for ultra-high throughput
+    // Use TBB concurrent hash map for ultra-high throughput
     template<typename Key, typename Value>
-    using HighThroughputMap = folly::ConcurrentHashMap<Key, Value>;
+    using HighThroughputMap = tbb::concurrent_hash_map<Key, Value>;
 
     /**
      * Performance-optimized atomic counters
@@ -124,37 +124,43 @@ namespace Threading
 
     /**
      * Lock-free bot state for read-heavy operations
+     * Uses shared_ptr with atomic operations to support complex types like std::unordered_map
      */
     template<typename T>
     class LockFreeState
     {
     public:
-        LockFreeState() : _version(0) {}
+        LockFreeState()
+            : _state(std::make_shared<T>()), _version(0)
+        {}
 
         void Update(T newState)
         {
-            uint64 newVersion = _version.fetch_add(1, std::memory_order_release) + 1;
-            _state.store(newState, std::memory_order_release);
-            _currentVersion.store(newVersion, std::memory_order_release);
+            // Create new shared_ptr with the updated state
+            auto newPtr = std::make_shared<T>(std::move(newState));
+
+            // Atomically update the shared_ptr
+            std::atomic_store_explicit(&_state, newPtr, std::memory_order_release);
+
+            // Increment version
+            _version.fetch_add(1, std::memory_order_release);
         }
 
         T Read(uint64& version) const
         {
-            T state;
-            uint64 ver;
-            do {
-                ver = _currentVersion.load(std::memory_order_acquire);
-                state = _state.load(std::memory_order_acquire);
-            } while (ver != _currentVersion.load(std::memory_order_acquire));
+            // Atomically load the shared_ptr
+            auto statePtr = std::atomic_load_explicit(&_state, std::memory_order_acquire);
 
-            version = ver;
-            return state;
+            // Get version
+            version = _version.load(std::memory_order_acquire);
+
+            // Return copy of the state
+            return *statePtr;
         }
 
     private:
-        std::atomic<T> _state;
+        std::shared_ptr<T> _state;
         std::atomic<uint64> _version;
-        std::atomic<uint64> _currentVersion;
     };
 
     /**

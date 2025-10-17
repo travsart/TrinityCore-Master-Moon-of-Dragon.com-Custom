@@ -31,7 +31,10 @@ namespace Playerbot
 {
 
 class BotAI;
-class InterruptCoordinator;
+class InterruptCoordinatorFixed;
+
+// Type alias for backward compatibility
+using InterruptCoordinator = InterruptCoordinatorFixed;
 
 // Spell detection configuration
 struct SpellDetectionConfig

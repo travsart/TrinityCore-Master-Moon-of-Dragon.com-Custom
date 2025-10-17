@@ -851,24 +851,11 @@ void InterruptAwareness::NotifySpellDetected(DetectedSpellCast const& cast)
     // Notify interrupt coordinator
     if (auto coordinator = _coordinator.lock())
     {
-        // Find the spell object for the coordinator
+        // Notify coordinator of the cast with cast time
         Unit* caster = ObjectAccessor::GetUnit(*_observer, cast.casterGuid);
         if (caster)
         {
-            if (Spell* spell = caster->GetCurrentSpell(CURRENT_GENERIC_SPELL))
-            {
-                if (spell->GetSpellInfo()->Id == cast.spellId)
-                {
-                    coordinator->OnSpellCastStart(caster, spell);
-                }
-            }
-            else if (Spell* channeled = caster->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
-            {
-                if (channeled->GetSpellInfo()->Id == cast.spellId)
-                {
-                    coordinator->OnSpellCastStart(caster, channeled);
-                }
-            }
+            coordinator->OnEnemyCastStart(caster, cast.spellId, cast.castTimeMs);
         }
     }
 
@@ -892,11 +879,10 @@ void InterruptAwareness::NotifySpellCompleted(ObjectGuid casterGuid, uint32 spel
     // Notify interrupt coordinator
     if (auto coordinator = _coordinator.lock())
     {
-        Unit* caster = ObjectAccessor::GetUnit(*_observer, casterGuid);
-        if (caster)
-        {
-            coordinator->OnSpellCastFinish(caster, spellId, interrupted);
-        }
+        if (interrupted)
+            coordinator->OnEnemyCastInterrupted(casterGuid, spellId);
+        else
+            coordinator->OnEnemyCastComplete(casterGuid, spellId);
     }
 
     // Notify registered callbacks

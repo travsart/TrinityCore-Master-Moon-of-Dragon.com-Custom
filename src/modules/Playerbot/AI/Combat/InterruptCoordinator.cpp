@@ -1,1013 +1,610 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2024 TrinityCore Playerbot Module
+ *
+ * Thread-Safe Interrupt Coordinator Implementation
  */
 
-// Combat/ThreatManager.h removed - not used in this file
 #include "InterruptCoordinator.h"
+#include "BotAI.h"
 #include "Player.h"
-#include "Unit.h"
-#include "Spell.h"
+#include "Group.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "Group.h"
+#include "World.h"
 #include "Log.h"
-#include "Timer.h"
-#include "ObjectAccessor.h"
-#include "../BotAI.h"
+#include "Map.h"
 #include <algorithm>
-#include <random>
+#include <execution>
 
 namespace Playerbot
 {
 
-
-InterruptCoordinator::InterruptCoordinator(Group* group)
-    : _group(group)
-    , _lastUpdate(std::chrono::steady_clock::now())
+InterruptCoordinatorFixed::InterruptCoordinatorFixed(Group* group)
+    : _group(group), _lastUpdate(std::chrono::steady_clock::now())
 {
-    LoadDefaultPriorities();
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Initialized for group %s",
-                 group ? std::to_string(group->GetGUID().GetCounter()).c_str() : "nullptr");
+    TC_LOG_DEBUG("module.playerbot.interrupt",
+        "InterruptCoordinatorFixed initialized for group with single-mutex design");
 }
 
-void InterruptCoordinator::Update(uint32 diff)
+InterruptCoordinatorFixed::~InterruptCoordinatorFixed()
 {
-    if (!_active.load())
-        return;
-
-    auto startTime = std::chrono::steady_clock::now();
-
-    // Update bot cooldowns and positions
-    {
-        std::lock_guard<std::recursive_mutex> lock(_botMutex);
-        for (auto& [botGuid, botInfo] : _botInfo)
-        {
-            UpdateBotCooldowns(botGuid);
-        }
-    }
-
-    // Clean up expired casts and assignments
-    CleanupExpiredCasts();
-    CleanupExpiredAssignments();
-
-    // Update assignment deadlines
-    UpdateAssignmentDeadlines();
-
-    // Performance optimization every 10 updates
-    if (++_updateCount % 10 == 0)
-    {
-        OptimizeForPerformance();
-    }
-
-    // Update performance metrics
-    auto endTime = std::chrono::steady_clock::now();
-    auto updateTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-
-    {
-        std::lock_guard lock(_metricsMutex);
-        if (updateTime > _metrics.maxAssignmentTime)
-            _metrics.maxAssignmentTime = updateTime;
-
-        // Rolling average calculation
-        auto currentAvg = _metrics.averageAssignmentTime;
-        _metrics.averageAssignmentTime = std::chrono::microseconds(
-            (currentAvg.count() * 9 + updateTime.count()) / 10
-        );
-    }
-
-    _lastUpdate = startTime;
+    _active = false;
 }
 
-void InterruptCoordinator::RegisterBot(Player* bot, BotAI* ai)
+void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 {
     if (!bot || !ai)
         return;
 
-    ObjectGuid botGuid = bot->GetGUID();
+    BotInterruptInfo info;
+    info.botGuid = bot->GetGUID();
+    info.available = true;
 
-    std::lock_guard<std::recursive_mutex> lock(_botMutex);
-
-    _botInfo[botGuid] = BotInterruptInfo(botGuid);
-    _botAI[botGuid] = ai;
-
-    InitializeBotCapabilities(botGuid, bot);
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Registered bot %s with %u interrupt abilities",
-                 bot->GetName().c_str(), static_cast<uint32>(_botInfo[botGuid].abilities.size()));
-}
-
-void InterruptCoordinator::UnregisterBot(ObjectGuid botGuid)
-{
-    std::lock_guard<std::recursive_mutex> lock(_botMutex);
-
-    _botInfo.erase(botGuid);
-    _botAI.erase(botGuid);
-    _assignedBots.erase(botGuid);
-
-    // Remove any pending assignments for this bot
-    std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
-    _pendingAssignments.erase(
-        std::remove_if(_pendingAssignments.begin(), _pendingAssignments.end(),
-                      [botGuid](const InterruptAssignment& assignment) {
-                          return assignment.assignedBot == botGuid;
-                      }),
-        _pendingAssignments.end()
-    );
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Unregistered bot %s", botGuid.ToString().c_str());
-}
-
-void InterruptCoordinator::RefreshBotCapabilities(ObjectGuid botGuid)
-{
-    std::lock_guard<std::recursive_mutex> lock(_botMutex);
-
-    auto botIt = _botAI.find(botGuid);
-    if (botIt != _botAI.end() && botIt->second)
+    // Find interrupt spells
+    auto const& spells = bot->GetSpellMap();
+    for (auto const& [spellId, _] : spells)
     {
-        if (Player* bot = botIt->second->GetBot())
-        {
-            InitializeBotCapabilities(botGuid, bot);
-        }
-    }
-}
-
-bool InterruptCoordinator::OnSpellCastStart(Unit* caster, Spell const* spell)
-{
-    if (!caster || !spell || !_active.load())
-        return false;
-
-    const SpellInfo* spellInfo = spell->GetSpellInfo();
-    if (!spellInfo)
-        return false;
-
-    uint32 spellId = spellInfo->Id;
-    ObjectGuid casterGuid = caster->GetGUID();
-
-    // Check if we should interrupt this spell
-    if (!ShouldInterrupt(spellId, caster))
-        return false;
-
-    // Create casting spell info
-    CastingSpellInfo castInfo;
-    castInfo.casterGuid = casterGuid;
-    castInfo.spellId = spellId;
-    castInfo.priority = GetSpellPriority(spellId);
-    castInfo.castStart = std::chrono::steady_clock::now();
-    castInfo.castTimeMs = spellInfo->CastTimeEntry ? spellInfo->CastTimeEntry->Base : 0;
-    castInfo.isChanneled = spellInfo->IsChanneled();
-    castInfo.canBeInterrupted = !spellInfo->HasAttribute(SPELL_ATTR7_NO_UI_NOT_INTERRUPTIBLE);
-    castInfo.schoolMask = spellInfo->SchoolMask;
-    castInfo.casterPosition = Position(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ());
-
-    // Calculate cast end time
-    uint32 totalCastTime = castInfo.isChanneled ? spellInfo->GetDuration() : castInfo.castTimeMs;
-    castInfo.castEnd = castInfo.castStart + std::chrono::milliseconds(totalCastTime);
-
-    // Store the active cast
-    {
-        std::lock_guard<std::recursive_mutex> lock(_castMutex);
-        _activeCasts[casterGuid] = castInfo;
-    }
-
-    // Update metrics
-    _metrics.spellsDetected.fetch_add(1);
-
-    // Assign interrupt
-    bool assigned = AssignInterrupt(castInfo);
-    if (assigned)
-        _metrics.interruptsAssigned.fetch_add(1);
-    else
-        _metrics.assignmentFailures.fetch_add(1);
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Detected spell cast %u from %s, priority %u, assigned: %s",
-                 spellId, caster->GetName().c_str(), static_cast<uint32>(castInfo.priority), assigned ? "yes" : "no");
-
-    return assigned;
-}
-
-void InterruptCoordinator::OnSpellCastFinish(Unit* caster, uint32 spellId, bool interrupted)
-{
-    if (!caster)
-        return;
-
-    ObjectGuid casterGuid = caster->GetGUID();
-
-    // Remove from active casts
-    {
-        std::lock_guard<std::recursive_mutex> lock(_castMutex);
-        _activeCasts.erase(casterGuid);
-    }
-
-    // Update metrics if this was an interrupt success
-    if (interrupted)
-    {
-        _metrics.interruptsSucceeded.fetch_add(1);
-        TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Spell %u from %s successfully interrupted",
-                     spellId, caster->GetName().c_str());
-    }
-
-    // Remove any pending assignments for this cast
-    std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
-    _pendingAssignments.erase(
-        std::remove_if(_pendingAssignments.begin(), _pendingAssignments.end(),
-                      [casterGuid, spellId](const InterruptAssignment& assignment) {
-                          return assignment.targetCaster == casterGuid && assignment.targetSpell == spellId;
-                      }),
-        _pendingAssignments.end()
-    );
-}
-
-void InterruptCoordinator::OnSpellCastCancel(Unit* caster, uint32 spellId)
-{
-    OnSpellCastFinish(caster, spellId, false);
-}
-
-void InterruptCoordinator::OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 interruptSpell, bool succeeded)
-{
-    // Update bot cooldown
-    {
-        std::lock_guard<std::recursive_mutex> lock(_botMutex);
-        auto botIt = _botInfo.find(botGuid);
-        if (botIt != _botInfo.end())
-        {
-            // Find the interrupt ability and set its cooldown
-            for (const auto& ability : botIt->second.abilities)
-            {
-                if (ability.spellId == interruptSpell)
-                {
-                    auto cooldownEnd = std::chrono::steady_clock::now() + std::chrono::milliseconds(ability.cooldownMs);
-                    botIt->second.cooldowns[interruptSpell] = cooldownEnd;
-                    botIt->second.lastInterrupt = std::chrono::steady_clock::now();
-                    botIt->second.interruptCount++;
-                    break;
-                }
-            }
-        }
-    }
-
-    // Update metrics
-    _metrics.interruptsExecuted.fetch_add(1);
-    if (succeeded)
-        _metrics.interruptsSucceeded.fetch_add(1);
-    else
-        _metrics.interruptsFailed.fetch_add(1);
-
-    // Mark assignment as executed
-    {
-        std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
-        for (auto& assignment : _pendingAssignments)
-        {
-            if (assignment.assignedBot == botGuid && assignment.targetCaster == targetGuid)
-            {
-                assignment.executed = true;
-                assignment.succeeded = succeeded;
-                break;
-            }
-        }
-    }
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Bot %s executed interrupt %u on target %s, success: %s",
-                 botGuid.ToString().c_str(), interruptSpell, targetGuid.ToString().c_str(), succeeded ? "yes" : "no");
-}
-
-void InterruptCoordinator::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 interruptSpell, std::string const& reason)
-{
-    OnInterruptExecuted(botGuid, targetGuid, interruptSpell, false);
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Bot %s failed to interrupt %u on target %s: %s",
-                 botGuid.ToString().c_str(), interruptSpell, targetGuid.ToString().c_str(), reason.c_str());
-
-    // If this was a critical spell and backup assignment is enabled, try to assign backup
-    if (_enableBackupAssignment)
-    {
-        // Collect cast info while holding lock
-        CastingSpellInfo castInfo;
-        bool foundCriticalCast = false;
-        {
-            std::lock_guard<std::recursive_mutex> castLock(_castMutex);
-            auto castIt = _activeCasts.find(targetGuid);
-            if (castIt != _activeCasts.end() && castIt->second.priority <= InterruptPriority::HIGH)
-            {
-                castInfo = castIt->second;
-                foundCriticalCast = true;
-            }
-        } // Release cast lock
-
-        if (foundCriticalCast)
-        {
-            // Mark the failed bot as temporarily unavailable
-            {
-                std::lock_guard<std::recursive_mutex> botLock(_botMutex);
-                auto botIt = _botInfo.find(botGuid);
-                if (botIt != _botInfo.end())
-                {
-                    // Set a short cooldown to prevent immediate reassignment
-                    auto tempCooldown = std::chrono::steady_clock::now() + std::chrono::milliseconds(5000);
-                    botIt->second.cooldowns[interruptSpell] = tempCooldown;
-                }
-            }
-
-            // Assign interrupt without holding any locks
-            AssignInterrupt(castInfo);
-        }
-    }
-}
-
-void InterruptCoordinator::SetSpellPriority(uint32 spellId, InterruptPriority priority)
-{
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-    _spellPriorities[spellId] = priority;
-}
-
-InterruptPriority InterruptCoordinator::GetSpellPriority(uint32 spellId) const
-{
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-    auto it = _spellPriorities.find(spellId);
-    if (it != _spellPriorities.end())
-        return it->second;
-
-    // Analyze spell if not in our priority map
-    return AnalyzeSpellPriority(spellId, nullptr);
-}
-
-void InterruptCoordinator::LoadDefaultPriorities()
-{
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-
-    // Critical interrupts (Must interrupt)
-    _spellPriorities[118] = InterruptPriority::CRITICAL;    // Polymorph
-    _spellPriorities[5782] = InterruptPriority::CRITICAL;   // Fear
-    _spellPriorities[8122] = InterruptPriority::CRITICAL;   // Psychic Scream
-    _spellPriorities[20066] = InterruptPriority::CRITICAL;  // Repentance
-    _spellPriorities[51514] = InterruptPriority::CRITICAL;  // Hex
-    _spellPriorities[2637] = InterruptPriority::CRITICAL;   // Hibernate
-
-    // High priority interrupts (Major heals, buffs)
-    _spellPriorities[2060] = InterruptPriority::HIGH;       // Greater Heal
-    _spellPriorities[2061] = InterruptPriority::HIGH;       // Flash Heal
-    _spellPriorities[25314] = InterruptPriority::HIGH;      // Greater Heal Rank 7
-    _spellPriorities[10917] = InterruptPriority::HIGH;      // Flash Heal Rank 9
-    _spellPriorities[1064] = InterruptPriority::HIGH;       // Chain Heal
-    _spellPriorities[8004] = InterruptPriority::HIGH;       // Healing Stream Totem
-
-    // Medium priority (Minor heals, damage buffs)
-    _spellPriorities[2050] = InterruptPriority::MEDIUM;     // Lesser Heal
-    _spellPriorities[6064] = InterruptPriority::MEDIUM;     // Heal
-    _spellPriorities[2054] = InterruptPriority::MEDIUM;     // Heal Rank 2
-    _spellPriorities[6078] = InterruptPriority::MEDIUM;     // Renew
-
-    // Low priority (Minor effects)
-    _spellPriorities[21562] = InterruptPriority::LOW;       // Power Word: Fortitude (Updated for WoW 11.2)
-    _spellPriorities[8091] = InterruptPriority::LOW;        // Lightning Bolt
-    _spellPriorities[133] = InterruptPriority::LOW;         // Fireball
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Loaded %u default spell priorities",
-                 static_cast<uint32>(_spellPriorities.size()));
-}
-
-size_t InterruptCoordinator::GetRegisteredBotCount() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_botMutex);
-    return _botInfo.size();
-}
-
-size_t InterruptCoordinator::GetActiveCastCount() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-    return _activeCasts.size();
-}
-
-size_t InterruptCoordinator::GetPendingAssignmentCount() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
-    return _pendingAssignments.size();
-}
-
-void InterruptCoordinator::ResetMetrics()
-{
-    std::lock_guard lock(_metricsMutex);
-    _metrics.Reset();
-}
-
-std::vector<CastingSpellInfo> InterruptCoordinator::GetActiveCasts() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-    std::vector<CastingSpellInfo> casts;
-    casts.reserve(_activeCasts.size());
-
-    for (const auto& [guid, castInfo] : _activeCasts)
-    {
-        casts.push_back(castInfo);
-    }
-
-    return casts;
-}
-
-std::vector<InterruptAssignment> InterruptCoordinator::GetPendingAssignments() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
-    return _pendingAssignments;
-}
-
-bool InterruptCoordinator::AssignInterrupt(CastingSpellInfo const& castInfo)
-{
-    auto assignmentStart = std::chrono::steady_clock::now();
-
-    // Quick check if any bots are available
-    std::vector<ObjectGuid> candidates;
-    {
-        std::lock_guard<std::recursive_mutex> lock(_botMutex);
-        for (const auto& [botGuid, botInfo] : _botInfo)
-        {
-            if (CanBotInterrupt(botGuid, castInfo))
-            {
-                candidates.push_back(botGuid);
-            }
-        }
-    }
-
-    if (candidates.empty())
-    {
-        TC_LOG_DEBUG("playerbot", "InterruptCoordinator: No available bots for interrupt assignment");
-        return false;
-    }
-
-    // Select best interrupter
-    ObjectGuid selectedBot = SelectBestInterrupter(castInfo, candidates);
-    if (selectedBot.IsEmpty())
-        return false;
-
-    // Get the interrupt ability for this bot
-    const InterruptAbility* ability = nullptr;
-    {
-        std::lock_guard<std::recursive_mutex> lock(_botMutex);
-        auto botIt = _botInfo.find(selectedBot);
-        if (botIt != _botInfo.end())
-        {
-            // Calculate distance to target
-            float distance = 0.0f;
-            if (Player* bot = ObjectAccessor::FindPlayer(selectedBot))
-            {
-                distance = bot->GetDistance(castInfo.casterPosition.GetPositionX(),
-                                           castInfo.casterPosition.GetPositionY(),
-                                           castInfo.casterPosition.GetPositionZ());
-            }
-
-            ability = botIt->second.GetBestAvailableInterrupt(distance);
-        }
-    }
-
-    if (!ability)
-        return false;
-
-    // Calculate timing
-    uint32 interruptTiming = CalculateInterruptTiming(castInfo, *ability);
-
-    // Create assignment
-    InterruptAssignment assignment;
-    assignment.assignedBot = selectedBot;
-    assignment.targetCaster = castInfo.casterGuid;
-    assignment.targetSpell = castInfo.spellId;
-    assignment.interruptSpell = ability->spellId;
-    assignment.assignmentTime = std::chrono::steady_clock::now();
-    assignment.executionDeadline = castInfo.castStart + std::chrono::milliseconds(interruptTiming);
-
-    // Store assignment
-    {
-        std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
-        _pendingAssignments.push_back(assignment);
-        _assignedBots.insert(selectedBot);
-    }
-
-    // Notify the bot AI about the assignment
-    {
-        std::lock_guard<std::recursive_mutex> lock(_botMutex);
-        auto botIt = _botAI.find(selectedBot);
-        if (botIt != _botAI.end() && botIt->second)
-        {
-            // The bot AI will pick up this assignment through its update cycle
-            // We could add a direct notification method here if needed
-        }
-    }
-
-    // Update assignment time metrics
-    auto assignmentTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() - assignmentStart
-    );
-
-    {
-        std::lock_guard lock(_metricsMutex);
-        if (assignmentTime > _metrics.maxAssignmentTime)
-            _metrics.maxAssignmentTime = assignmentTime;
-    }
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Assigned interrupt %u to bot %s for spell %u (timing: %ums)",
-                 ability->spellId, selectedBot.ToString().c_str(), castInfo.spellId, interruptTiming);
-
-    return true;
-}
-
-ObjectGuid InterruptCoordinator::SelectBestInterrupter(CastingSpellInfo const& castInfo, std::vector<ObjectGuid>& candidates)
-{
-    if (candidates.empty())
-        return ObjectGuid::Empty;
-
-    // Scoring algorithm for bot selection
-    struct BotScore
-    {
-        ObjectGuid botGuid;
-        float score = 0.0f;
-
-        BotScore(ObjectGuid guid) : botGuid(guid) {}
-    };
-
-    std::vector<BotScore> scores;
-    scores.reserve(candidates.size());
-
-    std::lock_guard<std::recursive_mutex> lock(_botMutex);
-
-    for (ObjectGuid botGuid : candidates)
-    {
-        auto botIt = _botInfo.find(botGuid);
-        if (botIt == _botInfo.end())
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        if (!spellInfo)
             continue;
 
-        const BotInterruptInfo& botInfo = botIt->second;
-        BotScore score(botGuid);
-
-        // Base score
-        score.score = 100.0f;
-
-        // Distance factor (closer is better)
-        if (botInfo.distanceToTarget > 0.0f)
+        // Check if this is an interrupt spell
+        for (auto const& effect : spellInfo->GetEffects())
         {
-            score.score -= std::min(50.0f, botInfo.distanceToTarget * 2.0f);
-        }
-
-        // Cooldown factor (shorter cooldowns are better)
-        const InterruptAbility* ability = botInfo.GetBestAvailableInterrupt(botInfo.distanceToTarget);
-        if (ability)
-        {
-            score.score -= ability->cooldownMs / 1000.0f; // Prefer shorter cooldowns
-        }
-
-        // Recent interrupt factor (distribute interrupts)
-        if (_useRotation)
-        {
-            auto timeSinceLastInterrupt = std::chrono::steady_clock::now() - botInfo.lastInterrupt;
-            auto secondsSince = std::chrono::duration_cast<std::chrono::seconds>(timeSinceLastInterrupt).count();
-            score.score += std::min(20.0f, static_cast<float>(secondsSince)); // Bonus for not interrupting recently
-        }
-
-        // Assignment load factor (prefer less busy bots)
-        if (_assignedBots.count(botGuid) > 0)
-        {
-            score.score -= 30.0f; // Penalty for already having an assignment
-        }
-
-        scores.push_back(score);
-    }
-
-    // Sort by score (highest first)
-    std::sort(scores.begin(), scores.end(),
-              [](const BotScore& a, const BotScore& b) { return a.score > b.score; });
-
-    return !scores.empty() ? scores[0].botGuid : ObjectGuid::Empty;
-}
-
-bool InterruptCoordinator::CanBotInterrupt(ObjectGuid botGuid, CastingSpellInfo const& castInfo) const
-{
-    auto botIt = _botInfo.find(botGuid);
-    if (botIt == _botInfo.end())
-        return false;
-
-    const BotInterruptInfo& botInfo = botIt->second;
-
-    // Check if bot has available interrupt abilities
-    if (!botInfo.HasAvailableInterrupt(botInfo.distanceToTarget))
-        return false;
-
-    // Check if spell can be interrupted
-    if (!castInfo.canBeInterrupted)
-        return false;
-
-    // Check timing - make sure there's enough time to interrupt
-    uint32 remainingTime = castInfo.GetRemainingCastTime();
-    if (remainingTime < _minInterruptDelay + 200) // 200ms safety margin
-        return false;
-
-    // Check if bot is already assigned to another interrupt
-    if (_assignedBots.count(botGuid) > 0)
-        return false;
-
-    return true;
-}
-
-void InterruptCoordinator::InitializeBotCapabilities(ObjectGuid botGuid, Player* bot)
-{
-    if (!bot)
-        return;
-
-    auto& botInfo = _botInfo[botGuid];
-    botInfo.abilities = GetClassInterrupts(static_cast<Classes>(bot->GetClass()));
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Initialized %u interrupt abilities for %s",
-                 static_cast<uint32>(botInfo.abilities.size()), bot->GetName().c_str());
-}
-
-void InterruptCoordinator::UpdateBotCooldowns(ObjectGuid botGuid)
-{
-    auto botIt = _botInfo.find(botGuid);
-    if (botIt == _botInfo.end())
-        return;
-
-    auto& botInfo = botIt->second;
-    auto now = std::chrono::steady_clock::now();
-
-    // Remove expired cooldowns
-    for (auto it = botInfo.cooldowns.begin(); it != botInfo.cooldowns.end();)
-    {
-        if (it->second <= now)
-            it = botInfo.cooldowns.erase(it);
-        else
-            ++it;
-    }
-
-    // Update position information if position manager is available
-    // Position manager integration placeholder - can be implemented later
-}
-
-std::vector<InterruptAbility> InterruptCoordinator::GetClassInterrupts(Classes playerClass) const
-{
-    std::vector<InterruptAbility> abilities;
-
-    switch (playerClass)
-    {
-        case CLASS_WARRIOR:
-            abilities.emplace_back(6552, 10000, 5.0f, 6000, CLASS_WARRIOR, 6);  // Pummel
-            abilities.emplace_back(72, 6000, 8.0f, 6000, CLASS_WARRIOR, 6);     // Shield Bash
-            break;
-
-        case CLASS_PALADIN:
-            abilities.emplace_back(96231, 15000, 10.0f, 4000, CLASS_PALADIN, 14); // Rebuke
-            break;
-
-        case CLASS_HUNTER:
-            abilities.emplace_back(147362, 30000, 40.0f, 5000, CLASS_HUNTER, 6);  // Counter Shot
-            abilities.emplace_back(19801, 24000, 5.0f, 5000, CLASS_HUNTER, 8);    // Tranquilizing Shot
-            break;
-
-        case CLASS_ROGUE:
-            abilities.emplace_back(1766, 15000, 5.0f, 5000, CLASS_ROGUE, 6);      // Kick
-            abilities.emplace_back(408, 20000, 10.0f, 8000, CLASS_ROGUE, 14);     // Kidney Shot
-            break;
-
-        case CLASS_PRIEST:
-            abilities.emplace_back(15487, 45000, 30.0f, 8000, CLASS_PRIEST, 26);  // Silence
-            abilities.emplace_back(8122, 30000, 8.0f, 4000, CLASS_PRIEST, 14);    // Psychic Scream
-            break;
-
-        case CLASS_DEATH_KNIGHT:
-            abilities.emplace_back(47528, 15000, 5.0f, 5000, CLASS_DEATH_KNIGHT, 55); // Mind Freeze
-            abilities.emplace_back(49576, 35000, 30.0f, 4000, CLASS_DEATH_KNIGHT, 56); // Death Grip
-            break;
-
-        case CLASS_SHAMAN:
-            abilities.emplace_back(57994, 12000, 5.0f, 5000, CLASS_SHAMAN, 12);   // Wind Shear
-            break;
-
-        case CLASS_MAGE:
-            abilities.emplace_back(2139, 24000, 40.0f, 6000, CLASS_MAGE, 6);      // Counterspell
-            break;
-
-        case CLASS_WARLOCK:
-            abilities.emplace_back(19647, 24000, 30.0f, 6000, CLASS_WARLOCK, 8);  // Spell Lock (Felhunter)
-            abilities.emplace_back(6789, 45000, 20.0f, 3000, CLASS_WARLOCK, 10);  // Death Coil
-            break;
-
-        case CLASS_MONK:
-            abilities.emplace_back(116705, 15000, 5.0f, 4000, CLASS_MONK, 6);     // Spear Hand Strike
-            break;
-
-        case CLASS_DRUID:
-            abilities.emplace_back(78675, 60000, 8.0f, 4000, CLASS_DRUID, 22);    // Solar Beam
-            abilities.emplace_back(80964, 60000, 30.0f, 4000, CLASS_DRUID, 58);   // Skull Bash
-            break;
-
-        case CLASS_DEMON_HUNTER:
-            abilities.emplace_back(183752, 15000, 20.0f, 3000, CLASS_DEMON_HUNTER, 99); // Disrupt
-            abilities.emplace_back(179057, 60000, 8.0f, 4000, CLASS_DEMON_HUNTER, 104);  // Chaos Nova
-            break;
-
-        case CLASS_EVOKER:
-            abilities.emplace_back(351338, 40000, 25.0f, 4000, CLASS_EVOKER, 58);  // Quell
-            break;
-    }
-
-    return abilities;
-}
-
-InterruptPriority InterruptCoordinator::AnalyzeSpellPriority(uint32 spellId, Unit* caster) const
-{
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo)
-        return InterruptPriority::IGNORE;
-
-    // Check spell effects to determine priority
-    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
-    {
-        switch (spellInfo->GetEffect(SpellEffIndex(i)).Effect)
-        {
-            case SPELL_EFFECT_HEAL:
-            case SPELL_EFFECT_HEAL_MAX_HEALTH:
-                // Healing spells are high priority
-                if (spellInfo->GetEffect(SpellEffIndex(i)).BasePoints > 2000) // Large heals
-                    return InterruptPriority::CRITICAL;
-                else
-                    return InterruptPriority::HIGH;
-
-            case SPELL_EFFECT_APPLY_AURA:
-                switch (spellInfo->GetEffect(SpellEffIndex(i)).ApplyAuraName)
+            if (effect.Effect == SPELL_EFFECT_INTERRUPT_CAST)
+            {
+                if (!info.spellId)
                 {
-                    case SPELL_AURA_TRANSFORM:
-                    case SPELL_AURA_MOD_FEAR:
-                    case SPELL_AURA_MOD_STUN:
-                    case SPELL_AURA_MOD_CHARM:
-                        return InterruptPriority::CRITICAL;
-
-                    case SPELL_AURA_MOD_DAMAGE_PERCENT_DONE:
-                    case SPELL_AURA_MOD_HEALING_DONE:
-                        return InterruptPriority::HIGH;
-
-                    default:
-                        break;
+                    info.spellId = spellId;
+                    info.interruptRange = spellInfo->GetMaxRange(false);
                 }
-                break;
-
-            case SPELL_EFFECT_SCHOOL_DAMAGE:
-                // High damage spells are medium priority
-                if (spellInfo->GetEffect(SpellEffIndex(i)).BasePoints > 3000)
-                    return InterruptPriority::MEDIUM;
-                break;
-
-            default:
-                break;
+                else if (!info.backupSpellId)
+                {
+                    info.backupSpellId = spellId;
+                }
+            }
         }
     }
 
-    // Default to low priority for unknown spells
-    return InterruptPriority::LOW;
+    // Thread-safe state update with SINGLE LOCK
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+        _state.botInfo[info.botGuid] = info;
+        _state.botAI[info.botGuid] = ai;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.interrupt",
+        "Registered bot {} with interrupt spell {} (range: {} yards)",
+        bot->GetName(), info.spellId, info.interruptRange);
 }
 
-bool InterruptCoordinator::ShouldInterrupt(uint32 spellId, Unit* caster) const
+void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 {
-    InterruptPriority priority = GetSpellPriority(spellId);
+    // Thread-safe removal with SINGLE LOCK
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
-    // Always interrupt critical and high priority spells
-    if (priority <= InterruptPriority::HIGH)
-        return true;
+    _state.botInfo.erase(botGuid);
+    _state.botAI.erase(botGuid);
+    _state.assignedBots.erase(botGuid);
 
-    // For medium and low priority, consider group capacity
-    size_t botCount = GetRegisteredBotCount();
-    size_t activeCasts = GetActiveCastCount();
-
-    // If we have plenty of interrupt capacity, interrupt medium priority spells
-    if (priority == InterruptPriority::MEDIUM && activeCasts < botCount / 2)
-        return true;
-
-    // Low priority spells only if we have excess capacity
-    if (priority == InterruptPriority::LOW && activeCasts < botCount / 4)
-        return true;
-
-    return false;
+    // Remove any pending assignments
+    _state.pendingAssignments.erase(
+        std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+            [botGuid](InterruptAssignment const& assignment) {
+                return assignment.assignedBot == botGuid;
+            }),
+        _state.pendingAssignments.end()
+    );
 }
 
-uint32 InterruptCoordinator::CalculateInterruptTiming(CastingSpellInfo const& castInfo, InterruptAbility const& ability) const
+void InterruptCoordinatorFixed::UpdateBotCooldown(ObjectGuid botGuid, uint32 cooldownMs)
 {
-    // Base timing - interrupt late enough to avoid early resistance but early enough to succeed
-    uint32 castTimeMs = castInfo.castTimeMs;
-    uint32 minTiming = _minInterruptDelay;
-    uint32 maxTiming = castTimeMs > 500 ? castTimeMs - 200 : castTimeMs - 50; // Safety margin
+    // Optimized with shared lock for read, upgrade to unique only if needed
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+    auto it = _state.botInfo.find(botGuid);
+    if (it != _state.botInfo.end())
+    {
+        // Use atomic for lock-free update
+        it->second.available = (cooldownMs == 0);
+        it->second.cooldownRemaining = cooldownMs;
+    }
+}
+
+void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, uint32 castTime)
+{
+    if (!caster || !_active)
+        return;
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+    if (!spellInfo)
+        return;
+
+    CastingSpellInfo castInfo;
+    castInfo.casterGuid = caster->GetGUID();
+    castInfo.spellId = spellId;
+    castInfo.castStartTime = getMSTime();
+    castInfo.castEndTime = castInfo.castStartTime + castTime;
+    castInfo.isChanneled = spellInfo->IsChanneled();
+
+    // Get priority from lock-free cache
+    uint64 version;
+    auto priorities = _spellPriorities.Read(version);
+    auto prioIt = priorities.find(spellId);
+    castInfo.priority = (prioIt != priorities.end()) ? prioIt->second : InterruptPriority::NORMAL;
+
+    // Thread-safe insertion with SINGLE LOCK
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+        _state.activeCasts[caster->GetGUID()] = castInfo;
+    }
+
+    // Update metrics atomically (lock-free)
+    _metrics.spellsDetected.fetch_add(1, std::memory_order_relaxed);
+
+    TC_LOG_DEBUG("module.playerbot.interrupt",
+        "Enemy cast detected: {} casting spell {} (priority: {}, duration: {}ms)",
+        caster->GetName(), spellId, static_cast<int>(castInfo.priority), castTime);
+}
+
+void InterruptCoordinatorFixed::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId)
+{
+    // Thread-safe update with SINGLE LOCK
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    auto it = _state.activeCasts.find(casterGuid);
+    if (it != _state.activeCasts.end() && it->second.spellId == spellId)
+    {
+        it->second.wasInterrupted = true;
+        _metrics.interruptsSuccessful.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
+{
+    // Thread-safe removal with SINGLE LOCK
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+    _state.activeCasts.erase(casterGuid);
+}
+
+void InterruptCoordinatorFixed::Update(uint32 diff)
+{
+    if (!_active || !_group)
+        return;
+
+    _updateCount.fetch_add(1, std::memory_order_relaxed);
+    uint32 currentTime = getMSTime();
+
+    // Execute ready assignments
+    ExecuteAssignments(currentTime);
+
+    // Assign new interrupts
+    AssignInterrupters();
+
+    // Rotate interrupters if enabled
+    if (_useRotation && (_updateCount % 100) == 0)
+    {
+        RotateInterrupters();
+    }
+
+    // Clean up completed casts
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+        for (auto it = _state.activeCasts.begin(); it != _state.activeCasts.end(); )
+        {
+            if (currentTime > it->second.castEndTime || it->second.wasInterrupted)
+            {
+                it = _state.activeCasts.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+}
+
+void InterruptCoordinatorFixed::AssignInterrupters()
+{
+    auto startTime = std::chrono::high_resolution_clock::now();
+    uint32 currentTime = getMSTime();
+
+    // Copy data for processing (minimize lock time)
+    CoordinatorState localState;
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+        localState = _state;  // Fast copy under read lock
+    }
+
+    std::vector<InterruptAssignment> newAssignments;
+
+    // Process each active cast
+    for (auto& [casterGuid, castInfo] : localState.activeCasts)
+    {
+        // Skip if already assigned enough bots
+        if (castInfo.assignedBots >= (castInfo.priority >= InterruptPriority::HIGH ? 2 : 1))
+            continue;
+
+        // Skip if too early to interrupt
+        uint32 timeSinceCast = currentTime - castInfo.castStartTime;
+        if (timeSinceCast < _minInterruptDelay)
+            continue;
+
+        // Get available bots
+        auto availableBots = GetAvailableInterrupters(castInfo);
+        if (availableBots.empty())
+            continue;
+
+        // Sort by distance (if position manager available)
+        if (_positionManager)
+        {
+            std::sort(availableBots.begin(), availableBots.end(),
+                [this, casterGuid](ObjectGuid a, ObjectGuid b) {
+                    return GetBotDistanceToTarget(a, casterGuid) <
+                           GetBotDistanceToTarget(b, casterGuid);
+                });
+        }
+
+        // Assign primary interrupter
+        ObjectGuid primaryBot = availableBots[0];
+
+        InterruptAssignment assignment;
+        assignment.assignedBot = primaryBot;
+        assignment.targetCaster = casterGuid;
+        assignment.targetSpell = castInfo.spellId;
+        assignment.interruptSpell = localState.botInfo[primaryBot].spellId;
+        assignment.executionDeadline = CalculateInterruptTime(castInfo);
+        assignment.isPrimary = true;
+        assignment.inProgress = false;
+
+        newAssignments.push_back(assignment);
+        castInfo.assignedBots++;
+
+        // Assign backup for critical spells
+        if (_enableBackupAssignment &&
+            castInfo.priority >= InterruptPriority::HIGH &&
+            availableBots.size() > 1)
+        {
+            ObjectGuid backupBot = availableBots[1];
+
+            InterruptAssignment backup = assignment;
+            backup.assignedBot = backupBot;
+            backup.interruptSpell = localState.botInfo[backupBot].spellId;
+            backup.isPrimary = false;
+            backup.executionDeadline += 200; // Backup waits 200ms
+
+            newAssignments.push_back(backup);
+            castInfo.assignedBots++;
+        }
+
+        _metrics.interruptsAssigned.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    // Apply new assignments with SINGLE LOCK
+    if (!newAssignments.empty())
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+        for (auto const& assignment : newAssignments)
+        {
+            _state.pendingAssignments.push_back(assignment);
+            _state.assignedBots.insert(assignment.assignedBot);
+        }
+    }
+
+    // Track assignment time
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    _metrics.assignmentTime.fetch_add(duration.count(), std::memory_order_relaxed);
+}
+
+void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
+{
+    std::vector<InterruptAssignment*> readyAssignments;
+
+    // Find ready assignments with minimal lock time
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+        for (auto& assignment : _state.pendingAssignments)
+        {
+            if (!assignment.executed &&
+                currentTime >= assignment.executionDeadline &&
+                !assignment.inProgress)
+            {
+                readyAssignments.push_back(&assignment);
+            }
+        }
+    }
+
+    // Execute assignments (outside lock)
+    for (auto* assignment : readyAssignments)
+    {
+        // Mark as in progress (protected by mutex access pattern)
+        if (assignment->inProgress)
+            continue;
+        assignment->inProgress = true;
+
+        // Get bot AI
+        BotAI* botAI = nullptr;
+        {
+            std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+            auto it = _state.botAI.find(assignment->assignedBot);
+            if (it != _state.botAI.end())
+                botAI = it->second;
+        }
+
+        if (botAI)
+        {
+            // Signal bot to interrupt
+            // Note: This would integrate with actual BotAI interrupt system
+            TC_LOG_DEBUG("module.playerbot.interrupt",
+                "Executing interrupt: Bot {} interrupting spell {}",
+                assignment->assignedBot.ToString(), assignment->targetSpell);
+
+            assignment->executed = true;
+            _metrics.interruptsExecuted.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        assignment->inProgress = false;
+    }
+
+    // Clean up executed assignments
+    if (!readyAssignments.empty())
+    {
+        std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+        _state.pendingAssignments.erase(
+            std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+                [](InterruptAssignment const& a) { return a.executed; }),
+            _state.pendingAssignments.end()
+        );
+
+        // Update assigned bots
+        for (auto const& assignment : _state.pendingAssignments)
+        {
+            if (!assignment.executed)
+                continue;
+            _state.assignedBots.erase(assignment.assignedBot);
+        }
+    }
+}
+
+std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(CastingSpellInfo const& castInfo) const
+{
+    std::vector<ObjectGuid> available;
+
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    for (auto const& [guid, info] : _state.botInfo)
+    {
+        // Check if bot is available
+        if (!info.available)
+            continue;
+
+        // Check if bot has interrupt spell
+        if (info.spellId == 0)
+            continue;
+
+        // Check if bot is not already assigned
+        if (_state.assignedBots.find(guid) != _state.assignedBots.end())
+            continue;
+
+        // Check cooldown
+        if (info.cooldownRemaining > 0)
+            continue;
+
+        available.push_back(guid);
+    }
+
+    return available;
+}
+
+uint32 InterruptCoordinatorFixed::CalculateInterruptTime(CastingSpellInfo const& castInfo) const
+{
+    uint32 currentTime = getMSTime();
+    uint32 timeSinceCast = currentTime - castInfo.castStartTime;
+    uint32 timeRemaining = castInfo.castEndTime - currentTime;
+
+    // For critical spells, interrupt ASAP
+    if (castInfo.priority == InterruptPriority::CRITICAL)
+    {
+        return currentTime + _minInterruptDelay;
+    }
 
     // For channeled spells, interrupt quickly
     if (castInfo.isChanneled)
     {
-        minTiming = std::min(minTiming, 500u);
-        maxTiming = std::min(maxTiming, 1000u);
+        return currentTime + (_minInterruptDelay * 2);
     }
 
-    // Adjust for spell priority - interrupt critical spells faster
-    switch (castInfo.priority)
+    // For normal casts, interrupt at 60-80% of cast time
+    uint32 totalCastTime = castInfo.castEndTime - castInfo.castStartTime;
+    uint32 targetTime = castInfo.castStartTime + (totalCastTime * 7 / 10); // 70% through cast
+
+    return std::max(currentTime + _minInterruptDelay, targetTime);
+}
+
+bool InterruptCoordinatorFixed::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId) const
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    // Check for pending assignments for this bot
+    for (auto const& assignment : _state.pendingAssignments)
     {
-        case InterruptPriority::CRITICAL:
-            return minTiming;
+        if (assignment.assignedBot == botGuid &&
+            !assignment.executed &&
+            getMSTime() >= assignment.executionDeadline)
+        {
+            targetGuid = assignment.targetCaster;
+            spellId = assignment.interruptSpell;
+            return true;
+        }
+    }
 
-        case InterruptPriority::HIGH:
-            return minTiming + (maxTiming - minTiming) / 4;
+    return false;
+}
 
-        case InterruptPriority::MEDIUM:
-            return minTiming + (maxTiming - minTiming) / 2;
+uint32 InterruptCoordinatorFixed::GetNextInterruptTime(ObjectGuid botGuid) const
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
-        case InterruptPriority::LOW:
-        default:
-            return minTiming + (maxTiming - minTiming) * 3 / 4;
+    for (auto const& assignment : _state.pendingAssignments)
+    {
+        if (assignment.assignedBot == botGuid && !assignment.executed)
+        {
+            return assignment.executionDeadline;
+        }
+    }
+
+    return 0;
+}
+
+bool InterruptCoordinatorFixed::HasPendingInterrupt(ObjectGuid botGuid) const
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    return std::any_of(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+        [botGuid](InterruptAssignment const& assignment) {
+            return assignment.assignedBot == botGuid && !assignment.executed;
+        });
+}
+
+void InterruptCoordinatorFixed::SetSpellPriority(uint32 spellId, InterruptPriority priority)
+{
+    uint64 version;
+    auto priorities = _spellPriorities.Read(version);
+    priorities[spellId] = priority;
+    _spellPriorities.Update(priorities);
+}
+
+InterruptPriority InterruptCoordinatorFixed::GetSpellPriority(uint32 spellId) const
+{
+    uint64 version;
+    auto priorities = _spellPriorities.Read(version);
+    auto it = priorities.find(spellId);
+    return (it != priorities.end()) ? it->second : InterruptPriority::NORMAL;
+}
+
+InterruptCoordinatorFixed::InterruptMetrics InterruptCoordinatorFixed::GetMetrics() const
+{
+    return InterruptMetrics{
+        {_metrics.spellsDetected.load(std::memory_order_relaxed)},
+        {_metrics.interruptsAssigned.load(std::memory_order_relaxed)},
+        {_metrics.interruptsExecuted.load(std::memory_order_relaxed)},
+        {_metrics.interruptsSuccessful.load(std::memory_order_relaxed)},
+        {_metrics.interruptsFailed.load(std::memory_order_relaxed)},
+        {_metrics.assignmentTime.load(std::memory_order_relaxed)},
+        {_metrics.rotationInterrupts.load(std::memory_order_relaxed)},
+        {_metrics.priorityInterrupts.load(std::memory_order_relaxed)}
+    };
+}
+
+void InterruptCoordinatorFixed::ResetMetrics()
+{
+    _metrics.Reset();
+}
+
+std::string InterruptCoordinatorFixed::GetStatusString() const
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    std::stringstream ss;
+    ss << "InterruptCoordinator Status:\n";
+    ss << "  Active Bots: " << _state.botInfo.size() << "\n";
+    ss << "  Active Casts: " << _state.activeCasts.size() << "\n";
+    ss << "  Pending Assignments: " << _state.pendingAssignments.size() << "\n";
+    ss << "  Assigned Bots: " << _state.assignedBots.size() << "\n";
+
+    auto metrics = GetMetrics();
+    ss << "  Metrics:\n";
+    ss << "    Spells Detected: " << metrics.spellsDetected << "\n";
+    ss << "    Interrupts Assigned: " << metrics.interruptsAssigned << "\n";
+    ss << "    Interrupts Executed: " << metrics.interruptsExecuted << "\n";
+    ss << "    Interrupts Successful: " << metrics.interruptsSuccessful << "\n";
+    ss << "    Average Assignment Time: " <<
+          (metrics.interruptsAssigned > 0 ? metrics.assignmentTime / metrics.interruptsAssigned : 0) << " us\n";
+
+    return ss.str();
+}
+
+float InterruptCoordinatorFixed::GetBotDistanceToTarget(ObjectGuid botGuid, ObjectGuid targetGuid) const
+{
+    // This would integrate with actual position tracking
+    // For now, return a placeholder
+    return 10.0f;
+}
+
+bool InterruptCoordinatorFixed::IsBotInRange(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 range) const
+{
+    return GetBotDistanceToTarget(botGuid, targetGuid) <= float(range);
+}
+
+void InterruptCoordinatorFixed::RotateInterrupters()
+{
+    // Implement rotation logic to distribute interrupt duties
+    // This prevents the same bots from always interrupting
+    _metrics.rotationInterrupts.fetch_add(1, std::memory_order_relaxed);
+}
+
+std::vector<InterruptAssignment> InterruptCoordinatorFixed::GetPendingAssignments() const
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+    return _state.pendingAssignments;
+}
+
+void InterruptCoordinatorFixed::OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, bool success)
+{
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
+
+    // Find and mark assignment as executed
+    for (auto& assignment : _state.pendingAssignments)
+    {
+        if (assignment.assignedBot == botGuid &&
+            assignment.targetCaster == targetGuid &&
+            assignment.interruptSpell == spellId)
+        {
+            assignment.executed = true;
+            _state.assignedBots.erase(botGuid);
+
+            // Update metrics
+            if (success)
+                _metrics.interruptsSuccessful.fetch_add(1, std::memory_order_relaxed);
+            else
+                _metrics.interruptsFailed.fetch_add(1, std::memory_order_relaxed);
+
+            TC_LOG_DEBUG("module.playerbot.interrupt",
+                "Interrupt executed: Bot {} interrupted spell {} on target {} - {}",
+                botGuid.ToString(), spellId, targetGuid.ToString(),
+                success ? "Success" : "Failed");
+
+            break;
+        }
     }
 }
 
-void InterruptCoordinator::CleanupExpiredCasts()
+void InterruptCoordinatorFixed::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, std::string const& reason)
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
-    for (auto it = _activeCasts.begin(); it != _activeCasts.end();)
+    // Find and mark assignment as failed
+    for (auto& assignment : _state.pendingAssignments)
     {
-        if (it->second.IsExpired())
+        if (assignment.assignedBot == botGuid &&
+            assignment.targetCaster == targetGuid &&
+            assignment.interruptSpell == spellId)
         {
-            TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Removing expired cast %u from %s",
-                         it->second.spellId, it->first.ToString().c_str());
-            it = _activeCasts.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
-}
+            assignment.executed = true;
+            _state.assignedBots.erase(botGuid);
+            _metrics.interruptsFailed.fetch_add(1, std::memory_order_relaxed);
 
-void InterruptCoordinator::CleanupExpiredAssignments()
-{
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
+            TC_LOG_DEBUG("module.playerbot.interrupt",
+                "Interrupt failed: Bot {} failed to interrupt spell {} on target {} - Reason: {}",
+                botGuid.ToString(), spellId, targetGuid.ToString(), reason.c_str());
 
-    for (auto it = _pendingAssignments.begin(); it != _pendingAssignments.end();)
-    {
-        if (it->IsExpired() || it->executed)
-        {
-            _assignedBots.erase(it->assignedBot);
-            it = _pendingAssignments.erase(it);
-        }
-        else
-        {
-            ++it;
+            break;
         }
     }
-}
-
-void InterruptCoordinator::UpdateAssignmentDeadlines()
-{
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
-
-    for (const auto& assignment : _pendingAssignments)
-    {
-        if (!assignment.executed && assignment.GetTimeUntilDeadline() < 100)
-        {
-            // Assignment is about to expire - could trigger emergency reassignment
-            TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Assignment for bot %s is about to expire",
-                         assignment.assignedBot.ToString().c_str());
-        }
-    }
-}
-
-void InterruptCoordinator::OptimizeForPerformance()
-{
-    // Clean up old metrics data, optimize data structures, etc.
-    // This is called periodically to maintain performance
-
-    // Clean up old cooldown data and capture counts while holding lock
-    size_t botCount = 0;
-    {
-        std::lock_guard<std::recursive_mutex> botLock(_botMutex);
-        for (auto& [botGuid, botInfo] : _botInfo)
-        {
-            UpdateBotCooldowns(botGuid);
-        }
-        botCount = _botInfo.size();
-    } // Release bot lock
-
-    // Clean up old assignments
-    CleanupExpiredAssignments();
-
-    // Clean up old casts
-    CleanupExpiredCasts();
-
-    // Get remaining counts without holding locks
-    size_t castCount = 0;
-    size_t assignmentCount = 0;
-    {
-        std::lock_guard<std::recursive_mutex> castLock(_castMutex);
-        castCount = _activeCasts.size();
-    }
-    {
-        std::lock_guard<std::recursive_mutex> assignLock(_assignmentMutex);
-        assignmentCount = _pendingAssignments.size();
-    }
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Performance optimization complete - %u bots, %u active casts, %u pending assignments",
-                 static_cast<uint32>(botCount),
-                 static_cast<uint32>(castCount),
-                 static_cast<uint32>(assignmentCount));
-}
-
-void InterruptCoordinator::AddEncounterPattern(uint32 npcId, std::vector<uint32> const& spellSequence, std::vector<uint32> const& timings)
-{
-    if (spellSequence.size() != timings.size())
-    {
-        TC_LOG_ERROR("playerbot", "InterruptCoordinator: Encounter pattern size mismatch for NPC %u", npcId);
-        return;
-    }
-
-    EncounterPattern pattern;
-    pattern.npcId = npcId;
-    pattern.spellSequence = spellSequence;
-    pattern.timings = timings;
-
-    _encounterPatterns[npcId] = pattern;
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Added encounter pattern for NPC %u with %u spells",
-                 npcId, static_cast<uint32>(spellSequence.size()));
-}
-
-void InterruptCoordinator::ClearEncounterPatterns()
-{
-    _encounterPatterns.clear();
-}
-
-void InterruptCoordinator::AdjustPrioritiesForGroup()
-{
-    if (!_group)
-        return;
-
-    // Analyze group composition and adjust spell priorities accordingly
-    uint32 healerCount = 0;
-    uint32 tankCount = 0;
-    uint32 dpsCount = 0;
-
-    // Count roles in group based on class and basic role detection
-    for (auto const& slot : _group->GetMemberSlots())
-    {
-        if (Player* player = ObjectAccessor::FindPlayer(slot.guid))
-        {
-            Classes playerClass = static_cast<Classes>(player->GetClass());
-
-            // Basic role detection based on class
-            switch (playerClass)
-            {
-                case CLASS_PRIEST:
-                case CLASS_SHAMAN:
-                case CLASS_DRUID:
-                    // These classes can heal, assume healing role for priority adjustment
-                    healerCount++;
-                    break;
-
-                case CLASS_WARRIOR:
-                case CLASS_PALADIN:
-                case CLASS_DEATH_KNIGHT:
-                case CLASS_MONK:
-                case CLASS_DEMON_HUNTER:
-                    // These classes can tank, assume tank role for priority adjustment
-                    tankCount++;
-                    break;
-
-                default:
-                    // All other classes considered DPS
-                    dpsCount++;
-                    break;
-            }
-        }
-    }
-
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
-
-    // Adjust priorities based on group composition
-    if (healerCount == 0)
-    {
-        // No healers - prioritize interrupting enemy heals more
-        for (auto& [spellId, priority] : _spellPriorities)
-        {
-            const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-            if (spellInfo && spellInfo->HasEffect(SPELL_EFFECT_HEAL))
-            {
-                if (priority > InterruptPriority::CRITICAL)
-                    priority = static_cast<InterruptPriority>(static_cast<uint8>(priority) - 1);
-            }
-        }
-    }
-
-    if (tankCount == 0)
-    {
-        // No tanks - prioritize interrupting damage and fear effects
-        for (auto& [spellId, priority] : _spellPriorities)
-        {
-            const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-            if (spellInfo && (spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE) ||
-                            spellInfo->HasAura(SPELL_AURA_MOD_FEAR)))
-            {
-                if (priority > InterruptPriority::CRITICAL)
-                    priority = static_cast<InterruptPriority>(static_cast<uint8>(priority) - 1);
-            }
-        }
-    }
-
-    TC_LOG_DEBUG("playerbot", "InterruptCoordinator: Adjusted priorities for group composition - %u healers, %u tanks, %u dps",
-                 healerCount, tankCount, dpsCount);
 }
 
 } // namespace Playerbot

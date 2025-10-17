@@ -150,12 +150,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
 
     # AI Utility Systems
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ObjectCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ObjectCache.h
 
@@ -792,15 +786,6 @@ source_group("AI\\Combat" FILES
 source_group("AI\\Values" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Values/Value.h
-)
-
-source_group("AI\\Utilities" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ResourceManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/CooldownManager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/InterruptManager.h
 )
 
 source_group("Group" FILES
