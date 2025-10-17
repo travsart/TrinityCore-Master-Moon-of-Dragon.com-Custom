@@ -274,16 +274,17 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/ProtectionPaladinRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/RetributionSpecializationRefactored.h
 
-    # Priest AI
+    # Priest AI - NOW USING TEMPLATE-BASED REFACTORED ARCHITECTURE (Phase 3A Week 1 Complete)
     # PriestAI.cpp has BaselineRotationManager integration - ENABLED
     # PriestAI_Specialization.cpp disabled to prevent duplicate symbols
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/DisciplineSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/HolySpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowSpecialization.cpp
+    # OLD .cpp SPECIALIZATIONS REMOVED (Phase 3A refactoring - using *Refactored.h headers):
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/DisciplineSpecialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/HolySpecialization.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowSpecialization.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI_Specialization.cpp
 
     # Rogue AI - NOW USING TEMPLATE-BASED REFACTORED ARCHITECTURE

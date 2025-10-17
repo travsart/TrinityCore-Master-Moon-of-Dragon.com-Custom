@@ -33,6 +33,10 @@ if(BUILD_PLAYERBOT_TESTS)
         Phase2IntegrationTest.cpp
         # Phase 1: State Machine Tests (115 comprehensive tests)
         Phase1StateMachineTests.cpp
+        # Phase 3: God Class Refactoring - Priest Specialization Tests
+        Phase3/Unit/Specializations/DisciplinePriestSpecializationTest.cpp
+        Phase3/Unit/Specializations/HolyPriestSpecializationTest.cpp
+        Phase3/Unit/Specializations/ShadowPriestSpecializationTest.cpp
         # Future test files will be added here
     )
 
