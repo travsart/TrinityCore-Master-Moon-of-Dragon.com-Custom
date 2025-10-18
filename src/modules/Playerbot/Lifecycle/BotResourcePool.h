@@ -106,7 +106,7 @@ private:
     bool IsSessionReusable(std::shared_ptr<BotSession> const& session);
 
     // Pool data
-    mutable std::mutex _poolMutex;
+    mutable std::recursive_mutex _poolMutex;
     std::queue<std::shared_ptr<BotSession>> _sessionPool;
     std::unordered_set<std::shared_ptr<BotSession>> _activeSessions;
 
@@ -124,7 +124,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotResourcePool> _instance;
-    inline static std::mutex _instanceMutex;
+    inline static std::recursive_mutex _instanceMutex;
 
     // Non-copyable
     BotResourcePool(BotResourcePool const&) = delete;

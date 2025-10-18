@@ -98,7 +98,7 @@ private:
     std::unordered_map<InstanceEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
-    mutable std::mutex _subscriberMutex;
+    mutable std::recursive_mutex _subscriberMutex;
 };
 
 } // namespace Playerbot

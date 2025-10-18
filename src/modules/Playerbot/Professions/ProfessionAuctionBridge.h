@@ -392,7 +392,7 @@ private:
     // Reference to existing auction house (set in Initialize)
     AuctionHouse* _auctionHouse;
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Update intervals
     static constexpr uint32 AUCTION_CHECK_INTERVAL = 600000;        // 10 minutes

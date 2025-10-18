@@ -292,7 +292,7 @@ private:
         uint32 minTimeUs = UINT32_MAX;
     };
 
-    std::mutex _mutex;
+    std::recursive_mutex _mutex;
     std::unordered_map<uint32, BotStatistics> _botStats;
     std::unordered_map<std::string, uint32> _templateInstantiations;
 };

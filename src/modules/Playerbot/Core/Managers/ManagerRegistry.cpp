@@ -54,7 +54,7 @@ bool ManagerRegistry::RegisterManager(std::unique_ptr<IManagerBase> manager)
 
     std::string managerId = manager->GetManagerId();
 
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     // Check if manager ID already exists
     if (_managers.find(managerId) != _managers.end())
@@ -85,7 +85,7 @@ bool ManagerRegistry::RegisterManager(std::unique_ptr<IManagerBase> manager)
 
 bool ManagerRegistry::UnregisterManager(std::string const& managerId)
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     auto it = _managers.find(managerId);
     if (it == _managers.end())
@@ -130,7 +130,7 @@ bool ManagerRegistry::UnregisterManager(std::string const& managerId)
 
 IManagerBase* ManagerRegistry::GetManager(std::string const& managerId) const
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     auto it = _managers.find(managerId);
     if (it == _managers.end())
@@ -141,13 +141,13 @@ IManagerBase* ManagerRegistry::GetManager(std::string const& managerId) const
 
 bool ManagerRegistry::HasManager(std::string const& managerId) const
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
     return _managers.find(managerId) != _managers.end();
 }
 
 uint32 ManagerRegistry::InitializeAll()
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     uint32 successCount = 0;
     uint64 startTime = getMSTime();
@@ -215,7 +215,7 @@ uint32 ManagerRegistry::InitializeAll()
 
 void ManagerRegistry::ShutdownAll()
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     uint64 startTime = getMSTime();
 
@@ -269,7 +269,7 @@ void ManagerRegistry::ShutdownAll()
 
 uint32 ManagerRegistry::UpdateAll(uint32 diff)
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     if (!_initialized)
         return 0;
@@ -327,13 +327,13 @@ uint32 ManagerRegistry::UpdateAll(uint32 diff)
 
 size_t ManagerRegistry::GetManagerCount() const
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
     return _managers.size();
 }
 
 std::vector<std::string> ManagerRegistry::GetManagerIds() const
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     std::vector<std::string> ids;
     ids.reserve(_managers.size());
@@ -348,7 +348,7 @@ std::vector<std::string> ManagerRegistry::GetManagerIds() const
 
 bool ManagerRegistry::SetManagerActive(std::string const& managerId, bool active)
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     auto it = _managers.find(managerId);
     if (it == _managers.end())
@@ -367,7 +367,7 @@ bool ManagerRegistry::SetManagerActive(std::string const& managerId, bool active
 
 std::vector<ManagerRegistry::ManagerMetrics> ManagerRegistry::GetMetrics() const
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     std::vector<ManagerMetrics> metrics;
     metrics.reserve(_managers.size());
@@ -403,7 +403,7 @@ std::vector<ManagerRegistry::ManagerMetrics> ManagerRegistry::GetMetrics() const
 
 void ManagerRegistry::ResetMetrics()
 {
-    std::lock_guard<std::mutex> lock(_managerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
 
     for (auto& [managerId, entry] : _managers)
     {

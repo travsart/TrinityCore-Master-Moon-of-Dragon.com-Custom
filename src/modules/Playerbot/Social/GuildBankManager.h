@@ -229,7 +229,7 @@ private:
     std::unordered_map<uint32, BankAnalysis> _guildBankAnalysis; // guildId -> analysis
     std::unordered_map<uint32, MemberBankProfile> _memberProfiles; // playerGuid -> profile
     std::unordered_map<uint32, BankMetrics> _guildMetrics; // guildId -> metrics
-    mutable std::mutex _bankMutex;
+    mutable std::recursive_mutex _bankMutex;
 
     // Item categorization system
     std::unordered_map<uint32, GuildBankItemType> _itemCategories; // itemId -> category

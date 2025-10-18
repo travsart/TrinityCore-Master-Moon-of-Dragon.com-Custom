@@ -234,7 +234,7 @@ bool NPCEventBus::PublishEvent(NPCEvent const& event)
 
     // Update statistics
     {
-        std::lock_guard<std::mutex> lock(_subscriberMutex);
+        std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
         ++_eventCounts[event.type];
         ++_totalEventsPublished;
     }
@@ -251,7 +251,7 @@ void NPCEventBus::Subscribe(BotAI* subscriber, std::vector<NPCEventType> const& 
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto type : types)
     {
@@ -270,7 +270,7 @@ void NPCEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
@@ -285,7 +285,7 @@ void NPCEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
@@ -305,7 +305,7 @@ uint32 NPCEventBus::SubscribeCallback(EventHandler handler, std::vector<NPCEvent
     if (!handler)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     CallbackSubscription sub;
     sub.id = _nextCallbackId++;
@@ -322,7 +322,7 @@ uint32 NPCEventBus::SubscribeCallback(EventHandler handler, std::vector<NPCEvent
 
 void NPCEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
         std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
@@ -334,14 +334,14 @@ void NPCEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 NPCEventBus::GetEventCount(NPCEventType type) const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     auto it = _eventCounts.find(type);
     return it != _eventCounts.end() ? it->second : 0;
 }
 
 void NPCEventBus::DeliverEvent(NPCEvent const& event)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);

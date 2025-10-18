@@ -118,7 +118,7 @@ private:
         uint32 usageCount = 0;
     };
 
-    mutable std::mutex _templateMutex;
+    mutable std::recursive_mutex _templateMutex;
     std::unordered_map<std::string, SessionTemplate> _sessionTemplates;
 
     void LoadDefaultTemplates();
@@ -133,7 +133,7 @@ private:
         bool isValid = false;
     };
 
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
     mutable ConfigurationCache _configCache;
 
     void UpdateConfigurationCache();

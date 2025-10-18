@@ -30,7 +30,7 @@ void BotPriorityManager::Shutdown()
 {
     TC_LOG_INFO("module.playerbot", "BotPriorityManager: Shutting down...");
 
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _botMetrics.clear();
 
     _initialized.store(false);
@@ -75,7 +75,7 @@ void BotPriorityManager::LoadDefaultConfiguration()
 
 void BotPriorityManager::SetPriority(ObjectGuid botGuid, BotPriority priority)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     auto& metrics = _botMetrics[botGuid];
     if (metrics.currentPriority != priority)
@@ -92,7 +92,7 @@ void BotPriorityManager::SetPriority(ObjectGuid botGuid, BotPriority priority)
 
 BotPriority BotPriorityManager::GetPriority(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -138,7 +138,7 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
         // Only apply hysteresis to downgrades (prevent priority thrashing when leaving combat/activity)
         if (isDowngrade && !isUpgradeToEmergency && !isUpgradeToHigh)
         {
-            std::lock_guard<std::mutex> lock(_metricsMutex);
+            std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
             auto& metrics = _botMetrics[guid];
             uint32 timeInCurrent = currentTime - metrics.priorityChangeTime;
 
@@ -162,7 +162,7 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
     }
 
     // Update state tracking
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto& metrics = _botMetrics[guid];
     metrics.wasInCombat = bot->IsInCombat();
     metrics.wasInGroup = bot->GetGroup() != nullptr;
@@ -325,7 +325,7 @@ uint32 BotPriorityManager::GetUpdateInterval(BotPriority priority) const
 
 void BotPriorityManager::RecordUpdateStart(ObjectGuid botGuid, uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto& metrics = _botMetrics[botGuid];
     metrics.lastUpdateTime = currentTime;
     metrics.ticksSinceLastUpdate = 0;
@@ -333,7 +333,7 @@ void BotPriorityManager::RecordUpdateStart(ObjectGuid botGuid, uint32 currentTim
 
 void BotPriorityManager::RecordUpdateEnd(ObjectGuid botGuid, uint32 durationMicros)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto& metrics = _botMetrics[botGuid];
 
     metrics.lastUpdateDuration = durationMicros;
@@ -352,7 +352,7 @@ void BotPriorityManager::RecordUpdateEnd(ObjectGuid botGuid, uint32 durationMicr
 
 void BotPriorityManager::RecordUpdateSkipped(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto& metrics = _botMetrics[botGuid];
     metrics.skippedUpdates++;
     metrics.ticksSinceLastUpdate++;
@@ -360,7 +360,7 @@ void BotPriorityManager::RecordUpdateSkipped(ObjectGuid botGuid)
 
 void BotPriorityManager::RecordUpdateError(ObjectGuid botGuid, uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto& metrics = _botMetrics[botGuid];
     metrics.errorCount++;
     metrics.lastErrorTime = currentTime;
@@ -368,7 +368,7 @@ void BotPriorityManager::RecordUpdateError(ObjectGuid botGuid, uint32 currentTim
 
 BotUpdateMetrics const* BotPriorityManager::GetMetrics(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
         return &it->second;
@@ -377,7 +377,7 @@ BotUpdateMetrics const* BotPriorityManager::GetMetrics(ObjectGuid botGuid) const
 
 uint32 BotPriorityManager::GetBotCountByPriority(BotPriority priority) const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     uint32 count = 0;
     for (auto const& [guid, metrics] : _botMetrics)
@@ -420,7 +420,7 @@ void BotPriorityManager::GetPriorityDistribution(uint32& emergency, uint32& high
 
 void BotPriorityManager::SuspendLowPriorityBots(uint32 targetCount)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     uint32 suspended = 0;
     for (auto& [guid, metrics] : _botMetrics)
@@ -441,7 +441,7 @@ void BotPriorityManager::SuspendLowPriorityBots(uint32 targetCount)
 
 void BotPriorityManager::ResumeSuspendedBots(uint32 targetCount)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     uint32 resumed = 0;
     for (auto& [guid, metrics] : _botMetrics)
@@ -463,7 +463,7 @@ void BotPriorityManager::ResumeSuspendedBots(uint32 targetCount)
 
 void BotPriorityManager::DetectStalledBots(uint32 currentTime, uint32 stallThresholdMs)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     for (auto& [guid, metrics] : _botMetrics)
     {
@@ -491,7 +491,7 @@ void BotPriorityManager::DetectStalledBots(uint32 currentTime, uint32 stallThres
 
 std::vector<ObjectGuid> BotPriorityManager::GetStalledBots() const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     std::vector<ObjectGuid> stalled;
     for (auto const& [guid, metrics] : _botMetrics)
@@ -504,13 +504,13 @@ std::vector<ObjectGuid> BotPriorityManager::GetStalledBots() const
 
 void BotPriorityManager::RemoveBot(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _botMetrics.erase(botGuid);
 }
 
 void BotPriorityManager::Clear()
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _botMetrics.clear();
 }
 
@@ -552,7 +552,7 @@ void BotPriorityManager::LogPriorityDistribution() const
 
 void BotPriorityManager::LogPerformanceStatistics() const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     if (_botMetrics.empty())
         return;

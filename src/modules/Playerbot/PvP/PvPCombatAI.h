@@ -455,7 +455,7 @@ private:
     std::unordered_map<uint32, PvPMetrics> _playerMetrics;
     PvPMetrics _globalMetrics;
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Update intervals
     static constexpr uint32 COMBAT_UPDATE_INTERVAL = 100;  // 100ms for PvP responsiveness

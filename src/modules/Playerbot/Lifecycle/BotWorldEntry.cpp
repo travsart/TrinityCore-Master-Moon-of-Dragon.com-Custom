@@ -59,7 +59,7 @@ bool BotWorldEntry::BeginWorldEntry(EntryCallback callback)
     }
 
     {
-        std::lock_guard<std::mutex> lock(_callbackMutex);
+        std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
         _callback = callback;
     }
 
@@ -129,7 +129,7 @@ bool BotWorldEntry::ProcessWorldEntry(uint32 diff)
 
             // Invoke callback if set
             {
-                std::lock_guard<std::mutex> lock(_callbackMutex);
+                std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
                 if (_callback)
                 {
                     _callback(true, _metrics);
@@ -232,7 +232,7 @@ void BotWorldEntry::SetError(std::string const& error)
 
 bool BotWorldEntry::TransitionToState(BotWorldEntryState newState)
 {
-    std::lock_guard<std::mutex> lock(_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stateMutex);
 
     BotWorldEntryState oldState = _state.exchange(newState);
     _phaseStartTime = std::chrono::steady_clock::now();
@@ -717,7 +717,7 @@ void BotWorldEntry::HandleWorldEntryFailure(std::string const& reason)
 
     // Invoke callback with failure
     {
-        std::lock_guard<std::mutex> lock(_callbackMutex);
+        std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
         if (_callback)
         {
             _callback(false, _metrics);
@@ -763,7 +763,7 @@ uint32 BotWorldEntryQueue::QueueEntry(std::shared_ptr<BotWorldEntry> entry)
     if (!entry)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     _pendingQueue.push(entry);
     return static_cast<uint32>(_pendingQueue.size());
@@ -771,7 +771,7 @@ uint32 BotWorldEntryQueue::QueueEntry(std::shared_ptr<BotWorldEntry> entry)
 
 void BotWorldEntryQueue::ProcessQueue(uint32 maxConcurrent)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     // Remove completed entries
     _activeEntries.erase(
@@ -817,7 +817,7 @@ void BotWorldEntryQueue::ProcessQueue(uint32 maxConcurrent)
 
 BotWorldEntryQueue::QueueStats BotWorldEntryQueue::GetStats() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     QueueStats stats;
     stats.queuedEntries = static_cast<uint32>(_pendingQueue.size());
@@ -840,7 +840,7 @@ BotWorldEntryQueue::QueueStats BotWorldEntryQueue::GetStats() const
 
 void BotWorldEntryQueue::ClearQueue()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     while (!_pendingQueue.empty())
     {

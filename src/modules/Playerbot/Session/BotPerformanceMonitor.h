@@ -89,7 +89,7 @@ private:
 
     std::array<uint32, BUCKET_COUNT> _buckets;
     uint32 _totalCount{0};
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 };
 
 /**
@@ -174,7 +174,7 @@ private:
 
     // Current metrics
     SystemPerformanceMetrics _metrics;
-    mutable std::mutex _metricsMutex;
+    mutable std::recursive_mutex _metricsMutex;
 
     // Histogram
     UpdateTimeHistogram _histogram;

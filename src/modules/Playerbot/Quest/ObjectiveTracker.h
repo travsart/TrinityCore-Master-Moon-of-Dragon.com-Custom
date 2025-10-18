@@ -188,7 +188,7 @@ private:
     std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives
     std::unordered_map<uint32, std::vector<ObjectivePriority>> _botObjectivePriorities; // botGuid -> priorities
     std::unordered_map<uint32, ObjectiveAnalytics> _botAnalytics;
-    mutable std::mutex _trackingMutex;
+    mutable std::recursive_mutex _trackingMutex;
 
     // Target tracking and caching
     struct TargetTrackingData
@@ -210,7 +210,7 @@ private:
     };
 
     std::unordered_map<uint32, TargetTrackingData> _targetTracking; // targetId -> data
-    mutable std::mutex _targetMutex;
+    mutable std::recursive_mutex _targetMutex;
 
     // Group coordination data
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _groupObjectiveAssignments; // groupId -> memberGuid -> objectiveIndex

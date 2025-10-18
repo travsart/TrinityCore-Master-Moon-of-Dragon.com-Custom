@@ -45,7 +45,7 @@ MountManager::MountManager()
 
 void MountManager::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("server.loading", "Loading mount database...");
     LoadMountDatabase();
@@ -214,7 +214,7 @@ MountInfo const* MountManager::GetBestMount(::Player* player) const
     if (!player)
         return nullptr;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -257,7 +257,7 @@ MountInfo const* MountManager::GetFlyingMount(::Player* player) const
     if (!player)
         return nullptr;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -299,7 +299,7 @@ MountInfo const* MountManager::GetGroundMount(::Player* player) const
     if (!player)
         return nullptr;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -360,7 +360,7 @@ MountInfo const* MountManager::GetAquaticMount(::Player* player) const
     if (!player)
         return nullptr;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -391,7 +391,7 @@ MountInfo const* MountManager::GetDragonridingMount(::Player* player) const
     if (!player)
         return nullptr;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -462,7 +462,7 @@ std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
     if (!player)
         return mounts;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -493,7 +493,7 @@ bool MountManager::LearnMount(::Player* player, uint32 spellId)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto mountItr = _mountDatabase.find(spellId);
     if (mountItr == _mountDatabase.end())
@@ -531,7 +531,7 @@ uint32 MountManager::GetMountCount(::Player* player) const
     if (!player)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
@@ -733,13 +733,13 @@ bool MountManager::RemovePassenger(::Player* passenger)
 
 void MountManager::SetAutomationProfile(uint32 playerGuid, MountAutomationProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 MountAutomationProfile MountManager::GetAutomationProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto profileItr = _playerProfiles.find(playerGuid);
     if (profileItr != _playerProfiles.end())
@@ -755,7 +755,7 @@ MountAutomationProfile MountManager::GetAutomationProfile(uint32 playerGuid) con
 
 MountManager::MountMetrics const& MountManager::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto metricsItr = _playerMetrics.find(playerGuid);
     if (metricsItr != _playerMetrics.end())

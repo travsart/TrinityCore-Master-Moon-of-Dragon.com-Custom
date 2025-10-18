@@ -308,7 +308,7 @@ private:
      *
      * Used by Subscribe/Unsubscribe operations to ensure thread safety.
      */
-    mutable std::mutex _subscriptionMutex;
+    mutable std::recursive_mutex _subscriptionMutex;
 
     /**
      * @brief Thread-safe event queue using std::deque
@@ -317,7 +317,7 @@ private:
      * Sufficient for single-threaded world updates.
      */
     std::deque<BotEvent> _eventQueue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     /**
      * @brief Enable/disable flag

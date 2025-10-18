@@ -132,7 +132,7 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
     }
 
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -159,7 +159,7 @@ bool AuraEventBus::Subscribe(BotAI* subscriber, std::vector<AuraEventType> const
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (AuraEventType type : types)
     {
@@ -179,7 +179,7 @@ bool AuraEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
@@ -193,7 +193,7 @@ void AuraEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
@@ -224,7 +224,7 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<AuraEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -248,7 +248,7 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::mutex> lock(_subscriberMutex);
+            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -286,7 +286,7 @@ uint32 AuraEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void AuraEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<AuraEvent> remainingEvents;
 
@@ -307,13 +307,13 @@ void AuraEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 AuraEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 AuraEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -349,7 +349,7 @@ bool AuraEventBus::ValidateEvent(AuraEvent const& event) const
 
 uint32 AuraEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<AuraEvent> validEvents;
@@ -386,19 +386,19 @@ void AuraEventBus::LogEvent(AuraEvent const& event, std::string const& action) c
 
 void AuraEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void AuraEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Queue: {} events ===", _eventQueue.size());
 }
 
 std::vector<AuraEvent> AuraEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<AuraEvent> snapshot;
     std::priority_queue<AuraEvent> tempQueue = _eventQueue;

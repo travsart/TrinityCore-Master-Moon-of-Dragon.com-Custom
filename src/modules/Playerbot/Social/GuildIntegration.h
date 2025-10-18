@@ -312,13 +312,13 @@ private:
     std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
     std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
     std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
-    mutable std::mutex _guildMutex;
+    mutable std::recursive_mutex _guildMutex;
 
     // Chat intelligence system
     std::unordered_map<uint32, ChatIntelligence> _chatIntelligence; // playerGuid -> intelligence
     std::unordered_map<std::string, std::vector<std::string>> _globalResponseTemplates;
     std::vector<std::string> _conversationTopics;
-    mutable std::mutex _chatMutex;
+    mutable std::recursive_mutex _chatMutex;
 
     // Guild activity tracking
     struct GuildActivityTracker

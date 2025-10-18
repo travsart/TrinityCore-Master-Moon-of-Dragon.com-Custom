@@ -284,11 +284,11 @@ private:
     float _targetWinRate;
 
     // Player profiles
-    mutable std::mutex _profilesMutex;
+    mutable std::recursive_mutex _profilesMutex;
     std::unordered_map<ObjectGuid, std::shared_ptr<PlayerSkillProfile>> _playerProfiles;
 
     // Bot difficulty settings
-    mutable std::mutex _botDifficultyMutex;
+    mutable std::recursive_mutex _botDifficultyMutex;
     std::unordered_map<uint32_t, DifficultySettings> _botDifficulties;
 
     // Difficulty curves

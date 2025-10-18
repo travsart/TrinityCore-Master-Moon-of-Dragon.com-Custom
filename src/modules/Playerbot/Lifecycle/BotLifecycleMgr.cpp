@@ -190,7 +190,7 @@ void BotLifecycleMgr::ProcessEventQueue()
     // Replace TBB try_pop with std::queue + mutex
     while (processedCount < maxEventsPerCycle)
     {
-        std::lock_guard<std::mutex> lock(_eventQueueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
         if (_eventQueue.empty())
             break;
 
@@ -621,7 +621,7 @@ void BotLifecycleMgr::OptimizePerformance()
     _metrics.failedSpawnsLastHour = 0;
 
     // Clear correlation tracking for old events
-    std::lock_guard<std::mutex> lock(_correlationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_correlationMutex);
     _correlatedEvents.clear();
 }
 

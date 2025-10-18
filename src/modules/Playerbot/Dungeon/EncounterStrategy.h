@@ -233,7 +233,7 @@ private:
     std::unordered_map<uint32, HealerStrategy> _healerStrategies;
     std::unordered_map<uint32, DpsStrategy> _dpsStrategies;
     std::unordered_map<uint32, StrategyMetrics> _encounterMetrics;
-    mutable std::mutex _strategyMutex;
+    mutable std::recursive_mutex _strategyMutex;
 
     // Encounter mechanics database
     struct EncounterMechanic

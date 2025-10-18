@@ -411,7 +411,7 @@ private:
     std::unordered_map<uint32, PetMetrics> _playerMetrics;
     PetMetrics _globalMetrics;
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds

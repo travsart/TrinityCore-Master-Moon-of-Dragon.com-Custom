@@ -249,7 +249,7 @@ private:
     };
 
     static OptimizationMetrics _metrics;
-    static std::mutex _metricsMutex;
+    static std::recursive_mutex _metricsMutex;
 
     // Constants for optimization algorithms
     static constexpr uint32 GA_POPULATION_SIZE = 50;

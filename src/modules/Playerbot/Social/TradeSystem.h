@@ -264,13 +264,13 @@ private:
     std::unordered_map<uint32, TradeConfiguration> _playerConfigs; // playerGuid -> config
     std::unordered_map<uint32, TradeMetrics> _playerMetrics; // playerGuid -> metrics
     std::atomic<uint32> _nextSessionId{1};
-    mutable std::mutex _tradeMutex;
+    mutable std::recursive_mutex _tradeMutex;
 
     // Vendor database loaded from TrinityCore
     std::unordered_map<uint32, VendorInfo> _vendorDatabase; // creatureGuid -> vendor info
     std::unordered_map<uint32, std::vector<uint32>> _zoneVendors; // zoneId -> vendorGuids
     std::unordered_map<VendorType, std::vector<uint32>> _vendorsByType; // type -> vendorGuids
-    mutable std::mutex _vendorMutex;
+    mutable std::recursive_mutex _vendorMutex;
 
     // Trade history and learning
     struct PlayerTradeHistory

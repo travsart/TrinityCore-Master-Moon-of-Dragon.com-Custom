@@ -199,7 +199,7 @@ private:
             if (current < COMBO_POINTS_MAX) {
                 currentPoints++;
                 optimal++;
-                std::lock_guard<std::mutex> lock(historyMutex);
+                std::lock_guard<std::recursive_mutex> lock(historyMutex);
                 pointHistory.push(getMSTime());
                 if (pointHistory.size() > 10) // Keep last 10
                     pointHistory.pop();
@@ -224,7 +224,7 @@ private:
         std::unordered_map<uint64, uint32> mangledExpiry;
         mutable std::recursive_mutex bleedMutex;
         void UpdateBleed(uint64 targetGuid, uint32 spellId, uint32 duration) {
-            std::lock_guard<std::mutex> lock(bleedMutex);
+            std::lock_guard<std::recursive_mutex> lock(bleedMutex);
             uint32 expiry = getMSTime() + duration;
             switch (spellId) {
                 case RAKE: rakeExpiry[targetGuid] = expiry; break;
@@ -233,7 +233,7 @@ private:
             }
         }
         bool HasBleed(uint64 targetGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(bleedMutex);
+            std::lock_guard<std::recursive_mutex> lock(bleedMutex);
             uint32 currentTime = getMSTime();
             switch (spellId) {
                 case RAKE: {
@@ -252,7 +252,7 @@ private:
             return false;
         }
         uint32 GetTimeRemaining(uint64 targetGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(bleedMutex);
+            std::lock_guard<std::recursive_mutex> lock(bleedMutex);
             uint32 currentTime = getMSTime();
             uint32 expiry = 0;
             switch (spellId) {

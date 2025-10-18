@@ -41,7 +41,7 @@ BattlePetManager::BattlePetManager()
 
 void BattlePetManager::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "BattlePetManager: Loading battle pet database...");
 
@@ -151,7 +151,7 @@ void BattlePetManager::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Get automation profile
     PetBattleAutomationProfile profile = GetAutomationProfile(playerGuid);
@@ -180,7 +180,7 @@ std::vector<BattlePetInfo> BattlePetManager::GetPlayerPets(::Player* player) con
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     std::vector<BattlePetInfo> pets;
@@ -199,7 +199,7 @@ bool BattlePetManager::OwnsPet(::Player* player, uint32 speciesId) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!_playerPets.count(playerGuid))
@@ -213,7 +213,7 @@ bool BattlePetManager::CapturePet(::Player* player, uint32 speciesId, PetQuality
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -261,7 +261,7 @@ bool BattlePetManager::ReleasePet(::Player* player, uint32 speciesId)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -282,7 +282,7 @@ uint32 BattlePetManager::GetPetCount(::Player* player) const
     if (!player)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!_playerPets.count(playerGuid))
@@ -345,7 +345,7 @@ uint32 BattlePetManager::SelectBestAbility(::Player* player) const
     if (!player)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -415,7 +415,7 @@ bool BattlePetManager::ShouldCapturePet(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     PetBattleAutomationProfile profile = GetAutomationProfile(playerGuid);
@@ -466,7 +466,7 @@ std::vector<BattlePetInfo> BattlePetManager::GetPetsNeedingLevel(::Player* playe
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     PetBattleAutomationProfile profile = GetAutomationProfile(playerGuid);
@@ -500,7 +500,7 @@ void BattlePetManager::AwardPetXP(::Player* player, uint32 speciesId, uint32 xp)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -533,7 +533,7 @@ bool BattlePetManager::LevelUpPet(::Player* player, uint32 speciesId)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -575,7 +575,7 @@ bool BattlePetManager::CreatePetTeam(::Player* player, std::string const& teamNa
     if (!player || petSpeciesIds.empty() || petSpeciesIds.size() > 3)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -608,7 +608,7 @@ std::vector<PetTeam> BattlePetManager::GetPlayerTeams(::Player* player) const
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!_playerTeams.count(playerGuid))
@@ -622,7 +622,7 @@ bool BattlePetManager::SetActiveTeam(::Player* player, std::string const& teamNa
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -656,7 +656,7 @@ PetTeam BattlePetManager::GetActiveTeam(::Player* player) const
     if (!player)
         return PetTeam();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -678,7 +678,7 @@ std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     std::vector<uint32> optimizedTeam;
@@ -719,7 +719,7 @@ bool BattlePetManager::HealAllPets(::Player* player)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -748,7 +748,7 @@ bool BattlePetManager::HealPet(::Player* player, uint32 speciesId)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -774,7 +774,7 @@ bool BattlePetManager::NeedsHealing(::Player* player, uint32 speciesId) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     PetBattleAutomationProfile profile = GetAutomationProfile(playerGuid);
@@ -824,7 +824,7 @@ void BattlePetManager::TrackRarePetSpawns(::Player* player)
 
 bool BattlePetManager::IsRarePet(uint32 speciesId) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_petDatabase.count(speciesId))
         return false;
@@ -837,7 +837,7 @@ std::vector<uint32> BattlePetManager::GetRarePetsInZone(::Player* player) const
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     std::vector<uint32> result;
 
@@ -859,7 +859,7 @@ bool BattlePetManager::NavigateToRarePet(::Player* player, uint32 speciesId)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_rarePetSpawns.count(speciesId) || _rarePetSpawns[speciesId].empty())
         return false;
@@ -882,13 +882,13 @@ bool BattlePetManager::NavigateToRarePet(::Player* player, uint32 speciesId)
 void BattlePetManager::SetAutomationProfile(uint32 playerGuid,
     PetBattleAutomationProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -902,7 +902,7 @@ PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerG
 
 BattlePetManager::PetMetrics const& BattlePetManager::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {

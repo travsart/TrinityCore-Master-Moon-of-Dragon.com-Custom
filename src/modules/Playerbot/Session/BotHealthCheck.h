@@ -130,7 +130,7 @@ private:
     BotHealthCheck& operator=(const BotHealthCheck&) = delete;
 
     // Stall tracking
-    mutable std::mutex _stalledBotsMutex;
+    mutable std::recursive_mutex _stalledBotsMutex;
     std::unordered_set<ObjectGuid> _stalledBots;
     uint32 _stallThresholdMs{5000}; // 5 seconds
 
@@ -138,7 +138,7 @@ private:
     std::atomic<bool> _systemDeadlocked{false};
     uint32 _lastHeartbeatTime{0};
     uint32 _deadlockThresholdMs{10000}; // 10 seconds
-    mutable std::mutex _heartbeatMutex;
+    mutable std::recursive_mutex _heartbeatMutex;
 
     // Error tracking
     struct ErrorRecord
@@ -147,13 +147,13 @@ private:
         std::string errorType;
         uint32 timestamp;
     };
-    mutable std::mutex _errorsMutex;
+    mutable std::recursive_mutex _errorsMutex;
     std::vector<ErrorRecord> _recentErrors;
     static constexpr uint32 ERROR_HISTORY_DURATION_MS = 60000; // 1 minute
     float _errorRateThreshold{10.0f}; // 10 errors per second
 
     // Health issues history
-    mutable std::mutex _healthIssuesMutex;
+    mutable std::recursive_mutex _healthIssuesMutex;
     std::vector<HealthCheckResult> _healthIssues;
     static constexpr uint32 HEALTH_ISSUE_HISTORY_SIZE = 100;
 

@@ -175,7 +175,7 @@ private:
     std::unordered_map<uint32, InstanceProgress> _instanceProgress; // groupId -> progress
     std::unordered_map<uint32, CoordinationMetrics> _groupMetrics;
     std::unordered_map<uint32, std::vector<Position>> _groupRoutes; // groupId -> waypoints
-    mutable std::mutex _coordinationMutex;
+    mutable std::recursive_mutex _coordinationMutex;
 
     // Formation and movement data
     struct FormationData
@@ -193,7 +193,7 @@ private:
     };
 
     std::unordered_map<uint32, FormationData> _groupFormations; // groupId -> formation
-    mutable std::mutex _formationMutex;
+    mutable std::recursive_mutex _formationMutex;
 
     // Communication and decision tracking
     struct CoordinationState

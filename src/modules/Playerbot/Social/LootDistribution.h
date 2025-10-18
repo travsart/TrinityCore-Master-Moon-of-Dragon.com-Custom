@@ -325,7 +325,7 @@ private:
     std::unordered_map<uint32, PlayerLootProfile> _playerLootProfiles; // playerGuid -> profile
     std::unordered_map<uint32, LootFairnessTracker> _groupFairnessTracking; // groupId -> fairness
     std::unordered_map<uint32, LootMetrics> _playerMetrics; // playerGuid -> metrics
-    mutable std::mutex _lootMutex;
+    mutable std::recursive_mutex _lootMutex;
 
     // Roll management
     std::atomic<uint32> _nextRollId{1};
@@ -335,7 +335,7 @@ private:
     // Loot analysis cache
     std::unordered_map<uint32, std::unordered_map<uint32, LootPriority>> _itemPriorityCache; // playerGuid -> itemId -> priority
     std::unordered_map<uint32, std::unordered_map<uint32, bool>> _upgradeCache; // playerGuid -> itemId -> isUpgrade
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
 
     // Performance tracking
     LootMetrics _globalMetrics;

@@ -197,7 +197,7 @@ bool InstanceEventBus::PublishEvent(InstanceEvent const& event)
 
     // Update statistics
     {
-        std::lock_guard<std::mutex> lock(_subscriberMutex);
+        std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
         ++_eventCounts[event.type];
         ++_totalEventsPublished;
     }
@@ -214,7 +214,7 @@ void InstanceEventBus::Subscribe(BotAI* subscriber, std::vector<InstanceEventTyp
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto type : types)
     {
@@ -233,7 +233,7 @@ void InstanceEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
@@ -248,7 +248,7 @@ void InstanceEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
@@ -268,7 +268,7 @@ uint32 InstanceEventBus::SubscribeCallback(EventHandler handler, std::vector<Ins
     if (!handler)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     CallbackSubscription sub;
     sub.id = _nextCallbackId++;
@@ -285,7 +285,7 @@ uint32 InstanceEventBus::SubscribeCallback(EventHandler handler, std::vector<Ins
 
 void InstanceEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
         std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
@@ -297,14 +297,14 @@ void InstanceEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 InstanceEventBus::GetEventCount(InstanceEventType type) const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     auto it = _eventCounts.find(type);
     return it != _eventCounts.end() ? it->second : 0;
 }
 
 void InstanceEventBus::DeliverEvent(InstanceEvent const& event)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);

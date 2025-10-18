@@ -236,13 +236,13 @@ private:
     std::atomic<bool> _shutdownRequested{false};
 
     // Metrics storage
-    mutable std::mutex _metricsMutex;
+    mutable std::recursive_mutex _metricsMutex;
     std::queue<PerformanceMetric> _metricsQueue;
     std::unordered_map<MetricType, MetricStatistics> _globalStatistics;
     std::unordered_map<uint32_t, std::unordered_map<MetricType, MetricStatistics>> _botStatistics;
 
     // Alerts
-    mutable std::mutex _alertsMutex;
+    mutable std::recursive_mutex _alertsMutex;
     std::queue<PerformanceAlert> _alertsQueue;
     std::vector<PerformanceAlert> _recentAlerts;
     static constexpr size_t MAX_RECENT_ALERTS = 1000;
@@ -251,7 +251,7 @@ private:
     std::unordered_map<MetricType, std::unordered_map<AlertLevel, uint64_t>> _thresholds;
 
     // Bot tracking
-    mutable std::mutex _botsMutex;
+    mutable std::recursive_mutex _botsMutex;
     std::unordered_set<uint32_t> _registeredBots;
     std::unordered_map<uint32_t, uint64_t> _botMemoryUsage;
 
@@ -261,7 +261,7 @@ private:
     std::condition_variable _alertsCondition;
 
     // System metrics
-    mutable std::mutex _systemMetricsMutex;
+    mutable std::recursive_mutex _systemMetricsMutex;
     std::atomic<uint64_t> _totalSystemMemory{0};
     std::atomic<double> _systemCpuUsage{0.0};
     std::atomic<uint64_t> _lastSystemUpdate{0};

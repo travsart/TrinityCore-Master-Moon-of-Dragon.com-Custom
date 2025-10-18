@@ -330,13 +330,13 @@ private:
     std::unordered_map<uint32, QuestAcceptanceStrategy> _botStrategies;
     std::unordered_map<uint32, QuestPickupFilter> _botFilters;
     std::unordered_map<uint32, QuestPickupMetrics> _botMetrics;
-    mutable std::mutex _pickupMutex;
+    mutable std::recursive_mutex _pickupMutex;
 
     // Quest giver database
     std::unordered_map<uint32, QuestGiverInfo> _questGivers; // giverGuid -> info
     std::unordered_map<uint32, std::vector<uint32>> _questToGivers; // questId -> giverGuids
     std::unordered_map<uint32, std::vector<uint32>> _zoneQuestGivers; // zoneId -> giverGuids
-    mutable std::mutex _giverMutex;
+    mutable std::recursive_mutex _giverMutex;
 
     // Quest chain data
     std::unordered_map<uint32, std::vector<uint32>> _questChains; // chainId -> questIds

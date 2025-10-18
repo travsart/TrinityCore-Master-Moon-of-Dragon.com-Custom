@@ -104,7 +104,7 @@ void MemoryPool<T>::Deallocate(T* ptr)
 template<typename T>
 void MemoryPool<T>::AllocateChunk()
 {
-    std::lock_guard<std::mutex> lock(_chunkMutex);
+    std::lock_guard<std::recursive_mutex> lock(_chunkMutex);
 
     size_t currentCapacity = _totalCapacity.load(std::memory_order_relaxed);
     if (currentCapacity >= _config.maxCapacity)

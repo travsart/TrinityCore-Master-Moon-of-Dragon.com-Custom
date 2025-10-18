@@ -434,13 +434,13 @@ void GuildIntegration::OrganizeGuildRuns(Player* player)
 
 void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& profile)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerProfiles.find(playerGuid);
     if (it != _playerProfiles.end())
         return it->second;
@@ -450,7 +450,7 @@ GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGu
 
 GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerParticipation.find(playerGuid);
     if (it != _playerParticipation.end())
         return it->second;
@@ -460,7 +460,7 @@ GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uin
 
 void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     auto& participation = _playerParticipation[playerGuid];
     participation.activityCounts[activityType]++;
@@ -764,7 +764,7 @@ void GuildIntegration::CelebrateGuildAchievements(Player* player)
 
 GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
         return it->second;
@@ -780,7 +780,7 @@ GuildIntegration::GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guild
     combinedMetrics.Reset();
 
     // Aggregate metrics from all bots in the guild
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     for (const auto& metricsPair : _playerMetrics)
     {
@@ -1074,7 +1074,7 @@ void GuildIntegration::OfferGuildAssistance(Player* player, const std::string& a
 
 void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType activity, bool wasSuccessful)
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     auto& metrics = _playerMetrics[playerGuid];
     metrics.guildInteractions++;
@@ -1151,7 +1151,7 @@ void GuildIntegration::Update(uint32 diff)
 
 void GuildIntegration::UpdateGuildParticipation()
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     uint32 currentTime = getMSTime();
 
@@ -1177,7 +1177,7 @@ void GuildIntegration::ProcessGuildEvents()
 
 void GuildIntegration::CleanupGuildData()
 {
-    std::lock_guard<std::mutex> lock(_guildMutex);
+    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     uint32 currentTime = getMSTime();
 

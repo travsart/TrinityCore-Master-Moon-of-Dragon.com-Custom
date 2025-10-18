@@ -79,7 +79,7 @@ bool QuestCompletion::StartQuestCompletion(uint32 questId, Player* bot)
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     // Initialize quest progress tracking
     QuestProgressData progress(questId, bot->GetGUID().GetCounter());
@@ -117,7 +117,7 @@ void QuestCompletion::UpdateQuestProgress(Player* bot)
     if (!bot)
         return;
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
     if (it == _botQuestProgress.end())
@@ -210,7 +210,7 @@ void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
     // Mark quest as complete
     bot->CompleteQuest(questId);
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     // Update progress tracking
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
@@ -264,7 +264,7 @@ void QuestCompletion::TrackQuestObjectives(Player* bot)
     if (!bot)
         return;
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
     if (it == _botQuestProgress.end())
@@ -372,7 +372,7 @@ void QuestCompletion::UpdateObjectiveProgress(Player* bot, uint32 questId, uint3
     if (!bot)
         return;
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
     if (it == _botQuestProgress.end())
@@ -1267,7 +1267,7 @@ void QuestCompletion::ShareObjectiveProgress(Group* group, uint32 questId)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_groupMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupMutex);
 
     // Update group quest sharing data
     _groupQuestSharing[group->GetGUID().GetCounter()].push_back(questId);
@@ -1287,7 +1287,7 @@ void QuestCompletion::DetectStuckState(Player* bot, uint32 questId)
     TC_LOG_DEBUG("playerbot", "QuestCompletion::DetectStuckState - Bot %s stuck on quest %u",
         bot->GetName().c_str(), questId);
 
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
     if (it == _botQuestProgress.end())
@@ -1325,7 +1325,7 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
         bot->GetName().c_str(), questId);
 
     // Try different recovery strategies
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botQuestProgress.find(bot->GetGUID().GetCounter());
     if (it == _botQuestProgress.end())
@@ -1363,7 +1363,7 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
  */
 QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -1389,7 +1389,7 @@ QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetGlobalComp
  */
 void QuestCompletion::SetQuestCompletionStrategy(uint32 botGuid, QuestCompletionStrategy strategy)
 {
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
     _botStrategies[botGuid] = strategy;
 }
 
@@ -1400,7 +1400,7 @@ void QuestCompletion::SetQuestCompletionStrategy(uint32 botGuid, QuestCompletion
  */
 QuestCompletionStrategy QuestCompletion::GetQuestCompletionStrategy(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     auto it = _botStrategies.find(botGuid);
     if (it != _botStrategies.end())
@@ -1433,7 +1433,7 @@ void QuestCompletion::Update(uint32 diff)
  */
 void QuestCompletion::CleanupCompletedQuests()
 {
-    std::lock_guard<std::mutex> lock(_completionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_completionMutex);
 
     uint32 currentTime = getMSTime();
 

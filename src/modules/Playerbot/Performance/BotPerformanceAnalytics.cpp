@@ -62,7 +62,7 @@ void BotPerformanceAnalytics::Shutdown()
 
 void BotPerformanceAnalytics::RegisterBot(uint32_t botGuid, uint8_t botClass, uint8_t botLevel, uint8_t specialization)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     BotPerformanceProfile profile;
     profile.botGuid = botGuid;
@@ -76,7 +76,7 @@ void BotPerformanceAnalytics::RegisterBot(uint32_t botGuid, uint8_t botClass, ui
 
     // Update system analytics
     {
-        std::lock_guard<std::mutex> systemLock(_systemAnalyticsMutex);
+        std::lock_guard<std::recursive_mutex> systemLock(_systemAnalyticsMutex);
         _systemAnalytics.concurrentBotsCount++;
         _systemAnalytics.classBotCount[botClass]++;
     }
@@ -87,7 +87,7 @@ void BotPerformanceAnalytics::RegisterBot(uint32_t botGuid, uint8_t botClass, ui
 
 void BotPerformanceAnalytics::UnregisterBot(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
@@ -97,7 +97,7 @@ void BotPerformanceAnalytics::UnregisterBot(uint32_t botGuid)
 
         // Update system analytics
         {
-            std::lock_guard<std::mutex> systemLock(_systemAnalyticsMutex);
+            std::lock_guard<std::recursive_mutex> systemLock(_systemAnalyticsMutex);
             _systemAnalytics.concurrentBotsCount--;
             if (_systemAnalytics.classBotCount[it->second.botClass] > 0)
                 _systemAnalytics.classBotCount[it->second.botClass]--;
@@ -111,7 +111,7 @@ void BotPerformanceAnalytics::UnregisterBot(uint32_t botGuid)
 
 void BotPerformanceAnalytics::UpdateBotLevel(uint32_t botGuid, uint8_t newLevel)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
     {
@@ -122,7 +122,7 @@ void BotPerformanceAnalytics::UpdateBotLevel(uint32_t botGuid, uint8_t newLevel)
 
 void BotPerformanceAnalytics::UpdateBotSpecialization(uint32_t botGuid, uint8_t newSpecialization)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
     {
@@ -136,7 +136,7 @@ void BotPerformanceAnalytics::AnalyzeBotPerformance(uint32_t botGuid)
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return;
@@ -163,7 +163,7 @@ void BotPerformanceAnalytics::UpdateBehaviorScore(uint32_t botGuid, BotBehaviorC
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end() && static_cast<size_t>(category) < it->second.behaviorScores.size())
     {
@@ -210,7 +210,7 @@ void BotPerformanceAnalytics::RecordPerformanceEvent(uint32_t botGuid, const std
 
 double BotPerformanceAnalytics::CalculateOverallPerformance(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return 50.0;
@@ -235,7 +235,7 @@ PerformanceProfile BotPerformanceAnalytics::DeterminePerformanceProfile(double s
 
 void BotPerformanceAnalytics::UpdatePerformanceTrends(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return;
@@ -270,7 +270,7 @@ void BotPerformanceAnalytics::UpdateSystemAnalytics()
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_systemAnalyticsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_systemAnalyticsMutex);
 
     // Reset distribution counts
     _systemAnalytics.performanceDistribution.fill(0);
@@ -280,7 +280,7 @@ void BotPerformanceAnalytics::UpdateSystemAnalytics()
     uint32_t totalBots = 0;
 
     {
-        std::lock_guard<std::mutex> profilesLock(_profilesMutex);
+        std::lock_guard<std::recursive_mutex> profilesLock(_profilesMutex);
         for (const auto& [botGuid, profile] : _botProfiles)
         {
             _systemAnalytics.performanceDistribution[static_cast<size_t>(profile.overallProfile)]++;
@@ -319,14 +319,14 @@ void BotPerformanceAnalytics::UpdateSystemAnalytics()
 
 SystemPerformanceAnalytics BotPerformanceAnalytics::GetSystemAnalytics() const
 {
-    std::lock_guard<std::mutex> lock(_systemAnalyticsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_systemAnalyticsMutex);
     return _systemAnalytics;
 }
 
 void BotPerformanceAnalytics::AnalyzeClassPerformance()
 {
-    std::lock_guard<std::mutex> profilesLock(_profilesMutex);
-    std::lock_guard<std::mutex> systemLock(_systemAnalyticsMutex);
+    std::lock_guard<std::recursive_mutex> profilesLock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> systemLock(_systemAnalyticsMutex);
 
     // Clear existing class performance data
     _systemAnalytics.classPerformanceAverage.clear();
@@ -352,8 +352,8 @@ void BotPerformanceAnalytics::AnalyzeClassPerformance()
 
 void BotPerformanceAnalytics::AnalyzeSpecializationPerformance()
 {
-    std::lock_guard<std::mutex> profilesLock(_profilesMutex);
-    std::lock_guard<std::mutex> systemLock(_systemAnalyticsMutex);
+    std::lock_guard<std::recursive_mutex> profilesLock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> systemLock(_systemAnalyticsMutex);
 
     // Clear existing specialization performance data
     _systemAnalytics.specializationPerformance.clear();
@@ -383,14 +383,14 @@ void BotPerformanceAnalytics::AnalyzeSpecializationPerformance()
 
 BotPerformanceProfile BotPerformanceAnalytics::GetBotProfile(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     return it != _botProfiles.end() ? it->second : BotPerformanceProfile();
 }
 
 std::vector<BotPerformanceProfile> BotPerformanceAnalytics::GetTopPerformers(uint32_t count) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     std::vector<BotPerformanceProfile> profiles;
     profiles.reserve(_botProfiles.size());
@@ -413,7 +413,7 @@ std::vector<BotPerformanceProfile> BotPerformanceAnalytics::GetTopPerformers(uin
 
 std::vector<BotPerformanceProfile> BotPerformanceAnalytics::GetPoorPerformers(uint32_t count) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     std::vector<BotPerformanceProfile> profiles;
     profiles.reserve(_botProfiles.size());
@@ -436,7 +436,7 @@ std::vector<BotPerformanceProfile> BotPerformanceAnalytics::GetPoorPerformers(ui
 
 std::vector<uint32_t> BotPerformanceAnalytics::GetBotsInPerformanceRange(PerformanceProfile minProfile, PerformanceProfile maxProfile) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     std::vector<uint32_t> botGuids;
 
@@ -451,7 +451,7 @@ std::vector<uint32_t> BotPerformanceAnalytics::GetBotsInPerformanceRange(Perform
 
 std::vector<std::string> BotPerformanceAnalytics::GetOptimizationSuggestions(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return {};
@@ -574,7 +574,7 @@ void BotPerformanceAnalytics::RecordAdaptationEvent(uint32_t botGuid, const std:
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
     {
@@ -604,7 +604,7 @@ void BotPerformanceAnalytics::RecordError(uint32_t botGuid, const std::string& e
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
     {
@@ -631,7 +631,7 @@ void BotPerformanceAnalytics::RecordErrorRecovery(uint32_t botGuid, const std::s
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it != _botProfiles.end())
     {
@@ -771,7 +771,7 @@ void BotPerformanceAnalytics::ProcessAnalytics()
 {
     while (!_shutdownRequested.load())
     {
-        std::unique_lock<std::mutex> lock(_analyticsUpdateMutex);
+        std::unique_lock<std::recursive_mutex> lock(_analyticsUpdateMutex);
         _analyticsCondition.wait_for(lock, std::chrono::microseconds(_updateInterval),
                                    [this] { return _shutdownRequested.load(); });
 
@@ -786,7 +786,7 @@ void BotPerformanceAnalytics::ProcessAnalytics()
         // Analyze all registered bots
         std::vector<uint32_t> botGuids;
         {
-            std::lock_guard<std::mutex> profilesLock(_profilesMutex);
+            std::lock_guard<std::recursive_mutex> profilesLock(_profilesMutex);
             for (const auto& [botGuid, profile] : _botProfiles)
                 botGuids.push_back(botGuid);
         }

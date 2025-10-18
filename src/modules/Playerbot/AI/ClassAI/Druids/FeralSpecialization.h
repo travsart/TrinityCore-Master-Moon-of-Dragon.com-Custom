@@ -184,7 +184,7 @@ private:
             if (current < COMBO_POINTS_MAX) {
                 currentPoints++;
                 optimal++;
-                std::lock_guard<std::mutex> lock(historyMutex);
+                std::lock_guard<std::recursive_mutex> lock(historyMutex);
                 pointHistory.push(getMSTime());
                 if (pointHistory.size() > 10) // Keep last 10
                     pointHistory.pop();

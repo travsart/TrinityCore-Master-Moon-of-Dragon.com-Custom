@@ -263,7 +263,7 @@ private:
     std::unordered_map<TestCategory, std::vector<uint32>> _categoryTests; // category -> testIds
     std::unordered_map<std::string, std::vector<uint32>> _testSuites; // suiteName -> testIds
     std::atomic<uint32> _nextTestId{1};
-    mutable std::mutex _testMutex;
+    mutable std::recursive_mutex _testMutex;
 
     // Test execution management
     std::queue<uint32> _testQueue;

@@ -329,7 +329,7 @@ bool GroupEventBus::PublishEvent(GroupEvent const& event)
 
     // Check queue size limit
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             TC_LOG_WARN("module.playerbot.group", "GroupEventBus: Event queue full ({} events), dropping event: {}",
@@ -366,7 +366,7 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> con
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (GroupEventType type : types)
     {
@@ -405,7 +405,7 @@ bool GroupEventBus::SubscribeAll(BotAI* subscriber)
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Check if already subscribed
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
@@ -427,7 +427,7 @@ void GroupEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Remove from all specific event subscriptions
     for (auto& [type, subscriberList] : _subscribers)
@@ -468,7 +468,7 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     // Extract events from queue (hold lock briefly)
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -496,7 +496,7 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::mutex> lock(_subscriberMutex);
+            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
             // Add specific subscribers
             auto it = _subscribers.find(event.type);
@@ -546,7 +546,7 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
 
     // Extract group events from queue
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty())
         {
@@ -578,7 +578,7 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::mutex> lock(_subscriberMutex);
+            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
@@ -608,7 +608,7 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
 
 void GroupEventBus::ClearGroupEvents(ObjectGuid groupGuid)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<GroupEvent> remainingEvents;
 
@@ -633,13 +633,13 @@ void GroupEventBus::ClearGroupEvents(ObjectGuid groupGuid)
 
 uint32 GroupEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 GroupEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -683,7 +683,7 @@ bool GroupEventBus::ValidateEvent(GroupEvent const& event) const
 
 uint32 GroupEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<GroupEvent> validEvents;
@@ -733,7 +733,7 @@ void GroupEventBus::LogEvent(GroupEvent const& event, std::string const& action)
 
 void GroupEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     TC_LOG_INFO("module.playerbot.group", "=== GroupEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.group", "Global subscribers: {}", _globalSubscribers.size());
@@ -747,7 +747,7 @@ void GroupEventBus::DumpSubscribers() const
 
 void GroupEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     TC_LOG_INFO("module.playerbot.group", "=== GroupEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.group", "Queue size: {}", _eventQueue.size());
@@ -758,7 +758,7 @@ void GroupEventBus::DumpEventQueue() const
 
 std::vector<GroupEvent> GroupEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<GroupEvent> snapshot;
     std::priority_queue<GroupEvent> tempQueue = _eventQueue;

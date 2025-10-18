@@ -270,7 +270,7 @@ private:
 
     // Priority queue for scheduled actions (TBB removed)
     std::priority_queue<ScheduleEntry> _scheduleQueue;
-    mutable std::mutex _scheduleQueueMutex;
+    mutable std::recursive_mutex _scheduleQueueMutex;
 
     // Runtime state
     std::atomic<bool> _enabled{true};

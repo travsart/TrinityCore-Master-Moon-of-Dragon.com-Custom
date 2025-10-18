@@ -34,7 +34,7 @@ GroupCoordination::GroupCoordination(uint32 groupId)
 
 void GroupCoordination::ExecuteCommand(CoordinationCommand command, const std::vector<uint32>& targets)
 {
-    std::lock_guard<std::mutex> lock(_commandMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandMutex);
 
     CoordinationCommandData commandData(command, targets, 0, 100);
 
@@ -50,7 +50,7 @@ void GroupCoordination::ExecuteCommand(CoordinationCommand command, const std::v
 
 void GroupCoordination::IssueCommand(uint32 memberGuid, CoordinationCommand command, const std::vector<uint32>& targets)
 {
-    std::lock_guard<std::mutex> lock(_commandMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandMutex);
 
     if (_commandQueue.size() >= MAX_COMMAND_QUEUE_SIZE)
     {
@@ -80,7 +80,7 @@ void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std:
 
 void GroupCoordination::SetPrimaryTarget(ObjectGuid targetGuid, uint32 priority)
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     _primaryTarget = targetGuid;
 
@@ -100,14 +100,14 @@ void GroupCoordination::SetPrimaryTarget(ObjectGuid targetGuid, uint32 priority)
 
 void GroupCoordination::AddSecondaryTarget(ObjectGuid targetGuid, uint32 priority)
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     _targets.emplace(targetGuid, CoordinationTarget(targetGuid, priority, ThreatLevel::MEDIUM));
 }
 
 void GroupCoordination::RemoveTarget(ObjectGuid targetGuid)
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     _targets.erase(targetGuid);
 
@@ -130,13 +130,13 @@ void GroupCoordination::RemoveTarget(ObjectGuid targetGuid)
 
 ObjectGuid GroupCoordination::GetPrimaryTarget() const
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
     return _primaryTarget;
 }
 
 std::vector<ObjectGuid> GroupCoordination::GetTargetPriorityList() const
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     std::vector<std::pair<ObjectGuid, uint32>> targetPairs;
     for (const auto& [guid, target] : _targets)
@@ -161,20 +161,20 @@ std::vector<ObjectGuid> GroupCoordination::GetTargetPriorityList() const
 
 void GroupCoordination::SetFormation(const std::vector<FormationSlot>& formation)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     _formation = formation;
 }
 
 void GroupCoordination::UpdateFormation(const Position& leaderPosition)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     _formationCenter = leaderPosition;
     UpdateFormationPositions();
 }
 
 Position GroupCoordination::GetFormationPosition(uint32 memberGuid) const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     for (const auto& slot : _formation)
     {
@@ -205,7 +205,7 @@ bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
 
 void GroupCoordination::MoveToPosition(const Position& destination, bool maintainFormation)
 {
-    std::lock_guard<std::mutex> lock(_movementMutex);
+    std::lock_guard<std::recursive_mutex> lock(_movementMutex);
 
     _currentDestination = destination;
     _maintainFormationDuringMove = maintainFormation;
@@ -231,7 +231,7 @@ void GroupCoordination::FollowLeader(uint32 leaderGuid, float distance)
 
 Position GroupCoordination::GetNextWaypoint() const
 {
-    std::lock_guard<std::mutex> lock(_movementMutex);
+    std::lock_guard<std::recursive_mutex> lock(_movementMutex);
 
     if (!_movementPath.empty())
         return _movementPath.front().position;
@@ -241,7 +241,7 @@ Position GroupCoordination::GetNextWaypoint() const
 
 bool GroupCoordination::HasReachedDestination() const
 {
-    std::lock_guard<std::mutex> lock(_movementMutex);
+    std::lock_guard<std::recursive_mutex> lock(_movementMutex);
 
     if (_movementPath.empty())
         return true;
@@ -289,7 +289,7 @@ void GroupCoordination::EndCombat()
 
     // Clear combat targets
     {
-        std::lock_guard<std::mutex> lock(_targetMutex);
+        std::lock_guard<std::recursive_mutex> lock(_targetMutex);
         _targets.clear();
         _primaryTarget = ObjectGuid::Empty;
     }
@@ -375,7 +375,7 @@ void GroupCoordination::UpdateMetrics()
 
 void GroupCoordination::ProcessCommandQueue()
 {
-    std::lock_guard<std::mutex> lock(_commandMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandMutex);
 
     while (!_commandQueue.empty())
     {
@@ -392,7 +392,7 @@ void GroupCoordination::ProcessCommandQueue()
 
 void GroupCoordination::UpdateTargetAssessment()
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     // Update target information
     for (auto& [guid, target] : _targets)
@@ -427,7 +427,7 @@ void GroupCoordination::UpdateFormationPositions()
 
 void GroupCoordination::UpdateMovementProgress()
 {
-    std::lock_guard<std::mutex> lock(_movementMutex);
+    std::lock_guard<std::recursive_mutex> lock(_movementMutex);
 
     if (!_movementPath.empty() && HasReachedDestination())
     {
@@ -463,7 +463,7 @@ void GroupCoordination::UpdateCombatTactics()
 
 float GroupCoordination::AssessFormationCompliance()
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     if (_formation.empty())
         return 1.0f;
@@ -481,7 +481,7 @@ float GroupCoordination::AssessFormationCompliance()
 
 void GroupCoordination::OptimizeTargetAssignments()
 {
-    std::lock_guard<std::mutex> lock(_targetMutex);
+    std::lock_guard<std::recursive_mutex> lock(_targetMutex);
 
     // Assign targets based on priority and member capabilities
     auto priorityList = GetTargetPriorityList();
@@ -527,7 +527,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
         case CoordinationCommand::SPREAD_OUT:
             // Increase formation spacing
             {
-                std::lock_guard<std::mutex> lock(_formationMutex);
+                std::lock_guard<std::recursive_mutex> lock(_formationMutex);
                 for (auto& slot : _formation)
                 {
                     slot.maxDistance *= 1.5f; // Increase spacing
@@ -538,7 +538,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
         case CoordinationCommand::STACK_UP:
             // Decrease formation spacing
             {
-                std::lock_guard<std::mutex> lock(_formationMutex);
+                std::lock_guard<std::recursive_mutex> lock(_formationMutex);
                 for (auto& slot : _formation)
                 {
                     slot.maxDistance *= 0.7f; // Decrease spacing

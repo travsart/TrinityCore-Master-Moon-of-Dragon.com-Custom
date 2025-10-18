@@ -231,11 +231,11 @@ private:
 
 private:
     std::priority_queue<CombatEvent> _eventQueue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     std::unordered_map<CombatEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers;
-    mutable std::mutex _subscriberMutex;
+    mutable std::recursive_mutex _subscriberMutex;
 
     std::atomic<uint32_t> _maxQueueSize{10000};
     std::atomic<uint32_t> _eventTTLMs{5000};  // Combat events expire faster (5s vs 30s)

@@ -78,7 +78,7 @@ public:
      */
     std::shared_ptr<SubscriptionHandle> Subscribe(EventHandler handler, EventPredicate predicate = nullptr)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         Subscriber sub;
         sub.id = ++_nextSubscriptionId;
@@ -95,7 +95,7 @@ public:
      */
     void Unsubscribe(uint32 subscriptionId)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         _subscribers.erase(
             std::remove_if(_subscribers.begin(), _subscribers.end(),
@@ -110,7 +110,7 @@ public:
      */
     void PublishEvent(EventType const& event)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         for (auto const& subscriber : _subscribers)
         {
@@ -128,7 +128,7 @@ public:
      */
     size_t GetSubscriberCount() const
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         return _subscribers.size();
     }
 
@@ -137,7 +137,7 @@ public:
      */
     void ClearSubscribers()
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         _subscribers.clear();
     }
 
@@ -151,7 +151,7 @@ private:
 
     std::vector<Subscriber> _subscribers;
     uint32 _nextSubscriptionId = 0;
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 };
 
 } // namespace Playerbot

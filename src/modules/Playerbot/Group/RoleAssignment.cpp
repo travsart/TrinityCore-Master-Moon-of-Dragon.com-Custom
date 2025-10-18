@@ -37,7 +37,7 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
     if (!group)
         return false;
 
-    std::lock_guard<std::mutex> lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
     _groupStrategies[groupId] = strategy;
@@ -102,7 +102,7 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
     if (!group)
         return false;
 
-    std::lock_guard<std::mutex> lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
     if (!player)
@@ -135,7 +135,7 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
     if (!group)
         return false;
 
-    std::lock_guard<std::mutex> lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     auto it1 = _playerProfiles.find(player1Guid);
     auto it2 = _playerProfiles.find(player2Guid);
@@ -230,7 +230,7 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
     if (!group)
         return composition;
 
-    std::lock_guard<std::mutex> lock(_assignmentMutex);
+    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
 
     // Count assigned roles
     for (GroupReference const& itr : group->GetMembers())
@@ -618,7 +618,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
 float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role)
 {
-    std::lock_guard<std::mutex> lock(_performanceMutex);
+    std::lock_guard<std::recursive_mutex> lock(_performanceMutex);
 
     auto playerIt = _rolePerformance.find(playerGuid);
     if (playerIt == _rolePerformance.end())

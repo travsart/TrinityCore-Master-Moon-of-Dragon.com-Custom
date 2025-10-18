@@ -146,7 +146,7 @@ private:
 
     // Event processing (TBB removed - using std:: equivalents)
     std::queue<LifecycleEventInfo> _eventQueue;
-    mutable std::mutex _eventQueueMutex;
+    mutable std::recursive_mutex _eventQueueMutex;
 
     // Thread management
     std::unique_ptr<std::thread> _workerThread;
@@ -210,7 +210,7 @@ private:
     // Correlation tracking
     std::string GenerateCorrelationId();
     std::unordered_map<std::string, std::vector<LifecycleEventInfo>> _correlatedEvents;
-    mutable std::mutex _correlationMutex;
+    mutable std::recursive_mutex _correlationMutex;
 };
 
 // Lifecycle event logging macros

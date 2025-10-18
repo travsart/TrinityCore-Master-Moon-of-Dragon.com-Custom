@@ -55,7 +55,7 @@ void InstanceCoordination::InitializeInstanceCoordination(Group* group, Map* ins
         return;
     }
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
     uint32 instanceId = instanceMap->GetInstanceId();
@@ -122,7 +122,7 @@ void InstanceCoordination::HandleInstanceCompletion(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -157,7 +157,7 @@ void InstanceCoordination::HandleInstanceFailure(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -194,7 +194,7 @@ void InstanceCoordination::CoordinateGroupMovement(Group* group, const Position&
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -218,7 +218,7 @@ void InstanceCoordination::MaintainDungeonFormation(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -287,7 +287,7 @@ void InstanceCoordination::AdaptFormationToTerrain(Group* group, const Position&
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -440,7 +440,7 @@ void InstanceCoordination::CoordinateResourceUsage(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -776,7 +776,7 @@ void InstanceCoordination::ResolveeLootConflicts(Group* group, uint32 itemId)
 
 InstanceCoordination::InstanceProgress InstanceCoordination::GetInstanceProgress(uint32 groupId)
 {
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     auto progressItr = _instanceProgress.find(groupId);
     if (progressItr != _instanceProgress.end())
@@ -791,7 +791,7 @@ void InstanceCoordination::UpdateInstanceProgress(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -866,7 +866,7 @@ void InstanceCoordination::PlanInstanceRoute(Group* group, const std::vector<uin
     if (!group || objectiveIds.empty())
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -892,7 +892,7 @@ void InstanceCoordination::UpdateNavigationRoute(Group* group, const Position& c
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -946,7 +946,7 @@ Position InstanceCoordination::GetNextWaypoint(Group* group)
     if (!group)
         return Position();
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -1100,7 +1100,7 @@ void InstanceCoordination::HandlePlayerIncapacitation(Group* group, Player* inca
 
 InstanceCoordination::CoordinationMetrics InstanceCoordination::GetGroupCoordinationMetrics(uint32 groupId)
 {
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     auto metricsItr = _groupMetrics.find(groupId);
     if (metricsItr != _groupMetrics.end())
@@ -1271,7 +1271,7 @@ void InstanceCoordination::SetCoordinationPrecision(uint32 groupId, float precis
 
 void InstanceCoordination::SetFormationStyle(uint32 groupId, const std::string& formationStyle)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     auto formationItr = _groupFormations.find(groupId);
     if (formationItr != _groupFormations.end())
@@ -1294,7 +1294,7 @@ void InstanceCoordination::EnableAdvancedCoordination(uint32 groupId, bool enabl
 
 void InstanceCoordination::SetCommunicationLevel(uint32 groupId, uint32 level)
 {
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     auto stateItr = _coordinationStates.find(groupId);
     if (stateItr != _coordinationStates.end())
@@ -1393,7 +1393,7 @@ void InstanceCoordination::ResetCoordinationState(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 
@@ -1456,7 +1456,7 @@ void InstanceCoordination::UpdateGroupCoordination(Group* group, uint32 diff)
 
 void InstanceCoordination::CleanupInactiveCoordinations()
 {
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     // Remove coordination data for inactive groups
     std::vector<uint32> inactiveGroups;
@@ -1585,7 +1585,7 @@ void InstanceCoordination::ProcessPendingActions(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
 

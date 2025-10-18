@@ -249,11 +249,11 @@ private:
     std::unordered_map<uint32, PlayerRoleProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, GroupComposition> _groupCompositions; // groupId -> composition
     std::unordered_map<uint32, RoleAssignmentStrategy> _groupStrategies; // groupId -> strategy
-    mutable std::mutex _assignmentMutex;
+    mutable std::recursive_mutex _assignmentMutex;
 
     // Role performance tracking
     std::unordered_map<uint32, std::unordered_map<GroupRole, RolePerformance>> _rolePerformance; // playerGuid -> role -> performance
-    mutable std::mutex _performanceMutex;
+    mutable std::recursive_mutex _performanceMutex;
 
     // Content-specific requirements
     std::unordered_map<uint32, std::unordered_map<GroupRole, uint32>> _contentRequirements; // contentId -> role requirements

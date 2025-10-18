@@ -249,13 +249,13 @@ namespace Playerbot
 
         // Sync queue for async-to-sync bridge
         std::queue<std::shared_ptr<SyncRequest>> _syncQueue;
-        mutable std::mutex _syncQueueMutex;
+        mutable std::recursive_mutex _syncQueueMutex;
         std::condition_variable _syncQueueCV;
 
         // Thread tracking
         std::thread::id _mainThreadId;
         std::unordered_set<std::thread::id> _asyncThreadIds;
-        mutable std::mutex _threadMutex;
+        mutable std::recursive_mutex _threadMutex;
 
         // Metrics
         mutable Metrics _metrics;

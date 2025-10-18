@@ -210,7 +210,7 @@ private:
 
     // Pre-created account pool for instant availability
     std::queue<uint32> _accountPool;
-    mutable std::mutex _poolMutex;
+    mutable std::recursive_mutex _poolMutex;
 
     // Email generation
     std::atomic<uint32> _emailCounter{1};
@@ -241,7 +241,7 @@ private:
         std::chrono::steady_clock::time_point submitTime;
     };
     std::queue<PendingCallback> _pendingCallbacks;
-    mutable std::mutex _callbackMutex;
+    mutable std::recursive_mutex _callbackMutex;
 };
 
 } // namespace Playerbot

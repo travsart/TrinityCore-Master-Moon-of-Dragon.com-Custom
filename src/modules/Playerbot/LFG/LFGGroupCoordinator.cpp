@@ -70,8 +70,8 @@ void LFGGroupCoordinator::Shutdown()
 {
     TC_LOG_INFO("server.loading", "Shutting down LFG Group Coordinator...");
 
-    std::lock_guard<std::mutex> lockTeleport(_teleportMutex);
-    std::lock_guard<std::mutex> lockGroup(_groupMutex);
+    std::lock_guard<std::recursive_mutex> lockTeleport(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lockGroup(_groupMutex);
 
     _pendingTeleports.clear();
     _groupFormations.clear();
@@ -102,7 +102,7 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
 
     // Track group formation
     {
-        std::lock_guard<std::mutex> lock(_groupMutex);
+        std::lock_guard<std::recursive_mutex> lock(_groupMutex);
 
         GroupFormationInfo& info = _groupFormations[groupGuid];
         info.groupGuid = groupGuid;
@@ -145,7 +145,7 @@ bool LFGGroupCoordinator::OnGroupReady(ObjectGuid groupGuid)
 
     uint32 dungeonId = 0;
     {
-        std::lock_guard<std::mutex> lock(_groupMutex);
+        std::lock_guard<std::recursive_mutex> lock(_groupMutex);
         auto itr = _groupFormations.find(groupGuid);
         if (itr == _groupFormations.end())
         {
@@ -348,7 +348,7 @@ bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, fl
 
 void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId, uint32 timestamp)
 {
-    std::lock_guard<std::mutex> lock(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
 
     TeleportInfo& info = _pendingTeleports[playerGuid];
     info.playerGuid = playerGuid;
@@ -362,7 +362,7 @@ void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId,
 
 void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
     if (itr != _pendingTeleports.end())
@@ -374,13 +374,13 @@ void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 
 bool LFGGroupCoordinator::HasPendingTeleport(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
     return _pendingTeleports.find(playerGuid) != _pendingTeleports.end();
 }
 
 uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
     if (itr != _pendingTeleports.end())
@@ -395,7 +395,7 @@ uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) con
 
 void LFGGroupCoordinator::ProcessTeleportTimeouts()
 {
-    std::lock_guard<std::mutex> lock(_teleportMutex);
+    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
 
     uint32 currentTime = getMSTime();
     std::vector<ObjectGuid> timedOut;

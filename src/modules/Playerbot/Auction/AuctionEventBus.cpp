@@ -187,7 +187,7 @@ bool AuctionEventBus::PublishEvent(AuctionEvent const& event)
 
     // Update statistics
     {
-        std::lock_guard<std::mutex> lock(_subscriberMutex);
+        std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
         ++_eventCounts[event.type];
         ++_totalEventsPublished;
     }
@@ -204,7 +204,7 @@ void AuctionEventBus::Subscribe(BotAI* subscriber, std::vector<AuctionEventType>
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto type : types)
     {
@@ -223,7 +223,7 @@ void AuctionEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
@@ -238,7 +238,7 @@ void AuctionEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
@@ -258,7 +258,7 @@ uint32 AuctionEventBus::SubscribeCallback(EventHandler handler, std::vector<Auct
     if (!handler)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     CallbackSubscription sub;
     sub.id = _nextCallbackId++;
@@ -275,7 +275,7 @@ uint32 AuctionEventBus::SubscribeCallback(EventHandler handler, std::vector<Auct
 
 void AuctionEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
         std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
@@ -287,14 +287,14 @@ void AuctionEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 AuctionEventBus::GetEventCount(AuctionEventType type) const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     auto it = _eventCounts.find(type);
     return it != _eventCounts.end() ? it->second : 0;
 }
 
 void AuctionEventBus::DeliverEvent(AuctionEvent const& event)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);

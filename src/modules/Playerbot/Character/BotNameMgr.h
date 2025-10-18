@@ -64,7 +64,7 @@ private:
         uint32 usedByGuid;
     };
     
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
     
     // All names indexed by ID
     std::unordered_map<uint32, NameEntry> _names;

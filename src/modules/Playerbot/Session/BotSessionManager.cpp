@@ -15,7 +15,7 @@ namespace Playerbot {
 
 // Thread-safe registry of bot AI instances
 static std::unordered_map<WorldSession*, BotAI*> s_botAIRegistry;
-static std::mutex s_botAIMutex;
+static std::recursive_mutex s_botAIMutex;
 
 void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
 {
@@ -56,7 +56,7 @@ void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
     if (!session || !ai)
         return;
 
-    std::lock_guard<std::mutex> lock(s_botAIMutex);
+    std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
     s_botAIRegistry[session] = ai;
 
     TC_LOG_DEBUG("module.playerbot.session",
@@ -68,7 +68,7 @@ void BotSessionManager::UnregisterBotAI(WorldSession* session)
     if (!session)
         return;
 
-    std::lock_guard<std::mutex> lock(s_botAIMutex);
+    std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
     auto it = s_botAIRegistry.find(session);
     if (it != s_botAIRegistry.end())
     {
@@ -106,7 +106,7 @@ void BotSessionManager::ProcessBotAI(WorldSession* session, uint32 diff)
     // Get registered AI
     BotAI* ai = nullptr;
     {
-        std::lock_guard<std::mutex> lock(s_botAIMutex);
+        std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
         auto it = s_botAIRegistry.find(session);
         if (it != s_botAIRegistry.end())
             ai = it->second;

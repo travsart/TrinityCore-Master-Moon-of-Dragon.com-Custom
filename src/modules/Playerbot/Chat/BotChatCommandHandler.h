@@ -461,9 +461,9 @@ private:
     static inline std::atomic<uint32> _maxConcurrentCommands{5};
     static inline std::atomic<bool> _debugLogging{false};
     static inline Statistics _statistics;
-    static inline std::mutex _commandsMutex;
-    static inline std::mutex _cooldownsMutex;
-    static inline std::mutex _llmMutex;
+    static inline std::recursive_mutex _commandsMutex;
+    static inline std::recursive_mutex _cooldownsMutex;
+    static inline std::recursive_mutex _llmMutex;
 };
 
 } // namespace Playerbot

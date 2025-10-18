@@ -42,7 +42,7 @@ ArenaAI::ArenaAI()
 
 void ArenaAI::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "ArenaAI: Initializing arena systems...");
 
@@ -155,7 +155,7 @@ void ArenaAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Update match state
     UpdateMatchState(player);
@@ -196,7 +196,7 @@ void ArenaAI::OnMatchStart(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -216,7 +216,7 @@ void ArenaAI::OnMatchEnd(::Player* player, bool won)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -255,7 +255,7 @@ void ArenaAI::AnalyzeTeamComposition(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -754,7 +754,7 @@ void ArenaAI::SignalBurst(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     _burstReady[playerGuid] = true;
@@ -922,7 +922,7 @@ void ArenaAI::Execute3v3TripleDPS(::Player* player)
         player->SetSelection(target->GetGUID());
 
         // Save target as focus
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         _focusTargets[player->GetGUID().GetCounter()] = target->GetGUID();
     }
 }
@@ -1039,7 +1039,7 @@ ArenaMatchState ArenaAI::GetMatchState(::Player* player) const
     if (!player)
         return ArenaMatchState();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_matchStates.count(playerGuid))
@@ -1053,7 +1053,7 @@ void ArenaAI::UpdateMatchState(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!_matchStates.count(playerGuid))
@@ -1108,13 +1108,13 @@ uint32 ArenaAI::GetMatchDuration(::Player* player) const
 
 void ArenaAI::SetArenaProfile(uint32 playerGuid, ArenaProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -1128,7 +1128,7 @@ ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 
 ArenaAI::ArenaMetrics const& ArenaAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {

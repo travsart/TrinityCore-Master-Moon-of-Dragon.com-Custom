@@ -291,7 +291,7 @@ private:
     std::unordered_map<uint32, std::vector<QuestProgressData>> _botQuestProgress; // botGuid -> quests
     std::unordered_map<uint32, QuestCompletionStrategy> _botStrategies;
     std::unordered_map<uint32, QuestCompletionMetrics> _botMetrics;
-    mutable std::mutex _completionMutex;
+    mutable std::recursive_mutex _completionMutex;
 
     // Objective execution state
     std::unordered_map<uint32, uint32> _botCurrentObjective; // botGuid -> objectiveIndex
@@ -301,7 +301,7 @@ private:
     // Group coordination data
     std::unordered_map<uint32, std::vector<uint32>> _groupQuestSharing; // groupId -> questIds
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _groupObjectiveSync; // groupId -> questId -> syncTime
-    mutable std::mutex _groupMutex;
+    mutable std::recursive_mutex _groupMutex;
 
     // Performance tracking
     QuestCompletionMetrics _globalMetrics;

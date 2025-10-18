@@ -211,7 +211,7 @@ private:
 
     // Callback management
     EntryCallback _callback;
-    mutable std::mutex _callbackMutex;
+    mutable std::recursive_mutex _callbackMutex;
 
     // Error handling
     uint32 _retryCount;
@@ -222,7 +222,7 @@ private:
     static constexpr auto PHASE_TIMEOUT = std::chrono::seconds(10);
 
     // Thread safety
-    mutable std::mutex _stateMutex;
+    mutable std::recursive_mutex _stateMutex;
 };
 
 /**
@@ -274,7 +274,7 @@ private:
     // Queue management
     std::queue<std::shared_ptr<BotWorldEntry>> _pendingQueue;
     std::vector<std::shared_ptr<BotWorldEntry>> _activeEntries;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     // Statistics
     std::atomic<uint32> _totalCompleted{0};

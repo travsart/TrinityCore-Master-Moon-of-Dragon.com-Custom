@@ -179,7 +179,7 @@ private:
     std::unordered_map<uint32, std::vector<uint32>> _zoneVendorCache; // zoneId -> vendorGuids
     std::unordered_map<VendorType, std::vector<uint32>> _typeVendorCache; // type -> vendorGuids
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _vendorInventoryCache; // vendorGuid -> itemId -> stock
-    mutable std::mutex _vendorCacheMutex;
+    mutable std::recursive_mutex _vendorCacheMutex;
 
     // Player strategies
     std::unordered_map<uint32, BuyingStrategy> _playerBuyingStrategies; // playerGuid -> strategy

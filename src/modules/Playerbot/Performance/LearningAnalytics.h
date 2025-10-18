@@ -215,11 +215,11 @@ private:
         static constexpr size_t MAX_DATA_POINTS = 10000;
     };
 
-    mutable std::mutex _dataMutex;
+    mutable std::recursive_mutex _dataMutex;
     std::unordered_map<uint32_t, std::unique_ptr<BotLearningData>> _botData;
 
     // Experiments
-    mutable std::mutex _experimentsMutex;
+    mutable std::recursive_mutex _experimentsMutex;
     std::unordered_map<std::string, ExperimentResult> _experiments;
     std::unordered_map<std::string, std::chrono::steady_clock::time_point> _activeExperiments;
 

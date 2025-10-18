@@ -939,7 +939,7 @@ bool QuestValidation::ValidateQuestDifficulty(uint32 questId, Player* bot)
 
 QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     uint64_t key = ((uint64_t)questId << 32) | botGuid;
     auto it = _validationCache.find(key);
@@ -954,7 +954,7 @@ QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 qu
 
 void QuestValidation::CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result)
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     uint64_t key = ((uint64_t)questId << 32) | botGuid;
     ValidationResult cached = result;
@@ -964,7 +964,7 @@ void QuestValidation::CacheValidationResult(uint32 questId, uint32 botGuid, cons
 
 void QuestValidation::InvalidateValidationCache(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     // Remove all entries for this bot
     auto it = _validationCache.begin();
@@ -980,7 +980,7 @@ void QuestValidation::InvalidateValidationCache(uint32 botGuid)
 
 void QuestValidation::CleanupExpiredCache()
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     uint32 now = getMSTime();
     auto it = _validationCache.begin();

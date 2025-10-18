@@ -154,7 +154,7 @@ private:
     bool IsInMediumPriorityActivity(Player* bot) const;
 
     // Metrics storage
-    mutable std::mutex _metricsMutex;
+    mutable std::recursive_mutex _metricsMutex;
     std::unordered_map<ObjectGuid, BotUpdateMetrics> _botMetrics;
 
     // Configuration (loaded from playerbots.conf)

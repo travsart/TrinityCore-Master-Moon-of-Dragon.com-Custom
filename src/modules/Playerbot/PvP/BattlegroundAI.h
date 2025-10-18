@@ -498,7 +498,7 @@ private:
     std::unordered_map<uint32, BGMetrics> _playerMetrics;
     BGMetrics _globalMetrics;
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Update intervals
     static constexpr uint32 BG_UPDATE_INTERVAL = 500;  // 500ms

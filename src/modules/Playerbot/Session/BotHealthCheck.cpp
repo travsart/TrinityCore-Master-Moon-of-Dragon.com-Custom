@@ -41,17 +41,17 @@ void BotHealthCheck::Shutdown()
     LogDetailedHealthStatus();
 
     {
-        std::lock_guard<std::mutex> lock1(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock1(_stalledBotsMutex);
         _stalledBots.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock2(_errorsMutex);
+        std::lock_guard<std::recursive_mutex> lock2(_errorsMutex);
         _recentErrors.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock3(_healthIssuesMutex);
+        std::lock_guard<std::recursive_mutex> lock3(_healthIssuesMutex);
         _healthIssues.clear();
     }
 
@@ -104,7 +104,7 @@ void BotHealthCheck::CheckForStalledBots(uint32 currentTime)
     if (stalledBots.empty())
     {
         // Clear previously stalled bots if they recovered
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
         if (!_stalledBots.empty())
         {
             TC_LOG_INFO("module.playerbot.health", "All previously stalled bots have recovered");
@@ -115,7 +115,7 @@ void BotHealthCheck::CheckForStalledBots(uint32 currentTime)
 
     // Update stalled bots set
     {
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
 
         // Find new stalls
         for (ObjectGuid guid : stalledBots)
@@ -150,19 +150,19 @@ void BotHealthCheck::CheckForStalledBots(uint32 currentTime)
 
 std::vector<ObjectGuid> BotHealthCheck::GetStalledBots() const
 {
-    std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
     return std::vector<ObjectGuid>(_stalledBots.begin(), _stalledBots.end());
 }
 
 bool BotHealthCheck::IsBotStalled(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
     return _stalledBots.find(botGuid) != _stalledBots.end();
 }
 
 void BotHealthCheck::CheckForDeadlocks(uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_heartbeatMutex);
+    std::lock_guard<std::recursive_mutex> lock(_heartbeatMutex);
 
     uint32 timeSinceHeartbeat = currentTime - _lastHeartbeatTime;
 
@@ -199,13 +199,13 @@ void BotHealthCheck::CheckForDeadlocks(uint32 currentTime)
 
 uint32 BotHealthCheck::GetTimeSinceLastProgress() const
 {
-    std::lock_guard<std::mutex> lock(_heartbeatMutex);
+    std::lock_guard<std::recursive_mutex> lock(_heartbeatMutex);
     return getMSTime() - _lastHeartbeatTime;
 }
 
 void BotHealthCheck::RecordHeartbeat(uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_heartbeatMutex);
+    std::lock_guard<std::recursive_mutex> lock(_heartbeatMutex);
     _lastHeartbeatTime = currentTime;
 
     // Clear deadlock flag if set
@@ -218,7 +218,7 @@ void BotHealthCheck::RecordHeartbeat(uint32 currentTime)
 
 void BotHealthCheck::RecordError(ObjectGuid botGuid, std::string const& errorType)
 {
-    std::lock_guard<std::mutex> lock(_errorsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_errorsMutex);
 
     ErrorRecord error;
     error.botGuid = botGuid;
@@ -236,7 +236,7 @@ void BotHealthCheck::RecordError(ObjectGuid botGuid, std::string const& errorTyp
 
 float BotHealthCheck::GetSystemErrorRate() const
 {
-    std::lock_guard<std::mutex> lock(_errorsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_errorsMutex);
 
     if (_recentErrors.empty())
         return 0.0f;
@@ -265,7 +265,7 @@ HealthStatus BotHealthCheck::GetSystemHealth() const
 
     // CRITICAL: Large number of stalled bots
     {
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
         if (_stalledBots.size() > 50)
             return HealthStatus::CRITICAL;
     }
@@ -276,7 +276,7 @@ HealthStatus BotHealthCheck::GetSystemHealth() const
 
     // DEGRADED: Some bots stalled or moderate errors
     {
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
         if (!_stalledBots.empty())
             return HealthStatus::DEGRADED;
     }
@@ -308,7 +308,7 @@ HealthStatus BotHealthCheck::GetBotHealth(ObjectGuid botGuid) const
 
 std::vector<HealthCheckResult> BotHealthCheck::GetRecentHealthIssues() const
 {
-    std::lock_guard<std::mutex> lock(_healthIssuesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_healthIssuesMutex);
     return _healthIssues;
 }
 
@@ -342,7 +342,7 @@ void BotHealthCheck::TriggerSystemRecovery()
     // System recovery actions:
     // 1. Clear all stalled bot flags
     {
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
         _stalledBots.clear();
     }
 
@@ -359,24 +359,24 @@ void BotHealthCheck::TriggerSystemRecovery()
 
 void BotHealthCheck::ClearStalledBot(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
     _stalledBots.erase(botGuid);
 }
 
 void BotHealthCheck::ClearAllHealthIssues()
 {
     {
-        std::lock_guard<std::mutex> lock1(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock1(_stalledBotsMutex);
         _stalledBots.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock2(_errorsMutex);
+        std::lock_guard<std::recursive_mutex> lock2(_errorsMutex);
         _recentErrors.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock3(_healthIssuesMutex);
+        std::lock_guard<std::recursive_mutex> lock3(_healthIssuesMutex);
         _healthIssues.clear();
     }
 
@@ -395,7 +395,7 @@ void BotHealthCheck::LogHealthReport() const
     TC_LOG_INFO("module.playerbot.health",
         "System Health: {}", healthStr[static_cast<uint8>(systemHealth)]);
 
-    std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
     if (!_stalledBots.empty())
     {
         TC_LOG_WARN("module.playerbot.health",
@@ -430,7 +430,7 @@ void BotHealthCheck::LogDetailedHealthStatus() const
 
     // Stall status
     {
-        std::lock_guard<std::mutex> lock(_stalledBotsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_stalledBotsMutex);
         TC_LOG_INFO("module.playerbot.health",
             "Stalled Bots: {} | Threshold: {}ms",
             _stalledBots.size(), _stallThresholdMs);
@@ -438,7 +438,7 @@ void BotHealthCheck::LogDetailedHealthStatus() const
 
     // Deadlock status
     {
-        std::lock_guard<std::mutex> lock(_heartbeatMutex);
+        std::lock_guard<std::recursive_mutex> lock(_heartbeatMutex);
         uint32 timeSinceHeartbeat = getMSTime() - _lastHeartbeatTime;
         TC_LOG_INFO("module.playerbot.health",
             "Deadlock Status: {} | Time since heartbeat: {}ms | Threshold: {}ms",
@@ -448,7 +448,7 @@ void BotHealthCheck::LogDetailedHealthStatus() const
 
     // Error status
     {
-        std::lock_guard<std::mutex> lock(_errorsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_errorsMutex);
         float errorRate = GetSystemErrorRate();
         TC_LOG_INFO("module.playerbot.health",
             "Error Rate: {:.2f} errors/sec | Recent Errors: {} | Threshold: {:.2f} errors/sec",
@@ -457,7 +457,7 @@ void BotHealthCheck::LogDetailedHealthStatus() const
 
     // Recent health issues
     {
-        std::lock_guard<std::mutex> lock(_healthIssuesMutex);
+        std::lock_guard<std::recursive_mutex> lock(_healthIssuesMutex);
         if (!_healthIssues.empty())
         {
             TC_LOG_INFO("module.playerbot.health",
@@ -480,7 +480,7 @@ void BotHealthCheck::LogDetailedHealthStatus() const
 
 void BotHealthCheck::AddHealthIssue(HealthStatus status, std::string const& component, std::string const& message, uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_healthIssuesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_healthIssuesMutex);
 
     HealthCheckResult issue;
     issue.status = status;
@@ -495,7 +495,7 @@ void BotHealthCheck::AddHealthIssue(HealthStatus status, std::string const& comp
 
 void BotHealthCheck::PruneOldErrors(uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_errorsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_errorsMutex);
 
     // Remove errors older than ERROR_HISTORY_DURATION_MS
     _recentErrors.erase(

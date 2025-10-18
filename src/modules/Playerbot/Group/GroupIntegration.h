@@ -87,7 +87,7 @@ private:
     // Integration data
     static std::unordered_map<uint32, uint32> _groupToPlayerbotGroup; // core group id -> playerbot group id
     static std::unordered_map<uint32, RegularGroupScenario> _groupScenarios;
-    static std::mutex _integrationMutex;
+    static std::recursive_mutex _integrationMutex;
 
     // Helper functions
     static uint32 CreatePlayerbotGroupForCoreGroup(Group* coreGroup);
@@ -166,7 +166,7 @@ private:
     };
 
     static std::unordered_map<uint32, QuestGroupData> _activeQuestGroups; // questId -> data
-    static std::mutex _questGroupMutex;
+    static std::recursive_mutex _questGroupMutex;
 };
 
 } // namespace Playerbot

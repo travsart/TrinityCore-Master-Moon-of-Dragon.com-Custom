@@ -163,7 +163,7 @@ private:
     std::unordered_map<uint32, LootSession> _activeSessions; // sessionId -> session
     std::unordered_map<uint32, LootCoordinationMetrics> _groupMetrics; // groupId -> metrics
     std::atomic<uint32> _nextSessionId{1};
-    mutable std::mutex _coordinationMutex;
+    mutable std::recursive_mutex _coordinationMutex;
 
     // Group coordination state
     struct GroupCoordinationState

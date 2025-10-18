@@ -57,7 +57,7 @@ bool DungeonBehavior::EnterDungeon(Group* group, uint32 dungeonId)
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     // Check if dungeon data exists
     auto dungeonItr = _dungeonDatabase.find(dungeonId);
@@ -117,7 +117,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -228,7 +228,7 @@ void DungeonBehavior::HandleDungeonCompletion(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -268,7 +268,7 @@ void DungeonBehavior::HandleDungeonWipe(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -309,7 +309,7 @@ void DungeonBehavior::StartEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -372,7 +372,7 @@ void DungeonBehavior::CompleteEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -414,7 +414,7 @@ void DungeonBehavior::HandleEncounterWipe(Group* group, uint32 encounterId)
         group->GetGUID().GetCounter(), encounter.encounterName);
 
     // Record failed encounter
-    std::lock_guard<std::mutex> lock(_dungeonMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr != _groupDungeonStates.end())
     {

@@ -225,7 +225,7 @@ private:
         std::atomic<uint64> primaryTarget{0};
         std::atomic<uint32> activeThreatTargets{0};
         void UpdateThreat(uint64 targetGuid, float threat) {
-            std::lock_guard<std::mutex> lock(threatMutex);
+            std::lock_guard<std::recursive_mutex> lock(threatMutex);
             auto& target = targets[targetGuid];
             target.guid = targetGuid;
             target.threatLevel = threat;
@@ -244,7 +244,7 @@ private:
                 target.priority = GuardianThreatPriority::EXCESS;
         }
         GuardianThreatTarget* GetHighestPriorityTarget() {
-            std::lock_guard<std::mutex> lock(threatMutex);
+            std::lock_guard<std::recursive_mutex> lock(threatMutex);
             GuardianThreatTarget* highestPriority = nullptr;
             for (auto& [guid, target] : targets) {
                 if (!highestPriority || target.priority < highestPriority->priority)
@@ -253,7 +253,7 @@ private:
             return highestPriority;
         }
         uint32 GetTargetCount(GuardianThreatPriority priority) const {
-            std::lock_guard<std::mutex> lock(threatMutex);
+            std::lock_guard<std::recursive_mutex> lock(threatMutex);
             uint32 count = 0;
             for (const auto& [guid, target] : targets) {
                 if (target.priority == priority)
@@ -269,12 +269,12 @@ private:
         std::unordered_map<uint64, uint32> expiry;
         mutable std::recursive_mutex lacerateMutex;
         void UpdateLacerate(uint64 targetGuid, uint32 stackCount, uint32 duration) {
-            std::lock_guard<std::mutex> lock(lacerateMutex);
+            std::lock_guard<std::recursive_mutex> lock(lacerateMutex);
             stacks[targetGuid] = stackCount;
             expiry[targetGuid] = getMSTime() + duration;
         }
         uint32 GetStacks(uint64 targetGuid) const {
-            std::lock_guard<std::mutex> lock(lacerateMutex);
+            std::lock_guard<std::recursive_mutex> lock(lacerateMutex);
             auto it = stacks.find(targetGuid);
             if (it != stacks.end()) {
                 uint32 currentTime = getMSTime();
@@ -285,7 +285,7 @@ private:
             return 0;
         }
         uint32 GetTimeRemaining(uint64 targetGuid) const {
-            std::lock_guard<std::mutex> lock(lacerateMutex);
+            std::lock_guard<std::recursive_mutex> lock(lacerateMutex);
             auto it = expiry.find(targetGuid);
             if (it != expiry.end()) {
                 uint32 currentTime = getMSTime();

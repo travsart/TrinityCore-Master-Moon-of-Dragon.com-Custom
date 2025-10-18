@@ -234,7 +234,7 @@ private:
     std::unordered_map<BenchmarkType, std::vector<BenchmarkResult>> _benchmarkHistory;
     std::unordered_map<BenchmarkType, BenchmarkResult> _performanceBaseline;
     std::queue<PerformanceSnapshot> _performanceHistory;
-    mutable std::mutex _benchmarkMutex;
+    mutable std::recursive_mutex _benchmarkMutex;
 
     // Performance targets
     struct PerformanceTargets

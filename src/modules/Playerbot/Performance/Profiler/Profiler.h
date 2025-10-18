@@ -94,7 +94,7 @@ public:
 
 private:
     std::unordered_map<std::string, SectionData> _sections;
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     std::atomic<bool> _enabled{false};
     std::atomic<uint32> _samplingRate{10};

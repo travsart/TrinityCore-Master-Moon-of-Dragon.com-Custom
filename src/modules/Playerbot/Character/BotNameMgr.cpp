@@ -40,7 +40,7 @@ bool BotNameMgr::Initialize()
 
 void BotNameMgr::Shutdown()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _names.clear();
     _availableMaleNames.clear();
     _availableFemaleNames.clear();
@@ -51,7 +51,7 @@ void BotNameMgr::Shutdown()
 
 std::string BotNameMgr::AllocateName(uint8 gender, uint32 characterGuid)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     // Check if character already has a name
     auto it = _guidToNameId.find(characterGuid);
@@ -132,7 +132,7 @@ std::string BotNameMgr::AllocateName(uint8 gender, uint32 characterGuid)
 
 void BotNameMgr::ReleaseName(uint32 characterGuid)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     auto it = _guidToNameId.find(characterGuid);
     if (it == _guidToNameId.end())
@@ -178,7 +178,7 @@ void BotNameMgr::ReleaseName(uint32 characterGuid)
 
 void BotNameMgr::ReleaseName(std::string const& name)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     auto it = _nameToId.find(name);
     if (it == _nameToId.end())
@@ -198,7 +198,7 @@ void BotNameMgr::ReleaseName(std::string const& name)
 
 bool BotNameMgr::IsNameAvailable(std::string const& name) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     auto it = _nameToId.find(name);
     if (it == _nameToId.end())
@@ -213,7 +213,7 @@ bool BotNameMgr::IsNameAvailable(std::string const& name) const
 
 std::string BotNameMgr::GetCharacterName(uint32 characterGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     auto it = _guidToNameId.find(characterGuid);
     if (it == _guidToNameId.end())
@@ -228,7 +228,7 @@ std::string BotNameMgr::GetCharacterName(uint32 characterGuid) const
 
 uint32 BotNameMgr::GetAvailableNameCount(uint8 gender) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     if (gender == 0)
         return _availableMaleNames.size();
@@ -240,13 +240,13 @@ uint32 BotNameMgr::GetAvailableNameCount(uint8 gender) const
 
 uint32 BotNameMgr::GetTotalNameCount() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _names.size();
 }
 
 uint32 BotNameMgr::GetUsedNameCount() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _guidToNameId.size();
 }
 
@@ -254,7 +254,7 @@ void BotNameMgr::ReloadNames()
 {
     TC_LOG_INFO("module.playerbot.names", "Reloading name pool from database");
     
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     
     // Clear current data
     _names.clear();

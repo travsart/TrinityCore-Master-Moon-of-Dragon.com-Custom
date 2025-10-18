@@ -156,7 +156,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
     // Use parallel execution for large batches
     if (sortedRequests.size() > 100)
     {
-        std::mutex resultMutex;
+        std::recursive_mutex resultMutex;
         std::for_each(std::execution::par_unseq,
             sortedRequests.begin(), sortedRequests.end(),
             [this, &results, &resultMutex, &occupiedCells](PositionRequest* req) {

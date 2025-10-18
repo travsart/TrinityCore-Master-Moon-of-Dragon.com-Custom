@@ -33,7 +33,7 @@ Profiler::ScopedTimer::~ScopedTimer()
 
 void Profiler::RecordSection(const std::string& section, uint64 microseconds)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto& data = _sections[section];
     data.totalTime.fetch_add(microseconds, std::memory_order_relaxed);
@@ -49,7 +49,7 @@ void Profiler::RecordSection(const std::string& section, uint64 microseconds)
 
 Profiler::ProfileResults Profiler::GetResults() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ProfileResults results;
     for (const auto& [name, data] : _sections)
@@ -61,7 +61,7 @@ Profiler::ProfileResults Profiler::GetResults() const
 
 void Profiler::Reset()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _sections.clear();
 }
 

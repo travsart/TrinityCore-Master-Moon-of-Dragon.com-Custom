@@ -529,7 +529,7 @@ namespace Playerbot
         // THREAD SAFETY
         // ========================================================================
 
-        mutable std::mutex _nodeMutex;
+        mutable std::recursive_mutex _nodeMutex;
     };
 
 } // namespace Playerbot

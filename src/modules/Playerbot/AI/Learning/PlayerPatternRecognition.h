@@ -289,8 +289,8 @@ private:
 
     // System state
     bool _initialized;
-    mutable std::mutex _profilesMutex;
-    mutable std::mutex _clusterMutex;
+    mutable std::recursive_mutex _profilesMutex;
+    mutable std::recursive_mutex _clusterMutex;
 
     // Profile storage
     std::unordered_map<ObjectGuid, std::shared_ptr<PlayerProfile>> _profiles;

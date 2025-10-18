@@ -70,7 +70,7 @@ class BotSession;
  *
  * Thread Safety:
  * - All methods are thread-safe
- * - Uses std::mutex for packet queue protection
+ * - Uses std::recursive_mutex for packet queue protection
  * - Atomic flags for initialization state
  *
  * Performance:
@@ -357,7 +357,7 @@ private:
 
     // Relay opcode whitelist (thread-safe for reads after initialization)
     static inline std::unordered_set<uint32> _relayOpcodes;
-    static inline std::mutex _opcodesMutex;
+    static inline std::recursive_mutex _opcodesMutex;
 
     // Statistics
     static inline RelayStatistics _statistics;

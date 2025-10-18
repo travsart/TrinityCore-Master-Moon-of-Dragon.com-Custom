@@ -44,7 +44,7 @@ BattlegroundAI::BattlegroundAI()
 
 void BattlegroundAI::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "BattlegroundAI: Initializing battleground strategies...");
 
@@ -199,7 +199,7 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Auto-assign role if not assigned
     if (!_playerRoles.count(playerGuid))
@@ -261,7 +261,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     BGRole role = BGRole::ATTACKER; // Default
@@ -317,7 +317,7 @@ BGRole BattlegroundAI::GetPlayerRole(::Player* player) const
     if (!player)
         return BGRole::ATTACKER;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_playerRoles.count(playerGuid))
@@ -331,7 +331,7 @@ bool BattlegroundAI::SwitchRole(::Player* player, BGRole newRole)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     BGStrategyProfile profile = GetStrategyProfile(player->GetGUID().GetCounter());
     if (!profile.allowRoleSwitch)
@@ -388,7 +388,7 @@ std::vector<BGObjective> BattlegroundAI::GetActiveObjectives(::Player* player) c
     if (!player)
         return {};
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ::Battleground* bg = GetPlayerBattleground(player);
     if (!bg)
@@ -406,7 +406,7 @@ BGObjective BattlegroundAI::GetPlayerObjective(::Player* player) const
     if (!player)
         return BGObjective();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_playerObjectives.count(playerGuid))
@@ -431,7 +431,7 @@ bool BattlegroundAI::AssignObjective(::Player* player, BGObjective const& object
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     _playerObjectives[playerGuid] = objective;
@@ -447,7 +447,7 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -1173,7 +1173,7 @@ bool BattlegroundAI::CallForBackup(::Player* player, Position const& location)
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     _backupCalls[playerGuid] = {location, getMSTime()};
@@ -1296,13 +1296,13 @@ void BattlegroundAI::SwitchToAggressiveStrategy(::Player* player)
 
 void BattlegroundAI::SetStrategyProfile(uint32 playerGuid, BGStrategyProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 BGStrategyProfile BattlegroundAI::GetStrategyProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -1316,7 +1316,7 @@ BGStrategyProfile BattlegroundAI::GetStrategyProfile(uint32 playerGuid) const
 
 BattlegroundAI::BGMetrics const& BattlegroundAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {

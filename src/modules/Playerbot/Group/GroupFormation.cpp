@@ -45,7 +45,7 @@ GroupFormation::GroupFormation(uint32 groupId, FormationType type)
 
 void GroupFormation::SetFormationType(FormationType type)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     if (_formationType == type)
         return;
@@ -59,7 +59,7 @@ void GroupFormation::SetFormationType(FormationType type)
 
 void GroupFormation::SetFormationBehavior(FormationBehavior behavior)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     _behavior = behavior;
 
     // Adjust spacing based on behavior
@@ -90,7 +90,7 @@ void GroupFormation::SetFormationBehavior(FormationBehavior behavior)
 
 void GroupFormation::SetCustomFormation(const std::vector<Position>& positions)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     if (positions.size() != _members.size())
     {
@@ -109,7 +109,7 @@ void GroupFormation::SetCustomFormation(const std::vector<Position>& positions)
 
 void GroupFormation::AddMember(uint32 memberGuid, const Position& preferredPosition)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     // Check if member already exists
     for (const auto& member : _members)
@@ -139,7 +139,7 @@ void GroupFormation::AddMember(uint32 memberGuid, const Position& preferredPosit
 
 void GroupFormation::RemoveMember(uint32 memberGuid)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     _members.erase(
         std::remove_if(_members.begin(), _members.end(),
@@ -161,7 +161,7 @@ void GroupFormation::RemoveMember(uint32 memberGuid)
 
 void GroupFormation::UpdateFormation(const Position& centerPosition, float direction)
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     bool positionChanged = _formationCenter.GetExactDist(centerPosition) > FORMATION_UPDATE_THRESHOLD;
     bool directionChanged = std::abs(_formationDirection - direction) > 0.1f;
@@ -182,7 +182,7 @@ void GroupFormation::UpdateFormation(const Position& centerPosition, float direc
 
 Position GroupFormation::GetAssignedPosition(uint32 memberGuid) const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     for (const auto& member : _members)
     {
@@ -195,19 +195,19 @@ Position GroupFormation::GetAssignedPosition(uint32 memberGuid) const
 
 Position GroupFormation::GetFormationCenter() const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     return _formationCenter;
 }
 
 float GroupFormation::GetFormationRadius() const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     return _formationRadius;
 }
 
 bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     for (const auto& member : _members)
     {
@@ -226,7 +226,7 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
 
 std::vector<uint32> GroupFormation::GetMembersOutOfPosition(float tolerance) const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
     std::vector<uint32> outOfPosition;
 
     for (const auto& member : _members)
@@ -266,7 +266,7 @@ void GroupFormation::Update(uint32 diff)
 
 void GroupFormation::UpdateMetrics()
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     if (_members.empty())
         return;
@@ -299,7 +299,7 @@ void GroupFormation::UpdateMetrics()
 
 bool GroupFormation::IsFormationValid() const
 {
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     if (_members.empty())
         return false;
@@ -755,7 +755,7 @@ std::vector<Position> GroupFormation::GenerateArrowFormation(uint32 memberCount,
 void GroupFormation::PerformFormationSmoothing()
 {
     // Implement formation smoothing logic
-    std::lock_guard<std::mutex> lock(_formationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
     // Adjust positions for smoother transitions
     for (auto& member : _members)

@@ -335,7 +335,7 @@ private:
 
     // FIX #23: CRITICAL - Change to recursive_mutex to prevent deadlock
     // AutoEquipBestGear() calls GetAutomationProfile() while holding lock
-    // std::mutex does NOT support recursive locking → "resource deadlock would occur"
+    // std::recursive_mutex does NOT support recursive locking → "resource deadlock would occur"
     // std::recursive_mutex allows same thread to acquire lock multiple times
     mutable std::recursive_mutex _mutex;
 

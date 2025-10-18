@@ -169,7 +169,7 @@ private:
     float _formationDirection;
     float _formationSpacing;
     float _formationRadius;
-    mutable std::mutex _formationMutex;
+    mutable std::recursive_mutex _formationMutex;
 
     // Movement tracking
     Position _lastCenterPosition;
@@ -180,7 +180,7 @@ private:
     // Terrain and obstacle data
     std::vector<Position> _knownObstacles;
     std::unordered_map<uint32, Position> _terrainAdjustments;
-    mutable std::mutex _terrainMutex;
+    mutable std::recursive_mutex _terrainMutex;
 
     // Performance tracking
     FormationMetrics _metrics;

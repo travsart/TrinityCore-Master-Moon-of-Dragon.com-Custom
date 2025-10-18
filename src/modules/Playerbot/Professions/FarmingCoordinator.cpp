@@ -52,7 +52,7 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
     uint32 playerGuid = player->GetGUID().GetCounter();
     uint32 currentTime = getMSTime();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Check if player has active farming session
     auto sessionIt = _activeSessions.find(playerGuid);
@@ -87,7 +87,7 @@ void FarmingCoordinator::SetEnabled(::Player* player, bool enabled)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     if (_profiles.find(playerGuid) == _profiles.end())
@@ -101,7 +101,7 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _profiles.find(playerGuid);
@@ -113,13 +113,13 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
 
 void FarmingCoordinator::SetCoordinatorProfile(uint32 playerGuid, FarmingCoordinatorProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _profiles[playerGuid] = profile;
 }
 
 FarmingCoordinatorProfile FarmingCoordinator::GetCoordinatorProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _profiles.find(playerGuid);
     if (it != _profiles.end())
@@ -226,7 +226,7 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
     if (!player || !CanStartFarming(player))
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     // Check if session already active
@@ -282,7 +282,7 @@ void FarmingCoordinator::StopFarmingSession(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _activeSessions.find(playerGuid);
@@ -318,7 +318,7 @@ void FarmingCoordinator::StopFarmingSession(::Player* player)
 
 FarmingSession const* FarmingCoordinator::GetActiveFarmingSession(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _activeSessions.find(playerGuid);
     if (it != _activeSessions.end())
@@ -332,7 +332,7 @@ bool FarmingCoordinator::HasActiveFarmingSession(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _activeSessions.find(player->GetGUID().GetCounter()) != _activeSessions.end();
 }
 
@@ -420,7 +420,7 @@ FarmingZoneInfo const* FarmingCoordinator::GetOptimalFarmingZone(::Player* playe
         }
     }
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return bestZone;
 }
 
@@ -431,7 +431,7 @@ std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* play
     if (!player)
         return suitable;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _farmingZones.find(profession);
     if (it == _farmingZones.end())
@@ -520,7 +520,7 @@ std::vector<std::pair<uint32, uint32>> FarmingCoordinator::GetNeededMaterials(::
 
 FarmingStatistics const& FarmingCoordinator::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     static FarmingStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -537,7 +537,7 @@ FarmingStatistics const& FarmingCoordinator::GetGlobalStatistics() const
 
 void FarmingCoordinator::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
@@ -671,7 +671,7 @@ bool FarmingCoordinator::CanStartFarming(::Player* player) const
     //     return false;
 
     // Check farming cooldown
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _lastFarmingTimes.find(playerGuid);

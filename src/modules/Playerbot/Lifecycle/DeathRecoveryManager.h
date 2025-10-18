@@ -531,7 +531,7 @@ private:
     DeathRecoveryStatistics m_stats;
 
     // Thread safety
-    mutable std::mutex m_mutex;
+    mutable std::recursive_mutex m_mutex;
 
     // Constants
     static constexpr float CORPSE_RESURRECTION_RANGE = 39.0f;      ///< WoW corpse rez range

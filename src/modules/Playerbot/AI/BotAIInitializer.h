@@ -284,7 +284,7 @@ public:
 private:
     // Track active AIs
     static std::unordered_map<ObjectGuid, BotAI*> _activeAIs;
-    static std::mutex _aiMutex;
+    static std::recursive_mutex _aiMutex;
 };
 
 /**

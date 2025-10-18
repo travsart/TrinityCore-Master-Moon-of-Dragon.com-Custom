@@ -278,7 +278,7 @@ private:
     std::unordered_map<uint32, DungeonData> _dungeonDatabase; // dungeonId -> data
     std::unordered_map<uint32, GroupDungeonState> _groupDungeonStates; // groupId -> state
     std::unordered_map<uint32, DungeonMetrics> _groupMetrics;
-    mutable std::mutex _dungeonMutex;
+    mutable std::recursive_mutex _dungeonMutex;
 
     // Encounter tracking
     std::unordered_map<uint32, std::vector<DungeonEncounter>> _dungeonEncounters; // dungeonId -> encounters

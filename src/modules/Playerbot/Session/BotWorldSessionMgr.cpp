@@ -101,7 +101,7 @@ void BotWorldSessionMgr::Shutdown()
     sBotPerformanceMon->Shutdown();
     sBotPriorityMgr->Shutdown();
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     // Clean logout all bot sessions
     for (auto& [guid, session] : _botSessions)
@@ -133,7 +133,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     // Check if bot is already loading
     if (_botsLoading.find(playerGuid) != _botsLoading.end())
@@ -216,7 +216,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     // holding _sessionsMutex (non-recursive), causing deadlock when threads tried to
     // acquire the same mutex for cleanup (line 184). This disabled the spawner.
     //
-    // ROOT CAUSE: std::mutex is NOT recursive. Main thread holds lock, detached thread
+    // ROOT CAUSE: std::recursive_mutex is NOT recursive. Main thread holds lock, detached thread
     // tries to acquire → deadlock → "resource deadlock would occur" exception.
     //
     // NEW SOLUTION: Calculate position-based delay but execute immediately WITHOUT threads.
@@ -245,7 +245,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
 
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -274,7 +274,7 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
 
 Player* BotWorldSessionMgr::GetPlayerBot(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -315,7 +315,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     // PHASE 1: Priority-based session collection (minimal lock time)
     {
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
         if (_botSessions.empty())
         {
@@ -407,7 +407,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     // Thread-safe error queue for disconnections (std::queue with mutex)
     std::queue<ObjectGuid> disconnectionQueue;
-    std::mutex disconnectionMutex;
+    std::recursive_mutex disconnectionMutex;
 
     // CRITICAL SAFETY: Never use ThreadPool during server startup
     // Check if we have any active bots that have completed login
@@ -465,7 +465,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     if (!botSession->Update(diff, filter))
                     {
                         TC_LOG_WARN("module.playerbot.session", "🔧 Bot update failed: {}", guid.ToString());
-                        std::lock_guard<std::mutex> lock(disconnectionMutex);
+                        std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                         disconnectionQueue.push(guid);
                         return;
                     }
@@ -484,7 +484,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                             if (botSession->GetPlayer())
                                 botSession->LogoutPlayer(true);
 
-                            std::lock_guard<std::mutex> lock(disconnectionMutex);
+                            std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                             disconnectionQueue.push(guid);
                             return;
                         }
@@ -522,7 +522,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     TC_LOG_ERROR("module.playerbot.session", "🔧 Exception updating bot {}: {}", guid.ToString(), e.what());
                     sBotHealthCheck->RecordError(guid, "UpdateException");
 
-                    std::lock_guard<std::mutex> lock(disconnectionMutex);
+                    std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                     disconnectionQueue.push(guid);
                 }
                 catch (...)
@@ -530,7 +530,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     TC_LOG_ERROR("module.playerbot.session", "🔧 Unknown exception updating bot {}", guid.ToString());
                     sBotHealthCheck->RecordError(guid, "UnknownException");
 
-                    std::lock_guard<std::mutex> lock(disconnectionMutex);
+                    std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                     disconnectionQueue.push(guid);
                 }
             };
@@ -582,7 +582,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     // Collect disconnected sessions from thread-safe queue
     {
-        std::lock_guard<std::mutex> lock(disconnectionMutex);
+        std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
         while (!disconnectionQueue.empty())
         {
             disconnectedSessions.push_back(disconnectionQueue.front());
@@ -593,7 +593,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // PHASE 3: Cleanup disconnected sessions
     if (!disconnectedSessions.empty())
     {
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
         for (ObjectGuid const& guid : disconnectedSessions)
         {
             _botSessions.erase(guid);
@@ -624,7 +624,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
 uint32 BotWorldSessionMgr::GetBotCount() const
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
     return static_cast<uint32>(_botSessions.size());
 }
 
@@ -690,7 +690,7 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId) const
 {
     std::vector<Player*> bots;
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {
@@ -715,7 +715,7 @@ void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 
     // Collect GUIDs to remove (avoid modifying map while iterating)
     {
-        std::lock_guard<std::mutex> lock(_sessionsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
         for (auto const& [guid, session] : _botSessions)
         {
             if (!session)
@@ -738,7 +738,7 @@ void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
 {
     uint32 count = 0;
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {

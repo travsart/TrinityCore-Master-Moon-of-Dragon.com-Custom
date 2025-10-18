@@ -367,7 +367,7 @@ private:
     std::unordered_map<uint32, FarmingStatistics> _playerStatistics;
     FarmingStatistics _globalStatistics;
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     // Session ID generator
     std::atomic<uint32> _nextSessionId{1};

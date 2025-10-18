@@ -284,24 +284,24 @@ private:
     };
 
     // Data storage
-    mutable std::mutex _profilesMutex;
+    mutable std::recursive_mutex _profilesMutex;
     std::unordered_map<uint32_t, BotPerformanceProfile> _botProfiles;
 
-    mutable std::mutex _systemAnalyticsMutex;
+    mutable std::recursive_mutex _systemAnalyticsMutex;
     SystemPerformanceAnalytics _systemAnalytics;
 
-    mutable std::mutex _comparisonMutex;
+    mutable std::recursive_mutex _comparisonMutex;
     std::unordered_map<uint32_t, std::vector<PerformanceComparison>> _performanceHistory;
 
     // Background processing
     std::thread _analyticsThread;
     std::condition_variable _analyticsCondition;
-    std::mutex _analyticsUpdateMutex;
+    std::recursive_mutex _analyticsUpdateMutex;
 
     // Real-time monitoring
     std::atomic<bool> _realTimeMonitoring{false};
     std::thread _monitoringThread;
-    mutable std::mutex _realTimeDataMutex;
+    mutable std::recursive_mutex _realTimeDataMutex;
     std::vector<std::pair<uint32_t, double>> _realTimePerformanceData;
 
     // Constants

@@ -89,17 +89,17 @@ void BotChatCommandHandler::Shutdown()
 
     // Clear all data structures
     {
-        std::lock_guard<std::mutex> lock(_commandsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
         _commands.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock(_cooldownsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cooldownsMutex);
         _cooldowns.clear();
     }
 
     {
-        std::lock_guard<std::mutex> lock(_llmMutex);
+        std::lock_guard<std::recursive_mutex> lock(_llmMutex);
         _llmProvider.reset();
     }
 
@@ -390,7 +390,7 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
         return CommandResult::LLM_UNAVAILABLE;
     }
 
-    std::lock_guard<std::mutex> lock(_llmMutex);
+    std::lock_guard<std::recursive_mutex> lock(_llmMutex);
 
     if (!_llmProvider->IsAvailable())
     {
@@ -452,7 +452,7 @@ bool BotChatCommandHandler::RegisterCommand(ChatCommand const& command)
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_commandsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
 
     if (_commands.find(command.name) != _commands.end())
     {
@@ -472,7 +472,7 @@ bool BotChatCommandHandler::UnregisterCommand(std::string const& name)
     if (!_initialized)
         return false;
 
-    std::lock_guard<std::mutex> lock(_commandsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
 
     auto it = _commands.find(name);
     if (it == _commands.end())
@@ -487,7 +487,7 @@ bool BotChatCommandHandler::UnregisterCommand(std::string const& name)
 
 ChatCommand const* BotChatCommandHandler::GetCommand(std::string const& name)
 {
-    std::lock_guard<std::mutex> lock(_commandsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
 
     auto it = _commands.find(name);
     if (it != _commands.end())
@@ -498,7 +498,7 @@ ChatCommand const* BotChatCommandHandler::GetCommand(std::string const& name)
 
 std::vector<ChatCommand> BotChatCommandHandler::GetAllCommands()
 {
-    std::lock_guard<std::mutex> lock(_commandsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
 
     std::vector<ChatCommand> commands;
     commands.reserve(_commands.size());
@@ -515,7 +515,7 @@ std::vector<ChatCommand> BotChatCommandHandler::GetAvailableCommands(CommandCont
 {
     std::vector<ChatCommand> available;
 
-    std::lock_guard<std::mutex> lock(_commandsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_commandsMutex);
 
     for (auto const& [name, cmd] : _commands)
     {
@@ -591,7 +591,7 @@ uint32 BotChatCommandHandler::GetRemainingCooldown(CommandContext const& context
     if (!context.sender)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownsMutex);
 
     ObjectGuid playerGuid = context.sender->GetGUID();
     auto playerIt = _cooldowns.find(playerGuid);
@@ -619,7 +619,7 @@ void BotChatCommandHandler::SetCooldown(CommandContext const& context, ChatComma
     if (!context.sender)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownsMutex);
 
     ObjectGuid playerGuid = context.sender->GetGUID();
 
@@ -632,7 +632,7 @@ void BotChatCommandHandler::SetCooldown(CommandContext const& context, ChatComma
 
 void BotChatCommandHandler::ClearCooldowns(ObjectGuid playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_cooldownsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownsMutex);
 
     auto it = _cooldowns.find(playerGuid);
     if (it != _cooldowns.end())
@@ -669,7 +669,7 @@ bool BotChatCommandHandler::ValidateArgumentCount(CommandContext const& context,
 
 void BotChatCommandHandler::RegisterLLMProvider(std::shared_ptr<LLMProvider> provider)
 {
-    std::lock_guard<std::mutex> lock(_llmMutex);
+    std::lock_guard<std::recursive_mutex> lock(_llmMutex);
 
     if (_llmProvider)
     {
@@ -692,7 +692,7 @@ void BotChatCommandHandler::RegisterLLMProvider(std::shared_ptr<LLMProvider> pro
 
 void BotChatCommandHandler::UnregisterLLMProvider()
 {
-    std::lock_guard<std::mutex> lock(_llmMutex);
+    std::lock_guard<std::recursive_mutex> lock(_llmMutex);
 
     if (_llmProvider)
     {
@@ -706,13 +706,13 @@ void BotChatCommandHandler::UnregisterLLMProvider()
 
 bool BotChatCommandHandler::HasLLMProvider()
 {
-    std::lock_guard<std::mutex> lock(_llmMutex);
+    std::lock_guard<std::recursive_mutex> lock(_llmMutex);
     return _llmProvider != nullptr;
 }
 
 std::shared_ptr<LLMProvider> BotChatCommandHandler::GetLLMProvider()
 {
-    std::lock_guard<std::mutex> lock(_llmMutex);
+    std::lock_guard<std::recursive_mutex> lock(_llmMutex);
     return _llmProvider;
 }
 

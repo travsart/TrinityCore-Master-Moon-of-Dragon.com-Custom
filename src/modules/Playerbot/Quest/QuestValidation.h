@@ -212,7 +212,7 @@ private:
 
     // Validation cache
     std::unordered_map<uint64, ValidationResult> _validationCache; // (questId << 32 | botGuid) -> result
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
 
     // Configuration
     std::atomic<bool> _strictValidation{true};

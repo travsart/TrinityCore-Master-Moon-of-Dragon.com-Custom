@@ -56,7 +56,7 @@ GroupInvitationHandler::~GroupInvitationHandler()
 
 bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite const& packet)
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
 
     // Extract invitation details
     ObjectGuid inviterGuid = packet.InviterGUID;
@@ -291,7 +291,7 @@ bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -305,7 +305,7 @@ void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::stri
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -318,13 +318,13 @@ void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::stri
 
 bool GroupInvitationHandler::HasPendingInvitation() const
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
     return !_pendingInvitations.empty() || !_currentInviter.IsEmpty();
 }
 
 ObjectGuid GroupInvitationHandler::GetPendingInviter() const
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
 
     if (!_currentInviter.IsEmpty())
         return _currentInviter;
@@ -337,7 +337,7 @@ ObjectGuid GroupInvitationHandler::GetPendingInviter() const
 
 void GroupInvitationHandler::ClearPendingInvitations()
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
 
     while (!_pendingInvitations.empty())
         _pendingInvitations.pop();
@@ -624,7 +624,7 @@ void GroupInvitationHandler::UpdateStatistics(bool accepted, std::chrono::millis
 bool GroupInvitationHandler::ProcessNextInvitation()
 {
     // CRITICAL: Use try_lock to avoid deadlock - if mutex is busy, skip this update and try next time
-    std::unique_lock<std::mutex> lock(_invitationMutex, std::try_to_lock);
+    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Mutex is busy, skip this update cycle
@@ -707,7 +707,7 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
 void GroupInvitationHandler::CleanupExpiredInvitations()
 {
-    std::lock_guard<std::mutex> lock(_invitationMutex);
+    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
 
     // Clean up expired invitations from queue
     std::queue<PendingInvitation> validInvitations;

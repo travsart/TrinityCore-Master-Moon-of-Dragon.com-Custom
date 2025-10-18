@@ -40,7 +40,7 @@ MarketAnalysis::MarketAnalysis()
 
 MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     MarketSnapshot snapshot;
     snapshot.itemId = itemId;
@@ -119,7 +119,7 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
 
 MarketTrend MarketAnalysis::GetMarketTrend(uint32 itemId, uint32 daysBack)
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     auto historyIt = _priceHistory.find(itemId);
     if (historyIt == _priceHistory.end() || historyIt->second.size() < 2)
@@ -160,7 +160,7 @@ float MarketAnalysis::GetPricePrediction(uint32 itemId, uint32 hoursAhead)
 
 std::vector<uint32> MarketAnalysis::GetTrendingItems(MarketSegment segment)
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     std::vector<uint32> trendingItems;
     auto segmentIt = _segmentItems.find(segment);
@@ -200,7 +200,7 @@ void MarketAnalysis::AnalyzeMarketConditions()
 
 void MarketAnalysis::UpdateMarketData(uint32 itemId, uint32 price, uint32 quantity, uint32 timestamp)
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     if (timestamp == 0)
         timestamp = getMSTime();
@@ -258,7 +258,7 @@ void MarketAnalysis::TrackMarketMovement()
 
 MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     auto it = _itemMetrics.find(itemId);
     if (it != _itemMetrics.end())
@@ -1190,7 +1190,7 @@ void MarketAnalysis::UpdateTrendAnalysis()
 
 void MarketAnalysis::CleanupOldData()
 {
-    std::lock_guard<std::mutex> lock(_marketMutex);
+    std::lock_guard<std::recursive_mutex> lock(_marketMutex);
 
     uint32 currentTime = getMSTime();
     uint32 cutoffTime = currentTime - (_maxHistoryDays * 24 * 60 * 60 * 1000);

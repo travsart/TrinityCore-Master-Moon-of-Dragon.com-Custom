@@ -26,7 +26,7 @@ BotResourcePool::~BotResourcePool()
 
 BotResourcePool* BotResourcePool::instance()
 {
-    std::lock_guard<std::mutex> lock(_instanceMutex);
+    std::lock_guard<std::recursive_mutex> lock(_instanceMutex);
     if (!_instance)
         _instance = std::unique_ptr<BotResourcePool>(new BotResourcePool());
     return _instance.get();
@@ -34,7 +34,7 @@ BotResourcePool* BotResourcePool::instance()
 
 bool BotResourcePool::Initialize(uint32 initialPoolSize)
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     _initialPoolSize = initialPoolSize;
     _maxPoolSize = sPlayerbotConfig->GetUInt("Playerbot.Pool.MaxSize", 1000);
@@ -56,7 +56,7 @@ bool BotResourcePool::Initialize(uint32 initialPoolSize)
 
 void BotResourcePool::Shutdown()
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     TC_LOG_INFO("module.playerbot.pool",
         "Shutting down BotResourcePool. Stats - Created: {}, Reused: {}, Hit Rate: {:.2f}%",
@@ -121,7 +121,7 @@ std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId
 
 std::shared_ptr<BotSession> BotResourcePool::AcquireSession(uint32 accountId)
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     // Try to reuse a session from the pool
     if (!_sessionPool.empty())
@@ -178,7 +178,7 @@ void BotResourcePool::ReleaseSession(std::shared_ptr<BotSession> session)
     if (!session)
         return;
 
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     // Remove from active sessions
     auto it = _activeSessions.find(session);
@@ -286,7 +286,7 @@ bool BotResourcePool::CanAllocateSession() const
 
 void BotResourcePool::ReturnSession(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     // Find the session by bot GUID and return it to pool
     for (auto it = _activeSessions.begin(); it != _activeSessions.end(); ++it)
@@ -313,7 +313,7 @@ void BotResourcePool::AddSession(std::shared_ptr<BotSession> session)
     if (!session)
         return;
 
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     _activeSessions.insert(session);
     _stats.sessionsActive.fetch_add(1);

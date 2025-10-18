@@ -343,7 +343,7 @@ private:
     std::atomic<uint32_t> _metricsInterval{1000};
 
     // Test data
-    mutable std::mutex _testDataMutex;
+    mutable std::recursive_mutex _testDataMutex;
     std::vector<BotLoadTestConfig> _currentTestConfigs;
     std::vector<uint32_t> _testBotGuids;
     LoadTestResults _currentResults;
@@ -351,7 +351,7 @@ private:
     LoadTestMonitorData _monitorData;
 
     // Custom scenarios
-    mutable std::mutex _scenariosMutex;
+    mutable std::recursive_mutex _scenariosMutex;
     std::unordered_map<std::string, std::function<void(uint32_t)>> _customScenarios;
 
     // Threading
@@ -359,11 +359,11 @@ private:
     std::thread _monitoringThread;
     std::thread _metricsThread;
     std::condition_variable _testCondition;
-    std::mutex _testMutex;
+    std::recursive_mutex _testMutex;
 
     // Alert system
     std::function<void(const std::string&, const std::string&)> _alertCallback;
-    mutable std::mutex _alertMutex;
+    mutable std::recursive_mutex _alertMutex;
     std::queue<std::pair<std::string, std::string>> _pendingAlerts;
 
     // Performance tracking

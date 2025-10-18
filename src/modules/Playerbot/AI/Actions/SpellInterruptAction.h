@@ -222,8 +222,8 @@ private:
     };
 
     // Thread safety
-    mutable std::mutex _metricsMutex;
-    mutable std::mutex _executionMutex;
+    mutable std::recursive_mutex _metricsMutex;
+    mutable std::recursive_mutex _executionMutex;
 
     // Deleted operations
     SpellInterruptAction(SpellInterruptAction const&) = delete;

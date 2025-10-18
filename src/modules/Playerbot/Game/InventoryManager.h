@@ -578,7 +578,7 @@ private:
     mutable PerformanceMetrics _metrics;
 
     // Thread safety
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 };
 
 } // namespace Playerbot

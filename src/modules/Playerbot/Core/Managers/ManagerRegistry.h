@@ -290,7 +290,7 @@ private:
     /**
      * @brief Mutex protecting the manager map
      */
-    mutable std::mutex _managerMutex;
+    mutable std::recursive_mutex _managerMutex;
 
     /**
      * @brief Flag indicating whether InitializeAll() has been called

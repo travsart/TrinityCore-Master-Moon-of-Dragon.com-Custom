@@ -25,7 +25,7 @@ BotSpawnEventBus::BotSpawnEventBus()
 
 BotSpawnEventBus* BotSpawnEventBus::instance()
 {
-    std::lock_guard<std::mutex> lock(_instanceMutex);
+    std::lock_guard<std::recursive_mutex> lock(_instanceMutex);
     if (!_instance)
         _instance = std::unique_ptr<BotSpawnEventBus>(new BotSpawnEventBus());
     return _instance.get();
@@ -65,13 +65,13 @@ void BotSpawnEventBus::Shutdown()
 
     // Clear subscriptions
     {
-        std::lock_guard<std::mutex> lock(_subscriptionMutex);
+        std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
         _subscriptions.clear();
     }
 
     // Clear queue
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
         std::queue<QueuedEvent> empty;
         _eventQueue.swap(empty);
     }
@@ -111,7 +111,7 @@ void BotSpawnEventBus::PublishEvent(std::shared_ptr<BotSpawnEvent> event)
 
     // Queue the event
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             // Drop oldest event to make room
@@ -165,7 +165,7 @@ void BotSpawnEventBus::PublishPopulationChanged(uint32 zoneId, uint32 oldCount, 
 
 BotSpawnEventBus::HandlerId BotSpawnEventBus::Subscribe(BotSpawnEventType eventType, EventHandler handler)
 {
-    std::lock_guard<std::mutex> lock(_subscriptionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
     HandlerId id = _nextHandlerId.fetch_add(1);
 
@@ -185,7 +185,7 @@ BotSpawnEventBus::HandlerId BotSpawnEventBus::Subscribe(BotSpawnEventType eventT
 
 BotSpawnEventBus::HandlerId BotSpawnEventBus::SubscribeToAll(EventHandler handler)
 {
-    std::lock_guard<std::mutex> lock(_subscriptionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
     HandlerId id = _nextHandlerId.fetch_add(1);
 
@@ -204,7 +204,7 @@ BotSpawnEventBus::HandlerId BotSpawnEventBus::SubscribeToAll(EventHandler handle
 
 void BotSpawnEventBus::Unsubscribe(HandlerId handlerId)
 {
-    std::lock_guard<std::mutex> lock(_subscriptionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
     auto it = std::remove_if(_subscriptions.begin(), _subscriptions.end(),
         [handlerId](EventSubscription const& sub) {
@@ -235,7 +235,7 @@ void BotSpawnEventBus::ProcessEvents()
 
         // Get next event from queue
         {
-            std::lock_guard<std::mutex> lock(_queueMutex);
+            std::lock_guard<std::recursive_mutex> lock(_queueMutex);
             if (_eventQueue.empty())
                 break;
 
@@ -267,7 +267,7 @@ void BotSpawnEventBus::ProcessEventsOfType(BotSpawnEventType eventType)
 
     // Extract events of specific type
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty())
         {
@@ -321,7 +321,7 @@ void BotSpawnEventBus::ProcessEventInternal(std::shared_ptr<BotSpawnEvent> event
 
 void BotSpawnEventBus::NotifySubscribers(std::shared_ptr<BotSpawnEvent> event)
 {
-    std::lock_guard<std::mutex> lock(_subscriptionMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
     for (auto const& subscription : _subscriptions)
     {

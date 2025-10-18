@@ -110,7 +110,7 @@ private:
     std::atomic<uint32> _totalPlayerCount{0};
 
     // Zone population tracking (requires synchronization)
-    mutable std::mutex _populationMutex;
+    mutable std::recursive_mutex _populationMutex;
     std::unordered_map<uint32, ZonePopulation> _zonePopulations; // zoneId -> population data
     std::unordered_map<uint32, std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
@@ -130,7 +130,7 @@ private:
         bool isValid = false;
     };
     mutable PopulationCache _cache;
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
 
     // Timing
     std::chrono::steady_clock::time_point _lastUpdate;

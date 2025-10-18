@@ -243,7 +243,7 @@ private:
     std::unordered_map<uint32, std::unique_ptr<PlayerbotGroup>> _groups;
     std::unordered_map<uint32, uint32> _playerToGroup; // player guid -> group id
     std::atomic<uint32> _nextGroupId{1};
-    mutable std::mutex _groupsMutex;
+    mutable std::recursive_mutex _groupsMutex;
 
     // Group formation queue
     struct GroupFormationRequest
@@ -261,7 +261,7 @@ private:
     };
 
     std::queue<GroupFormationRequest> _formationQueue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     // Configuration
     std::atomic<bool> _autoGroupingEnabled{true};

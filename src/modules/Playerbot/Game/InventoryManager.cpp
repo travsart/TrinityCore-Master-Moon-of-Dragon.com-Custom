@@ -1273,7 +1273,7 @@ void InventoryManager::InitializeStatWeights()
 
 void InventoryManager::UpdateEquipmentCache()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _equippedItems.clear();
 
@@ -1290,7 +1290,7 @@ void InventoryManager::UpdateEquipmentCache()
 
 void InventoryManager::UpdateInventoryCache()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _inventoryItems.clear();
     _itemCounts.clear();
@@ -1330,7 +1330,7 @@ void InventoryManager::UpdateInventoryCache()
 
 void InventoryManager::InvalidateCaches()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     _itemScoreCache.Clear();
     _itemUsableCache.Clear();

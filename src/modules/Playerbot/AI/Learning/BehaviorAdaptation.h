@@ -300,7 +300,7 @@ private:
     float _epsilonMin;
 
     // Model storage
-    mutable std::mutex _modelsMutex;
+    mutable std::recursive_mutex _modelsMutex;
     std::unordered_map<uint32_t, std::unique_ptr<BotLearningModel>> _botModels;
 
     // Action registry

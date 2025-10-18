@@ -162,7 +162,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotPerformanceMonitor> _instance;
-    inline static std::mutex _instanceMutex;
+    inline static std::recursive_mutex _instanceMutex;
 
     // Non-copyable
     BotPerformanceMonitor(BotPerformanceMonitor const&) = delete;

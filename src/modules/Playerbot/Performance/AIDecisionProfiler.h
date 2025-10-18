@@ -321,23 +321,23 @@ private:
     std::atomic<bool> _realTimeMonitoring{false};
 
     // Data storage
-    mutable std::mutex _profilesMutex;
+    mutable std::recursive_mutex _profilesMutex;
     std::unordered_map<uint32_t, BotAIDecisionProfile> _botProfiles;
 
-    mutable std::mutex _recordsMutex;
+    mutable std::recursive_mutex _recordsMutex;
     std::queue<AIDecisionRecord> _pendingRecords;
     std::vector<AIDecisionRecord> _recentRecords;
 
-    mutable std::mutex _globalStatsMutex;
+    mutable std::recursive_mutex _globalStatsMutex;
     std::array<CategoryPerformanceStats, 15> _globalCategoryStats;
 
     // Background processing
     std::thread _analysisThread;
     std::condition_variable _analysisCondition;
-    std::mutex _analysisMutex;
+    std::recursive_mutex _analysisMutex;
 
     std::thread _realTimeThread;
-    mutable std::mutex _realTimeDataMutex;
+    mutable std::recursive_mutex _realTimeDataMutex;
     std::vector<std::pair<uint32_t, double>> _realTimeData;
 
     // Configuration

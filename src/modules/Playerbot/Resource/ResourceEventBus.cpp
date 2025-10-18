@@ -122,7 +122,7 @@ bool ResourceEventBus::PublishEvent(ResourceEvent const& event)
     }
 
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -149,7 +149,7 @@ bool ResourceEventBus::Subscribe(BotAI* subscriber, std::vector<ResourceEventTyp
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (ResourceEventType type : types)
     {
@@ -169,7 +169,7 @@ bool ResourceEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
@@ -183,7 +183,7 @@ void ResourceEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
@@ -214,7 +214,7 @@ uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<ResourceEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -238,7 +238,7 @@ uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::mutex> lock(_subscriberMutex);
+            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -276,7 +276,7 @@ uint32 ResourceEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void ResourceEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<ResourceEvent> remainingEvents;
 
@@ -297,13 +297,13 @@ void ResourceEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 ResourceEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 ResourceEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -339,7 +339,7 @@ bool ResourceEventBus::ValidateEvent(ResourceEvent const& event) const
 
 uint32 ResourceEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<ResourceEvent> validEvents;
@@ -376,19 +376,19 @@ void ResourceEventBus::LogEvent(ResourceEvent const& event, std::string const& a
 
 void ResourceEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.resource", "=== ResourceEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void ResourceEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.resource", "=== ResourceEventBus Queue: {} events ===", _eventQueue.size());
 }
 
 std::vector<ResourceEvent> ResourceEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::vector<ResourceEvent> snapshot;
     std::priority_queue<ResourceEvent> tempQueue = _eventQueue;

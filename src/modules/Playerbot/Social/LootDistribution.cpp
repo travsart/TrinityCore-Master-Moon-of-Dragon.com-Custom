@@ -92,7 +92,7 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
 
     // Store the roll
     {
-        std::lock_guard<std::mutex> lock(_lootMutex);
+        std::lock_guard<std::recursive_mutex> lock(_lootMutex);
         _activeLootRolls[rollId] = roll;
         _rollTimeouts[rollId] = getMSTime() + LOOT_ROLL_TIMEOUT;
     }
@@ -117,7 +117,7 @@ void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, 
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -150,7 +150,7 @@ void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, 
 
 void LootDistribution::CompleteLootRoll(uint32 rollId)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -335,7 +335,7 @@ bool LootDistribution::CanPlayerDisenchantItem(Player* player, const LootItem& i
 
 void LootDistribution::ProcessLootRolls(uint32 rollId)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -414,7 +414,7 @@ void LootDistribution::DistributeLootToWinner(uint32 rollId, uint32 winnerGuid)
 
 void LootDistribution::HandleLootRollTimeout(uint32 rollId)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -556,7 +556,7 @@ void LootDistribution::ExecuteMainSpecPriorityStrategy(Player* player, const Loo
 
 LootDistribution::LootFairnessTracker LootDistribution::GetGroupLootFairness(uint32 groupId)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     auto it = _groupFairnessTracking.find(groupId);
     if (it != _groupFairnessTracking.end())
         return it->second;
@@ -566,7 +566,7 @@ LootDistribution::LootFairnessTracker LootDistribution::GetGroupLootFairness(uin
 
 void LootDistribution::UpdateLootFairness(uint32 groupId, uint32 winnerGuid, const LootItem& item)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto& tracker = _groupFairnessTracking[groupId];
 
@@ -603,7 +603,7 @@ float LootDistribution::CalculateFairnessScore(const LootFairnessTracker& tracke
 
 LootDistribution::LootMetrics LootDistribution::GetPlayerLootMetrics(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
         return it->second;
@@ -632,13 +632,13 @@ LootDistribution::LootMetrics LootDistribution::GetGlobalLootMetrics()
 
 void LootDistribution::SetPlayerLootStrategy(uint32 playerGuid, LootDecisionStrategy strategy)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     _playerLootProfiles[playerGuid].strategy = strategy;
 }
 
 LootDecisionStrategy LootDistribution::GetPlayerLootStrategy(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second.strategy;
@@ -648,13 +648,13 @@ LootDecisionStrategy LootDistribution::GetPlayerLootStrategy(uint32 playerGuid)
 
 void LootDistribution::SetPlayerLootPreferences(uint32 playerGuid, const PlayerLootProfile& profile)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     _playerLootProfiles[playerGuid] = profile;
 }
 
 PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second;
@@ -1096,7 +1096,7 @@ bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group, Player* pl
 
 void LootDistribution::UpdateLootMetrics(uint32 playerGuid, const LootRoll& roll, bool wasWinner)
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     auto& metrics = _playerMetrics[playerGuid];
 
@@ -1143,7 +1143,7 @@ void LootDistribution::ProcessActiveLootRolls()
     std::vector<uint32> rollsToProcess;
 
     {
-        std::lock_guard<std::mutex> lock(_lootMutex);
+        std::lock_guard<std::recursive_mutex> lock(_lootMutex);
         for (const auto& rollPair : _activeLootRolls)
         {
             rollsToProcess.push_back(rollPair.first);
@@ -1158,7 +1158,7 @@ void LootDistribution::ProcessActiveLootRolls()
 
 void LootDistribution::CleanupExpiredRolls()
 {
-    std::lock_guard<std::mutex> lock(_lootMutex);
+    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
 
     uint32 currentTime = getMSTime();
     std::vector<uint32> expiredRolls;

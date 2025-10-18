@@ -60,7 +60,7 @@ void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterI
         return;
     }
 
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     TC_LOG_INFO("module.playerbot", "Executing encounter strategy for encounter {} (group {})",
         encounterId, group->GetGUID().GetCounter());
@@ -124,7 +124,7 @@ void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     TC_LOG_DEBUG("module.playerbot", "Handling mechanic '{}' for encounter {}", mechanic, encounterId);
 
@@ -409,7 +409,7 @@ void EncounterStrategy::HandleEnrageMechanic(Group* group, Unit* boss, uint32 ti
 
 EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encounterId, Player* tank)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto itr = _tankStrategies.find(encounterId);
     if (itr != _tankStrategies.end())
@@ -426,7 +426,7 @@ EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encoun
 
 EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto itr = _healerStrategies.find(encounterId);
     if (itr != _healerStrategies.end())
@@ -443,7 +443,7 @@ EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 en
 
 EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounterId, Player* dps)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto itr = _dpsStrategies.find(encounterId);
     if (itr != _dpsStrategies.end())
@@ -630,7 +630,7 @@ void EncounterStrategy::AdaptStrategyBasedOnFailures(Group* group, uint32 encoun
     if (!group || !_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -654,7 +654,7 @@ void EncounterStrategy::LearnFromSuccessfulEncounters(Group* group, uint32 encou
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -743,7 +743,7 @@ void EncounterStrategy::ExecuteRazorfenKraulStrategies(Group* group, uint32 enco
 
 EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 encounterId)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto itr = _encounterMetrics.find(encounterId);
     if (itr != _encounterMetrics.end())
@@ -937,7 +937,7 @@ void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string
     if (!_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     if (_learningData.find(encounterId) == _learningData.end())
     {
@@ -961,7 +961,7 @@ void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string
 
 void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -994,7 +994,7 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 
 void EncounterStrategy::OptimizeStrategyBasedOnLearning(uint32 encounterId)
 {
-    std::lock_guard<std::mutex> lock(_strategyMutex);
+    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())

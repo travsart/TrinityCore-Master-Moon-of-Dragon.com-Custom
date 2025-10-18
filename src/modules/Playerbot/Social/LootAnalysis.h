@@ -171,7 +171,7 @@ private:
     // Analysis cache
     std::unordered_map<uint64, ItemAnalysisResult> _analysisCache; // (playerGuid << 32 | itemId) -> result
     std::unordered_map<uint32, std::unordered_map<uint32, float>> _statWeightCache; // playerGuid -> statType -> weight
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
 
     // Stat weights database
     std::unordered_map<uint8, std::unordered_map<uint8, StatWeights>> _classSpecStatWeights; // class -> spec -> weights

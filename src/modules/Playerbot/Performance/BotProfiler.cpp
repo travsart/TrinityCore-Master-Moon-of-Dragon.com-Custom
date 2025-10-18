@@ -96,7 +96,7 @@ void ScopedProfiler::RecordProfile()
 // BotProfiler Implementation
 bool BotProfiler::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     if (_enabled.load())
         return true;
@@ -124,7 +124,7 @@ bool BotProfiler::Initialize()
 
 void BotProfiler::Shutdown()
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     if (!_enabled.load())
         return;
@@ -157,7 +157,7 @@ uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, Prof
         return 0;
     }
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     if (_activeSessions.size() >= _maxSessions.load())
     {
@@ -182,7 +182,7 @@ uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, Prof
 
 bool BotProfiler::StopProfilingSession(uint64_t sessionId)
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     auto it = _activeSessions.find(sessionId);
     if (it == _activeSessions.end())
@@ -213,7 +213,7 @@ bool BotProfiler::StopProfilingSession(uint64_t sessionId)
 
 void BotProfiler::StopAllSessions()
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     std::vector<uint64_t> sessionIds;
     for (const auto& pair : _activeSessions)
@@ -248,7 +248,7 @@ void BotProfiler::RecordFunctionCall(const std::string& functionName, uint64_t d
     _realTimeStats.totalSamples.fetch_add(1);
 
     // Record with all active sessions
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
     for (auto& pair : _activeSessions)
     {
         ProfilingSession& session = pair.second;
@@ -283,7 +283,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
     if (!_enabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     if (sessionId == 0)
     {
@@ -298,7 +298,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
         }
 
         // Also record globally
-        std::lock_guard<std::mutex> dataLock(_dataMutex);
+        std::lock_guard<std::recursive_mutex> dataLock(_dataMutex);
         _globalHotspots.push_back(hotspot);
     }
     else
@@ -316,7 +316,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
 
 std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId, uint32_t topN)
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     std::vector<PerformanceHotspot> allHotspots;
 
@@ -330,7 +330,7 @@ std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId,
         }
 
         // Include global hotspots
-        std::lock_guard<std::mutex> dataLock(_dataMutex);
+        std::lock_guard<std::recursive_mutex> dataLock(_dataMutex);
         allHotspots.insert(allHotspots.end(), _globalHotspots.begin(), _globalHotspots.end());
     }
     else
@@ -522,7 +522,7 @@ void BotProfiler::IntegrateLoadTester()
 
 bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& report)
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     ProfilingSession* session = nullptr;
     if (sessionId == 0)
@@ -599,7 +599,7 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& rep
 
 bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& filename, const std::string& format)
 {
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     ProfilingSession* session = nullptr;
     auto it = _activeSessions.find(sessionId);
@@ -668,7 +668,7 @@ void BotProfiler::StartBackgroundProcessing()
     _processingThread = std::thread([this]() {
         while (!_shutdownRequested.load())
         {
-            std::unique_lock<std::mutex> lock(_processingMutex);
+            std::unique_lock<std::recursive_mutex> lock(_processingMutex);
             _processingCondition.wait_for(lock, std::chrono::seconds(1));
 
             if (_shutdownRequested.load())
@@ -695,7 +695,7 @@ void BotProfiler::StopBackgroundProcessing()
 
 void BotProfiler::ProcessProfilingData()
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     // Process pending operations
     while (!_pendingOperations.empty())
@@ -716,7 +716,7 @@ void BotProfiler::ProcessProfilingData()
 
 void BotProfiler::UpdateRealTimeStatistics()
 {
-    std::lock_guard<std::mutex> lock(_statsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
 
     // Calculate profiling overhead
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -799,7 +799,7 @@ void BotProfiler::CleanupExpiredSessions()
 
     uint64_t retentionTime = static_cast<uint64_t>(_dataRetentionDays.load()) * 24 * 3600 * 1000000; // Convert to microseconds
 
-    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     // Remove old sessions from history
     _sessionHistory.erase(

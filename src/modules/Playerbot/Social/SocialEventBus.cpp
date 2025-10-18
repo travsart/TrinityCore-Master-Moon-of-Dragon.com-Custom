@@ -252,7 +252,7 @@ bool SocialEventBus::PublishEvent(SocialEvent const& event)
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     if (_eventQueue.size() >= MAX_QUEUE_SIZE)
     {
@@ -278,7 +278,7 @@ bool SocialEventBus::Subscribe(BotAI* subscriber, std::vector<SocialEventType> c
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     for (auto type : types)
     {
@@ -299,7 +299,7 @@ bool SocialEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
@@ -315,7 +315,7 @@ void SocialEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
@@ -338,7 +338,7 @@ uint32 SocialEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<SocialEvent> eventsToDeliver;
 
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processed < maxEvents))
         {
@@ -387,7 +387,7 @@ uint32 SocialEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void SocialEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     // Remove all events for this unit
     std::priority_queue<SocialEvent> newQueue;
@@ -405,13 +405,13 @@ void SocialEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 SocialEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 SocialEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
     for (auto const& [type, subscribers] : _subscribers)
         count += static_cast<uint32>(subscribers.size());
@@ -420,7 +420,7 @@ uint32 SocialEventBus::GetSubscriberCount() const
 
 void SocialEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
     TC_LOG_INFO("playerbot.events", "SocialEventBus: {} global subscribers", _globalSubscribers.size());
     for (auto const& [type, subscribers] : _subscribers)
         TC_LOG_INFO("playerbot.events", "  Type {}: {} subscribers", static_cast<uint32>(type), subscribers.size());
@@ -428,14 +428,14 @@ void SocialEventBus::DumpSubscribers() const
 
 void SocialEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
     TC_LOG_INFO("playerbot.events", "SocialEventBus: {} events in queue", _eventQueue.size());
 }
 
 std::vector<SocialEvent> SocialEventBus::GetQueueSnapshot() const
 {
     std::vector<SocialEvent> snapshot;
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::priority_queue<SocialEvent> queueCopy = _eventQueue;
     while (!queueCopy.empty())
@@ -449,7 +449,7 @@ std::vector<SocialEvent> SocialEventBus::GetQueueSnapshot() const
 
 bool SocialEventBus::DeliverEvent(BotAI* subscriber, SocialEvent const& event)
 {
-    std::lock_guard<std::mutex> lock(_subscriberMutex);
+    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);
@@ -485,7 +485,7 @@ bool SocialEventBus::ValidateEvent(SocialEvent const& event) const
 
 uint32 SocialEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
 
     std::priority_queue<SocialEvent> newQueue;
     uint32 removed = 0;

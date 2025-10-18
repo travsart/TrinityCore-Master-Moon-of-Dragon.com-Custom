@@ -203,7 +203,7 @@ private:
     std::unordered_map<SystemComponent, ValidationResult> _lastResults;
     std::unordered_map<std::string, std::function<bool()>> _validationTriggers;
     std::unordered_map<std::string, std::function<bool(SystemComponent)>> _customRules;
-    mutable std::mutex _validationMutex;
+    mutable std::recursive_mutex _validationMutex;
 
     // Continuous validation
     std::atomic<bool> _continuousValidationEnabled{false};

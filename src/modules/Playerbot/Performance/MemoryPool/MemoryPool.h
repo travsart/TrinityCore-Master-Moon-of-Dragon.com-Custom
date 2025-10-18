@@ -110,7 +110,7 @@ private:
     alignas(64) std::atomic<size_t> _peakUsage{0};
 
     Configuration _config;
-    std::mutex _chunkMutex;
+    std::recursive_mutex _chunkMutex;
 
     // Thread-local cache
     static thread_local ThreadCache _threadCache;

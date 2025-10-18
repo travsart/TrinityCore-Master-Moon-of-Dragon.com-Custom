@@ -59,7 +59,7 @@ public:
      */
     ~ObjectPool()
     {
-        std::lock_guard<std::mutex> lock(_poolMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
         // Log pool statistics before shutdown
         TC_LOG_INFO("module.playerbot.pool",
@@ -81,7 +81,7 @@ public:
      */
     std::unique_ptr<T, std::function<void(T*)>> Acquire()
     {
-        std::lock_guard<std::mutex> lock(_poolMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
         T* obj = nullptr;
 
@@ -139,7 +139,7 @@ public:
      */
     void Reserve(size_t count)
     {
-        std::lock_guard<std::mutex> lock(_poolMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
         size_t needed = count > _pool.size() ? (count - _pool.size()) : 0;
         if (needed > 0)
@@ -154,7 +154,7 @@ public:
      */
     void Shrink(size_t targetSize = 0)
     {
-        std::lock_guard<std::mutex> lock(_poolMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
         while (_pool.size() > targetSize && !_pool.empty())
         {
@@ -173,7 +173,7 @@ private:
         if (!obj)
             return;
 
-        std::lock_guard<std::mutex> lock(_poolMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
         // Reset object state (placement new with default constructor)
         obj->~T();
@@ -219,7 +219,7 @@ private:
         _chunks.push_back(std::move(chunk));
     }
 
-    std::mutex _poolMutex;                              // Pool access synchronization
+    std::recursive_mutex _poolMutex;                              // Pool access synchronization
     std::vector<T*> _pool;                              // Available objects
     std::vector<std::unique_ptr<std::vector<T>>> _chunks; // Allocated memory chunks
 

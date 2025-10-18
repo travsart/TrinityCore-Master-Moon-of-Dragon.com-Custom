@@ -370,7 +370,7 @@ void PlayerbotCharacterDBInterface::ExecuteSyncFromAsync(CharacterDatabasePrepar
 
     // Add to sync queue
     {
-        std::lock_guard<std::mutex> lock(_syncQueueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_syncQueueMutex);
 
         if (_syncQueue.size() >= _config.syncQueueMaxSize)
         {
@@ -406,7 +406,7 @@ void PlayerbotCharacterDBInterface::ProcessSyncQueue()
 
         // Extract one request at a time
         {
-            std::lock_guard<std::mutex> lock(_syncQueueMutex);
+            std::lock_guard<std::recursive_mutex> lock(_syncQueueMutex);
             if (_syncQueue.empty())
                 break;
 

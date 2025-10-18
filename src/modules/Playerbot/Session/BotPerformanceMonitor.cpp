@@ -17,7 +17,7 @@ namespace Playerbot {
 
 void UpdateTimeHistogram::RecordTime(uint32 microseconds)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 bucket = microseconds / BUCKET_SIZE_MICROS;
     if (bucket >= BUCKET_COUNT)
@@ -29,14 +29,14 @@ void UpdateTimeHistogram::RecordTime(uint32 microseconds)
 
 void UpdateTimeHistogram::Clear()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _buckets.fill(0);
     _totalCount = 0;
 }
 
 uint32 UpdateTimeHistogram::GetMin() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (uint32 i = 0; i < BUCKET_COUNT; ++i)
     {
@@ -48,7 +48,7 @@ uint32 UpdateTimeHistogram::GetMin() const
 
 uint32 UpdateTimeHistogram::GetMax() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     for (int32 i = BUCKET_COUNT - 1; i >= 0; --i)
     {
@@ -68,7 +68,7 @@ uint32 UpdateTimeHistogram::GetPercentile(uint8 percentile) const
     if (percentile > 100)
         percentile = 100;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_totalCount == 0)
         return 0;
@@ -88,7 +88,7 @@ uint32 UpdateTimeHistogram::GetPercentile(uint8 percentile) const
 
 std::vector<uint32> UpdateTimeHistogram::GetBuckets() const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return std::vector<uint32>(_buckets.begin(), _buckets.end());
 }
 
@@ -129,7 +129,7 @@ void BotPerformanceMonitor::Shutdown()
     // Log final statistics before shutdown
     LogDetailedStatistics();
 
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _metrics = SystemPerformanceMetrics{};
     _histogram.Clear();
 
@@ -146,7 +146,7 @@ void BotPerformanceMonitor::BeginTick(uint32 currentTime)
     // This allows us to see actual sub-millisecond performance (e.g., 0.45ms instead of 0.00ms)
     _tickStartTimeHighRes = std::chrono::steady_clock::now();
 
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _metrics.errorsThisTick = 0;
     _metrics.botsUpdatedThisTick = 0;
     _metrics.botsSkippedThisTick = 0;
@@ -162,7 +162,7 @@ void BotPerformanceMonitor::EndTick(uint32 currentTime, uint32 botsUpdated, uint
     );
     uint32 tickDuration = static_cast<uint32>(durationMicros.count());
 
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     // Update current tick metrics
     _metrics.currentTickTime = tickDuration;
@@ -243,7 +243,7 @@ void BotPerformanceMonitor::CheckPerformanceThresholds()
         return;
 
     uint32 currentTime = getMSTime();
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     // Check if we need load shedding
     if (_metrics.isOverloaded && _consecutiveSlowTicks >= DEGRADATION_THRESHOLD)
@@ -297,7 +297,7 @@ void BotPerformanceMonitor::TriggerLoadRecovery(uint32 targetIncrease)
 
 bool BotPerformanceMonitor::IsPerformanceDegraded() const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     return _consecutiveSlowTicks >= DEGRADATION_THRESHOLD;
 }
 
@@ -311,7 +311,7 @@ float BotPerformanceMonitor::CalculateLoadPercent(uint32 tickTimeMicros) const
 
 void BotPerformanceMonitor::LogPerformanceReport() const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     TC_LOG_INFO("module.playerbot.performance",
         "=== PERFORMANCE REPORT ===");
@@ -344,7 +344,7 @@ void BotPerformanceMonitor::LogPerformanceReport() const
 
 void BotPerformanceMonitor::LogDetailedStatistics() const
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     TC_LOG_INFO("module.playerbot.performance",
         "=== DETAILED PERFORMANCE STATISTICS ===");
@@ -393,7 +393,7 @@ void BotPerformanceMonitor::LogDetailedStatistics() const
 
 void BotPerformanceMonitor::ResetStatistics()
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
 
     _metrics.maxTickTime = 0;
     _metrics.minTickTime = UINT32_MAX;

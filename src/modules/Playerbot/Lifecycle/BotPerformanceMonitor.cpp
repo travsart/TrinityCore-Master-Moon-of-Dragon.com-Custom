@@ -18,7 +18,7 @@ BotPerformanceMonitor::BotPerformanceMonitor()
 
 BotPerformanceMonitor* BotPerformanceMonitor::instance()
 {
-    std::lock_guard<std::mutex> lock(_instanceMutex);
+    std::lock_guard<std::recursive_mutex> lock(_instanceMutex);
     if (!_instance)
         _instance = std::unique_ptr<BotPerformanceMonitor>(new BotPerformanceMonitor());
     return _instance.get();

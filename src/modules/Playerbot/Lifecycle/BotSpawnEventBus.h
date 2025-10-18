@@ -203,7 +203,7 @@ private:
     };
 
     std::queue<QueuedEvent> _eventQueue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     // Event handlers
     struct EventSubscription
@@ -215,7 +215,7 @@ private:
     };
 
     std::vector<EventSubscription> _subscriptions;
-    mutable std::mutex _subscriptionMutex;
+    mutable std::recursive_mutex _subscriptionMutex;
     std::atomic<HandlerId> _nextHandlerId{1};
 
     // Event processing
@@ -244,7 +244,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotSpawnEventBus> _instance;
-    inline static std::mutex _instanceMutex;
+    inline static std::recursive_mutex _instanceMutex;
 
     // Non-copyable
     BotSpawnEventBus(BotSpawnEventBus const&) = delete;

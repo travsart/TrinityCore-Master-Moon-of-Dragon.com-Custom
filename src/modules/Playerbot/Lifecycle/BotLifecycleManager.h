@@ -231,11 +231,11 @@ private:
     // Activity tracking
     BotActivity _currentActivity;
     std::queue<BotActivity> _activityQueue;
-    mutable std::mutex _activityMutex;
+    mutable std::recursive_mutex _activityMutex;
 
     // Performance metrics
     BotPerformanceMetrics _metrics;
-    mutable std::mutex _metricsMutex;
+    mutable std::recursive_mutex _metricsMutex;
 
     // Idle management
     uint32 _idleTimer;
@@ -357,13 +357,13 @@ private:
     uint32 _updateInterval = 100; // milliseconds
 
     // Statistics tracking
-    mutable std::mutex _statsMutex;
+    mutable std::recursive_mutex _statsMutex;
     std::chrono::steady_clock::time_point _lastStatsUpdate;
     static constexpr auto STATS_UPDATE_INTERVAL = std::chrono::seconds(1);
 
     // Event handlers
     std::vector<LifecycleEventHandler> _eventHandlers;
-    std::mutex _eventMutex;
+    std::recursive_mutex _eventMutex;
 
     // Broadcast state change event
     void BroadcastStateChange(ObjectGuid botGuid, BotLifecycleState oldState, BotLifecycleState newState);

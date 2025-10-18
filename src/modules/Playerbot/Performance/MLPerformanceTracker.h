@@ -168,16 +168,16 @@ private:
         std::string context;
     };
 
-    mutable std::mutex _operationsMutex;
+    mutable std::recursive_mutex _operationsMutex;
     std::unordered_map<uint32_t, std::unordered_map<MLOperationType, ActiveOperation>> _activeOperations;
 
     // Performance samples
-    mutable std::mutex _samplesMutex;
+    mutable std::recursive_mutex _samplesMutex;
     std::deque<MLPerformanceSample> _recentSamples;
     static constexpr size_t MAX_SAMPLES = 10000;
 
     // Model statistics per bot
-    mutable std::mutex _statsMutex;
+    mutable std::recursive_mutex _statsMutex;
     std::unordered_map<uint32_t, ModelStatistics> _botStatistics;
 
     // Operation metrics
@@ -194,7 +194,7 @@ private:
     std::unordered_map<MLOperationType, OperationMetrics> _operationMetrics;
 
     // Memory tracking
-    mutable std::mutex _memoryMutex;
+    mutable std::recursive_mutex _memoryMutex;
     std::unordered_map<uint32_t, std::unordered_map<MLOperationType, uint64_t>> _memoryUsage;
     std::atomic<uint64_t> _totalMLMemory{0};
 

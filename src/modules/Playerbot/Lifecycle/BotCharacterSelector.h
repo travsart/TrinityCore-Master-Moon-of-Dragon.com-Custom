@@ -117,7 +117,7 @@ private:
         bool isValid = false;
     };
 
-    mutable std::mutex _cacheMutex;
+    mutable std::recursive_mutex _cacheMutex;
     std::unordered_map<uint32, CharacterCacheEntry> _characterCache; // accountId -> characters
 
     void UpdateCharacterCache(uint32 accountId, std::vector<ObjectGuid> const& characters);
@@ -133,7 +133,7 @@ private:
     };
 
     std::queue<PendingRequest> _pendingRequests;
-    mutable std::mutex _requestMutex;
+    mutable std::recursive_mutex _requestMutex;
     std::atomic<bool> _processingRequests{false};
 
     void QueueRequest(SpawnRequest const& request, CharacterCallback callback);

@@ -242,7 +242,7 @@ namespace Playerbot
         std::atomic<uint32> _activeAuctionCount{0};
 
         // Thread safety
-        mutable std::mutex _mutex;
+        mutable std::recursive_mutex _mutex;
 
         // Configuration
         uint32 _maxActiveAuctions;

@@ -292,7 +292,7 @@ private:
     // Member variables
 
     /// Mutex for thread-safe access to all data structures
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     /// Map of bot GUID -> queue information
     std::unordered_map<ObjectGuid, BotQueueInfo> _queuedBots;

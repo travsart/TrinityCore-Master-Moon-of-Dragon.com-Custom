@@ -81,7 +81,7 @@ private:
     std::unordered_set<ObjectGuid> _botsLoading;
 
     // Thread safety
-    mutable std::mutex _sessionsMutex;
+    mutable std::recursive_mutex _sessionsMutex;
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _enabled{false};
 

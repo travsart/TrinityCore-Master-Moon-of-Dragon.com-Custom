@@ -170,7 +170,7 @@ private:
         std::unordered_map<uint64, uint32> insectSwarmExpiry;
         mutable std::recursive_mutex dotMutex;
         void UpdateDoT(uint64 targetGuid, uint32 spellId, uint32 duration) {
-            std::lock_guard<std::mutex> lock(dotMutex);
+            std::lock_guard<std::recursive_mutex> lock(dotMutex);
             uint32 expiry = getMSTime() + duration;
             switch (spellId) {
                 case MOONFIRE: moonfireExpiry[targetGuid] = expiry; break;
@@ -179,7 +179,7 @@ private:
             }
         }
         bool HasDoT(uint64 targetGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(dotMutex);
+            std::lock_guard<std::recursive_mutex> lock(dotMutex);
             uint32 currentTime = getMSTime();
             switch (spellId) {
                 case MOONFIRE: {
@@ -198,7 +198,7 @@ private:
             return false;
         }
         uint32 GetTimeRemaining(uint64 targetGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(dotMutex);
+            std::lock_guard<std::recursive_mutex> lock(dotMutex);
             uint32 currentTime = getMSTime();
             uint32 expiry = 0;
             switch (spellId) {

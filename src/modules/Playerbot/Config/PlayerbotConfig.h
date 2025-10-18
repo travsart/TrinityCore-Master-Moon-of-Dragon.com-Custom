@@ -218,7 +218,7 @@ private:
     std::string _configPath;
     std::string _lastError;
     bool _loaded = false;
-    mutable std::mutex _configMutex;
+    mutable std::recursive_mutex _configMutex;
 
     // Performance: Configuration caching for frequently accessed values
     struct ConfigCache {

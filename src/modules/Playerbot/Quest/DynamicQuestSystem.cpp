@@ -160,7 +160,7 @@ bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
 
     // Add to bot's quest progress
     {
-        std::lock_guard<std::mutex> lock(_questMutex);
+        std::lock_guard<std::recursive_mutex> lock(_questMutex);
         _botQuestProgress[botGuid].push_back(progress);
     }
 
@@ -183,7 +183,7 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
     // Get current quest count
     uint32 currentQuests = 0;
     {
-        std::lock_guard<std::mutex> lock(_questMutex);
+        std::lock_guard<std::recursive_mutex> lock(_questMutex);
         auto it = _botQuestProgress.find(botGuid);
         if (it != _botQuestProgress.end())
             currentQuests = static_cast<uint32>(it->second.size());
@@ -280,7 +280,7 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
     uint32 botGuid = bot->GetGUID().GetCounter();
 
     // Find quest progress
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return false;
@@ -318,7 +318,7 @@ void DynamicQuestSystem::UpdateQuestProgress(Player* bot)
 
     uint32 botGuid = bot->GetGUID().GetCounter();
 
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
@@ -377,7 +377,7 @@ void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
 
     // Remove from active quests
     {
-        std::lock_guard<std::mutex> lock(_questMutex);
+        std::lock_guard<std::recursive_mutex> lock(_questMutex);
         auto progressIt = _botQuestProgress.find(botGuid);
         if (progressIt != _botQuestProgress.end())
         {
@@ -573,7 +573,7 @@ void DynamicQuestSystem::HandleQuestStuckState(Player* bot, uint32 questId)
 
     uint32 botGuid = bot->GetGUID().GetCounter();
 
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
@@ -610,7 +610,7 @@ void DynamicQuestSystem::OptimizeQuestOrder(Player* bot)
 
     uint32 botGuid = bot->GetGUID().GetCounter();
 
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
@@ -792,7 +792,7 @@ bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, Player* bot)
 
 DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
         return it->second;
@@ -807,7 +807,7 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
     QuestMetrics globalMetrics;
     globalMetrics.Reset();
 
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
 
     // Aggregate all bot metrics
     for (const auto& metricsPair : _botMetrics)
@@ -826,13 +826,13 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 
 void DynamicQuestSystem::SetQuestStrategy(uint32 botGuid, QuestStrategy strategy)
 {
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     _botStrategies[botGuid] = strategy;
 }
 
 QuestStrategy DynamicQuestSystem::GetQuestStrategy(uint32 botGuid)
 {
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto it = _botStrategies.find(botGuid);
     if (it != _botStrategies.end())
         return it->second;
@@ -1210,7 +1210,7 @@ void DynamicQuestSystem::Update(uint32 diff)
 
 void DynamicQuestSystem::CleanupCompletedQuests()
 {
-    std::lock_guard<std::mutex> lock(_questMutex);
+    std::lock_guard<std::recursive_mutex> lock(_questMutex);
 
     uint32 currentTime = getMSTime();
 

@@ -381,29 +381,29 @@ private:
     std::atomic<double> _maxOverheadPercent{5.0};
 
     // Session management
-    mutable std::mutex _sessionsMutex;
+    mutable std::recursive_mutex _sessionsMutex;
     std::unordered_map<uint64_t, ProfilingSession> _activeSessions;
     std::vector<ProfilingSession> _sessionHistory;
     std::atomic<uint64_t> _nextSessionId{1};
 
     // Data storage
-    mutable std::mutex _dataMutex;
+    mutable std::recursive_mutex _dataMutex;
     std::queue<std::function<void()>> _pendingOperations;
     std::vector<PerformanceHotspot> _globalHotspots;
 
     // Real-time statistics
     RealTimeProfilingStats _realTimeStats;
-    mutable std::mutex _statsMutex;
+    mutable std::recursive_mutex _statsMutex;
 
     // Background processing
     std::thread _processingThread;
     std::thread _samplingThread;
     std::condition_variable _processingCondition;
-    std::mutex _processingMutex;
+    std::recursive_mutex _processingMutex;
 
     // Call stack tracking
     thread_local std::stack<std::shared_ptr<ProfileCallFrame>> _callStack;
-    mutable std::mutex _callStackMutex;
+    mutable std::recursive_mutex _callStackMutex;
 
     // Integration states
     std::atomic<bool> _performanceMonitorIntegrated{false};

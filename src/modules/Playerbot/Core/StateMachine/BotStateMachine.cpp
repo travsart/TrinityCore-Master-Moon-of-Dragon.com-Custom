@@ -136,7 +136,7 @@ TransitionValidation BotStateMachine::TransitionInternal(
     // Measure transition time
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
 
     BotInitState currentState = GetCurrentState();
 
@@ -217,7 +217,7 @@ TransitionValidation BotStateMachine::TransitionInternal(
 
 void BotStateMachine::SetFlags(StateFlags flags)
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) | static_cast<uint32>(flags));
@@ -232,7 +232,7 @@ void BotStateMachine::SetFlags(StateFlags flags)
 
 void BotStateMachine::ClearFlags(StateFlags flags)
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) & ~static_cast<uint32>(flags));
@@ -247,7 +247,7 @@ void BotStateMachine::ClearFlags(StateFlags flags)
 
 void BotStateMachine::ToggleFlags(StateFlags flags)
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) ^ static_cast<uint32>(flags));
@@ -266,7 +266,7 @@ void BotStateMachine::ToggleFlags(StateFlags flags)
 
 std::vector<TransitionEvent> BotStateMachine::GetTransitionHistory() const
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     std::vector<TransitionEvent> history;
 
     // Build history from circular buffer
@@ -293,7 +293,7 @@ std::vector<TransitionEvent> BotStateMachine::GetTransitionHistory() const
 
 std::optional<TransitionEvent> BotStateMachine::GetLastTransition() const
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
 
     if (m_historyIndex == 0)
     {
@@ -320,7 +320,7 @@ uint64 BotStateMachine::GetTransitionCount() const
 
 void BotStateMachine::DumpState() const
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
 
     TC_LOG_INFO("bot.statemachine", "=== State Machine Dump for Bot {} ===",
         m_bot ? m_bot->GetName() : "null");
@@ -366,7 +366,7 @@ void BotStateMachine::DumpState() const
 
 void BotStateMachine::SetPolicy(TransitionPolicy policy)
 {
-    std::lock_guard<std::mutex> lock(m_stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     TransitionPolicy oldPolicy = m_policy;
     m_policy = policy;
 

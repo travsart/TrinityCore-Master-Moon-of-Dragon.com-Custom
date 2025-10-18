@@ -261,7 +261,7 @@ private:
 
     // Member variables
     Player* _bot;                                           // The bot player instance
-    mutable std::mutex _invitationMutex;                   // Thread safety mutex
+    mutable std::recursive_mutex _invitationMutex;                   // Thread safety mutex
     std::queue<PendingInvitation> _pendingInvitations;     // Queue of pending invitations
     ObjectGuid _currentInviter;                            // Currently processing inviter
 

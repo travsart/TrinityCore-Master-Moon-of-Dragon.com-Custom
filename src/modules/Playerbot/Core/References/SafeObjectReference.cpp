@@ -140,7 +140,7 @@ class DanglingReferenceDetector {
 public:
     static void RegisterReference(ObjectGuid guid, void* reference) {
 #ifdef _DEBUG
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::recursive_mutex> lock(s_mutex);
         s_references[guid].insert(reference);
 
         TC_LOG_TRACE("module.playerbot.reference.debug",
@@ -151,7 +151,7 @@ public:
 
     static void UnregisterReference(ObjectGuid guid, void* reference) {
 #ifdef _DEBUG
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::recursive_mutex> lock(s_mutex);
         auto it = s_references.find(guid);
         if (it != s_references.end()) {
             it->second.erase(reference);
@@ -168,7 +168,7 @@ public:
 
     static void CheckForDanglingReferences(ObjectGuid guid) {
 #ifdef _DEBUG
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::recursive_mutex> lock(s_mutex);
         auto it = s_references.find(guid);
         if (it != s_references.end() && !it->second.empty()) {
             TC_LOG_ERROR("module.playerbot.reference",
@@ -184,7 +184,7 @@ public:
 
     static size_t GetReferenceCount(ObjectGuid guid) {
 #ifdef _DEBUG
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::recursive_mutex> lock(s_mutex);
         auto it = s_references.find(guid);
         return it != s_references.end() ? it->second.size() : 0;
 #else
@@ -194,13 +194,13 @@ public:
 
 private:
 #ifdef _DEBUG
-    static std::mutex s_mutex;
+    static std::recursive_mutex s_mutex;
     static std::unordered_map<ObjectGuid, std::unordered_set<void*>> s_references;
 #endif
 };
 
 #ifdef _DEBUG
-std::mutex DanglingReferenceDetector::s_mutex;
+std::recursive_mutex DanglingReferenceDetector::s_mutex;
 std::unordered_map<ObjectGuid, std::unordered_set<void*>> DanglingReferenceDetector::s_references;
 #endif
 

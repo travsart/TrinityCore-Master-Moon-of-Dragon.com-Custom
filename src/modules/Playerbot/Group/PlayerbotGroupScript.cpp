@@ -32,7 +32,7 @@ PlayerbotGroupScript::PlayerbotGroupScript() : GroupScript("PlayerbotGroupScript
 
 PlayerbotGroupScript::~PlayerbotGroupScript()
 {
-    std::lock_guard<std::mutex> lock(_groupStatesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupStatesMutex);
     _groupStates.clear();
 }
 
@@ -50,7 +50,7 @@ void PlayerbotGroupScript::OnAddMember(Group* group, ObjectGuid guid)
     PublishEvent(event);
 
     // Initialize or update group state for polling
-    std::lock_guard<std::mutex> lock(_groupStatesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupStatesMutex);
     GroupState& state = GetOrCreateGroupState(group->GetGUID());
 
     // Update member subgroup tracking
@@ -84,7 +84,7 @@ void PlayerbotGroupScript::OnRemoveMember(Group* group, ObjectGuid guid, RemoveM
     PublishEvent(event);
 
     // Update group state
-    std::lock_guard<std::mutex> lock(_groupStatesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupStatesMutex);
     auto stateItr = _groupStates.find(group->GetGUID());
     if (stateItr != _groupStates.end())
     {
@@ -137,7 +137,7 @@ void PlayerbotGroupScript::PollGroupStateChanges(Group* group, uint32 diff)
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    std::lock_guard<std::mutex> lock(_groupStatesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupStatesMutex);
     GroupState& state = GetOrCreateGroupState(group->GetGUID());
 
     // Check all polled state changes
@@ -154,7 +154,7 @@ void PlayerbotGroupScript::PollGroupStateChanges(Group* group, uint32 diff)
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 
-    std::lock_guard<std::mutex> statsLock(_pollStatsMutex);
+    std::lock_guard<std::recursive_mutex> statsLock(_pollStatsMutex);
     _pollStats.totalPolls++;
 
     // Running average of poll time
@@ -174,7 +174,7 @@ void PlayerbotGroupScript::CheckLootMethodChange(Group* group, GroupState& state
 
         state.lootMethod = currentMethod;
 
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckLootMethodChange: Group {} loot method changed to {}",
@@ -199,7 +199,7 @@ void PlayerbotGroupScript::CheckLootThresholdChange(Group* group, GroupState& st
 
         state.lootThreshold = currentThreshold;
 
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckLootThresholdChange: Group {} loot threshold changed to {}",
@@ -224,7 +224,7 @@ void PlayerbotGroupScript::CheckMasterLooterChange(Group* group, GroupState& sta
 
         state.masterLooterGuid = currentMasterLooter;
 
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckMasterLooterChange: Group {} master looter changed to {}",
@@ -273,7 +273,7 @@ void PlayerbotGroupScript::CheckDifficultyChanges(Group* group, GroupState& stat
 
     if (changed)
     {
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckDifficultyChanges: Group {} difficulty changed",
@@ -298,7 +298,7 @@ void PlayerbotGroupScript::CheckRaidConversion(Group* group, GroupState& state)
 
         state.isRaid = currentIsRaid;
 
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_INFO("playerbot.group", "PlayerbotGroupScript::CheckRaidConversion: Group {} converted to {}",
@@ -354,7 +354,7 @@ void PlayerbotGroupScript::CheckSubgroupChanges(Group* group, GroupState& state)
 
     if (anyChanged)
     {
-        std::lock_guard<std::mutex> lock(_pollStatsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
     }
 }
@@ -380,7 +380,7 @@ PlayerbotGroupScript::GroupState& PlayerbotGroupScript::GetOrCreateGroupState(Ob
 
 void PlayerbotGroupScript::RemoveGroupState(ObjectGuid groupGuid)
 {
-    std::lock_guard<std::mutex> lock(_groupStatesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_groupStatesMutex);
     _groupStates.erase(groupGuid);
 }
 

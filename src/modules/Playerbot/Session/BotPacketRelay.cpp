@@ -121,7 +121,7 @@ void BotPacketRelay::Shutdown()
 
     // Clear opcode whitelist
     {
-        std::lock_guard<std::mutex> lock(_opcodesMutex);
+        std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
         _relayOpcodes.clear();
     }
 
@@ -337,7 +337,7 @@ bool BotPacketRelay::ShouldRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 {
-    std::lock_guard<std::mutex> lock(_opcodesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
 
     auto result = _relayOpcodes.insert(opcode);
     if (result.second && _debugLogging.load())
@@ -348,7 +348,7 @@ void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
 {
-    std::lock_guard<std::mutex> lock(_opcodesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
 
     size_t removed = _relayOpcodes.erase(opcode);
     if (removed > 0 && _debugLogging.load())
@@ -526,7 +526,7 @@ void BotPacketRelay::SetDebugLogging(bool enabled)
 
 void BotPacketRelay::InitializeOpcodeWhitelist()
 {
-    std::lock_guard<std::mutex> lock(_opcodesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
     _relayOpcodes.clear();
 
     // ========================================================================

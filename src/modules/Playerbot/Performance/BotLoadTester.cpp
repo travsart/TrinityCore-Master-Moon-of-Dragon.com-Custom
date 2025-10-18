@@ -34,7 +34,7 @@ namespace Playerbot
 
 bool BotLoadTester::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_testMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testMutex);
 
     if (_enabled.load())
         return true;
@@ -61,7 +61,7 @@ bool BotLoadTester::Initialize()
 
 void BotLoadTester::Shutdown()
 {
-    std::lock_guard<std::mutex> lock(_testMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testMutex);
 
     if (!_enabled.load())
         return;
@@ -282,7 +282,7 @@ bool BotLoadTester::RunEnduranceTest(uint32_t botCount, uint32_t durationHours)
 
 bool BotLoadTester::ExecuteLoadTest(const std::vector<BotLoadTestConfig>& configs)
 {
-    std::lock_guard<std::mutex> lock(_testDataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testDataMutex);
 
     _testRunning.store(true);
     _testPaused.store(false);
@@ -756,7 +756,7 @@ void BotLoadTester::TriggerAlert(const std::string& alertType, const std::string
     if (!_alertsEnabled.load())
         return;
 
-    std::lock_guard<std::mutex> lock(_alertMutex);
+    std::lock_guard<std::recursive_mutex> lock(_alertMutex);
 
     if (_alertCallback)
         _alertCallback(alertType, message);
@@ -850,7 +850,7 @@ LoadTestMonitorData BotLoadTester::GetCurrentMetrics() const
 
 void BotLoadTester::AnalyzeTestResults()
 {
-    std::lock_guard<std::mutex> lock(_testDataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testDataMutex);
 
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -917,7 +917,7 @@ double BotLoadTester::CalculateScalabilityMetric(uint32_t botCount, const LoadTe
 
 void BotLoadTester::CleanupTestResources()
 {
-    std::lock_guard<std::mutex> lock(_testDataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testDataMutex);
 
     // Reset monitoring data
     _monitorData.currentBots.store(0);
@@ -968,7 +968,7 @@ bool BotLoadTester::CheckSystemRequirements(uint32_t botCount)
 
 void BotLoadTester::SaveTestResults(const LoadTestResults& results)
 {
-    std::lock_guard<std::mutex> lock(_testDataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_testDataMutex);
 
     _testHistory.push_back(results);
     _totalTestsRun.fetch_add(1);

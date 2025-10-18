@@ -237,7 +237,7 @@ public:
 
     T* Allocate()
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         if (_nextFree == SIZE_MAX)
             return nullptr; // Pool exhausted
@@ -256,7 +256,7 @@ public:
         if (!ptr || ptr < _pool || ptr >= _pool + PoolSize)
             return; // Invalid pointer
 
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         size_t index = ptr - _pool;
         *reinterpret_cast<size_t*>(ptr) = _nextFree;
@@ -280,7 +280,7 @@ private:
     size_t _nextFree;
     std::atomic<size_t> _allocatedCount{0};
     std::atomic<size_t> _deallocatedCount{0};
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 };
 
 // Main memory management system
@@ -354,7 +354,7 @@ public:
     template<typename T>
     std::shared_ptr<MemoryPool<T>> GetPool(MemoryCategory category, uint32_t botGuid)
     {
-        std::lock_guard<std::mutex> lock(_poolsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_poolsMutex);
 
         auto key = std::make_pair(static_cast<uint8_t>(category), botGuid);
         auto it = _memoryPools.find(key);
@@ -406,25 +406,25 @@ private:
     std::atomic<bool> _shutdownRequested{false};
 
     // Memory tracking
-    mutable std::mutex _profilesMutex;
+    mutable std::recursive_mutex _profilesMutex;
     std::unordered_map<uint32_t, BotMemoryProfile> _botProfiles;
 
-    mutable std::mutex _allocationsMutex;
+    mutable std::recursive_mutex _allocationsMutex;
     std::unordered_map<void*, MemoryLeakEntry> _activeAllocations;
 
     // System analytics
-    mutable std::mutex _systemAnalyticsMutex;
+    mutable std::recursive_mutex _systemAnalyticsMutex;
     SystemMemoryAnalytics _systemAnalytics;
 
     // Memory pools
-    mutable std::mutex _poolsMutex;
+    mutable std::recursive_mutex _poolsMutex;
     std::unordered_map<std::pair<uint8_t, uint32_t>, std::shared_ptr<void>,
                       std::hash<std::pair<uint8_t, uint32_t>>> _memoryPools;
 
     // Background processing
     std::thread _maintenanceThread;
     std::condition_variable _maintenanceCondition;
-    std::mutex _maintenanceMutex;
+    std::recursive_mutex _maintenanceMutex;
 
     // Configuration
     std::atomic<double> _memoryPressureThreshold{0.8}; // 80% usage

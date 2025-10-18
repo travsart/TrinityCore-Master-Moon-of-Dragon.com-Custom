@@ -61,7 +61,7 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
     uint32 playerGuid = player->GetGUID().GetCounter();
     uint32 currentTime = getMSTime();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Check if enough time passed since last auction check
     if (currentTime - _lastAuctionCheckTimes[playerGuid] < AUCTION_CHECK_INTERVAL)
@@ -96,7 +96,7 @@ void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     if (_profiles.find(playerGuid) == _profiles.end())
@@ -110,7 +110,7 @@ bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _profiles.find(playerGuid);
@@ -122,13 +122,13 @@ bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
 
 void ProfessionAuctionBridge::SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _profiles[playerGuid] = profile;
 }
 
 ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _profiles.find(playerGuid);
     if (it != _profiles.end())
@@ -210,7 +210,7 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
 
     if (success)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();
 
         _playerStatistics[playerGuid].materialsListedCount++;
@@ -322,7 +322,7 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
 
     if (success)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();
 
         _playerStatistics[playerGuid].craftedsListedCount++;
@@ -385,7 +385,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
                 {
                     budgetRemaining -= totalCost;
 
-                    std::lock_guard<std::mutex> lock(_mutex);
+                    std::lock_guard<std::recursive_mutex> lock(_mutex);
                     uint32 playerGuid = player->GetGUID().GetCounter();
 
                     _playerStatistics[playerGuid].materialsBought += quantity;
@@ -448,7 +448,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
 
 void ProfessionAuctionBridge::SetMaterialStockpile(uint32 playerGuid, uint32 itemId, MaterialStockpileConfig const& config)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();
@@ -458,7 +458,7 @@ void ProfessionAuctionBridge::SetMaterialStockpile(uint32 playerGuid, uint32 ite
 
 void ProfessionAuctionBridge::SetCraftedItemAuction(uint32 playerGuid, uint32 itemId, CraftedItemAuctionConfig const& config)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();
@@ -510,7 +510,7 @@ void ProfessionAuctionBridge::SynchronizeWithAuctionHouse(::Player* player)
 
 ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     static ProfessionAuctionStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -527,7 +527,7 @@ ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetGlobalStatistics(
 
 void ProfessionAuctionBridge::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())

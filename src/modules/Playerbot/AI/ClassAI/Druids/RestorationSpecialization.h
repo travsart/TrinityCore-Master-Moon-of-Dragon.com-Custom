@@ -239,7 +239,7 @@ private:
         std::unordered_map<uint64, float> predictedDamage;
         mutable std::recursive_mutex predictionMutex;
         void RecordDamage(uint64 unitGuid, float damage) {
-            std::lock_guard<std::mutex> lock(predictionMutex);
+            std::lock_guard<std::recursive_mutex> lock(predictionMutex);
             auto& history = damageHistory[unitGuid];
             history.push(damage);
             if (history.size() > 5) // Keep last 5 damage events
@@ -260,7 +260,7 @@ private:
             predictedDamage[unitGuid] = count > 0 ? avgDamage / count : 0.0f;
         }
         float GetPredictedDamage(uint64 unitGuid) const {
-            std::lock_guard<std::mutex> lock(predictionMutex);
+            std::lock_guard<std::recursive_mutex> lock(predictionMutex);
             auto it = predictedDamage.find(unitGuid);
             return it != predictedDamage.end() ? it->second : 0.0f;
         }
@@ -274,7 +274,7 @@ private:
         std::unordered_map<uint64, uint32> lifebloomExpiry;
         mutable std::recursive_mutex hotMutex;
         void UpdateHoT(uint64 unitGuid, uint32 spellId, uint32 duration, uint32 stacks = 1) {
-            std::lock_guard<std::mutex> lock(hotMutex);
+            std::lock_guard<std::recursive_mutex> lock(hotMutex);
             uint32 expiry = getMSTime() + duration;
             switch (spellId) {
                 case REJUVENATION:
@@ -290,7 +290,7 @@ private:
             }
         }
         bool HasHoT(uint64 unitGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(hotMutex);
+            std::lock_guard<std::recursive_mutex> lock(hotMutex);
             uint32 currentTime = getMSTime();
             switch (spellId) {
                 case REJUVENATION:
@@ -303,7 +303,7 @@ private:
             return false;
         }
         uint32 GetTimeRemaining(uint64 unitGuid, uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(hotMutex);
+            std::lock_guard<std::recursive_mutex> lock(hotMutex);
             uint32 currentTime = getMSTime();
             uint32 expiry = 0;
             switch (spellId) {
@@ -323,7 +323,7 @@ private:
             return expiry > currentTime ? expiry - currentTime : 0;
         }
         uint32 GetLifebloomStacks(uint64 unitGuid) const {
-            std::lock_guard<std::mutex> lock(hotMutex);
+            std::lock_guard<std::recursive_mutex> lock(hotMutex);
             auto it = lifebloomStacks.find(unitGuid);
             return it != lifebloomStacks.end() ? it->second : 0;
         }

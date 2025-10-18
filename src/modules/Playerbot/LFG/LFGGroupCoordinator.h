@@ -311,8 +311,8 @@ private:
     std::unordered_map<ObjectGuid, TeleportInfo> _pendingTeleports;        ///< Pending teleportations
     std::unordered_map<ObjectGuid, GroupFormationInfo> _groupFormations;   ///< Active group formations
 
-    mutable std::mutex _teleportMutex;                      ///< Protects teleport data
-    mutable std::mutex _groupMutex;                         ///< Protects group formation data
+    mutable std::recursive_mutex _teleportMutex;                      ///< Protects teleport data
+    mutable std::recursive_mutex _groupMutex;                         ///< Protects group formation data
 };
 
 } // namespace Playerbot

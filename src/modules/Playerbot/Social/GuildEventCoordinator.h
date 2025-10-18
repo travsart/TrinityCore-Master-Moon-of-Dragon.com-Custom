@@ -265,7 +265,7 @@ private:
     std::unordered_map<uint32, EventCoordinationProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, EventParticipation> _playerParticipation; // playerGuid -> participation
     std::atomic<uint32> _nextEventId{1};
-    mutable std::mutex _eventMutex;
+    mutable std::recursive_mutex _eventMutex;
 
     // Guild event tracking
     std::unordered_map<uint32, std::vector<uint32>> _guildActiveEvents; // guildId -> eventIds

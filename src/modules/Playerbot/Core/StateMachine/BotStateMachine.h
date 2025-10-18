@@ -56,7 +56,7 @@ namespace Playerbot::StateMachine
  *
  * Thread safety:
  * - All public methods are thread-safe
- * - Internal state uses std::mutex protection
+ * - Internal state uses std::recursive_mutex protection
  * - Atomic operations for high-frequency queries
  */
 class TC_GAME_API BotStateMachine
@@ -357,7 +357,7 @@ private:
     TransitionPolicy m_policy;
 
     // Thread safety
-    mutable std::mutex m_stateMutex;
+    mutable std::recursive_mutex m_stateMutex;
 
     // Transition history (circular buffer, last 10 transitions)
     std::array<TransitionEvent, 10> m_transitionHistory;

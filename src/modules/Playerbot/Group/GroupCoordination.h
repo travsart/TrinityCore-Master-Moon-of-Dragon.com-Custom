@@ -199,18 +199,18 @@ private:
     // Target management
     std::unordered_map<ObjectGuid, CoordinationTarget> _targets;
     ObjectGuid _primaryTarget;
-    mutable std::mutex _targetMutex;
+    mutable std::recursive_mutex _targetMutex;
 
     // Formation data
     std::vector<FormationSlot> _formation;
     Position _formationCenter;
-    mutable std::mutex _formationMutex;
+    mutable std::recursive_mutex _formationMutex;
 
     // Movement data
     std::queue<MovementWaypoint> _movementPath;
     Position _currentDestination;
     bool _maintainFormationDuringMove;
-    mutable std::mutex _movementMutex;
+    mutable std::recursive_mutex _movementMutex;
 
     // Combat state
     std::atomic<bool> _inCombat{false};
@@ -232,7 +232,7 @@ private:
     };
 
     std::priority_queue<CoordinationCommandData> _commandQueue;
-    mutable std::mutex _commandMutex;
+    mutable std::recursive_mutex _commandMutex;
 
     // Cooldown coordination
     struct CooldownCoordination
@@ -240,16 +240,16 @@ private:
         std::unordered_map<uint32, uint32> spellCooldowns; // spellId -> expiry time
         std::unordered_set<uint32> reservedCooldowns;
         std::queue<uint32> cooldownQueue;
-        mutable std::mutex cooldownMutex;
+        mutable std::recursive_mutex cooldownMutex;
 
         bool IsSpellOnCooldown(uint32 spellId) const {
-            std::lock_guard<std::mutex> lock(cooldownMutex);
+            std::lock_guard<std::recursive_mutex> lock(cooldownMutex);
             auto it = spellCooldowns.find(spellId);
             return it != spellCooldowns.end() && it->second > getMSTime();
         }
 
         void SetSpellCooldown(uint32 spellId, uint32 duration) {
-            std::lock_guard<std::mutex> lock(cooldownMutex);
+            std::lock_guard<std::recursive_mutex> lock(cooldownMutex);
             spellCooldowns[spellId] = getMSTime() + duration;
         }
     } _cooldownCoordination;

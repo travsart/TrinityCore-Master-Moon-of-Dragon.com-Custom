@@ -47,13 +47,13 @@ void BotCharacterSelector::Shutdown()
 
     // Clear cache
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         _characterCache.clear();
     }
 
     // Clear pending requests
     {
-        std::lock_guard<std::mutex> lock(_requestMutex);
+        std::lock_guard<std::recursive_mutex> lock(_requestMutex);
         while (!_pendingRequests.empty())
             _pendingRequests.pop();
     }
@@ -316,7 +316,7 @@ uint32 BotCharacterSelector::AcquireSuitableAccount(SpawnRequest const& request)
 
 void BotCharacterSelector::UpdateCharacterCache(uint32 accountId, std::vector<ObjectGuid> const& characters)
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     if (_characterCache.size() >= MAX_CACHED_ACCOUNTS)
     {
@@ -338,7 +338,7 @@ void BotCharacterSelector::UpdateCharacterCache(uint32 accountId, std::vector<Ob
 
 std::vector<ObjectGuid> BotCharacterSelector::GetCachedCharacters(uint32 accountId) const
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     auto it = _characterCache.find(accountId);
     if (it == _characterCache.end() || !it->second.isValid)
@@ -358,7 +358,7 @@ std::vector<ObjectGuid> BotCharacterSelector::GetCachedCharacters(uint32 account
 
 void BotCharacterSelector::InvalidateCache(uint32 accountId)
 {
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     auto it = _characterCache.find(accountId);
     if (it != _characterCache.end())
@@ -371,7 +371,7 @@ void BotCharacterSelector::InvalidateCache(uint32 accountId)
 
 void BotCharacterSelector::QueueRequest(SpawnRequest const& request, CharacterCallback callback)
 {
-    std::lock_guard<std::mutex> lock(_requestMutex);
+    std::lock_guard<std::recursive_mutex> lock(_requestMutex);
 
     if (_pendingRequests.size() >= MAX_PENDING_REQUESTS)
     {
@@ -391,7 +391,7 @@ void BotCharacterSelector::QueueRequest(SpawnRequest const& request, CharacterCa
 void BotCharacterSelector::ProcessPendingRequests()
 {
     // Simplified queue processing - would implement proper async processing in full version
-    std::lock_guard<std::mutex> lock(_requestMutex);
+    std::lock_guard<std::recursive_mutex> lock(_requestMutex);
 
     while (!_pendingRequests.empty())
     {

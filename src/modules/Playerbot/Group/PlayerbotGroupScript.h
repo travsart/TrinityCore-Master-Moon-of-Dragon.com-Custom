@@ -168,7 +168,7 @@ private:
 
     // State cache: GroupGUID → GroupState
     static inline std::unordered_map<ObjectGuid, GroupState> _groupStates;
-    static inline std::mutex _groupStatesMutex;
+    static inline std::recursive_mutex _groupStatesMutex;
 
     // Polling helper functions
     static void CheckLootMethodChange(Group* group, GroupState& state);
@@ -201,7 +201,7 @@ private:
     };
 
     static inline PollStatistics _pollStats;
-    static inline std::mutex _pollStatsMutex;
+    static inline std::recursive_mutex _pollStatsMutex;
 };
 
 /**

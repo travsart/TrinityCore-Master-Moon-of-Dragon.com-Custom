@@ -436,7 +436,7 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
         player->GetName(), skillId, maxSkill);
 
     // Update metrics
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerMetrics[player->GetGUID().GetCounter()].professionsLearned++;
     _globalMetrics.professionsLearned++;
 
@@ -841,7 +841,7 @@ bool ProfessionManager::LearnRecipe(::Player* player, uint32 recipeId)
         player->GetName(), recipeId, recipe.spellId);
 
     // Update metrics
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerMetrics[player->GetGUID().GetCounter()].recipesLearned++;
     _globalMetrics.recipesLearned++;
 
@@ -1006,7 +1006,7 @@ void ProfessionManager::QueueCraft(::Player* player, uint32 recipeId, uint32 qua
     task.quantity = quantity;
     task.queueTime = getMSTime();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _craftingQueues[playerGuid].push_back(task);
 
     TC_LOG_DEBUG("playerbots", "Queued {} x{} for player {}",
@@ -1020,7 +1020,7 @@ void ProfessionManager::ProcessCraftingQueue(::Player* player, uint32 diff)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _craftingQueues.find(playerGuid);
     if (it == _craftingQueues.end() || it->second.empty())
         return;
@@ -1123,7 +1123,7 @@ bool ProfessionManager::CastCraftingSpell(::Player* player, RecipeInfo const& re
     uint16 newSkill = GetProfessionSkill(player, recipe.profession);
     if (newSkill > oldSkill)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         _playerMetrics[player->GetGUID().GetCounter()].skillPointsGained += (newSkill - oldSkill);
         _globalMetrics.skillPointsGained += (newSkill - oldSkill);
     }
@@ -1185,13 +1185,13 @@ bool ProfessionManager::ShouldCraftForSkillUp(::Player* player, RecipeInfo const
 
 void ProfessionManager::SetAutomationProfile(uint32 playerGuid, ProfessionAutomationProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 ProfessionAutomationProfile ProfessionManager::GetAutomationProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _playerProfiles.find(playerGuid);
     if (it != _playerProfiles.end())
         return it->second;
@@ -1206,7 +1206,7 @@ ProfessionAutomationProfile ProfessionManager::GetAutomationProfile(uint32 playe
 
 ProfessionManager::ProfessionMetrics const& ProfessionManager::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
         return it->second;

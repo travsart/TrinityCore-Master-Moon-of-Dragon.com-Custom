@@ -45,7 +45,7 @@ PvPCombatAI::PvPCombatAI()
 
 void PvPCombatAI::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Initializing PvP combat systems...");
 
@@ -73,7 +73,7 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Get combat profile
     PvPCombatProfile profile = GetCombatProfile(playerGuid);
@@ -279,7 +279,7 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
     if (!player || !target)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     PvPCombatProfile profile = GetCombatProfile(player->GetGUID().GetCounter());
     if (!profile.autoCCChain)
@@ -358,7 +358,7 @@ void PvPCombatAI::TrackCCUsed(::Unit* target, CCType ccType)
     if (!target)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid targetGuid = target->GetGUID();
     if (!_ccChains.count(targetGuid))
@@ -517,7 +517,7 @@ bool PvPCombatAI::ExecuteOffensiveBurst(::Player* player, ::Unit* target)
     if (!player || !target)
         return false;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Player {} executing offensive burst on target {}",
         player->GetGUID().GetCounter(), target->GetGUID().GetCounter());
@@ -755,7 +755,7 @@ void PvPCombatAI::SetCombatState(::Player* player, PvPCombatState state)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _combatStates[player->GetGUID().GetCounter()] = state;
 }
 
@@ -764,7 +764,7 @@ PvPCombatState PvPCombatAI::GetCombatState(::Player* player) const
     if (!player)
         return PvPCombatState::IDLE;
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_combatStates.count(playerGuid))
@@ -779,13 +779,13 @@ PvPCombatState PvPCombatAI::GetCombatState(::Player* player) const
 
 void PvPCombatAI::SetCombatProfile(uint32 playerGuid, PvPCombatProfile const& profile)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 PvPCombatProfile PvPCombatAI::GetCombatProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -799,7 +799,7 @@ PvPCombatProfile PvPCombatAI::GetCombatProfile(uint32 playerGuid) const
 
 PvPCombatAI::PvPMetrics const& PvPCombatAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {

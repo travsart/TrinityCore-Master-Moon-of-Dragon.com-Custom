@@ -67,7 +67,7 @@ void BotScheduler::Shutdown()
 
     // Clear the schedule queue (TBB -> std::priority_queue)
     {
-        std::lock_guard<std::mutex> lock(_scheduleQueueMutex);
+        std::lock_guard<std::recursive_mutex> lock(_scheduleQueueMutex);
         while (!_scheduleQueue.empty())
         {
             _scheduleQueue.pop();
@@ -409,7 +409,7 @@ void BotScheduler::ProcessSchedule()
     {
         ScheduleEntry entry;
         {
-            std::lock_guard<std::mutex> lock(_scheduleQueueMutex);
+            std::lock_guard<std::recursive_mutex> lock(_scheduleQueueMutex);
             if (_scheduleQueue.empty())
                 break;
 

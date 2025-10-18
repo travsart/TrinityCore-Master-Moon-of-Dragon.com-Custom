@@ -201,7 +201,7 @@ private:
     std::atomic<uint32> _scriptMisses{0};
     std::atomic<uint32> _mechanicExecutions{0};
 
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
     bool _initialized;
 };
 

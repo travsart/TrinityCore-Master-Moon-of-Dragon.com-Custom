@@ -49,7 +49,7 @@ void LearningAnalytics::Shutdown()
     TC_LOG_INFO("playerbot.learning", "Shutting down Learning Analytics");
 
     // Export final reports for all bots
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
     for (const auto& [botGuid, data] : _botData)
     {
         std::string report = GenerateLearningReport(botGuid);
@@ -66,7 +66,7 @@ void LearningAnalytics::RecordLearningStep(uint32_t botGuid, const LearningDataP
 
     TRACK_ML_OPERATION(botGuid, MLOperationType::EXPERIENCE_STORAGE);
 
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     BotLearningData* data = GetOrCreateBotData(botGuid);
     if (!data)
@@ -97,7 +97,7 @@ void LearningAnalytics::RecordEpisode(uint32_t botGuid, uint32_t episode, float 
     if (!_initialized)
         return;
 
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     BotLearningData* data = GetOrCreateBotData(botGuid);
     if (!data)
@@ -140,7 +140,7 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
 {
     LearningTrend trend;
 
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.size() < _minDataPoints)
@@ -184,7 +184,7 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
 
 LearningPhase LearningAnalytics::DetectLearningPhase(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -233,7 +233,7 @@ float LearningAnalytics::GetLearningRate(uint32_t botGuid) const
 
 float LearningAnalytics::GetConvergenceProgress(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.size() < _minDataPoints)
@@ -258,7 +258,7 @@ float LearningAnalytics::GetConvergenceProgress(uint32_t botGuid) const
 
 bool LearningAnalytics::HasConverged(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -270,7 +270,7 @@ bool LearningAnalytics::HasConverged(uint32_t botGuid) const
 
 bool LearningAnalytics::IsInPlateau(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -281,7 +281,7 @@ bool LearningAnalytics::IsInPlateau(uint32_t botGuid) const
 
 bool LearningAnalytics::IsRegressing(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -292,7 +292,7 @@ bool LearningAnalytics::IsRegressing(uint32_t botGuid) const
 
 float LearningAnalytics::GetAveragePerformance(uint32_t botGuid, uint32_t lastEpisodes) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -315,7 +315,7 @@ float LearningAnalytics::GetAveragePerformance(uint32_t botGuid, uint32_t lastEp
 
 float LearningAnalytics::GetSampleEfficiency(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -520,7 +520,7 @@ std::vector<float> LearningAnalytics::ExtractMetricSeries(
 
 float LearningAnalytics::GetPeakPerformance(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it != _botData.end())
@@ -531,7 +531,7 @@ float LearningAnalytics::GetPeakPerformance(uint32_t botGuid) const
 
 float LearningAnalytics::GetPerformanceVariance(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -545,7 +545,7 @@ float LearningAnalytics::GetPerformanceVariance(uint32_t botGuid) const
 
 float LearningAnalytics::GetTimeEfficiency(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_dataMutex);
+    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())

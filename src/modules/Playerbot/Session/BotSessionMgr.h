@@ -62,7 +62,7 @@ private:
     std::vector<BotSession*> _activeSessions;
 
     // Simple thread safety
-    mutable std::mutex _sessionsMutex;
+    mutable std::recursive_mutex _sessionsMutex;
 
     // State
     std::atomic<bool> _enabled{false};

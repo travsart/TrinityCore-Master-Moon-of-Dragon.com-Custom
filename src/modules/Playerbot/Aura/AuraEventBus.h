@@ -132,12 +132,12 @@ private:
 
     // Event queue
     std::priority_queue<AuraEvent> _eventQueue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
 
     // Subscriber management
     std::unordered_map<AuraEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers;
-    mutable std::mutex _subscriberMutex;
+    mutable std::recursive_mutex _subscriberMutex;
 
     // Configuration
     static constexpr uint32 MAX_QUEUE_SIZE = 10000;
