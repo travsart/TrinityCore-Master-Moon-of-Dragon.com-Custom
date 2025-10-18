@@ -101,7 +101,7 @@ private:
     alignas(64) std::atomic<size_t> _capacity{INITIAL_CAPACITY};
 
     // Expansion lock
-    std::mutex _expansionMutex;
+    std::recursive_mutex _expansionMutex;
 
 public:
     WorkStealingQueue();
@@ -258,7 +258,7 @@ private:
     };
 
     // Wake notification
-    std::mutex _wakeMutex;
+    std::mutex _wakeMutex;  // MUST be std::mutex for condition_variable compatibility
     std::condition_variable _wakeCv;
 
     // Thread initialization state
@@ -386,7 +386,7 @@ private:
     private:
         std::vector<std::unique_ptr<T>> _pool;
         std::queue<T*> _available;
-        std::mutex _mutex;
+        std::recursive_mutex _mutex;
 
     public:
         ObjectPool(size_t initialSize = 1000)
@@ -402,7 +402,7 @@ private:
 
         T* Acquire()
         {
-            std::lock_guard<std::mutex> lock(_mutex);
+            std::lock_guard<std::recursive_mutex> lock(_mutex);
             if (_available.empty())
             {
                 auto obj = std::make_unique<T>();
@@ -418,7 +418,7 @@ private:
 
         void Release(T* obj)
         {
-            std::lock_guard<std::mutex> lock(_mutex);
+            std::lock_guard<std::recursive_mutex> lock(_mutex);
             _available.push(obj);
         }
     };
@@ -437,13 +437,13 @@ private:
     // Shutdown coordination
     std::atomic<bool> _shutdown{false};
     std::condition_variable _shutdownCv;
-    std::mutex _shutdownMutex;
+    std::mutex _shutdownMutex;  // MUST be std::mutex for condition_variable compatibility
 
     // CRITICAL FIX: Deferred worker creation to prevent startup crash
     // Workers are not created in constructor, but lazily on first Submit() call
     // This prevents worker threads from starting before World is fully initialized
     std::atomic<bool> _workersCreated{false};
-    std::mutex _workerCreationMutex;
+    std::recursive_mutex _workerCreationMutex;
 
     // Async initialization support for non-blocking startup
     std::future<void> _initFuture;
