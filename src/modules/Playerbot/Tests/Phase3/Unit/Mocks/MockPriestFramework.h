@@ -53,6 +53,7 @@ enum PriestSpellIds
     APOTHEOSIS                      = 200183,
     BENEDICTION                     = 193157,
     HOLY_FIRE                       = 14914,
+    SMITE                           = 585,
 
     // Shadow Spells
     SHADOW_FORM                     = 15473,
@@ -79,12 +80,12 @@ enum PriestSpellIds
     SHADOW_CRASH                    = 205385,
 
     // Shared Healing Spells
-    HEAL                            = 2050,
-    GREATER_HEAL                    = 2060,
+    HEAL                            = 2060,
     FLASH_HEAL                      = 2061,
+    GREATER_HEAL                    = 2062,
     RENEW                           = 139,
     PRAYER_OF_HEALING               = 596,
-    CIRCLE_OF_HEALING               = 34861,
+    CIRCLE_OF_HEALING               = 204883,
     BINDING_HEAL                    = 32546,
     PRAYER_OF_MENDING               = 33076,
 
@@ -306,6 +307,49 @@ private:
 };
 
 // ============================================================================
+// SCENARIO STRUCTURES (Forward declarations and definitions)
+// ============================================================================
+
+struct HolyPriestHealingScenario
+{
+    std::shared_ptr<MockPriestPlayer> priest;
+    std::shared_ptr<MockGroup> group;
+    std::vector<std::shared_ptr<MockPriestPlayer>> groupMembers;
+    MockGuid tankGuid;
+    bool criticalEmergency = false;
+};
+
+struct ShadowPriestDPSScenario
+{
+    std::shared_ptr<MockPriestPlayer> priest;
+    std::shared_ptr<MockUnit> boss;
+    bool hasDoTs = false;
+};
+
+struct ShadowPriestAoEScenario
+{
+    std::shared_ptr<MockPriestPlayer> priest;
+    std::vector<std::shared_ptr<MockUnit>> enemies;
+    uint32 enemyCount = 0;
+};
+
+struct ShadowPriestBurstScenario
+{
+    std::shared_ptr<MockPriestPlayer> priest;
+    std::shared_ptr<MockUnit> boss;
+    bool inVoidform = false;
+};
+
+struct HolyPriestRaidHealingScenario
+{
+    std::shared_ptr<MockPriestPlayer> priest;
+    std::shared_ptr<MockGroup> group;
+    std::vector<std::shared_ptr<MockPriestPlayer>> raidMembers;
+    uint32 raidSize = 0;
+    uint32 injuredCount = 0;
+};
+
+// ============================================================================
 // PRIEST TEST SCENARIO BUILDERS
 // ============================================================================
 
@@ -313,7 +357,7 @@ class PriestScenarioBuilder
 {
 public:
     // Holy Priest healing scenario with injured group
-    static struct HolyPriestHealingScenario CreateHolyHealingScenario(
+    static HolyPriestHealingScenario CreateHolyHealingScenario(
         uint32 groupSize = 5,
         float avgHealthPct = 60.0f,
         bool includeTank = true,
@@ -386,7 +430,7 @@ public:
     }
 
     // Shadow Priest DPS scenario with single target
-    static struct ShadowPriestDPSScenario CreateShadowSingleTargetScenario(
+    static ShadowPriestDPSScenario CreateShadowSingleTargetScenario(
         uint32 bossLevel = 83,
         uint32 bossHealth = 500000,
         bool hasPriorDoTs = false
@@ -432,7 +476,7 @@ public:
     }
 
     // Shadow Priest AoE scenario with multiple targets
-    static struct ShadowPriestAoEScenario CreateShadowAoEScenario(
+    static ShadowPriestAoEScenario CreateShadowAoEScenario(
         uint32 enemyCount = 5,
         uint32 enemyHealth = 50000
     )
@@ -470,7 +514,7 @@ public:
     }
 
     // Voidform burst scenario (Shadow Priest at max insanity)
-    static struct ShadowPriestBurstScenario CreateVoidformBurstScenario(
+    static ShadowPriestBurstScenario CreateVoidformBurstScenario(
         bool inVoidform = false
     )
     {
@@ -509,7 +553,7 @@ public:
     }
 
     // Holy Priest AoE healing scenario (raid-wide damage)
-    static struct HolyPriestRaidHealingScenario CreateRaidHealingScenario(
+    static HolyPriestRaidHealingScenario CreateRaidHealingScenario(
         uint32 raidSize = 25,
         float avgHealthPct = 50.0f,
         uint32 injuredCount = 15
@@ -559,49 +603,6 @@ public:
 
         return scenario;
     }
-};
-
-// ============================================================================
-// SCENARIO STRUCTURES
-// ============================================================================
-
-struct HolyPriestHealingScenario
-{
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockGroup> group;
-    std::vector<std::shared_ptr<MockPriestPlayer>> groupMembers;
-    ObjectGuid tankGuid;
-    bool criticalEmergency = false;
-};
-
-struct ShadowPriestDPSScenario
-{
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockUnit> boss;
-    bool hasDoTs = false;
-};
-
-struct ShadowPriestAoEScenario
-{
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::vector<std::shared_ptr<MockUnit>> enemies;
-    uint32 enemyCount = 0;
-};
-
-struct ShadowPriestBurstScenario
-{
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockUnit> boss;
-    bool inVoidform = false;
-};
-
-struct HolyPriestRaidHealingScenario
-{
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockGroup> group;
-    std::vector<std::shared_ptr<MockPriestPlayer>> raidMembers;
-    uint32 raidSize = 0;
-    uint32 injuredCount = 0;
 };
 
 // ============================================================================

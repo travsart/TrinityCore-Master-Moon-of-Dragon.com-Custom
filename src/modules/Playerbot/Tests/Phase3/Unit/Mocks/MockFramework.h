@@ -24,7 +24,6 @@
 #pragma once
 
 #include "Define.h"
-#include "ObjectGuid.h"
 #include "Position.h"
 #include "SharedDefines.h"
 #include "SpellInfo.h"
@@ -34,11 +33,34 @@
 #include <vector>
 #include <unordered_map>
 #include <atomic>
+#include <cstdint>
 
 namespace Playerbot
 {
 namespace Test
 {
+
+// ============================================================================
+// MOCK GUID - Lightweight GUID for testing without TrinityCore dependencies
+// ============================================================================
+
+class MockGuid
+{
+public:
+    MockGuid() : m_value(0) {}
+    explicit MockGuid(uint64 value) : m_value(value) {}
+
+    uint64 GetRawValue() const { return m_value; }
+    bool IsEmpty() const { return m_value == 0; }
+    void Clear() { m_value = 0; }
+
+    bool operator==(MockGuid const& other) const { return m_value == other.m_value; }
+    bool operator!=(MockGuid const& other) const { return m_value != other.m_value; }
+    bool operator<(MockGuid const& other) const { return m_value < other.m_value; }
+
+private:
+    uint64 m_value;
+};
 
 // ============================================================================
 // FORWARD DECLARATIONS
@@ -107,7 +129,7 @@ public:
     virtual ~MockUnit() = default;
 
     // Core identification
-    MOCK_METHOD(ObjectGuid, GetGUID, (), (const));
+    MOCK_METHOD(MockGuid, GetGUID, (), (const));
     MOCK_METHOD(std::string, GetName, (), (const));
     MOCK_METHOD(uint32, GetEntry, (), (const));
 
@@ -135,8 +157,8 @@ public:
 
     // Combat targeting
     MOCK_METHOD(MockUnit*, GetVictim, (), (const));
-    MOCK_METHOD(void, SetTarget, (ObjectGuid));
-    MOCK_METHOD(ObjectGuid, GetTargetGUID, (), (const));
+    MOCK_METHOD(void, SetTarget, (MockGuid));
+    MOCK_METHOD(MockGuid, GetTargetGUID, (), (const));
 
     // Spell casting (pure virtual - must be mocked)
     MOCK_METHOD(MockSpellCastResult, CastSpell, (MockUnit*, uint32, bool), ());
@@ -163,7 +185,7 @@ public:
     void SetCombatState(bool inCombat) { m_inCombat = inCombat; }
 
 protected:
-    ObjectGuid m_guid;
+    MockGuid m_guid;
     std::string m_name;
     uint32 m_entry = 0;
     uint32 m_health = 1;
@@ -173,7 +195,7 @@ protected:
     Position m_position;
     bool m_inCombat = false;
     bool m_alive = true;
-    ObjectGuid m_targetGuid;
+    MockGuid m_targetGuid;
 };
 
 // ============================================================================
@@ -309,24 +331,24 @@ class MockGroup
 public:
     MockGroup();
 
-    MOCK_METHOD(ObjectGuid, GetGUID, (), (const));
-    MOCK_METHOD(ObjectGuid, GetLeaderGUID, (), (const));
+    MOCK_METHOD(MockGuid, GetGUID, (), (const));
+    MOCK_METHOD(MockGuid, GetLeaderGUID, (), (const));
     MOCK_METHOD(MockPlayer*, GetLeader, (), (const));
     MOCK_METHOD(uint32, GetMembersCount, (), (const));
-    MOCK_METHOD(bool, IsMember, (ObjectGuid), (const));
-    MOCK_METHOD(bool, IsLeader, (ObjectGuid), (const));
-    MOCK_METHOD(bool, IsAssistant, (ObjectGuid), (const));
+    MOCK_METHOD(bool, IsMember, (MockGuid), (const));
+    MOCK_METHOD(bool, IsLeader, (MockGuid), (const));
+    MOCK_METHOD(bool, IsAssistant, (MockGuid), (const));
     MOCK_METHOD(bool, AddMember, (MockPlayer*), ());
-    MOCK_METHOD(bool, RemoveMember, (ObjectGuid), ());
-    MOCK_METHOD(void, SetLeader, (ObjectGuid));
+    MOCK_METHOD(bool, RemoveMember, (MockGuid), ());
+    MOCK_METHOD(void, SetLeader, (MockGuid));
 
     // Helper methods
     void AddMemberHelper(MockPlayer* player) { m_members.push_back(player); }
     std::vector<MockPlayer*> const& GetMembers() const { return m_members; }
 
 private:
-    ObjectGuid m_guid;
-    ObjectGuid m_leaderGuid;
+    MockGuid m_guid;
+    MockGuid m_leaderGuid;
     std::vector<MockPlayer*> m_members;
 };
 
@@ -364,8 +386,8 @@ public:
     MOCK_METHOD(MockPlayer*, GetBot, (), (const));
     MOCK_METHOD(bool, IsActive, (), (const));
     MOCK_METHOD(bool, IsInCombat, (), (const));
-    MOCK_METHOD(ObjectGuid, GetTarget, (), (const));
-    MOCK_METHOD(void, SetTarget, (ObjectGuid));
+    MOCK_METHOD(MockGuid, GetTarget, (), (const));
+    MOCK_METHOD(void, SetTarget, (MockGuid));
 
     // Value system (for shared bot values)
     MOCK_METHOD(float, GetValue, (std::string const&), (const));
@@ -456,7 +478,7 @@ public:
 
 private:
     static std::atomic<uint64> s_guidCounter;
-    static ObjectGuid GenerateGUID();
+    static MockGuid GenerateGUID();
 };
 
 // ============================================================================

@@ -1286,6 +1286,9 @@ endif()
 #     )
 # endif()
 
+# Add Tests subdirectory (Phase 3A Week 2: Unit Testing)
+add_subdirectory(Tests)
+
 # Enterprise quality validation
 message(STATUS "=== Playerbot Enterprise Configuration Summary ===")
 message(STATUS "  -> Build Type: ${CMAKE_BUILD_TYPE}")
