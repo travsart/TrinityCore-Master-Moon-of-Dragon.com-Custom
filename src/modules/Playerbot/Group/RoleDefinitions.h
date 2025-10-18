@@ -54,6 +54,7 @@ public:
         float baseEffectiveness;
         std::vector<std::string> keyAbilities;
 
+        SpecializationData() : specId(0), primaryRole(GroupRole::NONE), baseEffectiveness(0.0f) {}
         SpecializationData(uint8 id, const std::string& n, GroupRole primary, float effectiveness)
             : specId(id), name(n), primaryRole(primary), baseEffectiveness(effectiveness) {}
     };
@@ -67,6 +68,7 @@ public:
         bool isHybridClass;
         float overallVersatility;
 
+        ClassData() : classId(0), isHybridClass(false), overallVersatility(0.0f) {}
         ClassData(uint8 id, const std::string& name, bool hybrid = false, float versatility = 0.5f)
             : classId(id), className(name), isHybridClass(hybrid), overallVersatility(versatility) {}
     };

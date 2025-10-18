@@ -1177,6 +1177,24 @@ StatPriority const& EquipmentManager::GetStatPriority(::Player* player)
     return defaultPriority;
 }
 
+StatPriority const& EquipmentManager::GetStatPriorityByClassSpec(uint8 classId, uint32 specId)
+{
+    uint16 key = MakeStatPriorityKey(classId, static_cast<uint8>(specId));
+
+    auto it = _statPriorities.find(key);
+    if (it != _statPriorities.end())
+        return it->second;
+
+    // Fallback to spec 0
+    key = MakeStatPriorityKey(classId, 0);
+    it = _statPriorities.find(key);
+    if (it != _statPriorities.end())
+        return it->second;
+
+    static StatPriority defaultPriority(0, 0);
+    return defaultPriority;
+}
+
 void EquipmentManager::UpdatePlayerStatPriority(::Player* player)
 {
     // Called when player changes spec - priority automatically updated via GetStatPriority()

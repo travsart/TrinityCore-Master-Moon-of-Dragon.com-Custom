@@ -216,6 +216,12 @@ public:
     StatPriority const& GetStatPriority(::Player* player);
 
     /**
+     * Get stat priority configuration by class/spec ID directly
+     * Used by BotGearFactory for cache building without Player objects
+     */
+    StatPriority const& GetStatPriorityByClassSpec(uint8 classId, uint32 specId);
+
+    /**
      * Initialize all class/spec stat priorities (called on startup)
      */
     void InitializeStatPriorities();

@@ -349,6 +349,9 @@ set(PLAYERBOT_SOURCES
     # Group Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
 
     # Group Event System - Event-Driven Architecture for Group Coordination
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
@@ -407,6 +410,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotMovementUtil.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
 
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
@@ -417,8 +422,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelDistribution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelDistribution.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
 
     # Phase 2: Bot Lifecycle Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
@@ -535,6 +544,12 @@ set(PLAYERBOT_SOURCES
     # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.h
+
+    # Talent Management - Specialization Selection + Loadout Application + Dual-Spec
+    ${CMAKE_CURRENT_SOURCE_DIR}/Talents/BotTalentManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Talents/BotTalentManager.h
 
     # Profession System - Complete Crafting + Gathering Automation (Phase 1, 2, 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
@@ -792,6 +807,9 @@ source_group("AI\\Values" FILES
 source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
@@ -883,8 +901,12 @@ source_group("Character" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotNameMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCharacterDistribution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelDistribution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelDistribution.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
 )
 
 source_group("Lifecycle" FILES
@@ -961,6 +983,13 @@ source_group("Social" FILES
 source_group("Equipment" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/BotGearFactory.h
+)
+
+source_group("Talents" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Talents/BotTalentManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Talents/BotTalentManager.h
 )
 
 source_group("Professions" FILES
@@ -1046,6 +1075,8 @@ source_group("Movement" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Pathfinding/NavMeshInterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
 )
 
 source_group("Interaction" FILES

@@ -18,6 +18,7 @@
 #include "Session/BotSessionMgr.h"
 #include "Session/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleMgr.h"
+#include "Character/BotLevelManager.h"
 
 PlayerbotWorldScript::PlayerbotWorldScript() : WorldScript("PlayerbotWorldScript")
 {
@@ -45,6 +46,17 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
         // Module is now ready
         TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Playerbot module initialized");
         initialized = true;
+
+        // Initialize Automated World Population System
+        TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Initializing Automated World Population System...");
+        if (sBotLevelManager->Initialize())
+        {
+            TC_LOG_INFO("module.playerbot.script", "Automated World Population System initialized successfully");
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.script", "Automated World Population System failed to initialize");
+        }
 
         // Initialize performance tracking
         _lastMetricUpdate = GameTime::GetGameTimeMS();
