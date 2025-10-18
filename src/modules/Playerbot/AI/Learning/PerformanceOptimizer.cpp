@@ -588,8 +588,8 @@ void PerformanceOptimizer::Shutdown()
 
     TC_LOG_INFO("playerbot.optimizer", "Shutting down Performance Optimizer");
 
-    std::lock_guard<std::mutex> profileLock(_profilesMutex);
-    std::lock_guard<std::mutex> paramLock(_parametersMutex);
+    std::lock_guard<std::recursive_mutex> profileLock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> paramLock(_parametersMutex);
 
     _profiles.clear();
     _optimizers.clear();
@@ -633,7 +633,7 @@ void PerformanceOptimizer::InitializeStrategies()
 
 void PerformanceOptimizer::CreateProfile(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     if (_profiles.find(botGuid) == _profiles.end())
     {
@@ -648,7 +648,7 @@ void PerformanceOptimizer::CreateProfile(uint32_t botGuid)
 
 std::shared_ptr<PerformanceProfile> PerformanceOptimizer::GetProfile(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     auto it = _profiles.find(botGuid);
     if (it != _profiles.end())
@@ -773,7 +773,7 @@ float PerformanceOptimizer::EvaluateStrategyFitness(uint32_t botGuid, const Stra
 void PerformanceOptimizer::RegisterTuningParameter(const std::string& name, float initial,
                                                    float min, float max, float learningRate)
 {
-    std::lock_guard<std::mutex> lock(_parametersMutex);
+    std::lock_guard<std::recursive_mutex> lock(_parametersMutex);
 
     TuningParameter param;
     param.name = name;
@@ -788,7 +788,7 @@ void PerformanceOptimizer::RegisterTuningParameter(const std::string& name, floa
 
 float PerformanceOptimizer::GetTuningParameter(const std::string& name) const
 {
-    std::lock_guard<std::mutex> lock(_parametersMutex);
+    std::lock_guard<std::recursive_mutex> lock(_parametersMutex);
 
     auto it = _tuningParameters.find(name);
     if (it != _tuningParameters.end())

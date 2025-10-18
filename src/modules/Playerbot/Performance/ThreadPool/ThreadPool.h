@@ -358,9 +358,13 @@ class ThreadPool
 public:
     struct Configuration
     {
-        uint32 numThreads = std::thread::hardware_concurrency() > 2
+        // CRITICAL FIX: Minimum 4 workers to prevent deadlock when main thread waits for futures
+        // Even on 2-core systems, we need enough workers to prevent blocking issues
+        // Original logic: hardware_concurrency() - 2, but this gives 1 thread on 2-3 core systems
+        // New logic: Minimum 4 threads, or (cores - 2) if cores > 6
+        uint32 numThreads = std::max(4u, std::thread::hardware_concurrency() > 6
             ? std::thread::hardware_concurrency() - 2
-            : 1;
+            : 4);
         uint32 maxQueueSize = 10000;
         bool enableWorkStealing = true;
         bool enableCpuAffinity = false; // Disabled by default (requires admin on Windows)

@@ -133,18 +133,20 @@ private:
     uint32 _totalDamageDealt;
     uint32 _furySpent;
     uint32 _soulFragmentsConsumed;
-
-    // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr uint32 FURY_MAX = 120;
-    static constexpr uint32 HAVOC_META_DURATION = 30000; // 30 seconds
-    static constexpr uint32 NEMESIS_COOLDOWN = 120000; // 2 minutes
-    static constexpr uint32 CHAOS_BLADES_COOLDOWN = 120000; // 2 minutes
-    static constexpr uint32 EYE_BEAM_COOLDOWN = 45000; // 45 seconds
-    static constexpr uint32 FEL_RUSH_COOLDOWN = 10000; // 10 seconds
-    static constexpr uint32 VENGEFUL_RETREAT_COOLDOWN = 25000; // 25 seconds
-    static constexpr float FURY_GENERATION_THRESHOLD = 0.7f; // 70%
-    static constexpr uint32 SOUL_FRAGMENT_CONSUME_THRESHOLD = 3;
 };
+
+// Constants defined outside class to avoid MSVC constexpr issues
+namespace {
+    constexpr float HAVOC_MELEE_RANGE = 5.0f;
+    constexpr uint32 HAVOC_FURY_MAX = 120;
+    constexpr uint32 HAVOC_META_DURATION = 30000; // 30 seconds
+    constexpr uint32 HAVOC_NEMESIS_COOLDOWN = 120000; // 2 minutes
+    constexpr uint32 HAVOC_CHAOS_BLADES_COOLDOWN = 120000; // 2 minutes
+    constexpr uint32 HAVOC_EYE_BEAM_COOLDOWN = 45000; // 45 seconds
+    constexpr uint32 HAVOC_FEL_RUSH_COOLDOWN = 10000; // 10 seconds
+    constexpr uint32 HAVOC_VENGEFUL_RETREAT_COOLDOWN = 25000; // 25 seconds
+    constexpr float HAVOC_FURY_GENERATION_THRESHOLD = 0.7f; // 70%
+    constexpr uint32 HAVOC_SOUL_FRAGMENT_CONSUME_THRESHOLD = 3;
+}
 
 } // namespace Playerbot

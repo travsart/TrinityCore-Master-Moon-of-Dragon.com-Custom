@@ -242,7 +242,7 @@ private:
     static std::unordered_map<uint32, uint32> _manaCostCache;
     static std::unordered_map<uint32, uint32> _rageCostCache;
     static std::unordered_map<uint32, uint32> _energyCostCache;
-    static std::mutex _cacheMutex;
+    static std::recursive_mutex _cacheMutex;
 
     static void CacheSpellResourceCost(uint32 spellId);
 };
@@ -278,7 +278,7 @@ private:
     };
 
     std::unordered_map<uint32, std::unordered_map<ResourceType, ResourceUsageData>> _botResourceData;
-    std::mutex _dataMutex;
+    std::recursive_mutex _dataMutex;
 };
 
 } // namespace Playerbot

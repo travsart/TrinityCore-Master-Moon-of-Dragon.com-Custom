@@ -81,7 +81,7 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
     if (!bot || !ai)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     ObjectGuid botGuid = bot->GetGUID();
 
@@ -133,7 +133,7 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
 
 void ThreatCoordinator::UnregisterBot(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     _botThreatManagers.erase(botGuid);
     _botAssignments.erase(botGuid);
@@ -175,7 +175,7 @@ void ThreatCoordinator::UnregisterBot(ObjectGuid botGuid)
 
 void ThreatCoordinator::UpdateBotRole(ObjectGuid botGuid, ThreatRole role)
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     auto it = _botAssignments.find(botGuid);
     if (it != _botAssignments.end())
@@ -190,7 +190,7 @@ void ThreatCoordinator::UpdateBotRole(ObjectGuid botGuid, ThreatRole role)
 
 bool ThreatCoordinator::AssignPrimaryTank(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     auto it = _botAssignments.find(botGuid);
     if (it == _botAssignments.end())
@@ -207,7 +207,7 @@ bool ThreatCoordinator::AssignPrimaryTank(ObjectGuid botGuid)
 
 bool ThreatCoordinator::AssignOffTank(ObjectGuid botGuid)
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     auto it = _botAssignments.find(botGuid);
     if (it == _botAssignments.end())
@@ -224,7 +224,7 @@ bool ThreatCoordinator::AssignOffTank(ObjectGuid botGuid)
 
 void ThreatCoordinator::InitiateTankSwap(ObjectGuid fromTank, ObjectGuid toTank)
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     // Queue taunt from new tank
     for (const auto& targetGuid : _groupStatus.activeTargets)
@@ -370,7 +370,7 @@ void ThreatCoordinator::HandleEmergencyThreat(Unit* looseTarget)
     if (!looseTarget)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     // Find available tank for emergency taunt
     ObjectGuid emergencyTank;
@@ -419,7 +419,7 @@ void ThreatCoordinator::ProtectHealer(ObjectGuid healerGuid, Unit* attacker)
     if (!attacker)
         return;
 
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     // Priority 1: Tank taunt
     HandleEmergencyThreat(attacker);
@@ -443,19 +443,19 @@ void ThreatCoordinator::ProtectHealer(ObjectGuid healerGuid, Unit* attacker)
 
 GroupThreatStatus ThreatCoordinator::GetGroupThreatStatus() const
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
     return _groupStatus;
 }
 
 bool ThreatCoordinator::IsGroupThreatStable() const
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
     return _groupStatus.state == ThreatState::STABLE;
 }
 
 float ThreatCoordinator::GetGroupThreatStability() const
 {
-    std::lock_guard<std::mutex> lock(_coordinatorMutex);
+    std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     if (_groupStatus.activeTargets.empty())
         return 1.0f;

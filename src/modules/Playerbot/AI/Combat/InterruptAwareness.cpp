@@ -73,7 +73,7 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
         std::chrono::steady_clock::now() - updateStart);
 
     {
-        std::lock_guard<std::mutex> lock(_metricsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
         _metrics.totalScans.fetch_add(1);
         _metrics.unitsScanned.fetch_add(result.totalUnitsScanned);
         _metrics.spellsDetected.fetch_add(result.totalSpellsDetected);
@@ -105,7 +105,7 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
 
 void InterruptAwareness::SetObserver(Player* observer)
 {
-    std::lock_guard<std::mutex> lock(_observerMutex);
+    std::lock_guard<std::recursive_mutex> lock(_observerMutex);
     _observer = observer;
 
     TC_LOG_DEBUG("playerbot", "InterruptAwareness: Observer set to %s",
@@ -232,13 +232,13 @@ void InterruptAwareness::SetInterruptCoordinator(std::shared_ptr<InterruptCoordi
 
 void InterruptAwareness::RegisterSpellCastCallback(std::function<void(DetectedSpellCast const&)> callback)
 {
-    std::lock_guard<std::mutex> lock(_callbackMutex);
+    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
     _spellCastCallbacks.push_back(callback);
 }
 
 void InterruptAwareness::RegisterSpellCompleteCallback(std::function<void(ObjectGuid, uint32, bool)> callback)
 {
-    std::lock_guard<std::mutex> lock(_callbackMutex);
+    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
     _spellCompleteCallbacks.push_back(callback);
 }
 
@@ -259,7 +259,7 @@ size_t InterruptAwareness::GetActiveCastCount() const
 
 void InterruptAwareness::ResetMetrics()
 {
-    std::lock_guard<std::mutex> lock(_metricsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
     _metrics.totalScans.store(0);
     _metrics.unitsScanned.store(0);
     _metrics.spellsDetected.store(0);
@@ -814,7 +814,7 @@ void InterruptAwareness::OptimizeForPerformance()
 
     // Reset metrics if they get too large
     {
-        std::lock_guard<std::mutex> lock(_metricsMutex);
+        std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
         if (_metrics.totalScans.load() > 100000)
         {
             // Scale down metrics to prevent overflow
@@ -860,7 +860,7 @@ void InterruptAwareness::NotifySpellDetected(DetectedSpellCast const& cast)
     }
 
     // Notify registered callbacks
-    std::lock_guard<std::mutex> lock(_callbackMutex);
+    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
     for (const auto& callback : _spellCastCallbacks)
     {
         try
@@ -886,7 +886,7 @@ void InterruptAwareness::NotifySpellCompleted(ObjectGuid casterGuid, uint32 spel
     }
 
     // Notify registered callbacks
-    std::lock_guard<std::mutex> lock(_callbackMutex);
+    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
     for (const auto& callback : _spellCompleteCallbacks)
     {
         try

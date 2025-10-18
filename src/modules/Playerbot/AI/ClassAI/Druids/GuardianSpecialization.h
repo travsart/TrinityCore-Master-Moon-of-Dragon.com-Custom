@@ -221,7 +221,7 @@ private:
     // Advanced threat tracking system
     struct ThreatManager {
         std::unordered_map<uint64, GuardianThreatTarget> targets;
-        mutable std::mutex threatMutex;
+        mutable std::recursive_mutex threatMutex;
         std::atomic<uint64> primaryTarget{0};
         std::atomic<uint32> activeThreatTargets{0};
         void UpdateThreat(uint64 targetGuid, float threat) {
@@ -267,7 +267,7 @@ private:
     struct LacerateTracker {
         std::unordered_map<uint64, uint32> stacks;
         std::unordered_map<uint64, uint32> expiry;
-        mutable std::mutex lacerateMutex;
+        mutable std::recursive_mutex lacerateMutex;
         void UpdateLacerate(uint64 targetGuid, uint32 stackCount, uint32 duration) {
             std::lock_guard<std::mutex> lock(lacerateMutex);
             stacks[targetGuid] = stackCount;
@@ -311,7 +311,7 @@ private:
 
     // Cooldown tracking
     std::unordered_map<uint32, uint32> _cooldowns;
-    mutable std::mutex _cooldownMutex;
+    mutable std::recursive_mutex _cooldownMutex;
 
     // Advanced Guardian mechanics
     void OptimizeTankRotation(::Unit* target);

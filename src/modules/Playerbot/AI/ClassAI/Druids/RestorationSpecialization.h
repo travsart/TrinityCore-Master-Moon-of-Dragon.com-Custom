@@ -237,7 +237,7 @@ private:
     struct HealingPredictor {
         std::unordered_map<uint64, std::queue<float>> damageHistory;
         std::unordered_map<uint64, float> predictedDamage;
-        mutable std::mutex predictionMutex;
+        mutable std::recursive_mutex predictionMutex;
         void RecordDamage(uint64 unitGuid, float damage) {
             std::lock_guard<std::mutex> lock(predictionMutex);
             auto& history = damageHistory[unitGuid];
@@ -272,7 +272,7 @@ private:
         std::unordered_map<uint64, uint32> regrowthExpiry;
         std::unordered_map<uint64, uint32> lifebloomStacks;
         std::unordered_map<uint64, uint32> lifebloomExpiry;
-        mutable std::mutex hotMutex;
+        mutable std::recursive_mutex hotMutex;
         void UpdateHoT(uint64 unitGuid, uint32 spellId, uint32 duration, uint32 stacks = 1) {
             std::lock_guard<std::mutex> lock(hotMutex);
             uint32 expiry = getMSTime() + duration;

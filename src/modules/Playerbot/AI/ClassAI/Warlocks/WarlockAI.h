@@ -186,7 +186,7 @@ private:
     // Soul shard tracking
     std::atomic<uint32> _currentSoulShards{0};
     std::queue<uint32> _soulShardHistory;
-    mutable std::mutex _soulShardMutex;
+    mutable std::recursive_mutex _soulShardMutex;
 
     // Pet management
     std::atomic<bool> _petActive{false};

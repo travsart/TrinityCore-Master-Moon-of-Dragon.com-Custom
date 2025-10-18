@@ -258,7 +258,7 @@ private:
 
     static void TestMoveSemantics() {
         SafePlayerReference ref1;
-        ref1.SetGuid(ObjectGuid(HighGuid::Player, 12345));
+        ref1.SetGuid(ObjectGuid::Create<HighGuid::Player>(12345));
 
         SafePlayerReference ref2(std::move(ref1));
         ASSERT(ref1.IsEmpty(), "Moved-from reference should be empty");
@@ -269,7 +269,7 @@ private:
 
     static void TestCopySemantics() {
         SafePlayerReference ref1;
-        ref1.SetGuid(ObjectGuid(HighGuid::Player, 12345));
+        ref1.SetGuid(ObjectGuid::Create<HighGuid::Player>(12345));
 
         SafePlayerReference ref2(ref1);
         ASSERT(!ref1.IsEmpty(), "Copied-from reference should retain GUID");

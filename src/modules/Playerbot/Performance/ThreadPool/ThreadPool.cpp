@@ -459,10 +459,11 @@ void ThreadPool::EnsureWorkersCreated()
 
     // CRITICAL VALIDATION: Runtime check before creating workers
     // NOTE: Cannot log here either - playerbot.performance logger may not be ready yet
-    if (_config.numThreads < 1)
+    if (_config.numThreads < 4)
     {
-        // Silent early return to prevent crash from accessing empty _workers vector
+        // Silent early return to prevent crash or deadlock from too few workers
         // If this happens, validation in GetThreadPool() and constructor failed
+        // Minimum 4 threads required to prevent main thread deadlock
         return;
     }
 
@@ -509,7 +510,10 @@ void ThreadPool::EnsureWorkersCreated()
         // Use try-catch to prevent crash if logger not initialized
         try
         {
-            TC_LOG_INFO("playerbot.performance", "ThreadPool: Created and started {} worker threads", _config.numThreads);
+            uint32 hwCores = std::thread::hardware_concurrency();
+            TC_LOG_INFO("playerbot.performance",
+                "ThreadPool: Created and started {} worker threads (CPU: {} logical cores detected)",
+                _config.numThreads, hwCores);
         }
         catch (...)
         {
@@ -736,9 +740,18 @@ ThreadPool& GetThreadPool()
         {
             if (PlayerbotConfig::instance())
             {
-                config.numThreads = PlayerbotConfig::instance()->GetUInt(
+                uint32 configThreads = PlayerbotConfig::instance()->GetUInt(
                     "Playerbot.Performance.ThreadPool.WorkerCount",
-                    config.numThreads);
+                    0);  // 0 means auto-detect
+
+                // Handle special case: 0 = auto-detect (keep default formula)
+                // Non-zero values override the default
+                if (configThreads > 0)
+                {
+                    config.numThreads = configThreads;
+                }
+                // else: keep default from Configuration struct (auto-calculated)
+
                 config.maxQueueSize = PlayerbotConfig::instance()->GetUInt(
                     "Playerbot.Performance.ThreadPool.MaxQueueSize",
                     config.maxQueueSize);
@@ -755,11 +768,13 @@ ThreadPool& GetThreadPool()
             // Config not ready yet, use defaults
         }
 
-        // CRITICAL VALIDATION: Ensure numThreads >= 1 (prevent crash from invalid config)
+        // CRITICAL VALIDATION: Ensure numThreads >= 4 to prevent deadlock
+        // With blocking future.get() pattern in BotWorldSessionMgr, we need minimum 4 workers
+        // to prevent main thread deadlock when waiting for many bot updates
         // NOTE: Cannot log here - GetThreadPool() may be called before logging system is ready
-        if (config.numThreads < 1)
+        if (config.numThreads < 4)
         {
-            config.numThreads = 1;  // Silent fix - logging will happen in EnsureWorkersCreated()
+            config.numThreads = 4;  // Silent fix - logging will happen in EnsureWorkersCreated()
         }
 
         g_threadPool = std::make_unique<ThreadPool>(config);

@@ -400,7 +400,9 @@ private:
     static inline std::unordered_map<uint32, uint32> _baseDamageCache;
     static inline std::unordered_map<uint32, uint32> _manaCostCache;
     static inline std::unordered_map<uint32, uint32> _castTimeCache;
-    static inline std::mutex _cacheMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex to allow same thread to lock multiple times
+    // Prevents "resource deadlock would occur" error during UpdateRotation
+    static inline std::recursive_mutex _cacheMutex;
 
     static void CacheSpellData(uint32 spellId);
 };

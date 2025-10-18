@@ -276,13 +276,15 @@ private:
 
     // Performance metrics
     mutable DetectionMetrics _metrics;
-    mutable std::mutex _metricsMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex
+    mutable std::recursive_mutex _metricsMutex;
 
     // Integration components
     std::weak_ptr<InterruptCoordinator> _coordinator;
     std::vector<std::function<void(DetectedSpellCast const&)>> _spellCastCallbacks;
     std::vector<std::function<void(ObjectGuid, uint32, bool)>> _spellCompleteCallbacks;
-    mutable std::mutex _callbackMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex
+    mutable std::recursive_mutex _callbackMutex;
 
     // Priority scanning
     std::unordered_map<CreatureType, uint32> _creatureTypePriorities;
@@ -308,7 +310,7 @@ private:
     static constexpr uint32 MAX_ACTIVE_CASTS = 100;     // Maximum tracked active casts
 
     // Thread safety
-    mutable std::mutex _observerMutex;
+    mutable std::recursive_mutex _observerMutex;
 
     // Deleted operations
     InterruptAwareness(InterruptAwareness const&) = delete;

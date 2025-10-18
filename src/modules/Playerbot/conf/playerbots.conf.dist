@@ -198,10 +198,12 @@ Playerbot.Performance.Profiler.Enable = 0
 #
 #    Playerbot.Performance.ThreadPool.WorkerCount
 #        Description: Number of worker threads for parallel bot updates
-#        Default:     0 (auto-detect: hardware_concurrency - 2)
-#        Range:       1-32
-#        Note:        0 = Auto-detect (recommended)
-#                     Manual override: Set to specific thread count
+#        Default:     0 (auto-detect: max(4, hardware_concurrency > 6 ? hardware_concurrency - 2 : 4))
+#        Range:       4-32 (minimum 4 to prevent deadlock)
+#        Note:        0 = Auto-detect (recommended for most systems)
+#                     Manual override: Set to specific thread count (minimum 4)
+#                     On 16-core/32-thread CPU: auto-detect = 30 threads
+#                     On 4-core/8-thread CPU: auto-detect = 4 threads
 #                     Leave 2 cores free for OS and database operations
 #                     Example: 8-core CPU → 6 worker threads
 #

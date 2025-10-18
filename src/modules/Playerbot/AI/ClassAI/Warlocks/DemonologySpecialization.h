@@ -162,7 +162,7 @@ private:
 
     // Cooldown tracking
     std::unordered_map<uint32, uint32> _cooldowns;
-    mutable std::mutex _cooldownMutex;
+    mutable std::recursive_mutex _cooldownMutex;
 
     // Advanced Demonology mechanics
     void OptimizePetAI();

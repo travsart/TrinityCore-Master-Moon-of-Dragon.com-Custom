@@ -163,7 +163,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
                 Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
 
                 // Thread-safe result insertion
-                std::lock_guard<std::mutex> lock(resultMutex);
+                std::lock_guard<std::recursive_mutex> lock(resultMutex);
                 results.push_back(pos);
 
                 // Mark grid cell as occupied

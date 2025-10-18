@@ -157,20 +157,22 @@ private:
     uint32 _totalThreatGenerated;
     uint32 _painSpent;
     uint32 _damageAbsorbed;
-
-    // Constants
-    static constexpr float MELEE_RANGE = 5.0f;
-    static constexpr uint32 PAIN_MAX = 100;
-    static constexpr uint32 VENGEANCE_META_DURATION = 15000; // 15 seconds
-    static constexpr uint32 DEMON_SPIKES_DURATION = 6000; // 6 seconds
-    static constexpr uint32 DEMON_SPIKES_COOLDOWN = 20000; // 20 seconds
-    static constexpr uint32 FIERY_BRAND_COOLDOWN = 30000; // 30 seconds
-    static constexpr uint32 SOUL_BARRIER_COOLDOWN = 30000; // 30 seconds
-    static constexpr uint32 SIGIL_COOLDOWN = 30000; // 30 seconds
-    static constexpr uint32 INFERNAL_STRIKE_COOLDOWN = 20000; // 20 seconds
-    static constexpr float EMERGENCY_HEALTH_THRESHOLD = 0.3f; // 30%
-    static constexpr float PAIN_GENERATION_THRESHOLD = 0.8f; // 80%
-    static constexpr uint32 SOUL_FRAGMENT_CONSUME_THRESHOLD = 5;
 };
+
+// Constants defined outside class to avoid MSVC constexpr issues
+namespace {
+    constexpr float VENG_MELEE_RANGE = 5.0f;
+    constexpr uint32 VENG_PAIN_MAX = 100;
+    constexpr uint32 VENG_META_DURATION = 15000; // 15 seconds
+    constexpr uint32 VENG_DEMON_SPIKES_DURATION = 6000; // 6 seconds
+    constexpr uint32 VENG_DEMON_SPIKES_COOLDOWN = 20000; // 20 seconds
+    constexpr uint32 VENG_FIERY_BRAND_COOLDOWN = 30000; // 30 seconds
+    constexpr uint32 VENG_SOUL_BARRIER_COOLDOWN = 30000; // 30 seconds
+    constexpr uint32 VENG_SIGIL_COOLDOWN = 30000; // 30 seconds
+    constexpr uint32 VENG_INFERNAL_STRIKE_COOLDOWN = 20000; // 20 seconds
+    constexpr float VENG_EMERGENCY_HEALTH_THRESHOLD = 0.3f; // 30%
+    constexpr float VENG_PAIN_GENERATION_THRESHOLD = 0.8f; // 80%
+    constexpr uint32 VENG_SOUL_FRAGMENT_CONSUME_THRESHOLD = 5;
+}
 
 } // namespace Playerbot

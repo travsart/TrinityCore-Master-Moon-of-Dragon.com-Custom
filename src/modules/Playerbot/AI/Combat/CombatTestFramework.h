@@ -424,10 +424,10 @@ private:
 
     // Logging and debugging
     std::vector<std::string> _testLog;
-    mutable std::mutex _logMutex;
+    mutable std::recursive_mutex _logMutex;
 
     // Test result storage
-    mutable std::mutex _resultMutex;
+    mutable std::recursive_mutex _resultMutex;
     std::unordered_map<std::string, std::vector<TestResult>> _scenarioHistory;
 
     // Constants

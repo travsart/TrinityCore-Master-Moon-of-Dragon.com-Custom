@@ -2118,7 +2118,7 @@ uint32 MageSpellCalculator::CalculateSpellManaCost(uint32 spellId, Player* caste
     if (!caster)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     // Check cache
     auto it = _manaCostCache.find(spellId);
@@ -2167,7 +2167,7 @@ uint32 MageSpellCalculator::CalculateCastTime(uint32 spellId, Player* caster)
     if (!caster)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     // Check cache
     auto it = _castTimeCache.find(spellId);
@@ -2288,7 +2288,7 @@ void MageSpellCalculator::CacheSpellData(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     // Cache various spell properties
     // This would be expanded with more data

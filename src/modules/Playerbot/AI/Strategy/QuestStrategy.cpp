@@ -2271,11 +2271,12 @@ bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
     // PERFORMANCE: Use static cache to avoid repeated database queries
     // Key: itemId, Value: isCreatureLoot
     static std::unordered_map<uint32, bool> itemLootCache;
-    static std::mutex cacheMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex
+    static std::recursive_mutex cacheMutex;
 
     // Check cache first for performance
     {
-        std::lock_guard<std::mutex> lock(cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(cacheMutex);
         auto cacheIt = itemLootCache.find(itemId);
         if (cacheIt != itemLootCache.end())
         {
@@ -2296,7 +2297,7 @@ bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
 
     // Cache the result for future queries (thread-safe)
     {
-        std::lock_guard<std::mutex> lock(cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(cacheMutex);
         itemLootCache[itemId] = isCreatureLoot;
     }
 
@@ -2316,11 +2317,12 @@ bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
 
     // PERFORMANCE: Use static cache to avoid repeated database queries
     static std::unordered_map<uint32, bool> spellClickCache;
-    static std::mutex cacheMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex
+    static std::recursive_mutex cacheMutex;
 
     // Check cache first
     {
-        std::lock_guard<std::mutex> lock(cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(cacheMutex);
         auto cacheIt = spellClickCache.find(creatureEntry);
         if (cacheIt != spellClickCache.end())
         {
@@ -2340,7 +2342,7 @@ bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
 
     // Cache the result
     {
-        std::lock_guard<std::mutex> lock(cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(cacheMutex);
         spellClickCache[creatureEntry] = hasSpellClick;
     }
 

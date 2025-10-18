@@ -163,7 +163,7 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     // Check cache first if enabled
     if (_cachingEnabled)
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (it != _combatCache.end() && IsCacheValid(group))
         {
@@ -212,7 +212,7 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
     // Check engagement delay
     if (_engagementDelayMs > 0)
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (it != _combatCache.end())
         {
@@ -352,7 +352,7 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     if (!group)
         return;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     auto& info = _combatCache[group->GetGUID()];
 
@@ -390,7 +390,7 @@ uint32 GroupCombatTrigger::GetCombatDuration(Group* group) const
     if (!group)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
     auto it = _combatCache.find(group->GetGUID());
     if (it == _combatCache.end() || !it->second.inCombat)

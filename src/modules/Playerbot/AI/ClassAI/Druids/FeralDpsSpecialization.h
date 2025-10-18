@@ -191,7 +191,7 @@ private:
     struct ComboPointManager {
         std::atomic<uint32> currentPoints{0};
         std::queue<uint32> pointHistory;
-        mutable std::mutex historyMutex;
+        mutable std::recursive_mutex historyMutex;
         std::atomic<uint32> wasted{0};
         std::atomic<uint32> optimal{0};
         void AddPoint() {
@@ -222,7 +222,7 @@ private:
         std::unordered_map<uint64, uint32> rakeExpiry;
         std::unordered_map<uint64, uint32> ripExpiry;
         std::unordered_map<uint64, uint32> mangledExpiry;
-        mutable std::mutex bleedMutex;
+        mutable std::recursive_mutex bleedMutex;
         void UpdateBleed(uint64 targetGuid, uint32 spellId, uint32 duration) {
             std::lock_guard<std::mutex> lock(bleedMutex);
             uint32 expiry = getMSTime() + duration;
@@ -285,7 +285,7 @@ private:
 
     // Cooldown tracking
     std::unordered_map<uint32, uint32> _cooldowns;
-    mutable std::mutex _cooldownMutex;
+    mutable std::recursive_mutex _cooldownMutex;
 
     // Advanced DPS mechanics
     void OptimizeOpenerSequence(::Unit* target);

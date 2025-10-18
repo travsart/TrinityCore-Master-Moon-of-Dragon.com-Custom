@@ -176,7 +176,7 @@ private:
     struct ComboPointManager {
         std::atomic<uint32> currentPoints{0};
         std::queue<uint32> pointHistory;
-        mutable std::mutex historyMutex;
+        mutable std::recursive_mutex historyMutex;
         std::atomic<uint32> wasted{0};
         std::atomic<uint32> optimal{0};
         void AddPoint() {

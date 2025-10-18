@@ -1655,7 +1655,7 @@ void WarlockAI::ManageWarlockCooldowns()
 void WarlockAI::OptimizeSoulShardUsage()
 {
     // Optimize soul shard usage based on availability and need
-    std::lock_guard<std::mutex> lock(_soulShardMutex);
+    std::lock_guard<std::recursive_mutex> lock(_soulShardMutex);
 
     // Determine conservation mode based on shard count
     bool shouldConserve = (_currentSoulShards < 5);

@@ -396,7 +396,7 @@ ActionPool& ActionPool::Instance()
 
 std::unique_ptr<PrioritizedAction> ActionPool::Acquire()
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     if (!_pool.empty())
     {
@@ -413,7 +413,7 @@ void ActionPool::Release(std::unique_ptr<PrioritizedAction> action)
     if (!action)
         return;
 
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     if (_pool.size() < MAX_POOL_SIZE)
     {
@@ -426,7 +426,7 @@ void ActionPool::Release(std::unique_ptr<PrioritizedAction> action)
 
 void ActionPool::Cleanup()
 {
-    std::lock_guard<std::mutex> lock(_poolMutex);
+    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
 
     // Keep only half the pool size to free up memory
     if (_pool.size() > MAX_POOL_SIZE / 2)

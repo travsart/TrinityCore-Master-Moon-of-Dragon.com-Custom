@@ -646,8 +646,8 @@ void PlayerPatternRecognition::Shutdown()
 
     TC_LOG_INFO("playerbot.pattern", "Shutting down Player Pattern Recognition System");
 
-    std::lock_guard<std::mutex> profileLock(_profilesMutex);
-    std::lock_guard<std::mutex> clusterLock(_clusterMutex);
+    std::lock_guard<std::recursive_mutex> profileLock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> clusterLock(_clusterMutex);
 
     _profiles.clear();
     _behaviorCluster.reset();
@@ -664,7 +664,7 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     ObjectGuid guid = player->GetGUID();
     if (_profiles.find(guid) == _profiles.end())
@@ -676,7 +676,7 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
         // Add to clustering system
         if (_behaviorCluster)
         {
-            std::lock_guard<std::mutex> clusterLock(_clusterMutex);
+            std::lock_guard<std::recursive_mutex> clusterLock(_clusterMutex);
             _behaviorCluster->AddProfile(profile);
         }
     }
@@ -684,7 +684,7 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
 
 std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid guid) const
 {
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     auto it = _profiles.find(guid);
     if (it != _profiles.end())
@@ -908,7 +908,7 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
 
     TC_LOG_INFO("playerbot.pattern", "Updating meta patterns");
 
-    std::lock_guard<std::mutex> lock(_profilesMutex);
+    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     // Analyze all profiles to identify meta patterns
     std::unordered_map<PlayerArchetype, uint32_t> archetypeCounts;

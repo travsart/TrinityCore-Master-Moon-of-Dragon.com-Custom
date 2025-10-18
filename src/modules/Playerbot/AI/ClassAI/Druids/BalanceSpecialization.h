@@ -168,7 +168,7 @@ private:
         std::unordered_map<uint64, uint32> moonfireExpiry;
         std::unordered_map<uint64, uint32> sunfireExpiry;
         std::unordered_map<uint64, uint32> insectSwarmExpiry;
-        mutable std::mutex dotMutex;
+        mutable std::recursive_mutex dotMutex;
         void UpdateDoT(uint64 targetGuid, uint32 spellId, uint32 duration) {
             std::lock_guard<std::mutex> lock(dotMutex);
             uint32 expiry = getMSTime() + duration;

@@ -6,9 +6,9 @@ unset(CMAKE_PREFIX_PATH)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG FALSE)
 
 # Explicitly set Boost paths to 1.78 installation
-set(BOOST_ROOT "C:/libs/boost_1_78_0-bin-msvc-all-32-64/boost_1_78_0")
+set(BOOST_ROOT "C:/libs/boost_1_78_0")
 set(BOOST_INCLUDEDIR "${BOOST_ROOT}")
-set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib64-msvc-14.3")
+set(BOOST_LIBRARYDIR "${BOOST_ROOT}/stage/lib")
 
 # Force CMake to use these paths and ignore vcpkg/system
 set(Boost_NO_SYSTEM_PATHS ON)
@@ -23,6 +23,15 @@ add_definitions(-DBOOST_ALL_NO_LIB)
 
 message(STATUS "Forcing system Boost 1.78 from: ${BOOST_ROOT}")
 
+# Determine debug suffix based on build type
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(BOOST_LIB_SUFFIX "gd")
+    message(STATUS "Using DEBUG Boost libraries (-gd suffix)")
+else()
+    set(BOOST_LIB_SUFFIX "")
+    message(STATUS "Using RELEASE Boost libraries (no suffix)")
+endif()
+
 # Manually find boost libraries using old-style approach
 find_path(Boost_INCLUDE_DIRS
     NAMES boost/version.hpp
@@ -30,32 +39,32 @@ find_path(Boost_INCLUDE_DIRS
     NO_DEFAULT_PATH)
 
 find_library(Boost_SYSTEM_LIBRARY
-    NAMES libboost_system-vc143-mt-x64-1_78
+    NAMES libboost_system-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 
 find_library(Boost_THREAD_LIBRARY
-    NAMES libboost_thread-vc143-mt-x64-1_78
+    NAMES libboost_thread-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 
 find_library(Boost_FILESYSTEM_LIBRARY
-    NAMES libboost_filesystem-vc143-mt-x64-1_78
+    NAMES libboost_filesystem-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 
 find_library(Boost_PROGRAM_OPTIONS_LIBRARY
-    NAMES libboost_program_options-vc143-mt-x64-1_78
+    NAMES libboost_program_options-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 
 find_library(Boost_REGEX_LIBRARY
-    NAMES libboost_regex-vc143-mt-x64-1_78
+    NAMES libboost_regex-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 
 find_library(Boost_LOCALE_LIBRARY
-    NAMES libboost_locale-vc143-mt-x64-1_78
+    NAMES libboost_locale-vc143-mt-${BOOST_LIB_SUFFIX}-x64-1_78
     PATHS "${BOOST_LIBRARYDIR}"
     NO_DEFAULT_PATH)
 

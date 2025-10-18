@@ -165,7 +165,7 @@ private:
     std::atomic<uint32> _maxDoTTargets{MAX_DOT_TARGETS};
     std::vector<::Unit*> _dotTargets;
     std::atomic<uint32> _lastDoTSpread{0};
-    mutable std::mutex _dotTargetsMutex;
+    mutable std::recursive_mutex _dotTargetsMutex;
 
     // DoT tracking system
     struct DoTTracker {

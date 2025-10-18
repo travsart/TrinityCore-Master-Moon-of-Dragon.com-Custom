@@ -24,7 +24,7 @@ CooldownManager::CooldownManager()
 
 void CooldownManager::Update(uint32 diff)
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     _totalUpdates.fetch_add(1);
 
@@ -38,7 +38,7 @@ void CooldownManager::Update(uint32 diff)
 
     // Update category cooldowns
     {
-        std::lock_guard<std::mutex> categoryLock(_categoryMutex);
+        std::lock_guard<std::recursive_mutex> categoryLock(_categoryMutex);
         for (auto& pair : _categoryCooldowns)
         {
             if (pair.second > diff)
@@ -76,7 +76,7 @@ void CooldownManager::StartCooldown(uint32 spellId, uint32 cooldownMs, bool trig
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     // Apply cooldown multiplier
     uint32 adjustedCooldown = ApplyCooldownMultiplier(cooldownMs);
@@ -102,7 +102,7 @@ void CooldownManager::ResetCooldown(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -118,7 +118,7 @@ void CooldownManager::ReduceCooldown(uint32 spellId, uint32 reductionMs)
     if (!spellId || !reductionMs)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -137,7 +137,7 @@ bool CooldownManager::IsReady(uint32 spellId) const
     if (!spellId)
         return false;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -153,7 +153,7 @@ uint32 CooldownManager::GetRemaining(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -169,7 +169,7 @@ float CooldownManager::GetRemainingPercent(uint32 spellId) const
     if (!spellId)
         return 0.0f;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -185,7 +185,7 @@ uint32 CooldownManager::GetTotalCooldown(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -217,7 +217,7 @@ void CooldownManager::SetCharges(uint32 spellId, uint32 current, uint32 maximum,
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -244,7 +244,7 @@ uint32 CooldownManager::GetCharges(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -260,7 +260,7 @@ uint32 CooldownManager::GetMaxCharges(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -276,7 +276,7 @@ void CooldownManager::ConsumeCharge(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end() && it->second.charges > 0)
@@ -298,7 +298,7 @@ void CooldownManager::AddCharge(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -317,7 +317,7 @@ uint32 CooldownManager::GetNextChargeTime(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -333,7 +333,7 @@ void CooldownManager::StartChanneling(uint32 spellId, uint32 channelDurationMs)
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -358,7 +358,7 @@ void CooldownManager::StopChanneling(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -374,7 +374,7 @@ bool CooldownManager::IsChanneling(uint32 spellId) const
     if (!spellId)
         return false;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -387,7 +387,7 @@ bool CooldownManager::IsChanneling(uint32 spellId) const
 
 bool CooldownManager::IsChannelingAny() const
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     for (const auto& pair : _cooldowns)
     {
@@ -403,7 +403,7 @@ uint32 CooldownManager::GetChannelRemaining(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end() && it->second.isChanneling)
@@ -416,7 +416,7 @@ uint32 CooldownManager::GetChannelRemaining(uint32 spellId) const
 
 void CooldownManager::ResetAllCooldowns()
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     for (auto& pair : _cooldowns)
     {
@@ -434,7 +434,7 @@ void CooldownManager::ReduceAllCooldowns(uint32 reductionMs)
     if (!reductionMs)
         return;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     for (auto& pair : _cooldowns)
     {
@@ -449,7 +449,7 @@ void CooldownManager::ReduceAllCooldowns(uint32 reductionMs)
 
 std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     std::vector<uint32> result;
     for (const auto& pair : _cooldowns)
@@ -465,7 +465,7 @@ std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
 
 std::vector<uint32> CooldownManager::GetReadySpells(const std::vector<uint32>& spellIds) const
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     std::vector<uint32> result;
     for (uint32 spellId : spellIds)
@@ -485,7 +485,7 @@ void CooldownManager::SetCooldownCategory(uint32 spellId, uint32 categoryId)
     if (!spellId || !categoryId)
         return;
 
-    std::lock_guard<std::mutex> lock(_categoryMutex);
+    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
     _spellCategories[spellId] = categoryId;
 
     TC_LOG_DEBUG("playerbot.cooldown", "Set spell {} to category {}", spellId, categoryId);
@@ -496,7 +496,7 @@ void CooldownManager::StartCategoryCooldown(uint32 categoryId, uint32 cooldownMs
     if (!categoryId)
         return;
 
-    std::lock_guard<std::mutex> lock(_categoryMutex);
+    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
     _categoryCooldowns[categoryId] = ApplyCooldownMultiplier(cooldownMs);
 
     TC_LOG_DEBUG("playerbot.cooldown", "Started category {} cooldown: {}ms", categoryId, cooldownMs);
@@ -507,7 +507,7 @@ bool CooldownManager::IsCategoryReady(uint32 categoryId) const
     if (!categoryId)
         return true;
 
-    std::lock_guard<std::mutex> lock(_categoryMutex);
+    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
 
     auto it = _categoryCooldowns.find(categoryId);
     return (it == _categoryCooldowns.end() || it->second == 0);
@@ -518,7 +518,7 @@ uint32 CooldownManager::GetTimeUntilReady(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -538,7 +538,7 @@ bool CooldownManager::WillBeReadyIn(uint32 spellId, uint32 timeMs) const
 
 uint32 CooldownManager::GetTotalSpellsTracked() const
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
     return static_cast<uint32>(_cooldowns.size());
 }
 
@@ -555,7 +555,7 @@ uint32 CooldownManager::GetAverageActiveCooldowns() const
 
 void CooldownManager::DumpCooldowns() const
 {
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     TC_LOG_DEBUG("playerbot.cooldown", "=== Cooldown Manager Dump ===");
     TC_LOG_DEBUG("playerbot.cooldown", "GCD Remaining: {}ms", _globalCooldown.load());
@@ -575,7 +575,7 @@ CooldownInfo CooldownManager::GetCooldownInfo(uint32 spellId) const
     if (!spellId)
         return CooldownInfo();
 
-    std::lock_guard<std::mutex> lock(_cooldownMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
 
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
@@ -671,7 +671,7 @@ void CooldownManager::CleanupExpiredCooldowns()
 
 std::unordered_map<uint32, uint32> CooldownCalculator::_cooldownCache;
 std::unordered_map<uint32, bool> CooldownCalculator::_gcdCache;
-std::mutex CooldownCalculator::_cacheMutex;
+std::recursive_mutex CooldownCalculator::_cacheMutex;
 
 uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster)
 {
@@ -680,7 +680,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Check cache first
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         auto it = _cooldownCache.find(spellId);
         if (it != _cooldownCache.end())
             return it->second;
@@ -695,7 +695,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Cache the result
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         _cooldownCache[spellId] = cooldown;
     }
 
@@ -723,7 +723,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Check cache first
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         auto it = _gcdCache.find(spellId);
         if (it != _gcdCache.end())
             return it->second;
@@ -738,7 +738,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Cache the result
     {
-        std::lock_guard<std::mutex> lock(_cacheMutex);
+        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
         _gcdCache[spellId] = triggersGCD;
     }
 
@@ -794,7 +794,7 @@ void CooldownCalculator::CacheSpellData(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard<std::mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
     _cooldownCache[spellId] = spellInfo->RecoveryTime;
     _gcdCache[spellId] = true; // Default assumption
 }

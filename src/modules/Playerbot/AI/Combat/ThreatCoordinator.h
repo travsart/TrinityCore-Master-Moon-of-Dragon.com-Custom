@@ -328,7 +328,7 @@ private:
     std::chrono::steady_clock::time_point _lastEmergencyCheck;
 
     // Thread safety
-    mutable std::mutex _coordinatorMutex;
+    mutable std::recursive_mutex _coordinatorMutex;
 
     // Constants
     static constexpr float THREAT_STABILITY_THRESHOLD = 0.8f;   // 80% stability = stable

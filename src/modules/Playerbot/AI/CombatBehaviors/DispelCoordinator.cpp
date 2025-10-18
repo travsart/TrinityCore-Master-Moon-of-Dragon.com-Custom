@@ -130,7 +130,7 @@ DispelCoordinator::DispelCoordinator(BotAI* ai)
     // Initialize database if needed
     if (!s_databaseInitialized)
     {
-        std::lock_guard<std::mutex> lock(s_databaseMutex);
+        std::lock_guard<std::recursive_mutex> lock(s_databaseMutex);
         if (!s_databaseInitialized)
         {
             InitializeGlobalDatabase();

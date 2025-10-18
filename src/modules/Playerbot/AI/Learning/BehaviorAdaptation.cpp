@@ -409,7 +409,7 @@ void BehaviorAdaptation::Shutdown()
 
     TC_LOG_INFO("playerbot.learning", "Shutting down Behavior Adaptation System");
 
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
     _botModels.clear();
     _collectiveModel.reset();
     _sharedExperiences.clear();
@@ -736,7 +736,7 @@ void BehaviorAdaptation::RecordExperience(uint32_t botGuid, const Experience& ex
 
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, botGuid, "RecordExperience");
 
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model)
@@ -772,7 +772,7 @@ void BehaviorAdaptation::Learn(uint32_t botGuid)
     if (!_learningEnabled)
         return;
 
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model || model->experienceBuffer.size() < MIN_EXPERIENCES_FOR_LEARNING)
@@ -823,7 +823,7 @@ void BehaviorAdaptation::BatchLearn(uint32_t botGuid, size_t batchSize)
     if (!_learningEnabled)
         return;
 
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model || model->experienceBuffer.size() < batchSize)
@@ -846,7 +846,7 @@ void BehaviorAdaptation::BatchLearn(uint32_t botGuid, size_t batchSize)
 
 uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const std::vector<float>& state)
 {
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model)
@@ -888,7 +888,7 @@ uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const std::vector<fl
 
 float BehaviorAdaptation::GetAdaptiveEpsilon(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -900,7 +900,7 @@ float BehaviorAdaptation::GetAdaptiveEpsilon(uint32_t botGuid) const
 
 void BehaviorAdaptation::UpdateExplorationRate(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -1017,7 +1017,7 @@ void BehaviorAdaptation::UpdateCollectiveKnowledge()
 
 BehaviorAdaptation::LearningMetrics BehaviorAdaptation::GetMetrics(uint32_t botGuid) const
 {
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -1030,7 +1030,7 @@ BehaviorAdaptation::LearningMetrics BehaviorAdaptation::GetMetrics(uint32_t botG
 
 void BehaviorAdaptation::ResetMetrics(uint32_t botGuid)
 {
-    std::lock_guard<std::mutex> lock(_modelsMutex);
+    std::lock_guard<std::recursive_mutex> lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())

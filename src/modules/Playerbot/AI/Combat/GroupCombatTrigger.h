@@ -278,7 +278,7 @@ private:
 
     // Member variables
     mutable std::unordered_map<ObjectGuid, GroupCombatInfo> _combatCache; // Group combat state cache
-    mutable std::mutex _cacheMutex;                                       // Thread safety for cache
+    mutable std::recursive_mutex _cacheMutex;                                       // Thread safety for cache
 
     // Configuration
     uint32 _updateIntervalMs = 500;                    // Cache update interval (500ms default)

@@ -105,7 +105,7 @@ public:
 
 private:
     mutable std::priority_queue<PrioritizedAction> _queue;
-    mutable std::mutex _queueMutex;
+    mutable std::recursive_mutex _queueMutex;
     mutable std::atomic<size_t> _size{0};
 
     // Internal helper to validate action
@@ -163,7 +163,7 @@ private:
     ~ActionPool() = default;
 
     std::vector<std::unique_ptr<PrioritizedAction>> _pool;
-    std::mutex _poolMutex;
+    std::recursive_mutex _poolMutex;
     static constexpr size_t MAX_POOL_SIZE = 1000;
 };
 

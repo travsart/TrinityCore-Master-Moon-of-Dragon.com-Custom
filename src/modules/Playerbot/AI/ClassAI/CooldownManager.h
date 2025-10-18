@@ -125,11 +125,14 @@ public:
 
 private:
     // Thread-safe cooldown storage
-    mutable std::mutex _cooldownMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex to prevent "resource deadlock would occur"
+    // Allows same thread to lock multiple times during nested cooldown checks
+    mutable std::recursive_mutex _cooldownMutex;
     std::unordered_map<uint32, CooldownInfo> _cooldowns;
 
     // Category cooldowns (spell schools, etc.)
-    mutable std::mutex _categoryMutex;
+    // DEADLOCK FIX: Changed to recursive_mutex
+    mutable std::recursive_mutex _categoryMutex;
     std::unordered_map<uint32, uint32> _spellCategories;     // spellId -> categoryId
     std::unordered_map<uint32, uint32> _categoryCooldowns;   // categoryId -> remainingMs
 
@@ -189,7 +192,7 @@ private:
     // Cache for spell cooldown data
     static std::unordered_map<uint32, uint32> _cooldownCache;
     static std::unordered_map<uint32, bool> _gcdCache;
-    static std::mutex _cacheMutex;
+    static std::recursive_mutex _cacheMutex;
 
     static void CacheSpellData(uint32 spellId);
 };
