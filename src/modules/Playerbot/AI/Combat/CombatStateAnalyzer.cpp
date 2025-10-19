@@ -26,6 +26,8 @@
 #include "Log.h"
 #include <algorithm>
 #include <numeric>
+#include "../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -235,36 +237,55 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
         _enemyCache.clear();
         _enemyCacheTime = getMSTime();
 
-        // Scan for enemies
-        std::list<Unit*> enemies;
-        Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(_bot, _bot, 50.0f);
-        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, enemies, checker);
-        Cell::VisitAllObjects(_bot, searcher, 50.0f);
-
-        for (Unit* enemy : enemies)
+        // Lock-free spatial grid query
+        Map* map = _bot->GetMap();
+        if (map)
         {
-            if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
-                continue;
-
-            _enemyCache.push_back(enemy);
-            _currentMetrics.enemyCount++;
-
-            float distance = _bot->GetDistance(enemy);
-            _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
-            _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
-
-            if (enemy->GetTypeId() == TYPEID_UNIT)
+            DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
             {
-                Creature* creature = enemy->ToCreature();
-                if (creature->IsElite())
-                    _currentMetrics.eliteCount++;
-                if (creature->IsDungeonBoss())
-                    _currentMetrics.bossCount++;
+                // Create grid on demand
+                sSpatialGridManager.CreateGrid(map);
+                spatialGrid = sSpatialGridManager.GetGrid(map);
             }
 
-            // Check if enemy is ranged (simplified check)
-            if (distance > 10.0f && enemy->IsInCombatWith(_bot))
-                _currentMetrics.hasRangedEnemies = true;
+            if (spatialGrid)
+            {
+                // Query nearby creature GUIDs (lock-free!)
+                std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+                    _bot->GetPosition(), 50.0f);
+
+                // Resolve GUIDs to Unit pointers and apply filtering logic
+                for (ObjectGuid guid : nearbyGuids)
+                {
+                    Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                    if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
+                        continue;
+
+                    if (!_bot->IsHostileTo(enemy))
+                        continue;
+
+                    _enemyCache.push_back(enemy);
+                    _currentMetrics.enemyCount++;
+
+                    float distance = _bot->GetDistance(enemy);
+                    _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
+                    _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
+
+                    if (enemy->GetTypeId() == TYPEID_UNIT)
+                    {
+                        Creature* creature = enemy->ToCreature();
+                        if (creature->IsElite())
+                            _currentMetrics.eliteCount++;
+                        if (creature->IsDungeonBoss())
+                            _currentMetrics.bossCount++;
+                    }
+
+                    // Check if enemy is ranged (simplified check)
+                    if (distance > 10.0f && enemy->IsInCombatWith(_bot))
+                        _currentMetrics.hasRangedEnemies = true;
+                }
+            }
         }
     }
     else

@@ -18,6 +18,8 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
 #include <algorithm>
 #include <cmath>
 
@@ -65,15 +67,33 @@ void KitingManager::UpdateKiting(uint32 diff)
             context.isMoving = _bot->IsMoving();
             context.isCasting = _bot->HasUnitState(UNIT_STATE_CASTING);
 
-            std::list<Unit*> nearbyEnemies;
-            Trinity::AnyUnitInObjectRangeCheck check(_bot, 40.0f);
-            Trinity::UnitSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
-            Cell::VisitAllObjects(_bot, searcher, 40.0f);
-
-            for (Unit* enemy : nearbyEnemies)
+            // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+            float searchRadius = 40.0f;
+            Map* map = _bot->GetMap();
+            if (map)
             {
-                if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
-                    context.threats.push_back(enemy);
+                DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+                if (!spatialGrid)
+                {
+                    // Grid not yet created for this map - create it on demand
+                    sSpatialGridManager.CreateGrid(map);
+                    spatialGrid = sSpatialGridManager.GetGrid(map);
+                }
+
+                if (spatialGrid)
+                {
+                    // Query nearby creature GUIDs (lock-free!)
+                    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+                        _bot->GetPosition(), searchRadius);
+
+                    // Resolve GUIDs to Unit pointers and filter enemies
+                    for (ObjectGuid guid : nearbyGuids)
+                    {
+                        ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                        if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
+                            context.threats.push_back(enemy);
+                    }
+                }
             }
 
             if (_bot->GetVictim())

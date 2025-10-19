@@ -23,6 +23,7 @@
 #include "Creature.h"
 #include "ObjectAccessor.h"
 #include "SpellHistory.h"
+#include "../../Spatial/SpatialGridManager.h"
 
 namespace Playerbot
 {
@@ -464,25 +465,40 @@ std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
 {
     std::vector<Unit*> enemies;
 
-    auto check = [&](Unit* unit) -> bool
+    // Lock-free spatial grid query
+    Map* map = _bot->GetMap();
+    if (!map)
+        return enemies;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return enemies;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), range);
+
+    // Resolve GUIDs to Unit pointers and apply filtering logic
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
-            return false;
+            continue;
 
         if (!_bot->IsHostileTo(unit))
-            return false;
+            continue;
 
         if (_bot->GetDistance(unit) > range)
-            return false;
+            continue;
 
         enemies.push_back(unit);
-        return false;
-    };
-
-    Trinity::AnyUnitInObjectRangeCheck checker(_bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, enemies, checker);
-
-    Cell::VisitAllObjects(_bot, searcher, range);
+    }
 
     return enemies;
 }
@@ -503,16 +519,37 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
         }
     }
 
-    auto check = [&](Unit* unit) -> bool
+    // Lock-free spatial grid query for pets
+    Map* map = _bot->GetMap();
+    if (!map)
+        return allies;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return allies;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), range);
+
+    // Resolve GUIDs to Unit pointers and apply filtering logic
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
-            return false;
+            continue;
 
         if (_bot->IsHostileTo(unit))
-            return false;
+            continue;
 
         if (_bot->GetDistance(unit) > range)
-            return false;
+            continue;
 
         if (Pet* pet = unit->ToPet())
         {
@@ -522,14 +559,7 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
                     allies.push_back(unit);
             }
         }
-
-        return false;
-    };
-
-    Trinity::AnyUnitInObjectRangeCheck checker(_bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, allies, checker);
-
-    Cell::VisitAllObjects(_bot, searcher, range);
+    }
 
     return allies;
 }
@@ -817,10 +847,31 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
     Unit* nearestEnemy = nullptr;
     float nearestDistance = maxRange;
 
-    auto check = [&](Unit* unit) -> bool
+    // Lock-free spatial grid query
+    Map* map = bot->GetMap();
+    if (!map)
+        return nullptr;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return nullptr;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), maxRange);
+
+    // Resolve GUIDs to Unit pointers and apply filtering logic
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
         if (!unit || !unit->IsAlive() || !bot->IsHostileTo(unit))
-            return false;
+            continue;
 
         float distance = bot->GetDistance(unit);
         if (distance < nearestDistance)
@@ -828,13 +879,7 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
             nearestDistance = distance;
             nearestEnemy = unit;
         }
-        return false;
-    };
-
-    std::list<Unit*> units;
-    Trinity::AnyUnitInObjectRangeCheck checker(bot, maxRange);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, units, checker);
-    Cell::VisitAllObjects(bot, searcher, maxRange);
+    }
 
     return nearestEnemy;
 }
@@ -847,13 +892,29 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
     Unit* weakestEnemy = nullptr;
     float lowestHealth = 100.0f;
 
-    std::list<Unit*> units;
-    Trinity::AnyUnitInObjectRangeCheck checker(bot, maxRange);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, units, checker);
-    Cell::VisitAllObjects(bot, searcher, maxRange);
+    // Lock-free spatial grid query
+    Map* map = bot->GetMap();
+    if (!map)
+        return nullptr;
 
-    for (Unit* unit : units)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return nullptr;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), maxRange);
+
+    // Resolve GUIDs to Unit pointers and apply filtering logic
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
         if (!unit || !unit->IsAlive() || !bot->IsHostileTo(unit))
             continue;
 

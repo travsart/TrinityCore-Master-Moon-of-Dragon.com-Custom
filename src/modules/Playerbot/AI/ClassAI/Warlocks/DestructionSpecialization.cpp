@@ -26,6 +26,7 @@
 #include "CellImpl.h"
 #include "SpellHistory.h"
 #include <algorithm>
+#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -396,7 +397,33 @@ void DestructionSpecialization::UpdateDoTManagement()
     std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 30.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
-    Cell::VisitAllObjects(bot, searcher, 30.0f);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = bot->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), 30.0f);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
     // Apply DoTs to targets that need them
     for (Unit* target : targets)

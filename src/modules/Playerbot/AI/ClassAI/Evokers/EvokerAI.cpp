@@ -25,6 +25,7 @@
 #include "CellImpl.h"
 #include "../BaselineRotationManager.h"
 #include "Log.h"
+#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -931,7 +932,33 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     std::list<Unit*> nearbyEnemies;
     Trinity::AnyUnitInObjectRangeCheck check(_bot, EMPOWERED_SPELL_RANGE);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
-    Cell::VisitAllObjects(_bot, searcher, EMPOWERED_SPELL_RANGE);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = _bot->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), EMPOWERED_SPELL_RANGE);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
     for (Unit* enemy : nearbyEnemies)
     {

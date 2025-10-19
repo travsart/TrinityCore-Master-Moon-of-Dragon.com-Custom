@@ -80,6 +80,12 @@ private:
     std::unordered_map<ObjectGuid, std::shared_ptr<BotSession>> _botSessions;
     std::unordered_set<ObjectGuid> _botsLoading;
 
+    // CRITICAL FIX: Spawn throttling to prevent database overload
+    // Queue pending bot spawns and process them at controlled rate
+    std::vector<std::pair<ObjectGuid, uint32>> _pendingSpawns;  // <playerGuid, masterAccountId>
+    uint32 _spawnsProcessedThisTick{0};
+    uint32 _maxSpawnsPerTick{10};  // From Playerbot.LevelManager.MaxBotsPerUpdate config
+
     // Thread safety
     mutable std::recursive_mutex _sessionsMutex;
     std::atomic<bool> _initialized{false};

@@ -25,6 +25,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "UpdateFields.h"
+#include "../../Spatial/SpatialGridManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -223,14 +224,29 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
 
     uint32 count = 0;
 
-    // Use Trinity's visitor pattern for efficient range checking
-    std::list<Unit*> targetList;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(_bot, _bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targetList, check);
-    Cell::VisitAllObjects(_bot, searcher, range);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = _bot->GetMap();
+    if (!map)
+        return 0;
 
-    for (Unit* unit : targetList)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return 0;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), range);
+
+    // Resolve GUIDs to Unit pointers and count valid targets
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -650,14 +666,30 @@ void AoEDecisionManager::UpdateTargetCache()
             ++it;
     }
 
-    // Update with current targets
-    std::list<Unit*> nearbyTargets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(_bot, _bot, 40.0f);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, nearbyTargets, check);
-    Cell::VisitAllObjects(_bot, searcher, 40.0f);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    float searchRadius = 40.0f;
+    Map* map = _bot->GetMap();
+    if (!map)
+        return;
 
-    for (Unit* unit : nearbyTargets)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), searchRadius);
+
+    // Resolve GUIDs to Unit pointers and update cache
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 

@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "Chat.h"
 #include "GridNotifiers.h"
+#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "CellImpl.h"
 
 namespace Playerbot
@@ -202,15 +203,33 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     ::Unit* nearestEnemy = nullptr;
     float nearestDistance = range;
 
-    // Search for nearest hostile unit
-    std::list<::Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(bot, bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, checker);
-    Cell::VisitAllObjects(bot, searcher, range);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = bot->GetMap();
+    if (!map)
+        return nullptr;
 
-    for (::Unit* unit : targets)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return nullptr;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), range);
+
+    // Resolve GUIDs to Unit pointers and find nearest enemy
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
         if (!unit || !unit->IsAlive())
+            continue;
+
+        // Check if hostile
+        if (!bot->IsHostileTo(unit))
             continue;
 
         float distance = bot->GetDistance(unit);

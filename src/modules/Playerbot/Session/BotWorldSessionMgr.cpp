@@ -14,7 +14,9 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "WorldSession.h"
+#include "Config.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
+#include "../Spatial/SpatialGridManager.h"
 #include <chrono>
 #include <queue>
 
@@ -79,10 +81,19 @@ bool BotWorldSessionMgr::Initialize()
         return false;
     }
 
+    // Load spawn throttling config
+    _maxSpawnsPerTick = sConfigMgr->GetIntDefault("Playerbot.LevelManager.MaxBotsPerUpdate", 10);
+
+    // Initialize spatial grid system (grids created on-demand per map)
+    TC_LOG_INFO("module.playerbot.session",
+        "🔧 BotWorldSessionMgr: Spatial grid system initialized (lock-free double-buffered architecture)");
+
     _enabled.store(true);
     _initialized.store(true);
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 BotWorldSessionMgr: ENTERPRISE MODE enabled for 5000 bot scalability");
+    TC_LOG_INFO("module.playerbot.session",
+        "🔧 BotWorldSessionMgr: ENTERPRISE MODE enabled for 5000 bot scalability (spawn rate: {}/tick)",
+        _maxSpawnsPerTick);
 
     return true;
 }
@@ -122,6 +133,11 @@ void BotWorldSessionMgr::Shutdown()
 
     _botSessions.clear();
     _botsLoading.clear();
+
+    // Destroy all spatial grids and stop worker threads
+    sSpatialGridManager.DestroyAllGrids();
+    TC_LOG_INFO("module.playerbot.session", "🔧 BotWorldSessionMgr: Spatial grid system shut down");
+
     _initialized.store(false);
 }
 
@@ -186,61 +202,45 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         }
     }
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 Adding bot {} using proven BotSession approach", playerGuid.ToString());
-
-    // CRITICAL FIX: Synchronize character cache with playerbot_characters database before login
-    if (!SynchronizeCharacterCache(playerGuid))
+    // CRITICAL FIX: Enforce MaxBots limit
+    uint32 maxBots = sConfigMgr->GetIntDefault("Playerbot.MaxBots", 100);
+    uint32 totalBots = static_cast<uint32>(_botSessions.size() + _pendingSpawns.size());
+    if (totalBots >= maxBots)
     {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to synchronize character cache for {}", playerGuid.ToString());
+        TC_LOG_WARN("module.playerbot.session",
+            "🔧 MAX BOTS LIMIT: Cannot queue bot {} - already at limit ({}/{} bots)",
+            playerGuid.ToString(), totalBots, maxBots);
         return false;
     }
 
-    // Mark as loading
-    _botsLoading.insert(playerGuid);
-
-    // Use the proven BotSession that we know works
-    std::shared_ptr<BotSession> botSession = BotSession::Create(accountId);
-    if (!botSession)
-    {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to create BotSession for {}", playerGuid.ToString());
-        _botsLoading.erase(playerGuid);
-        return false;
-    }
-
-    // Store the shared_ptr to keep the session alive
-    _botSessions[playerGuid] = botSession;
-
-    // ENTERPRISE FIX V2: DEADLOCK-FREE staggered login using immediate execution
+    // CRITICAL FIX V3: RATE-LIMITED SPAWN QUEUE
     //
-    // CRITICAL DEADLOCK BUG FOUND: Previous implementation created detached threads WHILE
-    // holding _sessionsMutex (non-recursive), causing deadlock when threads tried to
-    // acquire the same mutex for cleanup (line 184). This disabled the spawner.
+    // ROOT CAUSE OF SERVER HANG: "ENTERPRISE FIX V2" removed all throttling, causing:
+    // - 296 bots spawning immediately at server startup
+    // - 296 × 66 async queries = 19,536 database queries flooding connection pool
+    // - ProcessQueryCallbacks() overwhelmed, world thread hangs 60+ seconds
     //
-    // ROOT CAUSE: std::recursive_mutex is NOT recursive. Main thread holds lock, detached thread
-    // tries to acquire → deadlock → "resource deadlock would occur" exception.
+    // NEW SOLUTION: Queue-based rate-limited spawning
+    // - AddPlayerBot() adds to _pendingSpawns queue (no immediate spawn)
+    // - UpdateSessions() processes N spawns per tick (configurable, default 10)
+    // - Prevents database overload while maintaining async benefits
+    // - No threads, no deadlock, controlled flow
     //
-    // NEW SOLUTION: Calculate position-based delay but execute immediately WITHOUT threads.
-    // Let TrinityCore's async database system handle the queueing naturally.
-    // The async connection pool has built-in queuing - we don't need manual thread delays.
-    //
-    // Performance: Database pool will process callbacks in order as connections become
-    // available. Natural flow-control without threading complexity or deadlock risk.
+    // Performance: MaxBotsPerUpdate config controls rate (10/tick = 10/50ms = 200 bots/sec)
+    // Full 100-bot spawn completes in 500ms instead of overloading database instantly
 
     TC_LOG_INFO("module.playerbot.session",
-        "🔧 Initiating async login for bot {} (position {} in spawn batch)",
-        playerGuid.ToString(), _botSessions.size());
+        "🔧 Queueing bot {} for rate-limited spawn (queue position: {}, accountId: {})",
+        playerGuid.ToString(), _pendingSpawns.size() + 1, accountId);
 
-    // Initiate async login immediately - let database pool handle queuing
-    if (!botSession->LoginCharacter(playerGuid))
-    {
-        TC_LOG_ERROR("module.playerbot.session", "🔧 Failed to initiate async login for character {}", playerGuid.ToString());
-        _botSessions.erase(playerGuid);
-        _botsLoading.erase(playerGuid);
-        return false;
-    }
+    // Add to pending spawn queue - will be processed in UpdateSessions()
+    _pendingSpawns.push_back({playerGuid, accountId});
 
-    TC_LOG_INFO("module.playerbot.session", "🔧 Async bot login initiated for: {}", playerGuid.ToString());
-    return true; // Return true to indicate login was started (not completed)
+    TC_LOG_DEBUG("module.playerbot.session",
+        "🔧 Bot {} added to spawn queue. Total pending: {}",
+        playerGuid.ToString(), _pendingSpawns.size());
+
+    return true; // Queued successfully
 }
 
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
@@ -309,6 +309,71 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     sBotPerformanceMon->BeginTick(currentTime);
     sBotHealthCheck->RecordHeartbeat(currentTime);
 
+    // PHASE 0.5: CRITICAL FIX - Process pending spawns at controlled rate
+    // Prevents database overload by rate-limiting async login submissions
+    {
+        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+
+        _spawnsProcessedThisTick = 0;
+
+        while (!_pendingSpawns.empty() && _spawnsProcessedThisTick < _maxSpawnsPerTick)
+        {
+            auto [playerGuid, accountId] = _pendingSpawns.front();
+            _pendingSpawns.erase(_pendingSpawns.begin());
+
+            TC_LOG_INFO("module.playerbot.session",
+                "🔧 Processing queued spawn for bot {} (accountId: {}, remaining in queue: {})",
+                playerGuid.ToString(), accountId, _pendingSpawns.size());
+
+            // Synchronize character cache
+            if (!SynchronizeCharacterCache(playerGuid))
+            {
+                TC_LOG_ERROR("module.playerbot.session",
+                    "🔧 Failed to synchronize character cache for {}", playerGuid.ToString());
+                continue;
+            }
+
+            // Mark as loading
+            _botsLoading.insert(playerGuid);
+
+            // Create BotSession
+            std::shared_ptr<BotSession> botSession = BotSession::Create(accountId);
+            if (!botSession)
+            {
+                TC_LOG_ERROR("module.playerbot.session",
+                    "🔧 Failed to create BotSession for {}", playerGuid.ToString());
+                _botsLoading.erase(playerGuid);
+                continue;
+            }
+
+            // Store session
+            _botSessions[playerGuid] = botSession;
+
+            // Initiate async login (1 bot × 66 queries)
+            if (!botSession->LoginCharacter(playerGuid))
+            {
+                TC_LOG_ERROR("module.playerbot.session",
+                    "🔧 Failed to initiate async login for {}", playerGuid.ToString());
+                _botSessions.erase(playerGuid);
+                _botsLoading.erase(playerGuid);
+                continue;
+            }
+
+            TC_LOG_INFO("module.playerbot.session",
+                "✅ Async bot login initiated for: {} ({}/{} spawns this tick)",
+                playerGuid.ToString(), _spawnsProcessedThisTick + 1, _maxSpawnsPerTick);
+
+            _spawnsProcessedThisTick++;
+        }
+
+        if (_spawnsProcessedThisTick > 0)
+        {
+            TC_LOG_INFO("module.playerbot.session",
+                "🔧 Processed {} bot spawns this tick. Remaining in queue: {}",
+                _spawnsProcessedThisTick, _pendingSpawns.size());
+        }
+    }
+
     std::vector<std::pair<ObjectGuid, std::shared_ptr<BotSession>>> sessionsToUpdate;
     std::vector<ObjectGuid> sessionsToRemove;
     uint32 botsSkipped = 0;
@@ -317,7 +382,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     {
         std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
-        if (_botSessions.empty())
+        if (_botSessions.empty() && _pendingSpawns.empty())
         {
             sBotPerformanceMon->EndTick(currentTime, 0, 0);
             return;

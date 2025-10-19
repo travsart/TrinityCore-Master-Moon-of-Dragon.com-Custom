@@ -24,6 +24,8 @@
 #include "SpellMgr.h"
 #include "PhaseShift.h"
 #include "SharedDefines.h"
+#include "../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -882,29 +884,50 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
     float currentDistance = _bot->GetPosition().GetExactDist(&pos);
     score += std::min(currentDistance * 10.0f, 50.0f); // Max 50 points for distance
 
-    // Check distance from nearby enemies
-    float minEnemyDistance = 1000.0f;
-    std::list<Unit*> enemies;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(_bot, _bot, 30.0f);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, enemies, check);
-    Cell::VisitAllObjects(_bot, searcher, 30.0f);
-
-    for (Unit* enemy : enemies)
+    // Lock-free spatial grid query for nearby enemies
+    Map* map = _bot->GetMap();
+    if (map)
     {
-        if (!enemy || !enemy->IsAlive())
-            continue;
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+        {
+            // Create grid on demand
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+        }
 
-        float enemyDistance = pos.GetExactDist(enemy);
-        minEnemyDistance = std::min(minEnemyDistance, enemyDistance);
+        if (spatialGrid)
+        {
+            // Query nearby creature GUIDs (lock-free!)
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+                _bot->GetPosition(), 30.0f);
 
-        // Higher score for positions farther from enemies
-        if (enemyDistance > 0.0f)
-            score += std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
+            // Check distance from nearby enemies
+            float minEnemyDistance = 1000.0f;
+
+            // Resolve GUIDs to Unit pointers and apply filtering logic
+            for (ObjectGuid guid : nearbyGuids)
+            {
+                Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                if (!enemy || !enemy->IsAlive())
+                    continue;
+
+                if (!_bot->IsHostileTo(enemy))
+                    continue;
+
+                float enemyDistance = pos.GetExactDist(enemy);
+                minEnemyDistance = std::min(minEnemyDistance, enemyDistance);
+
+                // Higher score for positions farther from enemies
+                if (enemyDistance > 0.0f)
+                    score += std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
+            }
+
+            // Bonus for getting to safe range
+            if (minEnemyDistance > 15.0f)
+                score += 20.0f;
+        }
     }
-
-    // Bonus for getting to safe range
-    if (minEnemyDistance > 15.0f)
-        score += 20.0f;
 
     // Check for line of sight to group members (we want to maintain LOS)
     if (Group* group = _bot->GetGroup())

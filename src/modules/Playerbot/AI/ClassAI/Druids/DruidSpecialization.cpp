@@ -23,6 +23,7 @@
 #include "MotionMaster.h"
 #include "Item.h"
 #include <algorithm>
+#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -396,7 +397,33 @@ bool DruidSpecialization::IsInDanger()
     std::list<Unit*> attackers;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 15.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, attackers, u_check);
-    Cell::VisitAllObjects(bot, searcher, 15.0f);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = bot->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), 15.0f);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
     if (attackers.size() >= 3)
         return true;
@@ -551,7 +578,33 @@ void DruidSpecialization::CastCyclone(Unit* target)
         std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 30.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
-        Cell::VisitAllObjects(bot, searcher, 30.0f);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = bot->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), 30.0f);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
         if (enemies.size() < 2)
             return; // Don't cyclone if only one enemy

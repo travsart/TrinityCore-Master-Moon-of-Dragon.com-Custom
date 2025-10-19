@@ -483,6 +483,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.h
 
+    # Spatial Grid System - Lock-Free Double-Buffered Spatial Partitioning (Phase 1: Deadlock Fix)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
+
     # Integration Tests (Temporarily disabled - Google Test not configured)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Tests/TargetScannerTest.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Tests/QuestHubDatabaseTest.cpp
@@ -797,6 +803,13 @@ source_group("AI\\Combat" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
 # Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
+)
+
+source_group("Spatial" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
 )
 
 source_group("AI\\Values" FILES

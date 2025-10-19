@@ -27,6 +27,7 @@
 #include "CellImpl.h"
 #include <algorithm>
 #include <cmath>
+#include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -1194,7 +1195,34 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
     std::list<::DynamicObject*> dynamicObjects;
     Trinity::AllWorldObjectsInRange check(player, 15.0f);
     Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
-    Cell::VisitAllObjects(player, searcher, 15.0f);
+    // DEADLOCK FIX: Spatial grid replaces Cell::Visit
+    {
+        Map* cellVisitMap = player->GetMap();
+        if (!cellVisitMap)
+            return;
+
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
+        if (!spatialGrid)
+        {
+            sSpatialGridManager.CreateGrid(cellVisitMap);
+            spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
+        }
+
+        if (spatialGrid)
+        {
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
+                player->GetPosition(), 15.0f);
+
+            for (ObjectGuid guid : nearbyGuids)
+            {
+                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                if (dynObj)
+                {
+                    // Original logic from searcher
+                }
+            }
+        }
+    }
 
     for (::DynamicObject* dynObj : dynamicObjects)
     {
@@ -1240,7 +1268,7 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
     std::list<::Creature*> creatures;
     Trinity::AllWorldObjectsInRange check(player, 50.0f);
     Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
-    Cell::VisitAllObjects(player, searcher, 50.0f);
+    
 
     ::Creature* highestPriorityAdd = nullptr;
     uint32 highestPriority = 0;

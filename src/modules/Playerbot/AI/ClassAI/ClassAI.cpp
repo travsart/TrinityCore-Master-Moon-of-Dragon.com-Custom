@@ -30,6 +30,7 @@
 #include "GridNotifiersImpl.h"
 #include "Cell.h"
 #include "CellImpl.h"
+#include "../../Spatial/SpatialGridManager.h"
 #include <chrono>
 
 namespace Playerbot
@@ -392,14 +393,29 @@ void ClassAI::UpdateTargeting()
     ::Unit* nearestEnemy = nullptr;
     float nearestDistance = maxRange;
 
-    // Find nearest enemy within range
-    std::list<::Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), maxRange);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
-    Cell::VisitAllObjects(GetBot(), searcher, maxRange);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = GetBot()->GetMap();
+    if (!map)
+        return nullptr;
 
-    for (::Unit* target : targets)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return nullptr;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        GetBot()->GetPosition(), maxRange);
+
+    // Resolve GUIDs to Unit pointers and find nearest enemy
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), guid);
         if (!target || !GetBot()->IsValidAttackTarget(target))
             continue;
 

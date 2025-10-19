@@ -21,6 +21,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include <mutex>
 #include <algorithm>
 #include <cmath>
@@ -933,15 +934,35 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
     if (!m_bot)
         return targets;
 
-    // Get all enemies in combat range using grid search
-    std::list<Unit*> enemies;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(m_bot, m_bot, static_cast<float>(m_config.maxPurgeRange));
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(m_bot, enemies, u_check);
-    Cell::VisitAllObjects(m_bot, searcher, static_cast<float>(m_config.maxPurgeRange));
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = m_bot->GetMap();
+    if (!map)
+        return targets;
 
-    for (Unit* enemy : enemies)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return targets;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    float searchRange = static_cast<float>(m_config.maxPurgeRange);
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        m_bot->GetPosition(), searchRange);
+
+    // Resolve GUIDs to Unit pointers and check for enemies
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, guid);
         if (!enemy || enemy->isDead())
+            continue;
+
+        // Check if enemy (must be hostile)
+        if (!m_bot->IsHostileTo(enemy))
             continue;
 
         // Check all auras

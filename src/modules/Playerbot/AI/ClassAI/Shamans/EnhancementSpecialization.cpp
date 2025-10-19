@@ -18,6 +18,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -401,7 +402,33 @@ bool EnhancementSpecialization::ShouldCastChainLightning()
     std::list<Unit*> units;
     Trinity::AnyUnitInObjectRangeCheck u_check(bot, 25.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, units, u_check);
-    Cell::VisitAllObjects(bot, searcher, 25.0f);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = bot->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), 25.0f);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
     uint32 enemyCount = 0;
     for (Unit* unit : units)

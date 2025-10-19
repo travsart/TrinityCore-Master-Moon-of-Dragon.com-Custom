@@ -19,6 +19,8 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "G3D/Vector3.h"
+#include "../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -311,13 +313,29 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
 {
     std::vector<Unit*> visibleEnemies;
 
-    std::list<Unit*> nearbyUnits;
-    Trinity::AnyUnitInObjectRangeCheck check(_bot, maxRange);
-    Trinity::UnitSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyUnits, check);
-    Cell::VisitAllObjects(_bot, searcher, maxRange);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = _bot->GetMap();
+    if (!map)
+        return visibleEnemies;
 
-    for (Unit* unit : nearbyUnits)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return visibleEnemies;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), maxRange);
+
+    // Resolve GUIDs to Unit pointers and filter visible enemies
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -337,13 +355,29 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
 {
     std::vector<Unit*> visibleAllies;
 
-    std::list<Unit*> nearbyUnits;
-    Trinity::AnyUnitInObjectRangeCheck check(_bot, maxRange);
-    Trinity::UnitSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyUnits, check);
-    Cell::VisitAllObjects(_bot, searcher, maxRange);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = _bot->GetMap();
+    if (!map)
+        return visibleAllies;
 
-    for (Unit* unit : nearbyUnits)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return visibleAllies;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), maxRange);
+
+    // Resolve GUIDs to Unit pointers and filter visible allies
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -538,13 +572,30 @@ bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Posit
 
 bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Position& to)
 {
-    std::list<GameObject*> nearbyObjects;
-    Trinity::AllGameObjectsInRange check(_bot, std::max(from.GetExactDist(&to), 30.0f));
-    Trinity::GameObjectSearcher<Trinity::AllGameObjectsInRange> searcher(_bot, nearbyObjects, check);
-    Cell::VisitAllObjects(_bot, searcher, std::max(from.GetExactDist(&to), 30.0f));
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    float searchRange = std::max(from.GetExactDist(&to), 30.0f);
+    Map* map = _bot->GetMap();
+    if (!map)
+        return false;
 
-    for (GameObject* obj : nearbyObjects)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return false;
+    }
+
+    // Query nearby GameObject GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+        _bot->GetPosition(), searchRange);
+
+    // Resolve GUIDs to GameObject pointers and check for blocking
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        GameObject* obj = _bot->GetMap()->GetGameObject(guid);
         if (!obj || !obj->IsInWorld())
             continue;
 
@@ -569,13 +620,30 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
 
 bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position& to, Unit* ignoreUnit)
 {
-    std::list<Unit*> nearbyUnits;
-    Trinity::AnyUnitInObjectRangeCheck check(_bot, from.GetExactDist(&to));
-    Trinity::UnitSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyUnits, check);
-    Cell::VisitAllObjects(_bot, searcher, from.GetExactDist(&to));
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    float searchRange = from.GetExactDist(&to);
+    Map* map = _bot->GetMap();
+    if (!map)
+        return false;
 
-    for (Unit* unit : nearbyUnits)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return false;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), searchRange);
+
+    // Resolve GUIDs to Unit pointers and check for blocking
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || unit == _bot || unit == ignoreUnit)
             continue;
 

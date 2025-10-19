@@ -28,6 +28,7 @@
 #include "Config/PlayerbotConfig.h"
 #include <algorithm>
 #include <cmath>
+#include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -374,18 +375,29 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
     if (!quest)
         return false;
 
-    // Check for quest ender NPCs
+    Map* map = bot->GetMap();
+    if (!map)
+        return false;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return false;
+    }
+
+    // Check for quest ender NPCs (lock-free!)
     Creature* questEnder = nullptr;
     float minDistance = MAX_TURNIN_DISTANCE;
 
-    // Search for quest ender creatures
-    std::list<Creature*> creatures;
-    Trinity::AnyUnitInObjectRangeCheck check(bot, MAX_TURNIN_DISTANCE);
-    Trinity::CreatureListSearcher searcher(bot, creatures, check);
-    Cell::VisitGridObjects(bot, searcher, MAX_TURNIN_DISTANCE);
+    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatures(
+        bot->GetPosition(), MAX_TURNIN_DISTANCE);
 
-    for (Creature* creature : creatures)
+    for (ObjectGuid guid : creatureGuids)
     {
+        Creature* creature = ObjectAccessor::GetCreature(*bot, guid);
         if (!creature || !bot->CanSeeOrDetect(creature))
             continue;
 

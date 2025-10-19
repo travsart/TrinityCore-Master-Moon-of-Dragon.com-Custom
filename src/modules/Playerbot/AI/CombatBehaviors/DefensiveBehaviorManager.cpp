@@ -24,6 +24,7 @@
 #include "CellImpl.h"
 #include <algorithm>
 #include <execution>
+#include "../../Spatial/SpatialGridManager.h"
 
 namespace Playerbot
 {
@@ -1034,11 +1035,43 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
     if (!_bot)
         return 0;
 
-    std::list<Unit*> enemies;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
-    Trinity::UnitListSearcher searcher(_bot, enemies, u_check);
-    Cell::VisitAllObjects(_bot, searcher, range);
-    return enemies.size();
+    // Lock-free spatial grid query
+    Map* map = _bot->GetMap();
+    if (!map)
+        return 0;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return 0;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), range);
+
+    // Count enemies
+    uint32 count = 0;
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        if (!unit || !unit->IsAlive())
+            continue;
+
+        if (!_bot->IsHostileTo(unit))
+            continue;
+
+        if (_bot->GetDistance(unit) > range)
+            continue;
+
+        count++;
+    }
+
+    return count;
 }
 
 // Check if damage is mostly magical

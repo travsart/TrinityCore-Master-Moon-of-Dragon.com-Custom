@@ -24,6 +24,8 @@
 #include "MotionMaster.h"
 #include <algorithm>
 #include <cmath>
+#include "../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -105,13 +107,29 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
 {
     std::vector<InterruptTarget> targets;
 
-    std::list<Unit*> nearbyUnits;
-    Trinity::AnyUnitInObjectRangeCheck check(_bot, _maxInterruptRange);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyUnits, check);
-    Cell::VisitAllObjects(_bot, searcher, _maxInterruptRange);
+    // Lock-free spatial grid query
+    Map* map = _bot->GetMap();
+    if (!map)
+        return targets;
 
-    for (Unit* unit : nearbyUnits)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Create grid on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return targets;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _bot->GetPosition(), _maxInterruptRange);
+
+    // Resolve GUIDs to Unit pointers and apply filtering logic
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!IsValidInterruptTarget(unit))
             continue;
 

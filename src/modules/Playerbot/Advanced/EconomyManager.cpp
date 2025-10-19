@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "BotAI.h"
 #include "TradeData.h"
+#include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "GridNotifiers.h"
 #include "CellImpl.h"
 #include "Timer.h"
@@ -486,15 +487,25 @@ namespace Playerbot
             return nodes;
 
         float searchRadius = 100.0f;
-        std::list<GameObject*> gameobjects;
 
-        // Use TrinityCore AllGameObjectsWithEntryInRange searcher (entry = 0 for all types)
-        Trinity::AllGameObjectsWithEntryInRange check(m_bot, 0, searchRadius);
-        Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(m_bot, gameobjects, check);
-        Cell::VisitGridObjects(m_bot, searcher, searchRadius);
-
-        for (GameObject* go : gameobjects)
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
         {
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+                return nodes;
+        }
+
+        // Query nearby GameObject GUIDs (lock-free!)
+        std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+            m_bot->GetPosition(), searchRadius);
+
+        // Resolve GUIDs to GameObject pointers and find gathering nodes
+        for (ObjectGuid guid : nearbyGuids)
+        {
+            GameObject* go = map->GetGameObject(guid);
             if (!go || !go->isSpawned())
                 continue;
 

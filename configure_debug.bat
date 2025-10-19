@@ -12,9 +12,9 @@ set TIMEOUT=1800
 
 REM Set library paths
 set VCPKG_ROOT=C:\libs\vcpkg
-set BOOST_ROOT=C:\libs\boost_1_78_0
-set BOOST_INCLUDEDIR=%BOOST_ROOT%
-set BOOST_LIBRARYDIR=%BOOST_ROOT%\stage\lib
+set BOOST_ROOT=C:\libs\boost_1_78_0-bin-msvc-all-32-64\boost_1_78_0
+set BOOST_INCLUDEDIR=%BOOST_ROOT%\boost
+set BOOST_LIBRARYDIR=%BOOST_ROOT%\lib64-msvc-14.3
 
 echo VCPKG_ROOT: %VCPKG_ROOT%
 echo BOOST_ROOT: %BOOST_ROOT%

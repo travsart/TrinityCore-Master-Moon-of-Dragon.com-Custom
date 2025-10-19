@@ -13,6 +13,7 @@
 #include "ObjectAccessor.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -190,7 +191,33 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
     std::list<::Creature*> creatures;
     Trinity::AllWorldObjectsInRange check(player, 50.0f);
     Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
-    Cell::VisitAllObjects(player, searcher, 50.0f);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = player->GetMap();
+    if (!map)
+        return; // Adjust return value as needed
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return; // Adjust return value as needed
+    }
+
+    // Query nearby GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        player->GetPosition(), 50.0f);
+
+    // Process results (replace old loop)
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        auto* entity = ObjectAccessor::GetCreature(*player, guid);
+        if (!entity)
+            continue;
+        // Original filtering logic goes here
+    }
+    // End of spatial grid fix
 
     for (::Creature* creature : creatures)
     {

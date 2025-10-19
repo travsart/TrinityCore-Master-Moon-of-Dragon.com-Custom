@@ -23,6 +23,7 @@
 #include "Loot.h"
 #include "LootMgr.h"
 #include "MotionMaster.h"
+#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -235,14 +236,25 @@ std::vector<ObjectGuid> LootStrategy::FindLootableObjects(BotAI* ai, float maxDi
     if (!map)
         return lootableObjects;
 
-    // Scan for game objects within range
-    std::list<GameObject*> nearbyObjects;
-    Trinity::GameObjectInRangeCheck check(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(), maxDistance);
-    Trinity::GameObjectListSearcher<Trinity::GameObjectInRangeCheck> searcher(bot, nearbyObjects, check);
-    Cell::VisitGridObjects(bot, searcher, maxDistance);
-
-    for (GameObject* object : nearbyObjects)
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return lootableObjects;
+    }
+
+    // Query nearby GameObject GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+        bot->GetPosition(), maxDistance);
+
+    // Resolve GUIDs to GameObject pointers
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        GameObject* object = map->GetGameObject(guid);
         if (!object)
             continue;
 

@@ -17,6 +17,7 @@
 #include "GridNotifiersImpl.h"
 #include "../BotAI.h"
 #include "InterruptCoordinator.h"
+#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include <algorithm>
 #include <thread>
 #include <chrono>
@@ -706,15 +707,29 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     if (!_observer)
         return units;
 
-    // Use TrinityCore's ObjectAccessor for proper grid-based unit search
-    std::list<Unit*> nearbyUnits;
-    Trinity::AnyUnitInObjectRangeCheck check(_observer, _config.maxDetectionRange);
-    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_observer, nearbyUnits, check);
-    Cell::VisitAllObjects(_observer, searcher, _config.maxDetectionRange);
+    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    Map* map = _observer->GetMap();
+    if (!map)
+        return units;
 
-    // Convert to vector and filter appropriate units
-    for (Unit* unit : nearbyUnits)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
     {
+        // Grid not yet created for this map - create it on demand
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+            return units;
+    }
+
+    // Query nearby creature GUIDs (lock-free!)
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+        _observer->GetPosition(), _config.maxDetectionRange);
+
+    // Resolve GUIDs to Unit pointers and filter appropriate units
+    for (ObjectGuid guid : nearbyGuids)
+    {
+        ::Unit* unit = ObjectAccessor::GetUnit(*_observer, guid);
         if (!unit || unit == _observer)
             continue;
 
