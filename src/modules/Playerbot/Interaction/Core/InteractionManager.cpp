@@ -403,7 +403,7 @@ namespace Playerbot
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return nullptr;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -411,7 +411,7 @@ namespace Playerbot
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return nullptr;
     }
 
     // Query nearby GUIDs (lock-free!)

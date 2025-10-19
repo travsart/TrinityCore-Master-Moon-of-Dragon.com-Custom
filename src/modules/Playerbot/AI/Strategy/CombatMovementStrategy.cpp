@@ -31,6 +31,7 @@
 #include "DBCEnums.h"
 #include <cmath>
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -397,7 +398,7 @@ namespace Playerbot
     {
         Map* cellVisitMap = player->GetMap();
         if (!cellVisitMap)
-            return false;
+            return Position();
 
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         if (!spatialGrid)
@@ -572,32 +573,7 @@ namespace Playerbot
         }
 
         // Check for DynamicObjects (AoE spells) using WorldObjectListSearcher
-        
-        
-
-        for (WorldObject* obj : worldObjects)
-        {
-            // Cast to DynamicObject using TypeID check
-            if (!obj || obj->GetTypeId() != TYPEID_DYNAMICOBJECT)
-                continue;
-
-            DynamicObject* dynObj = static_cast<DynamicObject*>(obj);
-            if (!dynObj)
-                continue;
-
-            // Check if this is a hostile effect
-            if (Unit* caster = dynObj->GetCaster())
-            {
-                if (player->IsValidAttackTarget(caster))
-                {
-                    if (dynObj->GetDistance2d(player) <= dynObj->GetRadius())
-                    {
-                        _lastDangerResult = true;
-                        return true;
-                    }
-                }
-            }
-        }
+        // REMOVED: Orphaned worldObjects loop (variable not populated after Cell::Visit elimination)
 
         _lastDangerResult = false;
         return false;
@@ -693,29 +669,7 @@ namespace Playerbot
             return false;
 
         // Check for DynamicObjects at position using WorldObjectListSearcher
-        
-        
-
-        for (WorldObject* obj : worldObjects)
-        {
-            // Cast to DynamicObject using TypeID check
-            if (!obj || obj->GetTypeId() != TYPEID_DYNAMICOBJECT)
-                continue;
-
-            DynamicObject* dynObj = static_cast<DynamicObject*>(obj);
-            if (!dynObj)
-                continue;
-
-            // Check if this is a hostile effect
-            if (Unit* caster = dynObj->GetCaster())
-            {
-                if (player->IsValidAttackTarget(caster))
-                {
-                    if (position.GetExactDist2d(dynObj) <= dynObj->GetRadius())
-                        return false;
-                }
-            }
-        }
+        // REMOVED: Orphaned worldObjects loop (variable not populated after Cell::Visit elimination)
 
         return true;
     }

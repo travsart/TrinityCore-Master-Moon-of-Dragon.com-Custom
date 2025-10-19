@@ -27,6 +27,7 @@
 #include "../Combat/TargetSelector.h"
 #include "Config/PlayerbotConfig.h"
 #include "SpellMgr.h"
+#include "ObjectAccessor.h"
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include <algorithm>
 #include <cmath>
@@ -671,7 +672,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -679,7 +680,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -689,7 +690,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = bot->GetMap()->GetGameObject(*bot, guid);
+        auto* entity = bot->GetMap()->GetGameObject(guid);
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -805,7 +806,7 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -813,7 +814,7 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -880,7 +881,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -888,7 +889,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -981,7 +982,7 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return false;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -989,7 +990,7 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return false;
     }
 
     // Query nearby GUIDs (lock-free!)

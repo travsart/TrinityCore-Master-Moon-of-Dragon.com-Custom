@@ -326,13 +326,13 @@ bool AugmentationSpecialization::CanShiftAspect() { return EvokerSpecialization:
 void AugmentationSpecialization::UpdateCombatPhase()
 {
     if (!_bot)
-        return;
+        return false;
 
     // Emergency support takes priority
     if (_bot->GetHealthPct() < 30.0f)
     {
         _augmentationPhase = AugmentationRotationPhase::EMERGENCY_SUPPORT;
-        return;
+        return false;
     }
 
     // Check if buffs need refresh
@@ -340,7 +340,7 @@ void AugmentationSpecialization::UpdateCombatPhase()
     if (currentTime - _lastBuffRefreshTime > BUFF_REFRESH_INTERVAL)
     {
         _augmentationPhase = AugmentationRotationPhase::BUFF_REFRESH;
-        return;
+        return false;
     }
 
     // Ebon Might management
@@ -348,7 +348,7 @@ void AugmentationSpecialization::UpdateCombatPhase()
     if (ebonTarget && NeedsEbonMight(ebonTarget))
     {
         _augmentationPhase = AugmentationRotationPhase::EBON_MIGHT_MANAGEMENT;
-        return;
+        return false;
     }
 
     // Prescience distribution
@@ -356,14 +356,14 @@ void AugmentationSpecialization::UpdateCombatPhase()
     if (prescienceTarget && NeedsPrescience(prescienceTarget))
     {
         _augmentationPhase = AugmentationRotationPhase::PRESCIENCE_DISTRIBUTION;
-        return;
+        return false;
     }
 
     // Breath of Eons setup
     if (_essence.state >= EssenceState::HIGH)
     {
         _augmentationPhase = AugmentationRotationPhase::BREATH_OF_EONS_SETUP;
-        return;
+        return false;
     }
 
     // Default to damage contribution

@@ -607,7 +607,7 @@ namespace Playerbot
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        GameObject* entity = map->GetGameObject(*GetBot(), guid);
+        GameObject* entity = map->GetGameObject(guid);
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

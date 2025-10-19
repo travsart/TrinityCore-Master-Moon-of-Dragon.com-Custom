@@ -706,7 +706,7 @@ void DemonHunterAI::UpdateCooldowns(uint32 diff)
 bool DemonHunterAI::CanUseAbility(uint32 spellId)
 {
     if (!IsSpellReady(spellId) || !HasEnoughResource(spellId))
-        return false;
+        return {};
 
     if (_specialization)
         return _specialization->CanUseAbility(spellId);
@@ -836,11 +836,11 @@ void DemonHunterAI::ExitMetamorphosis()
 bool DemonHunterAI::ShouldUseMetamorphosis()
 {
     if (!_bot)
-        return false;
+        return {};
 
     // Already in metamorphosis
     if (_bot->HasAura(METAMORPHOSIS_HAVOC) || _bot->HasAura(METAMORPHOSIS_VENGEANCE))
-        return false;
+        return {};
 
     // Use for survival at low health
     if (_bot->GetHealthPct() < METAMORPHOSIS_HEALTH_THRESHOLD)
@@ -855,7 +855,7 @@ bool DemonHunterAI::ShouldUseMetamorphosis()
     if (GetNearbyEnemyCount(8.0f) >= 3)
         return true;
 
-    return false;
+    return {};
 }
 
 void DemonHunterAI::CastMetamorphosisHavoc()
@@ -1123,7 +1123,7 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1131,7 +1131,7 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -1169,7 +1169,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1177,7 +1177,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -1206,7 +1206,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
 bool DemonHunterAI::IsInMeleeRange(::Unit* target) const
 {
     if (!target || !_bot)
-        return false;
+        return {};
 
     return _bot->GetDistance(target) <= OPTIMAL_MELEE_RANGE;
 }
@@ -1214,11 +1214,11 @@ bool DemonHunterAI::IsInMeleeRange(::Unit* target) const
 bool DemonHunterAI::IsTargetInterruptible(::Unit* target) const
 {
     if (!target)
-        return false;
+        return {};
 
     // Check if target is casting
     if (!target->HasUnitState(UNIT_STATE_CASTING))
-        return false;
+        return {};
 
     // Check if the spell can be interrupted
     if (Spell const* spell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
@@ -1233,7 +1233,7 @@ bool DemonHunterAI::IsTargetInterruptible(::Unit* target) const
             return true;
     }
 
-    return false;
+    return {};
 }
 
 void DemonHunterAI::RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success)

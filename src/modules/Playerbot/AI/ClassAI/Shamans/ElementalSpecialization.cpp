@@ -20,6 +20,7 @@
 #include "SpellAuras.h"
 #include "SpellAuraEffects.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -132,7 +133,7 @@ bool ElementalSpecialization::CanUseAbility(uint32 spellId)
 {
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end() && it->second > 0)
-        return false;
+        return {};
 
     return HasEnoughResource(spellId);
 }
@@ -161,7 +162,7 @@ bool ElementalSpecialization::HasEnoughResource(uint32 spellId)
 {
     Player* bot = GetBot();
     if (!bot)
-        return false;
+        return {};
 
     if (HasClearcasting())
         return true;
@@ -271,7 +272,7 @@ uint32 ElementalSpecialization::GetOptimalFireTotem()
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -279,7 +280,7 @@ uint32 ElementalSpecialization::GetOptimalFireTotem()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -446,7 +447,7 @@ bool ElementalSpecialization::ShouldCastThunderstorm()
 {
     Player* bot = GetBot();
     if (!bot)
-        return false;
+        return {};
 
     std::list<Unit*> units;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, THUNDERSTORM_RANGE);
@@ -454,7 +455,7 @@ bool ElementalSpecialization::ShouldCastThunderstorm()
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -462,7 +463,7 @@ bool ElementalSpecialization::ShouldCastThunderstorm()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -586,7 +587,7 @@ std::vector<::Unit*> ElementalSpecialization::GetChainLightningTargets(::Unit* p
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = primary->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -594,7 +595,7 @@ std::vector<::Unit*> ElementalSpecialization::GetChainLightningTargets(::Unit* p
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)

@@ -19,6 +19,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -405,7 +406,7 @@ bool EnhancementSpecialization::ShouldCastChainLightning()
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return false; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -413,7 +414,7 @@ bool EnhancementSpecialization::ShouldCastChainLightning()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return false; // Adjust return value as needed
     }
 
     // Query nearby GUIDs (lock-free!)

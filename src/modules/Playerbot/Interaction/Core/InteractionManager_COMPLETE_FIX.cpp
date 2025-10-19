@@ -118,7 +118,7 @@ namespace Playerbot
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (!m_initialized)
-            return;
+            return false;
 
         TC_LOG_INFO("playerbot", "Shutting down InteractionManager");
 
@@ -156,7 +156,7 @@ namespace Playerbot
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         if (!m_initialized)
-            return;
+            return false;
 
         // Clean NPC type cache every 5 minutes
         auto now = std::chrono::steady_clock::now();
@@ -303,7 +303,7 @@ namespace Playerbot
     void InteractionManager::CancelInteraction(Player* bot, ObjectGuid targetGuid)
     {
         if (!bot)
-            return;
+            return false;
 
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -654,11 +654,11 @@ namespace Playerbot
     void InteractionManager::HandleGossipMenu(Player* bot, uint32 menuId, WorldObject* target)
     {
         if (!bot || !target)
-            return;
+            return nullptr;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return nullptr;
 
         context->gossipMenuId = menuId;
         context->state = InteractionState::ProcessingMenu;
@@ -670,11 +670,11 @@ namespace Playerbot
     void InteractionManager::SelectGossipOption(Player* bot, uint32 optionIndex, WorldObject* target)
     {
         if (!bot || !target)
-            return;
+            return nullptr;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return nullptr;
 
         // For bots, select gossip option directly
         if (Creature* creature = target->ToCreature())
@@ -739,11 +739,11 @@ namespace Playerbot
     void InteractionManager::TransitionState(Player* bot, InteractionState newState)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return false;
 
         if (m_config.logInteractions)
         {
@@ -789,11 +789,11 @@ namespace Playerbot
     void InteractionManager::HandleInteractionError(Player* bot, InteractionResult error)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return false;
 
         if (m_config.logInteractions)
         {
@@ -807,7 +807,7 @@ namespace Playerbot
         if (context->attemptCount < context->maxAttempts)
         {
             if (AttemptRecovery(bot))
-                return;
+                return false;
         }
 
         // Failed too many times
@@ -846,11 +846,11 @@ namespace Playerbot
     void InteractionManager::HandleVendorList(Player* bot, WorldPacket const& packet)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context || context->type != InteractionType::Vendor)
-            return;
+            return false;
 
         // Pass to vendor handler
         m_vendorHandler->HandleVendorList(bot, packet);
@@ -859,11 +859,11 @@ namespace Playerbot
     void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& packet)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context || context->type != InteractionType::Trainer)
-            return;
+            return false;
 
         // TODO: Implement when TrainerInteraction is created
         // Pass to trainer handler
@@ -873,11 +873,11 @@ namespace Playerbot
     void InteractionManager::HandleGossipMessage(Player* bot, WorldPacket const& packet)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return false;
 
         // Pass to gossip handler
         m_gossipHandler->HandleGossipPacket(bot, packet, context->type);
@@ -1051,11 +1051,11 @@ namespace Playerbot
     void InteractionManager::CompleteInteraction(Player* bot, InteractionResult result)
     {
         if (!bot)
-            return;
+            return false;
 
         auto context = GetInteractionContext(bot);
         if (!context)
-            return;
+            return false;
 
         // Record metrics
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(

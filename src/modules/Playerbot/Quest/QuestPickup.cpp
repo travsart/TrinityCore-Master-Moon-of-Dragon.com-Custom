@@ -385,7 +385,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {}; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -393,7 +393,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {}; // Adjust return value as needed
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -470,27 +470,13 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     Trinity::AllGameObjectsWithEntryInRange goCheck(bot, 0, scanRadius);  // 0 = all entries
     Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> goSearcher(bot, gameObjects, goCheck);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = bot->GetMap();
-    if (!map)
-        return; // Adjust return value as needed
-
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return; // Adjust return value as needed
-    }
-
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> nearbyGuids2 = spatialGrid->QueryNearbyGameObjects(
         bot->GetPosition(), scanRadius);
 
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = bot->GetMap()->GetGameObject(*bot, guid);
+        auto* entity = bot->GetMap()->GetGameObject(guid);
         if (!entity)
             continue;
         // Original filtering logic goes here

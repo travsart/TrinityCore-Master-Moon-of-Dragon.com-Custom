@@ -18,6 +18,7 @@
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {

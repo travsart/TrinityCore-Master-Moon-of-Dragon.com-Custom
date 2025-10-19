@@ -428,7 +428,7 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return false;
+        return nodes;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -436,7 +436,7 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return false;
+            return nodes;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -446,7 +446,7 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        GameObject* entity = map->GetGameObject(*GetBot(), guid);
+        GameObject* entity = map->GetGameObject(guid);
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -489,7 +489,7 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return;
+        return nodes;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -497,7 +497,7 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return;
+            return nodes;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -507,7 +507,7 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        GameObject* entity = map->GetGameObject(*GetBot(), guid);
+        GameObject* entity = map->GetGameObject(guid);
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -544,14 +544,10 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
 
-    // Search for fishing pools (GameObject type 25)
-    std::list<GameObject*> gameObjects;
-    Trinity::AllWorldObjectsInRange check(GetBot(), range);
-    Trinity::GameObjectListSearcher searcher(GetBot(), gameObjects, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return;
+        return nodes;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -559,25 +555,15 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return;
+            return nodes;
     }
 
-    // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
         GetBot()->GetPosition(), range);
 
-    // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        GameObject* entity = map->GetGameObject(*GetBot(), guid);
-        if (!entity)
-            continue;
-        // Original filtering logic from searcher goes here
-    }
-    // End of spatial grid fix
-
-    for (GameObject* go : gameObjects)
-    {
+        GameObject* go = map->GetGameObject(guid);
         if (!go || go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE)
             continue;
 
@@ -596,14 +582,10 @@ std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float rang
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
 
-    // Search for dead, skinnable creatures
-    std::list<Creature*> creatures;
-    Trinity::AnyUnitInObjectRangeCheck check(GetBot(), range);
-    Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(GetBot(), creatures, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return;
+        return nodes;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -611,25 +593,15 @@ std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float rang
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return;
+            return nodes;
     }
 
-    // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
         GetBot()->GetPosition(), range);
 
-    // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
-        if (!entity)
-            continue;
-        // Original filtering logic from searcher goes here
-    }
-    // End of spatial grid fix
-
-    for (Creature* creature : creatures)
-    {
+        Creature* creature = ObjectAccessor::GetCreature(*GetBot(), guid);
         if (!creature || !creature->isDead())
             continue;
 

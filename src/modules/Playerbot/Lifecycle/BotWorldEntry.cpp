@@ -791,7 +791,7 @@ void BotWorldEntryQueue::ProcessQueue(uint32 maxConcurrent)
                     }
                     return true;
                 }
-                return false;
+                return;
             }),
         _activeEntries.end()
     );

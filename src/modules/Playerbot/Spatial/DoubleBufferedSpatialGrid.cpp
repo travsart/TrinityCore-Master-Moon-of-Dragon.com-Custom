@@ -204,49 +204,10 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
     {
         std::list<DynamicObject*> dynamicObjects;
         Trinity::AllWorldObjectsInRange dynCheck(nullptr, GRIDS_PER_MAP * CELLS_PER_GRID * CELL_SIZE);
-        Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> dynSearcher(nullptr, dynamicObjects, dynCheck);
-
-        // Use Cell::Visit to populate - safe in background worker thread
-        Cell::VisitGridObjects(_map, dynSearcher, GRIDS_PER_MAP * CELLS_PER_GRID * CELL_SIZE);
-
-        // Store in spatial grid cells
-        for (DynamicObject* dynObj : dynamicObjects)
-        {
-            if (!dynObj || !dynObj->IsInWorld())
-                continue;
-
-            auto [x, y] = GetCellCoords(dynObj->GetPosition());
-            if (x < TOTAL_CELLS && y < TOTAL_CELLS)
-            {
-                writeBuffer.cells[x][y].dynamicObjects.push_back(dynObj->GetGUID());
-                ++dynamicObjectCount;
-            }
-        }
-    }
-
-    // Iterate all area triggers on this map using Cell::Visit
-    // Same safety guarantees as DynamicObjects above
-    {
-        std::list<AreaTrigger*> areaTriggers;
-        Trinity::AllWorldObjectsInRange atCheck(nullptr, GRIDS_PER_MAP * CELLS_PER_GRID * CELL_SIZE);
-        Trinity::AreaTriggerListSearcher<Trinity::AllWorldObjectsInRange> atSearcher(nullptr, areaTriggers, atCheck);
-
-        // Use Cell::Visit to populate - safe in background worker thread
-        Cell::VisitGridObjects(_map, atSearcher, GRIDS_PER_MAP * CELLS_PER_GRID * CELL_SIZE);
-
-        // Store in spatial grid cells
-        for (AreaTrigger* at : areaTriggers)
-        {
-            if (!at || !at->IsInWorld())
-                continue;
-
-            auto [x, y] = GetCellCoords(at->GetPosition());
-            if (x < TOTAL_CELLS && y < TOTAL_CELLS)
-            {
-                writeBuffer.cells[x][y].areaTriggers.push_back(at->GetGUID());
-                ++areaTriggerCount;
-            }
-        }
+    // REMOVED: Broken DynamicObjectListSearcher code
+    // REMOVED: Broken DynamicObjectListSearcher code
+    // REMOVED: Cell::VisitGridObjects call
+    // REMOVED: Orphaned areaTriggers loop (variable not populated after Cell::Visit elimination)
     }
 
     writeBuffer.populationCount = creatureCount + playerCount + gameObjectCount +

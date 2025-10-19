@@ -935,7 +935,7 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -943,7 +943,7 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
     // Query nearby GUIDs (lock-free!)

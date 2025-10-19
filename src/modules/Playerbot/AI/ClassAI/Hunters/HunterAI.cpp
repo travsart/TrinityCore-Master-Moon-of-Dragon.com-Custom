@@ -1191,7 +1191,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return false;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1199,7 +1199,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return false;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -1394,7 +1394,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return nullptr;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1402,7 +1402,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return nullptr;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -1445,7 +1445,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1453,7 +1453,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return 0;
     }
 
     // Query nearby GUIDs (lock-free!)

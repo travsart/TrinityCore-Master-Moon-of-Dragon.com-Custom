@@ -17,6 +17,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -396,7 +397,7 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = target->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return false; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -404,7 +405,7 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return false; // Adjust return value as needed
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -590,7 +591,7 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {}; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -598,7 +599,7 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {}; // Adjust return value as needed
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -774,7 +775,7 @@ bool AfflictionSpecialization::ShouldChannelDrain()
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return nullptr; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -782,7 +783,7 @@ bool AfflictionSpecialization::ShouldChannelDrain()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return nullptr; // Adjust return value as needed
     }
 
     // Query nearby GUIDs (lock-free!)

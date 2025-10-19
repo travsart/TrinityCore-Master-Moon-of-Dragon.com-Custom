@@ -337,34 +337,34 @@ bool PreservationSpecialization::CanShiftAspect() { return EvokerSpecialization:
 void PreservationSpecialization::UpdateCombatPhase()
 {
     if (!_bot)
-        return;
+        return false;
 
     // Emergency healing takes priority
     if (ShouldUseEmergencyHealing())
     {
         _preservationPhase = PreservationRotationPhase::EMERGENCY_HEALING;
-        return;
+        return false;
     }
 
     // Group healing phase
     if (ShouldUseGroupHealing())
     {
         _preservationPhase = PreservationRotationPhase::GROUP_HEALING;
-        return;
+        return false;
     }
 
     // Echo management
     if (_prioritizeEchoes && GetActiveEchoCount() < _maxEchoes)
     {
         _preservationPhase = PreservationRotationPhase::ECHO_MANAGEMENT;
-        return;
+        return false;
     }
 
     // Empowered healing
     if (_essence.state >= EssenceState::HIGH)
     {
         _preservationPhase = PreservationRotationPhase::EMPOWERED_HEALING;
-        return;
+        return false;
     }
 
     // Default to sustain healing

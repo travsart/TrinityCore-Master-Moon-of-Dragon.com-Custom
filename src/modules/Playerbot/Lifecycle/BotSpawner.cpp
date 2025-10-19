@@ -382,7 +382,7 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
                 _stats.failedSpawns.fetch_add(1);
                 if (request.callback)
                     request.callback(false, ObjectGuid::Empty);
-                return;
+                return false;
             }
 
             // Continue with spawn process asynchronously

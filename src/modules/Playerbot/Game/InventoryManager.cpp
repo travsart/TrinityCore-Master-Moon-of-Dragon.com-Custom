@@ -1348,14 +1348,10 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     if (!_bot)
         return lootables;
 
-    // Find lootable creatures
-    std::list<Creature*> creatures;
-    Trinity::AllWorldObjectsInRange checker(_bot, range);
-    Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(_bot, creatures, checker);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1363,64 +1359,29 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return {};
     }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    // Query nearby creatures (lock-free!)
+    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatures(
         _bot->GetPosition(), range);
 
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : creatureGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-
-    for (Creature* creature : creatures)
-    {
+        Creature* creature = ObjectAccessor::GetCreature(*_bot, guid);
         if (creature && creature->GetHealth() == 0 && creature->HasDynamicFlag(UNIT_DYNFLAG_LOOTABLE))
         {
             lootables.push_back(creature->GetGUID());
         }
     }
 
-    // Find lootable game objects
-    std::list<GameObject*> gameObjects;
-    Trinity::GameObjectListSearcher<Trinity::AllWorldObjectsInRange> goSearcher(_bot, gameObjects, checker);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();
-    if (!map)
-        return; // Adjust return value as needed
-
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return; // Adjust return value as needed
-    }
-
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    // Query nearby game objects (lock-free!)
+    std::vector<ObjectGuid> goGuids = spatialGrid->QueryNearbyGameObjects(
         _bot->GetPosition(), range);
 
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : goGuids)
     {
-        auto* entity = _bot->GetMap()->GetGameObject(*_bot, guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-
-    for (GameObject* go : gameObjects)
-    {
+        GameObject* go = map->GetGameObject(guid);
         if (go && go->GetGoType() == GAMEOBJECT_TYPE_CHEST)
         {
             lootables.push_back(go->GetGUID());

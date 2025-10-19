@@ -1035,7 +1035,7 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return nullptr;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1043,7 +1043,7 @@ Unit* WarlockAI::GetNearestEnemy(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return nullptr;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -1091,7 +1091,7 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
     if (!map)
-        return; // Adjust return value as needed
+        return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -1099,7 +1099,7 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return; // Adjust return value as needed
+            return 0;
     }
 
     // Query nearby GUIDs (lock-free!)
