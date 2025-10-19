@@ -13,6 +13,11 @@
 #pragma once
 
 #include "HunterSpecialization.h"
+#include "ObjectGuid.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
+#include "Creature.h"
+#include "Map.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "Pet.h"
@@ -678,7 +683,24 @@ private:
         std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), 8.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
-        Cell::VisitAllObjects(this->GetBot(), searcher, 8.0f);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = this->GetBot()->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), 8.0f);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))
+                    {
+                        if (checker(creature))
+                            enemies.push_back(creature);
+                    }
+                }
+            }
+        }
 
         uint32 stingsApplied = 0;
         for (Unit* enemy : enemies)

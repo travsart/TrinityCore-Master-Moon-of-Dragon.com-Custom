@@ -13,6 +13,11 @@
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
+#include "ObjectGuid.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "ObjectAccessor.h"
+#include "Creature.h"
+#include "Map.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Unit.h"
@@ -698,7 +703,24 @@ private:
         std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
-        Cell::VisitAllObjects(this->GetBot(), searcher, range);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = this->GetBot()->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), range);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))
+                    {
+                        if (checker(creature))
+                            enemies.push_back(creature);
+                    }
+                }
+            }
+        }
 
         for (Unit* enemy : enemies)
         {
@@ -723,7 +745,24 @@ private:
         std::list<Unit*> unitList;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), unitList, checker);
-        Cell::VisitAllObjects(this->GetBot(), searcher, range);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = this->GetBot()->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), range);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))
+                    {
+                        if (checker(creature))
+                            enemies.push_back(creature);
+                    }
+                }
+            }
+        }
 
         enemies.assign(unitList.begin(), unitList.end());
         return enemies;

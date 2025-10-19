@@ -17,6 +17,10 @@
 #pragma once
 
 #include "Define.h"
+#include "ObjectGuid.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "Creature.h"
+#include "Map.h"
 #include "ClassAI.h"
 #include "ResourceTypes.h"
 #include "Position.h"
@@ -476,7 +480,24 @@ protected:
         std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
-        Cell::VisitAllObjects(bot, searcher, range);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = bot->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*bot, range);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+                    {
+                        if (u_check(creature))
+                            targets.push_back(creature);
+                    }
+                }
+            }
+        }
         return static_cast<uint32>(targets.size());
     }
 
@@ -988,7 +1009,24 @@ protected:
         std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(bot, bot, 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, hostileUnits, checker);
-        Cell::VisitAllObjects(bot, searcher, 40.0f);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = bot->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*bot, 40.0f);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+                    {
+                        if (checker(creature))
+                            hostileUnits.push_back(creature);
+                    }
+                }
+            }
+        }
 
         for (Unit* hostile : hostileUnits)
         {

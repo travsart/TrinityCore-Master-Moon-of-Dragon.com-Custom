@@ -10,6 +10,10 @@
 #pragma once
 
 #include "CombatSpecializationTemplates.h"
+#include "ObjectGuid.h"
+#include "../../../Spatial/SpatialGridManager.h"
+#include "Creature.h"
+#include "Map.h"
 #include "ResourceTypes.h"
 #include "SpellMgr.h"
 #include "Group.h"
@@ -485,7 +489,24 @@ protected:
         std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 10.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_searcher(bot, hostileUnits, u_check);
-        Cell::VisitAllObjects(bot, u_searcher, 10.0f);
+        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
+        Map* map = bot->GetMap();
+        if (map)
+        {
+            auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+            if (spatialGrid)
+            {
+                auto guids = spatialGrid->QueryNearbyCreatures(*bot, 10.0f);
+                for (ObjectGuid guid : guids)
+                {
+                    if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+                    {
+                        if (u_check(creature))
+                            hostileUnits.push_back(creature);
+                    }
+                }
+            }
+        }
 
         for (Unit* hostile : hostileUnits)
         {
