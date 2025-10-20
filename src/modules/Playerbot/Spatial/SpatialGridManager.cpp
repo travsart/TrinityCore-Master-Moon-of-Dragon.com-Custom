@@ -30,12 +30,12 @@ void SpatialGridManager::CreateGrid(Map* map)
     }
 
     auto grid = std::make_unique<DoubleBufferedSpatialGrid>(map);
-    grid->Start(); // Start worker thread
+    grid->Start(); // Initialize (no background thread, synchronous mode)
 
     _grids[mapId] = std::move(grid);
 
     TC_LOG_INFO("playerbot.spatial",
-        "Created and started spatial grid for map {} ({})",
+        "Created spatial grid for map {} ({}) in synchronous mode",
         mapId, map->GetMapName());
 }
 
@@ -90,6 +90,25 @@ void SpatialGridManager::DestroyAllGrids()
     }
 
     _grids.clear();
+}
+
+void SpatialGridManager::UpdateGrid(uint32 mapId)
+{
+    std::shared_lock<std::shared_mutex> lock(_mutex);  // Shared read lock
+
+    auto it = _grids.find(mapId);
+    if (it == _grids.end())
+        return;  // No grid for this map
+
+    it->second->Update();
+}
+
+void SpatialGridManager::UpdateGrid(Map* map)
+{
+    if (!map)
+        return;
+
+    UpdateGrid(map->GetId());
 }
 
 size_t SpatialGridManager::GetGridCount() const

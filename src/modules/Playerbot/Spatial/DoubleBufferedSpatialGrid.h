@@ -19,6 +19,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
+#include <mutex>
 
 class Map;
 class Creature;
@@ -133,9 +134,13 @@ public:
     ~DoubleBufferedSpatialGrid();
 
     // Lifecycle
-    void Start();
-    void Stop();
-    bool IsRunning() const { return _running.load(std::memory_order_acquire); }
+    void Start();  // DEPRECATED: No longer starts background thread
+    void Stop();   // DEPRECATED: No-op now
+    bool IsRunning() const { return true; }  // Always "running" now (no background thread)
+
+    // Manual update (call from Map::Update or on-demand)
+    // Const-qualified to allow calling from const query methods
+    void Update() const;
 
     // Bot query interface (thread-safe, lock-free)
     std::vector<ObjectGuid> QueryNearbyCreatures(Position const& pos, float radius) const;
@@ -153,9 +158,6 @@ public:
     uint32 GetPopulationCount() const;
 
 private:
-    // Worker thread main loop
-    void UpdateWorkerThread();
-
     // Populate write buffer from Map entities
     void PopulateBufferFromMap();
 
@@ -185,20 +187,22 @@ private:
     std::vector<DynamicObject*> GetDynamicObjectsInArea(Position const& center, float radius);
     std::vector<AreaTrigger*> GetAreaTriggersInArea(Position const& center, float radius);
 
+    // Check if update is needed (rate-limited)
+    bool ShouldUpdate() const;
+
     // Data members
     Map* _map;
-    GridBuffer _buffers[2];
-    std::atomic<uint32> _readBufferIndex{0};
+    mutable GridBuffer _buffers[2];  // Mutable to allow updates from const methods
+    mutable std::atomic<uint32> _readBufferIndex{0};
 
-    // Worker thread
-    std::unique_ptr<std::thread> _updateThread;
-    std::atomic<bool> _running{false};
+    mutable std::chrono::steady_clock::time_point _lastUpdate;
+    mutable std::mutex _updateMutex;  // Protects Update() to ensure only one thread updates at a time
 
     // Statistics (atomic for thread-safe access)
     mutable std::atomic<uint64_t> _totalQueries{0};
-    std::atomic<uint64_t> _totalUpdates{0};
-    std::atomic<uint64_t> _totalSwaps{0};
-    std::atomic<uint32> _lastUpdateDurationUs{0};
+    mutable std::atomic<uint64_t> _totalUpdates{0};
+    mutable std::atomic<uint64_t> _totalSwaps{0};
+    mutable std::atomic<uint32> _lastUpdateDurationUs{0};
 
     std::chrono::steady_clock::time_point _startTime;
 

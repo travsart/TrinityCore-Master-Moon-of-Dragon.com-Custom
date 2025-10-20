@@ -47,78 +47,80 @@ DoubleBufferedSpatialGrid::~DoubleBufferedSpatialGrid()
 
 void DoubleBufferedSpatialGrid::Start()
 {
-    if (_running.load(std::memory_order_acquire))
-    {
-        TC_LOG_WARN("playerbot.spatial",
-            "DoubleBufferedSpatialGrid already running for map {}", _map->GetId());
-        return;
-    }
+    // CRITICAL DEADLOCK FIX: Background thread eliminated
+    // Reason: Background thread was iterating Map containers without proper locks
+    // causing deadlocks with main thread and bot threads
+    // Solution: Spatial grid now updated synchronously from Map::Update
 
     TC_LOG_INFO("playerbot.spatial",
-        "Starting spatial grid worker thread for map {} (update interval: {}ms)",
-        _map->GetId(), UPDATE_INTERVAL_MS);
+        "Spatial grid initialized for map {} (synchronous updates, no background thread)",
+        _map->GetId());
 
-    _running.store(true, std::memory_order_release);
-    _updateThread = std::make_unique<std::thread>([this] { UpdateWorkerThread(); });
+    // Do initial population
+    PopulateBufferFromMap();
+    SwapBuffers();
 }
 
 void DoubleBufferedSpatialGrid::Stop()
 {
-    if (!_running.load(std::memory_order_acquire))
-        return;
-
+    // CRITICAL DEADLOCK FIX: No background thread to stop anymore
     TC_LOG_INFO("playerbot.spatial",
-        "Stopping spatial grid worker thread for map {}", _map->GetId());
-
-    _running.store(false, std::memory_order_release);
-
-    if (_updateThread && _updateThread->joinable())
-        _updateThread->join();
-
-    _updateThread.reset();
+        "Spatial grid stopped for map {} (synchronous mode, no thread to join)",
+        _map->GetId());
 }
 
-void DoubleBufferedSpatialGrid::UpdateWorkerThread()
+bool DoubleBufferedSpatialGrid::ShouldUpdate() const
 {
-    TC_LOG_DEBUG("playerbot.spatial",
-        "Worker thread started for map {}", _map->GetId());
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUpdate);
+    return elapsed.count() >= UPDATE_INTERVAL_MS;
+}
 
-    while (_running.load(std::memory_order_acquire))
+void DoubleBufferedSpatialGrid::Update() const
+{
+    // CRITICAL DEADLOCK FIX: On-demand synchronous update with rate limiting
+    // Only one thread can update at a time (mutex protected)
+    // Other threads will skip if update is already in progress
+
+    // Try to acquire lock (non-blocking)
+    std::unique_lock<std::mutex> lock(_updateMutex, std::try_to_lock);
+    if (!lock.owns_lock())
     {
-        auto cycleStart = std::chrono::steady_clock::now();
-
-        try
-        {
-            // Populate inactive buffer from Map entities
-            PopulateBufferFromMap();
-
-            // Swap buffers atomically
-            SwapBuffers();
-
-            _totalUpdates.fetch_add(1, std::memory_order_relaxed);
-        }
-        catch (std::exception const& ex)
-        {
-            TC_LOG_ERROR("playerbot.spatial",
-                "Exception in spatial grid worker thread for map {}: {}",
-                _map->GetId(), ex.what());
-        }
-
-        // Sleep for remaining time
-        auto cycleEnd = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(cycleEnd - cycleStart);
-        auto remaining = std::chrono::milliseconds(UPDATE_INTERVAL_MS) - elapsed;
-
-        if (remaining.count() > 0)
-            std::this_thread::sleep_for(remaining);
-        else
-            TC_LOG_WARN("playerbot.spatial",
-                "Spatial grid update took {}ms (target: {}ms) for map {}",
-                elapsed.count(), UPDATE_INTERVAL_MS, _map->GetId());
+        // Another thread is already updating, skip
+        return;
     }
 
-    TC_LOG_DEBUG("playerbot.spatial",
-        "Worker thread stopped for map {}", _map->GetId());
+    // Check if enough time has passed since last update
+    if (!ShouldUpdate())
+        return;
+
+    auto cycleStart = std::chrono::steady_clock::now();
+
+    try
+    {
+        // Populate inactive buffer from Map entities
+        const_cast<DoubleBufferedSpatialGrid*>(this)->PopulateBufferFromMap();
+
+        // Swap buffers atomically
+        const_cast<DoubleBufferedSpatialGrid*>(this)->SwapBuffers();
+
+        _lastUpdate = cycleStart;
+        _totalUpdates.fetch_add(1, std::memory_order_relaxed);
+    }
+    catch (std::exception const& ex)
+    {
+        TC_LOG_ERROR("playerbot.spatial",
+            "Exception in spatial grid update for map {}: {}",
+            _map->GetId(), ex.what());
+    }
+
+    auto cycleEnd = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(cycleEnd - cycleStart);
+
+    if (elapsed.count() > 10)  // Warn if update takes >10ms
+        TC_LOG_WARN("playerbot.spatial",
+            "Spatial grid update took {}ms for map {}",
+            elapsed.count(), _map->GetId());
 }
 
 void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
@@ -238,6 +240,9 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyCreatures(
     Position const& pos, float radius) const
 {
+    // Ensure grid is up-to-date (rate-limited, non-blocking)
+    Update();
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;
@@ -269,6 +274,8 @@ std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyCreatures(
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyPlayers(
     Position const& pos, float radius) const
 {
+    Update();  // Ensure grid is up-to-date
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;
@@ -290,6 +297,8 @@ std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyPlayers(
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyGameObjects(
     Position const& pos, float radius) const
 {
+    Update();  // Ensure grid is up-to-date
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;
@@ -311,6 +320,8 @@ std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyGameObjects(
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyDynamicObjects(
     Position const& pos, float radius) const
 {
+    Update();  // Ensure grid is up-to-date
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;
@@ -332,6 +343,8 @@ std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyDynamicObjects(
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyAreaTriggers(
     Position const& pos, float radius) const
 {
+    Update();  // Ensure grid is up-to-date
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;
@@ -353,6 +366,8 @@ std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyAreaTriggers(
 std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyAll(
     Position const& pos, float radius) const
 {
+    Update();  // Ensure grid is up-to-date
+
     _totalQueries.fetch_add(1, std::memory_order_relaxed);
 
     std::vector<ObjectGuid> results;

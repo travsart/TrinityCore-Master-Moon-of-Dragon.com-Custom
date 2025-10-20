@@ -42,6 +42,10 @@ public:
     // Destroy all grids
     void DestroyAllGrids();
 
+    // Update a specific grid (call from Map::Update)
+    void UpdateGrid(uint32 mapId);
+    void UpdateGrid(Map* map);
+
     // Statistics
     size_t GetGridCount() const;
 
