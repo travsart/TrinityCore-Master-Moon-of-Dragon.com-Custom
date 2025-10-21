@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
 namespace Playerbot
 {
@@ -330,7 +331,16 @@ namespace Playerbot
         {
             for (auto const& giver : m_questGivers)
             {
-                WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), giver.guid);
+                WorldObject* obj = nullptr;
+
+                if (snapshot)
+                {
+                    // Get WorldObject* for quest acceptance (validated via snapshot first)
+                    obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+                }
+
                 if (obj)
                 {
                     questGiver = obj;
@@ -399,7 +409,16 @@ namespace Playerbot
         {
             for (auto const& giver : m_questGivers)
             {
-                WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), giver.guid);
+                WorldObject* obj = nullptr;
+
+                if (snapshot)
+                {
+                    // Get WorldObject* for quest turn-in (validated via snapshot first)
+                    obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+                }
+
                 if (!obj)
                     continue;
 
@@ -538,7 +557,16 @@ namespace Playerbot
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+        Creature* entity = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for quest giver detection (validated via snapshot first)
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        }
+
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1142,7 +1170,16 @@ namespace Playerbot
 
         for (auto const& giver : m_questGivers)
         {
-            WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+            // PHASE 5D: Thread-safe spatial grid validation
+            auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), giver.guid);
+            WorldObject* obj = nullptr;
+
+            if (snapshot)
+            {
+                // Get WorldObject* for nearest quest giver (validated via snapshot first)
+                obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+            }
+
             if (!obj)
                 continue;
 
@@ -1166,7 +1203,16 @@ namespace Playerbot
 
         for (auto const& giver : m_questGivers)
         {
-            WorldObject* obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+            // PHASE 5D: Thread-safe spatial grid validation
+            auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(GetBot(), giver.guid);
+            WorldObject* obj = nullptr;
+
+            if (snapshot)
+            {
+                // Get WorldObject* for nearest quest object (validated via snapshot first)
+                obj = ObjectAccessor::GetWorldObject(*GetBot(), giver.guid);
+            }
+
             if (!obj)
                 continue;
 

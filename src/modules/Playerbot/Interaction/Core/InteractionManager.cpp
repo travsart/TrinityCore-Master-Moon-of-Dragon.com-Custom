@@ -32,6 +32,7 @@
 #include "MovementGenerator.h"
 #include "UnitDefines.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
 namespace Playerbot
 {
@@ -184,7 +185,18 @@ namespace Playerbot
             // Start the queued interaction
             if (Player* bot = ObjectAccessor::FindPlayer(queued.botGuid))
             {
-                if (WorldObject* target = ObjectAccessor::GetWorldObject(*bot, queued.targetGuid))
+                // PHASE 5D: Thread-safe spatial grid validation
+                // FindPlayer is safe (global storage), but GetWorldObject needs snapshot validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, queued.targetGuid);
+                WorldObject* target = nullptr;
+
+                if (snapshot)
+                {
+                    // Get WorldObject* for interaction (validated via snapshot first)
+                    target = ObjectAccessor::GetWorldObject(*bot, queued.targetGuid);
+                }
+
+                if (target)
                 {
                     StartInteraction(bot, target, queued.type);
                 }
@@ -421,7 +433,16 @@ namespace Playerbot
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+        Creature* entity = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for NPC type detection (validated via snapshot first)
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+        }
+
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -951,7 +972,16 @@ namespace Playerbot
 
     InteractionResult InteractionManager::ExecuteState(Player* bot, InteractionContext& context)
     {
-        WorldObject* target = ObjectAccessor::GetWorldObject(*bot, context.targetGuid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, context.targetGuid);
+        WorldObject* target = nullptr;
+
+        if (snapshot)
+        {
+            // Get WorldObject* for state execution (validated via snapshot first)
+            target = ObjectAccessor::GetWorldObject(*bot, context.targetGuid);
+        }
+
         if (!target)
             return InteractionResult::InvalidTarget;
 
