@@ -17,6 +17,7 @@
 #include "SpellAuras.h"
 #include "MotionMaster.h"
 #include "World.h"
+#include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
 
 #ifdef _WIN32
@@ -450,13 +451,20 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
     // Check if should follow group
     if (ShouldFollowGroup() && _followTarget)
     {
-        if (Player* leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget))
+        // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
+        auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _followTarget);
+        Player* leader = nullptr;
+
+        if (snapshot && snapshot->isAlive)
         {
-            if (GetBot()->GetExactDist2d(leader) > 10.0f)
-            {
-                GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, M_PI / 2);
-                TransitionToState(BotAIState::FOLLOWING);
-            }
+            // Get Player* for follow movement (validated via snapshot first)
+            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
+        }
+
+        if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
+        {
+            GetBot()->GetMotionMaster()->MoveFollow(leader, 5.0f, M_PI / 2);
+            TransitionToState(BotAIState::FOLLOWING);
         }
     }
 
@@ -485,7 +493,17 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
     // Following movement
     if (_currentState == BotAIState::FOLLOWING && _followTarget)
     {
-        if (Player* leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget))
+        // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
+        auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _followTarget);
+        Player* leader = nullptr;
+
+        if (snapshot && snapshot->isAlive)
+        {
+            // Get Player* for follow movement (validated via snapshot first)
+            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
+        }
+
+        if (leader)
         {
             float distance = GetBot()->GetExactDist2d(leader);
 
@@ -524,12 +542,19 @@ void EnhancedBotAI::UpdateGroupCoordination(uint32 diff)
     // Check group leader for following
     if (!_inCombat && _currentState != BotAIState::FOLLOWING)
     {
-        if (Player* leader = ObjectAccessor::GetPlayer(*GetBot(), _currentGroup->GetLeaderGUID()))
+        // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
+        auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _currentGroup->GetLeaderGUID());
+        Player* leader = nullptr;
+
+        if (snapshot && snapshot->isAlive)
         {
-            if (leader != GetBot())
-            {
-                _followTarget = leader->GetGUID();
-            }
+            // Get Player* for follow target setup (validated via snapshot first)
+            leader = ObjectAccessor::GetPlayer(*GetBot(), _currentGroup->GetLeaderGUID());
+        }
+
+        if (leader && leader != GetBot())
+        {
+            _followTarget = leader->GetGUID();
         }
     }
 

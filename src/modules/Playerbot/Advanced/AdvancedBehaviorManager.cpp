@@ -25,6 +25,7 @@
 #include "CellImpl.h"
 #include "../AI/BotAI.h"
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
 #include <random>
 
@@ -397,15 +398,19 @@ void AdvancedBehaviorManager::HandleTrashPull()
             return;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
         m_bot->GetPosition(), 30.0f);
 
-    // Resolve GUIDs to Creature pointers and find trash to pull
-    for (ObjectGuid guid : nearbyGuids)
+    // Find trash to pull using snapshots
+    for (auto const& snapshot : creatureSnapshots)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
-        if (!creature || !creature->IsAlive() || creature->IsFriendlyTo(m_bot))
+        if (!snapshot.IsAlive())
+            continue;
+
+        // Get Creature* for complex checks
+        Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
+        if (!creature || creature->IsFriendlyTo(m_bot))
             continue;
 
         if (!creature->IsInCombat() && !creature->IsDungeonBoss())
@@ -462,21 +467,25 @@ void AdvancedBehaviorManager::HandlePatrolAvoidance()
             return;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
         m_bot->GetPosition(), 40.0f);
 
-    // Resolve GUIDs to Creature pointers and detect patrols
-    for (ObjectGuid guid : nearbyGuids)
+    // Detect patrols using snapshots
+    for (auto const& snapshot : creatureSnapshots)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
-        if (!creature || !creature->IsAlive() || creature->IsFriendlyTo(m_bot))
+        if (!snapshot.IsAlive())
+            continue;
+
+        // Get Creature* for complex checks
+        Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
+        if (!creature || creature->IsFriendlyTo(m_bot))
             continue;
 
         // If creature is on patrol route, wait for it to pass
         if (creature->HasUnitMovementFlag(MOVEMENTFLAG_WALKING))
         {
-            if (m_bot->GetExactDist2d(creature) < 15.0f)
+            if (m_bot->GetExactDist2d(snapshot.position) < 15.0f)
             {
                 // Stop moving and wait
                 m_bot->GetMotionMaster()->Clear();
@@ -768,12 +777,13 @@ void AdvancedBehaviorManager::PrioritizeHealers()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+            // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+            auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
                 m_bot->GetPosition(), 40.0f);
 
-            for (ObjectGuid guid : nearbyGuids)
+            for (auto const& snapshot : creatureSnapshots)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
+                Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
                 if (creature)
                 {
                     // Original logic from searcher
@@ -830,12 +840,13 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+            // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+            auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
                 m_bot->GetPosition(), 50.0f);
 
-            for (ObjectGuid guid : nearbyGuids)
+            for (auto const& snapshot : creatureSnapshots)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
+                Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
                 if (creature)
                 {
                     // Original logic from searcher
@@ -980,14 +991,15 @@ void AdvancedBehaviorManager::DiscoverFlightPaths()
             return;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
         m_bot->GetPosition(), 50.0f);
 
-    // Resolve GUIDs to Creature pointers and find flight masters
-    for (ObjectGuid guid : nearbyGuids)
+    // Find flight masters using snapshots
+    for (auto const& snapshot : creatureSnapshots)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
+        // Get Creature* for NPC flag checks
+        Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
         if (!creature)
             continue;
 
@@ -1295,12 +1307,13 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+            // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+            auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
                 m_bot->GetPosition(), 40.0f);
 
-            for (ObjectGuid guid : nearbyGuids)
+            for (auto const& snapshot : creatureSnapshots)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
+                Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
                 if (creature)
                 {
                     // Original logic from searcher
@@ -1427,15 +1440,19 @@ void AdvancedBehaviorManager::ScanForRares()
             return;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    // PHASE 5C: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
         m_bot->GetPosition(), 100.0f);
 
-    // Resolve GUIDs to Creature pointers and scan for rares
-    for (ObjectGuid guid : nearbyGuids)
+    // Scan for rares using snapshots
+    for (auto const& snapshot : creatureSnapshots)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*m_bot, guid);
-        if (!creature || !creature->IsAlive())
+        if (!snapshot.IsAlive())
+            continue;
+
+        // Get Creature* for classification checks
+        Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
+        if (!creature)
             continue;
 
         // Check if creature is rare (classification)

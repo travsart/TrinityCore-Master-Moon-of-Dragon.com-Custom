@@ -24,6 +24,7 @@
 #include "SharedDefines.h"
 #include "Loot/Loot.h"
 #include "Group/GroupEventBus.h"
+#include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
 #include <algorithm>
 
 namespace Playerbot
@@ -678,7 +679,14 @@ namespace Playerbot
 
     Unit* GroupCoordinator::GetGroupTarget() const
     {
-        return ObjectAccessor::GetUnit(*m_bot, m_groupTarget);
+        // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_groupTarget);
+        if (snapshot)
+        {
+            // Get Unit* for return (validated via snapshot first)
+            return ObjectAccessor::GetUnit(*m_bot, m_groupTarget);
+        }
+        return nullptr;
     }
 
     void GroupCoordinator::CoordinateCrowdControl(Unit* target)
@@ -1021,7 +1029,16 @@ namespace Playerbot
 
             if (getMSTime() - it->second.inviteTime > m_inviteResponseDelay)
             {
-                Player* inviter = ObjectAccessor::FindPlayer(it->first);
+                // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::FindPlayer)
+                auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(m_bot, it->first);
+                Player* inviter = nullptr;
+
+                if (snapshot && snapshot->isAlive)
+                {
+                    // Get Player* for invite acceptance (validated via snapshot first)
+                    inviter = ObjectAccessor::FindPlayer(it->first);
+                }
+
                 if (inviter && ShouldAcceptInvite(inviter))
                 {
                     AcceptGroupInvite(inviter);
@@ -1053,8 +1070,16 @@ namespace Playerbot
         if (!group)
             return;
 
-        // Sync with group leader's target
-        Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
+        // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::FindPlayer)
+        auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(m_bot, group->GetLeaderGUID());
+        Player* leader = nullptr;
+
+        if (snapshot && snapshot->isAlive)
+        {
+            // Get Player* for target sync (validated via snapshot first)
+            leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
+        }
+
         if (leader && !leader->GetTarget().IsEmpty())
         {
             m_groupTarget = leader->GetTarget();
@@ -1152,7 +1177,16 @@ namespace Playerbot
             // High priority icons (Skull, Cross) should be focused
             if (targetIconId == 0 || targetIconId == 1) // Skull or Cross
             {
-                Unit* target = ObjectAccessor::GetUnit(*m_bot, event.targetGuid);
+                // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, event.targetGuid);
+                Unit* target = nullptr;
+
+                if (snapshot && snapshot->IsAlive())
+                {
+                    // Get Unit* for targeting (validated via snapshot first)
+                    target = ObjectAccessor::GetUnit(*m_bot, event.targetGuid);
+                }
+
                 if (target && target->IsAlive())
                 {
                     FocusTarget(target);
