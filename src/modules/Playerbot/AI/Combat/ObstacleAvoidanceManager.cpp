@@ -21,6 +21,7 @@
 #include "DynamicObject.h"
 #include "SpellInfo.h"
 #include "../../Spatial/SpatialGridManager.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include "ObjectAccessor.h"
 #include <algorithm>
 #include <cmath>
@@ -280,23 +281,27 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
             return unitObstacles;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(
         _bot->GetPosition(), context.scanRadius);
 
-    // Resolve GUIDs to Unit pointers
-    for (ObjectGuid guid : nearbyGuids)
+    // Use snapshots for obstacle detection (lock-free!)
+    for (auto const& snapshot : creatureSnapshots)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || unit == _bot || !unit->IsInWorld())
+        if (snapshot.guid == _bot->GetGUID() || !snapshot.IsAlive())
+            continue;
+
+        // Get Unit* for complex checks if needed
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        if (!unit || !unit->IsInWorld())
             continue;
 
         if (unit->IsAlive() && !unit->HasUnitState(UNIT_STATE_UNATTACKABLE))
         {
             ObstacleInfo obstacle;
-            obstacle.guid = unit->GetGUID();
+            obstacle.guid = snapshot.guid;
             obstacle.object = unit;
-            obstacle.position = unit->GetPosition();
+            obstacle.position = snapshot.position;
             obstacle.type = ObstacleType::UNIT_OBSTACLE;
             obstacle.radius = CalculateObstacleRadius(unit, ObstacleType::UNIT_OBSTACLE);
             obstacle.height = unit->GetCollisionHeight();
@@ -860,15 +865,20 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
 
         if (spatialGrid)
         {
-// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
-                _bot->GetPosition(), context.scanRadius);
+            // PHASE 5B: Thread-safe spatial grid query for DynamicObjects
+            auto dynObjSnapshots = SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(
+                _bot, context.scanRadius);
 
-            for (ObjectGuid guid : nearbyGuids)
+            for (auto const* snapshot : dynObjSnapshots)
             {
-                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*_bot, guid);
+                if (!snapshot)
+                    continue;
+
+                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*_bot, snapshot->guid);
                 if (dynObj)
                 {
-                    // Original logic from searcher
+                    // Add to dynamicObjects collection for further processing
+                    dynamicObjects.push_back(dynObj);
                 }
             }
         }

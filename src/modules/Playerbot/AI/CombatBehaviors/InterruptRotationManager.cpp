@@ -21,6 +21,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 #include <algorithm>
 
 namespace Playerbot
@@ -345,7 +346,19 @@ float InterruptRotationManager::CalculateInterrupterScore(const InterrupterBot& 
 
         // Check if can reach in time
         uint32 timeRemaining = GetTimeToComplete(cast);
-        Unit* caster = _unitCache.count(cast.casterGuid) ? _unitCache.at(cast.casterGuid) : ObjectAccessor::GetUnit(*_bot, cast.casterGuid);
+
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        Unit* caster = nullptr;
+        if (_unitCache.count(cast.casterGuid))
+        {
+            caster = _unitCache.at(cast.casterGuid);
+        }
+        else
+        {
+            auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, cast.casterGuid);
+            if (snapshot)
+                caster = ObjectAccessor::GetUnit(*_bot, cast.casterGuid);
+        }
 
         if (caster && !CanReachInTime(interrupter, caster, timeRemaining))
             return 0.0f; // Cannot interrupt in time
@@ -665,9 +678,18 @@ void InterruptRotationManager::ProcessDelayedInterrupts()
     {
         if (it->executeTime <= currentTime)
         {
-            // Execute the interrupt
-            Unit* interrupter = ObjectAccessor::GetUnit(*_bot, it->interrupter);
-            Unit* target = ObjectAccessor::GetUnit(*_bot, it->target);
+            // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+            auto interrupterSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, it->interrupter);
+            auto targetSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, it->target);
+
+            // Get actual Unit* for spell casting
+            Unit* interrupter = nullptr;
+            Unit* target = nullptr;
+
+            if (interrupterSnapshot)
+                interrupter = ObjectAccessor::GetUnit(*_bot, it->interrupter);
+            if (targetSnapshot)
+                target = ObjectAccessor::GetUnit(*_bot, it->target);
 
             if (interrupter && target && target->IsNonMeleeSpellCast(false))
             {
@@ -844,6 +866,12 @@ bool InterruptRotationManager::CanReachInTime(const InterrupterBot& bot, Unit* t
     if (!_bot || !target)
         return false;
 
+    // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, bot.botGuid);
+    if (!snapshot)
+        return false;
+
+    // Get actual Unit* for speed calculation
     Unit* botUnit = ObjectAccessor::GetUnit(*_bot, bot.botGuid);
     if (!botUnit)
         return false;
@@ -871,12 +899,14 @@ void InterruptRotationManager::UpdateRangeStatus(Unit* target)
 
     for (auto& interrupter : _interrupters)
     {
-        Unit* botUnit = ObjectAccessor::GetUnit(*_bot, interrupter.botGuid);
-        if (botUnit)
-        {
-            float distance = botUnit->GetDistance(target);
-            interrupter.isInRange = (distance <= interrupter.range + _config.interruptRangeBuffer);
-        }
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, interrupter.botGuid);
+        if (!snapshot)
+            continue;
+
+        // Use snapshot position for distance calculation (lock-free)
+        float distance = _bot->GetDistance(snapshot->position);
+        interrupter.isInRange = (distance <= interrupter.range + _config.interruptRangeBuffer);
     }
 }
 

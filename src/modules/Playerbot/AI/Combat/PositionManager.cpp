@@ -25,6 +25,7 @@
 #include "PhaseShift.h"
 #include "SharedDefines.h"
 #include "../../Spatial/SpatialGridManager.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include "ObjectAccessor.h"
 
 namespace Playerbot
@@ -898,24 +899,24 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
 
         if (spatialGrid)
         {
-            // Query nearby creature GUIDs (lock-free!)
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-                _bot->GetPosition(), 30.0f);
+            // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+            auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, 30.0f, true);
 
             // Check distance from nearby enemies
             float minEnemyDistance = 1000.0f;
 
-            // Resolve GUIDs to Unit pointers and apply filtering logic
-            for (ObjectGuid guid : nearbyGuids)
+            // Use snapshots for position calculations (lock-free!)
+            for (auto const* snapshot : hostileSnapshots)
             {
-                Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
-                if (!enemy || !enemy->IsAlive())
+                if (!snapshot)
                     continue;
 
-                if (!_bot->IsHostileTo(enemy))
+                // Validate with Unit* for IsHostileTo check
+                Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+                if (!enemy || !_bot->IsHostileTo(enemy))
                     continue;
 
-                float enemyDistance = pos.GetExactDist(enemy);
+                float enemyDistance = pos.GetExactDist(snapshot->position);
                 minEnemyDistance = std::min(minEnemyDistance, enemyDistance);
 
                 // Higher score for positions farther from enemies

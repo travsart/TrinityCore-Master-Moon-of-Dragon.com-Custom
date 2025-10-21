@@ -23,6 +23,7 @@
 #include "SpellHistory.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 #include "CellImpl.h"
 #include "UpdateFields.h"
 #include "../../Spatial/SpatialGridManager.h"
@@ -224,33 +225,18 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
 
     uint32 count = 0;
 
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();
-    if (!map)
-        return 0;
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
+    // Count valid targets using snapshots (lock-free)
+    for (auto const* snapshot : hostileSnapshots)
     {
-        // Grid not yet created for this map - create it on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return 0;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        _bot->GetPosition(), range);
-
-    // Resolve GUIDs to Unit pointers and count valid targets
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        if (!snapshot)
             continue;
 
-        if (!_bot->CanHaveThreatList() || !_bot->IsValidAttackTarget(unit))
+        // Get Unit* for additional validation
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        if (!unit || !_bot->IsValidAttackTarget(unit))
             continue;
 
         if (unit->GetTypeId() == TYPEID_UNIT)
@@ -564,11 +550,14 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
 
     for (auto const& [guid, info] : _targetCache)
     {
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot || !snapshot->IsAlive())
             continue;
 
-        if (!IsValidAoETarget(unit))
+        // Get Unit* for additional validation
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        if (!unit || !IsValidAoETarget(unit))
             continue;
 
         // Calculate priority
@@ -585,8 +574,8 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
         if (info.isElite)
             priority += 30.0f;
 
-        // Deprioritize distant targets
-        float distance = _bot->GetDistance(unit);
+        // Deprioritize distant targets (use snapshot position for lock-free calculation)
+        float distance = _bot->GetDistance(snapshot->position);
         priority -= distance * 2.0f;
 
         candidates.push_back({unit, priority});
@@ -666,40 +655,26 @@ void AoEDecisionManager::UpdateTargetCache()
             ++it;
     }
 
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
     float searchRadius = 40.0f;
-    Map* map = _bot->GetMap();
-    if (!map)
-        return;
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, searchRadius, true);
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
+    // Update cache with hostile snapshots
+    for (auto const* snapshot : hostileSnapshots)
     {
-        // Grid not yet created for this map - create it on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        _bot->GetPosition(), searchRadius);
-
-    // Resolve GUIDs to Unit pointers and update cache
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        if (!snapshot)
             continue;
 
-        if (!IsValidAoETarget(unit))
+        // Get Unit* for additional validation
+        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        if (!unit || !IsValidAoETarget(unit))
             continue;
 
         TargetInfo info;
-        info.guid = unit->GetGUID();
-        info.position = unit->GetPosition();
-        info.healthPercent = unit->GetHealthPct();
+        info.guid = snapshot->guid;
+        info.position = snapshot->position;
+        info.healthPercent = (snapshot->maxHealth > 0) ?
+            (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f : 0.0f;
         info.isElite = unit->GetTypeId() == TYPEID_UNIT &&
                        unit->ToCreature()->IsElite();
         info.hasDot = false;  // Would check for specific DoTs here

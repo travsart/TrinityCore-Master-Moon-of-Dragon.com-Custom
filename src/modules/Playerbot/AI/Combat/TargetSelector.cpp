@@ -24,6 +24,7 @@
 #include "ObjectAccessor.h"
 #include "SpellHistory.h"
 #include "../../Spatial/SpatialGridManager.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 
 namespace Playerbot
 {
@@ -465,39 +466,19 @@ std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
 {
     std::vector<Unit*> enemies;
 
-    // Lock-free spatial grid query
-    Map* map = _bot->GetMap();
-    if (!map)
-        return enemies;
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
+    // Convert snapshots to Unit* for return (needed by callers)
+    for (auto const* snapshot : hostileSnapshots)
     {
-        // Create grid on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return enemies;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        _bot->GetPosition(), range);
-
-    // Resolve GUIDs to Unit pointers and apply filtering logic
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        if (!snapshot)
             continue;
 
-        if (!_bot->IsHostileTo(unit))
-            continue;
-
-        if (_bot->GetDistance(unit) > range)
-            continue;
-
-        enemies.push_back(unit);
+        // Get Unit* for callers that need it
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        if (unit && unit->IsAlive())
+            enemies.push_back(unit);
     }
 
     return enemies;
@@ -519,36 +500,22 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
         }
     }
 
-    // Lock-free spatial grid query for pets
-    Map* map = _bot->GetMap();
-    if (!map)
+    // PHASE 5B: Thread-safe spatial grid query for pets (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto spatialGrid = sSpatialGridManager.GetGrid(_bot->GetMapId());
+    if (!spatialGrid)
         return allies;
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        // Create grid on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return allies;
-    }
+    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(_bot->GetPosition(), range);
 
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        _bot->GetPosition(), range);
-
-    // Resolve GUIDs to Unit pointers and apply filtering logic
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter for friendly pets
+    for (auto const& snapshot : creatureSnapshots)
     {
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        if (!snapshot.IsAlive() || snapshot.isHostile)
             continue;
 
-        if (_bot->IsHostileTo(unit))
-            continue;
-
-        if (_bot->GetDistance(unit) > range)
+        // Get Unit* to check if pet and owner (need actual object)
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        if (!unit)
             continue;
 
         if (Pet* pet = unit->ToPet())
@@ -847,37 +814,23 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
     Unit* nearestEnemy = nullptr;
     float nearestDistance = maxRange;
 
-    // Lock-free spatial grid query
-    Map* map = bot->GetMap();
-    if (!map)
-        return nullptr;
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(bot, maxRange, true);
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
+    // Find nearest hostile
+    for (auto const* snapshot : hostileSnapshots)
     {
-        // Create grid on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return nullptr;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        bot->GetPosition(), maxRange);
-
-    // Resolve GUIDs to Unit pointers and apply filtering logic
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
-        if (!unit || !unit->IsAlive() || !bot->IsHostileTo(unit))
+        if (!snapshot)
             continue;
 
-        float distance = bot->GetDistance(unit);
+        float distance = bot->GetDistance(snapshot->position);
         if (distance < nearestDistance)
         {
             nearestDistance = distance;
-            nearestEnemy = unit;
+            // Get Unit* for return (needed by caller)
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            if (unit && unit->IsAlive())
+                nearestEnemy = unit;
         }
     }
 
@@ -892,37 +845,23 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
     Unit* weakestEnemy = nullptr;
     float lowestHealth = 100.0f;
 
-    // Lock-free spatial grid query
-    Map* map = bot->GetMap();
-    if (!map)
-        return nullptr;
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(bot, maxRange, true);
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
+    // Find weakest hostile (lowest health %)
+    for (auto const* snapshot : hostileSnapshots)
     {
-        // Create grid on demand
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return nullptr;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        bot->GetPosition(), maxRange);
-
-    // Resolve GUIDs to Unit pointers and apply filtering logic
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
-        if (!unit || !unit->IsAlive() || !bot->IsHostileTo(unit))
+        if (!snapshot || snapshot->maxHealth == 0)
             continue;
 
-        float healthPct = unit->GetHealthPct();
+        float healthPct = (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f;
         if (healthPct < lowestHealth)
         {
             lowestHealth = healthPct;
-            weakestEnemy = unit;
+            // Get Unit* for return (needed by caller)
+            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            if (unit && unit->IsAlive())
+                weakestEnemy = unit;
         }
     }
 

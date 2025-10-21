@@ -22,6 +22,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include <mutex>
 #include <algorithm>
 #include <cmath>
@@ -761,8 +762,16 @@ bool DispelCoordinator::ExecuteDispel()
     if (now < m_globalCooldownUntil)
         return false;
 
-    // Get target
-    Unit* target = ObjectAccessor::GetUnit(*m_bot, m_currentAssignment.target);
+    // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_currentAssignment.target);
+    Unit* target = nullptr;
+
+    if (snapshot && snapshot->IsAlive())
+    {
+        // Get Unit* for aura checks (main thread operation)
+        target = ObjectAccessor::GetUnit(*m_bot, m_currentAssignment.target);
+    }
+
     if (!target || target->isDead())
     {
         m_currentAssignment.fulfilled = true;
@@ -837,8 +846,16 @@ bool DispelCoordinator::ExecutePurge()
     // Get best target
     const PurgeTarget& bestTarget = targets[0];  // Already sorted by priority
 
-    // Get target unit
-    Unit* enemy = ObjectAccessor::GetUnit(*m_bot, bestTarget.enemyGuid);
+    // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, bestTarget.enemyGuid);
+    Unit* enemy = nullptr;
+
+    if (snapshot && snapshot->IsAlive())
+    {
+        // Get Unit* for spell casting (main thread operation)
+        enemy = ObjectAccessor::GetUnit(*m_bot, bestTarget.enemyGuid);
+    }
+
     if (!enemy || enemy->isDead())
         return false;
 
@@ -949,15 +966,17 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
             return targets;
     }
 
-    // Query nearby creature GUIDs (lock-free!)
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
     float searchRange = static_cast<float>(m_config.maxPurgeRange);
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        m_bot->GetPosition(), searchRange);
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(m_bot, searchRange, true);
 
-    // Resolve GUIDs to Unit pointers and check for enemies
-    for (ObjectGuid guid : nearbyGuids)
+    // Resolve snapshots to Unit pointers and check for enemies
+    for (auto const* snapshot : hostileSnapshots)
     {
-        ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, guid);
+        if (!snapshot)
+            continue;
+
+        ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot->guid);
         if (!enemy || enemy->isDead())
             continue;
 

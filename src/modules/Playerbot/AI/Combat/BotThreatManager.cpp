@@ -17,6 +17,7 @@
 #include "Group.h"
 #include "Log.h"
 #include "Combat/ThreatManager.h" // TrinityCore's ThreatManager
+#include "Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 #include <algorithm>
 #include <chrono>
 
@@ -263,8 +264,14 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
         if (!info.isActive)
             continue;
 
+        // PHASE 5B: Thread-safe spatial grid lookup (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot || !snapshot->IsAlive())
+            continue;
+
+        // Get actual Unit* only when needed (main thread validation)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!target || !target->IsAlive())
+        if (!target)
             continue;
 
         ThreatTarget threatTarget;
@@ -383,6 +390,12 @@ void BotThreatManager::UpdateTargetPriorities()
 
     for (auto& [guid, info] : _threatMap)
     {
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot)
+            continue;
+
+        // Get actual Unit* for ThreatCalculator (requires Unit*)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
         if (!target)
             continue;
@@ -431,6 +444,12 @@ void BotThreatManager::UpdateRoleBasedThreat()
             // Healers should focus on staying alive
             for (auto& [guid, info] : _threatMap)
             {
+                // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+                if (!snapshot)
+                    continue;
+
+                // Get actual Unit* to check victim
                 Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
                 if (target && target->GetVictim() == _bot)
                 {
@@ -516,6 +535,12 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
         if (!info.isActive)
             continue;
 
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot || !snapshot->IsAlive())
+            continue;
+
+        // Get actual Unit* for return vector (needed by callers)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
         if (target && target->IsAlive())
             targets.push_back(target);
@@ -535,6 +560,12 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
         if (!info.isActive || info.priority != priority)
             continue;
 
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot || !snapshot->IsAlive())
+            continue;
+
+        // Get actual Unit* for return vector (needed by callers)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
         if (target && target->IsAlive())
             targets.push_back(target);
@@ -782,6 +813,15 @@ void BotThreatManager::UpdateThreatTable(uint32 diff)
 
     for (auto& [guid, info] : _threatMap)
     {
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot)
+        {
+            info.isActive = false;
+            continue;
+        }
+
+        // Get actual Unit* for threat calculation methods (they require Unit*)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
         if (!target)
         {
@@ -824,12 +864,14 @@ void BotThreatManager::UpdateDistances()
 {
     for (auto& [guid, info] : _threatMap)
     {
-        Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
-        if (target)
-        {
-            info.distance = _bot->GetDistance2d(target);
-            info.lastPosition = target->GetPosition();
-        }
+        // PHASE 5B: Thread-safe spatial grid query (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot)
+            continue;
+
+        // Use snapshot data directly (lock-free)
+        info.distance = _bot->GetDistance(snapshot->position);
+        info.lastPosition = snapshot->position;
     }
 }
 
@@ -837,11 +879,13 @@ void BotThreatManager::UpdateCombatState()
 {
     for (auto& [guid, info] : _threatMap)
     {
-        Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
-        if (target)
-        {
-            info.isInCombat = target->IsInCombat();
-        }
+        // PHASE 5B: Thread-safe spatial grid query (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        if (!snapshot)
+            continue;
+
+        // Use snapshot data directly (lock-free)
+        info.isInCombat = snapshot->isInCombat;
     }
 }
 

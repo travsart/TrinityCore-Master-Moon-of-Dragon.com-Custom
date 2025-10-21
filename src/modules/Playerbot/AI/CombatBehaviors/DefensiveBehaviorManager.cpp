@@ -22,6 +22,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
 #include <algorithm>
 #include <execution>
 #include "../../Spatial/SpatialGridManager.h"
@@ -566,9 +567,12 @@ void DefensiveBehaviorManager::RequestExternalDefensive(ObjectGuid target, Defen
     request.requestTime = getMSTime();
     request.fulfilled = false;
 
-    if (Unit* targetUnit = ObjectAccessor::GetUnit(*_bot, target))
+    // PHASE 5B: Thread-safe spatial grid query (replaces ObjectAccessor::GetUnit)
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, target);
+    if (snapshot)
     {
-        request.healthPercent = targetUnit->GetHealthPct();
+        request.healthPercent = (snapshot->maxHealth > 0) ?
+            (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f : 0.0f;
     }
 
     _externalRequests.push_back(request);
@@ -618,7 +622,16 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
     ObjectGuid targetGuid = GetExternalDefensiveTarget();
     if (!targetGuid.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*_bot, targetGuid);
+        // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, targetGuid);
+        Unit* target = nullptr;
+
+        if (snapshot && snapshot->IsAlive())
+        {
+            // Get Unit* for spell casting (main thread operation)
+            target = ObjectAccessor::GetUnit(*_bot, targetGuid);
+        }
+
         if (target && target->IsAlive())
         {
             // Try to provide external defensive based on class
@@ -1051,21 +1064,22 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
-        _bot->GetPosition(), range);
+    // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
+    auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
 
     // Count enemies
     uint32 count = 0;
-    for (ObjectGuid guid : nearbyGuids)
+    for (auto const* snapshot : hostileSnapshots)
     {
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !unit->IsAlive())
+        if (!snapshot)
             continue;
 
-        if (!_bot->IsHostileTo(unit))
+        // Validate with Unit* for IsHostileTo check
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        if (!unit || !_bot->IsHostileTo(unit))
             continue;
 
-        if (_bot->GetDistance(unit) > range)
+        if (_bot->GetDistance(snapshot->position) > range)
             continue;
 
         count++;

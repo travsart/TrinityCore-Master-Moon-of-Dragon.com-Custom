@@ -490,6 +490,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.h
 
     # Integration Tests (Temporarily disabled - Google Test not configured)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Tests/TargetScannerTest.cpp
@@ -833,6 +835,8 @@ source_group("Spatial" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridQueryHelpers.h
 )
 
 source_group("AI\\Values" FILES
