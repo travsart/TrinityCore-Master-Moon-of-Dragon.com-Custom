@@ -14,7 +14,8 @@
 #include "Player.h"
 #include "WorldSession.h"
 #include "Group.h"
-#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -364,7 +365,24 @@ std::vector<::Unit*> EvokerSpecialization::GetNearbyAllies(float range)
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*_bot, guid);
+
+        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*_bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -411,7 +429,24 @@ std::vector<::Unit*> EvokerSpecialization::GetNearbyEnemies(float range)
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*_bot, guid);
+
+        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*_bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here

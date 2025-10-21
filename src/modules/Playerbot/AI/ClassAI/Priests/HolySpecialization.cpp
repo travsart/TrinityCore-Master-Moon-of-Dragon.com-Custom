@@ -16,6 +16,7 @@
 #include "SharedDefines.h"
 #include "ObjectAccessor.h"
 #include <queue>
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

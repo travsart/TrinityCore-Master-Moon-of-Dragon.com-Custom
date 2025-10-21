@@ -14,6 +14,7 @@
 #include "SpellInfo.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

@@ -23,7 +23,8 @@
 #include "MotionMaster.h"
 #include "Item.h"
 #include <algorithm>
-#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -418,7 +419,24 @@ bool DruidSpecialization::IsInDanger()
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+
+        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -599,7 +617,24 @@ void DruidSpecialization::CastCyclone(Unit* target)
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+
+        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here

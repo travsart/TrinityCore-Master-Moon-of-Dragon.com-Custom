@@ -15,6 +15,7 @@
 #include "SpellMgr.h"
 #include "Log.h"
 #include "Group.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 // Common Priest spell constants
 constexpr uint32 INNER_FIRE = 588;

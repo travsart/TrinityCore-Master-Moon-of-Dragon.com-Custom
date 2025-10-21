@@ -24,7 +24,8 @@
 #include "SpellAuras.h"
 #include "SpellHistory.h"
 #include <chrono>
-#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridManager.h"
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -168,7 +169,21 @@ void ClassAI::UpdateTargeting()
     // Priority 2: Selected target
     if (ObjectGuid targetGuid = GetBot()->GetTarget())
     {
-        if (::Unit* target = ObjectAccessor::GetUnit(*GetBot(), targetGuid))
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), targetGuid);
+
+        ::Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), targetGuid);
+
+        }
+
+        if (target)
         {
             if (GetBot()->IsValidAttackTarget(target))
                 return target;
@@ -212,7 +227,24 @@ void ClassAI::UpdateTargeting()
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

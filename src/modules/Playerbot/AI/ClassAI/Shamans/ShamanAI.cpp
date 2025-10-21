@@ -30,7 +30,8 @@
 #include "Log.h"
 #include <algorithm>
 #include <chrono>
-#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -785,7 +786,24 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1105,7 +1123,24 @@ bool ShamanAI::HandleResourceManagement()
             // Spend maelstrom if capped
             if (maelstrom >= 90 && !_currentTarget.IsEmpty())
             {
-                Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+                // PHASE 5F: Thread-safe spatial grid validation
+
+                auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+                Unit* target = nullptr;
+
+                if (snapshot_target)
+
+                {
+
+                    target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+                }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
                 // Earth Shock to dump maelstrom
                 if (target && CanUseAbility(SPELL_EARTH_SHOCK))
                 {
@@ -1129,7 +1164,24 @@ bool ShamanAI::HandleResourceManagement()
             // Use instant cast at 5 stacks
             if (_maelstromWeaponStacks >= MAELSTROM_WEAPON_MAX && !_currentTarget.IsEmpty())
             {
-                Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+                // PHASE 5F: Thread-safe spatial grid validation
+
+                auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+                Unit* target = nullptr;
+
+                if (snapshot_target)
+
+                {
+
+                    target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+                }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
                 // Instant Lightning Bolt for single target
                 if (target && CanUseAbility(SPELL_LIGHTNING_BOLT))
                 {
@@ -1319,7 +1371,24 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1429,7 +1498,30 @@ bool ShamanAI::HandleMaelstromWeapon()
     if (_maelstromWeaponStacks < MAELSTROM_WEAPON_MAX || _currentTarget.IsEmpty())
         return false;
 
-    Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+    // PHASE 5F: Thread-safe spatial grid validation
+
+
+    auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+
+    Unit* target = nullptr;
+
+
+    if (snapshot_target)
+
+
+    {
+
+
+        target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+
+    }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
     if (!target)
         return false;
 
@@ -1571,7 +1663,24 @@ bool ShamanAI::NeedsTotemRefresh(TotemType type) const
     // Totem out of range
     if (!_currentTarget.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         if (target && !IsTotemInRange(type, target))
             return true;
     }
@@ -1753,7 +1862,24 @@ bool ShamanAI::ShouldUseAscendance() const
     // Use on boss fights or when multiple enemies
     if (!_currentTarget.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         if (target && target->GetMaxHealth() > 1000000)
             return true;
     }
@@ -1782,7 +1908,24 @@ bool ShamanAI::ShouldUseAscendance() const
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1796,7 +1939,24 @@ bool ShamanAI::ShouldUseElementalMastery() const
     // Use when we need burst damage
     if (!_currentTarget.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         return target && target->GetHealthPct() < 30.0f;
     }
     return false;
@@ -1889,7 +2049,24 @@ bool ShamanAI::HandleCrashLightning()
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1899,7 +2076,24 @@ bool ShamanAI::HandleCrashLightning()
     bool shouldUse = enemies.size() >= 2;
     if (!_currentTarget.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         if (target && IsInMeleeRange(target))
             shouldUse = true;
     }
@@ -1967,7 +2161,24 @@ bool ShamanAI::HandleEarthquake()
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -2490,7 +2701,24 @@ void ShamanAI::UpdateShockRotation()
     // Delegate shock rotation to specialization
     if (_specialization)
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         if (target)
             _specialization->UpdateShockRotation(target);
     }
@@ -2674,7 +2902,24 @@ bool ShamanAI::ShouldUseBloodlust() const
     // Use in boss fights or when health is critical
     if (!_currentTarget.IsEmpty())
     {
-        Unit* target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+
+        Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+
+        }hot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
+ }
         if (target && target->GetHealthPct() < 30.0f && target->GetMaxHealth() > 100000)
             return true;
     }

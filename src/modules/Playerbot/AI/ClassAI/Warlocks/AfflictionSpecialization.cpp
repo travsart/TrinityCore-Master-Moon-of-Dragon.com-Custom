@@ -18,6 +18,7 @@
 #include "CellImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "ObjectAccessor.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -415,7 +416,24 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*target, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(target, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*target, guid);
+
+        }to snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(target, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*target, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -609,7 +627,24 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+
+        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -793,7 +828,24 @@ bool AfflictionSpecialization::ShouldChannelDrain()
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+
+        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here

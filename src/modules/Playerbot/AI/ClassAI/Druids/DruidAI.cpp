@@ -19,6 +19,7 @@
 #include "SpellAuras.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

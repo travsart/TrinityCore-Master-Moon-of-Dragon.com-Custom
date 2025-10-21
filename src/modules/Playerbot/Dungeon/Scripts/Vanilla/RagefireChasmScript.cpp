@@ -42,7 +42,9 @@
 #include "Creature.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "ObjectAccessor.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5E: Thread-safe queries
 
 namespace Playerbot
 {
@@ -176,7 +178,16 @@ public:
 
             for (ObjectGuid guid : nearbyGuids)
             {
-                DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                // PHASE 5E: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindDynamicObjectByGuid(player, guid);
+                DynamicObject* dynObj = nullptr;
+
+                if (snapshot)
+                {
+                    // Get DynamicObject* for effect check (validated via snapshot first)
+                    dynObj = ObjectAccessor::GetDynamicObject(*player, guid);
+                }
+
                 if (dynObj)
                 {
                     // Original logic from searcher

@@ -28,6 +28,7 @@
 #include "SharedDefines.h"
 #include "../../../AI/Combat/TargetSelector.h"
 #include <algorithm>
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

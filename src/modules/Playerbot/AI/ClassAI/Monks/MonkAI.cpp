@@ -19,6 +19,7 @@
 #include "GridNotifiersImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "ObjectAccessor.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -992,7 +993,24 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1046,7 +1064,24 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here
@@ -1096,7 +1131,24 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

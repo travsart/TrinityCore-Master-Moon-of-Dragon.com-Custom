@@ -32,6 +32,7 @@
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include <chrono>
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -415,7 +416,24 @@ void ClassAI::UpdateTargeting()
     // Resolve GUIDs to Unit pointers and find nearest enemy
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        ::Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*GetBot(), guid);
+
+        }auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*GetBot(), guid);
+ }
         if (!target || !GetBot()->IsValidAttackTarget(target))
             continue;
 

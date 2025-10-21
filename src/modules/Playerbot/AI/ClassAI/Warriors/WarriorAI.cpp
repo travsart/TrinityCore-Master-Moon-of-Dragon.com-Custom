@@ -19,7 +19,8 @@
 #include "GridNotifiersImpl.h"
 #include "Unit.h"
 #include "SpellAuras.h"
-#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -641,7 +642,24 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     // Process results (replace old searcher logic)
     for (ObjectGuid guid : nearbyGuids)
     {
-        Creature* entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+
+        Creature* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

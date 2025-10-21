@@ -14,6 +14,7 @@
 #include "SpellInfo.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -393,7 +394,24 @@ void SurvivalSpecialization::RefreshExpiredDots()
 
     for (auto& targetPair : _targetDots)
     {
-        ::Unit* target = ObjectAccessor::GetUnit(*bot, targetPair.first);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetPair.first);
+
+        ::Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*bot, targetPair.first);
+
+        }apshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetPair.first);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*bot, targetPair.first);
+ }
         if (!target)
             continue;
 

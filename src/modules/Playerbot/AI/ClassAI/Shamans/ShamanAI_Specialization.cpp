@@ -15,6 +15,7 @@
 #include "SpellMgr.h"
 #include "Log.h"
 #include "../BaselineRotationManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

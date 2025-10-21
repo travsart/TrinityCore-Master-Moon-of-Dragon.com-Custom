@@ -20,6 +20,7 @@
 #include "CellImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "ObjectAccessor.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -424,7 +425,24 @@ bool EnhancementSpecialization::ShouldCastChainLightning()
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+
+        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here

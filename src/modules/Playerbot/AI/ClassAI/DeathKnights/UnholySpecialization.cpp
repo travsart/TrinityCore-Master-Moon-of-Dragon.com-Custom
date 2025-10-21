@@ -21,6 +21,7 @@
 #include "CharmInfo.h"
 #include "GameTime.h"
 #include "Creature.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -1451,7 +1452,24 @@ void UnholySpecialization::RefreshExpringDiseases()
 
     for (auto& targetDiseases : _activeDiseases)
     {
-        ::Unit* target = ObjectAccessor::GetUnit(*bot, targetDiseases.first);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetDiseases.first);
+
+        ::Unit* target = nullptr;
+
+        if (snapshot_target)
+
+        {
+
+            target = ObjectAccessor::GetUnit(*bot, targetDiseases.first);
+
+        }ot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetDiseases.first);
+ target = nullptr;
+ if (snapshot_target)
+ {
+     target = ObjectAccessor::GetUnit(*bot, targetDiseases.first);
+ }
         if (!target)
             continue;
 

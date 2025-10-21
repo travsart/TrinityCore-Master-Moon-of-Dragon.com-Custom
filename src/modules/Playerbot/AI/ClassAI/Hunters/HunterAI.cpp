@@ -27,7 +27,8 @@
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include <chrono>
-#include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridManager.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
 
 namespace Playerbot
 {
@@ -1209,7 +1210,24 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*_bot, guid);
+
+        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*_bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -1412,7 +1430,24 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*_bot, guid);
+
+        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*_bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -1463,7 +1498,24 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5F: Thread-safe spatial grid validation
+
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+
+        auto* entity = nullptr;
+
+        if (snapshot_entity)
+
+        {
+
+            entity = ObjectAccessor::GetCreature(*_bot, guid);
+
+        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+ entity = nullptr;
+ if (snapshot_entity)
+ {
+     entity = ObjectAccessor::GetCreature(*_bot, guid);
+ }
         if (!entity)
             continue;
         // Original filtering logic goes here

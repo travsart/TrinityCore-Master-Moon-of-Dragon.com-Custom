@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "Player.h"
 #include "Group.h"
+#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
