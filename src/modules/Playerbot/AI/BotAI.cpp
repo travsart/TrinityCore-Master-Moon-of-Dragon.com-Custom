@@ -31,6 +31,8 @@
 #include "Equipment/EquipmentManager.h"
 #include "Professions/ProfessionManager.h"
 #include "Advanced/GroupCoordinator.h"
+#include "Spatial/SpatialGridManager.h"
+#include "Spatial/DoubleBufferedSpatialGrid.h"
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
@@ -945,85 +947,54 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
             // Clean up blacklist
             _targetScanner->UpdateBlacklist(currentTime);
 
+            // ENTERPRISE-GRADE THREAD-SAFE TARGET RESOLUTION
             // Find best target to engage (returns GUID, thread-safe)
             ObjectGuid bestTargetGuid = _targetScanner->FindBestTarget();
 
-            // Resolve GUID to Unit* on main thread (Map access is safe here)
-            Unit* bestTarget = bestTargetGuid.IsEmpty() ? nullptr :
-                ObjectAccessor::GetUnit(*_bot, bestTargetGuid);
+            // DEADLOCK FIX: Validate and set target using spatial grid snapshots (lock-free, thread-safe)
+            // DO NOT use ObjectAccessor::GetUnit() from worker thread!
 
-            // If we found a valid target, validate and engage it
-            if (bestTarget && bestTarget->IsInWorld() &&
-                bestTarget->IsHostileTo(_bot) &&
-                _targetScanner->ShouldEngage(bestTarget))
+            if (!bestTargetGuid.IsEmpty())
             {
-                TC_LOG_DEBUG("playerbot", "Solo bot {} found hostile target {} at distance {:.1f}",
-                            _bot->GetName(), bestTarget->GetName(), _bot->GetDistance(bestTarget));
-
-                // CRITICAL FIX: For neutral mobs, we need to establish threat/combat state
-                // Neutral mobs only become hostile after taking damage OR being put in combat.
-                // The combat system (CombatManager::CanBeginCombat) validates IsFriendlyTo()
-                // and rejects combat if the mob is neutral/friendly.
-                //
-                // Solution: Add threat to the creature, which internally calls SetInCombatWith()
-                // This establishes combat state WITHOUT making the mob immediately chase us,
-                // preserving the "opener window" for ranged spell casters.
-                //
-                // For melee bots: They will approach anyway via SoloCombatStrategy MoveChase
-                // For casters: They get time to cast opener while mob is still standing still
-
-                if (Creature* targetCreature = bestTarget->ToCreature())
+                // Get spatial grid for lock-free snapshot queries
+                auto spatialGrid = sSpatialGridManager.GetGrid(_bot->GetMapId());
+                if (spatialGrid)
                 {
-                    // AddThreat() internally calls SetInCombatWith() if creature has threat list
-                    // This puts both units in combat state but doesn't force immediate engagement
-                    if (targetCreature->CanHaveThreatList())
+                    // Query nearby creature snapshots (lock-free read from atomic buffer)
+                    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(_bot->GetPosition(), 60.0f);
+
+                    // Find the snapshot matching our target GUID
+                    for (auto const& snapshot : creatureSnapshots)
                     {
-                        targetCreature->GetThreatManager().AddThreat(_bot, 1.0f);
-                        TC_LOG_ERROR("module.playerbot", "🎯 THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
-                                    _bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
+                        if (snapshot.guid == bestTargetGuid)
+                        {
+                            // Snapshot found - validate using snapshot data (no Map access needed)
+                            // 1. Check if creature is alive (isDead flag)
+                            // 2. Check if creature is hostile (isHostile flag)
+                            // 3. Check distance is within engage range
+
+                            if (!snapshot.isDead &&
+                                snapshot.isHostile &&
+                                snapshot.IsInRange(_bot->GetPosition()))
+                            {
+                                // Target is valid based on snapshot data
+                                // SetTarget() is thread-safe (just sets a GUID)
+                                _bot->SetTarget(bestTargetGuid);
+
+                                TC_LOG_DEBUG("playerbot.solo",
+                                    "Solo bot {} selected target {} (Entry: {}) via spatial grid snapshot - combat will engage naturally",
+                                    _bot->GetName(), snapshot.name, snapshot.entry);
+
+                                // Combat will initiate naturally:
+                                // - Bot has target set → ClassAI will cast spells/attack
+                                // - CombatMovementStrategy will handle positioning
+                                // - Threat will be established when damage lands
+                                // NO NEED for explicit Attack() or SetInCombatWith() calls from worker thread
+                            }
+                            break;
+                        }
                     }
-
-                    // NOTE: We do NOT call AttackStart() here!
-                    // AttackStart() would make the mob immediately chase us, ruining caster openers.
-                    // Instead, the mob will engage when:
-                    // - Melee bots approach via SoloCombatStrategy → mob sees them → natural aggro
-                    // - Caster bots cast spell → spell hits → damage triggers DamageTaken() → mob engages
-                    // This preserves the "opener window" mechanic for ranged classes
                 }
-
-                // NOW the creature is hostile, our combat initiation will work
-
-                // 1. Set target
-                _bot->SetTarget(bestTarget->GetGUID());
-
-                // 2. Start combat - this sets victim and initiates auto-attack
-                _bot->Attack(bestTarget, true);
-
-                // 3. Force bot into combat state
-                // SetInCombatWith() will now succeed because creature is hostile
-                _bot->SetInCombatWith(bestTarget);
-                bestTarget->SetInCombatWith(_bot);
-
-                TC_LOG_ERROR("module.playerbot", "🎯 AUTONOMOUS COMBAT START: Bot {} attacking {} (InCombat={}, HasVictim={})",
-                             _bot->GetName(), bestTarget->GetName(),
-                             _bot->IsInCombat(), _bot->GetVictim() != nullptr);
-
-                // CRITICAL FIX: Do NOT position here using MovePoint!
-                // MovePoint conflicts with SoloCombatStrategy's MoveChase, causing blinking.
-                // Instead, let SoloCombatStrategy handle ALL positioning with MoveChase.
-                //
-                // Flow:
-                // 1. We set combat state (Attack + SetInCombatWith) → IsInCombat() = true
-                // 2. Next frame: SoloCombatStrategy activates (sees IsInCombat() = true)
-                // 3. SoloCombatStrategy issues MoveChase → Smooth continuous movement
-                // 4. ClassAI::OnCombatUpdate() handles spell casting
-                //
-                // This eliminates redundancy and the MovePoint/MoveChase conflict.
-
-                TC_LOG_ERROR("module.playerbot", "✅ Combat initiated - SoloCombatStrategy will handle positioning via MoveChase");
-
-                // This will trigger combat state transition in next update
-                return;
             }
         }
     }
