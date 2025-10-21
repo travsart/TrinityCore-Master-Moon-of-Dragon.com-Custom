@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <execution>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
 namespace Playerbot
 {
@@ -173,7 +174,16 @@ uint32 InventoryManager::AutoLoot(float maxRange)
 
         if (guid.IsCreature())
         {
-            Creature* creature = ObjectAccessor::GetCreature(*_bot, guid);
+            // PHASE 5D: Thread-safe spatial grid validation
+            auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+            Creature* creature = nullptr;
+
+            if (snapshot)
+            {
+                // Get Creature* for loot check (validated via snapshot first)
+                creature = ObjectAccessor::GetCreature(*_bot, guid);
+            }
+
             if (creature && LootCorpse(creature))
             {
                 _lootedObjects.insert(guid);
@@ -182,7 +192,16 @@ uint32 InventoryManager::AutoLoot(float maxRange)
         }
         else if (guid.IsGameObject())
         {
-            GameObject* go = ObjectAccessor::GetGameObject(*_bot, guid);
+            // PHASE 5D: Thread-safe spatial grid validation
+            auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(_bot, guid);
+            GameObject* go = nullptr;
+
+            if (snapshot)
+            {
+                // Get GameObject* for loot check (validated via snapshot first)
+                go = ObjectAccessor::GetGameObject(*_bot, guid);
+            }
+
             if (go && LootGameObject(go))
             {
                 _lootedObjects.insert(guid);
@@ -1368,7 +1387,16 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
 
     for (ObjectGuid guid : creatureGuids)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*_bot, guid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+        Creature* creature = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for lootability check (validated via snapshot first)
+            creature = ObjectAccessor::GetCreature(*_bot, guid);
+        }
+
         if (creature && creature->GetHealth() == 0 && creature->HasDynamicFlag(UNIT_DYNFLAG_LOOTABLE))
         {
             lootables.push_back(creature->GetGUID());

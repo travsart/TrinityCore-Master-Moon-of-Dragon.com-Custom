@@ -27,6 +27,7 @@
 #include "../../Game/QuestAcceptanceManager.h"
 #include "../../Quest/QuestHubDatabase.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 #include <limits>
 
 namespace Playerbot
@@ -907,10 +908,15 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         }
     }
 
-    // THREAD-SAFE: Resolve GUID only after finding best target
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, targetGuid);
     GameObject* targetObject = nullptr;
-    if (!targetGuid.IsEmpty())
+
+    if (snapshot)
+    {
+        // Get GameObject* for quest item use (validated via snapshot first)
         targetObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
+    }
 
     if (!targetObject)
     {
@@ -1390,8 +1396,15 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
         return nullptr;
     }
 
-    // THREAD-SAFE: Resolve GUID only after finding target
-    ::Unit* target = ObjectAccessor::GetUnit(*bot, targetGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetGuid);
+    ::Unit* target = nullptr;
+
+    if (snapshot)
+    {
+        // Get Unit* for quest NPC interaction (validated via snapshot first)
+        target = ObjectAccessor::GetUnit(*bot, targetGuid);
+    }
 
     // CRITICAL FIX: Distinguish between "talk to" NPCs and "attackable neutral" mobs
     // Type 0 (QUEST_OBJECTIVE_MONSTER) can be used for TWO different quest mechanics:
@@ -1487,8 +1500,15 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
         return nullptr;
     }
 
-    // THREAD-SAFE: Resolve GUID only after finding object
-    GameObject* gameObject = ObjectAccessor::GetGameObject(*bot, objectGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, objectGuid);
+    GameObject* gameObject = nullptr;
+
+    if (snapshot)
+    {
+        // Get GameObject* for quest object interaction (validated via snapshot first)
+        gameObject = ObjectAccessor::GetGameObject(*bot, objectGuid);
+    }
 
     if (!gameObject)
     {

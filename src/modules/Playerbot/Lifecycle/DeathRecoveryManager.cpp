@@ -25,6 +25,7 @@
 #include "CellImpl.h"
 #include <sstream>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
 namespace Playerbot
 {
@@ -502,7 +503,15 @@ void DeathRecoveryManager::HandleFindingSpiritHealer(uint32 diff)
 
 void DeathRecoveryManager::HandleMovingToSpiritHealer(uint32 diff)
 {
-    Creature* spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_spiritHealerGuid);
+    Creature* spiritHealer = nullptr;
+
+    if (snapshot && snapshot->IsAlive())
+    {
+        // Get Creature* for distance check (validated via snapshot first)
+        spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    }
 
     if (!spiritHealer || !spiritHealer->IsAlive())
     {
@@ -785,7 +794,16 @@ bool DeathRecoveryManager::NavigateToSpiritHealer()
     if (!m_bot)
         return false;
 
-    Creature* spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_spiritHealerGuid);
+    Creature* spiritHealer = nullptr;
+
+    if (snapshot)
+    {
+        // Get Creature* for navigation (validated via snapshot first)
+        spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    }
+
     if (!spiritHealer)
         return false;
 
@@ -803,7 +821,16 @@ bool DeathRecoveryManager::InteractWithSpiritHealer()
     if (!m_bot || !CanInteractWithSpiritHealer())
         return false;
 
-    Creature* spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_spiritHealerGuid);
+    Creature* spiritHealer = nullptr;
+
+    if (snapshot)
+    {
+        // Get Creature* for interaction (validated via snapshot first)
+        spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    }
+
     if (!spiritHealer)
         return false;
 
@@ -910,7 +937,16 @@ Creature* DeathRecoveryManager::FindNearestSpiritHealer() const
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*m_bot, guid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, guid);
+        Creature* entity = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for spirit healer check (validated via snapshot first)
+            entity = ObjectAccessor::GetCreature(*m_bot, guid);
+        }
+
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -946,7 +982,16 @@ bool DeathRecoveryManager::CanInteractWithSpiritHealer() const
     if (!m_bot || m_spiritHealerGuid.IsEmpty())
         return false;
 
-    Creature* spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_spiritHealerGuid);
+    Creature* spiritHealer = nullptr;
+
+    if (snapshot && snapshot->IsAlive())
+    {
+        // Get Creature* for distance check (validated via snapshot first)
+        spiritHealer = ObjectAccessor::GetCreature(*m_bot, m_spiritHealerGuid);
+    }
+
     if (!spiritHealer || !spiritHealer->IsAlive())
         return false;
 

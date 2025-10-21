@@ -24,6 +24,7 @@
 #include "LootMgr.h"
 #include "MotionMaster.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 #include <unordered_map>  // For distance map in PrioritizeLootTargets
 
 namespace Playerbot
@@ -317,9 +318,16 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
         return false;
     }
 
-    // THREAD-SAFE: Resolve GUID only after validation (main thread context)
-    // This is safe because UpdateBehavior runs on main thread for strategies
-    Creature* creature = ObjectAccessor::GetCreature(*bot, corpseGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, corpseGuid);
+    Creature* creature = nullptr;
+
+    if (snapshot)
+    {
+        // Get Creature* for loot access (validated via snapshot first)
+        creature = ObjectAccessor::GetCreature(*bot, corpseGuid);
+    }
+
     if (!creature)
         return false;
 
@@ -384,9 +392,16 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         return false;
     }
 
-    // THREAD-SAFE: Resolve GUID only after validation (main thread context)
-    // This is safe because UpdateBehavior runs on main thread for strategies
-    GameObject* object = ObjectAccessor::GetGameObject(*bot, objectGuid);
+    // PHASE 5D: Thread-safe spatial grid validation
+    auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, objectGuid);
+    GameObject* object = nullptr;
+
+    if (snapshot)
+    {
+        // Get GameObject* for loot access (validated via snapshot first)
+        object = ObjectAccessor::GetGameObject(*bot, objectGuid);
+    }
+
     if (!object)
         return false;
 

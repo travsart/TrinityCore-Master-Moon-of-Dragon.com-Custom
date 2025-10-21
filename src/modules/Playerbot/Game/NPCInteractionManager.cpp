@@ -30,6 +30,7 @@
 #include "DB2Stores.h"
 #include <algorithm>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
 namespace Playerbot
 {
@@ -553,7 +554,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -577,7 +587,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -601,7 +620,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -625,7 +653,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -649,7 +686,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -673,7 +719,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -697,7 +752,16 @@ namespace Playerbot
 
             if (npcInfo.distance < minDistance)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                // PHASE 5D: Thread-safe spatial grid validation
+                auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
+                Creature* creature = nullptr;
+
+                if (snapshot)
+                {
+                    // Get Creature* for return (validated via snapshot first)
+                    creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
+                }
+
                 if (creature)
                 {
                     minDistance = npcInfo.distance;
@@ -884,7 +948,16 @@ namespace Playerbot
             return;
         }
 
-        Creature* npc = ObjectAccessor::GetCreature(*m_bot, m_currentInteraction.npc);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_currentInteraction.npc);
+        Creature* npc = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for interaction range check (validated via snapshot first)
+            npc = ObjectAccessor::GetCreature(*m_bot, m_currentInteraction.npc);
+        }
+
         if (!npc)
         {
             m_currentPhase = InteractionPhase::FAILED;
@@ -1210,7 +1283,16 @@ namespace Playerbot
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
     {
-        auto* entity = ObjectAccessor::GetCreature(*m_bot, guid);
+        // PHASE 5D: Thread-safe spatial grid validation
+        auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, guid);
+        Creature* entity = nullptr;
+
+        if (snapshot)
+        {
+            // Get Creature* for NPC type determination (validated via snapshot first)
+            entity = ObjectAccessor::GetCreature(*m_bot, guid);
+        }
+
         if (!entity)
             continue;
         // Original filtering logic goes here
