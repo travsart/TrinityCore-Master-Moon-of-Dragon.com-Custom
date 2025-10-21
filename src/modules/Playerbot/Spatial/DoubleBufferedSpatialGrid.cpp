@@ -182,6 +182,13 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.isElite = creature->IsElite();
         snapshot.isWorldBoss = creature->isWorldBoss();  // lowercase method
 
+        // Pre-calculate hostility for autonomous targeting (thread-safe, enterprise-grade)
+        // Use FactionTemplateEntry::IsHostileToPlayers() - proper faction-based hostility check
+        // This allows worker threads to validate targets without ObjectAccessor calls
+        // ENTERPRISE-GRADE: Uses WoW's faction system (EnemyGroup & FACTION_MASK_PLAYER)
+        FactionTemplateEntry const* factionTemplate = creature->GetFactionTemplateEntry();
+        snapshot.isHostile = factionTemplate && factionTemplate->IsHostileToPlayers();
+
         // Targeting data
         if (Unit* victim = creature->GetVictim())
             snapshot.currentTarget = victim->GetGUID();

@@ -92,6 +92,7 @@ public:
         bool isInCombat{false};
         bool isElite{false};
         bool isWorldBoss{false};
+        bool isHostile{false};  // Pre-calculated hostility (for thread-safe autonomous targeting)
 
         // Targeting data
         ObjectGuid currentTarget;  // Current victim GUID

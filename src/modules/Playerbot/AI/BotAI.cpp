@@ -969,21 +969,22 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                         if (snapshot.guid == bestTargetGuid)
                         {
                             // Snapshot found - validate using snapshot data (no Map access needed)
-                            // 1. Check if creature is alive (isDead flag)
-                            // 2. Check if creature is hostile (isHostile flag)
-                            // 3. Check distance is within engage range
+                            // 1. Check if creature is alive (!isDead flag)
+                            // 2. Check if creature is attackable (isHostile flag)
+                            // 3. Check distance is within engage range (60.0f)
 
+                            float distance = _bot->GetDistance(snapshot.position);
                             if (!snapshot.isDead &&
                                 snapshot.isHostile &&
-                                snapshot.IsInRange(_bot->GetPosition()))
+                                distance <= 60.0f)
                             {
                                 // Target is valid based on snapshot data
                                 // SetTarget() is thread-safe (just sets a GUID)
                                 _bot->SetTarget(bestTargetGuid);
 
                                 TC_LOG_DEBUG("playerbot.solo",
-                                    "Solo bot {} selected target {} (Entry: {}) via spatial grid snapshot - combat will engage naturally",
-                                    _bot->GetName(), snapshot.name, snapshot.entry);
+                                    "Solo bot {} selected target Entry {} (level {}) via spatial grid snapshot - combat will engage naturally",
+                                    _bot->GetName(), snapshot.entry, snapshot.level);
 
                                 // Combat will initiate naturally:
                                 // - Bot has target set → ClassAI will cast spells/attack
