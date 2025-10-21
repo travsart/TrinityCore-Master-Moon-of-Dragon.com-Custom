@@ -26,6 +26,7 @@
 #include "SharedDefines.h"
 #include "../../Game/QuestAcceptanceManager.h"
 #include "../../Quest/QuestHubDatabase.h"
+#include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include <limits>
 
 namespace Playerbot
@@ -863,61 +864,68 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         return;
     }
 
-    // IMPROVEMENT: Find the nearest valid (spawned and usable) GameObject
-    // This distributes bots across multiple gameobjects and handles despawned objects
-    uint16 mapId = static_cast<uint16>(bot->GetMapId());
-    GameObject* targetObject = nullptr;
+    // DEADLOCK FIX: Use spatial grid snapshots instead of ObjectAccessor in loop
+    Map* map = bot->GetMap();
+    if (!map)
+        return;
+
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return;
+
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 200.0f);
+
+    // Find the nearest valid GameObject matching target entry
+    ObjectGuid targetGuid;
     float nearestDistance = std::numeric_limits<float>::max();
     uint32 validObjectsFound = 0;
 
-    for (uint32 counter : objects)
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* go = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, targetObjectId, counter));
-
-        if (!go)
+        // Filter by entry ID
+        if (snapshot.entry != targetObjectId)
             continue;
 
-        // Check if GameObject is spawned and usable
-        if (!go->isSpawned())
+        // Check if GameObject is spawned and ready using snapshot fields
+        if (!snapshot.isSpawned || snapshot.goState != GO_STATE_READY)
         {
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject counter={} is NOT spawned (despawned), skipping",
-                         counter);
-            continue;
-        }
-
-        // Check if GameObject is ready (not on cooldown/respawn timer)
-        if (go->GetGoState() != GO_STATE_READY)
-        {
-            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject counter={} state={} (not ready), skipping",
-                         counter, go->GetGoState());
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ UseQuestItemOnTarget: GameObject entry={} is NOT ready (spawned={}, state={}), skipping",
+                         snapshot.entry, snapshot.isSpawned, snapshot.goState);
             continue;
         }
 
         validObjectsFound++;
 
-        // Find nearest valid GameObject
-        float distance = bot->GetDistance(go);
+        // Find nearest valid GameObject using snapshot position
+        float distance = bot->GetExactDist(snapshot.position);
         if (distance < nearestDistance)
         {
             nearestDistance = distance;
-            targetObject = go;
+            targetGuid = snapshot.guid;
         }
     }
 
+    // THREAD-SAFE: Resolve GUID only after finding best target
+    GameObject* targetObject = nullptr;
+    if (!targetGuid.IsEmpty())
+        targetObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
+
     if (!targetObject)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: No valid (spawned & ready) GameObject {} found ({} total scanned, {} were invalid)",
-                     targetObjectId, objects.size(), objects.size() - validObjectsFound);
+        TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: No valid (spawned & ready) GameObject {} found (scanned {} nearby objects, {} were valid but GUID resolution failed)",
+                     targetObjectId, nearbyObjects.size(), validObjectsFound);
 
         // All gameobjects might be despawned/used - navigate to objective area to wait for respawn
         NavigateToObjective(ai, objective);
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found nearest valid GameObject {} at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}yd ({} valid of {} total)",
+    TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Found nearest valid GameObject {} at ({:.1f}, {:.1f}, {:.1f}) - distance {:.1f}yd ({} valid nearby)",
                  targetObject->GetEntry(),
                  targetObject->GetPositionX(), targetObject->GetPositionY(), targetObject->GetPositionZ(),
-                 nearestDistance, validObjectsFound, objects.size());
+                 nearestDistance, validObjectsFound);
 
     // CRITICAL: Calculate SAFE distance from target based on GameObject type and damage radius
     // We need to detect if the GameObject causes damage and how large the damage area is
@@ -1344,11 +1352,34 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (questObjective.Type != QUEST_OBJECTIVE_MONSTER)
         return nullptr;
 
-    // CRITICAL FIX: Increase scan radius to 300 yards to match spawn distances
-    // FindObjectiveTargetLocation found spawns at 226-297 yards away, so 50 yards was way too small
-    std::vector<uint32> targets = ObjectiveTracker::instance()->ScanForKillTargets(bot, questObjective.ObjectID, 300.0f);
+    // DEADLOCK FIX: Use spatial grid instead of ObjectAccessor in loops
+    Map* map = bot->GetMap();
+    if (!map)
+        return nullptr;
 
-    if (targets.empty())
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return nullptr;
+
+    // Query nearby creatures (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 300.0f);
+
+    // Find first matching creature by entry
+    ObjectGuid targetGuid;
+    for (auto const& snapshot : nearbyCreatures)
+    {
+        if (snapshot.entry == questObjective.ObjectID && !snapshot.isDead)
+        {
+            targetGuid = snapshot.guid;
+            TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestTarget: Found creature entry {} at ({:.1f}, {:.1f}, {:.1f})",
+                         snapshot.entry, snapshot.position.GetPositionX(),
+                         snapshot.position.GetPositionY(), snapshot.position.GetPositionZ());
+            break;
+        }
+    }
+
+    if (targetGuid.IsEmpty())
     {
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestTarget: Bot {} - NO targets found in 300-yard scan for entry {}",
                      bot->GetName(), questObjective.ObjectID);
@@ -1359,20 +1390,8 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
         return nullptr;
     }
 
-    // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
-    // ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter)
-    // - mapId: Bot's current map (NOT 0!)
-    // - entry: Creature entry ID (from quest objective)
-    // - counter: Creature's unique GUID counter (from ScanForKillTargets)
-    uint16 mapId = static_cast<uint16>(bot->GetMapId());
-    uint32 entry = questObjective.ObjectID;
-    uint32 counter = targets[0]; // GUID counter from ScanForKillTargets()
-
-    TC_LOG_ERROR("module.playerbot.quest", "🔧 FindQuestTarget: Creating ObjectGuid with mapId={}, entry={}, counter={}",
-                 mapId, entry, counter);
-
-    // Get the unit
-    ::Unit* target = ObjectAccessor::GetUnit(*bot, ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+    // THREAD-SAFE: Resolve GUID only after finding target
+    ::Unit* target = ObjectAccessor::GetUnit(*bot, targetGuid);
 
     // CRITICAL FIX: Distinguish between "talk to" NPCs and "attackable neutral" mobs
     // Type 0 (QUEST_OBJECTIVE_MONSTER) can be used for TWO different quest mechanics:
@@ -1391,6 +1410,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (target && target->ToCreature())
     {
         Creature* creature = target->ToCreature();
+        uint32 entry = questObjective.ObjectID;
 
         // If creature is not hostile, check if it requires spell click interaction
         if (!bot->IsHostileTo(creature))
@@ -1430,40 +1450,55 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     if (questObjective.Type != QUEST_OBJECTIVE_GAMEOBJECT)
         return nullptr;
 
-    // CRITICAL FIX: Increase scan radius to 200 yards (user reported GameObjects are >50 yards away)
-    // Quest GameObjects can spawn far from quest POI markers, so we need a large scan radius
-    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, questObjective.ObjectID, 200.0f);
+    // DEADLOCK FIX: Use spatial grid instead of ObjectAccessor
+    Map* map = bot->GetMap();
+    if (!map)
+        return nullptr;
 
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 FindQuestObject: Bot {} scanning for GameObject entry {} within 200 yards - found {} objects",
-                 bot->GetName(), questObjective.ObjectID, objects.size());
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return nullptr;
 
-    if (objects.empty())
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 200.0f);
+
+    TC_LOG_ERROR("module.playerbot.quest", "🔍 FindQuestObject: Bot {} scanning for GameObject entry {} within 200 yards - found {} nearby objects",
+                 bot->GetName(), questObjective.ObjectID, nearbyObjects.size());
+
+    // Find first matching GameObject by entry
+    ObjectGuid objectGuid;
+    for (auto const& snapshot : nearbyObjects)
+    {
+        if (snapshot.entry == questObjective.ObjectID && snapshot.isSpawned)
+        {
+            objectGuid = snapshot.guid;
+            TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Found GameObject entry {} at ({:.1f}, {:.1f}, {:.1f})",
+                         snapshot.entry, snapshot.position.GetPositionX(),
+                         snapshot.position.GetPositionY(), snapshot.position.GetPositionZ());
+            break;
+        }
+    }
+
+    if (objectGuid.IsEmpty())
     {
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestObject: Bot {} - NO GameObjects found in 200-yard scan for entry {}",
                      bot->GetName(), questObjective.ObjectID);
         return nullptr;
     }
 
-    // CRITICAL FIX: Use bot's mapId for proper ObjectGuid creation!
-    uint16 mapId = static_cast<uint16>(bot->GetMapId());
-    uint32 entry = questObjective.ObjectID;
-    uint32 counter = objects[0];
-
-    TC_LOG_ERROR("module.playerbot.quest", "🔧 FindQuestObject: Creating GameObject GUID with mapId={}, entry={}, counter={}",
-                 mapId, entry, counter);
-
-    // Return first object
-    GameObject* gameObject = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
+    // THREAD-SAFE: Resolve GUID only after finding object
+    GameObject* gameObject = ObjectAccessor::GetGameObject(*bot, objectGuid);
 
     if (!gameObject)
     {
-        TC_LOG_ERROR("module.playerbot.quest", "❌ FindQuestObject: ObjectAccessor returned NULL for GameObject (mapId={}, entry={}, counter={}) - object might not be spawned/accessible",
-                     mapId, entry, counter);
+        TC_LOG_ERROR("module.playerbot.quest", "❌ FindQuestObject: ObjectAccessor returned NULL for GameObject - object might have despawned",
+                     questObjective.ObjectID);
         return nullptr;
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Bot {} found GameObject {} (Entry: {}) at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
-                 bot->GetName(), gameObject->GetName(), entry,
+                 bot->GetName(), gameObject->GetName(), questObjective.ObjectID,
                  gameObject->GetPositionX(), gameObject->GetPositionY(), gameObject->GetPositionZ(),
                  bot->GetDistance(gameObject));
 

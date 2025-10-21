@@ -412,7 +412,7 @@ bool DruidSpecialization::IsInDanger()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), 15.0f);
 
     // Process results (replace old loop)
@@ -593,7 +593,7 @@ void DruidSpecialization::CastCyclone(Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)

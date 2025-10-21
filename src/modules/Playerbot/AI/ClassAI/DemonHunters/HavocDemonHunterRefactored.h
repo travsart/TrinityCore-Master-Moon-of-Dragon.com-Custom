@@ -710,7 +710,7 @@ private:
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
             if (spatialGrid)
             {
-                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), range);
+                auto guids = spatialGrid->QueryNearbyCreatureGuids(*this->GetBot(), range);
                 for (ObjectGuid guid : guids)
                 {
                     if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))
@@ -752,7 +752,7 @@ private:
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
             if (spatialGrid)
             {
-                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), range);
+                auto guids = spatialGrid->QueryNearbyCreatureGuids(*this->GetBot(), range);
                 for (ObjectGuid guid : guids)
                 {
                     if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))

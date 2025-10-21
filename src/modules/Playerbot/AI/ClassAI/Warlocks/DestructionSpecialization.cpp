@@ -412,7 +412,7 @@ void DestructionSpecialization::UpdateDoTManagement()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)

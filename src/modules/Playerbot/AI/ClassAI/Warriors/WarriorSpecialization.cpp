@@ -174,7 +174,7 @@ void WarriorSpecialization::CastThunderClap()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 10.0f);
 
     // Process results (replace old loop)
@@ -412,7 +412,7 @@ void WarriorSpecialization::UseSpellReflection()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 20.0f);
 
     // Process results (replace old loop)
@@ -498,7 +498,7 @@ bool WarriorSpecialization::IsInDanger()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 15.0f);
 
     // Process results (replace old loop)

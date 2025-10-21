@@ -265,7 +265,7 @@ public:
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
+// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
                 player->GetPosition(), 15.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -577,7 +577,7 @@ public:
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
+// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
                 player->GetPosition(), 20.0f);
 
             for (ObjectGuid guid : nearbyGuids)

@@ -443,7 +443,7 @@ bool FurySpecialization::ShouldCastWhirlwind()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 8.0f);
 
     // Process results (replace old loop)

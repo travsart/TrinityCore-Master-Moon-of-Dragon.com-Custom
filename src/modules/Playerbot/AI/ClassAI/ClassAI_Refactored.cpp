@@ -206,7 +206,7 @@ void ClassAI::UpdateTargeting()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
 
     // Process results (replace old searcher logic)

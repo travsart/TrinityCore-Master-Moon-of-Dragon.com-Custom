@@ -1293,7 +1293,7 @@ bool MageAI::IsInDanger()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 15.0f);
 
     // Process results (replace old searcher logic)
@@ -1345,7 +1345,7 @@ void MageAI::FindSafeCastingPosition()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -1420,7 +1420,7 @@ void MageAI::FindSafeCastingPosition()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -1465,7 +1465,7 @@ void MageAI::FindSafeCastingPosition()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -1818,7 +1818,7 @@ void MageAI::HandleEmergencySituation()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -2449,7 +2449,7 @@ uint32 MageAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

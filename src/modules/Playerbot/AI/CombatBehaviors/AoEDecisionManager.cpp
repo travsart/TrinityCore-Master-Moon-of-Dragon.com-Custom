@@ -240,7 +240,7 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Resolve GUIDs to Unit pointers and count valid targets
@@ -683,7 +683,7 @@ void AoEDecisionManager::UpdateTargetCache()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), searchRadius);
 
     // Resolve GUIDs to Unit pointers and update cache

@@ -237,22 +237,71 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
         return false;
     }
 
-    // Try to find quest giver object in world
-    // First check creatures
-    if (Creature* creature = ObjectAccessor::GetCreature(*bot, ObjectGuid::Create<HighGuid::Creature>(bot->GetMapId(), questGiverGuid, 0)))
-        questGiver = creature;
-
-    // Then check game objects
-    if (!questGiver)
+    // DEADLOCK FIX: Find quest giver using spatial grid snapshots
+    Map* map = bot->GetMap();
+    if (!map)
     {
-        if (GameObject* go = ObjectAccessor::GetGameObject(*bot, ObjectGuid::Create<HighGuid::GameObject>(bot->GetMapId(), questGiverGuid, 0)))
-            questGiver = go;
+        HandleQuestPickupFailure(questId, bot, "Bot not on valid map");
+        return false;
     }
 
-    if (!questGiver)
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+    {
+        sSpatialGridManager.CreateGrid(map);
+        spatialGrid = sSpatialGridManager.GetGrid(map);
+    }
+
+    ObjectGuid questGiverObjectGuid;
+
+    if (spatialGrid)
+    {
+        // Search for quest giver creature using snapshots
+        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 100.0f);
+
+        for (auto const& snapshot : nearbyCreatures)
+        {
+            if (snapshot.hasQuestGiver && snapshot.isVisible)
+            {
+                questGiverObjectGuid = snapshot.guid;
+                break;
+            }
+        }
+
+        // If not found in creatures, check game objects
+        if (questGiverObjectGuid.IsEmpty())
+        {
+            std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+                spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 100.0f);
+
+            for (auto const& snapshot : nearbyObjects)
+            {
+                if (snapshot.isQuestObject && snapshot.isUsable)
+                {
+                    questGiverObjectGuid = snapshot.guid;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (questGiverObjectGuid.IsEmpty())
     {
         TC_LOG_DEBUG("playerbot.quest", "QuestPickup::PickupQuest: Quest giver {} not found in world", questGiverGuid);
         HandleQuestPickupFailure(questId, bot, "Quest giver not in world");
+        return false;
+    }
+
+    // Resolve GUID to pointer (safe if method runs on main thread context)
+    questGiver = ObjectAccessor::GetCreature(*bot, questGiverObjectGuid);
+    if (!questGiver)
+        questGiver = ObjectAccessor::GetGameObject(*bot, questGiverObjectGuid);
+
+    if (!questGiver)
+    {
+        TC_LOG_DEBUG("playerbot.quest", "QuestPickup::PickupQuest: Quest giver object not accessible");
+        HandleQuestPickupFailure(questId, bot, "Quest giver not accessible");
         return false;
     }
 
@@ -378,14 +427,10 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     std::vector<QuestGiverInfo> foundGivers;
     Position botPos = bot->GetPosition();
 
-    // Scan for creature quest givers
-    std::vector<Creature*> creatures;
-    Trinity::AnyUnitInObjectRangeCheck check(bot, scanRadius);
-    Trinity::CreatureListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(bot, creatures, check);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    // DEADLOCK FIX: Use lock-free spatial grid with snapshots
     Map* map = bot->GetMap();
     if (!map)
-        return {}; // Adjust return value as needed
+        return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -393,48 +438,38 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return {}; // Adjust return value as needed
+            return {};
     }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), scanRadius);
-
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
+    // Use snapshot-based query (thread-safe, lock-free)
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), scanRadius);
 
     TC_LOG_DEBUG("playerbot.quest", "🔍 QUEST SCAN: Bot {} found {} creatures in {}y radius",
-                 bot->GetName(), creatures.size(), scanRadius);
+                 bot->GetName(), nearbyCreatures.size(), scanRadius);
 
     uint32 creatureQuestGiverCount = 0;
     uint32 questsChecked = 0;
     uint32 questsRejected = 0;
 
-    for (Creature* creature : creatures)
+    // Process snapshots (NO ObjectAccessor calls in loop!)
+    for (auto const& snapshot : nearbyCreatures)
     {
-        if (!creature || !creature->IsAlive())
+        if (snapshot.isDead || !snapshot.hasQuestGiver)
             continue;
 
-        uint32 entry = creature->GetEntry();
+        uint32 entry = snapshot.entry;
         auto questRelations = sObjectMgr->GetCreatureQuestRelations(entry);
 
         if (questRelations.begin() != questRelations.end())
         {
             creatureQuestGiverCount++;
-            TC_LOG_DEBUG("playerbot.quest", "   📋 Creature {} (entry {}) has quests",
-                         creature->GetName(), entry);
+            TC_LOG_DEBUG("playerbot.quest", "   📋 Creature entry {} has quests", entry);
 
-            QuestGiverInfo info(entry, QuestGiverType::NPC_CREATURE, creature->GetPosition());
-            info.zoneId = creature->GetZoneId();
-            info.areaId = creature->GetAreaId();
-            info.interactionRange = DEFAULT_QUEST_GIVER_RANGE;
+            QuestGiverInfo info(entry, QuestGiverType::NPC_CREATURE, snapshot.position);
+            info.zoneId = snapshot.zoneId;  // From snapshot (populated on main thread)
+            info.areaId = snapshot.areaId;  // From snapshot (populated on main thread)
+            info.interactionRange = snapshot.interactionRange;
 
             for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
             {
@@ -442,8 +477,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
                 questsChecked++;
                 if (quest && bot->CanTakeQuest(quest, false))
                 {
-                    TC_LOG_DEBUG("playerbot.quest", "      ✅ Quest {} - CAN TAKE",
-                                 *it);
+                    TC_LOG_DEBUG("playerbot.quest", "      ✅ Quest {} - CAN TAKE", *it);
                     info.availableQuests.push_back(*it);
                 }
                 else
@@ -463,39 +497,26 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     }
 
     TC_LOG_DEBUG("playerbot.quest", "🔍 CREATURE SCAN SUMMARY: {} creatures scanned, {} quest givers found, {} quests checked, {} rejected",
-                 creatures.size(), creatureQuestGiverCount, questsChecked, questsRejected);
+                 nearbyCreatures.size(), creatureQuestGiverCount, questsChecked, questsRejected);
 
-    // Scan for game object quest givers
-    std::list<GameObject*> gameObjects;
-    Trinity::AllGameObjectsWithEntryInRange goCheck(bot, 0, scanRadius);  // 0 = all entries
-    Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> goSearcher(bot, gameObjects, goCheck);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    std::vector<ObjectGuid> nearbyGuids2 = spatialGrid->QueryNearbyGameObjects(
-        bot->GetPosition(), scanRadius);
+    // DEADLOCK FIX: Scan for game object quest givers using spatial grid snapshots
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyGameObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), scanRadius);
 
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
+    for (auto const& snapshot : nearbyGameObjects)
     {
-        auto* entity = bot->GetMap()->GetGameObject(guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-
-    for (GameObject* go : gameObjects)
-    {
-        if (!go || !go->isSpawned())
+        if (!snapshot.isSpawned || !snapshot.isQuestObject)
             continue;
 
-        uint32 entry = go->GetEntry();
+        uint32 entry = snapshot.entry;
         auto questRelations = sObjectMgr->GetGOQuestRelations(entry);
 
         if (questRelations.begin() != questRelations.end())
         {
-            QuestGiverInfo info(entry, QuestGiverType::GAME_OBJECT, go->GetPosition());
-            info.zoneId = go->GetZoneId();
-            info.areaId = go->GetAreaId();
+            // Use snapshot data for position, zone, and area
+            QuestGiverInfo info(entry, QuestGiverType::GAME_OBJECT, snapshot.position);
+            info.zoneId = snapshot.zoneId;  // From snapshot (populated on main thread)
+            info.areaId = snapshot.areaId;  // From snapshot (populated on main thread)
             info.interactionRange = DEFAULT_QUEST_GIVER_RANGE;
 
             for (auto it = questRelations.begin(); it != questRelations.end(); ++it)

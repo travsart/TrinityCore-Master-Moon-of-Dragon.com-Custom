@@ -252,7 +252,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
             if (spatialGrid)
             {
                 // Query nearby creature GUIDs (lock-free!)
-                std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+                std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                     _bot->GetPosition(), 50.0f);
 
                 // Resolve GUIDs to Unit pointers and apply filtering logic

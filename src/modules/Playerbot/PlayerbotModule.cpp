@@ -29,6 +29,7 @@
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
 #include "Network/PlayerbotPacketSniffer.h"
+#include "Threading/BotActionManager.h"
 #include "Log.h"
 #include "GitRevision.h"
 #include <chrono>
@@ -196,6 +197,11 @@ bool PlayerbotModule::Initialize()
     // Register hooks with TrinityCore
     RegisterHooks();
 
+    // Initialize Bot Action Manager for worker thread → main thread action queue
+    TC_LOG_INFO("server.loading", "Initializing Bot Action Manager...");
+    sBotActionMgr->Initialize();
+    TC_LOG_INFO("server.loading", "Bot Action Manager initialized successfully");
+
     // Register with the shared ModuleUpdateManager for world updates
     if (!sModuleUpdateManager->RegisterModule("playerbot", [](uint32 diff) { OnWorldUpdate(diff); }))
     {
@@ -218,6 +224,10 @@ void PlayerbotModule::Shutdown()
         return;
 
     TC_LOG_INFO("server.loading", "Shutting down Playerbot Module...");
+
+    // Shutdown Bot Action Manager
+    sBotActionMgr->Shutdown();
+    TC_LOG_INFO("server.loading", "Bot Action Manager shutdown complete");
 
     // Unregister hooks
     UnregisterHooks();

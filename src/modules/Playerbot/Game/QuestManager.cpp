@@ -532,7 +532,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), QUEST_GIVER_SCAN_RANGE);
 
     // Process results (replace old searcher logic)
@@ -601,7 +601,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         GetBot()->GetPosition(), QUEST_GIVER_SCAN_RANGE);
 
     // Process results (replace old searcher logic)

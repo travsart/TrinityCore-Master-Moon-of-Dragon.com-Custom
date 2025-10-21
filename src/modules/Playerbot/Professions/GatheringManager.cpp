@@ -235,34 +235,26 @@ bool GatheringManager::CastGatheringSpell(GatheringNode const& node)
     if (GetBot()->IsNonMeleeSpellCast(false))
         GetBot()->InterruptNonMeleeSpells(false);
 
-    // Get the target object
-    Unit* target = nullptr;
+    // DEADLOCK FIX: This method runs on main thread, so direct GUID resolution is safe
+    // The node.guid was obtained from spatial grid snapshots (thread-safe)
+
     if (node.nodeType == GatheringNodeType::CREATURE_CORPSE)
     {
-        target = ObjectAccessor::GetCreature(*GetBot(), node.guid);
-    }
+        // Skinning - cast spell on creature corpse
+        Creature* creature = ObjectAccessor::GetCreature(*GetBot(), node.guid);
+        if (!creature)
+            return false;
 
-    // Cast the gathering spell
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo)
-    {
-        TC_LOG_ERROR("bot.playerbot", "GatheringManager: Invalid spell ID %u for gathering", spellId);
-        return false;
-    }
-
-    if (node.nodeType == GatheringNodeType::CREATURE_CORPSE && target)
-    {
-        GetBot()->CastSpell(target, spellId, false);
+        GetBot()->CastSpell(creature, spellId, false);
     }
     else
     {
-        // For game objects, we need to use a different approach
+        // Mining/Herbalism - use game object
         GameObject* gameObject = ObjectAccessor::GetGameObject(*GetBot(), node.guid);
-        if (gameObject)
-        {
-            gameObject->Use(GetBot());
-            return true;
-        }
+        if (!gameObject)
+            return false;
+
+        gameObject->Use(GetBot());
     }
 
     _currentSpellId = spellId;
@@ -421,10 +413,6 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
 
-    // Search for mining veins (GameObject type 3)
-    std::list<GameObject*> gameObjects;
-    Trinity::AllWorldObjectsInRange check(GetBot(), range);
-    Trinity::GameObjectListSearcher searcher(GetBot(), gameObjects, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
@@ -439,37 +427,24 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
             return nodes;
     }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
-        GetBot()->GetPosition(), range);
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
-    // Process results (replace old searcher logic)
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter for mining veins using snapshot data
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* entity = map->GetGameObject(guid);
-        if (!entity)
-            continue;
-        // Original filtering logic from searcher goes here
-    }
-    // End of spatial grid fix
-
-    for (GameObject* go : gameObjects)
-    {
-        if (!go || go->GetGoType() != GAMEOBJECT_TYPE_CHEST)
+        if (!snapshot.isMineable || !snapshot.isSpawned)
             continue;
 
-        // Check if it's a mining vein (simplified check - real implementation would check specific entries)
-        GameObjectTemplate const* goInfo = go->GetGOInfo();
-        if (!goInfo)
-            continue;
+        GatheringNode node;
+        node.guid = snapshot.guid;
+        node.nodeType = GatheringNodeType::MINING_VEIN;
+        node.position = snapshot.position;
+        node.isActive = true;
+        node.distance = GetBot()->GetExactDist(snapshot.position);
 
-        // Mining veins typically have chest loot
-        if (goInfo->chest.chestLoot > 0)
-        {
-            GatheringNode node = CreateNodeInfo(go, GatheringNodeType::MINING_VEIN);
-            if (node.isActive)
-                nodes.push_back(node);
-        }
+        nodes.push_back(node);
     }
 
     return nodes;
@@ -482,10 +457,6 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
 
-    // Search for herb nodes (GameObject type 3)
-    std::list<GameObject*> gameObjects;
-    Trinity::AllWorldObjectsInRange check(GetBot(), range);
-    Trinity::GameObjectListSearcher searcher(GetBot(), gameObjects, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
@@ -500,38 +471,24 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
             return nodes;
     }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
-        GetBot()->GetPosition(), range);
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
-    // Process results (replace old searcher logic)
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter for herb nodes using snapshot data
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* entity = map->GetGameObject(guid);
-        if (!entity)
-            continue;
-        // Original filtering logic from searcher goes here
-    }
-    // End of spatial grid fix
-
-    for (GameObject* go : gameObjects)
-    {
-        if (!go || go->GetGoType() != GAMEOBJECT_TYPE_CHEST)
+        if (!snapshot.isHerbalism || !snapshot.isSpawned)
             continue;
 
-        // Check if it's an herb node (simplified check)
-        GameObjectTemplate const* goInfo = go->GetGOInfo();
-        if (!goInfo)
-            continue;
+        GatheringNode node;
+        node.guid = snapshot.guid;
+        node.nodeType = GatheringNodeType::HERB_NODE;
+        node.position = snapshot.position;
+        node.isActive = true;
+        node.distance = GetBot()->GetExactDist(snapshot.position);
 
-        // Herb nodes typically have chest loot
-        if (goInfo->chest.chestLoot > 0)
-        {
-            // Additional check could be done here based on entry ID ranges
-            GatheringNode node = CreateNodeInfo(go, GatheringNodeType::HERB_NODE);
-            if (node.isActive)
-                nodes.push_back(node);
-        }
+        nodes.push_back(node);
     }
 
     return nodes;
@@ -558,18 +515,24 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
             return nodes;
     }
 
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
-        GetBot()->GetPosition(), range);
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter for fishing pools using snapshot data
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* go = map->GetGameObject(guid);
-        if (!go || go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE)
+        if (!snapshot.isFishingNode || !snapshot.isSpawned)
             continue;
 
-        GatheringNode node = CreateNodeInfo(go, GatheringNodeType::FISHING_POOL);
-        if (node.isActive)
-            nodes.push_back(node);
+        GatheringNode node;
+        node.guid = snapshot.guid;
+        node.nodeType = GatheringNodeType::FISHING_POOL;
+        node.position = snapshot.position;
+        node.isActive = true;
+        node.distance = GetBot()->GetExactDist(snapshot.position);
+
+        nodes.push_back(node);
     }
 
     return nodes;
@@ -596,22 +559,24 @@ std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float rang
             return nodes;
     }
 
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-        GetBot()->GetPosition(), range);
+    // DEADLOCK FIX: Use snapshot-based query (thread-safe, lock-free)
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(GetBot()->GetPosition(), range);
 
-    for (ObjectGuid guid : nearbyGuids)
+    for (auto const& snapshot : nearbyCreatures)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*GetBot(), guid);
-        if (!creature || !creature->isDead())
+        // Use snapshot fields instead of pointer method calls
+        if (!snapshot.isDead || !snapshot.isSkinnable)
             continue;
 
-        // Check if creature is skinnable
-        if (creature->HasUnitFlag(UNIT_FLAG_SKINNABLE))
-        {
-            GatheringNode node = CreateNodeInfo(creature);
-            if (node.isActive)
-                nodes.push_back(node);
-        }
+        // Create node info from snapshot data
+        GatheringNode node;
+        node.guid = snapshot.guid;
+        node.nodeType = GatheringNodeType::CREATURE_CORPSE;
+        node.position = snapshot.position;
+        node.isActive = true;
+        node.distance = GetBot()->GetExactDist(snapshot.position);
+        nodes.push_back(node);
     }
 
     return nodes;
@@ -660,15 +625,37 @@ bool GatheringManager::ValidateNode(GatheringNode const& node)
     if (!GetBot() || !GetBot()->GetMap())
         return false;
 
+    // DEADLOCK FIX: Use spatial grid to validate node instead of ObjectAccessor
+    Map* map = GetBot()->GetMap();
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return false;
+
     if (node.nodeType == GatheringNodeType::CREATURE_CORPSE)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*GetBot(), node.guid);
-        return creature && creature->isDead() && creature->HasUnitFlag(UNIT_FLAG_SKINNABLE);
+        // Query nearby creatures and find matching GUID
+        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            spatialGrid->QueryNearbyCreatures(GetBot()->GetPosition(), 100.0f);
+
+        for (auto const& snapshot : nearbyCreatures)
+        {
+            if (snapshot.guid == node.guid)
+                return snapshot.isDead && snapshot.isSkinnable;
+        }
+        return false;
     }
     else
     {
-        GameObject* gameObject = ObjectAccessor::GetGameObject(*GetBot(), node.guid);
-        return gameObject && gameObject->isSpawned() && gameObject->GetGoState() == GO_STATE_READY;
+        // Query nearby game objects and find matching GUID
+        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+            spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), 100.0f);
+
+        for (auto const& snapshot : nearbyObjects)
+        {
+            if (snapshot.guid == node.guid)
+                return snapshot.isSpawned && snapshot.goState == GO_STATE_READY;
+        }
+        return false;
     }
 }
 

@@ -552,7 +552,7 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         groupMember->GetPosition(), 40.0f);
 
     // Process results (replace old loop)
@@ -775,7 +775,7 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         player->GetPosition(), 50.0f);
 
     // Process results (replace old loop)
@@ -1263,7 +1263,7 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         dps->GetPosition(), 40.0f);
 
     // Process results (replace old loop)

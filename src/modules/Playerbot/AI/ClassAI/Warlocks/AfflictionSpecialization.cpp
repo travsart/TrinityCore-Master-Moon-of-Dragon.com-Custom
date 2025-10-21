@@ -409,7 +409,7 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         target->GetPosition(), 15.0f);
 
     // Process results (replace old loop)
@@ -603,7 +603,7 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), OPTIMAL_CASTING_RANGE);
 
     // Process results (replace old loop)
@@ -787,7 +787,7 @@ bool AfflictionSpecialization::ShouldChannelDrain()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), OPTIMAL_CASTING_RANGE);
 
     // Process results (replace old loop)

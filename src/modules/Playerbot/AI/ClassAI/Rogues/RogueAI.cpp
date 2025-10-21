@@ -790,7 +790,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

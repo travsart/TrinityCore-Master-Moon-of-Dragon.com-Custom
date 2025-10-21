@@ -83,7 +83,7 @@ void KitingManager::UpdateKiting(uint32 diff)
                 if (spatialGrid)
                 {
                     // Query nearby creature GUIDs (lock-free!)
-                    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+                    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                         _bot->GetPosition(), searchRadius);
 
                     // Resolve GUIDs to Unit pointers and filter enemies

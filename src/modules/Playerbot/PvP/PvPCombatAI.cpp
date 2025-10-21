@@ -234,7 +234,7 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 player->GetPosition(), range);
 
             for (ObjectGuid guid : nearbyGuids)

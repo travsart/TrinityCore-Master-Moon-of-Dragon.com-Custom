@@ -488,6 +488,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.h
 
     # Integration Tests (Temporarily disabled - Google Test not configured)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Tests/TargetScannerTest.cpp
@@ -615,6 +617,25 @@ set(PLAYERBOT_SOURCES
     # Performance Optimization (Phase 5) - ThreadPool, MemoryPool, QueryOptimizer, Profiler
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolDiagnostics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DeadlockDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DeadlockDetector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ContinuousDiagnosticLogger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ContinuousDiagnosticLogger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DebuggerIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DebuggerIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ETWProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ETWProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.natvis
+
+    # Bot Action Queue System (TrinityCore-style async pattern)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionProcessor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionProcessor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionManager.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.cpp
@@ -810,6 +831,8 @@ source_group("Spatial" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/SpatialGridScheduler.h
 )
 
 source_group("AI\\Values" FILES
@@ -1065,6 +1088,25 @@ source_group("Advanced" FILES
 source_group("Performance" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolDiagnostics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DeadlockDetector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DeadlockDetector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPoolCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ContinuousDiagnosticLogger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ContinuousDiagnosticLogger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DebuggerIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/DebuggerIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ETWProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ETWProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ThreadPool/ThreadPool.natvis
+
+    # Bot Action Queue System (TrinityCore-style async pattern)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotAction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionProcessor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionProcessor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Threading/BotActionManager.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/MemoryPool/MemoryPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/QueryOptimizer/QueryOptimizer.cpp

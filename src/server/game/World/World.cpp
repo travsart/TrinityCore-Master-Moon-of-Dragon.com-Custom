@@ -112,6 +112,7 @@
 
 #ifdef BUILD_PLAYERBOT
 #include "Lifecycle/BotSpawner.h"
+#include "Threading/BotActionManager.h"
 #endif
 
 TC_GAME_API std::atomic<bool> World::m_stopEvent(false);
@@ -2325,6 +2326,36 @@ void World::Update(uint32 diff)
         }
     }
 
+    // CRITICAL FIX: Module/script updates MUST happen BEFORE Map updates
+    // to prevent deadlock when bot worker threads try to access Maps that
+    // main thread is currently updating (holding locks on).
+    // See: CELL_VISIT_DEADLOCK_RESOLUTION.md
+    {
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update world scripts"));
+        sScriptMgr->OnWorldUpdate(diff);
+    }
+
+    {
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update modules"));
+        ModuleManager::CallOnUpdate(diff);
+    }
+
+    // CRITICAL FIX: Update registered module callbacks (PlayerBot, etc.)
+    {
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update module callbacks"));
+        sModuleUpdateManager->Update(diff);
+    }
+
+    // CRITICAL FIX: Process bot actions queued by worker threads
+    // Bot worker threads make decisions using snapshots and queue actions.
+    // Main thread executes actions with full Map access (thread-safe by design).
+    // This must happen AFTER module updates (bot decisions) and BEFORE Map updates.
+    {
+        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Process bot actions"));
+        if (sBotActionMgr)
+            sBotActionMgr->ProcessActions();
+    }
+
     /// <li> Handle all other objects
     ///- Update objects when the timer has passed (maps, transport, creatures, ...)
     {
@@ -2440,22 +2471,6 @@ void World::Update(uint32 diff)
         TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Process cli commands"));
         // And last, but not least handle the issued cli commands
         ProcessCliCommands();
-    }
-
-    {
-        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update world scripts"));
-        sScriptMgr->OnWorldUpdate(diff);
-    }
-
-    {
-        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update modules"));
-        ModuleManager::CallOnUpdate(diff);
-    }
-
-    // CRITICAL FIX: Update registered module callbacks (PlayerBot, etc.)
-    {
-        TC_METRIC_TIMER("world_update_time", TC_METRIC_TAG("type", "Update module callbacks"));
-        sModuleUpdateManager->Update(diff);
     }
 
     {

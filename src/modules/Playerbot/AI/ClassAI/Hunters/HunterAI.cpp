@@ -1203,7 +1203,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), DEAD_ZONE_MAX);
 
     // Process results (replace old loop)
@@ -1406,7 +1406,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -1457,7 +1457,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)

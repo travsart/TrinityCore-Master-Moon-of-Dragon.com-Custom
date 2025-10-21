@@ -329,7 +329,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and filter visible enemies
@@ -371,7 +371,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and filter visible allies
@@ -589,7 +589,7 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
     }
 
     // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         _bot->GetPosition(), searchRange);
 
     // Resolve GUIDs to GameObject pointers and check for blocking
@@ -637,7 +637,7 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), searchRange);
 
     // Resolve GUIDs to Unit pointers and check for blocking

@@ -358,7 +358,7 @@ std::vector<::Unit*> EvokerSpecialization::GetNearbyAllies(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -405,7 +405,7 @@ std::vector<::Unit*> EvokerSpecialization::GetNearbyEnemies(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)

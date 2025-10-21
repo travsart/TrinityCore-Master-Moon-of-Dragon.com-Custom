@@ -1363,7 +1363,7 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     }
 
     // Query nearby creatures (lock-free!)
-    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     for (ObjectGuid guid : creatureGuids)
@@ -1376,7 +1376,7 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     }
 
     // Query nearby game objects (lock-free!)
-    std::vector<ObjectGuid> goGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> goGuids = spatialGrid->QueryNearbyGameObjectGuids(
         _bot->GetPosition(), range);
 
     for (ObjectGuid guid : goGuids)

@@ -945,11 +945,17 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
             // Clean up blacklist
             _targetScanner->UpdateBlacklist(currentTime);
 
-            // Find best target to engage
-            Unit* bestTarget = _targetScanner->FindBestTarget();
+            // Find best target to engage (returns GUID, thread-safe)
+            ObjectGuid bestTargetGuid = _targetScanner->FindBestTarget();
 
-            // If we found a valid target, engage it
-            if (bestTarget && _targetScanner->ShouldEngage(bestTarget))
+            // Resolve GUID to Unit* on main thread (Map access is safe here)
+            Unit* bestTarget = bestTargetGuid.IsEmpty() ? nullptr :
+                ObjectAccessor::GetUnit(*_bot, bestTargetGuid);
+
+            // If we found a valid target, validate and engage it
+            if (bestTarget && bestTarget->IsInWorld() &&
+                bestTarget->IsHostileTo(_bot) &&
+                _targetScanner->ShouldEngage(bestTarget))
             {
                 TC_LOG_DEBUG("playerbot", "Solo bot {} found hostile target {} at distance {:.1f}",
                             _bot->GetName(), bestTarget->GetName(), _bot->GetDistance(bestTarget));

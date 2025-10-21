@@ -899,7 +899,7 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
         if (spatialGrid)
         {
             // Query nearby creature GUIDs (lock-free!)
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 _bot->GetPosition(), 30.0f);
 
             // Check distance from nearby enemies

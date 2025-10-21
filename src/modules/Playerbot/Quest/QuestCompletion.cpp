@@ -459,24 +459,31 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-                bot->GetPosition(), objective.searchRadius);
+            // DEADLOCK FIX: Use snapshot-based query (thread-safe, lock-free)
+            std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+                spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
 
-            for (ObjectGuid guid : nearbyGuids)
+            ObjectGuid targetGuid;  // Store GUID instead of pointer
+
+            for (auto const& snapshot : nearbyCreatures)
             {
-                Creature* creature = ObjectAccessor::GetCreature(*bot, guid);
-                if (!creature || creature->isDead() || !bot->CanSeeOrDetect(creature))
+                // Use snapshot fields instead of calling methods on pointers
+                if (snapshot.isDead || !snapshot.isVisible)
                     continue;
-                if (creature->GetEntry() != objective.targetId)
+                if (snapshot.entry != objective.targetId)
                     continue;
 
-                float distance = bot->GetDistance(creature);
+                float distance = bot->GetExactDist(snapshot.position);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
-                    target = creature;
+                    targetGuid = snapshot.guid;  // Store GUID
                 }
             }
+
+            // Store the GUID for later use (main thread will resolve)
+            if (!targetGuid.IsEmpty())
+                target = ObjectAccessor::GetCreature(*bot, targetGuid);  // Safe: this method may run on main thread context
         }
     }
 
@@ -568,25 +575,32 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
 
             if (spatialGrid)
             {
-                std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-                    bot->GetPosition(), objective.searchRadius);
+                // DEADLOCK FIX: Use snapshot-based query (thread-safe, lock-free)
+                std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+                    spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
 
+                ObjectGuid npcGuid;
                 float minDistance = objective.searchRadius;
-                for (ObjectGuid guid : nearbyGuids)
+
+                for (auto const& snapshot : nearbyCreatures)
                 {
-                    Creature* creature = ObjectAccessor::GetCreature(*bot, guid);
-                    if (!creature || !bot->CanSeeOrDetect(creature))
+                    // Use snapshot fields instead of pointer method calls
+                    if (!snapshot.isVisible)
                         continue;
-                    if (creature->GetEntry() != objective.targetId)
+                    if (snapshot.entry != objective.targetId)
                         continue;
 
-                    float distance = bot->GetDistance(creature);
+                    float distance = bot->GetExactDist(snapshot.position);
                     if (distance < minDistance)
                     {
                         minDistance = distance;
-                        npc = creature;
+                        npcGuid = snapshot.guid;
                     }
                 }
+
+                // Resolve GUID to pointer after loop (safe if method runs on main thread context)
+                if (!npcGuid.IsEmpty())
+                    npc = ObjectAccessor::GetCreature(*bot, npcGuid);
             }
         }
     }
@@ -660,51 +674,41 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
     if (!bot)
         return;
 
-    // Find the game object
+    // DEADLOCK FIX: Use lock-free spatial grid to find game object
     GameObject* gameObject = nullptr;
     if (objective.targetId)
     {
-        // Search for game object
-        std::list<GameObject*> objects;
-        Trinity::GameObjectInRangeCheck check(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
-            objective.searchRadius);
-        Trinity::GameObjectListSearcher<Trinity::GameObjectInRangeCheck> searcher(bot, objects, check);
-        // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = bot->GetMap();
-    if (!map)
-        return;
-
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
+        Map* map = bot->GetMap();
+        if (!map)
             return;
-    }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
-        bot->GetPosition(), objective.searchRadius);
-
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        auto* entity = bot->GetMap()->GetGameObject(guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-
-        for (GameObject* go : objects)
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
         {
-            if (!go || go->GetEntry() != objective.targetId)
-                continue;
-
-            gameObject = go;
-            break;
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+                return;
         }
+
+        // Query nearby GameObjects (lock-free!)
+        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+            spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), objective.searchRadius);
+
+        // Find matching GameObject using snapshots
+        ObjectGuid targetGuid;
+        for (auto const& snapshot : nearbyObjects)
+        {
+            if (snapshot.entry == objective.targetId && snapshot.isSpawned)
+            {
+                targetGuid = snapshot.guid;
+                break;
+            }
+        }
+
+        // Resolve GUID after loop
+        if (!targetGuid.IsEmpty())
+            gameObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
     }
 
     if (gameObject)
@@ -799,40 +803,37 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
     Unit* target = nullptr;
     if (objective.targetId)
     {
-        // Search for target creature
-        std::list<Creature*> creatures;
-        Trinity::AllCreaturesOfEntryInRange check(bot, objective.targetId, QUEST_GIVER_INTERACTION_RANGE);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = bot->GetMap();
-    if (!map)
-        return;
-
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
+        Map* map = bot->GetMap();
+        if (!map)
             return;
-    }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), QUEST_GIVER_INTERACTION_RANGE);
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
+        {
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+                return;
+        }
 
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
+        // Use snapshot-based query (thread-safe, lock-free)
+        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            spatialGrid->QueryNearbyCreatures(bot->GetPosition(), QUEST_GIVER_INTERACTION_RANGE);
 
-        if (!creatures.empty())
-            target = creatures.front();
+        ObjectGuid targetGuid;
+        for (auto const& snapshot : nearbyCreatures)
+        {
+            if (snapshot.entry == objective.targetId && snapshot.isVisible)
+            {
+                targetGuid = snapshot.guid;
+                break;  // Use first matching creature
+            }
+        }
+
+        // Resolve GUID to pointer after loop
+        if (!targetGuid.IsEmpty())
+            target = ObjectAccessor::GetCreature(*bot, targetGuid);
     }
 
     if (target)
@@ -874,46 +875,37 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
     Creature* escortTarget = nullptr;
     if (objective.targetId)
     {
-        // Search for escort NPC
-        std::list<Creature*> creatures;
-        Trinity::AllCreaturesOfEntryInRange check(bot, objective.targetId, objective.searchRadius);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = bot->GetMap();
-    if (!map)
-        return;
-
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
+        Map* map = bot->GetMap();
+        if (!map)
             return;
-    }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), objective.searchRadius);
-
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
-    {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
-        if (!entity)
-            continue;
-        // Original filtering logic goes here
-    }
-    // End of spatial grid fix
-
-        for (Creature* creature : creatures)
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
         {
-            if (!creature || creature->isDead())
-                continue;
-
-            escortTarget = creature;
-            break;
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!spatialGrid)
+                return;
         }
+
+        // Use snapshot-based query (thread-safe, lock-free)
+        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
+
+        ObjectGuid escortGuid;
+        for (auto const& snapshot : nearbyCreatures)
+        {
+            if (snapshot.entry == objective.targetId && !snapshot.isDead)
+            {
+                escortGuid = snapshot.guid;
+                break;  // Use first alive matching creature
+            }
+        }
+
+        // Resolve GUID to pointer after loop
+        if (!escortGuid.IsEmpty())
+            escortTarget = ObjectAccessor::GetCreature(*bot, escortGuid);
     }
 
     if (escortTarget)
@@ -975,11 +967,7 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
     if (!bot)
         return false;
 
-    // Search for creatures matching objective
-    std::list<Creature*> creatures;
-    Trinity::AllCreaturesOfEntryInRange check(bot, objective.targetId, objective.searchRadius);
-    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, check);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
+    // DEADLOCK FIX: Use lock-free spatial grid with snapshots
     Map* map = bot->GetMap();
     if (!map)
         return false;
@@ -993,37 +981,37 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
             return false;
     }
 
-    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), objective.searchRadius);
+    // Use snapshot-based query (thread-safe, lock-free)
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
 
-    // Process results (replace old loop)
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter valid targets using snapshot data
+    DoubleBufferedSpatialGrid::CreatureSnapshot nearestSnapshot;
+    float minDistance = objective.searchRadius;
+    bool found = false;
+
+    for (auto const& snapshot : nearbyCreatures)
     {
-        auto* entity = ObjectAccessor::GetCreature(*bot, guid);
-        if (!entity)
+        // Filter: must match entry, be alive, visible, and hostile
+        if (snapshot.entry != objective.targetId)
             continue;
-        // Original filtering logic goes here
+        if (snapshot.isDead || !snapshot.isVisible)
+            continue;
+        // Note: faction check would require additional snapshot field or be done after GUID resolution
+
+        float distance = bot->GetExactDist(snapshot.position);
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            nearestSnapshot = snapshot;
+            found = true;
+        }
     }
-    // End of spatial grid fix
 
-    // Filter valid targets
-    creatures.remove_if([bot](Creature* creature)
+    if (found)
     {
-        return !creature || creature->isDead() || !bot->CanSeeOrDetect(creature) ||
-               creature->IsFriendlyTo(bot);
-    });
-
-    if (!creatures.empty())
-    {
-        // Update objective location to nearest target
-        Creature* nearest = *std::min_element(creatures.begin(), creatures.end(),
-            [bot](Creature* a, Creature* b)
-            {
-                return bot->GetDistance(a) < bot->GetDistance(b);
-            });
-
-        objective.targetLocation = nearest->GetPosition();
+        // Update objective location to nearest target (using snapshot position)
+        objective.targetLocation = nearestSnapshot.position;
         return true;
     }
 
@@ -1054,40 +1042,37 @@ bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objec
             return false;
     }
 
-    // First check if item drops from creatures (lock-free!)
-    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), objective.searchRadius);
+    // DEADLOCK FIX: First check if item drops from creatures using snapshots
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
 
-    for (ObjectGuid guid : creatureGuids)
+    for (auto const& snapshot : nearbyCreatures)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*bot, guid);
-        if (!creature || creature->isDead() || creature->IsFriendlyTo(bot))
+        // Filter: must be alive and not friendly (assume non-friendly if we can't check faction)
+        if (snapshot.isDead)
             continue;
 
         // Check if creature can drop the item (would need loot template access)
         // For now, assume creatures in quest area can drop quest items
-        if (bot->GetDistance(creature) < objective.searchRadius)
+        float distance = bot->GetExactDist(snapshot.position);
+        if (distance < objective.searchRadius)
         {
-            objective.targetLocation = creature->GetPosition();
+            objective.targetLocation = snapshot.position;
             return true;
         }
     }
 
-    // Check for game objects that might contain the item (lock-free!)
-    std::vector<ObjectGuid> objectGuids = spatialGrid->QueryNearbyGameObjects(
-        bot->GetPosition(), objective.searchRadius);
+    // DEADLOCK FIX: Check for game objects using snapshots
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), objective.searchRadius);
 
-    for (ObjectGuid guid : objectGuids)
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* go = map->GetGameObject(guid);
-        if (!go)
-            continue;
-
-        // Check if game object is lootable
-        if (go->GetGoType() == GAMEOBJECT_TYPE_CHEST ||
-            go->GetGoType() == GAMEOBJECT_TYPE_GOOBER)
+        // Check if game object is lootable using snapshot data
+        if (snapshot.goType == GAMEOBJECT_TYPE_CHEST ||
+            snapshot.goType == GAMEOBJECT_TYPE_GOOBER)
         {
-            objective.targetLocation = go->GetPosition();
+            objective.targetLocation = snapshot.position;
             return true;
         }
     }

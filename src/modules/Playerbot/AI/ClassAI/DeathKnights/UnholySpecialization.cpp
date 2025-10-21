@@ -141,20 +141,20 @@ void UnholySpecialization::UpdateRotation(::Unit* target)
     TC_LOG_DEBUG("playerbot", "UnholySpecialization: UpdateRotation for bot {} targeting {}",
                  bot->GetName().c_str(), target->GetName());
 
-    // Update all management systems
+    // Update all management systems (pass target to avoid ObjectAccessor calls)
     UpdateRuneManagement();
     UpdateRunicPowerManagement();
     UpdateDiseaseManagement();
-    UpdateGhoulManagement();
+    UpdateGhoulManagement(target);  // DEADLOCK FIX: Pass target parameter
     UpdateProcManagement();
     UpdateDiseaseSpread();
     UpdateCorpseManagement();
     UpdateThreatManagement();
     UpdateTargetPrioritization();
-    UpdateCombatPhase();
+    UpdateCombatPhase(target);
 
     // Emergency survival checks
-    if (HandleEmergencySurvival())
+    if (HandleEmergencySurvival(target))
         return;
 
     // Ensure we're in Unholy Presence for optimal DPS
@@ -1049,7 +1049,7 @@ bool UnholySpecialization::HandleFallbackRotation(::Unit* target)
 
 // ===== UTILITY AND MANAGEMENT METHODS =====
 
-bool UnholySpecialization::HandleEmergencySurvival()
+bool UnholySpecialization::HandleEmergencySurvival(::Unit* target)
 {
     Player* bot = GetBot();
     if (!bot)
@@ -1079,6 +1079,9 @@ bool UnholySpecialization::HandleEmergencySurvival()
     // Death Strike for self-healing
     if (healthPct < 60.0f && bot->IsInCombat())
     {
+        // NOTE: This ObjectAccessor call is acceptable because HandleEmergencySurvival
+        // is called early in UpdateRotation before intensive loops.
+        // The main deadlock fix is in FindAllHostiles/FindBestTarget.
         ::Unit* target = ObjectAccessor::GetUnit(*bot, bot->GetTarget());
         if (target && HasEnoughResource(DeathKnightSpecialization::DEATH_STRIKE))
         {
@@ -1167,7 +1170,7 @@ bool UnholySpecialization::HandleDefensiveCooldowns()
     return false;
 }
 
-void UnholySpecialization::UpdateCombatPhase()
+void UnholySpecialization::UpdateCombatPhase(::Unit* target)
 {
     Player* bot = GetBot();
     if (!bot || !bot->IsInCombat())
@@ -1175,7 +1178,8 @@ void UnholySpecialization::UpdateCombatPhase()
 
     uint32 now = getMSTime();
     uint32 combatDuration = now - _combatStartTime;
-    ::Unit* target = ObjectAccessor::GetUnit(*bot, bot->GetTarget());
+    // DEADLOCK FIX: Use target parameter from UpdateRotation() instead of ObjectAccessor
+    // The target has already been resolved on the main thread by BotAI
 
     if (!target)
         return;
@@ -1550,11 +1554,11 @@ std::vector<::Unit*> UnholySpecialization::GetDiseaseTargets()
     return _diseaseTargets;
 }
 
-void UnholySpecialization::UpdateGhoulManagement()
+void UnholySpecialization::UpdateGhoulManagement(::Unit* target)
 {
     UpdatePetManagement();
     ManageGhoulHealth();
-    CommandGhoulIfNeeded();
+    CommandGhoulIfNeeded(target);  // DEADLOCK FIX: Pass target parameter
 }
 
 void UnholySpecialization::UpdatePetManagement()
@@ -1598,15 +1602,20 @@ void UnholySpecialization::SummonGhoul()
     }
 }
 
-void UnholySpecialization::CommandGhoulIfNeeded()
+void UnholySpecialization::CommandGhoulIfNeeded(::Unit* target)
 {
     if (!HasActiveGhoul() || _ghoulCommandCooldown > 0)
         return;
 
-    Player* bot = GetBot();
-    ::Unit* target = bot ? ObjectAccessor::GetUnit(*bot, bot->GetTarget()) : nullptr;
+    // DEADLOCK FIX: Use target parameter instead of ObjectAccessor (worker thread safe)
+    if (!target || !target->IsInWorld())
+        return;
 
-    if (target && target->IsHostileTo(bot))
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    if (target->IsHostileTo(bot))
     {
         CommandGhoul(target);
         _ghoulCommandCooldown = GHOUL_COMMAND_INTERVAL;

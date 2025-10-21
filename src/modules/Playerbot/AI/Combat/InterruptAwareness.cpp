@@ -723,7 +723,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _observer->GetPosition(), _config.maxDetectionRange);
 
     // Resolve GUIDs to Unit pointers and filter appropriate units

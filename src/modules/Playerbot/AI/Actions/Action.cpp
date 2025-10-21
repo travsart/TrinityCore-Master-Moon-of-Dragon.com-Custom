@@ -219,7 +219,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Resolve GUIDs to Unit pointers and find nearest enemy

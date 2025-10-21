@@ -123,7 +123,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), _maxInterruptRange);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic

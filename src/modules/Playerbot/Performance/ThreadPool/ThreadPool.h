@@ -14,18 +14,21 @@
  * - Zero-allocation task submission during runtime
  * - CPU affinity support for cache locality
  * - Integration with existing BotScheduler
+ * - Comprehensive debugging and deadlock detection
  *
  * Performance Targets:
  * - <1μs task submission latency
  * - >95% CPU utilization
  * - <100 context switches/sec per thread
  * - Support 5000+ concurrent bot updates
+ * - <1% overhead from diagnostics
  */
 
 #ifndef PLAYERBOT_THREADPOOL_H
 #define PLAYERBOT_THREADPOOL_H
 
 #include "Define.h"
+#include "ThreadPoolDiagnostics.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -45,6 +48,7 @@ namespace Performance {
 // Forward declarations
 class ThreadPool;
 class WorkerThread;
+class DeadlockDetector;
 
 /**
  * @brief Task priority levels for scheduling
@@ -222,6 +226,7 @@ private:
     // State management
     alignas(64) std::atomic<bool> _running{true};
     alignas(64) std::atomic<bool> _sleeping{false};
+    // REMOVED in FIX D: _stealBackoff no longer needed with yield-based backoff
 
     // Local work queues (one per priority)
     std::array<WorkStealingQueue<Task*>, static_cast<size_t>(TaskPriority::COUNT)> _localQueues;
@@ -263,6 +268,9 @@ private:
 
     // Thread initialization state
     std::atomic<bool> _initialized{false};
+
+    // Diagnostics and debugging
+    std::unique_ptr<WorkerDiagnostics> _diagnostics;
 
 public:
     WorkerThread(ThreadPool* pool, uint32 workerId, uint32 cpuCore);
@@ -311,6 +319,13 @@ public:
     /**
      * @brief Get worker metrics (returns snapshot copy)
      */
+    /**
+     * @brief Check if any work is available (own queues or stealable)
+     * CRITICAL FIX #3: Better work detection to prevent unnecessary sleeping
+     */
+    bool HasWorkAvailable() const;
+
+
     MetricsSnapshot GetMetrics() const
     {
         MetricsSnapshot snapshot;
@@ -328,9 +343,24 @@ public:
      */
     void SetAffinity();
 
+    /**
+     * @brief Get worker diagnostics (for debugging)
+     */
+    WorkerDiagnostics* GetDiagnostics() const { return _diagnostics.get(); }
+
+    /**
+     * @brief Get worker ID
+     */
+    uint32 GetWorkerId() const { return _workerId; }
+
 private:
     void Sleep();
     uint32 GetRandomWorkerIndex() const;
+
+    /**
+     * @brief Initialize diagnostics (called from constructor)
+     */
+    void InitializeDiagnostics();
 };
 
 /**
@@ -360,17 +390,18 @@ public:
     {
         // CRITICAL FIX: Minimum 4 workers to prevent deadlock when main thread waits for futures
         // Even on 2-core systems, we need enough workers to prevent blocking issues
-        // Original logic: hardware_concurrency() - 2, but this gives 1 thread on 2-3 core systems
-        // New logic: Minimum 4 threads, or (cores - 2) if cores > 6
-        uint32 numThreads = std::max(4u, std::thread::hardware_concurrency() > 6
-            ? std::thread::hardware_concurrency() - 2
-            : 4);
+        // With future.get() blocking pattern, insufficient workers = deadlock
+        uint32 numThreads = []() -> uint32 {
+            uint32 hwCores = std::thread::hardware_concurrency();
+            uint32 threads = (hwCores > 6) ? (hwCores - 2) : std::max(4u, hwCores);
+            return std::max(4u, threads);  // Absolute minimum of 4
+        }();
         uint32 maxQueueSize = 10000;
         bool enableWorkStealing = true;
         bool enableCpuAffinity = false; // Disabled by default (requires admin on Windows)
         uint32 maxStealAttempts = 3;
         std::chrono::milliseconds shutdownTimeout{5000};
-        std::chrono::milliseconds workerSleepTime{1}; // Sleep time when idle
+        std::chrono::milliseconds workerSleepTime{10}; // Sleep time when idle
     };
 
 private:
@@ -449,6 +480,10 @@ private:
     std::future<void> _initFuture;
     std::atomic<bool> _asyncInitInProgress{false};
 
+    // Deadlock detection and diagnostics
+    std::unique_ptr<DeadlockDetector> _deadlockDetector;
+    std::atomic<bool> _diagnosticsEnabled{true};
+
 public:
     explicit ThreadPool(Configuration config = {});
     ~ThreadPool();
@@ -515,6 +550,42 @@ public:
 
         // Wake worker if sleeping
         worker->Wake();
+
+        // CRITICAL FIX #3: Wake additional workers for better work distribution
+        // This prevents work starvation when tasks pile up on one worker
+        if (_config.enableWorkStealing && !_workers.empty())
+        {
+            // Wake 25% of workers (minimum 2, maximum 4) to help with work distribution
+            uint32 workersToWake = std::min(4u, std::max(2u, static_cast<uint32>(_workers.size()) / 4));
+
+            for (uint32 i = 0; i < workersToWake; ++i)
+            {
+                uint32 randomWorker = SelectWorkerRoundRobin();
+                if (randomWorker != workerId)
+                {
+                    WorkerThread* helperWorker = _workers[randomWorker].get();
+                    if (helperWorker && helperWorker->_sleeping.load(std::memory_order_relaxed))
+                    {
+                        helperWorker->Wake();
+                    }
+                }
+            }
+        }
+
+        // CRITICAL FIX: Safety net - wake additional workers if many tasks are queued
+        // This prevents tasks from getting stuck if the primary worker is busy
+        size_t queuedTasks = GetQueuedTasks();
+        if (queuedTasks > _workers.size() * 2)
+        {
+            // Wake all sleeping workers to handle the load
+            for (auto& w : _workers)
+            {
+                if (w && w->_sleeping.load(std::memory_order_relaxed))
+                {
+                    w->Wake();
+                }
+            }
+        }
 
         return future;
     }
@@ -597,6 +668,48 @@ public:
      * @brief Get configuration
      */
     Configuration GetConfiguration() const { return _config; }
+
+    /**
+     * @brief Wake all sleeping workers
+     *
+     * CRITICAL FIX: Wake all workers to prevent deadlock when batch-submitting tasks
+     * Call this after submitting many tasks but BEFORE calling future.get()
+     *
+     * Use case: When submitting 100+ tasks in a loop and then waiting on all futures,
+     * individual Submit() wake calls may not wake enough workers due to race conditions.
+     * This ensures ALL workers are awake to process the queued tasks.
+     */
+    void WakeAllWorkers();
+
+    /**
+     * @brief Get deadlock detector
+     */
+    DeadlockDetector* GetDeadlockDetector() const { return _deadlockDetector.get(); }
+
+    /**
+     * @brief Enable/disable diagnostics
+     */
+    void SetDiagnosticsEnabled(bool enabled) { _diagnosticsEnabled.store(enabled); }
+
+    /**
+     * @brief Check if diagnostics are enabled
+     */
+    bool IsDiagnosticsEnabled() const { return _diagnosticsEnabled.load(); }
+
+    /**
+     * @brief Generate comprehensive diagnostic report
+     */
+    std::string GenerateDiagnosticReport() const;
+
+    /**
+     * @brief Get worker diagnostic information
+     */
+    std::vector<std::string> GetWorkerDiagnostics() const;
+
+    /**
+     * @brief Manually trigger deadlock check
+     */
+    bool CheckForDeadlock();
 
 private:
     uint32 SelectWorkerRoundRobin();

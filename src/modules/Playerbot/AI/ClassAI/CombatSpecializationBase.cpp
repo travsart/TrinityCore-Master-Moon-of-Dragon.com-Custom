@@ -431,7 +431,7 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyEnemies(float range) con
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -474,7 +474,7 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyAllies(float range) cons
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)

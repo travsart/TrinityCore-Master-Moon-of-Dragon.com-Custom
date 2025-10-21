@@ -206,7 +206,7 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         player->GetPosition(), 50.0f);
 
     // Process results (replace old loop)

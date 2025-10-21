@@ -398,7 +398,7 @@ void AdvancedBehaviorManager::HandleTrashPull()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), 30.0f);
 
     // Resolve GUIDs to Creature pointers and find trash to pull
@@ -463,7 +463,7 @@ void AdvancedBehaviorManager::HandlePatrolAvoidance()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), 40.0f);
 
     // Resolve GUIDs to Creature pointers and detect patrols
@@ -590,7 +590,7 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 m_bot->GetPosition(), 20.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -662,7 +662,7 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 carrier->GetPosition(), 15.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -768,7 +768,7 @@ void AdvancedBehaviorManager::PrioritizeHealers()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 m_bot->GetPosition(), 40.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -830,7 +830,7 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 m_bot->GetPosition(), 50.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -981,7 +981,7 @@ void AdvancedBehaviorManager::DiscoverFlightPaths()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), 50.0f);
 
     // Resolve GUIDs to Creature pointers and find flight masters
@@ -1295,7 +1295,7 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 m_bot->GetPosition(), 40.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -1428,7 +1428,7 @@ void AdvancedBehaviorManager::ScanForRares()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), 100.0f);
 
     // Resolve GUIDs to Creature pointers and scan for rares
@@ -1476,7 +1476,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
     }
 
     // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         m_bot->GetPosition(), 50.0f);
 
     // Resolve GUIDs to GameObject pointers and scan for treasures

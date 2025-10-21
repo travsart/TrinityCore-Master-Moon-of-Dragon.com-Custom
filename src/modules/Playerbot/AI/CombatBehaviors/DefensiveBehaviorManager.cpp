@@ -1051,7 +1051,7 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Count enemies

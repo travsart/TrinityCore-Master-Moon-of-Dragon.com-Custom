@@ -904,7 +904,7 @@ Creature* DeathRecoveryManager::FindNearestSpiritHealer() const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), m_config.spiritHealerSearchRadius);
 
     // Process results (replace old loop)

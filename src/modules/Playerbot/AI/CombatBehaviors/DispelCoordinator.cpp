@@ -951,7 +951,7 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
 
     // Query nearby creature GUIDs (lock-free!)
     float searchRange = static_cast<float>(m_config.maxPurgeRange);
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), searchRange);
 
     // Resolve GUIDs to Unit pointers and check for enemies

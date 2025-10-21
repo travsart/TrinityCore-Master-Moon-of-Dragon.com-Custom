@@ -1047,7 +1047,7 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1103,7 +1103,7 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Process results (replace old loop)

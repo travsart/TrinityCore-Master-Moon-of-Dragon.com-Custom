@@ -262,7 +262,7 @@ private:
     void UpdateAugmentationRotation(::Unit* target);
 
     // Essence management system
-    void UpdateEssenceManagement();
+    void UpdateEssenceManagement(::Unit* target);  // DEADLOCK FIX: Pass target parameter
     void GenerateEssence(uint32 amount);
     void SpendEssence(uint32 amount);
     bool HasEssence(uint32 required = 1);

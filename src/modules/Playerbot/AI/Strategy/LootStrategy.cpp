@@ -24,6 +24,7 @@
 #include "LootMgr.h"
 #include "MotionMaster.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include <unordered_map>  // For distance map in PrioritizeLootTargets
 
 namespace Playerbot
 {
@@ -247,30 +248,22 @@ std::vector<ObjectGuid> LootStrategy::FindLootableObjects(BotAI* ai, float maxDi
             return lootableObjects;
     }
 
-    // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
-        bot->GetPosition(), maxDistance);
+    // Query nearby GameObjects (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), maxDistance);
 
-    // Resolve GUIDs to GameObject pointers
-    for (ObjectGuid guid : nearbyGuids)
+    // Filter lootable objects using snapshot data
+    for (auto const& snapshot : nearbyObjects)
     {
-        GameObject* object = map->GetGameObject(guid);
-        if (!object)
+        if (!snapshot.isSpawned)
             continue;
 
-        // Check if object is lootable (chests, herbs, mining nodes)
-        GameobjectTypes type = object->GetGoType();
-        if (type != GAMEOBJECT_TYPE_CHEST &&
-            type != GAMEOBJECT_TYPE_GOOBER &&
-            type != GAMEOBJECT_TYPE_FISHINGHOLE)
-            continue;
-
-        // Check if object is ready to use
-        if (!object->isSpawned())
+        // Check if object is lootable container
+        if (!snapshot.isLootContainer)
             continue;
 
         // Add to lootable list
-        lootableObjects.push_back(object->GetGUID());
+        lootableObjects.push_back(snapshot.guid);
     }
 
     return lootableObjects;
@@ -282,18 +275,41 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
         return false;
 
     Player* bot = ai->GetBot();
-
-    Creature* creature = ObjectAccessor::GetCreature(*bot, corpseGuid);
-    if (!creature || !creature->isDead())
+    Map* map = bot->GetMap();
+    if (!map)
         return false;
 
-    // Check distance
-    float distance = bot->GetDistance(creature);
+    // DEADLOCK FIX: Use spatial grid to validate corpse state without pointer access
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return false;
+
+    // Query nearby creatures to find our target
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 50.0f);
+
+    // Find the corpse in snapshots
+    DoubleBufferedSpatialGrid::CreatureSnapshot const* corpseSnapshot = nullptr;
+    for (auto const& snapshot : nearbyCreatures)
+    {
+        if (snapshot.guid == corpseGuid)
+        {
+            corpseSnapshot = &snapshot;
+            break;
+        }
+    }
+
+    // Validate corpse exists and is dead
+    if (!corpseSnapshot || !corpseSnapshot->isDead)
+        return false;
+
+    // Check distance using snapshot position
+    float distance = bot->GetExactDist(corpseSnapshot->position);
     if (distance > INTERACTION_DISTANCE)
     {
-        // Move closer
+        // Move closer using snapshot position
         Position pos;
-        pos.Relocate(creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ());
+        pos.Relocate(corpseSnapshot->position);
         bot->GetMotionMaster()->MovePoint(0, pos);
 
         TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to corpse at distance {:.1f}",
@@ -301,13 +317,19 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
         return false;
     }
 
+    // THREAD-SAFE: Resolve GUID only after validation (main thread context)
+    // This is safe because UpdateBehavior runs on main thread for strategies
+    Creature* creature = ObjectAccessor::GetCreature(*bot, corpseGuid);
+    if (!creature)
+        return false;
+
     // Get the loot and send it to bot
     if (creature->m_loot)
     {
         bot->SendLoot(*creature->m_loot, false);
 
         TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} looting corpse {}",
-                     bot->GetName(), creature->GetEntry());
+                     bot->GetName(), corpseSnapshot->entry);
         return true;
     }
 
@@ -320,18 +342,41 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         return false;
 
     Player* bot = ai->GetBot();
-
-    GameObject* object = ObjectAccessor::GetGameObject(*bot, objectGuid);
-    if (!object)
+    Map* map = bot->GetMap();
+    if (!map)
         return false;
 
-    // Check distance
-    float distance = bot->GetDistance(object);
+    // DEADLOCK FIX: Use spatial grid to validate object state without pointer access
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return false;
+
+    // Query nearby game objects to find our target
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 50.0f);
+
+    // Find the object in snapshots
+    DoubleBufferedSpatialGrid::GameObjectSnapshot const* objectSnapshot = nullptr;
+    for (auto const& snapshot : nearbyObjects)
+    {
+        if (snapshot.guid == objectGuid)
+        {
+            objectSnapshot = &snapshot;
+            break;
+        }
+    }
+
+    // Validate object exists and is spawned
+    if (!objectSnapshot || !objectSnapshot->isSpawned)
+        return false;
+
+    // Check distance using snapshot position
+    float distance = bot->GetExactDist(objectSnapshot->position);
     if (distance > INTERACTION_DISTANCE)
     {
-        // Move closer
+        // Move closer using snapshot position
         Position pos;
-        pos.Relocate(object->GetPositionX(), object->GetPositionY(), object->GetPositionZ());
+        pos.Relocate(objectSnapshot->position);
         bot->GetMotionMaster()->MovePoint(0, pos);
 
         TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f}",
@@ -339,11 +384,17 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         return false;
     }
 
+    // THREAD-SAFE: Resolve GUID only after validation (main thread context)
+    // This is safe because UpdateBehavior runs on main thread for strategies
+    GameObject* object = ObjectAccessor::GetGameObject(*bot, objectGuid);
+    if (!object)
+        return false;
+
     // Use the object (opens loot)
     object->Use(bot);
 
     TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} looting object {}",
-                 bot->GetName(), object->GetEntry());
+                 bot->GetName(), objectSnapshot->entry);
 
     return true;
 }
@@ -381,32 +432,51 @@ std::vector<ObjectGuid> LootStrategy::PrioritizeLootTargets(BotAI* ai, std::vect
         return targets;
 
     Player* bot = ai->GetBot();
+    Map* map = bot->GetMap();
+    if (!map)
+        return targets;
+
+    // DEADLOCK FIX: Build distance map from snapshots instead of resolving GUIDs in lambda
+    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+    if (!spatialGrid)
+        return targets;
+
+    // Query all nearby entities once (lock-free!)
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 50.0f);
+    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 50.0f);
+
+    // Build distance map using snapshot positions
+    std::unordered_map<ObjectGuid, float> distanceMap;
+
+    for (auto const& snapshot : nearbyCreatures)
+    {
+        float distance = bot->GetExactDist(snapshot.position);
+        distanceMap[snapshot.guid] = distance;
+    }
+
+    for (auto const& snapshot : nearbyObjects)
+    {
+        float distance = bot->GetExactDist(snapshot.position);
+        distanceMap[snapshot.guid] = distance;
+    }
+
+    // Sort targets by distance (closest first) using pre-computed distances
     std::vector<ObjectGuid> prioritized = targets;
-
-    // Sort by distance (closest first)
     std::sort(prioritized.begin(), prioritized.end(),
-        [bot](ObjectGuid const& a, ObjectGuid const& b) -> bool
+        [&distanceMap](ObjectGuid const& a, ObjectGuid const& b) -> bool
         {
-            WorldObject* objA = nullptr;
-            WorldObject* objB = nullptr;
+            auto itA = distanceMap.find(a);
+            auto itB = distanceMap.find(b);
 
-            if (a.IsCreature())
-                objA = ObjectAccessor::GetCreature(*bot, a);
-            else if (a.IsGameObject())
-                objA = ObjectAccessor::GetGameObject(*bot, a);
-
-            if (b.IsCreature())
-                objB = ObjectAccessor::GetCreature(*bot, b);
-            else if (b.IsGameObject())
-                objB = ObjectAccessor::GetGameObject(*bot, b);
-
-            if (!objA || !objB)
+            // If either GUID not found in distance map, deprioritize it
+            if (itA == distanceMap.end())
                 return false;
+            if (itB == distanceMap.end())
+                return true;
 
-            float distA = bot->GetDistance(objA);
-            float distB = bot->GetDistance(objB);
-
-            return distA < distB;
+            return itA->second < itB->second;
         });
 
     return prioritized;

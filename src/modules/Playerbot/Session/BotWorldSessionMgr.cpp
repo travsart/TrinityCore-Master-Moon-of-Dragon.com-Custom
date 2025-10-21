@@ -17,6 +17,7 @@
 #include "Config.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Spatial/SpatialGridManager.h"
+#include "../Spatial/SpatialGridScheduler.h"
 #include <chrono>
 #include <queue>
 
@@ -374,6 +375,14 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
+    // DEADLOCK FIX: Update all spatial grids ONCE before bot updates
+    // This prevents 25+ threads from all trying to update simultaneously
+    // Single, controlled update point = no contention = no deadlock
+    if (_tickCounter % 2 == 0)  // Update every 100ms (every 2 ticks at 50ms/tick)
+    {
+        sSpatialGridScheduler.UpdateAllGrids(diff);
+    }
+
     std::vector<std::pair<ObjectGuid, std::shared_ptr<BotSession>>> sessionsToUpdate;
     std::vector<ObjectGuid> sessionsToRemove;
     uint32 botsSkipped = 0;
@@ -492,6 +501,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // Workers now create without affinity and OS scheduler handles CPU assignment
     bool useThreadPool = serverReady && !sessionsToUpdate.empty();
     std::vector<std::future<void>> futures;
+    std::vector<ObjectGuid> futureGuids;  // Track which GUID corresponds to which future
 
     // Cache member variables before lambda capture to avoid threading issues
     bool enterpriseMode = _enterpriseMode;
@@ -500,6 +510,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     if (useThreadPool)
     {
         futures.reserve(sessionsToUpdate.size());
+        futureGuids.reserve(sessionsToUpdate.size());
     }
 
     for (auto& [guid, botSession] : sessionsToUpdate)
@@ -514,6 +525,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Define the update logic (will be used in both parallel and sequential paths)
         auto updateLogic = [guid, botSession, diff, currentTime, enterpriseMode, tickCounter, &botsUpdated, &disconnectionQueue, &disconnectionMutex]()
             {
+                TC_LOG_TRACE("playerbot.session.task", "🔹 TASK START for bot {}", guid.ToString());
                 try
                 {
                     // Create PacketFilter for bot session
@@ -527,12 +539,16 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     } filter(botSession.get());
 
                     // Update session
-                    if (!botSession->Update(diff, filter))
+                    TC_LOG_TRACE("playerbot.session.update", "📋 Starting Update() for bot {}", guid.ToString());
+                    bool updateResult = botSession->Update(diff, filter);
+                    TC_LOG_TRACE("playerbot.session.update", "📋 Update() returned {} for bot {}", updateResult, guid.ToString());
+
+                    if (!updateResult)
                     {
                         TC_LOG_WARN("module.playerbot.session", "🔧 Bot update failed: {}", guid.ToString());
                         std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                         disconnectionQueue.push(guid);
-                        return;
+                        return;  // ← CRITICAL: Early return means promise NEVER set!
                     }
 
                     botsUpdated.fetch_add(1, std::memory_order_relaxed);
@@ -598,6 +614,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                     disconnectionQueue.push(guid);
                 }
+
+                TC_LOG_TRACE("playerbot.session.task", "🔹 TASK END for bot {}", guid.ToString());
             };
 
         // Execute either parallel (ThreadPool) or sequential (direct call)
@@ -611,6 +629,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
                 auto future = Performance::GetThreadPool().Submit(taskPriority, updateLogic);
                 futures.push_back(std::move(future));
+                futureGuids.push_back(guid);  // Track GUID for this future
+                TC_LOG_TRACE("playerbot.session.submit", "📤 Submitted task {} for bot {}", futures.size() - 1, guid.ToString());
             }
             catch (...)
             {
@@ -626,22 +646,68 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
+    // CRITICAL FIX: Wake all workers BEFORE waiting on futures to prevent deadlock
+    // When batch-submitting many tasks, individual Submit() wake calls may not wake
+    // enough workers due to race conditions. This ensures ALL workers are processing tasks.
+    if (useThreadPool && !futures.empty())
+    {
+        Performance::GetThreadPool().WakeAllWorkers();
+    }
+
     // SYNCHRONIZATION BARRIER: Wait for all parallel tasks to complete
     // This ensures all bot updates finish before proceeding to cleanup phase
     // future.get() also propagates exceptions from worker threads
-    for (auto& future : futures)
+    //
+    // CRITICAL FIX: Use wait_for() with timeout and retry with WakeAllWorkers()
+    // Problem: Workers may finish tasks and sleep BEFORE main thread reaches future.get()
+    // Solution: Timeout + wake + retry loop ensures futures eventually complete
+    for (size_t i = 0; i < futures.size(); ++i)
     {
-        try
+        auto& future = futures[i];
+        bool completed = false;
+        uint32 retries = 0;
+        constexpr uint32 MAX_RETRIES = 100;  // 100 * 100ms = 10 seconds max wait
+        constexpr auto TIMEOUT = std::chrono::milliseconds(100);
+
+        while (!completed && retries < MAX_RETRIES)
         {
-            future.get(); // Wait for task completion + exception propagation
+            auto status = future.wait_for(TIMEOUT);
+
+            if (status == std::future_status::ready)
+            {
+                completed = true;
+                try
+                {
+                    future.get(); // Get result + exception propagation
+                }
+                catch (std::exception const& e)
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 ThreadPool task failed: {}", e.what());
+                }
+                catch (...)
+                {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 ThreadPool task failed with unknown exception");
+                }
+            }
+            else
+            {
+                // Future not ready - wake all workers and retry
+                ++retries;
+                if (retries % 5 == 0)  // Every 500ms, wake workers
+                {
+                    TC_LOG_WARN("module.playerbot.session",
+                        "🔧 Future {} of {} (bot {}) not ready after {}ms, waking workers (attempt {}/{})",
+                        i + 1, futures.size(), futureGuids[i].ToString(), retries * 100, retries, MAX_RETRIES);
+                    Performance::GetThreadPool().WakeAllWorkers();
+                }
+            }
         }
-        catch (std::exception const& e)
+
+        if (!completed)
         {
-            TC_LOG_ERROR("module.playerbot.session", "🔧 ThreadPool task failed: {}", e.what());
-        }
-        catch (...)
-        {
-            TC_LOG_ERROR("module.playerbot.session", "🔧 ThreadPool task failed with unknown exception");
+            TC_LOG_FATAL("module.playerbot.session",
+                "🔧 DEADLOCK DETECTED: Future {} of {} (bot {}) did not complete after {} seconds!",
+                i + 1, futures.size(), futureGuids[i].ToString(), (MAX_RETRIES * 100) / 1000);
         }
     }
 

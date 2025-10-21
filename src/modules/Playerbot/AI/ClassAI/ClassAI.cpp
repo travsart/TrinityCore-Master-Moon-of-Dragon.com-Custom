@@ -409,7 +409,7 @@ void ClassAI::UpdateTargeting()
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and find nearest enemy

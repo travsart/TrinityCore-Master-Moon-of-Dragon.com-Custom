@@ -481,7 +481,7 @@ std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic
@@ -535,7 +535,7 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic
@@ -863,7 +863,7 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic
@@ -908,7 +908,7 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic

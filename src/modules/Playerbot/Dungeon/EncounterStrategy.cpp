@@ -1210,7 +1210,7 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
+// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
                 player->GetPosition(), 15.0f);
 
             for (ObjectGuid guid : nearbyGuids)

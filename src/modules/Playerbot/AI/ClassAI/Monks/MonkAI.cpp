@@ -986,7 +986,7 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1040,7 +1040,7 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1090,7 +1090,7 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

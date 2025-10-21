@@ -431,7 +431,7 @@ bool ProtectionSpecialization::ShouldCastThunderClap()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 10.0f);
 
     // Process results (replace old loop)
@@ -608,7 +608,7 @@ void ProtectionSpecialization::UpdateThreatList()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -663,7 +663,7 @@ std::vector<Unit*> ProtectionSpecialization::GetThreatTargets()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -925,7 +925,7 @@ bool ProtectionSpecialization::ShouldUseSpellReflection()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 20.0f);
 
     // Process results (replace old loop)

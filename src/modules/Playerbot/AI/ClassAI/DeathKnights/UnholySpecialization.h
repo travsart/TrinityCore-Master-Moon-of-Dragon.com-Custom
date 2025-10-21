@@ -76,7 +76,7 @@ public:
 private:
     // Unholy-specific mechanics
     void UpdateUnholyRotation();
-    void UpdateGhoulManagement();
+    void UpdateGhoulManagement(::Unit* target);  // DEADLOCK FIX: Pass target parameter
     void UpdateSuddenDoomProcs();
     bool ShouldCastScourgeStrike(::Unit* target);
     bool ShouldCastDeathCoil(::Unit* target);
@@ -90,11 +90,11 @@ private:
     bool HandleFallbackRotation(::Unit* target);
 
     // Combat management helpers
-    bool HandleEmergencySurvival();
+    bool HandleEmergencySurvival(::Unit* target);
     bool HandleMinionManagement();
     bool HandleUtilitySpells(::Unit* target);
     bool HandleDefensiveCooldowns();
-    void UpdateCombatPhase();
+    void UpdateCombatPhase(::Unit* target);
     void UpdateTargetPrioritization();
     void UpdateThreatManagement();
 
@@ -110,7 +110,7 @@ private:
     void UpdatePetManagement();
     void SummonGhoul();
     void CommandGhoul(::Unit* target);
-    void CommandGhoulIfNeeded();
+    void CommandGhoulIfNeeded(::Unit* target);  // DEADLOCK FIX: Pass target parameter
     bool HasActiveGhoul();
     void ManageGhoulHealth();
 

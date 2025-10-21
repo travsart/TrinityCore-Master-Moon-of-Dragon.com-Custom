@@ -690,7 +690,7 @@ private:
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
             if (spatialGrid)
             {
-                auto guids = spatialGrid->QueryNearbyCreatures(*this->GetBot(), 8.0f);
+                auto guids = spatialGrid->QueryNearbyCreatureGuids(*this->GetBot(), 8.0f);
                 for (ObjectGuid guid : guids)
                 {
                     if (Creature* creature = ObjectAccessor::GetCreature(*this->GetBot(), guid))

@@ -5,6 +5,7 @@
  */
 
 #include "ThreadPool.h"
+#include "DeadlockDetector.h"
 #include "../../Config/PlayerbotConfig.h"
 #include "Log.h"
 
@@ -175,6 +176,9 @@ WorkerThread::WorkerThread(ThreadPool* pool, uint32 workerId, uint32 cpuCore)
     // CRITICAL FIX: Thread is NOT started in constructor to prevent 60s hang
     // Thread will be started explicitly by calling Start() after all workers are constructed
     // This prevents race conditions and thread startup storms during initialization
+
+    // Initialize diagnostics if enabled
+    InitializeDiagnostics();
 }
 
 WorkerThread::~WorkerThread()
@@ -218,9 +222,16 @@ void WorkerThread::Start()
 
 void WorkerThread::Run()
 {
+    // Set initial state
+    if (_diagnostics)
+        WORKER_SET_STATE(_diagnostics, INITIALIZING);
+
     // CRITICAL FIX: Add small startup delay to prevent thread storm
     // Stagger thread startup by worker ID to reduce contention
     std::this_thread::sleep_for(std::chrono::milliseconds(_workerId * 5));
+
+    if (_diagnostics)
+        WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
 
     auto lastActiveTime = std::chrono::steady_clock::now();
 
@@ -238,10 +249,16 @@ void WorkerThread::Run()
                 lastActiveTime = std::chrono::steady_clock::now();
             }
             // Try to steal work from other workers (check pool not shutting down first)
-            else if (!_pool->IsShuttingDown() && _pool->GetConfiguration().enableWorkStealing && TryStealTask())
+            else if (!_pool->IsShuttingDown() && _pool->GetConfiguration().enableWorkStealing)
             {
-                didWork = true;
-                lastActiveTime = std::chrono::steady_clock::now();
+                if (_diagnostics)
+                    WORKER_SET_STATE(_diagnostics, STEALING);
+
+                if (TryStealTask())
+                {
+                    didWork = true;
+                    lastActiveTime = std::chrono::steady_clock::now();
+                }
             }
         }
         catch (std::exception const& e)
@@ -250,6 +267,11 @@ void WorkerThread::Run()
             // NOTE: Cannot use TC_LOG here as it might not be initialized
             // Error will be recorded in metrics instead
             _metrics.tasksCompleted.fetch_add(1, std::memory_order_relaxed); // Count as completed but failed
+
+            if (_diagnostics)
+            {
+                _diagnostics->tasksFailed.fetch_add(1, std::memory_order_relaxed);
+            }
         }
 
         if (!didWork)
@@ -261,8 +283,16 @@ void WorkerThread::Run()
 
             // Sleep if no work available
             Sleep();
+
+            // After waking, go back to checking queues
+            if (_diagnostics)
+                WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
         }
     }
+
+    // Shutting down
+    if (_diagnostics)
+        WORKER_SET_STATE(_diagnostics, SHUTTING_DOWN);
 }
 
 bool WorkerThread::TryExecuteTask()
@@ -273,17 +303,39 @@ bool WorkerThread::TryExecuteTask()
         Task* task = nullptr;
         if (_localQueues[i].Pop(task) && task)
         {
+            if (_diagnostics)
+                WORKER_SET_STATE(_diagnostics, EXECUTING);
+
             auto startTime = std::chrono::steady_clock::now();
 
             // Execute task
             task->Execute();
 
             auto endTime = std::chrono::steady_clock::now();
-            auto workTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+            auto workTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 
             // Update metrics
             _metrics.tasksCompleted.fetch_add(1, std::memory_order_relaxed);
-            _metrics.totalWorkTime.fetch_add(workTime, std::memory_order_relaxed);
+            _metrics.totalWorkTime.fetch_add(workTime.count(), std::memory_order_relaxed);
+
+            // Update diagnostics
+            if (_diagnostics)
+            {
+                _diagnostics->tasksExecuted.fetch_add(1, std::memory_order_relaxed);
+                _diagnostics->executionTime.Record(workTime);
+
+                // Record queue wait time if available
+                auto queueTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                    task->startedAt - task->submittedAt);
+                _diagnostics->queueWaitTime.Record(queueTime);
+
+                // Record total latency
+                auto totalLatency = std::chrono::duration_cast<std::chrono::microseconds>(
+                    task->completedAt - task->submittedAt);
+                _diagnostics->taskLatency.Record(totalLatency);
+
+                WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
+            }
 
             // Notify pool
             _pool->RecordTaskCompletion(task);
@@ -299,6 +351,7 @@ bool WorkerThread::TryStealTask()
 {
     uint32 attempts = 0;
     uint32 maxAttempts = _pool->GetConfiguration().maxStealAttempts;
+    uint32 yieldsPerAttempt = 1;  // Start with 1 yield
 
     while (attempts < maxAttempts)
     {
@@ -307,13 +360,26 @@ bool WorkerThread::TryStealTask()
         // Get random worker to steal from
         uint32 victimId = GetRandomWorkerIndex();
         if (victimId == _workerId)
+        {
+            ++attempts;
             continue;
+        }
 
         WorkerThread* victim = _pool->GetWorker(victimId);
         if (!victim)
+        {
+            ++attempts;
             continue;
+        }
 
-        // Try to steal from each priority level
+        // Check if victim is sleeping (likely has no work)
+        if (victim->_sleeping.load(std::memory_order_relaxed))
+        {
+            ++attempts;
+            continue;  // Skip sleeping workers
+        }
+
+        // Try to steal from each priority level (highest priority first)
         for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
         {
             Task* task = nullptr;
@@ -340,10 +406,28 @@ bool WorkerThread::TryStealTask()
 
         ++attempts;
 
-        // Exponential backoff
+        // CRITICAL FIX D: Replace CV wait with yield-based backoff
+        // This prevents deadlock when all threads enter backoff simultaneously
+        // Using yield instead of condition variable eliminates the 1ms CV wait deadlock
         if (attempts < maxAttempts)
         {
-            std::this_thread::yield();
+            // Progressive yield strategy - more yields on repeated failures
+            for (uint32 y = 0; y < yieldsPerAttempt; ++y)
+            {
+                // Check for shutdown or new work before each yield
+                if (!_running.load(std::memory_order_relaxed) ||
+                    _pool->IsShuttingDown() ||
+                    !_localQueues[0].Empty())  // Check CRITICAL queue for urgent work
+                {
+                    return false;  // Exit early if shutdown or urgent work
+                }
+
+                // Yield CPU to other threads
+                std::this_thread::yield();
+            }
+
+            // Exponentially increase yields (cap at 8 to prevent excessive spinning)
+            yieldsPerAttempt = std::min(yieldsPerAttempt * 2, 8u);
         }
     }
 
@@ -358,11 +442,16 @@ bool WorkerThread::SubmitLocal(Task* task, TaskPriority priority)
 
 void WorkerThread::Wake()
 {
-    if (_sleeping.load(std::memory_order_relaxed))
-    {
-        std::lock_guard<std::mutex> lock(_wakeMutex);
-        _wakeCv.notify_one();
-    }
+    // CRITICAL FIX B: Acquire lock BEFORE checking _sleeping flag
+    // This prevents lost wake signals when Sleep() sets flag after Wake() checks
+    std::lock_guard<std::mutex> lock(_wakeMutex);
+
+    // Clear sleeping flag under lock to ensure it's seen by Sleep()
+    _sleeping.store(false, std::memory_order_relaxed);
+    // NOTE: _stealBackoff removed in FIX D - no longer using CV-based backoff
+
+    // Always notify - even if not currently sleeping, thread might be about to sleep
+    _wakeCv.notify_one();
 }
 
 void WorkerThread::Shutdown()
@@ -386,28 +475,74 @@ void WorkerThread::SetAffinity()
 #endif
 }
 
+bool WorkerThread::HasWorkAvailable() const
+{
+    // Check own queues first (fast path)
+    for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
+    {
+        if (!_localQueues[i].Empty())
+            return true;
+    }
+
+    // Check if work stealing is enabled and other workers have work
+    if (_pool->GetConfiguration().enableWorkStealing)
+    {
+        for (uint32 i = 0; i < _pool->GetWorkerCount(); ++i)
+        {
+            if (i == _workerId)
+                continue;  // Skip self
+
+            WorkerThread* other = _pool->GetWorker(i);
+            if (!other)
+                continue;
+
+            // Check if other worker has stealable work
+            for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
+            {
+                if (!other->_localQueues[j].Empty())
+                    return true;  // Work available to steal
+            }
+        }
+    }
+
+    return false;  // No work available anywhere
+}
+
 void WorkerThread::Sleep()
 {
     // CRITICAL FIX: Add safety check to prevent blocking during shutdown
     if (!_running.load(std::memory_order_relaxed) || _pool->IsShuttingDown())
         return;
 
+    // CRITICAL FIX: Acquire lock BEFORE setting sleeping flag
+    // This ensures Wake() can't check the flag between setting it and waiting
+    std::unique_lock<std::mutex> lock(_wakeMutex);
+
+    // Set sleeping flag AFTER acquiring lock
     _sleeping.store(true, std::memory_order_relaxed);
 
-    // Use try-lock to prevent deadlock during initialization
-    std::unique_lock<std::mutex> lock(_wakeMutex, std::try_to_lock);
-    if (lock.owns_lock())
+    // CRITICAL FIX #3: Use comprehensive work detection
+    // Check both local queues and stealable work from other workers
+    bool hasWork = HasWorkAvailable();
+
+    if (hasWork)
     {
-        // Wait with timeout, but check running state frequently
-        _wakeCv.wait_for(lock, _pool->GetConfiguration().workerSleepTime, [this]() {
-            return !_running.load(std::memory_order_relaxed) || _pool->IsShuttingDown();
-        });
+        // Work available, don't sleep
+        _sleeping.store(false, std::memory_order_relaxed);
+        return;
     }
-    else
-    {
-        // Couldn't get lock, just yield instead of blocking
-        std::this_thread::yield();
-    }
+
+    // Wait with timeout, check multiple conditions for wake-up
+    // CRITICAL FIX: Check _sleeping flag in predicate (cleared by Wake())
+    _wakeCv.wait_for(lock, _pool->GetConfiguration().workerSleepTime, [this]() {
+        // Wake conditions:
+        // 1. _sleeping cleared by Wake() (new work submitted)
+        // 2. Thread shutdown requested
+        // 3. Pool shutting down
+        return !_sleeping.load(std::memory_order_relaxed) ||
+               !_running.load(std::memory_order_relaxed) ||
+               _pool->IsShuttingDown();
+    });
 
     _sleeping.store(false, std::memory_order_relaxed);
 }
@@ -417,6 +552,15 @@ uint32 WorkerThread::GetRandomWorkerIndex() const
     static thread_local std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<uint32> dist(0, _pool->GetWorkerCount() - 1);
     return dist(rng);
+}
+
+void WorkerThread::InitializeDiagnostics()
+{
+    if (_pool && _pool->IsDiagnosticsEnabled())
+    {
+        _diagnostics = std::make_unique<WorkerDiagnostics>();
+        _diagnostics->SetState(WorkerState::UNINITIALIZED, "WorkerThread::WorkerThread");
+    }
 }
 
 // ============================================================================
@@ -678,6 +822,32 @@ double ThreadPool::GetThroughput() const
     // Calculate throughput over last second
     // This is a simplified calculation - in production, you'd want a sliding window
     return static_cast<double>(completed);
+}
+
+void ThreadPool::WakeAllWorkers()
+{
+    // CRITICAL FIX: Wake ALL workers to prevent batch-submission deadlock
+    //
+    // Problem: When submitting many tasks rapidly (e.g., 100+ bot updates):
+    // 1. Submit task 1 → Wake worker 1
+    // 2. Submit task 2 → Wake worker 1 (round-robin)
+    // 3. Worker 1 completes task 1 → goes back to Sleep()
+    // 4. Submit task 50 → Wake worker 2
+    // 5. Main thread calls future.get() → BLOCKS
+    // 6. DEADLOCK: Workers sleeping with tasks still in queues
+    //
+    // Solution: After batch submission, wake ALL workers before future.get()
+    // This ensures maximum parallelism and prevents the race condition
+
+    for (auto& worker : _workers)
+    {
+        if (worker)
+        {
+            worker->Wake();
+        }
+    }
+
+    TC_LOG_TRACE("playerbot.threadpool", "WakeAllWorkers called - woke {} workers", _workers.size());
 }
 
 uint32 ThreadPool::SelectWorkerRoundRobin()

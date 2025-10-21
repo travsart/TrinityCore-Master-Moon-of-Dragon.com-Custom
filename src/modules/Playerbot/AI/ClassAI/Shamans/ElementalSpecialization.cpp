@@ -284,7 +284,7 @@ uint32 ElementalSpecialization::GetOptimalFireTotem()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -467,7 +467,7 @@ bool ElementalSpecialization::ShouldCastThunderstorm()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), THUNDERSTORM_RANGE);
 
     // Process results (replace old loop)
@@ -599,7 +599,7 @@ std::vector<::Unit*> ElementalSpecialization::GetChainLightningTargets(::Unit* p
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         primary->GetPosition(), CHAIN_LIGHTNING_RANGE);
 
     // Process results (replace old loop)

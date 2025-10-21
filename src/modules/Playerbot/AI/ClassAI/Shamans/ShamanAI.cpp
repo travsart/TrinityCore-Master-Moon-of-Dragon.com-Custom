@@ -779,7 +779,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)
@@ -1313,7 +1313,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -1776,7 +1776,7 @@ bool ShamanAI::ShouldUseAscendance() const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)
@@ -1883,7 +1883,7 @@ bool ShamanAI::HandleCrashLightning()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 8.0f);
 
     // Process results (replace old searcher logic)
@@ -1961,7 +1961,7 @@ bool ShamanAI::HandleEarthquake()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)

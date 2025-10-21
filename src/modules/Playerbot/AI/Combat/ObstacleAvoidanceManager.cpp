@@ -281,7 +281,7 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), context.scanRadius);
 
     // Resolve GUIDs to Unit pointers
@@ -806,7 +806,7 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
     }
 
     // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         _bot->GetPosition(), context.scanRadius);
 
     // Resolve GUIDs to GameObject pointers
@@ -860,7 +860,7 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
+// DEPRECATED:             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyDynamicObjects(
                 _bot->GetPosition(), context.scanRadius);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -943,7 +943,7 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
         if (spatialGrid)
         {
             // Query nearby GameObject GUIDs (lock-free!)
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 _bot->GetPosition(), context.scanRadius);
 
             // Resolve GUIDs to GameObject pointers

@@ -388,30 +388,31 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
             return false;
     }
 
-    // Check for quest ender NPCs (lock-free!)
+    // DEADLOCK FIX: Check for quest ender NPCs using snapshots (thread-safe!)
     Creature* questEnder = nullptr;
     float minDistance = MAX_TURNIN_DISTANCE;
 
-    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatures(
-        bot->GetPosition(), MAX_TURNIN_DISTANCE);
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        spatialGrid->QueryNearbyCreatures(bot->GetPosition(), MAX_TURNIN_DISTANCE);
 
-    for (ObjectGuid guid : creatureGuids)
+    ObjectGuid questEnderGuid;
+    for (auto const& snapshot : nearbyCreatures)
     {
-        Creature* creature = ObjectAccessor::GetCreature(*bot, guid);
-        if (!creature || !bot->CanSeeOrDetect(creature))
+        if (!snapshot.isVisible || !snapshot.hasQuestGiver)
             continue;
 
-        // Check if creature can end this quest
-        if (creature->IsQuestGiver())
+        // Check distance using snapshot position
+        float distance = bot->GetExactDist(snapshot.position);
+        if (distance < minDistance)
         {
-            float distance = bot->GetDistance(creature);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                questEnder = creature;
-            }
+            minDistance = distance;
+            questEnderGuid = snapshot.guid;
         }
     }
+
+    // Resolve GUID to pointer after loop
+    if (!questEnderGuid.IsEmpty())
+        questEnder = ObjectAccessor::GetCreature(*bot, questEnderGuid);
 
     if (questEnder)
     {

@@ -12,6 +12,7 @@
 
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "../../Spatial/DoubleBufferedSpatialGrid.h"  // For CreatureSnapshot type
 #include <memory>
 #include <vector>
 #include <unordered_set>
@@ -22,6 +23,7 @@ class Creature;
 
 namespace Playerbot
 {
+
     struct ScanResult
     {
         Unit* target = nullptr;
@@ -63,14 +65,18 @@ namespace Playerbot
         ~TargetScanner();
 
         // Main scanning functions
-        Unit* FindNearestHostile(float range = 0.0f);
-        Unit* FindBestTarget(float range = 0.0f);
-        std::vector<Unit*> FindAllHostiles(float range = 0.0f);
+        // CRITICAL DEADLOCK FIX: Return GUIDs instead of Unit* pointers
+        // Worker threads can call these methods safely without accessing Map
+        // Main thread converts GUID → Unit* and queues actions
+        ObjectGuid FindNearestHostile(float range = 0.0f);
+        ObjectGuid FindBestTarget(float range = 0.0f);
+        std::vector<ObjectGuid> FindAllHostiles(float range = 0.0f);
 
         // Target validation
         bool IsValidTarget(Unit* target) const;
         bool ShouldEngage(Unit* target) const;
         bool CanReachTarget(Unit* target) const;
+        bool IsValidTargetSnapshot(DoubleBufferedSpatialGrid::CreatureSnapshot const& creature) const;
 
         // Target prioritization
         uint8 GetTargetPriority(Unit* target) const;

@@ -499,7 +499,7 @@ namespace Playerbot
         }
 
         // Query nearby GameObject GUIDs (lock-free!)
-        std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjects(
+        std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
             m_bot->GetPosition(), searchRadius);
 
         // Resolve GUIDs to GameObject pointers and find gathering nodes

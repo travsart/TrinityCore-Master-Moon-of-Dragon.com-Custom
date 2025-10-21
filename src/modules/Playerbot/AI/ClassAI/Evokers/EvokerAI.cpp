@@ -115,7 +115,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         return;
     }
 
-    UpdateEssenceManagement();
+    UpdateEssenceManagement(target);  // DEADLOCK FIX: Pass target parameter
     UpdateEmpowermentSystem();
     UpdateAspectManagement();
 
@@ -653,25 +653,25 @@ void EvokerAI::UpdateAugmentationRotation(::Unit* target)
         CastAzureStrike(target);
 }
 
-void EvokerAI::UpdateEssenceManagement()
+void EvokerAI::UpdateEssenceManagement(::Unit* target)
 {
     // Essence regenerates naturally over time (handled in UpdateCooldowns)
+
+    // DEADLOCK FIX: Use target parameter instead of ObjectAccessor (worker thread safe)
+    if (!target || !target->IsInWorld())
+        return;
 
     // Optimize essence usage based on specialization
     if (_essence.current >= _essence.maximum * 0.9f)
     {
         // Spend excess essence
-        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), GetBot()->GetTarget());
-        if (target)
+        if (_specialization == EvokerSpec::DEVASTATION && this->CanUseAbility(DISINTEGRATE))
+            this->CastDisintegrate(target);
+        else if (_specialization == EvokerSpec::PRESERVATION)
         {
-            if (_specialization == EvokerSpec::DEVASTATION && CanUseAbility(DISINTEGRATE))
-                CastDisintegrate(target);
-            else if (_specialization == EvokerSpec::PRESERVATION)
-            {
-                ::Unit* healTarget = GetBestHealTarget();
-                if (healTarget && CanUseAbility(VERDANT_EMBRACE))
-                    CastVerdantEmbrace(healTarget);
-            }
+            ::Unit* healTarget = this->GetBestHealTarget();
+            if (healTarget && this->CanUseAbility(VERDANT_EMBRACE))
+                this->CastVerdantEmbrace(healTarget);
         }
     }
 }
@@ -947,7 +947,7 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatures(
+    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), EMPOWERED_SPELL_RANGE);
 
     // Process results (replace old loop)
@@ -1183,16 +1183,9 @@ void EvokerAI::ManageAugmentationBuffs()
 
 void EvokerAI::OptimizeResourceUsage()
 {
-    // Optimize essence usage based on situation
-    if (_essence.current >= _essence.maximum * 0.9f)
-    {
-        ::Unit* target = ObjectAccessor::GetUnit(*GetBot(), GetBot()->GetTarget());
-        if (target && _specialization == EvokerSpec::DEVASTATION)
-        {
-            if (CanUseAbility(DISINTEGRATE))
-                CastDisintegrate(target);
-        }
-    }
+    // DEADLOCK FIX: This function is deprecated - essence optimization now handled in UpdateEssenceManagement
+    // which receives target parameter from UpdateRotation (thread-safe)
+    // Keeping function for backward compatibility but not implementing Map access from worker thread
 }
 
 void EvokerAI::RecordDamageDealt(uint32 damage, ::Unit* target)
