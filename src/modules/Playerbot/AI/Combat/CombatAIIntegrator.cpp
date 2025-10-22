@@ -438,8 +438,27 @@ void CombatAIIntegrator::UpdatePositioning(uint32 diff)
 
                 if (!path.empty())
                 {
-                    _bot->GetMotionMaster()->MovePoint(0, path.back());
-                    _metrics.positionChanges++;
+                    // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+                    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+                    if (botAI && botAI->GetMovementArbiter())
+                    {
+                        bool accepted = botAI->RequestPointMovement(
+                            PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                            path.back(),
+                            "Ranged combat positioning",
+                            "CombatAIIntegrator");
+
+                        if (accepted)
+                        {
+                            _metrics.positionChanges++;
+                        }
+                    }
+                    else
+                    {
+                        // FALLBACK: Direct MotionMaster if arbiter not available
+                        _bot->GetMotionMaster()->MovePoint(0, path.back());
+                        _metrics.positionChanges++;
+                    }
                 }
             }
         }
@@ -607,7 +626,22 @@ void CombatAIIntegrator::UpdatePathfinding(uint32 diff)
         if (_obstacleAvoidance->HasObstaclesAhead())
         {
             Position avoidancePos = _obstacleAvoidance->GetAvoidancePosition();
-            _bot->GetMotionMaster()->MovePoint(0, avoidancePos);
+
+            // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+            BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                    avoidancePos,
+                    "Obstacle avoidance",
+                    "CombatAIIntegrator");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                _bot->GetMotionMaster()->MovePoint(0, avoidancePos);
+            }
         }
     }
 
@@ -627,7 +661,21 @@ void CombatAIIntegrator::UpdatePathfinding(uint32 diff)
 
                 if (!path.empty())
                 {
-                    _bot->GetMotionMaster()->MovePoint(0, path.back());
+                    // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+                    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+                    if (botAI && botAI->GetMovementArbiter())
+                    {
+                        botAI->RequestPointMovement(
+                            PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                            path.back(),
+                            "Line of sight pursuit",
+                            "CombatAIIntegrator");
+                    }
+                    else
+                    {
+                        // FALLBACK: Direct MotionMaster if arbiter not available
+                        _bot->GetMotionMaster()->MovePoint(0, path.back());
+                    }
                 }
             }
         }
@@ -644,7 +692,22 @@ void CombatAIIntegrator::HandleEngagingPhase()
     if (!_bot->IsWithinMeleeRange(_currentTarget))
     {
         Position engagePos = _positioning->GetEngagementPosition(_currentTarget);
-        _bot->GetMotionMaster()->MovePoint(0, engagePos);
+
+        // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                engagePos,
+                "Melee engagement",
+                "CombatAIIntegrator");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            _bot->GetMotionMaster()->MovePoint(0, engagePos);
+        }
     }
 
     // Pre-combat buffs and preparations
@@ -687,7 +750,21 @@ void CombatAIIntegrator::HandleSustainedPhase()
     Position optimalPos = _positioning->GetOptimalPosition(_currentTarget);
     if (_bot->GetExactDist2d(&optimalPos) > 5.0f)
     {
-        _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+        // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                optimalPos,
+                "Optimal combat positioning",
+                "CombatAIIntegrator");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+        }
     }
 }
 
@@ -765,7 +842,22 @@ void CombatAIIntegrator::HandleKitingPhase()
 
     // Kiting movement
     Position kitePos = _kitingManager->GetKitePosition(_currentTarget);
-    _bot->GetMotionMaster()->MovePoint(0, kitePos);
+
+    // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        botAI->RequestPointMovement(
+            PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+            kitePos,
+            "Kiting movement",
+            "CombatAIIntegrator");
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        _bot->GetMotionMaster()->MovePoint(0, kitePos);
+    }
 
     // Ranged attacks while kiting
     if (_classAI)
@@ -794,7 +886,21 @@ void CombatAIIntegrator::HandleRepositioningPhase()
 
         if (!path.empty())
         {
-            _bot->GetMotionMaster()->MovePoint(0, path.back());
+            // PHASE 6B: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+            BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,
+                    path.back(),
+                    "Combat repositioning",
+                    "CombatAIIntegrator");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                _bot->GetMotionMaster()->MovePoint(0, path.back());
+            }
         }
     }
 }
