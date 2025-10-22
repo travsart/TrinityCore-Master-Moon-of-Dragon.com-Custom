@@ -23,9 +23,13 @@
 #include "SpellDefines.h"
 #include "Grids/Notifiers/GridNotifiers.h"
 #include "CellImpl.h"
+#include "Log.h"
 #include "../AI/BotAI.h"
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
+#include "../Movement/Arbiter/MovementArbiter.h"
+#include "../Movement/Arbiter/MovementPriorityMapper.h"
+#include "UnitAI.h"
 #include <algorithm>
 #include <random>
 
@@ -312,7 +316,29 @@ void AdvancedBehaviorManager::AvoidDangerZone(Position const& center, float radi
     {
         // Find safe position outside radius
         Position safePos = FindSafePosition(m_bot->GetPosition());
-        m_bot->GetMotionMaster()->MovePoint(0, safePos, false);
+
+        // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+        BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                safePos,
+                "Danger zone escape",
+                "AdvancedBehaviorManager");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "AdvancedBehaviorManager: Danger zone escape rejected for {} - higher priority active",
+                    m_bot->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            m_bot->GetMotionMaster()->MovePoint(0, safePos, false);
+        }
     }
 
     // Track danger zone
@@ -375,7 +401,29 @@ void AdvancedBehaviorManager::MoveToBossSafeSpot(Creature* boss)
         return;
 
     Position safePos = FindSafePosition(m_bot->GetPosition());
-    m_bot->GetMotionMaster()->MovePoint(0, safePos, false);
+
+    // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::DUNGEON_MECHANIC,
+            safePos,
+            "Boss safe spot positioning",
+            "AdvancedBehaviorManager");
+
+        if (!accepted)
+        {
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "AdvancedBehaviorManager: Boss safe spot rejected for {} - higher priority active",
+                m_bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        m_bot->GetMotionMaster()->MovePoint(0, safePos, false);
+    }
 }
 
 void AdvancedBehaviorManager::HandleTrashPull()
@@ -573,7 +621,29 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
 
     // Move to flag position and defend
     Position flagPos = flag->GetPosition();
-    m_bot->GetMotionMaster()->MovePoint(0, flagPos, false);
+
+    // PHASE 6B: Use Movement Arbiter with PVP_FLAG_CAPTURE priority (210)
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
+            flagPos,
+            "PvP flag defense",
+            "AdvancedBehaviorManager");
+
+        if (!accepted)
+        {
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "AdvancedBehaviorManager: Flag defense rejected for {} - higher priority active",
+                m_bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        m_bot->GetMotionMaster()->MovePoint(0, flagPos, false);
+    }
 
     // Attack nearby enemies
     Map* map = m_bot->GetMap();
@@ -630,7 +700,29 @@ void AdvancedBehaviorManager::AttackBase(GameObject* flag)
 
     // Approach flag and capture
     Position flagPos = flag->GetPosition();
-    m_bot->GetMotionMaster()->MovePoint(0, flagPos, false);
+
+    // PHASE 6B: Use Movement Arbiter with PVP_FLAG_CAPTURE priority (210)
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
+            flagPos,
+            "PvP flag capture",
+            "AdvancedBehaviorManager");
+
+        if (!accepted)
+        {
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "AdvancedBehaviorManager: Flag capture rejected for {} - higher priority active",
+                m_bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        m_bot->GetMotionMaster()->MovePoint(0, flagPos, false);
+    }
 
     // Interact with flag when in range
     if (m_bot->GetExactDist2d(flagPos.GetPositionX(), flagPos.GetPositionY()) < 5.0f)
@@ -645,7 +737,29 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
         return;
 
     // Follow flag carrier
-    m_bot->GetMotionMaster()->MoveFollow(carrier, 3.0f, 0.0f);
+    // PHASE 6B: Use Movement Arbiter with PVP_TACTICAL priority (120)
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        bool accepted = botAI->RequestFollowMovement(
+            PlayerBotMovementPriority::PVP_TACTICAL,
+            carrier->GetGUID(),
+            3.0f,
+            "PvP flag carrier escort",
+            "AdvancedBehaviorManager");
+
+        if (!accepted)
+        {
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "AdvancedBehaviorManager: Flag escort rejected for {} - higher priority active",
+                m_bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        m_bot->GetMotionMaster()->MoveFollow(carrier, 3.0f, 0.0f);
+    }
 
     // Attack enemies near carrier
     Map* map = m_bot->GetMap();
@@ -711,7 +825,29 @@ void AdvancedBehaviorManager::CaptureObjective(GameObject* objective)
 
     // Move to objective
     Position objPos = objective->GetPosition();
-    m_bot->GetMotionMaster()->MovePoint(0, objPos, false);
+
+    // PHASE 6B: Use Movement Arbiter with PVP_FLAG_CAPTURE priority (210)
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
+            objPos,
+            "PvP objective capture",
+            "AdvancedBehaviorManager");
+
+        if (!accepted)
+        {
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "AdvancedBehaviorManager: Objective capture rejected for {} - higher priority active",
+                m_bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        m_bot->GetMotionMaster()->MovePoint(0, objPos, false);
+    }
 
     // Interact when in range
     if (m_bot->GetExactDist2d(objPos.GetPositionX(), objPos.GetPositionY()) < 5.0f)
