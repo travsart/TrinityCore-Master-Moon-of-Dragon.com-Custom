@@ -28,12 +28,16 @@
 #include "CellImpl.h"
 #include "PathGenerator.h"
 #include "Log.h"
-#include "../../Spatial/SpatialGridManager.h"
-#include "../../Spatial/DoubleBufferedSpatialGrid.h"
-#include "DBCEnums.h"
-#include <cmath>
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/DoubleBufferedSpatialGrid.h"
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "DBCEnums.h"
+#include "SpellMgr.h"
+#include "SpellInfo.h"
 #include "ObjectAccessor.h"
+#include "UnitAI.h"
+#include <cmath>
 
 namespace Playerbot
 {
@@ -471,17 +475,48 @@ namespace Playerbot
             return false;
         }
 
-        // Clear current movement
-        player->GetMotionMaster()->Clear();
+        // PHASE 5 MIGRATION: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
+        BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,  // Priority 130 - MEDIUM tier
+                position,
+                "Combat tactical movement",
+                "CombatMovementStrategy");
 
-        // Use point movement for combat positioning
-        player->GetMotionMaster()->MovePoint(1, position);
-
-        _isMoving = true;
-        _movementTimer = 0;
-        _lastTargetPosition = position;
-
-        return true;
+            if (accepted)
+            {
+                _isMoving = true;
+                _movementTimer = 0;
+                _lastTargetPosition = position;
+                TC_LOG_DEBUG("playerbot.movement.arbiter",
+                    "CombatMovementStrategy: Bot {} tactical movement requested (Priority: 130)",
+                    player->GetName());
+                return true;
+            }
+            else
+            {
+                // Arbiter rejected - higher priority movement active (likely emergency or positioning)
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "CombatMovementStrategy: Movement rejected for bot {} - higher priority active",
+                    player->GetName());
+                return false;
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster call if arbiter not available
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "CombatMovementStrategy: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                player->GetName());
+            player->GetMotionMaster()->Clear();
+            player->GetMotionMaster()->MovePoint(1, position);
+            _isMoving = true;
+            _movementTimer = 0;
+            _lastTargetPosition = position;
+            return true;
+        }
     }
 
     bool CombatMovementStrategy::IsInCorrectPosition(Player* player, Position const& targetPosition, float tolerance) const
@@ -544,11 +579,18 @@ namespace Playerbot
 
         for (auto const& trigger : nearbyAreaTriggers)
         {
-            if (!trigger.isDangerous)
+            // Only check spell-based area triggers
+            if (trigger.spellId == 0)
                 continue;
 
+            // Check spell to determine if it's harmful
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(trigger.spellId, DIFFICULTY_NONE);
+            if (!spellInfo || spellInfo->IsPositive())
+                continue; // Friendly spell, skip
+
             // Check if we're inside the trigger's effect radius
-            if (trigger.IsInRange(playerPos))
+            float dist = playerPos.GetExactDist(trigger.position);
+            if (dist < trigger.sphereRadius)
             {
                 _lastDangerResult = true;
                 return true;
@@ -561,11 +603,14 @@ namespace Playerbot
 
         for (auto const& dynObj : nearbyDynamicObjects)
         {
-            if (!dynObj.isHostile)
-                continue;
+            // Check spell to determine if it's harmful
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj.spellId, DIFFICULTY_NONE);
+            if (!spellInfo || spellInfo->IsPositive())
+                continue; // Friendly spell, skip
 
             // Check if we're inside the spell's effect radius
-            if (dynObj.IsInRange(playerPos))
+            float dist = playerPos.GetExactDist(dynObj.position);
+            if (dist < dynObj.radius)
             {
                 _lastDangerResult = true;
                 return true;
@@ -630,11 +675,18 @@ namespace Playerbot
 
         for (auto const& trigger : nearbyAreaTriggers)
         {
-            if (!trigger.isDangerous)
+            // Only check spell-based area triggers
+            if (trigger.spellId == 0)
                 continue;
 
+            // Check spell to determine if it's harmful
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(trigger.spellId, DIFFICULTY_NONE);
+            if (!spellInfo || spellInfo->IsPositive())
+                continue; // Friendly spell, skip
+
             // Check if position is inside the trigger's effect radius
-            if (trigger.IsInRange(position))
+            float dist = position.GetExactDist(trigger.position);
+            if (dist < trigger.sphereRadius)
                 return false; // Position is dangerous
         }
 
@@ -644,11 +696,14 @@ namespace Playerbot
 
         for (auto const& dynObj : nearbyDynamicObjects)
         {
-            if (!dynObj.isHostile)
-                continue;
+            // Check spell to determine if it's harmful
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj.spellId, DIFFICULTY_NONE);
+            if (!spellInfo || spellInfo->IsPositive())
+                continue; // Friendly spell, skip
 
             // Check if position is inside the spell's effect radius
-            if (dynObj.IsInRange(position))
+            float dist = position.GetExactDist(dynObj.position);
+            if (dist < dynObj.radius)
                 return false; // Position is dangerous
         }
 

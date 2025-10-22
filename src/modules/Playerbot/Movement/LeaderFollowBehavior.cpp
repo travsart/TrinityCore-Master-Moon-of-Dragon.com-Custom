@@ -28,6 +28,11 @@
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "Arbiter/MovementArbiter.h"
+#include "Arbiter/MovementRequest.h"
+#include "Arbiter/MovementPriorityMapper.h"
+#include "UnitAI.h"
+#include "ChaseMovementGenerator.h"
 #include <cmath>
 #include <set>
 #include <unordered_map>
@@ -1315,10 +1320,41 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
                 motionMaster->Clear();
             }
 
-            motionMaster->MoveFollow(leader, followDist, followAngle);
+            // PHASE 5 MIGRATION: Use Movement Arbiter with FOLLOW priority (70)
+            BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                // Create follow movement request with angle for formation
+                MovementRequest req = MovementRequest::MakeFollowMovement(
+                    PlayerBotMovementPriority::FOLLOW,  // Priority 70 - LOW tier
+                    leader->GetGUID(),
+                    followDist,
+                    ChaseAngle(followAngle),  // Formation angle
+                    {},  // No duration limit
+                    "Following group leader in formation",
+                    "LeaderFollowBehavior");
 
-            TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
-                        bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
+                bool accepted = botAI->GetMovementArbiter()->RequestMovement(req);
+
+                if (accepted)
+                {
+                    TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                                bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
+                }
+                else
+                {
+                    TC_LOG_TRACE("playerbot.movement.arbiter",
+                        "LeaderFollowBehavior: Follow movement rejected for bot {} - higher priority active",
+                        bot->GetName());
+                }
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster call if arbiter not available
+                motionMaster->MoveFollow(leader, followDist, followAngle);
+                TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                            bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
+            }
         }
         else
         {

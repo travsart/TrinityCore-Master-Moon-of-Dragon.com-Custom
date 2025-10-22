@@ -28,6 +28,9 @@
 #include "../../Quest/QuestHubDatabase.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "UnitAI.h"
 #include <limits>
 
 namespace Playerbot
@@ -669,10 +672,36 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
             {
                 // Move closer but stay at range
                 Position pos = target->GetNearPosition(optimalRange, 0.0f);
-                bot->GetMotionMaster()->MovePoint(0, pos);
 
-                TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
-                             bot->GetName(), currentDistance, optimalRange);
+                // PHASE 5 MIGRATION: Use Movement Arbiter with QUEST priority (50)
+                BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+                if (botAI && botAI->GetMovementArbiter())
+                {
+                    bool accepted = botAI->RequestPointMovement(
+                        PlayerBotMovementPriority::QUEST,  // Priority 50 - LOW tier
+                        pos,
+                        "Quest objective positioning",
+                        "QuestStrategy");
+
+                    if (accepted)
+                    {
+                        TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
+                                     bot->GetName(), currentDistance, optimalRange);
+                    }
+                    else
+                    {
+                        TC_LOG_TRACE("playerbot.movement.arbiter",
+                            "QuestStrategy: Movement rejected for bot {} - higher priority active",
+                            bot->GetName());
+                    }
+                }
+                else
+                {
+                    // FALLBACK: Direct MotionMaster call if arbiter not available
+                    bot->GetMotionMaster()->MovePoint(0, pos);
+                    TC_LOG_ERROR("module.playerbot.quest", "🏃 EngageQuestTargets: Bot {} moving TO optimal range (from {:.1f}yd → {:.1f}yd)",
+                                 bot->GetName(), currentDistance, optimalRange);
+                }
             }
             else
             {

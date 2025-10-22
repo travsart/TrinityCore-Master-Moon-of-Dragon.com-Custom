@@ -25,6 +25,9 @@
 #include "MotionMaster.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "UnitAI.h"
 #include <unordered_map>  // For distance map in PrioritizeLootTargets
 
 namespace Playerbot
@@ -259,8 +262,8 @@ std::vector<ObjectGuid> LootStrategy::FindLootableObjects(BotAI* ai, float maxDi
         if (!snapshot.isSpawned)
             continue;
 
-        // Check if object is lootable container
-        if (!snapshot.isLootContainer)
+        // Check if object is lootable container (chest)
+        if (snapshot.goType != GAMEOBJECT_TYPE_CHEST)
             continue;
 
         // Add to lootable list
@@ -311,10 +314,36 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
         // Move closer using snapshot position
         Position pos;
         pos.Relocate(corpseSnapshot->position);
-        bot->GetMotionMaster()->MovePoint(0, pos);
 
-        TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to corpse at distance {:.1f}",
-                     bot->GetName(), distance);
+        // PHASE 5 MIGRATION: Use Movement Arbiter with LOOT priority (40)
+        BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::LOOT,  // Priority 40 - MINIMAL tier
+                pos,
+                "Moving to corpse for looting",
+                "LootStrategy");
+
+            if (accepted)
+            {
+                TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to corpse at distance {:.1f}",
+                             bot->GetName(), distance);
+            }
+            else
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "LootStrategy: Movement to corpse rejected for bot {} - higher priority active",
+                    bot->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster call if arbiter not available
+            bot->GetMotionMaster()->MovePoint(0, pos);
+            TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to corpse at distance {:.1f}",
+                         bot->GetName(), distance);
+        }
         return false;
     }
 
@@ -385,10 +414,36 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         // Move closer using snapshot position
         Position pos;
         pos.Relocate(objectSnapshot->position);
-        bot->GetMotionMaster()->MovePoint(0, pos);
 
-        TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f}",
-                     bot->GetName(), distance);
+        // PHASE 5 MIGRATION: Use Movement Arbiter with LOOT priority (40)
+        BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::LOOT,  // Priority 40 - MINIMAL tier
+                pos,
+                "Moving to object for looting",
+                "LootStrategy");
+
+            if (accepted)
+            {
+                TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f}",
+                             bot->GetName(), distance);
+            }
+            else
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "LootStrategy: Movement to object rejected for bot {} - higher priority active",
+                    bot->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster call if arbiter not available
+            bot->GetMotionMaster()->MovePoint(0, pos);
+            TC_LOG_DEBUG("module.playerbot.strategy", "LootStrategy: Bot {} moving to object at distance {:.1f}",
+                         bot->GetName(), distance);
+        }
         return false;
     }
 
