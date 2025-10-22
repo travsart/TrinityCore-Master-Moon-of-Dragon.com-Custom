@@ -33,6 +33,10 @@
 #include <mutex>
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Movement/Arbiter/MovementArbiter.h"
+#include "../../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../../BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -537,7 +541,22 @@ void MageAI::OnCombatStart(::Unit* target)
     if (_positionManager && target)
     {
         Position optimalPos = _positionManager->FindRangedPosition(target, OPTIMAL_CASTING_RANGE);
-        GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+
+        // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(GetBot()->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                optimalPos,
+                "Mage combat entry positioning",
+                "MageAI");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+        }
     }
 
     if (target)
@@ -1263,7 +1282,22 @@ void MageAI::PerformKiting(::Unit* target)
 
     // Move to kiting range
     Position kitingPos = GetOptimalPosition(target);
-    GetBot()->GetMotionMaster()->MovePoint(0, kitingPos);
+
+    // PHASE 6C: Use Movement Arbiter with KITING priority (175)
+    BotAI* botAI = dynamic_cast<BotAI*>(GetBot()->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        botAI->RequestPointMovement(
+            PlayerBotMovementPriority::KITING,
+            kitingPos,
+            "Mage kiting movement",
+            "MageAI");
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        GetBot()->GetMotionMaster()->MovePoint(0, kitingPos);
+    }
 }
 
 bool MageAI::IsInDanger()
@@ -1332,7 +1366,22 @@ void MageAI::FindSafeCastingPosition()
         return;
 
     Position safePos = _positionManager->FindSafePosition(GetBot()->GetPosition(), OPTIMAL_CASTING_RANGE);
-    GetBot()->GetMotionMaster()->MovePoint(0, safePos);
+
+    // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+    BotAI* botAI = dynamic_cast<BotAI*>(GetBot()->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        botAI->RequestPointMovement(
+            PlayerBotMovementPriority::ROLE_POSITIONING,
+            safePos,
+            "Mage safe casting position",
+            "MageAI");
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        GetBot()->GetMotionMaster()->MovePoint(0, safePos);
+    }
 }
 
 // Targeting and priorities
