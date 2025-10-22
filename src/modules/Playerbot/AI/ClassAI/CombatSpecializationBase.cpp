@@ -26,7 +26,11 @@
 #include <algorithm>
 #include <numeric>
 #include "../../Spatial/SpatialGridManager.h"
-#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriority.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -439,23 +443,13 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyEnemies(float range) con
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*_bot, guid);
 
-        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*_bot, guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -499,23 +493,13 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyAllies(float range) cons
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*_bot, guid);
 
-        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*_bot, guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -1197,8 +1181,45 @@ void CombatSpecializationBase::UpdatePositioning(::Unit* target)
     if (!IsInOptimalPosition(target))
     {
         Position optimalPos = GetOptimalPosition(target);
-        _bot->GetMotionMaster()->MovePoint(0, optimalPos);
-        _metrics.positioningUpdates++;
+
+        // PHASE 4 MIGRATION: Use Movement Arbiter with role-based priorities
+        // All roles use ROLE_POSITIONING (170) - tank/healer/dps positioning priority
+        // This is HIGH tier (150-199) which maps to MOTION_PRIORITY_NORMAL + MOTION_MODE_OVERRIDE
+        PlayerBotMovementPriority priority = PlayerBotMovementPriority::ROLE_POSITIONING;  // Priority 170
+
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                priority,
+                optimalPos,
+                "Combat positioning - maintaining optimal range",
+                "CombatSpecializationBase");
+
+            if (accepted)
+            {
+                _metrics.positioningUpdates++;
+                TC_LOG_DEBUG("playerbot.movement.arbiter",
+                    "CombatSpecializationBase: Bot {} positioning requested (Role: {}, Priority: 170)",
+                    _bot->GetName(), static_cast<uint32>(_role));
+            }
+            else
+            {
+                // Arbiter rejected - higher priority movement is active
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "CombatSpecializationBase: Positioning rejected for bot {} - higher priority active",
+                    _bot->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster call if arbiter not available
+            TC_LOG_TRACE("playerbot.movement.arbiter",
+                "CombatSpecializationBase: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                _bot->GetName());
+            _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+            _metrics.positioningUpdates++;
+        }
     }
 }
 
