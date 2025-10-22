@@ -22,10 +22,14 @@
 #include "MechanicAwareness.h"
 #include "ThreatAbilities.h"
 #include "ClassAI/ClassAI.h"
+#include "Movement/Arbiter/MovementArbiter.h"
+#include "Movement/Arbiter/MovementPriority.h"
+#include "AI/BotAI.h"
 #include "Group.h"
 #include "Log.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "UnitAI.h"
 #include <algorithm>
 #include <execution>
 
@@ -717,7 +721,40 @@ void CombatAIIntegrator::HandleDefensivePhase()
     if (_bot->GetHealthPct() < 10.0f)
     {
         Position fleePos = _kitingManager->GetFleePosition();
-        _bot->GetMotionMaster()->MovePoint(0, fleePos);
+
+        // PHASE 3 MIGRATION: Use Movement Arbiter with EMERGENCY_DEFENSIVE priority (240)
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::EMERGENCY_DEFENSIVE,  // Priority 240 - CRITICAL emergency flee
+                fleePos,
+                "Emergency flee - health below 10%",
+                "CombatAIIntegrator");
+
+            if (accepted)
+            {
+                TC_LOG_DEBUG("playerbot.movement.arbiter",
+                    "CombatAIIntegrator: Bot {} emergency flee requested (HP: {:.1f}%)",
+                    _bot->GetName(), _bot->GetHealthPct());
+            }
+            else
+            {
+                // Arbiter rejected - system might be shutting down or bot in invalid state
+                TC_LOG_WARN("playerbot.movement.arbiter",
+                    "CombatAIIntegrator: Emergency flee rejected for bot {} - using fallback direct call",
+                    _bot->GetName());
+                _bot->GetMotionMaster()->MovePoint(0, fleePos);
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster call if arbiter not available
+            TC_LOG_DEBUG("playerbot.movement.arbiter",
+                "CombatAIIntegrator: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                _bot->GetName());
+            _bot->GetMotionMaster()->MovePoint(0, fleePos);
+        }
     }
 }
 
