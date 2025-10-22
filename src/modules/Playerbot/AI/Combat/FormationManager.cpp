@@ -15,6 +15,10 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 #include <algorithm>
 #include <cmath>
 
@@ -399,7 +403,21 @@ void FormationManager::CoordinateMovement(const Position& destination)
         Position myAssignedPos = GetAssignedPosition();
         if (_bot->GetDistance(myAssignedPos) > _formationSpacing)
         {
-            _bot->GetMotionMaster()->MovePoint(0, myAssignedPos.GetPositionX(), myAssignedPos.GetPositionY(), myAssignedPos.GetPositionZ());
+            // PHASE 6B: Use Movement Arbiter with FORMATION priority (160)
+            BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::FORMATION,
+                    myAssignedPos,
+                    "Formation position maintenance",
+                    "FormationManager");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                _bot->GetMotionMaster()->MovePoint(0, myAssignedPos.GetPositionX(), myAssignedPos.GetPositionY(), myAssignedPos.GetPositionZ());
+            }
         }
     }
 }
