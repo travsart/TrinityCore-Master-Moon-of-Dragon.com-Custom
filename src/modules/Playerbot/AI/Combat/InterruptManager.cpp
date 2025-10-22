@@ -26,6 +26,10 @@
 #include <cmath>
 #include "../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -538,9 +542,23 @@ bool InterruptManager::ExecuteInterruptPlan(const InterruptPlan& plan)
 
         if (plan.requiresMovement)
         {
-            _bot->GetMotionMaster()->MovePoint(0, plan.executionPosition.GetPositionX(),
-                                             plan.executionPosition.GetPositionY(),
-                                             plan.executionPosition.GetPositionZ());
+            // PHASE 6B: Use Movement Arbiter with INTERRUPT_POSITIONING priority (220)
+            BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::INTERRUPT_POSITIONING,
+                    plan.executionPosition,
+                    "Interrupt positioning",
+                    "InterruptManager");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                _bot->GetMotionMaster()->MovePoint(0, plan.executionPosition.GetPositionX(),
+                                                 plan.executionPosition.GetPositionY(),
+                                                 plan.executionPosition.GetPositionZ());
+            }
             return false;
         }
 
@@ -1176,7 +1194,21 @@ bool InterruptManager::AttemptMovementInterrupt(Unit* target)
     movePos.m_positionY = botPos.GetPositionY() + 10.0f * std::sin(angle);
     movePos.m_positionZ = botPos.GetPositionZ();
 
-    _bot->GetMotionMaster()->MovePoint(0, movePos.GetPositionX(), movePos.GetPositionY(), movePos.GetPositionZ());
+    // PHASE 6B: Use Movement Arbiter with INTERRUPT_POSITIONING priority (220)
+    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        botAI->RequestPointMovement(
+            PlayerBotMovementPriority::INTERRUPT_POSITIONING,
+            movePos,
+            "Movement interrupt - get out of range",
+            "InterruptManager");
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster if arbiter not available
+        _bot->GetMotionMaster()->MovePoint(0, movePos.GetPositionX(), movePos.GetPositionY(), movePos.GetPositionZ());
+    }
     return true;
 }
 
