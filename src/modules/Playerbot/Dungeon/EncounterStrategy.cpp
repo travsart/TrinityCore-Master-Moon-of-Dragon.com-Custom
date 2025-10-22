@@ -28,6 +28,10 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Movement/Arbiter/MovementArbiter.h"
+#include "../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../AI/BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -361,10 +365,34 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
             Position safePos = dangerZone;
             safePos.RelocateOffset({std::cos(angle) * (radius + 5.0f), std::sin(angle) * (radius + 5.0f), 0.0f});
 
-            player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-                safePos.GetPositionY(), safePos.GetPositionZ());
+            // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+            BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                bool accepted = botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                    safePos,
+                    "AoE avoidance positioning",
+                    "EncounterStrategy");
 
-            TC_LOG_TRACE("module.playerbot", "Player {} moving to avoid AoE", player->GetName());
+                if (!accepted)
+                {
+                    TC_LOG_TRACE("playerbot.movement.arbiter",
+                        "EncounterStrategy: AoE avoidance rejected for {} - higher priority active",
+                        player->GetName());
+                }
+                else
+                {
+                    TC_LOG_TRACE("module.playerbot", "Player {} moving to avoid AoE", player->GetName());
+                }
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                    safePos.GetPositionY(), safePos.GetPositionZ());
+                TC_LOG_TRACE("module.playerbot", "Player {} moving to avoid AoE", player->GetName());
+            }
         }
     }
 }
@@ -482,8 +510,29 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
         // Move if too far from optimal position
         if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
         {
-            player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+            BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                bool accepted = botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                    optimalPos,
+                    "Encounter optimal positioning",
+                    "EncounterStrategy");
+
+                if (!accepted)
+                {
+                    TC_LOG_TRACE("playerbot.movement.arbiter",
+                        "EncounterStrategy: Optimal positioning rejected for {} - higher priority active",
+                        player->GetName());
+                }
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            }
         }
     }
 }
@@ -546,8 +595,29 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Posit
                 Position safePos = dangerZone;
                 safePos.RelocateOffset({std::cos(angle) * 15.0f, std::sin(angle) * 15.0f, 0.0f});
 
-                player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-                    safePos.GetPositionY(), safePos.GetPositionZ());
+                // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+                BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                if (botAI && botAI->GetMovementArbiter())
+                {
+                    bool accepted = botAI->RequestPointMovement(
+                        PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                        safePos,
+                        "Danger zone avoidance",
+                        "EncounterStrategy");
+
+                    if (!accepted)
+                    {
+                        TC_LOG_TRACE("playerbot.movement.arbiter",
+                            "EncounterStrategy: Danger zone avoidance rejected for {} - higher priority active",
+                            player->GetName());
+                    }
+                }
+                else
+                {
+                    // FALLBACK: Direct MotionMaster if arbiter not available
+                    player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                        safePos.GetPositionY(), safePos.GetPositionZ());
+                }
             }
         }
     }
@@ -1248,11 +1318,33 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
                 float x = player->GetPositionX() + 10.0f * std::cos(angle);
                 float y = player->GetPositionY() + 10.0f * std::sin(angle);
                 float z = player->GetPositionZ();
+                Position safePos(x, y, z);
 
                 TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericGroundAvoidance - Player {} moving away from spell {}",
                     player->GetGUID().GetCounter(), spellInfo->Id);
 
-                player->GetMotionMaster()->MovePoint(0, x, y, z);
+                // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+                BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                if (botAI && botAI->GetMovementArbiter())
+                {
+                    bool accepted = botAI->RequestPointMovement(
+                        PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                        safePos,
+                        "Ground effect avoidance",
+                        "EncounterStrategy");
+
+                    if (!accepted)
+                    {
+                        TC_LOG_TRACE("playerbot.movement.arbiter",
+                            "EncounterStrategy: Ground avoidance rejected for {} - higher priority active",
+                            player->GetName());
+                    }
+                }
+                else
+                {
+                    // FALLBACK: Direct MotionMaster if arbiter not available
+                    player->GetMotionMaster()->MovePoint(0, x, y, z);
+                }
                 return;
             }
         }
@@ -1369,8 +1461,29 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericPositioning - Player {} moving to optimal position",
             player->GetGUID().GetCounter());
 
-        player->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(),
-            targetPos.GetPositionY(), targetPos.GetPositionZ());
+        // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+        BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                targetPos,
+                "Generic optimal positioning",
+                "EncounterStrategy");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "EncounterStrategy: Generic positioning rejected for {} - higher priority active",
+                    player->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            player->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(),
+                targetPos.GetPositionY(), targetPos.GetPositionZ());
+        }
     }
 }
 
@@ -1510,11 +1623,33 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
             float x = player->GetPositionX() + (distance - distanceToMember) * std::cos(angle);
             float y = player->GetPositionY() + (distance - distanceToMember) * std::sin(angle);
             float z = player->GetPositionZ();
+            Position spreadPos(x, y, z);
 
             TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericSpread - Player {} spreading {} yards from {}",
                 player->GetGUID().GetCounter(), distance, groupMember->GetGUID().GetCounter());
 
-            player->GetMotionMaster()->MovePoint(0, x, y, z);
+            // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+            BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                bool accepted = botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                    spreadPos,
+                    "Spread positioning",
+                    "EncounterStrategy");
+
+                if (!accepted)
+                {
+                    TC_LOG_TRACE("playerbot.movement.arbiter",
+                        "EncounterStrategy: Spread positioning rejected for {} - higher priority active",
+                        player->GetName());
+                }
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                player->GetMotionMaster()->MovePoint(0, x, y, z);
+            }
             return;
         }
     }
@@ -1554,8 +1689,31 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericStack - Player {} stacking on tank",
             player->GetGUID().GetCounter());
 
-        player->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
-            tank->GetPositionY(), tank->GetPositionZ());
+        Position tankPos(tank->GetPositionX(), tank->GetPositionY(), tank->GetPositionZ());
+
+        // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+        BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                tankPos,
+                "Stack on tank positioning",
+                "EncounterStrategy");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "EncounterStrategy: Stack positioning rejected for {} - higher priority active",
+                    player->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            player->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
+                tank->GetPositionY(), tank->GetPositionZ());
+        }
     }
 }
 
