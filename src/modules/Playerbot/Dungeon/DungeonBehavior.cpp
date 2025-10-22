@@ -28,6 +28,10 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Movement/Arbiter/MovementArbiter.h"
+#include "../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../AI/BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -453,8 +457,22 @@ void DungeonBehavior::CoordinateTankBehavior(Player* tank, const DungeonEncounte
     Position optimalPos = GetOptimalPosition(tank, DungeonRole::TANK, encounter);
     if (tank->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE)
     {
-        tank->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-            optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+        // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
+        BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_POSITIONING,
+                optimalPos,
+                "Dungeon tank positioning",
+                "DungeonBehavior");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            tank->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+        }
     }
 
     TC_LOG_TRACE("module.playerbot", "Coordinating tank {} behavior for encounter {}",
@@ -479,8 +497,22 @@ void DungeonBehavior::CoordinateHealerBehavior(Player* healer, const DungeonEnco
     Position safePos = GetOptimalPosition(healer, DungeonRole::HEALER, encounter);
     if (healer->GetExactDist(&safePos) > POSITIONING_TOLERANCE)
     {
-        healer->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
-            safePos.GetPositionY(), safePos.GetPositionZ());
+        // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
+        BotAI* botAI = dynamic_cast<BotAI*>(healer->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_POSITIONING,
+                safePos,
+                "Dungeon healer positioning",
+                "DungeonBehavior");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            healer->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
+                safePos.GetPositionY(), safePos.GetPositionZ());
+        }
     }
 
     TC_LOG_TRACE("module.playerbot", "Coordinating healer {} behavior for encounter {}",
@@ -510,8 +542,22 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
 
     if (dps->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE)
     {
-        dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-            optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+        // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
+        BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_POSITIONING,
+                optimalPos,
+                "Dungeon DPS positioning",
+                "DungeonBehavior");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+        }
     }
 
     TC_LOG_TRACE("module.playerbot", "Coordinating DPS {} behavior for encounter {}",
@@ -643,8 +689,22 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
         // Move if too far from optimal position
         if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
         {
-            player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
-                optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
+            BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::DUNGEON_POSITIONING,
+                    optimalPos,
+                    "Dungeon spread positioning",
+                    "DungeonBehavior");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                player->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                    optimalPos.GetPositionY(), optimalPos.GetPositionZ());
+            }
         }
     }
 }
@@ -732,8 +792,22 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
 
     if (inDanger)
     {
-        player->GetMotionMaster()->MovePoint(0, nearestSafeSpot.GetPositionX(),
-            nearestSafeSpot.GetPositionY(), nearestSafeSpot.GetPositionZ());
+        // PHASE 6D: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
+        BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::DUNGEON_MECHANIC,
+                nearestSafeSpot,
+                "Dungeon danger zone avoidance",
+                "DungeonBehavior");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            player->GetMotionMaster()->MovePoint(0, nearestSafeSpot.GetPositionX(),
+                nearestSafeSpot.GetPositionY(), nearestSafeSpot.GetPositionZ());
+        }
 
         TC_LOG_DEBUG("module.playerbot", "Player {} moving to avoid dangerous area", player->GetName());
     }
