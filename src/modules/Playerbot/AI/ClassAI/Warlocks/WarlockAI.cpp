@@ -35,7 +35,7 @@
 #include "DestructionSpecialization.h"
 #include "../BaselineRotationManager.h"
 #include "../../../Spatial/SpatialGridManager.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -1055,23 +1055,13 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*bot, guid);
 
-        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*bot, guid);
- }
+        } 
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -1128,23 +1118,13 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*bot, guid);
 
-        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*bot, guid);
- }
+        } 
         if (!entity)
             continue;
         // Original filtering logic goes here

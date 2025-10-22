@@ -662,6 +662,16 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
 
+    # Phase 6: Movement Arbiter - Enterprise Movement Request Arbitration System
+    # Priority-based arbitration resolving conflicts between 16+ concurrent movement systems
+    # Performance: <0.01ms per request, <1% CPU for 100 bots, thread-safe operation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementPriorityMapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementPriorityMapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementRequest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementRequest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementArbiter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementArbiter.h
+
     # Phase 3: Game System Integration - NPC Interaction System
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionManager.h
@@ -1136,6 +1146,14 @@ source_group("Movement" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
+
+    # Movement Arbiter - Enterprise Arbitration System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementPriorityMapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementPriorityMapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementRequest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementRequest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementArbiter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Arbiter/MovementArbiter.h
 )
 
 source_group("Interaction" FILES

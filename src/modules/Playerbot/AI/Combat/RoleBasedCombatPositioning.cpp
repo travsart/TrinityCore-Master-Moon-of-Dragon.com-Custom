@@ -21,6 +21,10 @@
 #include "Log.h"
 #include "World.h"
 #include "DBCEnums.h"
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 #include <algorithm>
 #include <cmath>
 #include <execution>
@@ -125,7 +129,29 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
     {
         // Tank should reposition to rotate boss
         Position newPos = CalculateFrontalPosition(target, _config.optimalDistance);
-        tank->GetMotionMaster()->MovePoint(0, newPos);
+
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,  // Priority 170 - HIGH tier
+                newPos,
+                "Tank boss rotation positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: Tank rotation rejected for {} - higher priority active",
+                    tank->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            tank->GetMotionMaster()->MovePoint(0, newPos);
+        }
     }
 }
 
@@ -744,7 +770,28 @@ void HealerPositioning::CoordinateHealerPositioning(const std::vector<Player*>& 
 
     for (size_t i = 0; i < healers.size() && i < healerPositions.size(); ++i)
     {
-        healers[i]->GetMotionMaster()->MovePoint(0, healerPositions[i]);
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(healers[i]->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,  // Priority 170 - HIGH tier
+                healerPositions[i],
+                "Healer optimal healing coverage positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: Healer positioning rejected for {} - higher priority active",
+                    healers[i]->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            healers[i]->GetMotionMaster()->MovePoint(0, healerPositions[i]);
+        }
     }
 }
 
@@ -928,7 +975,28 @@ void DPSPositioning::DistributeMeleePositions(const std::vector<Player*>& meleeD
             target->GetOrientation() + startAngle + (i * angleStep));
         Position pos = RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
 
-        meleeDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(meleeDPS[i]->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                pos,
+                "Melee DPS optimal positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: Melee DPS positioning rejected for {} - higher priority active",
+                    meleeDPS[i]->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK
+            meleeDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
 }
 
@@ -985,7 +1053,28 @@ void DPSPositioning::SpreadRangedPositions(const std::vector<Player*>& rangedDPS
             target->GetOrientation() + arcStart + (i * angleStep));
         Position pos = RotateAroundTarget(target, angle, _config.rangedOptimalDistance);
 
-        rangedDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(rangedDPS[i]->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                pos,
+                "Ranged DPS optimal positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: Ranged DPS optimal positioning rejected for {} - higher priority active",
+                    rangedDPS[i]->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK
+            rangedDPS[i]->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
 }
 
@@ -1025,7 +1114,28 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
             targetFacing + (angleToTarget > targetFacing ? cleaveAngle/2 + 0.2f : -cleaveAngle/2 - 0.2f));
         Position safePos = RotateAroundTarget(target, safeAngle, dps->GetDistance(target));
 
-        dps->GetMotionMaster()->MovePoint(0, safePos);
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                safePos,
+                "DPS safe positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: DPS safe positioning rejected for {} - higher priority active",
+                    dps->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK
+            dps->GetMotionMaster()->MovePoint(0, safePos);
+        }
     }
 }
 
@@ -1043,7 +1153,28 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
     {
         // Move to flank
         Position flankPos = CalculateFlankPosition(target, angleToTarget > targetRear);
-        dps->GetMotionMaster()->MovePoint(0, flankPos);
+        // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                flankPos,
+                "DPS flank positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: DPS flank positioning rejected for {} - higher priority active",
+                    dps->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK
+            dps->GetMotionMaster()->MovePoint(0, flankPos);
+        }
     }
 }
 
@@ -1677,7 +1808,28 @@ void RoleBasedCombatPositioning::RespondToEmergency(Player* bot, const Position&
         return;
 
     // Move to safe position immediately
-    bot->GetMotionMaster()->MovePoint(1, safeZone, true);  // High priority movement
+    // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                safeZone,
+                "Safe zone emergency positioning",
+                "RoleBasedCombatPositioning");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "RoleBasedCombatPositioning: Safe zone emergency positioning rejected for {} - higher priority active",
+                    bot->GetName());
+            }
+        }
+        else
+        {
+            // FALLBACK
+            bot->GetMotionMaster()->MovePoint(0, safeZone);
+        }  // High priority movement
 
     // _emergencyMoves++; // Member variable not declared in header
 }

@@ -9,6 +9,7 @@
 #include "SpatialGridQueryHelpers.h"
 #include "Player.h"
 #include "Group.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -238,11 +239,11 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
     // Query nearby DynamicObjects (lock-free)
     auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(bot->GetPosition(), range);
 
-    // Filter for dangerous objects
+    // Filter for dangerous objects (hostile faction)
     for (auto const& snapshot : dynamicObjectSnapshots)
     {
-        // Check if dangerous
-        if (!snapshot.isDangerous)
+        // Check if active
+        if (!snapshot.IsActive())
             continue;
 
         // Check distance
@@ -250,6 +251,7 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
         if (distance > range)
             continue;
 
+        // Return all active objects - caller determines what's dangerous based on caster/faction
         result.push_back(&snapshot);
     }
 
@@ -290,11 +292,20 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
     // Query nearby AreaTriggers (lock-free)
     auto areaTriggerSnapshots = spatialGrid->QueryNearbyAreaTriggers(bot->GetPosition(), range);
 
-    // Filter for dangerous triggers
+    // Filter for dangerous triggers (hostile spells/effects)
     for (auto const& snapshot : areaTriggerSnapshots)
     {
-        // Check if dangerous
-        if (!snapshot.isDangerous)
+        // Check if active
+        if (!snapshot.IsActive())
+            continue;
+
+        // Get caster to check faction hostility
+        Unit* caster = nullptr;
+        if (!snapshot.casterGuid.IsEmpty())
+            caster = ObjectAccessor::GetUnit(*bot, snapshot.casterGuid);
+
+        // Dangerous if caster is hostile or missing (assume hostile)
+        if (caster && !bot->IsHostileTo(caster))
             continue;
 
         // Check distance

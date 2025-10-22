@@ -24,7 +24,7 @@
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include <algorithm>
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

@@ -23,7 +23,7 @@
 #include "Map.h"
 #include "UnitDefines.h"
 #include <algorithm>
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

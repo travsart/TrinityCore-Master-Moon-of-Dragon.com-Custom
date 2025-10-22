@@ -11,7 +11,7 @@
 #include "Player.h"
 #include "Timer.h"
 #include "ObjectDefines.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {

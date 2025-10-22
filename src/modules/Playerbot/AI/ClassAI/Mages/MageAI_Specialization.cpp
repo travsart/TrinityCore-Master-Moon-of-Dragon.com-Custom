@@ -17,7 +17,7 @@
 #include "Timer.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -398,23 +398,14 @@ void MageAI::FindSafeCastingPosition()
     if (!_currentTarget.IsEmpty())
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, _currentTarget);
-
         Unit* target = nullptr;
-
         if (snapshot_target)
-
         {
-
             target = ObjectAccessor::GetUnit(*bot, _currentTarget);
 
-        }snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, _currentTarget);
- target = nullptr;
- if (snapshot_target)
- {
-     target = ObjectAccessor::GetUnit(*bot, _currentTarget);
- }
+        }
+        
         if (target && bot->GetDistance(target) < MINIMUM_SAFE_RANGE)
         {
             // Move away from target - simplified approach
@@ -475,29 +466,15 @@ bool MageAI::HasTooMuchThreat()
         return false;
 
     // PHASE 5F: Thread-safe spatial grid validation
-
-
     auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, _currentTarget);
-
-
     Unit* target = nullptr;
-
-
     if (snapshot_target)
-
-
     {
-
-
         target = ObjectAccessor::GetUnit(*bot, _currentTarget);
 
 
-    }snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, _currentTarget);
- target = nullptr;
- if (snapshot_target)
- {
-     target = ObjectAccessor::GetUnit(*bot, _currentTarget);
- }
+    }
+        
     if (!target)
         return false;
 

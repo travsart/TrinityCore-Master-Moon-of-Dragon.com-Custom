@@ -434,7 +434,8 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     // Filter for mining veins using snapshot data
     for (auto const& snapshot : nearbyObjects)
     {
-        if (!snapshot.isMineable || !snapshot.isSpawned)
+        // GAMEOBJECT_TYPE_CHEST (3) is used for mining/herb nodes
+        if (snapshot.goType != 3 || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;
@@ -478,7 +479,8 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     // Filter for herb nodes using snapshot data
     for (auto const& snapshot : nearbyObjects)
     {
-        if (!snapshot.isHerbalism || !snapshot.isSpawned)
+        // GAMEOBJECT_TYPE_CHEST (3) is used for mining/herb nodes
+        if (snapshot.goType != 3 || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;
@@ -522,7 +524,8 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
     // Filter for fishing pools using snapshot data
     for (auto const& snapshot : nearbyObjects)
     {
-        if (!snapshot.isFishingNode || !snapshot.isSpawned)
+        // GAMEOBJECT_TYPE_FISHINGHOLE (25) or GAMEOBJECT_TYPE_FISHINGNODE (17)
+        if ((snapshot.goType != 25 && snapshot.goType != 17) || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;

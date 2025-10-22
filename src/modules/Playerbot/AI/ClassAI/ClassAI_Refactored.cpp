@@ -25,7 +25,7 @@
 #include "SpellHistory.h"
 #include <chrono>
 #include "../../Spatial/SpatialGridManager.h"
-#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
+#include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -170,15 +170,12 @@ void ClassAI::UpdateTargeting()
     if (ObjectGuid targetGuid = GetBot()->GetTarget())
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), targetGuid);
 
         ::Unit* target = nullptr;
 
         if (snapshot_target)
-
         {
-
             target = ObjectAccessor::GetUnit(*GetBot(), targetGuid);
 
         }
@@ -228,23 +225,12 @@ void ClassAI::UpdateTargeting()
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
-
         Creature* entity = nullptr;
-
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
-
-        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

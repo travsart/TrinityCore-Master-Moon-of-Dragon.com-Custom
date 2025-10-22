@@ -18,7 +18,7 @@
 #include "CellImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "ObjectAccessor.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -417,23 +417,12 @@ bool AfflictionSpecialization::ShouldCastSeedOfCorruption(::Unit* target)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
-        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(target, guid);
-
-        auto* entity = nullptr;
-
+        auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
-            entity = ObjectAccessor::GetCreature(*target, guid);
-
-        }to snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(target, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*target, guid);
- }
+            entity = ObjectAccessor::GetCreature(*bot, guid);
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -628,23 +617,13 @@ std::vector<::Unit*> AfflictionSpecialization::GetDoTTargets(uint32 maxTargets)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*bot, guid);
 
-        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*bot, guid);
- }
+        } 
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -829,23 +808,13 @@ bool AfflictionSpecialization::ShouldChannelDrain()
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*bot, guid);
 
-        } auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*bot, guid);
- }
+        } 
         if (!entity)
             continue;
         // Original filtering logic goes here

@@ -235,7 +235,7 @@ namespace Playerbot
             uint8 priority = PRIORITY_NORMAL;
 
             // Prioritize creatures attacking bot or group members
-            if (it->currentTarget == m_bot->GetGUID())
+            if (it->victim == m_bot->GetGUID())
                 priority = PRIORITY_CRITICAL;
             else if (it->isInCombat)
                 priority = PRIORITY_NORMAL;
@@ -365,7 +365,7 @@ namespace Playerbot
     bool TargetScanner::IsValidTargetSnapshot(DoubleBufferedSpatialGrid::CreatureSnapshot const& creature) const
     {
         // Basic validation
-        if (!creature.IsValid() || !creature.isAlive)
+        if (!creature.IsValid() || creature.isDead || creature.health == 0)
             return false;
 
         // Check if blacklisted (uses thread-safe GUID check)
@@ -378,7 +378,7 @@ namespace Playerbot
 
         // Don't attack creatures already in combat with someone else (unless we're in a group)
         // This prevents bots from "stealing" kills
-        if (creature.isInCombat && creature.currentTarget != m_bot->GetGUID() &&
+        if (creature.isInCombat && creature.victim != m_bot->GetGUID() &&
             !m_bot->GetGroup())
             return false;
 

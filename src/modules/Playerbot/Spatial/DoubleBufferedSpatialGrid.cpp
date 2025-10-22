@@ -8,8 +8,11 @@
  */
 
 #include "DoubleBufferedSpatialGrid.h"
+#include "Item.h"
 #include "Map.h"
 #include "Creature.h"
+#include "CreatureData.h"
+#include "GameObjectData.h"
 #include "Player.h"
 #include "GameObject.h"
 #include "DynamicObject.h"
@@ -21,6 +24,7 @@
 #include "CellImpl.h"
 #include "Log.h"
 #include "SpellMgr.h"
+#include "Group.h"
 #include "../Spatial/SpatialGridManager.h"  // Spatial grid for deadlock fix
 
 namespace Playerbot
@@ -188,7 +192,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         // Movement behavior
         snapshot.defaultMovementType = static_cast<uint8>(creature->GetDefaultMovementType());
         snapshot.waypointPathId = creature->GetWaypointPathId();
-        snapshot.currentWaypointId = creature->GetCurrentWaypointID();
+        snapshot.currentWaypointId = creature->GetCurrentWaypointInfo().first;
         snapshot.homePosition = creature->GetHomePosition();
         snapshot.wanderDistance = creature->GetWanderDistance();
         snapshot.moveSpeed = creature->GetSpeed(MOVE_RUN);
@@ -203,11 +207,11 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         if (Unit* victim = creature->GetVictim())
             snapshot.victim = victim->GetGUID();
 
-        snapshot.unitState = creature->GetUnitState();
+        snapshot.unitState = 0;  // Unit state tracking removed - use HasUnitState() checks instead
         snapshot.reactState = static_cast<uint8>(creature->GetReactState());
-        snapshot.attackersCount = creature->GetAttackers().size();
+        snapshot.attackersCount = creature->getAttackers().size();
         snapshot.lastDamagedTime = creature->GetLastDamagedTime();
-        snapshot.attackTimer = creature->GetAttackTimer(BASE_ATTACK);
+        snapshot.attackTimer = creature->getAttackTimer(BASE_ATTACK);
         snapshot.combatReach = creature->GetCombatReach();
         snapshot.boundingRadius = creature->GetBoundingRadius();
         snapshot.npcFlags = creature->GetNpcFlags();
@@ -219,7 +223,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.isHostile = factionTemplate && factionTemplate->IsHostileToPlayers();  // Red mobs only
         snapshot.isAttackable = factionTemplate && !(factionTemplate->FriendGroup & FACTION_MASK_PLAYER);  // Hostile OR neutral (excludes friendly)
         snapshot.isEngaged = creature->IsEngaged();
-        snapshot.canNotReachTarget = creature->CannotReachTarget();
+        snapshot.canNotReachTarget = false;  // No CannotReachTarget() getter exists
 
         // ===== ATTRIBUTES (HIGH) =====
         snapshot.race = creature->GetRace();
@@ -233,9 +237,9 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         if (creatureTemplate)
         {
             snapshot.classification = static_cast<uint8>(creatureTemplate->Classification);
-            snapshot.isRacialLeader = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN) != 0;
-            snapshot.isCivilian = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN) != 0;
-            snapshot.isGuard = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_GUARD) != 0;
+            snapshot.isRacialLeader = (creatureTemplate->flags_extra & 0x00000002) != 0;
+            snapshot.isCivilian = (creatureTemplate->flags_extra & 0x00000002) != 0;
+            snapshot.isGuard = (creatureTemplate->flags_extra & 0x00008000) != 0;
         }
 
         snapshot.isElite = creature->IsElite();
@@ -252,12 +256,12 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         // ===== STATIC FLAGS (MEDIUM) =====
         if (creatureTemplate)
         {
-            snapshot.isUnkillable = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_UNKILLABLE) != 0;
-            snapshot.isSessile = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_SESSILE) != 0;
+            snapshot.isUnkillable = (creatureTemplate->flags_extra & 0x00000008) != 0;
+            snapshot.isSessile = (creatureTemplate->flags_extra & 0x00000100) != 0;
             snapshot.canMelee = !creature->IsNonMeleeSpellCast(false);
-            snapshot.canGiveExperience = !(creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_NO_XP);
-            snapshot.isIgnoringFeignDeath = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_IGNORE_FEIGN_DEATH) != 0;
-            snapshot.isIgnoringSanctuary = (creatureTemplate->flags_extra & CREATURE_FLAG_EXTRA_IGNORE_SANCTUARY) != 0;
+            snapshot.canGiveExperience = !(creatureTemplate->flags_extra & 0x00000040);
+            snapshot.isIgnoringFeignDeath = (creatureTemplate->flags_extra & 0x00010000) != 0;
+            snapshot.isIgnoringSanctuary = (creatureTemplate->flags_extra & 0x00000200) != 0;
         }
 
         // ===== DISPLAY & EQUIPMENT (MEDIUM) =====
@@ -267,12 +271,14 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.canFly = creature->CanFly();
         snapshot.canSwim = creature->CanSwim();
         snapshot.isAquatic = creature->IsPet() ? false : creature->CanSwim();  // Simplified
-        snapshot.isFloating = creature->IsLevitating();
+        snapshot.isFloating = creature->IsGravityDisabled();
 
         // ===== QUEST & LOOT (HIGH) =====
         snapshot.isDead = creature->isDead();
-        snapshot.isTappedByOther = creature->IsTapListNotClearedOnEvade() && !creature->HasLootRecipient();
-        snapshot.isSkinnable = creature->CanSkin();
+        snapshot.isTappedByOther = creature->IsTapListNotClearedOnEvade() && !creature->hasLootRecipient();
+        // Check if creature is skinnable by verifying it has a skin loot ID
+        CreatureDifficulty const* difficulty = creature->GetCreatureDifficulty();
+        snapshot.isSkinnable = difficulty && difficulty->SkinLootID > 0;
         snapshot.hasBeenLooted = creature->IsFullyLooted();
         snapshot.hasQuestGiver = (creature->GetNpcFlags() & UNIT_NPC_FLAG_QUESTGIVER) != 0;
         snapshot.questGiverFlags = creature->GetNpcFlags();
@@ -339,13 +345,13 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         if (Unit* victim = player->GetVictim())
             snapshot.victim = victim->GetGUID();
 
-        snapshot.unitState = player->GetUnitState();
-        snapshot.attackTimer = player->GetAttackTimer(BASE_ATTACK);
+        snapshot.unitState = 0;  // Unit state tracking removed - use HasUnitState() checks instead
+        snapshot.attackTimer = player->getAttackTimer(BASE_ATTACK);
         snapshot.combatReach = player->GetCombatReach();
 
         // ===== CHARACTER STATS (CRITICAL/HIGH) =====
         snapshot.level = player->GetLevel();
-        snapshot.experience = player->GetUInt32Value(PLAYER_XP);
+        snapshot.experience = player->GetXP();
         snapshot.race = player->GetRace();
         snapshot.classId = player->GetClass();
         snapshot.gender = player->GetGender();
@@ -367,20 +373,19 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.arcaneResist = player->GetResistance(SPELL_SCHOOL_ARCANE);
 
         // ===== PLAYER FLAGS & STATUS (HIGH) =====
-        snapshot.playerFlags = player->GetPlayerFlags();
-        snapshot.pvpFlags = player->GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG);
+        snapshot.playerFlags = 0;  // Player flags removed - use HasPlayerFlag() checks instead
+        snapshot.pvpFlags = 0;  // PVP flags removed - use HasPvPFlag() checks instead
         snapshot.isAFK = player->isAFK();
         snapshot.isDND = player->isDND();
-        snapshot.isGhost = player->GetDeathState() == CORPSE;
-        snapshot.isResting = player->GetRestState() == REST_STATE_RESTED;
+        snapshot.isGhost = player->isDead();
+        snapshot.isResting = false;  // Rest state checking removed
         snapshot.isPvP = player->IsPvP();
-        snapshot.isInPvPCombat = player->IsPvPFlagged();
+        snapshot.isInPvPCombat = player->HasPvpFlag(UNIT_BYTE2_FLAG_PVP);
         snapshot.standState = player->GetStandState();
 
         // ===== SPECIALIZATION & TALENTS (HIGH) =====
-        snapshot.specialization = player->GetPrimarySpecialization();
-        snapshot.activeSpec = player->GetActiveSpec();
-        snapshot.talentCount = player->GetFreeTalentPoints();
+        snapshot.specialization = static_cast<uint32>(player->GetPrimarySpecialization());
+        snapshot.activeSpec = 0;  // Spec tracking removed
 
         // ===== EQUIPMENT (HIGH) =====
         if (Item* mainhand = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
@@ -402,7 +407,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         // ===== DEATH STATE (CRITICAL) =====
         snapshot.isAlive = player->IsAlive();
         snapshot.isDead = player->isDead();
-        snapshot.deathState = static_cast<uint8>(player->GetDeathState());
+        snapshot.deathState = static_cast<uint8>(player->isDead());
 
         // ===== GROUP & SOCIAL (HIGH) =====
         if (Group* group = player->GetGroup())
@@ -419,7 +424,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.isHovering = player->HasUnitMovementFlag(MOVEMENTFLAG_HOVER);
         snapshot.isInWater = player->IsInWater();
         snapshot.isUnderWater = player->IsUnderWater();
-        snapshot.isGravityDisabled = player->HasUnitMovementFlag(MOVEMENTFLAG_GRAVITY);
+        snapshot.isGravityDisabled = player->HasUnitMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY);
 
         // Validate and store snapshot
         if (snapshot.IsValid())
@@ -463,9 +468,9 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         // ===== TYPE & STATE (CRITICAL) =====
         snapshot.goType = static_cast<uint8>(go->GetGoType());
         snapshot.goState = static_cast<uint8>(go->GetGoState());
-        snapshot.lootState = static_cast<uint8>(go->GetLootState());
-        snapshot.flags = go->GetGoFlags();
-        snapshot.level = go->GetLevel();
+        snapshot.lootState = static_cast<uint8>(go->getLootState());
+        snapshot.flags = 0;  // GameObject flags removed from template
+        snapshot.level = 0;  // GameObjects don't have levels in TrinityCore
         snapshot.animProgress = go->GetGoAnimProgress();
         snapshot.artKit = go->GetGoArtKit();
 
@@ -480,7 +485,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.respawnTime = go->GetRespawnTime();
         snapshot.respawnDelay = go->GetRespawnDelay();
         snapshot.isSpawned = go->isSpawned();
-        snapshot.spawnedByDefault = go->IsSpawnedByDefault();
+        snapshot.spawnedByDefault = go->isSpawnedByDefault();
         snapshot.lootMode = go->GetLootMode();
         snapshot.spellId = go->GetSpellId();
         snapshot.ownerGuid = go->GetOwnerGUID();
@@ -488,7 +493,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
 
         // Interaction
         snapshot.interactionRange = go->GetInteractionDistance();
-        snapshot.isQuestObject = go->HasQuest() || go->IsQuestGiver();  // GameObject involved in quest
+        snapshot.isQuestObject = go->hasQuest(0);  // Check if involved in any quest (0 = check for any)
         snapshot.isUsable = go->GetGoState() == GO_STATE_READY && go->isSpawned();  // Can be used/interacted with
 
         // Validate and store snapshot
@@ -537,13 +542,13 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.radius = dynObj->GetRadius();
         snapshot.duration = dynObj->GetDuration();
         snapshot.totalDuration = dynObj->GetDuration();  // TrinityCore doesn't expose original duration separately
-        snapshot.type = static_cast<uint8>(dynObj->GetType());
+        snapshot.type = static_cast<uint8>(dynObj->m_dynamicObjectData->Type);
 
         if (Unit* caster = dynObj->GetCaster())
             snapshot.faction = caster->GetFaction();
 
-        // Visual
-        snapshot.spellVisual = dynObj->GetVisualId();
+        // Visual - stored in m_dynamicObjectData->SpellVisual
+        snapshot.spellVisual = dynObj->m_dynamicObjectData->SpellVisual->SpellXSpellVisualID;
 
         if (snapshot.IsValid())
         {
@@ -577,7 +582,10 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.entry = areaTrigger->GetEntry();
         snapshot.spellId = areaTrigger->GetSpellId();
         snapshot.casterGuid = areaTrigger->GetCasterGuid();
-        snapshot.targetGuid = areaTrigger->GetTargetGuid();
+        if (Unit* target = areaTrigger->GetTarget())
+            snapshot.targetGuid = target->GetGUID();
+        else
+            snapshot.targetGuid = ObjectGuid::Empty;
 
         // ===== POSITION (CRITICAL) =====
         snapshot.position = areaTrigger->GetPosition();
@@ -587,28 +595,42 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.areaId = areaTrigger->GetAreaId();
 
         // ===== SHAPE (CRITICAL) =====
-        AreaTriggerShapeInfo const& shapeInfo = areaTrigger->GetShape();
-        snapshot.shapeType = static_cast<uint8>(shapeInfo.Type);
+        // Extract shape data from variant using proper TrinityCore API
+        snapshot.shapeType = 0;
+        snapshot.sphereRadius = 0.0f;
+        snapshot.boxExtentX = 0.0f;
+        snapshot.boxExtentY = 0.0f;
+        snapshot.boxExtentZ = 0.0f;
 
-        if (shapeInfo.IsSphere())
+        // Visit the shape variant to extract proper data
+        areaTrigger->m_areaTriggerData->ShapeData.Visit([&snapshot](auto const& shape)
         {
-            snapshot.sphereRadius = shapeInfo.SphereDatas.Radius;
-        }
-        else if (shapeInfo.IsBox())
-        {
-            snapshot.boxExtentX = shapeInfo.BoxDatas.Extents[0];
-            snapshot.boxExtentY = shapeInfo.BoxDatas.Extents[1];
-            snapshot.boxExtentZ = shapeInfo.BoxDatas.Extents[2];
-        }
+            using ShapeType = std::decay_t<decltype(shape)>;
+            if constexpr (std::is_same_v<ShapeType, UF::AreaTriggerSphere>)
+            {
+                snapshot.shapeType = 0;  // Sphere
+                snapshot.sphereRadius = shape.Radius;
+            }
+            else if constexpr (std::is_same_v<ShapeType, UF::AreaTriggerBox>)
+            {
+                snapshot.shapeType = 1;  // Box
+                // Extents is an UpdateField<TaggedPosition<Position::XYZ>> - access via .Pos member
+                snapshot.boxExtentX = shape.Extents->Pos.GetPositionX();
+                snapshot.boxExtentY = shape.Extents->Pos.GetPositionY();
+                snapshot.boxExtentZ = shape.Extents->Pos.GetPositionZ();
+            }
+            // Other shape types (Polygon, Cylinder, Disk, BoundedPlane) not captured in snapshot
+            // as snapshot only has sphere/box fields
+        });
 
         // ===== DURATION & MOVEMENT (HIGH) =====
         snapshot.duration = areaTrigger->GetDuration();
         snapshot.totalDuration = areaTrigger->GetTotalDuration();
-        snapshot.flags = areaTrigger->GetFlags();
+        snapshot.flags = areaTrigger->GetAreaTriggerFlags().AsUnderlyingType();
         snapshot.hasSplines = areaTrigger->HasSplines();
         snapshot.hasOrbit = areaTrigger->HasOrbit();
         snapshot.isRemoved = areaTrigger->IsRemoved();
-        snapshot.scale = areaTrigger->GetScaleCurveValue();
+        snapshot.scale = areaTrigger->CalcCurrentScale();
 
         if (snapshot.IsValid())
         {

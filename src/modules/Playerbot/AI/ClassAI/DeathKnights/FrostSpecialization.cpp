@@ -15,7 +15,7 @@
 #include "Item.h"
 #include "ObjectAccessor.h"
 #include "SharedDefines.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -503,23 +503,14 @@ void FrostSpecialization::RefreshExpringDiseases()
                 if (bot)
                 {
                     // PHASE 5F: Thread-safe spatial grid validation
-
                     auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetDiseases.first);
 
                     ::Unit* target = nullptr;
 
                     if (snapshot_target)
-
                     {
-
                         target = ObjectAccessor::GetUnit(*bot, targetDiseases.first);
-
-                    }ot_target = SpatialGridQueryHelpers::FindCreatureByGuid(bot, targetDiseases.first);
- target = nullptr;
- if (snapshot_target)
- {
-     target = ObjectAccessor::GetUnit(*bot, targetDiseases.first);
- }
+                    }
                     if (target && HasEnoughResource(ICY_TOUCH))
                     {
                         CastIcyTouch(target);

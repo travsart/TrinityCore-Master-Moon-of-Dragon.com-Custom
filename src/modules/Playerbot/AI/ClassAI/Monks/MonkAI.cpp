@@ -19,7 +19,7 @@
 #include "GridNotifiersImpl.h"
 #include "../../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "ObjectAccessor.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -994,15 +994,11 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
 
         Creature* entity = nullptr;
-
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
@@ -1065,15 +1061,11 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
 
         Creature* entity = nullptr;
-
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
@@ -1132,15 +1124,11 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
 
         Creature* entity = nullptr;
-
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);

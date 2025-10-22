@@ -20,7 +20,7 @@
 #include "Unit.h"
 #include "SpellAuras.h"
 #include "../../../Spatial/SpatialGridManager.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -643,15 +643,11 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
 
         Creature* entity = nullptr;
-
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);

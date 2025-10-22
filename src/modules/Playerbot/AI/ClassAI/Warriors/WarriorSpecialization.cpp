@@ -21,7 +21,7 @@
 #include "Log.h"
 #include "PlayerbotAI.h"
 #include "../../../Spatial/SpatialGridManager.h"
-#include "../../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries  // Lock-free spatial grid for deadlock fix
+#include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
 namespace Playerbot
 {
@@ -182,23 +182,13 @@ void WarriorSpecialization::CastThunderClap()
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*_bot, guid);
 
-        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*_bot, guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -437,23 +427,13 @@ void WarriorSpecialization::UseSpellReflection()
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*_bot, guid);
 
-        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*_bot, guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -540,23 +520,13 @@ bool WarriorSpecialization::IsInDanger()
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
-
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
-
-        auto* entity = nullptr;
-
+        Creature* entity = nullptr;
         if (snapshot_entity)
-
         {
-
             entity = ObjectAccessor::GetCreature(*_bot, guid);
 
-        }auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
- entity = nullptr;
- if (snapshot_entity)
- {
-     entity = ObjectAccessor::GetCreature(*_bot, guid);
- }
+        }
         if (!entity)
             continue;
         // Original filtering logic goes here
