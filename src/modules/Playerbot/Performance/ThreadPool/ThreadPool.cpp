@@ -938,13 +938,18 @@ ThreadPool& GetThreadPool()
             // Config not ready yet, use defaults
         }
 
-        // CRITICAL VALIDATION: Ensure numThreads >= 4 to prevent deadlock
-        // With blocking future.get() pattern in BotWorldSessionMgr, we need minimum 4 workers
-        // to prevent main thread deadlock when waiting for many bot updates
-        // NOTE: Cannot log here - GetThreadPool() may be called before logging system is ready
-        if (config.numThreads < 4)
+        // CRITICAL VALIDATION: Ensure sufficient worker threads to prevent task starvation
+        // With blocking future.get() pattern in BotWorldSessionMgr, each bot update blocks a worker.
+        // If we have N bots updating simultaneously, we need AT LEAST N+2 worker threads
+        // (N for bot updates, +2 for overhead/work stealing).
+        //
+        // However, hardware_concurrency() - 2 should typically provide enough threads.
+        // Minimum is 16 to handle reasonable bot counts without starvation.
+        //
+        // REAL FIX NEEDED: Make botSession->Update() non-blocking or use a different threading model
+        if (config.numThreads < 16)
         {
-            config.numThreads = 4;  // Silent fix - logging will happen in EnsureWorkersCreated()
+            config.numThreads = 16;  // Increased minimum from 4 to 16 to prevent task starvation
         }
 
         g_threadPool = std::make_unique<ThreadPool>(config);

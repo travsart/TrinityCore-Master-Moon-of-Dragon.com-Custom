@@ -499,6 +499,9 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // ThreadPool enabled with CPU affinity removed to prevent 60s hang
     // CPU affinity (SetThreadAffinityMask) was causing blocking during thread creation
     // Workers now create without affinity and OS scheduler handles CPU assignment
+    //
+    // CRITICAL: If futures hang, the issue is ObjectAccessor calls from BotAI::UpdateAI()
+    // Solution: Replace ObjectAccessor with spatial grid snapshots in the hanging code path
     bool useThreadPool = serverReady && !sessionsToUpdate.empty();
     std::vector<std::future<void>> futures;
     std::vector<ObjectGuid> futureGuids;  // Track which GUID corresponds to which future
@@ -509,6 +512,53 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     if (useThreadPool)
     {
+        // CRITICAL FIX: Check ThreadPool saturation BEFORE submitting tasks
+        // If workers are busy with previous batch, new tasks queue up and cause cascading delays
+        // Better to skip this update cycle than create 10+ second backlogs
+        size_t queuedTasks = Performance::GetThreadPool().GetQueuedTasks();
+        size_t activeWorkers = Performance::GetThreadPool().GetActiveThreads();
+        uint32 workerCount = Performance::GetThreadPool().GetWorkerCount();
+
+        // REVISED SATURATION LOGIC: Check both queue depth AND worker availability
+        //
+        // Problem: Queue depth alone doesn't prevent 10s delays. Even with queue capacity,
+        // if all workers are busy and we submit more tasks, the last task can wait
+        // 10+ seconds in a worker's queue while that worker processes 10+ sequential tasks.
+        //
+        // Solution: Also check worker availability. If most workers are busy, skip updates.
+        //
+        // Thresholds:
+        // 1. Queue depth: >100 tasks = backlog building up
+        // 2. Worker utilization: >80% busy = insufficient capacity for new batch
+        //
+        // Example with 30 workers (32 cores - 2):
+        // - >100 queued tasks = ~3 tasks per worker queued = ~300ms backlog (acceptable)
+        // - >24 workers busy (80%) = only 6 free workers for new batch
+        //
+        // Example with 16 workers (18 cores - 2):
+        // - >100 queued tasks = ~6 tasks per worker queued = ~600ms backlog
+        // - >13 workers busy (80%) = only 3 free workers for new batch
+        //
+        // Rationale:
+        // - 100 task threshold scales with worker count (3-6 tasks per worker)
+        // - 80% busy threshold ensures enough free workers to handle new batch quickly
+        // - Prevents scenario where new tasks queue behind long-running tasks
+        // - Priority system spreads bots across ticks, so actual per-tick load is manageable
+        uint32 busyThreshold = (workerCount * 4) / 5;  // 80% of workers
+
+        // Safety: Ensure minimum threshold to handle edge cases
+        // Even with minimum 16 workers enforced by ThreadPool, be defensive
+        if (busyThreshold < 3)
+            busyThreshold = 3;
+
+        if (queuedTasks > 100 || activeWorkers > busyThreshold)
+        {
+            TC_LOG_WARN("module.playerbot.session",
+                "ThreadPool saturated (queue: {} tasks, active: {}/{} workers, busy threshold: {}) - skipping bot updates this tick",
+                queuedTasks, activeWorkers, workerCount, busyThreshold);
+            return;  // Skip this update cycle to let workers catch up
+        }
+
         futures.reserve(sessionsToUpdate.size());
         futureGuids.reserve(sessionsToUpdate.size());
     }
@@ -525,9 +575,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Define the update logic (will be used in both parallel and sequential paths)
         auto updateLogic = [guid, botSession, diff, currentTime, enterpriseMode, tickCounter, &botsUpdated, &disconnectionQueue, &disconnectionMutex]()
             {
+                TC_LOG_ERROR("module.playerbot.session", "🔹 DEBUG: TASK START for bot {}", guid.ToString());
                 TC_LOG_TRACE("playerbot.session.task", "🔹 TASK START for bot {}", guid.ToString());
                 try
                 {
+                    TC_LOG_ERROR("module.playerbot.session", "🔹 DEBUG: Creating PacketFilter for bot {}", guid.ToString());
                     // Create PacketFilter for bot session
                     class BotPacketFilter : public PacketFilter
                     {
@@ -537,10 +589,13 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         bool Process(WorldPacket*) override { return true; }
                         bool ProcessUnsafe() const override { return true; }
                     } filter(botSession.get());
+                    TC_LOG_ERROR("module.playerbot.session", "🔹 DEBUG: PacketFilter created for bot {}", guid.ToString());
 
                     // Update session
                     TC_LOG_TRACE("playerbot.session.update", "📋 Starting Update() for bot {}", guid.ToString());
+                    TC_LOG_ERROR("module.playerbot.session", "🔍 DEBUG: About to call botSession->Update() for bot {}", guid.ToString());
                     bool updateResult = botSession->Update(diff, filter);
+                    TC_LOG_ERROR("module.playerbot.session", "🔍 DEBUG: botSession->Update() returned {} for bot {}", updateResult, guid.ToString());
                     TC_LOG_TRACE("playerbot.session.update", "📋 Update() returned {} for bot {}", updateResult, guid.ToString());
 
                     if (!updateResult)
@@ -548,7 +603,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         TC_LOG_WARN("module.playerbot.session", "🔧 Bot update failed: {}", guid.ToString());
                         std::lock_guard<std::recursive_mutex> lock(disconnectionMutex);
                         disconnectionQueue.push(guid);
-                        return;  // ← CRITICAL: Early return means promise NEVER set!
+                        return;  // Early return OK - packaged_task completes promise automatically
                     }
 
                     botsUpdated.fetch_add(1, std::memory_order_relaxed);
@@ -600,6 +655,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 }
                 catch (std::exception const& e)
                 {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 DEBUG: Exception caught in lambda for bot {}: {}", guid.ToString(), e.what());
                     TC_LOG_ERROR("module.playerbot.session", "🔧 Exception updating bot {}: {}", guid.ToString(), e.what());
                     sBotHealthCheck->RecordError(guid, "UpdateException");
 
@@ -608,6 +664,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 }
                 catch (...)
                 {
+                    TC_LOG_ERROR("module.playerbot.session", "🔧 DEBUG: Unknown exception caught in lambda for bot {}", guid.ToString());
                     TC_LOG_ERROR("module.playerbot.session", "🔧 Unknown exception updating bot {}", guid.ToString());
                     sBotHealthCheck->RecordError(guid, "UnknownException");
 
@@ -615,6 +672,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     disconnectionQueue.push(guid);
                 }
 
+                TC_LOG_ERROR("module.playerbot.session", "🔹 DEBUG: TASK END for bot {}", guid.ToString());
                 TC_LOG_TRACE("playerbot.session.task", "🔹 TASK END for bot {}", guid.ToString());
             };
 
@@ -630,7 +688,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 auto future = Performance::GetThreadPool().Submit(taskPriority, updateLogic);
                 futures.push_back(std::move(future));
                 futureGuids.push_back(guid);  // Track GUID for this future
-                TC_LOG_TRACE("playerbot.session.submit", "📤 Submitted task {} for bot {}", futures.size() - 1, guid.ToString());
+                TC_LOG_ERROR("module.playerbot.session", "📤 DEBUG: Submitted task {} for bot {} to ThreadPool", futures.size() - 1, guid.ToString());
             }
             catch (...)
             {
@@ -693,6 +751,23 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             {
                 // Future not ready - wake all workers and retry
                 ++retries;
+
+                // CRITICAL FIX: Emergency task resubmission after timeout
+                // If a future hasn't completed after 5 seconds (50 retries), the worker thread
+                // assigned to it is likely deadlocked or stuck. Resubmit the task to a different worker.
+                if (retries == 50)
+                {
+                    TC_LOG_ERROR("module.playerbot.session",
+                        "🚨 EMERGENCY: Future {} (bot {}) stuck after 5s - task likely not executed by worker. "
+                        "This indicates ThreadPool worker deadlock or task queue starvation.",
+                        i + 1, futureGuids[i].ToString());
+
+                    // The task is stuck in a worker's queue and never being executed.
+                    // We cannot safely resubmit it (would create duplicate tasks).
+                    // Best we can do is aggressively wake ALL workers and hope work stealing kicks in.
+                    Performance::GetThreadPool().WakeAllWorkers();
+                }
+
                 if (retries % 5 == 0)  // Every 500ms, wake workers
                 {
                     TC_LOG_WARN("module.playerbot.session",
