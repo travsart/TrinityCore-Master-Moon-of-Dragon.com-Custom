@@ -25,6 +25,10 @@
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include <algorithm>
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Movement/Arbiter/MovementArbiter.h"
+#include "../../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../../BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -517,7 +521,21 @@ bool PriestAI::HandlePositioningPriority(::Unit* target)
         Position optimalPos = GetOptimalPosition(target);
         if (optimalPos.IsPositionValid())
         {
-            GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+            // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+            BotAI* botAI = dynamic_cast<BotAI*>(GetBot()->GetAI());
+            if (botAI && botAI->GetMovementArbiter())
+            {
+                botAI->RequestPointMovement(
+                    PlayerBotMovementPriority::ROLE_POSITIONING,
+                    optimalPos,
+                    "Priest optimal range positioning",
+                    "PriestAI");
+            }
+            else
+            {
+                // FALLBACK: Direct MotionMaster if arbiter not available
+                GetBot()->GetMotionMaster()->MovePoint(0, optimalPos);
+            }
             return true;
         }
     }

@@ -29,6 +29,10 @@
 #include <chrono>
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../../Movement/Arbiter/MovementArbiter.h"
+#include "../../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../../BotAI.h"
+#include "UnitAI.h"
 
 namespace Playerbot
 {
@@ -1255,7 +1259,22 @@ void HunterAI::MaintainRange(::Unit* target)
     {
         // Too close, move back
         Position pos = GetOptimalPosition(target);
-        _bot->GetMotionMaster()->MovePoint(0, pos);
+
+        // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            botAI->RequestPointMovement(
+                PlayerBotMovementPriority::ROLE_POSITIONING,
+                pos,
+                "Hunter optimal range positioning (too close)",
+                "HunterAI");
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            _bot->GetMotionMaster()->MovePoint(0, pos);
+        }
     }
     else if (distance > OPTIMAL_RANGE_MAX)
     {
