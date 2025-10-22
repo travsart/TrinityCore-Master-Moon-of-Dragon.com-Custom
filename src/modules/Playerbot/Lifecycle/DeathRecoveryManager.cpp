@@ -27,6 +27,11 @@
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 
+// PHASE 3 MIGRATION: Movement Arbiter Integration
+#include "Movement/Arbiter/MovementArbiter.h"
+#include "Movement/Arbiter/MovementRequest.h"
+#include "Movement/Arbiter/MovementPriorityMapper.h"
+
 namespace Playerbot
 {
 
@@ -750,14 +755,62 @@ bool DeathRecoveryManager::NavigateToCorpse()
     if (corpseLocation.GetMapId() == MAPID_INVALID)
         return false;
 
-    // Use bot movement system
-    m_bot->GetMotionMaster()->MovePoint(0,
-        corpseLocation.GetPositionX(),
-        corpseLocation.GetPositionY(),
-        corpseLocation.GetPositionZ());
+    // PHASE 3 MIGRATION: Use Movement Arbiter with DEATH_RECOVERY priority (255)
+    // Death recovery has the ABSOLUTE HIGHEST priority - must override ALL other movement
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        Position corpsePos(corpseLocation.GetPositionX(),
+                          corpseLocation.GetPositionY(),
+                          corpseLocation.GetPositionZ(),
+                          corpseLocation.GetOrientation());
 
-    m_navigationActive = true;
-    return true;
+        // Use Movement Arbiter for priority-based arbitration
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::DEATH_RECOVERY,  // Priority 255 - HIGHEST
+            corpsePos,
+            "Corpse run - death recovery",
+            "DeathRecoveryManager");
+
+        if (accepted)
+        {
+            TC_LOG_DEBUG("playerbot.movement.arbiter",
+                "DeathRecoveryManager: Bot {} requested corpse run movement to ({:.2f}, {:.2f}, {:.2f}) with DEATH_RECOVERY priority (255)",
+                m_bot->GetName(),
+                corpsePos.GetPositionX(),
+                corpsePos.GetPositionY(),
+                corpsePos.GetPositionZ());
+
+            m_navigationActive = true;
+            return true;
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.movement.arbiter",
+                "DeathRecoveryManager: Bot {} corpse run movement request FILTERED (duplicate detected)",
+                m_bot->GetName());
+
+            // Still consider navigation active if filtered (likely duplicate)
+            m_navigationActive = true;
+            return true;
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster call if arbiter not available
+        // This should only happen during transition period
+        TC_LOG_WARN("playerbot.movement.arbiter",
+            "DeathRecoveryManager: Bot {} has no MovementArbiter - using legacy MovePoint() for corpse run",
+            m_bot->GetName());
+
+        m_bot->GetMotionMaster()->MovePoint(0,
+            corpseLocation.GetPositionX(),
+            corpseLocation.GetPositionY(),
+            corpseLocation.GetPositionZ());
+
+        m_navigationActive = true;
+        return true;
+    }
 }
 
 bool DeathRecoveryManager::InteractWithCorpse()
@@ -807,13 +860,62 @@ bool DeathRecoveryManager::NavigateToSpiritHealer()
     if (!spiritHealer)
         return false;
 
-    m_bot->GetMotionMaster()->MovePoint(0,
-        spiritHealer->GetPositionX(),
-        spiritHealer->GetPositionY(),
-        spiritHealer->GetPositionZ());
+    // PHASE 3 MIGRATION: Use Movement Arbiter with DEATH_RECOVERY priority (255)
+    // Death recovery has the ABSOLUTE HIGHEST priority - must override ALL other movement
+    BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        Position spiritHealerPos(spiritHealer->GetPositionX(),
+                                spiritHealer->GetPositionY(),
+                                spiritHealer->GetPositionZ(),
+                                spiritHealer->GetOrientation());
 
-    m_navigationActive = true;
-    return true;
+        // Use Movement Arbiter for priority-based arbitration
+        bool accepted = botAI->RequestPointMovement(
+            PlayerBotMovementPriority::DEATH_RECOVERY,  // Priority 255 - HIGHEST
+            spiritHealerPos,
+            "Moving to spirit healer - death recovery",
+            "DeathRecoveryManager");
+
+        if (accepted)
+        {
+            TC_LOG_DEBUG("playerbot.movement.arbiter",
+                "DeathRecoveryManager: Bot {} requested spirit healer movement to ({:.2f}, {:.2f}, {:.2f}) with DEATH_RECOVERY priority (255)",
+                m_bot->GetName(),
+                spiritHealerPos.GetPositionX(),
+                spiritHealerPos.GetPositionY(),
+                spiritHealerPos.GetPositionZ());
+
+            m_navigationActive = true;
+            return true;
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.movement.arbiter",
+                "DeathRecoveryManager: Bot {} spirit healer movement request FILTERED (duplicate detected)",
+                m_bot->GetName());
+
+            // Still consider navigation active if filtered (likely duplicate)
+            m_navigationActive = true;
+            return true;
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster call if arbiter not available
+        // This should only happen during transition period
+        TC_LOG_WARN("playerbot.movement.arbiter",
+            "DeathRecoveryManager: Bot {} has no MovementArbiter - using legacy MovePoint() for spirit healer",
+            m_bot->GetName());
+
+        m_bot->GetMotionMaster()->MovePoint(0,
+            spiritHealer->GetPositionX(),
+            spiritHealer->GetPositionY(),
+            spiritHealer->GetPositionZ());
+
+        m_navigationActive = true;
+        return true;
+    }
 }
 
 bool DeathRecoveryManager::InteractWithSpiritHealer()

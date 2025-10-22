@@ -37,6 +37,9 @@
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
 #include "Lifecycle/DeathRecoveryManager.h"
+#include "Movement/Arbiter/MovementArbiter.h"
+#include "Movement/Arbiter/MovementRequest.h"
+#include "Movement/Arbiter/MovementPriorityMapper.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Creature.h"
@@ -98,7 +101,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize death recovery system
     _deathRecoveryManager = std::make_unique<DeathRecoveryManager>(_bot, this);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery systems ready",
+    // Initialize movement arbiter for priority-based movement request arbitration
+    _movementArbiter = std::make_unique<MovementArbiter>(_bot);
+
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -459,6 +465,11 @@ void BotAI::UpdateAI(uint32 diff)
     // Update movement based on strategy decisions
     // CRITICAL: Must run every frame for smooth movement
     UpdateMovement(diff);
+
+    // Update movement arbiter for priority-based request arbitration
+    // CRITICAL: Must run every frame to process pending movement requests
+    if (_movementArbiter)
+        _movementArbiter->Update(diff);
 
     // ========================================================================
     // PHASE 2: STATE MANAGEMENT - Check for state transitions
@@ -1858,6 +1869,88 @@ void BotAI::UpdateManagers(uint32 diff)
     }
 
     // TC_LOG_ERROR("module.playerbot", "✅ UpdateManagers COMPLETE for bot {}", _bot->GetName());
+}
+
+// ============================================================================
+// MOVEMENT ARBITER INTEGRATION - Convenience Methods
+// ============================================================================
+
+bool BotAI::RequestMovement(MovementRequest const& request)
+{
+    if (!_movementArbiter)
+        return false;
+
+    return _movementArbiter->RequestMovement(request);
+}
+
+bool BotAI::RequestPointMovement(
+    PlayerBotMovementPriority priority,
+    Position const& position,
+    std::string const& reason,
+    std::string const& sourceSystem)
+{
+    if (!_movementArbiter)
+        return false;
+
+    MovementRequest req = MovementRequest::MakePointMovement(
+        priority,
+        position,
+        true,  // generatePath
+        {},    // finalOrient
+        {},    // speed
+        {},    // closeEnoughDistance
+        reason,
+        sourceSystem);
+
+    return _movementArbiter->RequestMovement(req);
+}
+
+bool BotAI::RequestChaseMovement(
+    PlayerBotMovementPriority priority,
+    ObjectGuid targetGuid,
+    std::string const& reason,
+    std::string const& sourceSystem)
+{
+    if (!_movementArbiter)
+        return false;
+
+    MovementRequest req = MovementRequest::MakeChaseMovement(
+        priority,
+        targetGuid,
+        {},  // range
+        {},  // angle
+        reason,
+        sourceSystem);
+
+    return _movementArbiter->RequestMovement(req);
+}
+
+bool BotAI::RequestFollowMovement(
+    PlayerBotMovementPriority priority,
+    ObjectGuid targetGuid,
+    float distance,
+    std::string const& reason,
+    std::string const& sourceSystem)
+{
+    if (!_movementArbiter)
+        return false;
+
+    MovementRequest req = MovementRequest::MakeFollowMovement(
+        priority,
+        targetGuid,
+        distance,
+        {},  // angle
+        {},  // duration
+        reason,
+        sourceSystem);
+
+    return _movementArbiter->RequestMovement(req);
+}
+
+void BotAI::StopAllMovement()
+{
+    if (_movementArbiter)
+        _movementArbiter->StopMovement();
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp

@@ -11,6 +11,7 @@
 #include "MechanicAwareness.h"
 #include "Player.h"
 #include "Unit.h"
+#include "UnitAI.h"
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
@@ -21,6 +22,10 @@
 #include "MotionMaster.h"
 #include "Log.h"
 #include "World.h"
+#include "AI/BotAI.h"
+#include "Movement/Arbiter/MovementArbiter.h"
+#include "Movement/Arbiter/MovementRequest.h"
+#include "Movement/Arbiter/MovementPriorityMapper.h"
 #include <algorithm>
 #include <execution>
 #include <cmath>
@@ -1272,21 +1277,63 @@ void MechanicAwareness::ExecuteMovementResponse(Player* bot, const Position& saf
     // Calculate reaction delay based on urgency
     uint32 reactionDelay = _minReactionTime;
 
+    // Determine priority based on urgency
+    PlayerBotMovementPriority priority = PlayerBotMovementPriority::BOSS_MECHANIC;
+
     switch (urgency)
     {
         case MechanicUrgency::IMMEDIATE:
             reactionDelay = _minReactionTime;
+            priority = PlayerBotMovementPriority::BOSS_MECHANIC;  // CRITICAL priority (250)
             break;
         case MechanicUrgency::URGENT:
             reactionDelay = (_minReactionTime + _maxReactionTime) / 2;
+            priority = PlayerBotMovementPriority::DUNGEON_MECHANIC;  // VERY_HIGH priority (205)
             break;
         default:
             reactionDelay = _maxReactionTime;
+            priority = PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY;  // CRITICAL priority (245)
             break;
     }
 
-    // Move after reaction delay (simulated with immediate movement for now)
-    bot->GetMotionMaster()->MovePoint(0, safePos);
+    // PHASE 3 MIGRATION: Use Movement Arbiter with CRITICAL priority
+    // This ensures boss mechanics ALWAYS override combat positioning, following, etc.
+    BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+    if (botAI && botAI->GetMovementArbiter())
+    {
+        // Use Movement Arbiter for priority-based arbitration
+        bool accepted = botAI->RequestPointMovement(
+            priority,
+            safePos,
+            "Avoiding boss mechanic/AOE",
+            "MechanicAwareness");
+
+        if (accepted)
+        {
+            TC_LOG_DEBUG("playerbot.movement.arbiter",
+                "MechanicAwareness: Bot {} requested movement to safe position ({:.2f}, {:.2f}, {:.2f}) with {} priority",
+                bot->GetName(),
+                safePos.GetPositionX(),
+                safePos.GetPositionY(),
+                safePos.GetPositionZ(),
+                MovementPriorityMapper::GetPriorityName(priority));
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.movement.arbiter",
+                "MechanicAwareness: Bot {} emergency movement request FILTERED (duplicate or lower priority active)",
+                bot->GetName());
+        }
+    }
+    else
+    {
+        // FALLBACK: Direct MotionMaster call if arbiter not available
+        // This should only happen during transition period
+        TC_LOG_WARN("playerbot.movement.arbiter",
+            "MechanicAwareness: Bot {} has no MovementArbiter - using legacy MovePoint()",
+            bot->GetName());
+        bot->GetMotionMaster()->MovePoint(0, safePos);
+    }
 
     // Track reaction time
     _metrics.reactionTimeTotal += reactionDelay;

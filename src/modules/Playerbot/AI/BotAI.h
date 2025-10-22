@@ -43,6 +43,8 @@ class GatheringManager;
 class AuctionManager;
 class GroupCoordinator;
 class DeathRecoveryManager;
+class MovementArbiter;
+enum class PlayerBotMovementPriority : uint8;
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -251,6 +253,82 @@ public:
 
     DeathRecoveryManager* GetDeathRecoveryManager() { return _deathRecoveryManager.get(); }
     DeathRecoveryManager const* GetDeathRecoveryManager() const { return _deathRecoveryManager.get(); }
+
+    // ========================================================================
+    // MOVEMENT ARBITER - Enterprise movement request arbitration
+    // ========================================================================
+
+    MovementArbiter* GetMovementArbiter() { return _movementArbiter.get(); }
+    MovementArbiter const* GetMovementArbiter() const { return _movementArbiter.get(); }
+
+    /**
+     * Request movement via the Movement Arbiter
+     * This is the PREFERRED method for all movement requests
+     *
+     * @param request MovementRequest to submit for arbitration
+     * @return true if request accepted, false if filtered (duplicate/low priority)
+     *
+     * Example:
+     *   auto req = MovementRequest::MakePointMovement(
+     *       PlayerBotMovementPriority::COMBAT_AI,
+     *       targetPos, true, {}, {}, {},
+     *       "Combat positioning", "WarriorAI");
+     *   bot->GetBotAI()->RequestMovement(req);
+     */
+    bool RequestMovement(class MovementRequest const& request);
+
+    /**
+     * Convenience method: Request point movement
+     *
+     * @param priority Movement priority
+     * @param position Target position
+     * @param reason Debug description
+     * @param sourceSystem Source system identifier
+     * @return true if accepted
+     */
+    bool RequestPointMovement(
+        PlayerBotMovementPriority priority,
+        Position const& position,
+        std::string const& reason = "",
+        std::string const& sourceSystem = "");
+
+    /**
+     * Convenience method: Request chase movement
+     *
+     * @param priority Movement priority
+     * @param target Target to chase
+     * @param reason Debug description
+     * @param sourceSystem Source system identifier
+     * @return true if accepted
+     */
+    bool RequestChaseMovement(
+        PlayerBotMovementPriority priority,
+        ObjectGuid targetGuid,
+        std::string const& reason = "",
+        std::string const& sourceSystem = "");
+
+    /**
+     * Convenience method: Request follow movement
+     *
+     * @param priority Movement priority
+     * @param target Target to follow
+     * @param distance Follow distance
+     * @param reason Debug description
+     * @param sourceSystem Source system identifier
+     * @return true if accepted
+     */
+    bool RequestFollowMovement(
+        PlayerBotMovementPriority priority,
+        ObjectGuid targetGuid,
+        float distance = 5.0f,
+        std::string const& reason = "",
+        std::string const& sourceSystem = "");
+
+    /**
+     * Stop all movement immediately
+     * Clears pending requests and stops current movement
+     */
+    void StopAllMovement();
 
     // ========================================================================
     // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
@@ -547,6 +625,9 @@ protected:
 
     // Death recovery system
     std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
+
+    // Movement arbiter - Enterprise movement request arbitration
+    std::unique_ptr<MovementArbiter> _movementArbiter;
 
     // Phase 7.1: Event system integration
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
