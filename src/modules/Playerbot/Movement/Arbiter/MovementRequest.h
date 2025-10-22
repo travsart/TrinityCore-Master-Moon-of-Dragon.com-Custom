@@ -196,6 +196,18 @@ public:
         std::string reason = "",
         std::string sourceSystem = "");
 
+    /**
+     * Construct jump movement request
+     */
+    static MovementRequest MakeJumpMovement(
+        PlayerBotMovementPriority priority,
+        Position const& targetPos,
+        float speedXY,
+        float speedZ,
+        uint32 eventId = 0,
+        std::string reason = "",
+        std::string sourceSystem = "");
+
     // ========================================================================
     // ACCESSORS
     // ========================================================================

@@ -255,6 +255,29 @@ MovementRequest MovementRequest::MakeIdleMovement(
     return req;
 }
 
+MovementRequest MovementRequest::MakeJumpMovement(
+    PlayerBotMovementPriority priority,
+    Position const& targetPos,
+    float speedXY,
+    float speedZ,
+    uint32 eventId,
+    std::string reason,
+    std::string sourceSystem)
+{
+    MovementRequest req(priority, std::move(reason));
+    req._type = MovementRequestType::JUMP;
+    req._sourceSystem = std::move(sourceSystem);
+
+    JumpMovementParams params;
+    params.targetPos = targetPos;
+    params.speedXY = speedXY;
+    params.speedZ = speedZ;
+    params.eventId = eventId;
+
+    req._params = params;
+    return req;
+}
+
 // ============================================================================
 // Type-Specific Parameter Getters (Throwing)
 // ============================================================================

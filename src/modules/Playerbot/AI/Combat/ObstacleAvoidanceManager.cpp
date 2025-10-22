@@ -23,6 +23,7 @@
 #include "../../Spatial/SpatialGridManager.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
 #include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementRequest.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
@@ -238,10 +239,34 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                 if (maneuver.requiresJump)
                 {
                     Position jumpTarget = maneuver.waypoints.back();
-                    // NOTE: MoveJump is not yet supported by Movement Arbiter
-                    // This is a specialized movement type that requires direct MotionMaster access
-                    // Future work: Add jump movement support to Movement Arbiter
-                    _bot->GetMotionMaster()->MoveJump(jumpTarget.GetPositionX(), jumpTarget.GetPositionY(), jumpTarget.GetPositionZ(), 10.0f, 10.0f);
+
+                    // PHASE 6A: Use Movement Arbiter with OBSTACLE_AVOIDANCE_EMERGENCY priority (245)
+                    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+                    if (botAI && botAI->GetMovementArbiter())
+                    {
+                        MovementRequest req = MovementRequest::MakeJumpMovement(
+                            PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY,  // Priority 245 - CRITICAL tier
+                            jumpTarget,
+                            10.0f,  // speedXY
+                            10.0f,  // speedZ
+                            0,      // eventId
+                            "Jumping over obstacle",
+                            "ObstacleAvoidanceManager");
+
+                        bool accepted = botAI->GetMovementArbiter()->RequestMovement(req);
+
+                        if (!accepted)
+                        {
+                            TC_LOG_TRACE("playerbot.movement.arbiter",
+                                "ObstacleAvoidanceManager: Jump movement rejected for bot {} - higher priority active",
+                                _bot->GetName());
+                        }
+                    }
+                    else
+                    {
+                        // FALLBACK: Direct MotionMaster call if arbiter not available
+                        _bot->GetMotionMaster()->MoveJump(jumpTarget.GetPositionX(), jumpTarget.GetPositionY(), jumpTarget.GetPositionZ(), 10.0f, 10.0f);
+                    }
                 }
                 break;
 
