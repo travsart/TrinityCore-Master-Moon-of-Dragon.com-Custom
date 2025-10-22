@@ -20,6 +20,10 @@
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 #include <algorithm>
 #include <cmath>
 
@@ -912,8 +916,30 @@ bool KitingManager::ExecuteMovementToPosition(const Position& target)
 {
     try
     {
-        _bot->GetMotionMaster()->MovePoint(0, target.GetPositionX(), target.GetPositionY(), target.GetPositionZ());
-        return true;
+        // PHASE 6B: Use Movement Arbiter with KITING priority (175)
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetMovementArbiter())
+        {
+            bool accepted = botAI->RequestPointMovement(
+                PlayerBotMovementPriority::KITING,
+                target,
+                "Kiting movement",
+                "KitingManager");
+
+            if (!accepted)
+            {
+                TC_LOG_TRACE("playerbot.movement.arbiter",
+                    "KitingManager: Kiting movement rejected for {} - higher priority active",
+                    _bot->GetName());
+            }
+            return accepted;
+        }
+        else
+        {
+            // FALLBACK: Direct MotionMaster if arbiter not available
+            _bot->GetMotionMaster()->MovePoint(0, target.GetPositionX(), target.GetPositionY(), target.GetPositionZ());
+            return true;
+        }
     }
     catch (const std::exception& e)
     {
