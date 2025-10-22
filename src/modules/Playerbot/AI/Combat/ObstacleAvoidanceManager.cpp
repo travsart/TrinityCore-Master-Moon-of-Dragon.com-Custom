@@ -22,6 +22,10 @@
 #include "SpellInfo.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
+#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "../BotAI.h"
+#include "UnitAI.h"
 #include "ObjectAccessor.h"
 #include <algorithm>
 #include <cmath>
@@ -200,7 +204,29 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
             case AvoidanceBehavior::FIND_ALTERNATIVE:
                 {
                     Position targetPos = maneuver.waypoints.back();
-                    _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+
+                    // PHASE 3 MIGRATION (MISSED): Use Movement Arbiter with OBSTACLE_AVOIDANCE_EMERGENCY priority (245)
+                    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+                    if (botAI && botAI->GetMovementArbiter())
+                    {
+                        bool accepted = botAI->RequestPointMovement(
+                            PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY,  // Priority 245 - CRITICAL tier
+                            targetPos,
+                            maneuver.description.c_str(),
+                            "ObstacleAvoidanceManager");
+
+                        if (!accepted)
+                        {
+                            TC_LOG_TRACE("playerbot.movement.arbiter",
+                                "ObstacleAvoidanceManager: Emergency avoidance rejected for bot {} - higher priority active (likely death recovery or boss mechanic)",
+                                _bot->GetName());
+                        }
+                    }
+                    else
+                    {
+                        // FALLBACK: Direct MotionMaster call if arbiter not available
+                        _bot->GetMotionMaster()->MovePoint(0, targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
+                    }
                 }
                 break;
 
@@ -212,6 +238,9 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                 if (maneuver.requiresJump)
                 {
                     Position jumpTarget = maneuver.waypoints.back();
+                    // NOTE: MoveJump is not yet supported by Movement Arbiter
+                    // This is a specialized movement type that requires direct MotionMaster access
+                    // Future work: Add jump movement support to Movement Arbiter
                     _bot->GetMotionMaster()->MoveJump(jumpTarget.GetPositionX(), jumpTarget.GetPositionY(), jumpTarget.GetPositionZ(), 10.0f, 10.0f);
                 }
                 break;
@@ -220,7 +249,29 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                 if (maneuver.waypoints.size() >= 2)
                 {
                     Position backtrackPos = maneuver.waypoints[0];
-                    _bot->GetMotionMaster()->MovePoint(0, backtrackPos.GetPositionX(), backtrackPos.GetPositionY(), backtrackPos.GetPositionZ());
+
+                    // PHASE 3 MIGRATION (MISSED): Use Movement Arbiter with OBSTACLE_AVOIDANCE_EMERGENCY priority (245)
+                    BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+                    if (botAI && botAI->GetMovementArbiter())
+                    {
+                        bool accepted = botAI->RequestPointMovement(
+                            PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY,  // Priority 245 - CRITICAL tier
+                            backtrackPos,
+                            "Backtracking from obstacle",
+                            "ObstacleAvoidanceManager");
+
+                        if (!accepted)
+                        {
+                            TC_LOG_TRACE("playerbot.movement.arbiter",
+                                "ObstacleAvoidanceManager: Backtrack movement rejected for bot {} - higher priority active",
+                                _bot->GetName());
+                        }
+                    }
+                    else
+                    {
+                        // FALLBACK: Direct MotionMaster call if arbiter not available
+                        _bot->GetMotionMaster()->MovePoint(0, backtrackPos.GetPositionX(), backtrackPos.GetPositionY(), backtrackPos.GetPositionZ());
+                    }
                 }
                 break;
 
