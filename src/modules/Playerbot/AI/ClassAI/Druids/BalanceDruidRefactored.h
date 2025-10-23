@@ -15,7 +15,6 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "DruidSpecialization.h"
 
 namespace Playerbot
 {
@@ -264,7 +263,7 @@ private:
 // BALANCE DRUID REFACTORED
 // ============================================================================
 
-class BalanceDruidRefactored : public RangedDpsSpecialization<ManaAstralPowerResource>, public DruidSpecialization
+class BalanceDruidRefactored : public RangedDpsSpecialization<ManaAstralPowerResource>
 {
 public:
     using Base = RangedDpsSpecialization<ManaAstralPowerResource>;
@@ -274,7 +273,7 @@ public:
     using Base::_resource;
     explicit BalanceDruidRefactored(Player* bot)
         : RangedDpsSpecialization<ManaAstralPowerResource>(bot)
-        , DruidSpecialization(bot)
+        
         , _eclipseTracker()
         , _dotTracker()
         , _starfallActive(false)

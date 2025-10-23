@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "PriestSpecialization.h"
 #include "Position.h"
 #include <memory>
 
@@ -57,10 +56,6 @@ protected:
     bool ExecuteNormalRotation(::Unit* target);
 
 private:
-    // Specialization system
-    PriestSpec _currentSpec;
-    std::unique_ptr<PriestSpecialization> _specialization;
-
     // Performance tracking
     uint32 _manaSpent;
     uint32 _healingDone;
@@ -77,12 +72,6 @@ private:
     uint32 _lastMassDispel;
     uint32 _lastDesperatePrayer;
     uint32 _lastFade;
-
-    // Specialization management
-    void InitializeSpecialization();
-    void UpdateSpecialization();
-    PriestSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(PriestSpec newSpec);
 
     // Shared priest utilities
     void UpdatePriestBuffs();
@@ -128,7 +117,6 @@ private:
     uint32 CalculateManaUsage() const;
     void AnalyzeHealingEfficiency();
     void HealGroupMembers();
-    void OptimizeForSpecialization();
 
     // Constants
     static constexpr float OPTIMAL_HEALING_RANGE = 40.0f;

@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_ELEMENTALSHAMANREFACTORED_H
 #define PLAYERBOT_ELEMENTALSHAMANREFACTORED_H
 
-#include "ShamanSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

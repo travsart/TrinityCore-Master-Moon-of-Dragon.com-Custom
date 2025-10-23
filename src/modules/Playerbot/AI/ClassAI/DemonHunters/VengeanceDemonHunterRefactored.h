@@ -17,7 +17,6 @@
 #include "Group.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
-#include "DemonHunterSpecialization.h"
 #include "DemonHunterAI.h"
 
 namespace Playerbot
@@ -258,7 +257,7 @@ private:
  * Complete Vengeance Demon Hunter implementation using template architecture
  * Inherits from TankSpecialization<PainResource> (uint32 resource)
  */
-class VengeanceDemonHunterRefactored : public TankSpecialization<PainResource>, public DemonHunterSpecialization
+class VengeanceDemonHunterRefactored : public TankSpecialization<PainResource>
 {
 public:
     using Base = TankSpecialization<PainResource>;
@@ -270,7 +269,7 @@ public:
     using Base::_resource;
     explicit VengeanceDemonHunterRefactored(Player* bot)
         : TankSpecialization<PainResource>(bot)
-        , DemonHunterSpecialization(bot)
+        
         , _soulFragments()
         , _demonSpikes()
         , _lastShearTime(0)

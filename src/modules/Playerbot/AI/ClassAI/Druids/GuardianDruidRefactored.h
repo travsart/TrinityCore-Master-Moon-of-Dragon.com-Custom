@@ -25,7 +25,6 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
-#include "DruidSpecialization.h"
 
 namespace Playerbot
 {
@@ -160,7 +159,7 @@ private:
     std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
 };
 
-class GuardianDruidRefactored : public TankSpecialization<RageResource>, public DruidSpecialization
+class GuardianDruidRefactored : public TankSpecialization<RageResource>
 {
 public:
     using Base = TankSpecialization<RageResource>;
@@ -171,7 +170,7 @@ public:
     using Base::_resource;
     explicit GuardianDruidRefactored(Player* bot)
         : TankSpecialization<RageResource>(bot)
-        , DruidSpecialization(bot)
+        
         , _ironfurTracker()
         , _thrashTracker()
         , _frenziedRegenerationActive(false)

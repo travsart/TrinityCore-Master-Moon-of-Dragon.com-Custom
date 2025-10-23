@@ -39,7 +39,6 @@ namespace Playerbot
 
 HunterAI::HunterAI(Player* bot) :
     ClassAI(bot),
-    _detectedSpec(HunterSpec::BEAST_MASTERY),
     _lastCounterShot(0),
     _lastFeignDeath(0),
     _lastDeterrence(0),
@@ -60,9 +59,6 @@ HunterAI::HunterAI(Player* bot) :
     // Initialize combat behavior integration
     _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);
 
-    // Initialize specialization
-    InitializeSpecialization();
-
     // Reset combat metrics
     _combatMetrics.Reset();
 
@@ -75,61 +71,6 @@ void HunterAI::InitializeCombatSystems()
     if (_combatBehaviors)
     {
         _combatBehaviors->Update(0); // Initial update to set up managers
-    }
-}
-
-void HunterAI::DetectSpecialization()
-{
-    Player* bot = GetBot();
-    if (!bot)
-    {
-        _detectedSpec = HunterSpec::BEAST_MASTERY;
-        return;
-    }
-
-    // Check for Marksmanship specialization indicators
-    if (bot->HasSpell(19434) || bot->HasSpell(53209)) // Aimed Shot or Chimera Shot
-        _detectedSpec = HunterSpec::MARKSMANSHIP;
-    // Check for Survival specialization indicators
-    else if (bot->HasSpell(3674) || bot->HasSpell(60053)) // Black Arrow or Explosive Shot
-        _detectedSpec = HunterSpec::SURVIVAL;
-    // Default to Beast Mastery
-    else
-        _detectedSpec = HunterSpec::BEAST_MASTERY;
-}
-
-void HunterAI::InitializeSpecialization()
-{
-    DetectSpecialization();
-    SwitchSpecialization(_detectedSpec);
-}
-
-void HunterAI::SwitchSpecialization(HunterSpec newSpec)
-{
-    _detectedSpec = newSpec;
-
-    switch (newSpec)
-    {
-        case HunterSpec::BEAST_MASTERY:
-            _specialization = std::make_unique<BeastMasteryHunterRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Beast Mastery specialization",
-                         GetBot()->GetName());
-            break;
-        case HunterSpec::MARKSMANSHIP:
-            _specialization = std::make_unique<MarksmanshipHunterRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Marksmanship specialization",
-                         GetBot()->GetName());
-            break;
-        case HunterSpec::SURVIVAL:
-            _specialization = std::make_unique<SurvivalHunterRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched to Survival specialization",
-                         GetBot()->GetName());
-            break;
-        default:
-            _specialization = std::make_unique<BeastMasteryHunterRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} defaulted to Beast Mastery specialization",
-                         GetBot()->GetName());
-            break;
     }
 }
 
@@ -477,7 +418,7 @@ bool HunterAI::HandlePetManagement(::Unit* target)
     }
 
     // Use Kill Command if available (BM spec)
-    if (target && _detectedSpec == HunterSpec::BEAST_MASTERY)
+    if (target && GetCurrentSpecialization() == HunterSpec::BEAST_MASTERY)
     {
         if (_bot->HasSpell(KILL_COMMAND) && CanUseAbility(KILL_COMMAND))
         {
@@ -635,7 +576,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
         }
 
         // Explosive Shot for Survival spec
-        if (_detectedSpec == HunterSpec::SURVIVAL && nearbyEnemies >= 2)
+        if (GetCurrentSpecialization() == HunterSpec::SURVIVAL && nearbyEnemies >= 2)
         {
             if (_bot->HasSpell(EXPLOSIVE_SHOT) && CanUseAbility(EXPLOSIVE_SHOT))
             {
@@ -686,7 +627,7 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
     {
         bool usedCooldown = false;
 
-        switch (_detectedSpec)
+        switch (GetCurrentSpecialization())
         {
             case HunterSpec::BEAST_MASTERY:
                 // Bestial Wrath - pet damage boost
@@ -789,27 +730,16 @@ void HunterAI::ExecuteNormalRotation(::Unit* target)
         }
     }
 
-    // Delegate to specialization for rotation
-    DelegateToSpecialization(target);
-}
-
-void HunterAI::DelegateToSpecialization(::Unit* target)
-{
-    if (_specialization)
-        _specialization->UpdateRotation(target);
-    else
+    // Fallback basic rotation (specialization rotations handled by refactored system)
+    if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
     {
-        // Fallback basic rotation
-        if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
-        {
-            CastSpell(target, STEADY_SHOT);
-            RecordShotResult(true, false);
-        }
-        else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
-        {
-            CastSpell(target, ARCANE_SHOT);
-            RecordShotResult(true, false);
-        }
+        CastSpell(target, STEADY_SHOT);
+        RecordShotResult(true, false);
+    }
+    else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
+    {
+        CastSpell(target, ARCANE_SHOT);
+        RecordShotResult(true, false);
     }
 }
 
@@ -830,8 +760,7 @@ void HunterAI::UpdateBuffs()
     ManageAspects();
     UpdateTracking();
 
-    if (_specialization)
-        _specialization->UpdateBuffs();
+    // Specialization buffs handled by refactored system
 }
 
 void HunterAI::UpdateCooldowns(uint32 diff)
@@ -995,7 +924,24 @@ float HunterAI::GetOptimalRange(::Unit* target)
 
 HunterSpec HunterAI::GetCurrentSpecialization() const
 {
-    return _detectedSpec;
+    if (!_bot)
+        return HunterSpec::BEAST_MASTERY;
+
+    // Use TrinityCore's GetPrimaryTalentTree to determine specialization
+    // 0 = Beast Mastery, 1 = Marksmanship, 2 = Survival
+    uint32 spec = _bot->GetPrimaryTalentTree(_bot->GetActiveSpec());
+
+    switch (spec)
+    {
+        case 0:
+            return HunterSpec::BEAST_MASTERY;
+        case 1:
+            return HunterSpec::MARKSMANSHIP;
+        case 2:
+            return HunterSpec::SURVIVAL;
+        default:
+            return HunterSpec::BEAST_MASTERY;
+    }
 }
 
 Pet* HunterAI::GetPet() const

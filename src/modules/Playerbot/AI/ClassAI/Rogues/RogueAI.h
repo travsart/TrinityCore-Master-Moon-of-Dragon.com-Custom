@@ -11,7 +11,6 @@
 #define ROGUE_AI_H
 
 #include "../ClassAI.h"
-#include "RogueSpecialization.h"
 // #include "EnergyManager.h"  // REMOVED - Legacy file deleted
 #include "Position.h"
 #include "Unit.h"
@@ -95,14 +94,9 @@ public:
     float GetOptimalRange(Unit* target) override;
 
     // Specialization Management
-    RogueSpec GetCurrentSpecialization() const;
-
 private:
     // Initialization
     void InitializeCombatSystems();
-    void DetectSpecialization();
-    void InitializeSpecialization();
-
     // Combat execution
     void ExecuteFallbackRotation(Unit* target);
     bool ExecuteStealthOpener(Unit* target);
@@ -113,13 +107,6 @@ private:
     // Utility
     void ApplyPoisons();
     bool IsFinisher(uint32 spellId) const;
-
-    // Specialization system - Template-based Refactored architecture
-    // Uses ClassAI* to hold any spec (Assassination/Outlaw/Subtlety with different resource types)
-    std::unique_ptr<ClassAI> _specialization;
-    RogueSpec _detectedSpec;
-    void SwitchSpecialization(RogueSpec newSpec);
-    void DelegateToSpecialization(::Unit* target);
 
     // Combat systems
     std::unique_ptr<BotThreatManager> _threatManager;

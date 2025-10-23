@@ -15,7 +15,6 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
-#include "WarriorSpecialization.h"
 #include "Item.h"
 #include "ItemDefines.h"
 #include <unordered_map>
@@ -33,7 +32,7 @@ namespace Playerbot
  * - Built-in threat management and defensive cooldown logic
  * - Eliminates ~820 lines of duplicate code
  */
-class ProtectionWarriorRefactored : public TankSpecialization<RageResource>, public WarriorSpecialization
+class ProtectionWarriorRefactored : public TankSpecialization<RageResource>
 {
 public:
     using Base = TankSpecialization<RageResource>;
@@ -46,7 +45,7 @@ public:
     using Base::_resource;
     explicit ProtectionWarriorRefactored(Player* bot)
         : TankSpecialization<RageResource>(bot)
-        , WarriorSpecialization(bot)
+        
         , _hasShieldEquipped(false)
         , _shieldBlockCharges(0)
         , _lastShieldBlock(0)

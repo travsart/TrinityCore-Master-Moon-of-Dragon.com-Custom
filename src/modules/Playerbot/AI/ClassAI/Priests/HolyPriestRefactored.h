@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_HOLYPRIESTREFACTORED_H
 #define PLAYERBOT_HOLYPRIESTREFACTORED_H
 
-#include "PriestSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

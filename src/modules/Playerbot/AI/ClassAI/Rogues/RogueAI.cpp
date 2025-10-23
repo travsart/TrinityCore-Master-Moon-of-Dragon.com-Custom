@@ -87,9 +87,6 @@ struct RogueMetrics
     }
 };
 
-
-
-
 // Combat metrics tracking
 class RogueCombatMetrics
 {
@@ -235,8 +232,6 @@ float RogueCombatPositioning::GetOptimalRange(RogueSpec spec) const
 
 RogueAI::RogueAI(Player* bot) :
     ClassAI(bot),
-    _detectedSpec(RogueSpec::ASSASSINATION),
-    _specialization(nullptr),
     _energySpent(0),
     _comboPointsUsed(0),
     _stealthsUsed(0),
@@ -246,17 +241,12 @@ RogueAI::RogueAI(Player* bot) :
     // Initialize combat systems
     InitializeCombatSystems();
 
-    // Detect and initialize specialization
-    DetectSpecialization();
-    InitializeSpecialization();
-
     // Initialize performance tracking
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
     _positioning = new RogueCombatPositioning(bot);
 
-    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {} with specialization {}",
-                 bot->GetName(), static_cast<uint32>(_detectedSpec));
+    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
 }
 
 void RogueAI::InitializeCombatSystems()
@@ -269,70 +259,6 @@ void RogueAI::InitializeCombatSystems()
     _cooldownManager = std::make_unique<CooldownManager>();
 
     TC_LOG_DEBUG("playerbot", "RogueAI combat systems initialized for {}", GetBot()->GetName());
-}
-
-void RogueAI::DetectSpecialization()
-{
-    if (!GetBot())
-    {
-        _detectedSpec = RogueSpec::ASSASSINATION;
-        return;
-    }
-
-    // Advanced specialization detection based on talents and abilities
-    uint32 assassinationPoints = 0;
-    uint32 combatPoints = 0;
-    uint32 subtletyPoints = 0;
-
-    // Check key Assassination abilities/talents
-    if (GetBot()->HasSpell(MUTILATE))
-        assassinationPoints += 10;
-    if (GetBot()->HasSpell(ENVENOM))
-        assassinationPoints += 8;
-    if (GetBot()->HasSpell(COLD_BLOOD))
-        assassinationPoints += 6;
-    if (GetBot()->HasSpell(VENDETTA))
-        assassinationPoints += 10;
-    if (GetBot()->HasSpell(1329)) // Mutilate (lower rank)
-        assassinationPoints += 5;
-
-    // Check key Combat abilities/talents
-    if (GetBot()->HasSpell(BLADE_FLURRY))
-        combatPoints += 10;
-    if (GetBot()->HasSpell(ADRENALINE_RUSH))
-        combatPoints += 8;
-    if (GetBot()->HasSpell(KILLING_SPREE))
-        combatPoints += 10;
-    if (GetBot()->HasSpell(13877)) // Blade Flurry (base)
-        combatPoints += 5;
-
-    // Check key Subtlety abilities/talents
-    if (GetBot()->HasSpell(HEMORRHAGE))
-        subtletyPoints += 8;
-    if (GetBot()->HasSpell(SHADOWSTEP))
-        subtletyPoints += 10;
-    if (GetBot()->HasSpell(SHADOW_DANCE))
-        subtletyPoints += 10;
-    if (GetBot()->HasSpell(14185)) // Preparation
-        subtletyPoints += 6;
-
-    // Determine specialization based on points
-    if (assassinationPoints >= combatPoints && assassinationPoints >= subtletyPoints)
-        _detectedSpec = RogueSpec::ASSASSINATION;
-    else if (combatPoints > assassinationPoints && combatPoints >= subtletyPoints)
-        _detectedSpec = RogueSpec::COMBAT;
-    else
-        _detectedSpec = RogueSpec::SUBTLETY;
-
-    TC_LOG_DEBUG("playerbot", "RogueAI detected specialization: {} (A:{}, C:{}, S:{})",
-                 static_cast<uint32>(_detectedSpec), assassinationPoints,
-                 combatPoints, subtletyPoints);
-}
-
-void RogueAI::InitializeSpecialization()
-{
-    DetectSpecialization();
-    SwitchSpecialization(_detectedSpec);
 }
 
 void RogueAI::UpdateRotation(Unit* target)
@@ -412,8 +338,9 @@ void RogueAI::UpdateRotation(Unit* target)
     // Priority 4: AoE vs Single-Target decision
     if (behaviors && behaviors->ShouldAOE())
     {
-        // Blade Flurry for Combat/Outlaw rogues
-        if (_detectedSpec == RogueSpec::COMBAT && CanUseAbility(BLADE_FLURRY))
+        // Blade Flurry for Combat/Outlaw rogues (check via specialization)
+        uint32 spec = GetBot()->GetPrimarySpecialization();
+        if (spec == 1 && CanUseAbility(BLADE_FLURRY)) // Combat/Outlaw is spec 1
         {
             if (CastSpell(BLADE_FLURRY))
             {
@@ -443,9 +370,10 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
         // Spec-specific offensive cooldowns
-        switch (_detectedSpec)
+        uint32 spec = GetBot()->GetPrimarySpecialization();
+        switch (spec)
         {
-            case RogueSpec::ASSASSINATION:
+            case 0: // Assassination
                 // Vendetta for damage amplification
                 if (CanUseAbility(VENDETTA))
                 {
@@ -470,7 +398,7 @@ void RogueAI::UpdateRotation(Unit* target)
                 }
                 break;
 
-            case RogueSpec::COMBAT:
+            case 1: // Combat/Outlaw
                 // Adrenaline Rush for energy regeneration
                 if (CanUseAbility(ADRENALINE_RUSH))
                 {
@@ -496,7 +424,7 @@ void RogueAI::UpdateRotation(Unit* target)
                 }
                 break;
 
-            case RogueSpec::SUBTLETY:
+            case 2: // Subtlety
                 // Shadow Dance for enhanced abilities
                 if (CanUseAbility(SHADOW_DANCE))
                 {
@@ -552,16 +480,8 @@ void RogueAI::UpdateRotation(Unit* target)
             return;
     }
 
-    // Priority 7: Execute normal rotation through specialization
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-    }
-    else
-    {
-        // Fallback rotation when no specialization is available
-        ExecuteRogueBasicRotation(target);
-    }
+    // Priority 7: Execute normal rotation (all specs use baseline logic in RogueAI)
+    ExecuteRogueBasicRotation(target);
 
     // Update performance metrics
     auto endTime = std::chrono::steady_clock::now();
@@ -751,7 +671,8 @@ void RogueAI::UseDefensiveCooldowns()
     }
 
     // Combat Readiness for damage reduction (Combat spec)
-    if (_detectedSpec == RogueSpec::COMBAT && healthPct < 40.0f)
+    uint32 spec = GetBot()->GetPrimarySpecialization();
+    if (spec == 1 && healthPct < 40.0f) // Combat/Outlaw is spec 1
     {
         uint32 combatReadiness = 74001; // Combat Readiness spell ID
         if (CanUseAbility(combatReadiness))
@@ -1018,9 +939,10 @@ bool RogueAI::BuildComboPoints(Unit* target)
     }
 
     // Spec-specific builders
-    switch (_detectedSpec)
+    uint32 spec = GetBot()->GetPrimarySpecialization();
+    switch (spec)
     {
-        case RogueSpec::ASSASSINATION:
+        case 0: // Assassination
             if (CanUseAbility(MUTILATE))
             {
                 CastSpell(target, MUTILATE);
@@ -1030,7 +952,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
             }
             break;
 
-        case RogueSpec::SUBTLETY:
+        case 2: // Subtlety
             if (CanUseAbility(HEMORRHAGE))
             {
                 CastSpell(target, HEMORRHAGE);
@@ -1040,7 +962,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
             }
             break;
 
-        case RogueSpec::COMBAT:
+        case 1: // Combat/Outlaw
             // Combat prefers Sinister Strike
             break;
     }
@@ -1089,11 +1011,8 @@ void RogueAI::UpdateBuffs()
         }
     }
 
-    // Delegate to specialization for spec-specific buffs
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
+    // Spec-specific buffs are handled within individual ability checks
+    // No delegation needed - RogueAI handles all buff logic directly
 }
 
 void RogueAI::ApplyPoisons()
@@ -1104,16 +1023,17 @@ void RogueAI::ApplyPoisons()
     // Main hand poison based on spec
     if (mainHand && !mainHand->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
     {
+        uint32 spec = GetBot()->GetPrimarySpecialization();
         uint32 poisonSpell = 0;
-        switch (_detectedSpec)
+        switch (spec)
         {
-            case RogueSpec::ASSASSINATION:
+            case 0: // Assassination
                 poisonSpell = DEADLY_POISON;
                 break;
-            case RogueSpec::COMBAT:
+            case 1: // Combat/Outlaw
                 poisonSpell = INSTANT_POISON;
                 break;
-            case RogueSpec::SUBTLETY:
+            case 2: // Subtlety
                 poisonSpell = WOUND_POISON;
                 break;
         }
@@ -1130,16 +1050,17 @@ void RogueAI::ApplyPoisons()
     if (offHand && offHand->GetTemplate()->GetClass() == ITEM_CLASS_WEAPON &&
         !offHand->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
     {
+        uint32 spec = GetBot()->GetPrimarySpecialization();
         uint32 poisonSpell = 0;
-        switch (_detectedSpec)
+        switch (spec)
         {
-            case RogueSpec::ASSASSINATION:
+            case 0: // Assassination
                 poisonSpell = INSTANT_POISON;
                 break;
-            case RogueSpec::COMBAT:
+            case 1: // Combat/Outlaw
                 poisonSpell = CRIPPLING_POISON;
                 break;
-            case RogueSpec::SUBTLETY:
+            case 2: // Subtlety
                 poisonSpell = MIND_NUMBING_POISON;
                 break;
         }
@@ -1162,12 +1083,8 @@ void RogueAI::UpdateCooldowns(uint32 diff)
     if (_cooldownManager)
         _cooldownManager->Update(diff);
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        // Template-based specs handle their own cooldowns internally
-        // No UpdateCooldowns method in MeleeDpsSpecialization interface
-    }
+    // No specialization delegation needed
+    // All cooldowns are tracked via CooldownManager
 }
 
 bool RogueAI::CanUseAbility(uint32 spellId)
@@ -1185,12 +1102,7 @@ bool RogueAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Additional checks via specialization
-    if (_specialization)
-    {
-        return _specialization->CanUseAbility(spellId);
-    }
-
+    // All checks passed
     return true;
 }
 
@@ -1308,14 +1220,7 @@ void RogueAI::OnCombatStart(Unit* target)
         }
     }
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatStart(target);
-    }
-
-    TC_LOG_DEBUG("playerbot", "RogueAI: Combat started against {} with spec {}",
-                 target->GetName(), static_cast<uint32>(_detectedSpec));
+    TC_LOG_DEBUG("playerbot", "RogueAI: Combat started against {}", target->GetName());
 }
 
 void RogueAI::OnCombatEnd()
@@ -1335,12 +1240,6 @@ void RogueAI::OnCombatEnd()
         CastSpell(STEALTH);
     }
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatEnd();
-    }
-
     TC_LOG_DEBUG("playerbot", "RogueAI: Combat ended. Energy spent: {}, CP generated: {}, Finishers: {}",
                  _energySpent, _comboPointsUsed, _metrics->totalFinishersExecuted.load());
 }
@@ -1350,9 +1249,10 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
     if (!target)
         return;
 
-    switch (_detectedSpec)
+    uint32 spec = GetBot()->GetPrimarySpecialization();
+    switch (spec)
     {
-        case RogueSpec::ASSASSINATION:
+        case 0: // Assassination
             if (CanUseAbility(COLD_BLOOD))
             {
                 CastSpell(COLD_BLOOD);
@@ -1365,7 +1265,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
             }
             break;
 
-        case RogueSpec::COMBAT:
+        case 1: // Combat/Outlaw
             if (CanUseAbility(BLADE_FLURRY))
             {
                 CastSpell(BLADE_FLURRY);
@@ -1383,7 +1283,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
             }
             break;
 
-        case RogueSpec::SUBTLETY:
+        case 2: // Subtlety
             if (CanUseAbility(SHADOW_DANCE))
             {
                 CastSpell(SHADOW_DANCE);
@@ -1406,13 +1306,10 @@ Position RogueAI::GetOptimalPosition(Unit* target)
     // Use positioning manager for advanced calculations
     if (_positioning)
     {
-        return _positioning->CalculateOptimalPosition(target, _detectedSpec);
-    }
-
-    // Fallback to specialization
-    if (_specialization)
-    {
-        return _specialization->GetOptimalPosition(target);
+        // Convert spec ID to RogueSpec enum
+        uint32 specId = GetBot()->GetPrimarySpecialization();
+        RogueSpec rogueSpec = static_cast<RogueSpec>(specId);
+        return _positioning->CalculateOptimalPosition(target, rogueSpec);
     }
 
     return ClassAI::GetOptimalPosition(target);
@@ -1426,21 +1323,13 @@ float RogueAI::GetOptimalRange(Unit* target)
     // Use positioning manager
     if (_positioning)
     {
-        return _positioning->GetOptimalRange(_detectedSpec);
-    }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        return _specialization->GetOptimalRange(target);
+        // Convert spec ID to RogueSpec enum
+        uint32 specId = GetBot()->GetPrimarySpecialization();
+        RogueSpec rogueSpec = static_cast<RogueSpec>(specId);
+        return _positioning->GetOptimalRange(rogueSpec);
     }
 
     return 5.0f; // Default melee range
-}
-
-RogueSpec RogueAI::GetCurrentSpecialization() const
-{
-    return _detectedSpec;
 }
 
 RogueAI::~RogueAI()
@@ -1449,46 +1338,6 @@ RogueAI::~RogueAI()
     delete _metrics;
     delete _combatMetrics;
     delete _positioning;
-}
-
-void RogueAI::SwitchSpecialization(RogueSpec newSpec)
-{
-    _detectedSpec = newSpec;
-
-    switch (newSpec)
-    {
-        case RogueSpec::ASSASSINATION:
-            _specialization = std::make_unique<AssassinationRogueRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Assassination specialization",
-                         GetBot()->GetName());
-            break;
-
-        case RogueSpec::COMBAT:
-            _specialization = std::make_unique<OutlawRogueRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Outlaw/Combat specialization",
-                         GetBot()->GetName());
-            break;
-
-        case RogueSpec::SUBTLETY:
-            _specialization = std::make_unique<SubtletyRogueRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} switched to Subtlety specialization",
-                         GetBot()->GetName());
-            break;
-
-        default:
-            _specialization = std::make_unique<AssassinationRogueRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.rogue", "Rogue {} defaulted to Assassination specialization",
-                         GetBot()->GetName());
-            break;
-    }
-}
-
-void RogueAI::DelegateToSpecialization(::Unit* target)
-{
-    if (_specialization)
-        _specialization->UpdateRotation(target);
-    else
-        ExecuteFallbackRotation(target);
 }
 
 // Helper methods implementation

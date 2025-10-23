@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <deque>
 #include <chrono>
-#include "DemonHunterSpecialization.h"
 
 namespace Playerbot
 {
@@ -233,7 +232,7 @@ private:
  * - Soul fragment tracking for sustain
  * - Advanced mobility with Fel Rush and Vengeful Retreat
  */
-class HavocDemonHunterRefactored : public MeleeDpsSpecialization<FuryResource>, public DemonHunterSpecialization
+class HavocDemonHunterRefactored : public MeleeDpsSpecialization<FuryResource>
 {
 public:
     using Base = MeleeDpsSpecialization<FuryResource>;
@@ -245,7 +244,7 @@ public:
     using Base::ConsumeResource;
     explicit HavocDemonHunterRefactored(Player* bot)
         : MeleeDpsSpecialization<FuryResource>(bot)
-        , DemonHunterSpecialization(bot)
+        
         , _soulFragments(bot)
         , _momentumTracker(bot)
         , _metamorphosisActive(false)

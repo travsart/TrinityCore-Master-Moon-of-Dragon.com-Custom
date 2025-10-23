@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "PaladinSpecialization.h"
 #include "Position.h"
 #include <memory>
 #include <chrono>
@@ -19,11 +18,7 @@
 namespace Playerbot
 {
 
-// Forward declarations
-class PaladinSpecialization;
-class HolyPaladinRefactored;
-class ProtectionPaladinRefactored;
-class RetributionPaladinRefactored;
+// Forward declarations (kept for potential future use in refactored specs)
 
 // Paladin AI with full CombatBehaviorIntegration
 class TC_GAME_API PaladinAI : public ClassAI
@@ -126,13 +121,6 @@ private:
         LONG_ARM_OF_THE_LAW = 87172  // Speed buff
     };
 
-    // Specialization management
-    void DetectSpecialization();
-    void InitializeSpecialization();
-    void UpdateSpecialization();
-    PaladinSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(PaladinSpec newSpec);
-    void DelegateToSpecialization(::Unit* target);
 
     // Paladin-specific combat logic
     void ExecuteBasicPaladinRotation(::Unit* target);
@@ -181,9 +169,6 @@ private:
     static constexpr float HOLY_POWER_EFFICIENCY_TARGET = 0.85f;
 
     // Member variables
-    PaladinSpec _currentSpec;
-    std::unique_ptr<PaladinSpecialization> _specialization;
-
     // Cooldown tracking
     uint32 _lastBlessingTime;
     uint32 _lastAuraChange;

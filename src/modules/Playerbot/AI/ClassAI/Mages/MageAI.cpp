@@ -9,9 +9,6 @@
 
 #include "MageAI.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
-#include "ArcaneSpecialization.h"
-#include "FireSpecialization.h"
-#include "FrostSpecialization.h"
 #include "Player.h"
 #include "Unit.h"
 #include "SpellMgr.h"
@@ -87,7 +84,6 @@ MageAI::MageAI(Player* bot) : ClassAI(bot),
     _lastIceBarrier(0)
 {
     // Initialize specialization
-    InitializeSpecialization();
 
     // Initialize combat system components
     _threatManager = std::make_unique<BotThreatManager>(bot);
@@ -98,94 +94,11 @@ MageAI::MageAI(Player* bot) : ClassAI(bot),
     // Reset combat metrics
     _combatMetrics.Reset();
 
-    TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {} with specialization {}",
-                 bot ? bot->GetName().c_str() : "null",
-                 _specialization ? _specialization->GetSpecializationName() : "none");
+    TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {}",
+                 bot ? bot->GetName().c_str() : "null");
 }
 
 MageAI::~MageAI() = default;
-
-void MageAI::InitializeSpecialization()
-{
-    if (!GetBot())
-        return;
-
-    // Detect current specialization based on talents
-    _currentSpec = DetectCurrentSpecialization();
-
-    // Create appropriate specialization handler
-    switch (_currentSpec)
-    {
-        case MageSpec::ARCANE:
-            _specialization = std::make_unique<ArcaneSpecialization>(GetBot());
-            break;
-        case MageSpec::FIRE:
-            _specialization = std::make_unique<FireSpecialization>(GetBot());
-            break;
-        case MageSpec::FROST:
-        default:
-            _specialization = std::make_unique<FrostSpecialization>(GetBot());
-            break;
-    }
-}
-
-MageSpec MageAI::DetectCurrentSpecialization()
-{
-    if (!GetBot())
-        return MageSpec::FROST;
-
-    // Count points in each tree
-    uint32 arcanePoints = 0;
-    uint32 firePoints = 0;
-    uint32 frostPoints = 0;
-
-    // Check for signature talents
-    if (GetBot()->HasSpell(TALENT_ARCANE_BARRAGE) || GetBot()->HasSpell(TALENT_ARCANE_POWER))
-        arcanePoints += 10;
-
-    if (GetBot()->HasSpell(TALENT_PYROBLAST) || GetBot()->HasSpell(TALENT_COMBUSTION))
-        firePoints += 10;
-
-    if (GetBot()->HasSpell(TALENT_ICY_VEINS) || GetBot()->HasSpell(TALENT_WATER_ELEMENTAL))
-        frostPoints += 10;
-
-    // Determine specialization based on point distribution
-    if (arcanePoints > firePoints && arcanePoints > frostPoints)
-        return MageSpec::ARCANE;
-    else if (firePoints > arcanePoints && firePoints > frostPoints)
-        return MageSpec::FIRE;
-    else
-        return MageSpec::FROST; // Default to Frost
-}
-
-void MageAI::SwitchSpecialization(MageSpec newSpec)
-{
-    if (_currentSpec == newSpec)
-        return;
-
-    _currentSpec = newSpec;
-
-    // Recreate specialization handler
-    switch (_currentSpec)
-    {
-        case MageSpec::ARCANE:
-            _specialization = std::make_unique<ArcaneSpecialization>(GetBot());
-            break;
-        case MageSpec::FIRE:
-            _specialization = std::make_unique<FireSpecialization>(GetBot());
-            break;
-        case MageSpec::FROST:
-            _specialization = std::make_unique<FrostSpecialization>(GetBot());
-            break;
-    }
-
-    if (GetBot())
-        TC_LOG_DEBUG("module.playerbot.ai", "Mage {} switched specialization to {}",
-                     GetBot()->GetName(), _specialization ? _specialization->GetSpecializationName() : "none");
-    else
-        TC_LOG_DEBUG("module.playerbot.ai", "Null mage switched specialization to {}",
-                     _specialization ? _specialization->GetSpecializationName() : "none");
-}
 
 void MageAI::UpdateRotation(::Unit* target)
 {
@@ -439,14 +352,9 @@ void MageAI::UpdateRotation(::Unit* target)
     // Update threat management
     ManageThreat();
 
-    // Priority 8: Normal rotation - delegate to specialization
-    if (_specialization && target)
+    // Priority 8: Normal rotation - execute advanced rotation
+    if (target)
     {
-        _specialization->UpdateRotation(target);
-    }
-    else if (target)
-    {
-        // Fallback basic rotation
         ExecuteAdvancedRotation(target);
     }
 
@@ -472,12 +380,6 @@ void MageAI::UpdateBuffs()
     }
 
     UpdateMageBuffs();
-
-    // Delegate to specialization for specific buffs
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
 }
 
 void MageAI::UpdateCooldowns(uint32 diff)
@@ -489,12 +391,6 @@ void MageAI::UpdateCooldowns(uint32 diff)
     if (_cooldownManager)
     {
         _cooldownManager->Update(diff);
-    }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateCooldowns(diff);
     }
 
     // Update performance metrics
@@ -514,10 +410,6 @@ bool MageAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Delegate to specialization for specific checks
-    if (_specialization)
-        return _specialization->CanUseAbility(spellId);
-
     return true;
 }
 
@@ -532,10 +424,6 @@ void MageAI::OnCombatStart(::Unit* target)
     // Apply combat buffs
     UpdateArmorSpells();
     CastManaShield();
-
-    // Notify specialization
-    if (_specialization)
-        _specialization->OnCombatStart(target);
 
     // Initialize positioning - move to optimal range
     if (_positionManager && target)
@@ -569,10 +457,6 @@ void MageAI::OnCombatEnd()
 {
     if (!GetBot())
         return;
-
-    // Notify specialization
-    if (_specialization)
-        _specialization->OnCombatEnd();
 
     // Perform post-combat actions
     UseManaRegeneration();

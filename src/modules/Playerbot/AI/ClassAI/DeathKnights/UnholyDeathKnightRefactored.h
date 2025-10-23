@@ -16,7 +16,6 @@
 #include "SpellAuraEffects.h"
 #include "Pet.h"
 #include "Log.h"
-#include "DeathKnightSpecialization.h"
 
 namespace Playerbot
 {
@@ -255,7 +254,7 @@ private:
 // UNHOLY DEATH KNIGHT REFACTORED
 // ============================================================================
 
-class UnholyDeathKnightRefactored : public MeleeDpsSpecialization<UnholyRuneRunicPowerResource>, public DeathKnightSpecialization
+class UnholyDeathKnightRefactored : public MeleeDpsSpecialization<UnholyRuneRunicPowerResource>
 {
 public:
     using Base = MeleeDpsSpecialization<UnholyRuneRunicPowerResource>;
@@ -265,7 +264,7 @@ public:
     using Base::_resource;
     explicit UnholyDeathKnightRefactored(Player* bot)
         : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)
-        , DeathKnightSpecialization(bot)
+        
         , _woundTracker()
         , _petTracker()
         , _suddenDoomProc(false)

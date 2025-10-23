@@ -15,7 +15,6 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "DeathKnightSpecialization.h"
 
 namespace Playerbot
 {
@@ -205,7 +204,7 @@ private:
 // BLOOD DEATH KNIGHT REFACTORED
 // ============================================================================
 
-class BloodDeathKnightRefactored : public TankSpecialization<RuneRunicPowerResource>, public DeathKnightSpecialization
+class BloodDeathKnightRefactored : public TankSpecialization<RuneRunicPowerResource>
 {
 public:
     using Base = TankSpecialization<RuneRunicPowerResource>;
@@ -215,7 +214,7 @@ public:
     using Base::_resource;
     explicit BloodDeathKnightRefactored(Player* bot)
         : TankSpecialization<RuneRunicPowerResource>(bot)
-        , DeathKnightSpecialization(bot)
+        
         , _boneShieldTracker()
         , _deathsAndDecayActive(false)
         , _deathsAndDecayEndTime(0)

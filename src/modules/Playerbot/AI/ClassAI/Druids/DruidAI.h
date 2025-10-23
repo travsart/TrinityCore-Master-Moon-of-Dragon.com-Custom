@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "DruidSpecialization.h"
 #include <memory>
 #include <chrono>
 
@@ -18,10 +17,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-class BalanceSpecialization;
-class FeralSpecialization;
-class GuardianSpecialization;
-class RestorationSpecialization;
 
 class TC_GAME_API DruidAI : public ClassAI
 {
@@ -48,11 +43,22 @@ protected:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
-private:
-    // Specialization system
-    DruidSpec _detectedSpec;
-    std::unique_ptr<DruidSpecialization> _specialization;
 
+    // Druid forms for shapeshift management
+    enum class DruidForm : uint8
+    {
+        CASTER = 0,      // Humanoid/Caster form
+        HUMANOID = 0,    // Alias for CASTER
+        BEAR = 1,
+        CAT = 2,
+        AQUATIC = 3,
+        TRAVEL = 4,
+        MOONKIN = 5,
+        TREE_OF_LIFE = 6,
+        FLIGHT = 7
+    };
+
+private:
     // Form management
     DruidForm _currentForm;
     uint32 _lastFormShift;
@@ -76,10 +82,6 @@ private:
     uint32 _lastIncarnation;
     uint32 _lastCelestialAlignment;
 
-    // Specialization management
-    void InitializeSpecialization();
-    void DetectSpecialization();
-    void SwitchSpecialization(DruidSpec newSpec);
     void DelegateToSpecialization(::Unit* target);
 
     // Combat behavior integration helpers

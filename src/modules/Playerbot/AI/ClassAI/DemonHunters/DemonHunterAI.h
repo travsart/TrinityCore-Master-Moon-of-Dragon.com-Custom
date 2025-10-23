@@ -10,17 +10,12 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "DemonHunterSpecialization.h"
 #include <memory>
 #include <chrono>
 #include <unordered_map>
 
 namespace Playerbot
 {
-
-class DemonHunterSpecialization;
-class HavocDemonHunterRefactored;
-class VengeanceDemonHunterRefactored;
 
 // DemonHunter Spell IDs (WoW 11.2 The War Within)
 enum DemonHunterSpells
@@ -98,9 +93,6 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Specialization management
-    void DetectSpecialization();
-    void InitializeSpecialization();
     void ExitMetamorphosis();
     bool ShouldUseMetamorphosis();
     void CastMetamorphosisHavoc();
@@ -149,13 +141,7 @@ private:
     void RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success);
     void RecordAbilityUsage(uint32 spellId);
     void OnTargetChanged(::Unit* newTarget);
-
-    DemonHunterSpec GetCurrentSpecialization() const;
-
     // Member variables
-    DemonHunterSpec _detectedSpec;
-    std::unique_ptr<DemonHunterSpecialization> _specialization;
-
     // Combat tracking
     uint32 _lastInterruptTime;
     uint32 _lastDefensiveTime;
@@ -176,8 +162,6 @@ private:
     DemonHunterMetrics _dhMetrics;
 
     // Helper methods
-    void SwitchSpecialization(DemonHunterSpec newSpec);
-    void DelegateToSpecialization(::Unit* target);
     void UpdateMetrics(uint32 diff);
     void AnalyzeCombatEffectiveness();
 };

@@ -25,7 +25,6 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
-#include "DruidSpecialization.h"
 
 namespace Playerbot
 {
@@ -312,7 +311,7 @@ private:
     uint32 _bloodtalonsStacks;
 };
 
-class FeralDruidRefactored : public MeleeDpsSpecialization<EnergyComboResource>, public DruidSpecialization
+class FeralDruidRefactored : public MeleeDpsSpecialization<EnergyComboResource>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -324,7 +323,7 @@ public:
     using Base::_resource;
     explicit FeralDruidRefactored(Player* bot)
         : MeleeDpsSpecialization<EnergyComboResource>(bot)
-        , DruidSpecialization(bot)
+        
         , _bleedTracker()
         , _bloodtalonsTracker()
         , _tigersFuryActive(false)

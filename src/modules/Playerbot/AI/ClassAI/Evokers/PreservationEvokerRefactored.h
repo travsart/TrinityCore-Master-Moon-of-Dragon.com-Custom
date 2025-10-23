@@ -27,7 +27,6 @@
 #include <unordered_map>
 #include <vector>
 #include "Log.h"
-#include "EvokerSpecialization.h"
 
 namespace Playerbot
 {

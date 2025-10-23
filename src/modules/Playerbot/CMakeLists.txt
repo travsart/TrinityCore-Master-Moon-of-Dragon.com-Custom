@@ -174,9 +174,7 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/BaselineRotationManager.h
 
-    # Death Knight AI
-    # DeathKnightAI.cpp has BaselineRotationManager integration - ENABLED
-    # DeathKnightAI_Specialization.cpp disabled to prevent duplicate symbols
+    # Death Knight AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DiseaseManager.cpp
@@ -184,11 +182,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/RuneManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/RuneManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightTypes.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/UnholySpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/BloodSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/FrostSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightAI_Specialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/DeathKnightSpecialization.cpp
 
     # Death Knight Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DeathKnights/BloodDeathKnightRefactored.h
@@ -209,22 +202,18 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/GuardianDruidRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Druids/RestorationDruidRefactored.h
 
-    # Evoker AI
+    # Evoker AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
 
     # Evoker Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/DevastationEvokerRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/PreservationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/AugmentationEvokerRefactored.h
 
-    # Hunter AI
+    # Hunter AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterSpecializationBase.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterSpecialization.h
-    # Note: Old HunterSpecialization.cpp excluded - uses deprecated APIs
-    # HunterSpecializationBase.cpp provides only the base class constructor and helpers
-    # Using refactored template-based specializations (BeastMastery/Marksmanship/SurvivalHunterRefactored)
 
     # Hunter Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/BeastMasteryHunterRefactored.h
@@ -235,16 +224,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/HavocDemonHunterRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/DemonHunters/VengeanceDemonHunterRefactored.h
 
-    # Mage AI
-    # MageAI.cpp has BaselineRotationManager integration - ENABLED
-    # MageAI_Specialization.cpp disabled to prevent duplicate symbols
+    # Mage AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FireSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/ArcaneSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/FrostSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageAI_Specialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/MageSpecialization.cpp
 
     # Mage Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Mages/ArcaneMageRefactored.h
@@ -274,63 +256,31 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/ProtectionPaladinRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/RetributionSpecializationRefactored.h
 
-    # Priest AI - NOW USING TEMPLATE-BASED REFACTORED ARCHITECTURE (Phase 3A Week 1 Complete)
-    # PriestAI.cpp has BaselineRotationManager integration - ENABLED
-    # PriestAI_Specialization.cpp disabled to prevent duplicate symbols
+    # Priest AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestSpecialization.h
-    # OLD .cpp SPECIALIZATIONS REMOVED (Phase 3A refactoring - using *Refactored.h headers):
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/DisciplineSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/HolySpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/ShadowSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI_Specialization.cpp
 
-    # Rogue AI - NOW USING TEMPLATE-BASED REFACTORED ARCHITECTURE
+    # Rogue AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI.h
-    # LEGACY FILES REMOVED (14 files, 123KB deleted):
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueCombatPositioning.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/EnergyManager.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletySpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/CombatSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueAI_Specialization.cpp
 
     # Rogue Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/AssassinationRogueRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/OutlawRogueRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/SubtletyRogueRefactored.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Rogues/RogueSpecialization.cpp  # REMOVED - Legacy class deleted
 
-    # Shaman AI
-    # ShamanAI.cpp has BaselineRotationManager integration - ENABLED (added in this commit)
-    # ShamanAI_Specialization.cpp disabled to prevent duplicate symbols
+    # Shaman AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanSpecialization.h
 
     # Shaman Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ElementalShamanRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/EnhancementShamanRefactored.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/RestorationShamanRefactored.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/RestorationSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/EnhancementSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ElementalSpecialization.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Shamans/ShamanAI_Specialization.cpp
 
-    # Warlock AI - Using enterprise WarlockAI.cpp with BaselineRotationManager
+    # Warlock AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/AfflictionSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DestructionSpecialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/DemonologySpecialization.cpp
-    # WarlockAI_Specialization.cpp disabled - using full WarlockAI.cpp implementation
-    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockAI_Specialization.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/WarlockSpecialization.cpp
 
     # Warlock Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Warlocks/AfflictionWarlockRefactored.h

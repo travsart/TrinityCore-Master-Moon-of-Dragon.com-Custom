@@ -15,7 +15,6 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "DeathKnightSpecialization.h"
 
 namespace Playerbot
 {
@@ -231,7 +230,7 @@ private:
 // FROST DEATH KNIGHT REFACTORED
 // ============================================================================
 
-class FrostDeathKnightRefactored : public MeleeDpsSpecialization<FrostRuneRunicPowerResource>, public DeathKnightSpecialization
+class FrostDeathKnightRefactored : public MeleeDpsSpecialization<FrostRuneRunicPowerResource>
 {
 public:
     using Base = MeleeDpsSpecialization<FrostRuneRunicPowerResource>;
@@ -241,7 +240,7 @@ public:
     using Base::_resource;
     explicit FrostDeathKnightRefactored(Player* bot)
         : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
-        , DeathKnightSpecialization(bot)
+        
         , _kmTracker()
         , _rimeTracker()
         , _pillarOfFrostActive(false)

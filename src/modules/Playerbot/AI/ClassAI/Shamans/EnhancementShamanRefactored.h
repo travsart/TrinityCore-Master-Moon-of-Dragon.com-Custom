@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_ENHANCEMENTSHAMANREFACTORED_H
 #define PLAYERBOT_ENHANCEMENTSHAMANREFACTORED_H
 
-#include "ShamanSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

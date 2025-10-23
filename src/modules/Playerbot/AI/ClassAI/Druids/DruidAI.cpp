@@ -25,7 +25,6 @@ namespace Playerbot
 {
 
 DruidAI::DruidAI(Player* bot) : ClassAI(bot),
-    _detectedSpec(DruidSpec::BALANCE),
     _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
@@ -42,53 +41,7 @@ DruidAI::DruidAI(Player* bot) : ClassAI(bot),
     _lastIncarnation(0),
     _lastCelestialAlignment(0)
 {
-    InitializeSpecialization();
     TC_LOG_DEBUG("playerbot", "DruidAI initialized for {}", bot->GetName());
-}
-
-void DruidAI::InitializeSpecialization()
-{
-    DetectSpecialization();
-    SwitchSpecialization(_detectedSpec);
-}
-
-void DruidAI::DetectSpecialization()
-{
-    Player* bot = GetBot();
-    if (!bot)
-    {
-        _detectedSpec = DruidSpec::BALANCE;
-        return;
-    }
-
-    // Check for Guardian specialization indicators
-    if (bot->HasSpell(33917) || bot->HasSpell(77758)) // Mangle (Bear) or Thrash
-        _detectedSpec = DruidSpec::GUARDIAN;
-    // Check for Feral specialization indicators
-    else if (bot->HasSpell(5221) || bot->HasSpell(22568)) // Shred or Ferocious Bite
-        _detectedSpec = DruidSpec::FERAL;
-    // Check for Restoration specialization indicators
-    else if (bot->HasSpell(18562) || bot->HasSpell(33763)) // Swiftmend or Lifebloom
-        _detectedSpec = DruidSpec::RESTORATION;
-    // Default to Balance
-    else
-        _detectedSpec = DruidSpec::BALANCE;
-}
-
-void DruidAI::SwitchSpecialization(DruidSpec newSpec)
-{
-    _detectedSpec = newSpec;
-
-    // TODO: Re-enable refactored specialization classes once template issues are fixed
-    _specialization = nullptr;
-    TC_LOG_WARN("module.playerbot.druid", "Druid specialization switching temporarily disabled for {}",
-                 GetBot()->GetName());
-}
-
-void DruidAI::DelegateToSpecialization(::Unit* target)
-{
-    if (_specialization)
-        _specialization->UpdateRotation(target);
 }
 
 void DruidAI::UpdateRotation(::Unit* target)
@@ -161,7 +114,8 @@ void DruidAI::UpdateRotation(::Unit* target)
     }
 
     // Priority 6: Combo Point/Energy Management (Feral/Guardian)
-    if (_detectedSpec == DruidSpec::FERAL || _detectedSpec == DruidSpec::GUARDIAN)
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    if (spec == ChrSpecialization::DruidFeral || spec == ChrSpecialization::DruidGuardian)
     {
         HandleComboPointManagement(target);
     }
@@ -192,7 +146,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     }
 
     // Solar Beam - Balance spec interrupt
-    if (_detectedSpec == DruidSpec::BALANCE && CanUseAbility(SOLAR_BEAM))
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::DruidBalance && CanUseAbility(SOLAR_BEAM))
     {
         if (CastSpell(interruptTarget, SOLAR_BEAM))
         {
@@ -265,7 +219,7 @@ bool DruidAI::HandleDefensives()
     }
 
     // Frenzied Regeneration - Guardian healing
-    if (_detectedSpec == DruidSpec::GUARDIAN &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&
         healthPercent < 60.0f &&
         currentTime > _lastFrenziedRegen + 30000 &&
         CanUseAbility(FRENZIED_REGENERATION))
@@ -280,7 +234,7 @@ bool DruidAI::HandleDefensives()
     }
 
     // Ironbark - Restoration defensive for allies
-    if (_detectedSpec == DruidSpec::RESTORATION)
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)
     {
         Unit* lowestAlly = GetLowestHealthAlly(40.0f);
         if (lowestAlly && lowestAlly->GetHealthPct() < 40.0f &&
@@ -296,7 +250,7 @@ bool DruidAI::HandleDefensives()
     }
 
     // Cenarion Ward - preemptive defense
-    if (_detectedSpec == DruidSpec::RESTORATION &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&
         healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
@@ -331,10 +285,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
         return false;
 
     uint32 currentTime = getMSTime();
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
 
-    switch (_detectedSpec)
+    switch (spec)
     {
-        case DruidSpec::FERAL:
+        case ChrSpecialization::DruidFeral:
         {
             // Ensure we're in Cat Form for Feral AoE
             if (!IsInForm(DruidForm::CAT))
@@ -380,7 +335,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::GUARDIAN:
+        case ChrSpecialization::DruidGuardian:
         {
             // Ensure we're in Bear Form for Guardian AoE
             if (!IsInForm(DruidForm::BEAR))
@@ -415,7 +370,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::BALANCE:
+        case ChrSpecialization::DruidBalance:
         {
             // Starfall - major AoE
             if (CanUseAbility(STARFALL))
@@ -452,7 +407,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::RESTORATION:
+        case ChrSpecialization::DruidRestoration:
         {
             // Wild Growth - AoE heal
             if (CanUseAbility(WILD_GROWTH))
@@ -492,10 +447,11 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
         return false;
 
     uint32 currentTime = getMSTime();
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
 
-    switch (_detectedSpec)
+    switch (spec)
     {
-        case DruidSpec::FERAL:
+        case ChrSpecialization::DruidFeral:
         {
             // Tiger's Fury - energy and damage boost
             if (currentTime > _lastTigersFury + 30000 &&
@@ -539,7 +495,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             break;
         }
 
-        case DruidSpec::GUARDIAN:
+        case ChrSpecialization::DruidGuardian:
         {
             // Berserk - rage generation and defense
             if (currentTime > _lastBerserk + 180000 &&
@@ -569,7 +525,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             break;
         }
 
-        case DruidSpec::BALANCE:
+        case ChrSpecialization::DruidBalance:
         {
             // Celestial Alignment - major DPS window
             if (currentTime > _lastCelestialAlignment + 180000 &&
@@ -599,7 +555,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             break;
         }
 
-        case DruidSpec::RESTORATION:
+        case ChrSpecialization::DruidRestoration:
         {
             // Tranquility - major raid heal
             Unit* lowestAlly = GetLowestHealthAlly(40.0f);
@@ -639,7 +595,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         return;
 
     // Only relevant for Feral spec
-    if (_detectedSpec != DruidSpec::FERAL)
+    if (GetBot()->GetPrimarySpecialization() != ChrSpecialization::DruidFeral)
         return;
 
     // Ensure we're in Cat Form
@@ -718,17 +674,11 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
     if (!target)
         return;
 
-    // If specialization system is active, delegate to it
-    if (_specialization)
+    // Execute basic rotation based on spec
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    switch (spec)
     {
-        DelegateToSpecialization(target);
-        return;
-    }
-
-    // Otherwise, execute basic rotation based on detected spec
-    switch (_detectedSpec)
-    {
-        case DruidSpec::FERAL:
+        case ChrSpecialization::DruidFeral:
         {
             // Ensure Cat Form
             if (!IsInForm(DruidForm::CAT))
@@ -766,7 +716,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::GUARDIAN:
+        case ChrSpecialization::DruidGuardian:
         {
             // Ensure Bear Form
             if (!IsInForm(DruidForm::BEAR))
@@ -802,7 +752,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::BALANCE:
+        case ChrSpecialization::DruidBalance:
         {
             // Ensure Moonkin Form if available
             if (!IsInForm(DruidForm::MOONKIN) && CanUseAbility(MOONKIN_FORM))
@@ -850,7 +800,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             break;
         }
 
-        case DruidSpec::RESTORATION:
+        case ChrSpecialization::DruidRestoration:
         {
             // Basic Restoration rotation - heal allies
             Unit* healTarget = GetLowestHealthAlly(40.0f);
@@ -918,15 +868,13 @@ void DruidAI::UpdateBuffs()
         return;
     }
 
-    // Delegate to specialization for buffs
-    if (_specialization)
-        _specialization->UpdateBuffs();
+    // TODO: Add spec-specific buff logic here if needed
 }
 
 void DruidAI::UpdateCooldowns(uint32 diff)
 {
-    if (_specialization)
-        _specialization->UpdateCooldowns(diff);
+    // Cooldown tracking is handled automatically by TrinityCore spell system
+    // No manual tracking needed here
 }
 
 bool DruidAI::CanUseAbility(uint32 spellId)
@@ -964,9 +912,6 @@ bool DruidAI::CanUseAbility(uint32 spellId)
         }
     }
 
-    if (_specialization)
-        return _specialization->CanUseAbility(spellId);
-
     return true;
 }
 
@@ -984,9 +929,6 @@ void DruidAI::OnCombatStart(::Unit* target)
 
     // Update resources
     UpdateResources();
-
-    if (_specialization)
-        _specialization->OnCombatStart(target);
 }
 
 void DruidAI::OnCombatEnd()
@@ -996,9 +938,6 @@ void DruidAI::OnCombatEnd()
     _combatTime = 0;
 
     TC_LOG_DEBUG("playerbot", "DruidAI {} leaving combat", GetBot()->GetName());
-
-    if (_specialization)
-        _specialization->OnCombatEnd();
 }
 
 bool DruidAI::HasEnoughResource(uint32 spellId)
@@ -1037,8 +976,7 @@ void DruidAI::ConsumeResource(uint32 spellId)
     if (!GetBot())
         return;
 
-    if (_specialization)
-        _specialization->ConsumeResource(spellId);
+    // Resource consumption is handled automatically by TrinityCore spell system
 }
 
 Position DruidAI::GetOptimalPosition(::Unit* target)
@@ -1046,25 +984,28 @@ Position DruidAI::GetOptimalPosition(::Unit* target)
     if (!GetBot() || !target)
         return GetBot() ? GetBot()->GetPosition() : Position();
 
-    if (_specialization)
-        return _specialization->GetOptimalPosition(target);
+    // Default position handling - melee specs get close, ranged stay back
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    if (spec == ChrSpecialization::DruidFeral || spec == ChrSpecialization::DruidGuardian)  // Feral or Guardian - melee
+    {
+        // Get behind target for Feral, face target for Guardian
+        return GetBot()->GetPosition();
+    }
 
     return GetBot()->GetPosition();
 }
 
 float DruidAI::GetOptimalRange(::Unit* target)
 {
-    if (_specialization)
-        return _specialization->GetOptimalRange(target);
-
     // Default range based on spec
-    switch (_detectedSpec)
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    switch (spec)
     {
-        case DruidSpec::FERAL:
-        case DruidSpec::GUARDIAN:
+        case ChrSpecialization::DruidFeral:
+        case ChrSpecialization::DruidGuardian:
             return 5.0f; // Melee range
-        case DruidSpec::BALANCE:
-        case DruidSpec::RESTORATION:
+        case ChrSpecialization::DruidBalance:
+        case ChrSpecialization::DruidRestoration:
             return 30.0f; // Casting range
         default:
             return 25.0f; // Safe default

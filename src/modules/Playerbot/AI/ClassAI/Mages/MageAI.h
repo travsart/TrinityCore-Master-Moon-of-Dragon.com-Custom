@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "MageSpecialization.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
 #include "../../Combat/TargetSelector.h"
@@ -26,9 +25,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-class ArcaneSpecialization;
-class FireSpecialization;
-class FrostSpecialization;
 
 // Mage schools for spell priorities
 enum class MageSchool : uint8
@@ -66,10 +62,6 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Specialization system
-    MageSpec _currentSpec;
-    std::unique_ptr<MageSpecialization> _specialization;
-
     // Performance tracking
     std::atomic<uint32> _manaSpent{0};
     std::atomic<uint32> _damageDealt{0};
@@ -94,12 +86,7 @@ private:
     uint32 _lastManaShield;
     uint32 _lastIceBarrier;
 
-    // Specialization management
-    void InitializeSpecialization();
     void UpdateSpecialization();
-    MageSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(MageSpec newSpec);
-
     // Mana management
     bool HasEnoughMana(uint32 amount);
     uint32 GetMana();
@@ -203,8 +190,7 @@ private:
     uint32 GetSpellCastTime(uint32 spellId);
     bool IsSpellInstant(uint32 spellId);
 
-    // Specialization detection and optimization
-    MageSpec DetectSpecialization();
+    // Optimization helpers
     void OptimizeForSpecialization();
     bool HasTalent(uint32 talentId);
 
@@ -391,9 +377,7 @@ public:
     static float CalculateResistance(uint32 spellId, Player* caster, ::Unit* target);
     static uint32 ApplyResistance(uint32 damage, float resistance);
 
-    // Specialization optimization
-    static float GetSpecializationBonus(MageSpec spec, uint32 spellId);
-    static uint32 GetOptimalRotationSpell(MageSpec spec, Player* caster, ::Unit* target);
+    // Specialization optimization (moved to template system)
 
 private:
     // Cache for spell data

@@ -33,7 +33,6 @@ namespace Playerbot
 
 EvokerAI::EvokerAI(Player* bot) : ClassAI(bot)
 {
-    _specialization = DetectSpecialization();
     _currentAspect = EvokerAspect::NONE;
     _damageDealt = 0;
     _healingDone = 0;
@@ -164,7 +163,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
         }
 
         // Verdant Embrace for Preservation - teleport to ally and heal
-        if (_specialization == EvokerSpec::PRESERVATION && healthPct < 40.0f && CanUseAbility(VERDANT_EMBRACE))
+        EvokerSpec currentSpec = DetectSpecialization();
+        if (currentSpec == EvokerSpec::PRESERVATION && healthPct < 40.0f && CanUseAbility(VERDANT_EMBRACE))
         {
             ::Unit* healTarget = GetLowestHealthAlly();
             if (healTarget && CastSpell(healTarget, VERDANT_EMBRACE))
@@ -239,7 +239,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
     // Priority 6: AoE Decisions - Pyre, Eternity's Surge based on enemy count
     if (behaviors && behaviors->ShouldAOE())
     {
-        if (_specialization == EvokerSpec::DEVASTATION)
+        EvokerSpec currentSpec = DetectSpecialization();
+        if (currentSpec == EvokerSpec::DEVASTATION)
         {
             // Pyre for AoE with Essence Burst proc
             if (_essenceBurstStacks > 0 && CanUseAbility(PYRE))
@@ -261,7 +262,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 return;
             }
         }
-        else if (_specialization == EvokerSpec::PRESERVATION)
+        else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             // Dream Breath (empowered) for AoE healing
             if (_essence.current >= 3 && CanUseAbility(DREAM_BREATH))
@@ -288,7 +289,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
     // Priority 7: Offensive Cooldowns - Dragonrage, Tip the Scales
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
-        if (_specialization == EvokerSpec::DEVASTATION)
+        EvokerSpec currentSpec = DetectSpecialization();
+        if (currentSpec == EvokerSpec::DEVASTATION)
         {
             // Dragonrage - major DPS cooldown
             if (CanUseAbility(SPELL_DRAGONRAGE))
@@ -302,7 +304,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 }
             }
         }
-        else if (_specialization == EvokerSpec::PRESERVATION)
+        else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             // Emerald Communion - major healing cooldown
             if (CanUseAbility(EMERALD_COMMUNION))
@@ -317,8 +319,15 @@ void EvokerAI::UpdateRotation(::Unit* target)
         }
     }
 
-    // Priority 8-10: Normal Rotation (spec-specific)
-    switch (_specialization)
+    // Priority 8-10: Normal Rotation
+    // Note: Spec-specific rotations are now handled by the template-based refactored system
+    // (DevastationEvokerRefactored, PreservationEvokerRefactored, AugmentationEvokerRefactored)
+    // This legacy implementation is kept for backward compatibility only
+
+    // Detect spec for legacy behavior
+    EvokerSpec currentSpec = DetectSpecialization();
+
+    switch (currentSpec)
     {
         case EvokerSpec::DEVASTATION:
             UpdateDevastationRotation(target);
@@ -380,7 +389,8 @@ void EvokerAI::UpdateCooldowns(uint32 diff)
         UpdateEmpoweredChanneling();
 
     // Update echo healing
-    if (_specialization == EvokerSpec::PRESERVATION)
+    EvokerSpec currentSpec = DetectSpecialization();
+    if (currentSpec == EvokerSpec::PRESERVATION)
     {
         _lastEchoUpdate += diff;
         if (_lastEchoUpdate >= _echoUpdateInterval)
@@ -665,10 +675,11 @@ void EvokerAI::UpdateEssenceManagement(::Unit* target)
     // Optimize essence usage based on specialization
     if (_essence.current >= _essence.maximum * 0.9f)
     {
+        EvokerSpec currentSpec = DetectSpecialization();
         // Spend excess essence
-        if (_specialization == EvokerSpec::DEVASTATION && this->CanUseAbility(DISINTEGRATE))
+        if (currentSpec == EvokerSpec::DEVASTATION && this->CanUseAbility(DISINTEGRATE))
             this->CastDisintegrate(target);
-        else if (_specialization == EvokerSpec::PRESERVATION)
+        else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             ::Unit* healTarget = this->GetBestHealTarget();
             if (healTarget && this->CanUseAbility(VERDANT_EMBRACE))
@@ -777,7 +788,8 @@ EmpowermentLevel EvokerAI::CalculateOptimalEmpowermentLevel(uint32 spellId, ::Un
 
 void EvokerAI::UpdateEchoSystem()
 {
-    if (_specialization != EvokerSpec::PRESERVATION)
+    EvokerSpec currentSpec = DetectSpecialization();
+    if (currentSpec != EvokerSpec::PRESERVATION)
         return;
 
     ProcessEchoHealing();
@@ -856,7 +868,8 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
 
 EvokerAspect EvokerAI::GetOptimalAspect()
 {
-    switch (_specialization)
+    EvokerSpec currentSpec = DetectSpecialization();
+    switch (currentSpec)
     {
         case EvokerSpec::DEVASTATION:
             return EvokerAspect::RED; // Red for damage
