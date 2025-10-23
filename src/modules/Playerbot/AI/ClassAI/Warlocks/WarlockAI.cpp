@@ -516,12 +516,12 @@ bool WarlockAI::SummonPet()
 
     // Choose pet based on spec and situation
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
-    if (spec == 265) // Affliction
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
         // Felhunter for interrupt and dispel
         summonSpell = SUMMON_FELHUNTER;
     }
-    else if (spec == 266) // Demonology
+    else if (static_cast<uint32>(spec) == 266) // Demonology
     {
         // Felguard if available, otherwise Voidwalker
         if (bot->HasSpell(SUMMON_FELGUARD))
@@ -529,7 +529,7 @@ bool WarlockAI::SummonPet()
         else
             summonSpell = SUMMON_VOIDWALKER;
     }
-    else if (spec == 267) // Destruction
+    else if (static_cast<uint32>(spec) == 267) // Destruction
     {
         // Imp for damage
         summonSpell = SUMMON_IMP;
@@ -621,7 +621,7 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     uint32 spec = bot->GetSpecialization();
 
     // Seed of Corruption for Affliction (265) or when many enemies
-    if (spec == 265 || nearbyEnemies >= 4)
+    if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)
     {
         if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))
         {
@@ -646,7 +646,7 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     }
 
     // Fire and Brimstone for Destruction (267)
-    if (spec == 267)
+    if (static_cast<uint32>(spec) == 267)
     {
         if (bot->HasSpell(FIRE_AND_BRIMSTONE) && !bot->HasAura(FIRE_AND_BRIMSTONE))
         {
@@ -683,7 +683,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
     // Dark Soul variants based on spec
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
-    if (spec == 265) // Affliction
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
         if (bot->HasSpell(DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_MISERY))
         {
@@ -691,7 +691,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
             usedCooldown = true;
         }
     }
-    else if (spec == 266) // Demonology
+    else if (static_cast<uint32>(spec) == 266) // Demonology
     {
         // Metamorphosis
         if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
@@ -706,7 +706,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
             usedCooldown = true;
         }
     }
-    else if (spec == 267) // Destruction
+    else if (static_cast<uint32>(spec) == 267) // Destruction
     {
         if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
         {
@@ -861,7 +861,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     // Spec-specific DoTs
     uint32 spec = bot->GetSpecialization();
 
-    if (spec == 265) // Affliction
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
         // Unstable Affliction
         if (bot->HasSpell(UNSTABLE_AFFLICTION) && !target->HasAura(UNSTABLE_AFFLICTION))
@@ -878,7 +878,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
             return true;
         }
     }
-    else if (spec == 267) // Destruction
+    else if (static_cast<uint32>(spec) == 267) // Destruction
     {
         // Immolate
         if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
@@ -888,7 +888,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
             return true;
         }
     }
-    else if (spec == 266) // Demonology
+    else if (static_cast<uint32>(spec) == 266) // Demonology
     {
         // Corruption is usually enough, Hand of Gul'dan for AoE
         if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
@@ -1491,13 +1491,13 @@ void WarlockAI::OptimizePetPositioning()
 
     // Determine optimal position based on pet type
     uint32 spec = bot->GetSpecialization();
-    if (spec == 266 && bot->HasSpell(SUMMON_FELGUARD)) // Demonology
+    if (static_cast<uint32>(spec) == 266 && bot->HasSpell(SUMMON_FELGUARD)) // Demonology
     {
         // Melee pet - position in front of target
         distance = 3.0f;
         optimalPos = target->GetNearPosition(distance, 0);
     }
-    else if (spec == 265) // Affliction - Felhunter
+    else if (static_cast<uint32>(spec) == 265) // Affliction - Felhunter
     {
         // Anti-caster pet - position near casters
         distance = 5.0f;
@@ -1595,7 +1595,7 @@ void WarlockAI::ManageWarlockCooldowns()
     uint32 spec = bot->GetSpecialization();
 
     // Demonic Empowerment for Demonology (266)
-    if (spec == 266 && _petActive)
+    if (static_cast<uint32>(spec) == 266 && _petActive)
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -1604,7 +1604,7 @@ void WarlockAI::ManageWarlockCooldowns()
     }
 
     // Metamorphosis for Demonology (266)
-    if (spec == 266)
+    if (static_cast<uint32>(spec) == 266)
     {
         if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
         {

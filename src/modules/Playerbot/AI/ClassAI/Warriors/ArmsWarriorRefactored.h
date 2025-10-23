@@ -526,6 +526,7 @@ private:
     uint32 _tacticalMasteryRage;
     WarriorStance _currentStance;
     WarriorStance _preferredStance;
+
 };
 
 } // namespace Playerbot

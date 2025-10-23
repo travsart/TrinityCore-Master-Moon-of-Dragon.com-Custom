@@ -114,6 +114,19 @@ private:
 class AssassinationRogueRefactored : public MeleeDpsSpecialization<ComboPointsAssassination>
 {
 public:
+    // Assassination Rogue Spell IDs
+    static constexpr uint32 GARROTE = 703;
+    static constexpr uint32 RUPTURE = 1943;
+    static constexpr uint32 ENVENOM = 32645;
+    static constexpr uint32 VENDETTA = 79140;
+    static constexpr uint32 MUTILATE = 1329;
+    static constexpr uint32 FAN_OF_KNIVES = 51723;
+    static constexpr uint32 CRIMSON_TEMPEST = 121411;
+    static constexpr uint32 EXSANGUINATE = 200806;
+    static constexpr uint32 KINGSBANE = 192759;
+
+
+public:
     // Use base class members with type alias for cleaner syntax
     using Base = MeleeDpsSpecialization<ComboPointsAssassination>;
     using Base::GetBot;

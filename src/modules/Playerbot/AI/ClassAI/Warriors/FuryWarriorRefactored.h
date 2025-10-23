@@ -448,6 +448,10 @@ private:
     // Combat state
     bool _executePhaseActive;
     bool _hasDualWield;
+
+    // Stance management
+    WarriorStance _currentStance;
+    WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

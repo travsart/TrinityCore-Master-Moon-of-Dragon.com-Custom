@@ -340,7 +340,7 @@ void RogueAI::UpdateRotation(Unit* target)
     {
         // Blade Flurry for Combat/Outlaw rogues (check via specialization)
         uint32 spec = GetBot()->GetPrimarySpecialization();
-        if (spec == 1 && CanUseAbility(BLADE_FLURRY)) // Combat/Outlaw is spec 1
+        if (static_cast<uint32>(spec) == 1 && CanUseAbility(BLADE_FLURRY)) // Combat/Outlaw is spec 1
         {
             if (CastSpell(BLADE_FLURRY))
             {
@@ -672,7 +672,7 @@ void RogueAI::UseDefensiveCooldowns()
 
     // Combat Readiness for damage reduction (Combat spec)
     uint32 spec = GetBot()->GetPrimarySpecialization();
-    if (spec == 1 && healthPct < 40.0f) // Combat/Outlaw is spec 1
+    if (static_cast<uint32>(spec) == 1 && healthPct < 40.0f) // Combat/Outlaw is spec 1
     {
         uint32 combatReadiness = 74001; // Combat Readiness spell ID
         if (CanUseAbility(combatReadiness))

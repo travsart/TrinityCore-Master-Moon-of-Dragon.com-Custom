@@ -557,6 +557,10 @@ private:
     uint32 _lastTaunt;
     std::priority_queue<ThreatTarget> _threatPriority;
     std::unordered_map<ObjectGuid, uint32> _sunderStacks;
+
+    // Stance management
+    WarriorStance _currentStance;
+    WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot
