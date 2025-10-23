@@ -25,7 +25,6 @@
 #include "Log.h"
 #include <unordered_map>
 #include "../CombatSpecializationTemplates.h"
-#include "MageSpecialization.h"
 
 namespace Playerbot
 {

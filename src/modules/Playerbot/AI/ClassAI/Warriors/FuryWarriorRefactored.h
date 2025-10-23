@@ -15,7 +15,6 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
-#include "WarriorSpecialization.h"
 #include "Item.h"
 #include "ItemDefines.h"
 #include "UnitDefines.h"
@@ -33,7 +32,7 @@ namespace Playerbot
  * - Specialized enrage and dual-wield mechanics
  * - Eliminates ~720 lines of duplicate code
  */
-class FuryWarriorRefactored : public MeleeDpsSpecialization<RageResource>, public WarriorSpecialization
+class FuryWarriorRefactored : public MeleeDpsSpecialization<RageResource>
 {
 public:
     using Base = MeleeDpsSpecialization<RageResource>;
@@ -45,7 +44,7 @@ public:
     using Base::_resource;
     explicit FuryWarriorRefactored(Player* bot)
         : MeleeDpsSpecialization<RageResource>(bot)
-        , WarriorSpecialization(bot)
+        
         , _isEnraged(false)
         , _enrageEndTime(0)
         , _hasWhirlwindBuff(false)
@@ -449,6 +448,10 @@ private:
     // Combat state
     bool _executePhaseActive;
     bool _hasDualWield;
+
+    // Stance management
+    WarriorStance _currentStance;
+    WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

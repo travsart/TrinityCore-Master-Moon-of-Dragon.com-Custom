@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_RESTORATIONSHAMANREFACTORED_H
 #define PLAYERBOT_RESTORATIONSHAMANREFACTORED_H
 
-#include "ShamanSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

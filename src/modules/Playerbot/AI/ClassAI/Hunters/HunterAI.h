@@ -11,10 +11,13 @@
 #define TRINITY_HUNTERPLAYERAI_H
 
 #include "../ClassAI.h"
-#include "HunterSpecialization.h"
+#include "Position.h"
+#include "ObjectGuid.h"
+#include "PetDefines.h"
 #include <memory>
 #include <atomic>
 #include <unordered_set>
+#include <vector>
 
 class Player;
 class Pet;
@@ -24,15 +27,48 @@ namespace Playerbot
 
 // Forward declarations
 class CombatBehaviorIntegration;
-class BeastMasterySpecialization;
-class MarksmanshipSpecialization;
-class SurvivalSpecialization;
 
 enum class HunterSpec : uint8
 {
     BEAST_MASTERY = 1,
     MARKSMANSHIP = 2,
     SURVIVAL = 3
+};
+
+// Trap information tracking
+struct TrapInfo
+{
+    uint32 spellId;
+    uint32 lastUsed;
+    Position position;
+    uint32 duration;
+
+    TrapInfo(uint32 spell = 0, uint32 last = 0, Position pos = Position(), uint32 dur = 30000)
+        : spellId(spell), lastUsed(last), position(pos), duration(dur) {}
+
+    bool IsReady() const { return (getMSTime() - lastUsed) >= 30000; } // 30sec trap cooldown
+    bool IsActive() const { return (getMSTime() - lastUsed) < duration; }
+};
+
+// Pet information tracking
+struct PetInfo
+{
+    ObjectGuid guid;
+    uint32 health;
+    uint32 maxHealth;
+    uint32 happiness;
+    PetType type;
+    uint32 lastCommand;
+    uint32 lastFeed;
+    bool isDead;
+
+    PetInfo() : guid(ObjectGuid::Empty), health(0), maxHealth(0), happiness(0),
+                type(PetType::MAX_PET_TYPE), lastCommand(0), lastFeed(0), isDead(true) {}
+
+    float GetHealthPct() const
+    {
+        return maxHealth > 0 ? (float(health) / maxHealth * 100.0f) : 0.0f;
+    }
 };
 
 // Hunter spell constants defined in HunterSpecialization.h (HunterSpells enum)
@@ -85,9 +121,9 @@ public:
     float GetOptimalRange(::Unit* target) override;
 
     // Hunter-specific methods
-    HunterSpec GetCurrentSpecialization() const;
     Pet* GetPet() const;
     bool HasActivePet() const;
+    HunterSpec GetCurrentSpecialization() const;
 
     // Combat behavior integration
     CombatBehaviorIntegration* GetCombatBehaviors() const { return _combatBehaviors.get(); }
@@ -95,10 +131,6 @@ public:
 private:
     // Initialization methods
     void InitializeCombatSystems();
-    void DetectSpecialization();
-    void InitializeSpecialization();
-    void SwitchSpecialization(HunterSpec newSpec);
-    void DelegateToSpecialization(::Unit* target);
 
     // Combat priority handlers (9 priorities from integration)
     bool HandleInterrupts(::Unit* target);
@@ -169,8 +201,6 @@ private:
     void RecordTrapPlacement(uint32 trapSpell);
 
     // Member variables
-    HunterSpec _detectedSpec;
-    std::unique_ptr<HunterSpecialization> _specialization;
     std::unique_ptr<CombatBehaviorIntegration> _combatBehaviors;
 
     // Combat state tracking

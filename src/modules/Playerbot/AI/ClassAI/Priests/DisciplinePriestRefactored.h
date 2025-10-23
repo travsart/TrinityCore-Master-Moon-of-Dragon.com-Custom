@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_DISCIPLINEPRIESTREFACTORED_H
 #define PLAYERBOT_DISCIPLINEPRIESTREFACTORED_H
 
-#include "PriestSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

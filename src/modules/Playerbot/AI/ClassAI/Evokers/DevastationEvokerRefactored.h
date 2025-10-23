@@ -25,7 +25,6 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
-#include "EvokerSpecialization.h"
 
 namespace Playerbot
 {

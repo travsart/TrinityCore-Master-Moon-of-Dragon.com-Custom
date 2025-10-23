@@ -8,9 +8,6 @@
  */
 
 #include "ShamanAI.h"
-#include "ElementalSpecialization.h"
-#include "EnhancementSpecialization.h"
-#include "RestorationSpecialization.h"
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
@@ -204,7 +201,6 @@ static const uint32 FLAME_SHOCK_DURATION = 30000; // 30 seconds
 static const uint32 MAELSTROM_WEAPON_MAX = 5;
 
 ShamanAI::ShamanAI(Player* bot) : ClassAI(bot),
-    _currentSpec(ShamanSpec::ELEMENTAL),
     _manaSpent(0),
     _damageDealt(0),
     _healingDone(0),
@@ -232,11 +228,8 @@ ShamanAI::ShamanAI(Player* bot) : ClassAI(bot),
     _healingStreamTotemTime(0),
     _chainHealBounceCount(3)
 {
-    InitializeSpecialization();
-
-    TC_LOG_DEBUG("module.playerbot.ai", "ShamanAI created for player {} with specialization {}",
-                 bot ? bot->GetName() : "null",
-                 _specialization ? _specialization->GetSpecializationName() : "none");
+    TC_LOG_DEBUG("module.playerbot.ai", "ShamanAI created for player {}",
+                 bot ? bot->GetName() : "null");
 }
 
 ShamanAI::~ShamanAI() = default;
@@ -263,13 +256,6 @@ void ShamanAI::UpdateRotation(::Unit* target)
         // No fallback for casters - if rotation failed, just return
         // Do NOT use AttackerStateUpdate (melee) for a caster class
         return;
-    }
-
-    // Check if we need to switch specialization
-    ShamanSpec newSpec = DetectCurrentSpecialization();
-    if (newSpec != _currentSpec)
-    {
-        SwitchSpecialization(newSpec);
     }
 
     // ========================================================================
@@ -370,7 +356,7 @@ bool ShamanAI::HandleInterrupts(::Unit* target)
         }
 
         // Capacitor Totem for AoE stun interrupt
-        if (_currentSpec == ShamanSpec::ELEMENTAL && CanUseAbility(SPELL_CAPACITOR_TOTEM))
+        if (GetBot()->GetPrimarySpecialization() == 262 && CanUseAbility(SPELL_CAPACITOR_TOTEM)) // 262 = Elemental
         {
             if (GetBot()->GetDistance(target) <= 8.0f)
             {
@@ -433,7 +419,7 @@ bool ShamanAI::HandleDefensives()
     if (healthPct < 40.0f)
     {
         // Shamanistic Rage for Enhancement
-        if (_currentSpec == ShamanSpec::ENHANCEMENT && CanUseAbility(SPELL_SHAMANISTIC_RAGE))
+        if (GetBot()->GetPrimarySpecialization() == 263 && CanUseAbility(SPELL_SHAMANISTIC_RAGE)) // 263 = Enhancement
         {
             uint32 currentTime = getMSTime();
             if (currentTime - _lastShamanisticRage > 60000) // 1 min cooldown
@@ -519,7 +505,7 @@ bool ShamanAI::HandlePositioning(::Unit* target)
     float optimalRange = GetOptimalRange(target);
 
     // Enhancement needs to be in melee range
-    if (_currentSpec == ShamanSpec::ENHANCEMENT)
+    if (GetBot()->GetPrimarySpecialization() == 263) // 263 = Enhancement
     {
         if (currentDistance > OPTIMAL_MELEE_RANGE)
         {
@@ -552,7 +538,7 @@ bool ShamanAI::HandlePositioning(::Unit* target)
         if (currentDistance < 8.0f)
         {
             // Thunderstorm for knockback
-            if (_currentSpec == ShamanSpec::ELEMENTAL && CanUseAbility(SPELL_THUNDERSTORM))
+            if (GetBot()->GetPrimarySpecialization() == 262 && CanUseAbility(SPELL_THUNDERSTORM)) // 262 = Elemental
             {
                 if (CastSpell(SPELL_THUNDERSTORM))
                 {
@@ -657,7 +643,7 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
     }
 
     // Apply Flame Shock to new target for Elemental
-    if (_currentSpec == ShamanSpec::ELEMENTAL)
+    if (GetBot()->GetPrimarySpecialization() == 262) // 262 = Elemental
     {
         if (!HasFlameShockOnTarget(priorityTarget))
         {
@@ -707,7 +693,7 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
     }
 
     // Cleanse Spirit for friendly dispels (Restoration)
-    if (_currentSpec == ShamanSpec::RESTORATION)
+    if (GetBot()->GetPrimarySpecialization() == 264) // 264 = Restoration
     {
         // Check group members for debuffs
         if (Group* group = GetBot()->GetGroup())
@@ -809,9 +795,9 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
     if (enemies.size() < 3)
         return false;
 
-    switch (_currentSpec)
+    switch (GetBot()->GetPrimarySpecialization())
     {
-        case ShamanSpec::ELEMENTAL:
+        case 262: // Elemental
         {
             // Earthquake for ground AoE
             if (CanUseAbility(SPELL_EARTHQUAKE))
@@ -851,7 +837,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
             break;
         }
 
-        case ShamanSpec::ENHANCEMENT:
+        case 263: // Enhancement
         {
             // Crash Lightning for melee AoE
             if (HandleCrashLightning())
@@ -893,7 +879,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
             break;
         }
 
-        case ShamanSpec::RESTORATION:
+        case 264: // Restoration
         {
             // Chain Heal for group healing
             if (CountInjuredGroupMembers(80.0f) >= 3)
@@ -946,9 +932,9 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
         }
     }
 
-    switch (_currentSpec)
+    switch (GetBot()->GetPrimarySpecialization())
     {
-        case ShamanSpec::ELEMENTAL:
+        case 262: // Elemental
         {
             // Ascendance for Lava Beam
             if (ShouldUseAscendance() && CanUseAbility(SPELL_ASCENDANCE))
@@ -1008,7 +994,7 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
             break;
         }
 
-        case ShamanSpec::ENHANCEMENT:
+        case 263: // Enhancement
         {
             // Ascendance for Windstrike
             if (ShouldUseAscendance() && CanUseAbility(SPELL_ASCENDANCE))
@@ -1049,7 +1035,7 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
             break;
         }
 
-        case ShamanSpec::RESTORATION:
+        case 264: // Restoration
         {
             // Ascendance for spreading heals
             if (CountInjuredGroupMembers(60.0f) >= 3 && CanUseAbility(SPELL_ASCENDANCE))
@@ -1109,9 +1095,9 @@ bool ShamanAI::HandleResourceManagement()
 {
     auto* behaviors = GetCombatBehaviors();
 
-    switch (_currentSpec)
+    switch (GetBot()->GetPrimarySpecialization())
     {
-        case ShamanSpec::ELEMENTAL:
+        case 262: // Elemental
         {
             // Manage Elemental Maelstrom resource
             uint32 maelstrom = GetElementalMaelstrom();
@@ -1144,7 +1130,7 @@ bool ShamanAI::HandleResourceManagement()
             break;
         }
 
-        case ShamanSpec::ENHANCEMENT:
+        case 263: // Enhancement
         {
             // Check Maelstrom Weapon stacks
             _maelstromWeaponStacks = GetMaelstromWeaponStacks();
@@ -1177,7 +1163,7 @@ bool ShamanAI::HandleResourceManagement()
             break;
         }
 
-        case ShamanSpec::RESTORATION:
+        case 264: // Restoration
         {
             // Mana management for Restoration
             float manaPct = GetBot()->GetPowerPct(POWER_MANA);
@@ -1212,15 +1198,15 @@ bool ShamanAI::HandleNormalRotation(::Unit* target)
     if (!target)
         return false;
 
-    switch (_currentSpec)
+    switch (GetBot()->GetPrimarySpecialization())
     {
-        case ShamanSpec::ELEMENTAL:
+        case 262: // Elemental
             return UpdateElementalRotation(target);
 
-        case ShamanSpec::ENHANCEMENT:
+        case 263: // Enhancement
             return UpdateEnhancementRotation(target);
 
-        case ShamanSpec::RESTORATION:
+        case 264: // Restoration
             return UpdateRestorationRotation(target);
 
         default:
@@ -1477,12 +1463,10 @@ bool ShamanAI::HandleMaelstromWeapon()
     // PHASE 5F: Thread-safe spatial grid validation
     auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
-
     Unit* target = nullptr;
     if (snapshot_target)
     {
         target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
-
 
     }
         
@@ -1653,19 +1637,19 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
     {
         case TotemType::FIRE:
         {
-            switch (_currentSpec)
+            switch (GetBot()->GetPrimarySpecialization())
             {
-                case ShamanSpec::ELEMENTAL:
+                case 262: // Elemental
                     // Searing Totem for single target damage
                     return SPELL_SEARING_TOTEM;
 
-                case ShamanSpec::ENHANCEMENT:
+                case 263: // Enhancement
                     // Magma Totem for AoE
                     if (GetBot()->GetDistance(target) <= 8.0f)
                         return SPELL_MAGMA_TOTEM;
                     return SPELL_SEARING_TOTEM;
 
-                case ShamanSpec::RESTORATION:
+                case 264: // Restoration
                     // Flametongue Totem for spell power buff
                     return SPELL_FLAMETONGUE_TOTEM;
             }
@@ -1679,11 +1663,11 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
                 return SPELL_STONESKIN_TOTEM;
 
             // Strength of Earth for melee
-            if (_currentSpec == ShamanSpec::ENHANCEMENT)
+            if (GetBot()->GetPrimarySpecialization() == 263) // 263 = Enhancement
                 return SPELL_STRENGTH_OF_EARTH_TOTEM;
 
             // Earthbind for kiting
-            if (_currentSpec != ShamanSpec::ENHANCEMENT && GetBot()->GetDistance(target) < 15.0f)
+            if (GetBot()->GetPrimarySpecialization() != 263 && GetBot()->GetDistance(target) < 15.0f) // 263 = Enhancement
                 return SPELL_EARTHBIND_TOTEM;
 
             return SPELL_STONESKIN_TOTEM;
@@ -1691,9 +1675,9 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
 
         case TotemType::WATER:
         {
-            switch (_currentSpec)
+            switch (GetBot()->GetPrimarySpecialization())
             {
-                case ShamanSpec::RESTORATION:
+                case 264: // Restoration
                     // Healing Stream for constant healing
                     return SPELL_HEALING_STREAM_TOTEM;
 
@@ -1708,17 +1692,17 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
 
         case TotemType::AIR:
         {
-            switch (_currentSpec)
+            switch (GetBot()->GetPrimarySpecialization())
             {
-                case ShamanSpec::ENHANCEMENT:
+                case 263: // Enhancement
                     // Windfury for attack speed
                     return SPELL_WINDFURY_TOTEM;
 
-                case ShamanSpec::ELEMENTAL:
+                case 262: // Elemental
                     // Wrath of Air for spell haste
                     return SPELL_WRATH_OF_AIR_TOTEM;
 
-                case ShamanSpec::RESTORATION:
+                case 264: // Restoration
                     // Grace of Air for agility
                     return SPELL_GRACE_OF_AIR_TOTEM;
             }
@@ -2224,12 +2208,6 @@ void ShamanAI::UpdateBuffs()
     // Check weapon imbues
     UpdateWeaponImbues();
 
-    // Delegate additional buffs to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
-
     // Water walking/breathing utility
     if (!GetBot()->IsInCombat())
     {
@@ -2267,12 +2245,6 @@ void ShamanAI::UpdateCooldowns(uint32 diff)
         _lavaBurstCharges++;
         lavaBurstRecharge = 0;
     }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateCooldowns(diff);
-    }
 }
 
 bool ShamanAI::CanUseAbility(uint32 spellId)
@@ -2291,12 +2263,6 @@ bool ShamanAI::CanUseAbility(uint32 spellId)
     // Check resource requirements
     if (!HasEnoughResource(spellId))
         return false;
-
-    // Check specialization-specific requirements
-    if (_specialization)
-    {
-        return _specialization->CanUseAbility(spellId);
-    }
 
     return true;
 }
@@ -2324,12 +2290,6 @@ void ShamanAI::OnCombatStart(::Unit* target)
     _lavaBurstCharges = 2;
     _hasLavaSurgeProc = false;
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatStart(target);
-    }
-
     // Initialize combat tracking
     _combatTime = 0;
     _inCombat = true;
@@ -2351,12 +2311,6 @@ void ShamanAI::OnCombatEnd()
     for (auto& totem : _activeTotems)
     {
         totem.isActive = false;
-    }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatEnd();
     }
 
     // Reset combat tracking
@@ -2385,18 +2339,12 @@ bool ShamanAI::HasEnoughResource(uint32 spellId)
     }
 
     // Check maelstrom cost for Elemental
-    if (_currentSpec == ShamanSpec::ELEMENTAL)
+    if (GetBot()->GetPrimarySpecialization() == 262) // 262 = Elemental
     {
         if (spellId == SPELL_EARTH_SHOCK && _elementalMaelstrom < 60)
             return false;
         if (spellId == SPELL_EARTHQUAKE && _elementalMaelstrom < 60)
             return false;
-    }
-
-    // Delegate additional checks to specialization
-    if (_specialization)
-    {
-        return _specialization->HasEnoughResource(spellId);
     }
 
     return true;
@@ -2432,12 +2380,6 @@ void ShamanAI::ConsumeResource(uint32 spellId)
     {
         _totemsDeploy++;
     }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->ConsumeResource(spellId);
-    }
 }
 
 Position ShamanAI::GetOptimalPosition(::Unit* target)
@@ -2468,83 +2410,11 @@ float ShamanAI::GetOptimalRange(::Unit* target)
         return OPTIMAL_CASTER_RANGE;
 
     // Enhancement needs melee range
-    if (_currentSpec == ShamanSpec::ENHANCEMENT)
+    if (GetBot()->GetPrimarySpecialization() == 263) // 263 = Enhancement
         return OPTIMAL_MELEE_RANGE;
 
     // Elemental and Restoration maintain caster range
     return OPTIMAL_CASTER_RANGE;
-}
-
-void ShamanAI::InitializeSpecialization()
-{
-    _currentSpec = DetectCurrentSpecialization();
-    SwitchSpecialization(_currentSpec);
-}
-
-ShamanSpec ShamanAI::DetectCurrentSpecialization()
-{
-    if (!GetBot())
-        return ShamanSpec::ELEMENTAL;
-
-    // Check for key Restoration talents
-    if (GetBot()->HasSpell(TALENT_EARTH_SHIELD_TALENT) ||
-        GetBot()->HasSpell(TALENT_RIPTIDE_TALENT) ||
-        GetBot()->HasSpell(TALENT_HEALING_RAIN_TALENT))
-    {
-        return ShamanSpec::RESTORATION;
-    }
-
-    // Check for key Enhancement talents
-    if (GetBot()->HasSpell(TALENT_STORMSTRIKE_TALENT) ||
-        GetBot()->HasSpell(TALENT_LAVA_LASH_TALENT) ||
-        GetBot()->HasSpell(TALENT_MAELSTROM_WEAPON))
-    {
-        return ShamanSpec::ENHANCEMENT;
-    }
-
-    // Check for key Elemental talents
-    if (GetBot()->HasSpell(TALENT_LAVA_BURST_TALENT) ||
-        GetBot()->HasSpell(TALENT_ELEMENTAL_MASTERY) ||
-        GetBot()->HasSpell(TALENT_LIGHTNING_OVERLOAD))
-    {
-        return ShamanSpec::ELEMENTAL;
-    }
-
-    // Default to Elemental if no clear specialization
-    return ShamanSpec::ELEMENTAL;
-}
-
-void ShamanAI::SwitchSpecialization(ShamanSpec newSpec)
-{
-    if (_currentSpec == newSpec && _specialization)
-        return;
-
-    _currentSpec = newSpec;
-    _specialization.reset();
-
-    switch (newSpec)
-    {
-        case ShamanSpec::ELEMENTAL:
-            _specialization = std::make_unique<ElementalSpecialization>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} switching to Elemental specialization", GetBot()->GetName());
-            break;
-        case ShamanSpec::ENHANCEMENT:
-            _specialization = std::make_unique<EnhancementSpecialization>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} switching to Enhancement specialization", GetBot()->GetName());
-            break;
-        case ShamanSpec::RESTORATION:
-            _specialization = std::make_unique<RestorationSpecialization>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} switching to Restoration specialization", GetBot()->GetName());
-            break;
-    }
-}
-
-void ShamanAI::DelegateToSpecialization(::Unit* target)
-{
-    if (!_specialization || !target)
-        return;
-
-    _specialization->UpdateRotation(target);
 }
 
 void ShamanAI::UpdateShamanBuffs()
@@ -2553,7 +2423,7 @@ void ShamanAI::UpdateShamanBuffs()
         return;
 
     // Lightning Shield for Elemental/Enhancement
-    if (_currentSpec != ShamanSpec::RESTORATION)
+    if (GetBot()->GetPrimarySpecialization() != 264) // 264 = Restoration
     {
         if (!HasAura(SPELL_LIGHTNING_SHIELD, GetBot()))
         {
@@ -2576,7 +2446,7 @@ void ShamanAI::UpdateShamanBuffs()
     }
 
     // Earth Shield on tank in group
-    if (_currentSpec == ShamanSpec::RESTORATION && GetBot()->HasSpell(SPELL_EARTH_SHIELD))
+    if (GetBot()->GetPrimarySpecialization() == 264 && GetBot()->HasSpell(SPELL_EARTH_SHIELD)) // 264 = Restoration
     {
         if (Group* group = GetBot()->GetGroup())
         {
@@ -2606,34 +2476,13 @@ void ShamanAI::UpdateTotemCheck()
 
     lastTotemCheck = currentTime;
 
-    // Check if totems need refreshing
-    if (_specialization)
-    {
-        _specialization->UpdateTotemManagement();
-    }
+    // Totem management is handled via HandleTotemManagement in UpdateRotation
 }
 
 void ShamanAI::UpdateShockRotation()
 {
-    if (!GetBot() || _currentTarget.IsEmpty())
-        return;
-
-    // Delegate shock rotation to specialization
-    if (_specialization)
-    {
-        // PHASE 5F: Thread-safe spatial grid validation
-        auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
-
-        Unit* target = nullptr;
-        if (snapshot_target)
-        {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
-
-        }
-        
-        if (target)
-            _specialization->UpdateShockRotation(target);
-    }
+    // Shock rotation is handled via HandleNormalRotation in UpdateRotation
+    // No separate delegation needed
 }
 
 // Private helper methods
@@ -2654,7 +2503,7 @@ void ShamanAI::UpdateWeaponImbues()
     }
 
     // Check off-hand weapon imbue for Enhancement
-    if (_currentSpec == ShamanSpec::ENHANCEMENT && !HasWeaponImbue(false))
+    if (GetBot()->GetPrimarySpecialization() == 263 && !HasWeaponImbue(false)) // 263 = Enhancement
     {
         uint32 imbueSpell = GetOptimalWeaponImbue(false);
         if (imbueSpell && CastSpell(imbueSpell))
@@ -2686,10 +2535,11 @@ void ShamanAI::UpdateUtilityBuffs()
 
 void ShamanAI::DeployInitialTotems(::Unit* target)
 {
-    if (!GetBot() || !target || !_specialization)
+    if (!GetBot() || !target)
         return;
 
-    _specialization->DeployOptimalTotems();
+    // Deploy totems based on spec via HandleTotemManagement
+    HandleTotemManagement(target);
 }
 
 void ShamanAI::RecallCombatTotems()
@@ -2766,13 +2616,13 @@ uint32 ShamanAI::GetOptimalWeaponImbue(bool mainHand) const
     if (!GetBot())
         return 0;
 
-    switch (_currentSpec)
+    switch (GetBot()->GetPrimarySpecialization())
     {
-        case ShamanSpec::ELEMENTAL:
+        case 262: // Elemental
             return SPELL_FLAMETONGUE_WEAPON;
-        case ShamanSpec::ENHANCEMENT:
+        case 263: // Enhancement
             return mainHand ? SPELL_WINDFURY_WEAPON : SPELL_FLAMETONGUE_WEAPON;
-        case ShamanSpec::RESTORATION:
+        case 264: // Restoration
             return SPELL_EARTHLIVING_WEAPON;
         default:
             return SPELL_ROCKBITER_WEAPON;
@@ -2886,7 +2736,7 @@ uint32 ShamanAI::CalculateHealingDone() const
 {
     // Simplified healing calculation for metrics
     // In a real implementation, this would track actual healing events
-    return _currentSpec == ShamanSpec::RESTORATION ? 200 : 0;
+    return GetBot()->GetPrimarySpecialization() == 264 ? 200 : 0; // 264 = Restoration
 }
 
 uint32 ShamanAI::CalculateManaUsage() const

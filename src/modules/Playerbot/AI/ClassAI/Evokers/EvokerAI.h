@@ -195,7 +195,6 @@ protected:
 
 private:
     // Evoker-specific data
-    EvokerSpec _specialization;
     EvokerAspect _currentAspect;
     uint32 _damageDealt;
     uint32 _healingDone;
@@ -379,7 +378,6 @@ private:
     // Helper methods
     bool IsChanneling();
     bool IsChannelingEmpoweredSpell();
-    EvokerSpec DetectSpecialization();
     bool HasTalent(uint32 talentId);
     bool IsInRange(::Unit* target, float range);
     uint32 GetSpellRange(uint32 spellId);

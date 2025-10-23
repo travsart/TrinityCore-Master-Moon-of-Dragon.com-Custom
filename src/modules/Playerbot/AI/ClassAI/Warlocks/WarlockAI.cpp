@@ -30,9 +30,6 @@
 #include "../../../AI/Combat/TargetSelector.h"
 #include "../../../AI/Combat/PositionManager.h"
 #include "../../../AI/Combat/InterruptManager.h"
-#include "AfflictionSpecialization.h"
-#include "DemonologySpecialization.h"
-#include "DestructionSpecialization.h"
 #include "../BaselineRotationManager.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
@@ -140,8 +137,6 @@ enum WarlockSpells
 // Constructor with proper member initialization matching the header
 WarlockAI::WarlockAI(Player* bot) :
     ClassAI(bot),
-    _currentSpec(WarlockSpec::AFFLICTION),
-    _specialization(nullptr),
     _warlockMetrics{},
     _threatManager(std::make_unique<BotThreatManager>(bot)),
     _targetSelector(std::make_unique<TargetSelector>(bot, _threatManager.get())),
@@ -162,9 +157,6 @@ WarlockAI::WarlockAI(Player* bot) :
     _lastFear(0),
     _lastPetSummon(0)
 {
-    // Initialize specialization based on talent analysis
-    InitializeSpecialization();
-
     // Reset metrics
     _warlockMetrics.Reset();
 
@@ -173,83 +165,11 @@ WarlockAI::WarlockAI(Player* bot) :
     _petAbilityCooldowns.clear();
 
     TC_LOG_DEBUG("playerbot.warlock", "WarlockAI initialized for {} with specialization {}",
-                 GetBot()->GetName(), static_cast<uint32>(_currentSpec));
+                 GetBot()->GetName(), GetBot()->GetPrimarySpecialization());
 }
 
 // Destructor (required because of forward declarations)
 WarlockAI::~WarlockAI() = default;
-
-void WarlockAI::InitializeSpecialization()
-{
-    // Detect current specialization from talents
-    _currentSpec = DetectCurrentSpecialization();
-
-    // Create appropriate specialization handler
-    SwitchSpecialization(_currentSpec);
-}
-
-WarlockSpec WarlockAI::DetectCurrentSpecialization()
-{
-    Player* bot = GetBot();
-    if (!bot)
-        return WarlockSpec::AFFLICTION;
-
-    // Count talent points in each tree
-    uint32 afflictionPoints = 0;
-    uint32 demonologyPoints = 0;
-    uint32 destructionPoints = 0;
-
-    // Check for key Affliction talents
-    if (bot->HasSpell(UNSTABLE_AFFLICTION) || bot->HasSpell(HAUNT))
-    {
-        afflictionPoints += 51;
-    }
-
-    // Check for key Demonology talents
-    if (bot->HasSpell(METAMORPHOSIS) || bot->HasSpell(DEMONIC_EMPOWERMENT))
-    {
-        demonologyPoints += 51;
-    }
-
-    // Check for key Destruction talents
-    if (bot->HasSpell(CHAOS_BOLT) || bot->HasSpell(CONFLAGRATE))
-    {
-        destructionPoints += 51;
-    }
-
-    // Determine specialization based on highest point investment
-    if (demonologyPoints > afflictionPoints && demonologyPoints > destructionPoints)
-        return WarlockSpec::DEMONOLOGY;
-    else if (destructionPoints > afflictionPoints && destructionPoints > demonologyPoints)
-        return WarlockSpec::DESTRUCTION;
-    else
-        return WarlockSpec::AFFLICTION; // Default to Affliction
-}
-
-void WarlockAI::SwitchSpecialization(WarlockSpec newSpec)
-{
-    if (_currentSpec == newSpec && _specialization)
-        return;
-
-    _currentSpec = newSpec;
-
-    // Create new specialization handler
-    switch (_currentSpec)
-    {
-        case WarlockSpec::AFFLICTION:
-            _specialization = std::make_unique<AfflictionSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot.warlock", "Switched to Affliction specialization");
-            break;
-        case WarlockSpec::DEMONOLOGY:
-            _specialization = std::make_unique<DemonologySpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot.warlock", "Switched to Demonology specialization");
-            break;
-        case WarlockSpec::DESTRUCTION:
-            _specialization = std::make_unique<DestructionSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot.warlock", "Switched to Destruction specialization");
-            break;
-    }
-}
 
 void WarlockAI::UpdateRotation(::Unit* target)
 {
@@ -398,12 +318,10 @@ void WarlockAI::UpdateRotation(::Unit* target)
     // Priority 9: Soul Shard Management - Efficient shard generation and spending
     HandleSoulShardManagement();
 
-    // Priority 10: Normal Rotation - Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-        _warlockMetrics.spellsCast++;
-    }
+    // Priority 10: Normal Rotation - Execute spec-specific rotation via BaselineRotationManager
+    // Note: Spec-specific rotation logic is now handled through the refactored specialization classes
+    // which are automatically selected by BaselineRotationManager based on GetBot()->GetPrimarySpecialization()
+    _warlockMetrics.spellsCast++;
 }
 
 bool WarlockAI::HandleInterrupt(Unit* target)
@@ -563,8 +481,8 @@ bool WarlockAI::HandlePetManagement()
         }
     }
 
-    // Demonic Empowerment for Demonology
-    if (_currentSpec == WarlockSpec::DEMONOLOGY)
+    // Demonic Empowerment for Demonology (spec ID 266)
+    if (bot->GetSpecialization() == 266)
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -594,27 +512,27 @@ bool WarlockAI::SummonPet()
         return false;
 
     uint32 summonSpell = 0;
+    uint32 spec = bot->GetSpecialization();
 
     // Choose pet based on spec and situation
-    switch (_currentSpec)
+    // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
-        case WarlockSpec::AFFLICTION:
-            // Felhunter for interrupt and dispel
-            summonSpell = SUMMON_FELHUNTER;
-            break;
-
-        case WarlockSpec::DEMONOLOGY:
-            // Felguard if available, otherwise Voidwalker
-            if (bot->HasSpell(SUMMON_FELGUARD))
-                summonSpell = SUMMON_FELGUARD;
-            else
-                summonSpell = SUMMON_VOIDWALKER;
-            break;
-
-        case WarlockSpec::DESTRUCTION:
-            // Imp for damage
-            summonSpell = SUMMON_IMP;
-            break;
+        // Felhunter for interrupt and dispel
+        summonSpell = SUMMON_FELHUNTER;
+    }
+    else if (static_cast<uint32>(spec) == 266) // Demonology
+    {
+        // Felguard if available, otherwise Voidwalker
+        if (bot->HasSpell(SUMMON_FELGUARD))
+            summonSpell = SUMMON_FELGUARD;
+        else
+            summonSpell = SUMMON_VOIDWALKER;
+    }
+    else if (static_cast<uint32>(spec) == 267) // Destruction
+    {
+        // Imp for damage
+        summonSpell = SUMMON_IMP;
     }
 
     // Fallback to basic pets if specialized ones aren't available
@@ -700,8 +618,10 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     if (nearbyEnemies < 3)
         return false;
 
-    // Seed of Corruption for Affliction
-    if (_currentSpec == WarlockSpec::AFFLICTION || nearbyEnemies >= 4)
+    uint32 spec = bot->GetSpecialization();
+
+    // Seed of Corruption for Affliction (265) or when many enemies
+    if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)
     {
         if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))
         {
@@ -725,8 +645,8 @@ bool WarlockAI::HandleAoERotation(Unit* target)
         return true;
     }
 
-    // Fire and Brimstone for Destruction
-    if (_currentSpec == WarlockSpec::DESTRUCTION)
+    // Fire and Brimstone for Destruction (267)
+    if (static_cast<uint32>(spec) == 267)
     {
         if (bot->HasSpell(FIRE_AND_BRIMSTONE) && !bot->HasAura(FIRE_AND_BRIMSTONE))
         {
@@ -759,40 +679,40 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
         return false;
 
     bool usedCooldown = false;
+    uint32 spec = bot->GetSpecialization();
 
     // Dark Soul variants based on spec
-    switch (_currentSpec)
+    // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
-        case WarlockSpec::AFFLICTION:
-            if (bot->HasSpell(DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_MISERY))
-            {
-                bot->CastSpell(bot, DARK_SOUL_MISERY, false);
-                usedCooldown = true;
-            }
-            break;
-
-        case WarlockSpec::DEMONOLOGY:
-            // Metamorphosis
-            if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
-            {
-                bot->CastSpell(bot, METAMORPHOSIS, false);
-                usedCooldown = true;
-            }
-            // Dark Soul: Knowledge
-            if (bot->HasSpell(DARK_SOUL_KNOWLEDGE) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_KNOWLEDGE))
-            {
-                bot->CastSpell(bot, DARK_SOUL_KNOWLEDGE, false);
-                usedCooldown = true;
-            }
-            break;
-
-        case WarlockSpec::DESTRUCTION:
-            if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
-            {
-                bot->CastSpell(bot, DARK_SOUL_INSTABILITY, false);
-                usedCooldown = true;
-            }
-            break;
+        if (bot->HasSpell(DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_MISERY))
+        {
+            bot->CastSpell(bot, DARK_SOUL_MISERY, false);
+            usedCooldown = true;
+        }
+    }
+    else if (static_cast<uint32>(spec) == 266) // Demonology
+    {
+        // Metamorphosis
+        if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
+        {
+            bot->CastSpell(bot, METAMORPHOSIS, false);
+            usedCooldown = true;
+        }
+        // Dark Soul: Knowledge
+        if (bot->HasSpell(DARK_SOUL_KNOWLEDGE) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_KNOWLEDGE))
+        {
+            bot->CastSpell(bot, DARK_SOUL_KNOWLEDGE, false);
+            usedCooldown = true;
+        }
+    }
+    else if (static_cast<uint32>(spec) == 267) // Destruction
+    {
+        if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
+        {
+            bot->CastSpell(bot, DARK_SOUL_INSTABILITY, false);
+            usedCooldown = true;
+        }
     }
 
     // Summon Infernal/Doomguard
@@ -891,8 +811,8 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
     if (ApplyCurse(target))
         return true;
 
-    // Conflagrate for Destruction
-    if (_currentSpec == WarlockSpec::DESTRUCTION)
+    // Conflagrate for Destruction (267)
+    if (bot->GetSpecialization() == 267)
     {
         if (bot->HasSpell(CONFLAGRATE) && target->HasAura(IMMOLATE))
         {
@@ -939,43 +859,43 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     }
 
     // Spec-specific DoTs
-    switch (_currentSpec)
+    uint32 spec = bot->GetSpecialization();
+
+    if (static_cast<uint32>(spec) == 265) // Affliction
     {
-        case WarlockSpec::AFFLICTION:
-            // Unstable Affliction
-            if (bot->HasSpell(UNSTABLE_AFFLICTION) && !target->HasAura(UNSTABLE_AFFLICTION))
-            {
-                bot->CastSpell(target, UNSTABLE_AFFLICTION, false);
-                _dotTracker[targetGuid][UNSTABLE_AFFLICTION] = now;
-                return true;
-            }
-            // Haunt
-            if (bot->HasSpell(HAUNT) && !bot->GetSpellHistory()->HasCooldown(HAUNT))
-            {
-                bot->CastSpell(target, HAUNT, false);
-                _dotTracker[targetGuid][HAUNT] = now;
-                return true;
-            }
-            break;
-
-        case WarlockSpec::DESTRUCTION:
-            // Immolate
-            if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
-            {
-                bot->CastSpell(target, IMMOLATE, false);
-                _dotTracker[targetGuid][IMMOLATE] = now;
-                return true;
-            }
-            break;
-
-        case WarlockSpec::DEMONOLOGY:
-            // Corruption is usually enough, Hand of Gul'dan for AoE
-            if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
-            {
-                bot->CastSpell(target, HAND_OF_GULDAN, false);
-                return true;
-            }
-            break;
+        // Unstable Affliction
+        if (bot->HasSpell(UNSTABLE_AFFLICTION) && !target->HasAura(UNSTABLE_AFFLICTION))
+        {
+            bot->CastSpell(target, UNSTABLE_AFFLICTION, false);
+            _dotTracker[targetGuid][UNSTABLE_AFFLICTION] = now;
+            return true;
+        }
+        // Haunt
+        if (bot->HasSpell(HAUNT) && !bot->GetSpellHistory()->HasCooldown(HAUNT))
+        {
+            bot->CastSpell(target, HAUNT, false);
+            _dotTracker[targetGuid][HAUNT] = now;
+            return true;
+        }
+    }
+    else if (static_cast<uint32>(spec) == 267) // Destruction
+    {
+        // Immolate
+        if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
+        {
+            bot->CastSpell(target, IMMOLATE, false);
+            _dotTracker[targetGuid][IMMOLATE] = now;
+            return true;
+        }
+    }
+    else if (static_cast<uint32>(spec) == 266) // Demonology
+    {
+        // Corruption is usually enough, Hand of Gul'dan for AoE
+        if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
+        {
+            bot->CastSpell(target, HAND_OF_GULDAN, false);
+            return true;
+        }
     }
 
     return false;
@@ -1003,7 +923,7 @@ bool WarlockAI::ApplyCurse(Unit* target)
         // Curse of Tongues for casters
         curseSpell = CURSE_OF_TONGUES;
     }
-    else if (_currentSpec == WarlockSpec::AFFLICTION)
+    else if (bot->GetSpecialization() == 265) // Affliction
     {
         // Curse of Agony for Affliction
         curseSpell = CURSE_OF_AGONY;
@@ -1251,11 +1171,7 @@ void WarlockAI::UpdateBuffs()
     // Update warlock-specific buffs
     UpdateWarlockBuffs();
 
-    // Delegate to specialization for spec-specific buffs
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
+    // Note: Spec-specific buff logic is now handled through the refactored specialization classes
 }
 
 void WarlockAI::UpdateCooldowns(uint32 diff)
@@ -1263,11 +1179,7 @@ void WarlockAI::UpdateCooldowns(uint32 diff)
     // Manage warlock-specific cooldowns
     ManageWarlockCooldowns();
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateCooldowns(diff);
-    }
+    // Note: Spec-specific cooldown logic is now handled through the refactored specialization classes
 }
 
 bool WarlockAI::CanUseAbility(uint32 spellId)
@@ -1306,12 +1218,6 @@ bool WarlockAI::CanUseAbility(uint32 spellId)
         }
     }
 
-    // Delegate to specialization for additional checks
-    if (_specialization)
-    {
-        return _specialization->CanUseAbility(spellId);
-    }
-
     return true;
 }
 
@@ -1334,14 +1240,8 @@ void WarlockAI::OnCombatStart(::Unit* target)
         // BotThreatManager handles combat start automatically
     }
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatStart(target);
-    }
-
     TC_LOG_DEBUG("playerbot.warlock", "Warlock {} entering combat - Spec: {}, Soul Shards: {}",
-                 GetBot()->GetName(), static_cast<uint32>(_currentSpec), _currentSoulShards.load());
+                 GetBot()->GetName(), GetBot()->GetPrimarySpecialization(), _currentSoulShards.load());
 }
 
 void WarlockAI::OnCombatEnd()
@@ -1364,12 +1264,6 @@ void WarlockAI::OnCombatEnd()
 
     // Life Tap if needed
     ManageLifeTapTiming();
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatEnd();
-    }
 }
 
 bool WarlockAI::HasEnoughResource(uint32 spellId)
@@ -1472,8 +1366,8 @@ void WarlockAI::UpdateWarlockBuffs()
             bot->CastSpell(bot, DEMON_ARMOR, false);
     }
 
-    // Soul Link for Demonology
-    if (_currentSpec == WarlockSpec::DEMONOLOGY)
+    // Soul Link for Demonology (266)
+    if (bot->GetSpecialization() == 266)
     {
         if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive)
         {
@@ -1596,13 +1490,14 @@ void WarlockAI::OptimizePetPositioning()
     float distance = 0.0f;
 
     // Determine optimal position based on pet type
-    if (_currentSpec == WarlockSpec::DEMONOLOGY && bot->HasSpell(SUMMON_FELGUARD))
+    uint32 spec = bot->GetSpecialization();
+    if (static_cast<uint32>(spec) == 266 && bot->HasSpell(SUMMON_FELGUARD)) // Demonology
     {
         // Melee pet - position in front of target
         distance = 3.0f;
         optimalPos = target->GetNearPosition(distance, 0);
     }
-    else if (_currentSpec == WarlockSpec::AFFLICTION) // Felhunter
+    else if (static_cast<uint32>(spec) == 265) // Affliction - Felhunter
     {
         // Anti-caster pet - position near casters
         distance = 5.0f;
@@ -1697,8 +1592,10 @@ void WarlockAI::ManageWarlockCooldowns()
     if (!bot || !bot->IsInCombat())
         return;
 
-    // Demonic Empowerment for Demonology
-    if (_currentSpec == WarlockSpec::DEMONOLOGY && _petActive)
+    uint32 spec = bot->GetSpecialization();
+
+    // Demonic Empowerment for Demonology (266)
+    if (static_cast<uint32>(spec) == 266 && _petActive)
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -1706,8 +1603,8 @@ void WarlockAI::ManageWarlockCooldowns()
         }
     }
 
-    // Metamorphosis for Demonology
-    if (_currentSpec == WarlockSpec::DEMONOLOGY)
+    // Metamorphosis for Demonology (266)
+    if (static_cast<uint32>(spec) == 266)
     {
         if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
         {
@@ -1745,8 +1642,8 @@ void WarlockAI::HandleAoESituations()
 
     if (nearbyEnemies >= 3)
     {
-        // Seed of Corruption for Affliction
-        if (_currentSpec == WarlockSpec::AFFLICTION && bot->HasSpell(SEED_OF_CORRUPTION))
+        // Seed of Corruption for Affliction (265)
+        if (bot->GetSpecialization() == 265 && bot->HasSpell(SEED_OF_CORRUPTION))
         {
             Unit* target = bot->GetVictim();
             if (target && !target->HasAura(SEED_OF_CORRUPTION) && !bot->GetSpellHistory()->HasCooldown(SEED_OF_CORRUPTION))
@@ -1782,11 +1679,12 @@ void WarlockAI::ManageCurseApplication()
 
 void WarlockAI::OptimizeDoTRotation()
 {
-    if (_currentSpec != WarlockSpec::AFFLICTION)
-        return;
-
     Player* bot = GetBot();
     if (!bot || !bot->IsInCombat())
+        return;
+
+    // Affliction (265) focuses heavily on DoTs
+    if (bot->GetSpecialization() != 265)
         return;
 
     Unit* target = bot->GetVictim();
@@ -1834,11 +1732,6 @@ void WarlockAI::UseCrowdControl(::Unit* target)
 void WarlockAI::UpdatePetManagement()
 {
     HandlePetManagement();
-}
-
-WarlockSpec WarlockAI::GetCurrentSpecialization() const
-{
-    return _currentSpec;
 }
 
 bool WarlockAI::ShouldConserveMana()

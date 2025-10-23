@@ -18,7 +18,6 @@
 #ifndef PLAYERBOT_SHADOWPRIESTREFACTORED_H
 #define PLAYERBOT_SHADOWPRIESTREFACTORED_H
 
-#include "PriestSpecialization.h"
 #include "../CombatSpecializationTemplates.h"
 #include "Player.h"
 #include "SpellAuras.h"

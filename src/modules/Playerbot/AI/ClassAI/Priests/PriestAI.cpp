@@ -8,9 +8,6 @@
  */
 
 #include "PriestAI.h"
-#include "DisciplinePriestRefactored.h"
-#include "HolyPriestRefactored.h"
-#include "ShadowPriestRefactored.h"
 #include "Player.h"
 #include "Unit.h"
 #include "SpellMgr.h"
@@ -58,7 +55,6 @@ enum PriestTalents
 // ============================================================================
 
 PriestAI::PriestAI(Player* bot) : ClassAI(bot),
-    _currentSpec(PriestSpec::HOLY),
     _manaSpent(0),
     _healingDone(0),
     _damageDealt(0),
@@ -73,11 +69,8 @@ PriestAI::PriestAI(Player* bot) : ClassAI(bot),
     _lastDesperatePrayer(0),
     _lastFade(0)
 {
-    InitializeSpecialization();
-
-    TC_LOG_DEBUG("module.playerbot.ai", "PriestAI created for player {} with specialization {}",
-                 bot ? bot->GetName() : "null",
-                 _specialization ? _specialization->GetSpecializationName() : "none");
+    TC_LOG_DEBUG("module.playerbot.ai", "PriestAI created for player {}",
+                 bot ? bot->GetName() : "null");
 }
 
 PriestAI::~PriestAI() = default;
@@ -109,13 +102,6 @@ void PriestAI::UpdateRotation(::Unit* target)
             }
         }
         return;
-    }
-
-    // Check if we need to switch specialization
-    PriestSpec newSpec = DetectCurrentSpecialization();
-    if (newSpec != _currentSpec)
-    {
-        SwitchSpecialization(newSpec);
     }
 
     // Update shared priest mechanics
@@ -153,21 +139,12 @@ void PriestAI::UpdateBuffs()
 
     UpdatePriestBuffs();
     UpdateFortitudeBuffs();
-
-    // Delegate to specialization for specific buffs
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
 }
 
 void PriestAI::UpdateCooldowns(uint32 diff)
 {
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateCooldowns(diff);
-    }
+    // Base cooldown tracking is handled by ClassAI
+    ClassAI::UpdateCooldowns(diff);
 }
 
 bool PriestAI::CanUseAbility(uint32 spellId)
@@ -183,12 +160,6 @@ bool PriestAI::CanUseAbility(uint32 spellId)
     if (IsHealingSpell(spellId) && ShouldConserveMana())
         return false;
 
-    // Delegate to specialization for additional checks
-    if (_specialization)
-    {
-        return _specialization->CanUseAbility(spellId);
-    }
-
     return true;
 }
 
@@ -199,12 +170,6 @@ void PriestAI::OnCombatStart(::Unit* target)
 
     TC_LOG_DEBUG("module.playerbot.ai", "Priest {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatStart(target);
-    }
 
     // Initialize combat tracking
     _manaSpent = 0;
@@ -226,12 +191,6 @@ void PriestAI::OnCombatEnd()
 
     // Reapply buffs if needed
     UpdatePriestBuffs();
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatEnd();
-    }
 
     // Log performance metrics
     AnalyzeHealingEfficiency();
@@ -260,12 +219,6 @@ bool PriestAI::HasEnoughResource(uint32 spellId)
         float manaPercent = GetManaPercent();
         if (manaPercent < MANA_CONSERVATION_THRESHOLD * 100.0f)
             return false;
-    }
-
-    // Delegate additional checks to specialization
-    if (_specialization)
-    {
-        return _specialization->HasEnoughResource(spellId);
     }
 
     return true;
@@ -297,24 +250,12 @@ void PriestAI::ConsumeResource(uint32 spellId)
     {
         _damageDealt += 100; // Simplified
     }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->ConsumeResource(spellId);
-    }
 }
 
 Position PriestAI::GetOptimalPosition(::Unit* target)
 {
     if (!GetBot() || !target)
         return Position();
-
-    // Delegate to specialization for position preference
-    if (_specialization)
-    {
-        return _specialization->GetOptimalPosition(target);
-    }
 
     // Default positioning for priests - maintain range
     float optimalRange = GetOptimalRange(target);
@@ -335,22 +276,15 @@ float PriestAI::GetOptimalRange(::Unit* target)
     if (!GetBot() || !target)
         return OPTIMAL_HEALING_RANGE;
 
-    // Delegate to specialization for range preference
-    if (_specialization)
-    {
-        return _specialization->GetOptimalRange(target);
-    }
+    // Default range based on current specialization
+    ChrSpecialization currentSpec = GetBot()->GetPrimarySpecialization();
 
-    // Default range based on spec
-    switch (_currentSpec)
-    {
-        case PriestSpec::SHADOW:
-            return OPTIMAL_DPS_RANGE;
-        case PriestSpec::HOLY:
-        case PriestSpec::DISCIPLINE:
-        default:
-            return OPTIMAL_HEALING_RANGE;
-    }
+    // Shadow priest prefers DPS range
+    if (currentSpec == ChrSpecialization::PriestShadow)
+        return OPTIMAL_DPS_RANGE;
+
+    // Discipline (spec 0) and Holy (spec 1) prefer healing range
+    return OPTIMAL_HEALING_RANGE;
 }
 
 // ============================================================================
@@ -420,7 +354,8 @@ bool PriestAI::HandleInterruptPriority(::Unit* target)
         return false;
 
     // Shadow priests have Silence
-    if (_currentSpec == PriestSpec::SHADOW)
+    ChrSpecialization currentSpec = GetBot()->GetPrimarySpecialization();
+    if (currentSpec == ChrSpecialization::PriestShadow)
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
         if (!interruptTarget)
@@ -457,7 +392,8 @@ bool PriestAI::HandleDefensivePriority()
     float healthPct = GetBot()->GetHealthPct();
 
     // Emergency: Dispersion for Shadow (90% damage reduction)
-    if (_currentSpec == PriestSpec::SHADOW && healthPct < 20.0f)
+    ChrSpecialization currentSpec = GetBot()->GetPrimarySpecialization();
+    if (currentSpec == ChrSpecialization::PriestShadow && healthPct < 20.0f)
     {
         if (this->IsSpellReady(DISPERSION))
         {
@@ -612,13 +548,7 @@ bool PriestAI::HandleAoEPriority(::Unit* target)
     if (!behaviors || !behaviors->ShouldAOE())
         return false;
 
-    // Delegate AoE decisions to specialization
-    if (_specialization)
-    {
-        // Specializations handle their own AoE rotations
-        return false; // Let it fall through to normal rotation
-    }
-
+    // AoE handling is done in normal rotation
     return false;
 }
 
@@ -631,13 +561,7 @@ bool PriestAI::HandleCooldownPriority(::Unit* target)
     if (!behaviors || !behaviors->ShouldUseCooldowns())
         return false;
 
-    // Delegate cooldown usage to specialization
-    if (_specialization)
-    {
-        // Specializations handle their own cooldowns
-        return false; // Let it fall through to normal rotation
-    }
-
+    // Cooldown usage is handled in normal rotation
     return false;
 }
 
@@ -657,97 +581,15 @@ bool PriestAI::HandleResourceManagement()
 
 bool PriestAI::ExecuteNormalRotation(::Unit* target)
 {
-    if (!GetBot() || !target || !_specialization)
+    if (!GetBot() || !target)
         return false;
 
-    // Delegate to specialization for rotation
-    _specialization->UpdateRotation(target);
-    return true;
+    // Use BaselineRotationManager for rotation execution
+    // The refactored specializations are integrated via BaselineRotationManager
+    static BaselineRotationManager rotationManager;
+    return rotationManager.ExecuteBaselineRotation(GetBot(), target);
 }
 
-// ============================================================================
-// SPECIALIZATION MANAGEMENT (60 lines)
-// ============================================================================
-
-void PriestAI::InitializeSpecialization()
-{
-    _currentSpec = DetectCurrentSpecialization();
-    SwitchSpecialization(_currentSpec);
-}
-
-void PriestAI::UpdateSpecialization()
-{
-    PriestSpec newSpec = DetectCurrentSpecialization();
-    if (newSpec != _currentSpec)
-    {
-        SwitchSpecialization(newSpec);
-    }
-}
-
-PriestSpec PriestAI::DetectCurrentSpecialization()
-{
-    if (!GetBot())
-        return PriestSpec::HOLY;
-
-    // Check for key Shadow talents
-    if (GetBot()->HasSpell(TALENT_SHADOWFORM) ||
-        GetBot()->HasSpell(TALENT_VAMPIRIC_TOUCH) ||
-        GetBot()->HasSpell(TALENT_DISPERSION))
-    {
-        return PriestSpec::SHADOW;
-    }
-
-    // Check for key Discipline talents
-    if (GetBot()->HasSpell(TALENT_PENANCE) ||
-        GetBot()->HasSpell(TALENT_PAIN_SUPPRESSION) ||
-        GetBot()->HasSpell(TALENT_POWER_INFUSION))
-    {
-        return PriestSpec::DISCIPLINE;
-    }
-
-    // Check for key Holy talents
-    if (GetBot()->HasSpell(TALENT_CIRCLE_OF_HEALING) ||
-        GetBot()->HasSpell(TALENT_GUARDIAN_SPIRIT) ||
-        GetBot()->HasSpell(TALENT_SPIRIT_OF_REDEMPTION))
-    {
-        return PriestSpec::HOLY;
-    }
-
-    // Default to Holy if no clear specialization
-    return PriestSpec::HOLY;
-}
-
-void PriestAI::SwitchSpecialization(PriestSpec newSpec)
-{
-    if (_currentSpec == newSpec && _specialization)
-        return;
-
-    _currentSpec = newSpec;
-    _specialization.reset();
-
-    switch (newSpec)
-    {
-        case PriestSpec::HOLY:
-            _specialization = std::make_unique<HolyPriestRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to Holy specialization", GetBot()->GetName());
-            break;
-        case PriestSpec::DISCIPLINE:
-            _specialization = std::make_unique<DisciplinePriestRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to Discipline specialization", GetBot()->GetName());
-            break;
-        case PriestSpec::SHADOW:
-            _specialization = std::make_unique<ShadowPriestRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to Shadow specialization", GetBot()->GetName());
-            break;
-    }
-
-    OptimizeForSpecialization();
-}
-
-void PriestAI::OptimizeForSpecialization()
-{
-    // Called after switching specs - allow cleanup/setup
-}
 
 // ============================================================================
 // SHARED UTILITIES (70 lines)
@@ -1195,9 +1037,11 @@ void PriestAI::HealGroupMembers()
 {
     // Post-combat group healing
     ::Unit* healTarget = GetBestHealTarget();
-    if (healTarget && _specialization)
+    if (healTarget)
     {
-        _specialization->UpdateRotation(healTarget);
+        // Execute healing rotation via BaselineRotationManager
+        static BaselineRotationManager rotationManager;
+        rotationManager.ExecuteBaselineRotation(GetBot(), healTarget);
     }
 }
 

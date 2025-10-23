@@ -16,7 +16,6 @@
 #include "SpellAuraEffects.h"
 #include "Group.h"
 #include "Log.h"
-#include "PaladinSpecialization.h"
 
 namespace Playerbot
 {

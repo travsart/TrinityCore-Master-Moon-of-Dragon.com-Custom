@@ -15,7 +15,6 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
-#include "PaladinSpecialization.h"
 
 namespace Playerbot
 {

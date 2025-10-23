@@ -21,7 +21,6 @@
 #include "CharmInfo.h"
 #include <unordered_map>
 #include <queue>
-#include "HunterSpecialization.h"
 
 namespace Playerbot
 {
@@ -229,7 +228,7 @@ private:
  * - Kill Command priority system
  * - Focus management with 5/sec regeneration
  */
-class BeastMasteryHunterRefactored : public RangedDpsSpecialization<FocusResource>, public HunterSpecialization
+class BeastMasteryHunterRefactored : public RangedDpsSpecialization<FocusResource>
 {
 public:
     using Base = RangedDpsSpecialization<FocusResource>;
@@ -242,7 +241,6 @@ public:
 
     explicit BeastMasteryHunterRefactored(Player* bot)
         : RangedDpsSpecialization<FocusResource>(bot)
-        , HunterSpecialization(bot)
         , _petManager(bot)
         , _barbedShotCharges(2)
         , _lastBarbedShotRecharge(0)
@@ -549,37 +547,37 @@ private:
     // ========================================================================
 
     // Pet management - implemented by BeastMasteryPetManager
-    void UpdatePetManagement() override { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void SummonPet() override { _petManager.SummonPet(); }
-    void MendPetIfNeeded() override { _petManager.MendPet(); }
-    void FeedPetIfNeeded() override { /* Feeding not implemented in WoW 11.2 */ }
-    bool HasActivePet() const override { return _petManager.HasActivePet(); }
-    PetInfo GetPetInfo() const override { return PetInfo(); /* Stub */ }
+    void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
+    void SummonPet() { _petManager.SummonPet(); }
+    void MendPetIfNeeded() { _petManager.MendPet(); }
+    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
+    bool HasActivePet() const { return _petManager.HasActivePet(); }
+    PetInfo GetPetInfo() const { return PetInfo(); /* Stub */ }
 
     // Trap management - delegated to AI
-    void UpdateTrapManagement() override { /* Traps managed by AI */ }
-    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) override { /* Traps managed by AI */ }
-    bool ShouldPlaceTrap() const override { return false; }
-    uint32 GetOptimalTrapSpell() const override { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const override { return std::vector<TrapInfo>(); }
+    void UpdateTrapManagement() { /* Traps managed by AI */ }
+    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
+    bool ShouldPlaceTrap() const { return false; }
+    uint32 GetOptimalTrapSpell() const { return 0; }
+    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
-    void UpdateAspectManagement() override { /* Aspects managed in UpdateBuffs */ }
-    void SwitchToOptimalAspect() override { /* Aspects managed in UpdateBuffs */ }
-    uint32 GetOptimalAspect() const override { return SPELL_ASPECT_OF_CHEETAH; }
-    bool HasCorrectAspect() const override { return true; }
+    void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
+    void SwitchToOptimalAspect() { /* Aspects managed in UpdateBuffs */ }
+    uint32 GetOptimalAspect() const { return SPELL_ASPECT_OF_CHEETAH; }
+    bool HasCorrectAspect() const { return true; }
 
     // Range and positioning - BM is ranged
-    void UpdateRangeManagement() override { /* Range handled by base class */ }
-    bool IsInDeadZone(::Unit* /*target*/) const override { return false; }
-    bool ShouldKite(::Unit* /*target*/) const override { return false; }
-    Position GetKitePosition(::Unit* /*target*/) const override { return Position(); }
-    void HandleDeadZone(::Unit* /*target*/) override { /* No dead zone management */ }
+    void UpdateRangeManagement() { /* Range handled by base class */ }
+    bool IsInDeadZone(::Unit* /*target*/) const { return false; }
+    bool ShouldKite(::Unit* /*target*/) const { return false; }
+    Position GetKitePosition(::Unit* /*target*/) const { return Position(); }
+    void HandleDeadZone(::Unit* /*target*/) { /* No dead zone management */ }
 
     // Tracking management - delegated to AI
-    void UpdateTracking() override { /* Tracking managed by AI */ }
-    uint32 GetOptimalTracking() const override { return 0; /* No specific tracking */ }
-    void ApplyTracking(uint32 /*trackingSpell*/) override { /* Applied by AI */ }
+    void UpdateTracking() { /* Tracking managed by AI */ }
+    uint32 GetOptimalTracking() const { return 0; /* No specific tracking */ }
+    void ApplyTracking(uint32 /*trackingSpell*/) { /* Applied by AI */ }
 
     // Pet command interface - delegated to pet manager
     void CommandPetAttack(::Unit* target) override { _petManager.CommandPetAttack(target); }

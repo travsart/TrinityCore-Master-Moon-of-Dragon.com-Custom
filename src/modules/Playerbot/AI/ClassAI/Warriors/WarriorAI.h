@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "WarriorSpecialization.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
 #include "../../Combat/TargetSelector.h"
@@ -26,9 +25,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-class ArmsSpecialization;
-class FurySpecialization;
-class ProtectionSpecialization;
 
 // Warrior AI implementation
 class TC_GAME_API WarriorAI : public ClassAI
@@ -56,11 +52,17 @@ protected:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
-private:
-    // Specialization system
-    WarriorSpec _currentSpec;
-    std::unique_ptr<WarriorSpecialization> _specialization;
 
+    // Warrior stance management
+    enum class WarriorStance : uint8
+    {
+        NONE = 0,
+        BATTLE = 1,
+        DEFENSIVE = 2,
+        BERSERKER = 3
+    };
+
+private:
     // Enhanced performance tracking
     std::atomic<uint32> _rageSpent{0};
     std::atomic<uint32> _damageDealt{0};
@@ -86,12 +88,7 @@ private:
     ::Unit* _lastChargeTarget;
     uint32 _lastChargeTime;
 
-    // Specialization management
-    void InitializeSpecialization();
     void UpdateSpecialization();
-    WarriorSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(WarriorSpec newSpec);
-
     // Delegation to specialization
     void DelegateToSpecialization(::Unit* target);
 

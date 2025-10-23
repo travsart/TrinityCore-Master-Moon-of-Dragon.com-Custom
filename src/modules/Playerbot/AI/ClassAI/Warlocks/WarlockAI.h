@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "WarlockSpecialization.h"
 #include "Position.h"
 #include "../../Combat/InterruptManager.h"
 #include "../../Combat/BotThreatManager.h"
@@ -25,9 +24,6 @@
 #include <map>
 
 // Forward declarations
-class AfflictionSpecialization;
-class DemonologySpecialization;
-class DestructionSpecialization;
 
 namespace Playerbot
 {
@@ -116,14 +112,6 @@ private:
     // ========================================================================
     // Specialization System
     // ========================================================================
-
-    WarlockSpec _currentSpec;
-    std::unique_ptr<WarlockSpecialization> _specialization;
-
-    void InitializeSpecialization();
-    WarlockSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(WarlockSpec newSpec);
-
     // ========================================================================
     // Performance Metrics
     // ========================================================================
@@ -219,7 +207,6 @@ private:
     void UseDefensiveAbilities();
     void UseCrowdControl(::Unit* target);
     void UpdatePetManagement();
-    WarlockSpec GetCurrentSpecialization() const;
     bool ShouldConserveMana();
 
     // ========================================================================

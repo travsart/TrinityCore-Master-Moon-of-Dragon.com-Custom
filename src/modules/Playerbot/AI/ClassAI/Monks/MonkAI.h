@@ -16,7 +16,6 @@
 #include "../Combat/PositionManager.h"
 #include "../Combat/TargetSelector.h"
 #include "../Combat/BotThreatManager.h"
-#include "MonkSpecialization.h"
 #include <unordered_map>
 #include <memory>
 #include <atomic>
@@ -74,9 +73,8 @@ protected:
     float GetOptimalRange(::Unit* target) override;
 
 private:
-    // Specialization system
+    // Current specialization tracking
     MonkSpec _currentSpec;
-    std::unique_ptr<MonkSpecialization> _specialization;
 
     // Advanced resource management systems
     struct ChiManagementSystem {
@@ -455,14 +453,6 @@ private:
     Position _transcendencePosition;
     bool _transcendenceActive;
 
-    // Specialization management
-    void InitializeSpecialization();
-    void UpdateSpecialization();
-    MonkSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(MonkSpec newSpec);
-
-    // Delegation to specialization
-    void DelegateToSpecialization(::Unit* target);
 
     // Shared monk utilities
     void UpdateMonkBuffs();

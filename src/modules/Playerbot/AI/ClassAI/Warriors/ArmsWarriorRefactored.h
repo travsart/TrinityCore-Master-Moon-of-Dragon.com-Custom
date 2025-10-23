@@ -15,7 +15,6 @@
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
-#include "WarriorSpecialization.h"
 #include <unordered_map>
 #include <queue>
 
@@ -31,7 +30,7 @@ namespace Playerbot
  * - Uses specialized rage management as primary resource
  * - Eliminates ~370 lines of duplicate code
  */
-class ArmsWarriorRefactored : public MeleeDpsSpecialization<RageResource>, public WarriorSpecialization
+class ArmsWarriorRefactored : public MeleeDpsSpecialization<RageResource>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -44,7 +43,7 @@ public:
     using Base::CanUseAbility;
     explicit ArmsWarriorRefactored(Player* bot)
         : MeleeDpsSpecialization<RageResource>(bot)
-        , WarriorSpecialization(bot)
+        
         , _deepWoundsTracking()
         , _colossusSmashActive(false)
         , _overpowerReady(false)
@@ -527,6 +526,7 @@ private:
     uint32 _tacticalMasteryRage;
     WarriorStance _currentStance;
     WarriorStance _preferredStance;
+
 };
 
 } // namespace Playerbot

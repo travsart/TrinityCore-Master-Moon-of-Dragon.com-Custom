@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "HunterSpecialization.h"
+// Old HunterSpecialization.h removed
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
@@ -330,7 +330,7 @@ private:
  * - Coordinated Assault burst windows
  * - DoT maintenance with Serpent Sting
  */
-class SurvivalHunterRefactored : public RangedDpsSpecialization<FocusResource>, public HunterSpecialization
+class SurvivalHunterRefactored : public RangedDpsSpecialization<FocusResource>
 {
 public:
     using Base = RangedDpsSpecialization<FocusResource>;
@@ -342,7 +342,6 @@ public:
     using Base::_resource;
     explicit SurvivalHunterRefactored(Player* bot)
         : RangedDpsSpecialization<FocusResource>(bot)
-        , HunterSpecialization(bot)
         , _bombManager()
         , _mongooseTracker()
         , _petManager(bot)
@@ -738,31 +737,31 @@ private:
     // ========================================================================
 
     // Pet management - implemented by SurvivalPetManager
-    void UpdatePetManagement() override { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void SummonPet() override { GetBot()->CastSpell(GetBot(), SPELL_CALL_PET_SURV, false); }
-    void MendPetIfNeeded() override { if (_petManager.HasActivePet()) _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void FeedPetIfNeeded() override { /* Feeding not implemented in WoW 11.2 */ }
-    bool HasActivePet() const override { return _petManager.HasActivePet(); }
-    PetInfo GetPetInfo() const override { return PetInfo(); /* Stub */ }
+    void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
+    void SummonPet() { GetBot()->CastSpell(GetBot(), SPELL_CALL_PET_SURV, false); }
+    void MendPetIfNeeded() { if (_petManager.HasActivePet()) _petManager.EnsurePetActive(GetBot()->GetVictim()); }
+    void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
+    bool HasActivePet() const { return _petManager.HasActivePet(); }
+    PetInfo GetPetInfo() const { return PetInfo(); /* Stub */ }
 
     // Trap management - delegated to AI
-    void UpdateTrapManagement() override { /* Traps managed by AI */ }
-    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) override { /* Traps managed by AI */ }
-    bool ShouldPlaceTrap() const override { return false; }
-    uint32 GetOptimalTrapSpell() const override { return SPELL_STEEL_TRAP; }
-    std::vector<TrapInfo> GetActiveTraps() const override { return std::vector<TrapInfo>(); }
+    void UpdateTrapManagement() { /* Traps managed by AI */ }
+    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
+    bool ShouldPlaceTrap() const { return false; }
+    uint32 GetOptimalTrapSpell() const { return SPELL_STEEL_TRAP; }
+    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
-    void UpdateAspectManagement() override { /* Aspects managed in UpdateBuffs */ }
-    void SwitchToOptimalAspect() override { /* Aspects managed in UpdateBuffs */ }
-    uint32 GetOptimalAspect() const override { return SPELL_ASPECT_OF_EAGLE; }
-    bool HasCorrectAspect() const override { return true; }
+    void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
+    void SwitchToOptimalAspect() { /* Aspects managed in UpdateBuffs */ }
+    uint32 GetOptimalAspect() const { return SPELL_ASPECT_OF_EAGLE; }
+    bool HasCorrectAspect() const { return true; }
 
     // Range and positioning - Survival is MELEE (unique)
-    void UpdateRangeManagement() override { /* Survival fights in melee */ }
-    bool IsInDeadZone(::Unit* /*target*/) const override { return false; /* No dead zone for melee */ }
-    bool ShouldKite(::Unit* target) const override { return target && GetBot()->GetHealthPct() < 30.0f; }
-    Position GetKitePosition(::Unit* target) const override {
+    void UpdateRangeManagement() { /* Survival fights in melee */ }
+    bool IsInDeadZone(::Unit* /*target*/) const { return false; /* No dead zone for melee */ }
+    bool ShouldKite(::Unit* target) const { return target && GetBot()->GetHealthPct() < 30.0f; }
+    Position GetKitePosition(::Unit* target) const {
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
@@ -770,24 +769,24 @@ private:
         float y = target->GetPositionY() + 15.0f * std::sin(angle);
         return Position(x, y, target->GetPositionZ());
     }
-    void HandleDeadZone(::Unit* /*target*/) override { /* No dead zone for melee spec */ }
+    void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 
     // Tracking management - delegated to AI
-    void UpdateTracking() override { /* Tracking managed by AI */ }
-    uint32 GetOptimalTracking() const override { return 0; /* No specific tracking */ }
-    void ApplyTracking(uint32 /*trackingSpell*/) override { /* Applied by AI */ }
+    void UpdateTracking() { /* Tracking managed by AI */ }
+    uint32 GetOptimalTracking() const { return 0; /* No specific tracking */ }
+    void ApplyTracking(uint32 /*trackingSpell*/) { /* Applied by AI */ }
 
     // Pet command interface - delegated to pet manager
-    void CommandPetAttack(::Unit* target) override {
+    void CommandPetAttack(::Unit* target) {
         if (target) _petManager.EnsurePetActive(target);
     }
-    void CommandPetFollow() override { /* Handled by pet AI */ }
-    void CommandPetStay() override { /* Handled by pet AI */ }
+    void CommandPetFollow() { /* Handled by pet AI */ }
+    void CommandPetStay() { /* Handled by pet AI */ }
 
     // Positioning interface - MELEE positioning (unique for Survival)
-    // Note: GetOptimalRange is final in base class - Survival should override base melee range behavior
+    // Note: GetOptimalRange is final in base class - Survival should base melee range behavior
     // The base class RangedDpsSpecialization returns 30-40 yards, but Survival needs melee (see line 364)
-    Position GetOptimalPosition(::Unit* /*target*/) override { return Position(); /* Handled by base class */ }
+    Position GetOptimalPosition(::Unit* /*target*/) { return Position(); /* Handled by base class */ }
 
 private:
     WildfireBombManager _bombManager;

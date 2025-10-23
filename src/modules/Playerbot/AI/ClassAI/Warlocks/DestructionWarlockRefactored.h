@@ -16,7 +16,6 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "WarlockSpecialization.h"
 
 namespace Playerbot
 {

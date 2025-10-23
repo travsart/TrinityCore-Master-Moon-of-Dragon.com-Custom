@@ -20,7 +20,7 @@
 #include "CharmInfo.h"
 #include <unordered_map>
 #include <deque>
-#include "HunterSpecialization.h"
+// Old HunterSpecialization.h removed
 
 namespace Playerbot
 {
@@ -217,7 +217,7 @@ private:
  * - Double Tap burst window management
  * - Minimal pet usage (Lone Wolf preference)
  */
-class MarksmanshipHunterRefactored : public RangedDpsSpecialization<FocusResource>, public HunterSpecialization
+class MarksmanshipHunterRefactored : public RangedDpsSpecialization<FocusResource>
 {
 public:
     using Base = RangedDpsSpecialization<FocusResource>;
@@ -229,7 +229,6 @@ public:
     using Base::_resource;
     explicit MarksmanshipHunterRefactored(Player* bot)
         : RangedDpsSpecialization<FocusResource>(bot)
-        , HunterSpecialization(bot)
         , _preciseShotsTracker()
         , _castManager(bot)
         , _trueshotActive(false)
@@ -579,42 +578,42 @@ private:
     // ========================================================================
 
     // Pet management - MM uses Lone Wolf (no pet)
-    void UpdatePetManagement() override { /* Lone Wolf - no pet management */ }
-    void SummonPet() override { /* Lone Wolf - no pet */ }
-    void MendPetIfNeeded() override { /* Lone Wolf - no pet */ }
-    void FeedPetIfNeeded() override { /* Lone Wolf - no pet */ }
-    bool HasActivePet() const override { return false; /* Lone Wolf */ }
-    PetInfo GetPetInfo() const override { return PetInfo(); /* No pet */ }
+    void UpdatePetManagement() { /* Lone Wolf - no pet management */ }
+    void SummonPet() { /* Lone Wolf - no pet */ }
+    void MendPetIfNeeded() { /* Lone Wolf - no pet */ }
+    void FeedPetIfNeeded() { /* Lone Wolf - no pet */ }
+    bool HasActivePet() const { return false; /* Lone Wolf */ }
+    PetInfo GetPetInfo() const { return PetInfo(); /* No pet */ }
 
     // Trap management - delegated to AI
-    void UpdateTrapManagement() override { /* Traps managed by AI */ }
-    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) override { /* Traps managed by AI */ }
-    bool ShouldPlaceTrap() const override { return false; }
-    uint32 GetOptimalTrapSpell() const override { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const override { return std::vector<TrapInfo>(); }
+    void UpdateTrapManagement() { /* Traps managed by AI */ }
+    void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
+    bool ShouldPlaceTrap() const { return false; }
+    uint32 GetOptimalTrapSpell() const { return 0; }
+    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
-    void UpdateAspectManagement() override { /* Aspects managed in UpdateBuffs */ }
-    void SwitchToOptimalAspect() override { /* Aspects managed in UpdateBuffs */ }
-    uint32 GetOptimalAspect() const override { return SPELL_ASPECT_TURTLE; }
-    bool HasCorrectAspect() const override { return true; }
+    void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
+    void SwitchToOptimalAspect() { /* Aspects managed in UpdateBuffs */ }
+    uint32 GetOptimalAspect() const { return SPELL_ASPECT_TURTLE; }
+    bool HasCorrectAspect() const { return true; }
 
     // Range and positioning - MM is ranged with cast times
-    void UpdateRangeManagement() override { /* Range handled by base class */ }
-    bool IsInDeadZone(::Unit* /*target*/) const override { return false; }
-    bool ShouldKite(::Unit* /*target*/) const override { return false; }
-    Position GetKitePosition(::Unit* /*target*/) const override { return Position(); }
-    void HandleDeadZone(::Unit* /*target*/) override { /* No dead zone management */ }
+    void UpdateRangeManagement() { /* Range handled by base class */ }
+    bool IsInDeadZone(::Unit* /*target*/) const { return false; }
+    bool ShouldKite(::Unit* /*target*/) const { return false; }
+    Position GetKitePosition(::Unit* /*target*/) const { return Position(); }
+    void HandleDeadZone(::Unit* /*target*/) { /* No dead zone management */ }
 
     // Tracking management - delegated to AI
-    void UpdateTracking() override { /* Tracking managed by AI */ }
-    uint32 GetOptimalTracking() const override { return 0; /* No specific tracking */ }
-    void ApplyTracking(uint32 /*trackingSpell*/) override { /* Applied by AI */ }
+    void UpdateTracking() { /* Tracking managed by AI */ }
+    uint32 GetOptimalTracking() const { return 0; /* No specific tracking */ }
+    void ApplyTracking(uint32 /*trackingSpell*/) { /* Applied by AI */ }
 
     // Pet command interface - MM uses Lone Wolf (no pet commands)
-    void CommandPetAttack(::Unit* /*target*/) override { /* Lone Wolf - no pet */ }
-    void CommandPetFollow() override { /* Lone Wolf - no pet */ }
-    void CommandPetStay() override { /* Lone Wolf - no pet */ }
+    void CommandPetAttack(::Unit* /*target*/) { /* Lone Wolf - no pet */ }
+    void CommandPetFollow() { /* Lone Wolf - no pet */ }
+    void CommandPetStay() { /* Lone Wolf - no pet */ }
 
     // Positioning interface - ranged DPS with cast times
     // Note: GetOptimalRange is final in RangedDpsSpecialization (returns 30-40 yards for casters)

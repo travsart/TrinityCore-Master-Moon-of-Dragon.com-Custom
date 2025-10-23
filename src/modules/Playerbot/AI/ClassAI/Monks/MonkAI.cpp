@@ -363,23 +363,6 @@ float MonkAI::GetOptimalRange(::Unit* target)
     return 5.0f;
 }
 
-// Initialize specialization based on talent inspection
-void MonkAI::InitializeSpecialization()
-{
-    _currentSpec = DetectCurrentSpecialization();
-    TC_LOG_DEBUG("module.playerbot.ai", "Monk {} initialized with spec: {}",
-                 GetBot()->GetName(), static_cast<uint8>(_currentSpec));
-}
-
-// Detect current specialization from talents
-MonkSpec MonkAI::DetectCurrentSpecialization()
-{
-    // Check for key talents to determine spec
-    // For now, default to Windwalker as DPS spec
-    // TODO: Implement proper talent inspection
-    return MonkSpec::WINDWALKER;
-}
-
 // Resource management methods
 bool MonkAI::HasEnoughChi(uint32 amount) const
 {

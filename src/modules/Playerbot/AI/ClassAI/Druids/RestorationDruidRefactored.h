@@ -27,7 +27,6 @@
 #include <unordered_map>
 #include <vector>
 #include "Log.h"
-#include "DruidSpecialization.h"
 
 namespace Playerbot
 {
@@ -194,7 +193,7 @@ private:
     uint32 _lastSwiftmendTime;
 };
 
-class RestorationDruidRefactored : public HealerSpecialization<ManaResource>, public DruidSpecialization
+class RestorationDruidRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -204,7 +203,7 @@ public:
     using Base::_resource;
     explicit RestorationDruidRefactored(Player* bot)
         : HealerSpecialization<ManaResource>(bot)
-        , DruidSpecialization(bot)
+        
         , _hotTracker()
         , _swiftmendTracker()
         , _treeFormActive(false)

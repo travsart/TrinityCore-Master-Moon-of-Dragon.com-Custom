@@ -11,7 +11,6 @@
 #define DEATHKNIGHT_AI_H
 
 #include "../ClassAI.h"
-#include "DeathKnightSpecialization.h"
 #include "DiseaseManager.h"
 #include "RuneManager.h"
 #include "../Combat/BotThreatManager.h"
@@ -26,6 +25,14 @@
 
 namespace Playerbot
 {
+
+// Death Knight Specializations
+enum class DeathKnightSpec : uint8
+{
+    BLOOD = 0,
+    FROST = 1,
+    UNHOLY = 2
+};
 
 // Forward declarations
 struct DeathKnightMetrics;
@@ -59,11 +66,10 @@ public:
     DeathKnightSpec GetCurrentSpecialization() const;
 
 private:
+    // Specialization detection
+    void DetectSpecialization();
     // Initialization
     void InitializeCombatSystems();
-    void DetectSpecialization();
-    void InitializeSpecialization();
-
     // Combat execution
     void ExecuteFallbackRotation(Unit* target);
     void ExecuteSpecializationRotation(Unit* target);
@@ -96,11 +102,6 @@ private:
     void RecordInterruptAttempt(Unit* target, uint32 spellId, bool success);
     void RecordAbilityUsage(uint32 spellId);
     void OnTargetChanged(Unit* newTarget);
-
-    // Specialization system
-    std::unique_ptr<DeathKnightSpecialization> _specialization;
-    DeathKnightSpec _detectedSpec;
-
     // Combat systems
     std::unique_ptr<BotThreatManager> _threatManager;
     std::unique_ptr<TargetSelector> _targetSelector;
@@ -114,6 +115,9 @@ private:
     DeathKnightCombatPositioning* _positioning;
     RuneManager* _runeManager;
     std::unique_ptr<DiseaseManager> _diseaseManager;
+
+    // Specialization
+    DeathKnightSpec _detectedSpec;
 
     // Combat tracking
     uint32 _runicPowerSpent;

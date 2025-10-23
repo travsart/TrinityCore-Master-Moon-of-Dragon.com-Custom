@@ -9,9 +9,6 @@
 
 #include "RuneManager.h"
 #include "DeathKnightAI.h"
-#include "BloodSpecialization.h"
-#include "FrostSpecialization.h"
-#include "UnholySpecialization.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "Group.h"
@@ -180,7 +177,6 @@ constexpr uint32 DARK_COMMAND_COOLDOWN = 8000;
 
 // Rune management system removed - using external RuneManager class
 
-
 // Combat metrics tracking
 class DeathKnightCombatMetrics
 {
@@ -250,7 +246,7 @@ class DeathKnightCombatPositioning
 public:
     explicit DeathKnightCombatPositioning(Player* bot) : _bot(bot) {}
 
-    Position CalculateOptimalPosition(Unit* target, DeathKnightSpec spec)
+    Position CalculateOptimalPosition(Unit* target, DeathKnightSpec detectedSpec)
     {
         if (!target || !_bot)
             return _bot->GetPosition();
@@ -258,7 +254,7 @@ public:
         Position optimalPos = _bot->GetPosition();
         float currentDistance = _bot->GetDistance(target);
 
-        switch (spec)
+        switch (detectedSpec)
         {
             case DeathKnightSpec::BLOOD:
                 // Tank positioning - in front of target
@@ -306,9 +302,9 @@ public:
         return optimalPos;
     }
 
-    float GetOptimalRange(DeathKnightSpec spec) const
+    float GetOptimalRange(DeathKnightSpec detectedSpec) const
     {
-        switch (spec)
+        switch (detectedSpec)
         {
             case DeathKnightSpec::BLOOD:
                 return 5.0f; // Tank in melee
@@ -328,7 +324,6 @@ private:
 DeathKnightAI::DeathKnightAI(Player* bot) :
     ClassAI(bot),
     _detectedSpec(DeathKnightSpec::BLOOD),
-    _specialization(nullptr),
     _runicPowerSpent(0),
     _runesUsed(0),
     _diseasesApplied(0),
@@ -341,9 +336,8 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     // Initialize combat systems
     InitializeCombatSystems();
 
-    // Detect and initialize specialization
+    // Detect specialization
     DetectSpecialization();
-    InitializeSpecialization();
 
     // Initialize performance tracking
     _metrics = new DeathKnightMetrics();
@@ -370,12 +364,6 @@ void DeathKnightAI::InitializeCombatSystems()
 
 void DeathKnightAI::DetectSpecialization()
 {
-    if (!GetBot())
-    {
-        _detectedSpec = DeathKnightSpec::BLOOD;
-        return;
-    }
-
     // Advanced specialization detection based on talents and abilities
     uint32 bloodPoints = 0;
     uint32 frostPoints = 0;
@@ -421,30 +409,6 @@ void DeathKnightAI::DetectSpecialization()
 
     TC_LOG_DEBUG("playerbot", "DeathKnightAI detected specialization: {} (B:{}, F:{}, U:{})",
                  static_cast<uint32>(_detectedSpec), bloodPoints, frostPoints, unholyPoints);
-}
-
-void DeathKnightAI::InitializeSpecialization()
-{
-    // Create specialization instance based on detected spec
-    switch (_detectedSpec)
-    {
-        case DeathKnightSpec::BLOOD:
-            _specialization = std::make_unique<BloodSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "DeathKnightAI: Initialized Blood specialization");
-            break;
-
-        case DeathKnightSpec::FROST:
-            _specialization = std::make_unique<FrostSpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "DeathKnightAI: Initialized Frost specialization");
-            break;
-
-        case DeathKnightSpec::UNHOLY:
-            _specialization = std::make_unique<UnholySpecialization>(GetBot());
-            TC_LOG_DEBUG("playerbot", "DeathKnightAI: Initialized Unholy specialization");
-            break;
-    }
-
-    // Specialization is initialized in its constructor
 }
 
 void DeathKnightAI::UpdateRotation(Unit* target)
@@ -756,12 +720,6 @@ void DeathKnightAI::UpdateBuffs()
     {
         CastSpell(BONE_SHIELD);
     }
-
-    // Delegate to specialization for spec-specific buffs
-    if (_specialization)
-    {
-        _specialization->UpdateBuffs();
-    }
 }
 
 void DeathKnightAI::UpdateCooldowns(uint32 diff)
@@ -775,12 +733,6 @@ void DeathKnightAI::UpdateCooldowns(uint32 diff)
     // Update cooldown manager
     if (_cooldownManager)
         _cooldownManager->Update(diff);
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->UpdateCooldowns(diff);
-    }
 }
 
 bool DeathKnightAI::CanUseAbility(uint32 spellId)
@@ -797,12 +749,6 @@ bool DeathKnightAI::CanUseAbility(uint32 spellId)
 
     if (!HasEnoughResource(spellId))
         return false;
-
-    // Additional checks via specialization
-    if (_specialization)
-    {
-        return _specialization->CanUseAbility(spellId);
-    }
 
     return true;
 }
@@ -846,12 +792,6 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
             return _runeManager->HasRunes(0u, 0u, 1u);
         default:
             break;
-    }
-
-    // Additional checks via specialization
-    if (_specialization)
-    {
-        return _specialization->HasEnoughResource(spellId);
     }
 
     return true;
@@ -902,12 +842,6 @@ void DeathKnightAI::ConsumeResource(uint32 spellId)
         _metrics->totalRunesUsed += runesUsed;
         _runesUsed += runesUsed;
     }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->ConsumeResource(spellId);
-    }
 }
 
 void DeathKnightAI::OnCombatStart(Unit* target)
@@ -956,12 +890,6 @@ void DeathKnightAI::OnCombatStart(Unit* target)
         }
     }
 
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatStart(target);
-    }
-
     TC_LOG_DEBUG("playerbot", "DeathKnightAI: Combat started against {} with spec {}",
                  target->GetName(), static_cast<uint32>(_detectedSpec));
 }
@@ -978,12 +906,6 @@ void DeathKnightAI::OnCombatEnd()
 
     // Reset rune system
     _runeManager->ResetRunes();
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        _specialization->OnCombatEnd();
-    }
 
     TC_LOG_DEBUG("playerbot", "DeathKnightAI: Combat ended. RP spent: {}, Runes used: {}, Diseases: {}",
                  _runicPowerSpent, _runesUsed, _diseasesApplied);
@@ -1053,12 +975,6 @@ Position DeathKnightAI::GetOptimalPosition(Unit* target)
         return _positioning->CalculateOptimalPosition(target, _detectedSpec);
     }
 
-    // Fallback to specialization
-    if (_specialization)
-    {
-        return _specialization->GetOptimalPosition(target);
-    }
-
     return ClassAI::GetOptimalPosition(target);
 }
 
@@ -1071,12 +987,6 @@ float DeathKnightAI::GetOptimalRange(Unit* target)
     if (_positioning)
     {
         return _positioning->GetOptimalRange(_detectedSpec);
-    }
-
-    // Delegate to specialization
-    if (_specialization)
-    {
-        return _specialization->GetOptimalRange(target);
     }
 
     return 5.0f; // Default melee range
@@ -1525,15 +1435,8 @@ void DeathKnightAI::ExecuteSpecializationRotation(Unit* target)
     if (_combatMetrics->IsOnGlobalCooldown())
         return;
 
-    // Delegate to specialization if available
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-    }
-    else
-    {
-        ExecuteFallbackRotation(target);
-    }
+    // Execute fallback rotation
+    ExecuteFallbackRotation(target);
 }
 
 void DeathKnightAI::UpdatePresenceIfNeeded()

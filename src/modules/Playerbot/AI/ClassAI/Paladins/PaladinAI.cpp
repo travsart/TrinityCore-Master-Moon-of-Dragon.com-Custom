@@ -8,9 +8,7 @@
  */
 
 #include "PaladinAI.h"
-#include "HolyPaladinRefactored.h"
-#include "ProtectionPaladinRefactored.h"
-#include "RetributionSpecializationRefactored.h"
+#include "ObjectAccessor.h"
 #include "../BaselineRotationManager.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
@@ -27,7 +25,7 @@
 namespace Playerbot
 {
 
-PaladinAI::PaladinAI(Player* bot) : ClassAI(bot), _currentSpec(PaladinSpec::RETRIBUTION)
+PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
 {
     _lastBlessingTime = 0;
     _lastAuraChange = 0;
@@ -40,8 +38,6 @@ PaladinAI::PaladinAI(Player* bot) : ClassAI(bot), _currentSpec(PaladinSpec::RETR
     _currentAura = 0;
     _currentBlessing = 0;
     _successfulInterrupts = 0;
-
-    InitializeSpecialization();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI created for player {}",
                  bot ? bot->GetName() : "null");
@@ -194,16 +190,9 @@ void PaladinAI::UpdateRotation(::Unit* target)
     if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
         return;
 
-    // Priority 7: Execute normal rotation through specialization
-    if (_specialization)
-    {
-        _specialization->UpdateRotation(target);
-    }
-    else
-    {
-        // Fallback rotation when no specialization is available
-        ExecuteBasicPaladinRotation(target);
-    }
+    // Priority 7: Execute normal rotation
+    // Use basic rotation - specialized behavior comes from talent/spec checks
+    ExecuteBasicPaladinRotation(target);
 
     // Handle repositioning needs
     if (behaviors && behaviors->NeedsRepositioning())
@@ -230,9 +219,7 @@ void PaladinAI::UpdateBuffs()
 void PaladinAI::UpdateCooldowns(uint32 diff)
 {
     UpdateMetrics(diff);
-
-    if (_specialization)
-        _specialization->UpdateCooldowns(diff);
+    // Cooldowns are tracked via standard spell system
 }
 
 bool PaladinAI::CanUseAbility(uint32 spellId)
@@ -244,18 +231,12 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
     if (!HasHolyPowerFor(spellId))
         return false;
 
-    if (_specialization)
-        return _specialization->CanUseAbility(spellId);
-
     return true;
 }
 
 void PaladinAI::OnCombatStart(::Unit* target)
 {
     _paladinMetrics.combatStartTime = std::chrono::steady_clock::now();
-
-    if (_specialization)
-        _specialization->OnCombatStart(target);
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
@@ -269,9 +250,6 @@ void PaladinAI::OnCombatEnd()
 {
     AnalyzeCombatEffectiveness();
 
-    if (_specialization)
-        _specialization->OnCombatEnd();
-
     _inCombat = false;
     _currentTarget = ObjectGuid::Empty;
     _combatTime = 0;
@@ -281,19 +259,14 @@ void PaladinAI::OnCombatEnd()
 
 bool PaladinAI::HasEnoughResource(uint32 spellId)
 {
-    if (_specialization)
-        return _specialization->HasEnoughResource(spellId);
-
-    // Default: check mana
-    return GetBot()->GetPower(POWER_MANA) >= 100;
+    // Simplified resource check - detailed checks handled by spell system
+    return GetBot()->GetPower(POWER_MANA) >= 100; // Conservative estimate
 }
 
 void PaladinAI::ConsumeResource(uint32 spellId)
 {
     RecordAbilityUsage(spellId);
-
-    if (_specialization)
-        _specialization->ConsumeResource(spellId);
+    // Resource consumption is handled by spell system
 }
 
 Position PaladinAI::GetOptimalPosition(::Unit* target)
@@ -301,89 +274,21 @@ Position PaladinAI::GetOptimalPosition(::Unit* target)
     if (!target || !GetBot())
         return Position();
 
-    if (_specialization)
-        return _specialization->GetOptimalPosition(target);
-
+    // Calculate optimal position based on current spec
     return CalculateOptimalMeleePosition(target);
 }
 
 float PaladinAI::GetOptimalRange(::Unit* target)
 {
-    if (_specialization)
-        return _specialization->GetOptimalRange(target);
+    // Check spec using TrinityCore API
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
 
-    // Default melee range for Retribution/Protection
-    if (_currentSpec == PaladinSpec::HOLY)
+    // Holy Paladin uses healing range
+    if (spec == ChrSpecialization::PaladinHoly)
         return OPTIMAL_HEALING_RANGE;
 
+    // Retribution and Protection use melee range
     return OPTIMAL_MELEE_RANGE;
-}
-
-void PaladinAI::InitializeSpecialization()
-{
-    _currentSpec = DetectCurrentSpecialization();
-    SwitchSpecialization(_currentSpec);
-}
-
-void PaladinAI::UpdateSpecialization()
-{
-    PaladinSpec newSpec = DetectCurrentSpecialization();
-    if (newSpec != _currentSpec)
-    {
-        SwitchSpecialization(newSpec);
-    }
-}
-
-PaladinSpec PaladinAI::DetectCurrentSpecialization()
-{
-    // TODO: Detect from talents
-    // For now, default to Retribution for DPS
-    return PaladinSpec::RETRIBUTION;
-}
-
-void PaladinAI::DetectSpecialization()
-{
-    _currentSpec = DetectCurrentSpecialization();
-}
-
-void PaladinAI::SwitchSpecialization(PaladinSpec newSpec)
-{
-    _currentSpec = newSpec;
-
-    // TODO: Re-enable refactored specialization classes once template issues are fixed
-    _specialization = nullptr;
-    TC_LOG_WARN("module.playerbot.paladin", "Paladin specialization switching temporarily disabled for {}",
-                GetBot()->GetName());
-
-    /* switch (newSpec)
-    {
-        case PaladinSpec::HOLY:
-            _specialization = std::make_unique<HolyPaladinRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Holy specialization",
-                         GetBot()->GetName());
-            break;
-        case PaladinSpec::PROTECTION:
-            _specialization = std::make_unique<ProtectionPaladinRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Protection specialization",
-                         GetBot()->GetName());
-            break;
-        case PaladinSpec::RETRIBUTION:
-            _specialization = std::make_unique<RetributionPaladinRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} switched to Retribution specialization",
-                         GetBot()->GetName());
-            break;
-        default:
-            _specialization = std::make_unique<RetributionPaladinRefactored>(GetBot());
-            TC_LOG_DEBUG("module.playerbot.paladin", "Paladin {} defaulted to Retribution specialization",
-                         GetBot()->GetName());
-            break;
-    } */
-}
-
-void PaladinAI::DelegateToSpecialization(::Unit* target)
-{
-    if (_specialization)
-        _specialization->UpdateRotation(target);
 }
 
 void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
@@ -498,9 +403,7 @@ void PaladinAI::UpdatePaladinBuffs()
 {
     UpdateBlessingManagement();
     UpdateAuraManagement();
-
-    if (_specialization)
-        _specialization->UpdateBuffs();
+    // Spec-specific buffs are handled through normal rotation
 }
 
 void PaladinAI::UseDefensiveCooldowns()
@@ -569,7 +472,7 @@ void PaladinAI::UseDefensiveCooldowns()
     }
 
     // Protection-specific defensives
-    if (_currentSpec == PaladinSpec::PROTECTION)
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)
     {
         // Ardent Defender
         if (healthPct < 35.0f && CanUseAbility(ARDENT_DEFENDER))
@@ -638,7 +541,7 @@ void PaladinAI::UseOffensiveCooldowns()
     }
 
     // Crusade for Retribution (replaces Avenging Wrath)
-    if (_currentSpec == PaladinSpec::RETRIBUTION && CanUseAbility(CRUSADE))
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinRetribution && CanUseAbility(CRUSADE))
     {
         if (CastSpell(CRUSADE))
         {
@@ -700,7 +603,10 @@ void PaladinAI::UpdateBlessingManagement()
     _lastBlessingTime = currentTime;
 
     // Apply appropriate blessing based on spec
-    if (_currentSpec == PaladinSpec::RETRIBUTION || _currentSpec == PaladinSpec::PROTECTION)
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+
+    // Retribution or Protection use Blessing of Might
+    if (spec == ChrSpecialization::PaladinProtection || spec == ChrSpecialization::PaladinRetribution)
     {
         // Blessing of Might for physical damage dealers
         if (CanUseAbility(BLESSING_OF_MIGHT))
@@ -713,7 +619,7 @@ void PaladinAI::UpdateBlessingManagement()
             }
         }
     }
-    else if (_currentSpec == PaladinSpec::HOLY)
+    else if (spec == ChrSpecialization::PaladinHoly)
     {
         // Blessing of Wisdom for mana users
         if (CanUseAbility(BLESSING_OF_WISDOM))
@@ -745,7 +651,9 @@ void PaladinAI::UpdateAuraManagement()
         return;
 
     // Select appropriate aura based on spec and situation
-    if (_currentSpec == PaladinSpec::RETRIBUTION)
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+
+    if (spec == ChrSpecialization::PaladinRetribution)
     {
         // Retribution Aura for damage reflection
         if (CanUseAbility(RETRIBUTION_AURA) && _currentAura != RETRIBUTION_AURA)
@@ -759,7 +667,7 @@ void PaladinAI::UpdateAuraManagement()
             }
         }
     }
-    else if (_currentSpec == PaladinSpec::PROTECTION)
+    else if (spec == ChrSpecialization::PaladinProtection)
     {
         // Devotion Aura for damage reduction
         if (CanUseAbility(DEVOTION_AURA) && _currentAura != DEVOTION_AURA)
@@ -856,8 +764,8 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
         }
     }
 
-    // Hammer of the Righteous for Protection (AoE generator)
-    if (_currentSpec == PaladinSpec::PROTECTION && CanUseAbility(HAMMER_OF_THE_RIGHTEOUS))
+    // Hammer of the Righteous for Protection (AoE generator, spec ID 1)
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection && CanUseAbility(HAMMER_OF_THE_RIGHTEOUS))
     {
         if (CastSpell(target, HAMMER_OF_THE_RIGHTEOUS))
         {
@@ -888,8 +796,8 @@ void PaladinAI::SpendHolyPower(::Unit* target)
     if (holyPower < 3)
         return;
 
-    // Protection: Shield of the Righteous for mitigation
-    if (_currentSpec == PaladinSpec::PROTECTION)
+    // Protection: Shield of the Righteous for mitigation (spec ID 1)
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)
     {
         if (CanUseAbility(SHIELD_OF_THE_RIGHTEOUS))
         {
@@ -902,8 +810,8 @@ void PaladinAI::SpendHolyPower(::Unit* target)
         }
     }
 
-    // Holy: Word of Glory for healing
-    if (_currentSpec == PaladinSpec::HOLY || GetBot()->GetHealthPct() < 50.0f)
+    // Holy: Word of Glory for healing (spec ID 0 or low health)
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinHoly || GetBot()->GetHealthPct() < 50.0f)
     {
         if (CanUseAbility(WORD_OF_GLORY))
         {
@@ -1159,7 +1067,7 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
 
     // Get behind target for Retribution DPS
     float angle = target->GetOrientation() + M_PI;  // Behind target
-    if (_currentSpec == PaladinSpec::PROTECTION)
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
         angle = target->GetOrientation();  // Face target for tanking
 
     float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;

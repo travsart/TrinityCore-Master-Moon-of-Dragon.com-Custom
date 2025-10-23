@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../ClassAI.h"
-#include "ShamanSpecialization.h"
 #include "Position.h"
 #include <unordered_map>
 #include <memory>
@@ -18,9 +17,6 @@
 #include <array>
 
 // Forward declarations
-class ElementalSpecialization;
-class EnhancementSpecialization;
-class RestorationSpecialization;
 
 namespace Playerbot
 {
@@ -53,11 +49,55 @@ protected:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
-private:
-    // Specialization system
-    ShamanSpec _currentSpec;
-    std::unique_ptr<ShamanSpecialization> _specialization;
 
+    // Totem management types
+    enum class TotemType : uint8
+    {
+        EARTH = 0,
+        FIRE = 1,
+        WATER = 2,
+        AIR = 3,
+        MAX_TOTEMS = 4
+    };
+
+    enum class TotemBehavior : uint8
+    {
+        AGGRESSIVE = 0,
+        DEFENSIVE = 1,
+        PASSIVE = 2
+    };
+
+    struct TotemInfo
+    {
+        uint32 spellId;
+        TotemType type;
+        TotemBehavior behavior;
+        uint32 duration;
+        uint32 cooldown;
+        uint32 lastCast;
+        ::Unit* totemUnit;
+
+        TotemInfo() : spellId(0), type(TotemType::EARTH), behavior(TotemBehavior::AGGRESSIVE),
+                     duration(0), cooldown(0), lastCast(0), totemUnit(nullptr) {}
+
+        bool IsActive() const { return totemUnit != nullptr; }
+        bool IsOnCooldown(uint32 currentTime) const { return (currentTime - lastCast) < cooldown; }
+    };
+
+    struct WeaponImbue
+    {
+        uint32 spellId;
+        uint32 mainHandEnchant;
+        uint32 offHandEnchant;
+        uint32 duration;
+        uint32 lastApplied;
+
+        WeaponImbue() : spellId(0), mainHandEnchant(0), offHandEnchant(0), duration(0), lastApplied(0) {}
+
+        bool IsActive(uint32 currentTime) const { return (currentTime - lastApplied) < duration; }
+    };
+
+private:
     // Performance tracking
     uint32 _manaSpent;
     uint32 _damageDealt;
@@ -97,11 +137,6 @@ private:
     bool _hasLavaSurgeProc;
     uint32 _healingStreamTotemTime;
     uint32 _chainHealBounceCount;
-
-    // Specialization management
-    void InitializeSpecialization();
-    ShamanSpec DetectCurrentSpecialization();
-    void SwitchSpecialization(ShamanSpec newSpec);
 
     // Delegation to specialization
     void DelegateToSpecialization(::Unit* target);
