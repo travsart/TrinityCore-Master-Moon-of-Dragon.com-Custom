@@ -147,6 +147,75 @@ private:
     uint32 _comboPointsGenerated;
     uint32 _finishersExecuted;
     uint32 _lastPoison;
+
+public:
+    // Rogue Spell IDs
+    enum RogueSpells
+    {
+        // Combo Point Builders
+        SINISTER_STRIKE = 1752,
+        BACKSTAB = 53,
+        MUTILATE = 1329,
+        HEMORRHAGE = 16511,
+        SHIV = 5938,
+        AMBUSH = 8676,
+        GARROTE = 703,
+        CHEAP_SHOT = 1833,
+
+        // Combo Point Finishers
+        SLICE_AND_DICE = 5171,
+        RUPTURE = 1943,
+        EVISCERATE = 2098,
+        KIDNEY_SHOT = 408,
+        EXPOSE_ARMOR = 8647,
+        ENVENOM = 32645,
+        CRIMSON_TEMPEST = 121411,
+        DEADLY_THROW = 26679,
+
+        // Cooldowns
+        BLADE_FLURRY = 13877,
+        ADRENALINE_RUSH = 13750,
+        KILLING_SPREE = 51690,
+        VENDETTA = 79140,
+        SHADOW_BLADES = 121471,
+        COLD_BLOOD = 14177,
+        SHADOW_DANCE = 185313,
+        SHADOWSTEP = 36554,
+
+        // Utility
+        KICK = 1766,
+        GOUGE = 1776,
+        BLIND = 2094,
+        SAP = 6770,
+        VANISH = 1856,
+        STEALTH = 1784,
+        SPRINT = 2983,
+        CLOAK_OF_SHADOWS = 31224,
+        EVASION = 5277,
+        FEINT = 1966,
+
+        // Poisons
+        DEADLY_POISON = 2823,
+        INSTANT_POISON = 315584,
+        WOUND_POISON = 8679,
+        MIND_NUMBING_POISON = 5761,
+        CRIPPLING_POISON = 3408,
+
+        // AoE
+        FAN_OF_KNIVES = 51723,
+        POISON_BOMB = 255544,
+
+        // Assassination
+        DEATHMARK = 360194,
+        POISONED_KNIFE = 185565,
+
+        // Subtlety
+        SYMBOLS_OF_DEATH = 212283,
+
+        // Talents
+        VIGOR = 14983,
+        DEEPER_STRATAGEM = 193531
+    };
 };
 
 } // namespace Playerbot

@@ -20,15 +20,22 @@
 namespace Playerbot
 {
 
-// Static member initialization
-bool PlayerBotHooks::_initialized = false;
-PlayerBotHooks::HookStatistics PlayerBotHooks::_stats;
+// Meyer's singleton accessors for DLL-safe static data
+bool& PlayerBotHooks::GetInitialized()
+{
+    static bool initialized = false;
+    return initialized;
+}
 
-// Static member definitions moved to header with inline to fix DLL linkage (C2491)
+PlayerBotHooks::HookStatistics& PlayerBotHooks::GetStats()
+{
+    static HookStatistics stats;
+    return stats;
+}
 
 void PlayerBotHooks::Initialize()
 {
-    if (_initialized)
+    if (GetInitialized())
     {
         TC_LOG_WARN("module.playerbot", "PlayerBotHooks::Initialize called multiple times");
         return;
@@ -38,15 +45,15 @@ void PlayerBotHooks::Initialize()
 
     RegisterHooks();
 
-    _initialized = true;
-    _stats.Reset();
+    GetInitialized() = true;
+    GetStats().Reset();
 
     TC_LOG_INFO("module.playerbot", "PlayerBot hook system initialized successfully");
 }
 
 void PlayerBotHooks::Shutdown()
 {
-    if (!_initialized)
+    if (!GetInitialized())
         return;
 
     TC_LOG_INFO("module.playerbot", "Shutting down PlayerBot hook system...");
@@ -54,14 +61,14 @@ void PlayerBotHooks::Shutdown()
     DumpStatistics();
     UnregisterHooks();
 
-    _initialized = false;
+    GetInitialized() = false;
 
     TC_LOG_INFO("module.playerbot", "PlayerBot hook system shutdown complete");
 }
 
 bool PlayerBotHooks::IsActive()
 {
-    return _initialized;
+    return GetInitialized();
 }
 
 void PlayerBotHooks::RegisterHooks()
@@ -537,51 +544,51 @@ bool PlayerBotHooks::GroupHasBots(Group const* group)
 
 void PlayerBotHooks::IncrementHookCall(const char* hookName)
 {
-    ++_stats.totalHookCalls;
+    ++GetStats().totalHookCalls;
 
     // Map specific hook calls to stat counters
     // Using string comparison for simplicity (could optimize with enum)
     std::string hook(hookName);
 
     if (hook == "OnGroupMemberAdded")
-        ++_stats.memberAddedCalls;
+        ++GetStats().memberAddedCalls;
     else if (hook == "OnGroupMemberRemoved")
-        ++_stats.memberRemovedCalls;
+        ++GetStats().memberRemovedCalls;
     else if (hook == "OnGroupLeaderChanged")
-        ++_stats.leaderChangedCalls;
+        ++GetStats().leaderChangedCalls;
     else if (hook == "OnGroupDisbanding")
-        ++_stats.groupDisbandedCalls;
+        ++GetStats().groupDisbandedCalls;
     else if (hook == "OnGroupRaidConverted")
-        ++_stats.raidConvertedCalls;
+        ++GetStats().raidConvertedCalls;
     else if (hook == "OnLootMethodChanged")
-        ++_stats.lootMethodChangedCalls;
+        ++GetStats().lootMethodChangedCalls;
     else if (hook == "OnReadyCheckStarted")
-        ++_stats.readyCheckCalls;
+        ++GetStats().readyCheckCalls;
     else if (hook == "OnRaidTargetIconChanged")
-        ++_stats.targetIconCalls;
+        ++GetStats().targetIconCalls;
     else if (hook == "OnDifficultyChanged")
-        ++_stats.difficultyCalls;
+        ++GetStats().difficultyCalls;
     else if (hook == "OnPlayerDeath")
-        ++_stats.playerDeathCalls;
+        ++GetStats().playerDeathCalls;
     else if (hook == "OnPlayerResurrected")
-        ++_stats.playerResurrectedCalls;
+        ++GetStats().playerResurrectedCalls;
 }
 
 PlayerBotHooks::HookStatistics const& PlayerBotHooks::GetStatistics()
 {
-    return _stats;
+    return GetStats();
 }
 
 void PlayerBotHooks::ResetStatistics()
 {
-    _stats.Reset();
+    GetStats().Reset();
     TC_LOG_DEBUG("module.playerbot", "PlayerBotHooks: Statistics reset");
 }
 
 void PlayerBotHooks::DumpStatistics()
 {
     TC_LOG_INFO("module.playerbot", "=== PlayerBot Hook Statistics ===");
-    TC_LOG_INFO("module.playerbot", "{}", _stats.ToString());
+    TC_LOG_INFO("module.playerbot", "{}", GetStats().ToString());
 }
 
 std::string PlayerBotHooks::HookStatistics::ToString() const

@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
 #include <unordered_map>
 #include <queue>
 
@@ -52,8 +52,8 @@ public:
         , _lastMortalStrike(0)
         , _lastColossusSmash(0)
         , _tacticalMasteryRage(0)
-        , _currentStance(WarriorStance::BATTLE)
-        , _preferredStance(WarriorStance::BATTLE)
+        , _currentStance(WarriorAI::WarriorStance::BATTLE)
+        , _preferredStance(WarriorAI::WarriorStance::BATTLE)
     {
         // Initialize debuff tracking
         InitializeDebuffTracking();
@@ -209,9 +209,9 @@ protected:
     void ExecutePhaseRotation(::Unit* target)
     {
         // Switch to Berserker Stance for execute if needed
-        if (_currentStance != WarriorStance::BERSERKER && this->HasTacticalMastery())
+        if (_currentStance != WarriorAI::WarriorStance::BERSERKER && this->HasTacticalMastery())
         {
-            this->SwitchToStance(WarriorStance::BERSERKER);
+            this->SwitchToStance(WarriorAI::WarriorStance::BERSERKER);
         }
 
         // Priority 1: Execute with Sudden Death proc
@@ -292,7 +292,7 @@ protected:
         Player* bot = this->GetBot();
 
         // Determine optimal stance based on situation
-        WarriorStance optimalStance = this->DetermineOptimalStance();
+        WarriorAI::WarriorStance optimalStance = this->DetermineOptimalStance();
 
         if (_currentStance != optimalStance)
         {
@@ -306,30 +306,30 @@ protected:
         }
     }
 
-    WarriorStance DetermineOptimalStance()
+    WarriorAI::WarriorStance DetermineOptimalStance()
     {
         Player* bot = this->GetBot();
 
         // Defensive stance if low health
         if (bot->GetHealthPct() < 30.0f)
-            return WarriorStance::DEFENSIVE;
+            return WarriorAI::WarriorStance::DEFENSIVE;
 
         // Berserker for execute phase
         if (_executePhaseActive)
-            return WarriorStance::BERSERKER;
+            return WarriorAI::WarriorStance::BERSERKER;
 
         // Battle stance as default for Arms
-        return WarriorStance::BATTLE;
+        return WarriorAI::WarriorStance::BATTLE;
     }
 
-    void SwitchToStance(WarriorStance stance)
+    void SwitchToStance(WarriorAI::WarriorStance stance)
     {
         uint32 stanceSpell = 0;
         switch (stance)
         {
-            case WarriorStance::BATTLE:     stanceSpell = SPELL_BATTLE_STANCE; break;
-            case WarriorStance::DEFENSIVE:  stanceSpell = SPELL_DEFENSIVE_STANCE; break;
-            case WarriorStance::BERSERKER:  stanceSpell = SPELL_BERSERKER_STANCE; break;
+            case WarriorAI::WarriorStance::BATTLE:     stanceSpell = SPELL_BATTLE_STANCE; break;
+            case WarriorAI::WarriorStance::DEFENSIVE:  stanceSpell = SPELL_DEFENSIVE_STANCE; break;
+            case WarriorAI::WarriorStance::BERSERKER:  stanceSpell = SPELL_BERSERKER_STANCE; break;
             default: return;
         }
 
@@ -423,9 +423,9 @@ protected:
         _rendTracking.clear();
 
         // Start in Battle Stance
-        if (_currentStance != WarriorStance::BATTLE)
+        if (_currentStance != WarriorAI::WarriorStance::BATTLE)
         {
-            this->SwitchToStance(WarriorStance::BATTLE);
+            this->SwitchToStance(WarriorAI::WarriorStance::BATTLE);
         }
 
         // Use charge if not in range
@@ -524,8 +524,8 @@ private:
 
     // Stance management
     uint32 _tacticalMasteryRage;
-    WarriorStance _currentStance;
-    WarriorStance _preferredStance;
+    WarriorAI::WarriorStance _currentStance;
+    WarriorAI::WarriorStance _preferredStance;
 
 };
 

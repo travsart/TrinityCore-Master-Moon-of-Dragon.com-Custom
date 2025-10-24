@@ -233,10 +233,10 @@ bool HunterAI::HandleDefensives(::Unit* target)
         // Deterrence - damage reduction
         if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
         {
-            if (_bot->HasSpell(HUNTER_DETERRENCE) && CanUseAbility(HUNTER_DETERRENCE) &&
+            if (_bot->HasSpell(DETERRENCE) && CanUseAbility(DETERRENCE) &&
                 now - _lastDeterrence > 120000) // 2 minute cooldown
             {
-                if (CastSpell(HUNTER_DETERRENCE))
+                if (CastSpell(DETERRENCE))
                 {
                     _lastDeterrence = now;
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Deterrence",
@@ -927,17 +927,17 @@ HunterSpec HunterAI::GetCurrentSpecialization() const
     if (!_bot)
         return HunterSpec::BEAST_MASTERY;
 
-    // Use TrinityCore's GetPrimaryTalentTree to determine specialization
-    // 0 = Beast Mastery, 1 = Marksmanship, 2 = Survival
-    uint32 spec = _bot->GetPrimaryTalentTree(_bot->GetActiveSpec());
+    // Use TrinityCore's GetPrimarySpecialization to determine specialization
+    // 253 = Beast Mastery, 254 = Marksmanship, 255 = Survival
+    uint32 spec = static_cast<uint32>(_bot->GetPrimarySpecialization());
 
     switch (spec)
     {
-        case 0:
+        case 253: // Beast Mastery
             return HunterSpec::BEAST_MASTERY;
-        case 1:
+        case 254: // Marksmanship
             return HunterSpec::MARKSMANSHIP;
-        case 2:
+        case 255: // Survival
             return HunterSpec::SURVIVAL;
         default:
             return HunterSpec::BEAST_MASTERY;
@@ -1118,7 +1118,7 @@ uint32 HunterAI::GetBestTrapForSituation() const
         return 13813; // Explosive Trap
     if (ShouldPlaceSnakeTrap())
         return SNAKE_TRAP;
-    return ICE_TRAP; // Default
+    return FREEZING_TRAP; // Default
 }
 
 // Range management implementation
@@ -1273,7 +1273,6 @@ void HunterAI::UpdateTracking()
 bool HunterAI::HasAnyAspect()
 {
     return HasAura(ASPECT_OF_THE_HAWK) ||
-           HasAura(ASPECT_OF_THE_MONKEY) ||
            HasAura(ASPECT_OF_THE_CHEETAH) ||
            HasAura(ASPECT_OF_THE_PACK) ||
            HasAura(ASPECT_OF_THE_VIPER) ||
@@ -1285,7 +1284,6 @@ uint32 HunterAI::GetCurrentAspect()
 {
     if (HasAura(ASPECT_OF_THE_DRAGONHAWK)) return ASPECT_OF_THE_DRAGONHAWK;
     if (HasAura(ASPECT_OF_THE_HAWK)) return ASPECT_OF_THE_HAWK;
-    if (HasAura(ASPECT_OF_THE_MONKEY)) return ASPECT_OF_THE_MONKEY;
     if (HasAura(ASPECT_OF_THE_CHEETAH)) return ASPECT_OF_THE_CHEETAH;
     if (HasAura(ASPECT_OF_THE_PACK)) return ASPECT_OF_THE_PACK;
     if (HasAura(ASPECT_OF_THE_VIPER)) return ASPECT_OF_THE_VIPER;

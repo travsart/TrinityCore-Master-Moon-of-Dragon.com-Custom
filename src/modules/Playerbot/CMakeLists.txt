@@ -206,11 +206,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
 
-    # Evoker Refactored Specializations (Template-based)
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/DevastationEvokerRefactored.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/PreservationEvokerRefactored.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/AugmentationEvokerRefactored.h
-
     # Hunter AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.h

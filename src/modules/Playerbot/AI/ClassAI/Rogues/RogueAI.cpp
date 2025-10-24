@@ -147,9 +147,9 @@ public:
 private:
     bool IsFinisher(uint32 spellId) const
     {
-        return spellId == SLICE_AND_DICE || spellId == RUPTURE ||
-               spellId == EVISCERATE || spellId == KIDNEY_SHOT ||
-               spellId == EXPOSE_ARMOR || spellId == ENVENOM;
+        return spellId == RogueAI::SLICE_AND_DICE || spellId == RogueAI::RUPTURE ||
+               spellId == RogueAI::EVISCERATE || spellId == RogueAI::KIDNEY_SHOT ||
+               spellId == RogueAI::EXPOSE_ARMOR || spellId == RogueAI::ENVENOM;
     }
 
     std::unordered_map<uint32, std::chrono::steady_clock::time_point> _abilityTimings;
@@ -339,7 +339,7 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldAOE())
     {
         // Blade Flurry for Combat/Outlaw rogues (check via specialization)
-        uint32 spec = GetBot()->GetPrimarySpecialization();
+        uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         if (static_cast<uint32>(spec) == 1 && CanUseAbility(BLADE_FLURRY)) // Combat/Outlaw is spec 1
         {
             if (CastSpell(BLADE_FLURRY))
@@ -370,7 +370,7 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
         // Spec-specific offensive cooldowns
-        uint32 spec = GetBot()->GetPrimarySpecialization();
+        uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         switch (spec)
         {
             case 0: // Assassination
@@ -671,7 +671,7 @@ void RogueAI::UseDefensiveCooldowns()
     }
 
     // Combat Readiness for damage reduction (Combat spec)
-    uint32 spec = GetBot()->GetPrimarySpecialization();
+    uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
     if (static_cast<uint32>(spec) == 1 && healthPct < 40.0f) // Combat/Outlaw is spec 1
     {
         uint32 combatReadiness = 74001; // Combat Readiness spell ID
@@ -939,7 +939,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
     }
 
     // Spec-specific builders
-    uint32 spec = GetBot()->GetPrimarySpecialization();
+    uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
     switch (spec)
     {
         case 0: // Assassination
@@ -1023,7 +1023,7 @@ void RogueAI::ApplyPoisons()
     // Main hand poison based on spec
     if (mainHand && !mainHand->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
     {
-        uint32 spec = GetBot()->GetPrimarySpecialization();
+        uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         uint32 poisonSpell = 0;
         switch (spec)
         {
@@ -1050,7 +1050,7 @@ void RogueAI::ApplyPoisons()
     if (offHand && offHand->GetTemplate()->GetClass() == ITEM_CLASS_WEAPON &&
         !offHand->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
     {
-        uint32 spec = GetBot()->GetPrimarySpecialization();
+        uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         uint32 poisonSpell = 0;
         switch (spec)
         {
@@ -1249,7 +1249,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
     if (!target)
         return;
 
-    uint32 spec = GetBot()->GetPrimarySpecialization();
+    uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
     switch (spec)
     {
         case 0: // Assassination
@@ -1307,7 +1307,7 @@ Position RogueAI::GetOptimalPosition(Unit* target)
     if (_positioning)
     {
         // Convert spec ID to RogueSpec enum
-        uint32 specId = GetBot()->GetPrimarySpecialization();
+        uint32 specId = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         RogueSpec rogueSpec = static_cast<RogueSpec>(specId);
         return _positioning->CalculateOptimalPosition(target, rogueSpec);
     }
@@ -1324,7 +1324,7 @@ float RogueAI::GetOptimalRange(Unit* target)
     if (_positioning)
     {
         // Convert spec ID to RogueSpec enum
-        uint32 specId = GetBot()->GetPrimarySpecialization();
+        uint32 specId = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         RogueSpec rogueSpec = static_cast<RogueSpec>(specId);
         return _positioning->GetOptimalRange(rogueSpec);
     }

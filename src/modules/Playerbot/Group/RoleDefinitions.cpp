@@ -13,18 +13,27 @@
 namespace Playerbot
 {
 
-// Static member initialization
-std::unordered_map<uint8, RoleDefinitions::ClassData> RoleDefinitions::_classDefinitions;
-bool RoleDefinitions::_initialized = false;
+// Meyer's singleton accessors for DLL-safe static data
+std::unordered_map<uint8, RoleDefinitions::ClassData>& RoleDefinitions::GetClassDefinitions()
+{
+    static std::unordered_map<uint8, ClassData> classDefinitions;
+    return classDefinitions;
+}
+
+bool& RoleDefinitions::GetInitialized()
+{
+    static bool initialized = false;
+    return initialized;
+}
 
 // Get class data
 const RoleDefinitions::ClassData& RoleDefinitions::GetClassData(uint8 classId)
 {
-    if (!_initialized)
+    if (!GetInitialized())
         Initialize();
 
-    auto it = _classDefinitions.find(classId);
-    if (it != _classDefinitions.end())
+    auto it = GetClassDefinitions().find(classId);
+    if (it != GetClassDefinitions().end())
         return it->second;
 
     // Return a default/empty ClassData if not found
@@ -36,11 +45,11 @@ const RoleDefinitions::ClassData& RoleDefinitions::GetClassData(uint8 classId)
 // Get specialization data
 const RoleDefinitions::SpecializationData& RoleDefinitions::GetSpecializationData(uint8 classId, uint8 specId)
 {
-    if (!_initialized)
+    if (!GetInitialized())
         Initialize();
 
-    auto classIt = _classDefinitions.find(classId);
-    if (classIt != _classDefinitions.end())
+    auto classIt = GetClassDefinitions().find(classId);
+    if (classIt != GetClassDefinitions().end())
     {
         for (auto const& spec : classIt->second.specializations)
         {
@@ -140,12 +149,12 @@ std::vector<GroupRole> RoleDefinitions::GetAvailableRoles(uint8 classId, uint8 s
 // Get preferred class/specs for role
 std::vector<std::pair<uint8, uint8>> RoleDefinitions::GetPreferredClassSpecsForRole(GroupRole role)
 {
-    if (!_initialized)
+    if (!GetInitialized())
         Initialize();
 
     std::vector<std::pair<uint8, uint8>> result;
 
-    for (auto const& [classId, classData] : _classDefinitions)
+    for (auto const& [classId, classData] : GetClassDefinitions())
     {
         for (auto const& spec : classData.specializations)
         {
@@ -166,7 +175,7 @@ float RoleDefinitions::GetRolePriorityScore(uint8 classId, uint8 specId, GroupRo
 // Initialize role definitions
 void RoleDefinitions::Initialize()
 {
-    if (_initialized)
+    if (GetInitialized())
         return;
 
     TC_LOG_INFO("playerbot.roles", "RoleDefinitions: Initializing role definitions...");
@@ -185,9 +194,9 @@ void RoleDefinitions::Initialize()
     InitializeDemonHunterRoles();
     InitializeEvokerRoles();
 
-    _initialized = true;
+    GetInitialized() = true;
 
-    TC_LOG_INFO("playerbot.roles", "RoleDefinitions: Initialized {} class definitions", _classDefinitions.size());
+    TC_LOG_INFO("playerbot.roles", "RoleDefinitions: Initialized {} class definitions", GetClassDefinitions().size());
 }
 
 // Initialize Warrior roles
@@ -217,7 +226,7 @@ void RoleDefinitions::InitializeWarriorRoles()
     };
     warrior.specializations.push_back(arms);
 
-    _classDefinitions[CLASS_WARRIOR] = warrior;
+    GetClassDefinitions()[CLASS_WARRIOR] = warrior;
 }
 
 // Initialize Paladin roles
@@ -250,7 +259,7 @@ void RoleDefinitions::InitializePaladinRoles()
     paladin.specializations.push_back(ret);
 
     paladin.hybridCapabilities = {GroupRole::TANK, GroupRole::HEALER, GroupRole::MELEE_DPS};
-    _classDefinitions[CLASS_PALADIN] = paladin;
+    GetClassDefinitions()[CLASS_PALADIN] = paladin;
 }
 
 // Initialize Hunter roles
@@ -279,7 +288,7 @@ void RoleDefinitions::InitializeHunterRoles()
     };
     hunter.specializations.push_back(surv);
 
-    _classDefinitions[CLASS_HUNTER] = hunter;
+    GetClassDefinitions()[CLASS_HUNTER] = hunter;
 }
 
 // Initialize Rogue roles
@@ -308,7 +317,7 @@ void RoleDefinitions::InitializeRogueRoles()
     };
     rogue.specializations.push_back(sub);
 
-    _classDefinitions[CLASS_ROGUE] = rogue;
+    GetClassDefinitions()[CLASS_ROGUE] = rogue;
 }
 
 // Initialize Priest roles
@@ -339,7 +348,7 @@ void RoleDefinitions::InitializePriestRoles()
     };
     priest.specializations.push_back(shadow);
 
-    _classDefinitions[CLASS_PRIEST] = priest;
+    GetClassDefinitions()[CLASS_PRIEST] = priest;
 }
 
 // Initialize Death Knight roles
@@ -368,7 +377,7 @@ void RoleDefinitions::InitializeDeathKnightRoles()
     };
     dk.specializations.push_back(unholy);
 
-    _classDefinitions[CLASS_DEATH_KNIGHT] = dk;
+    GetClassDefinitions()[CLASS_DEATH_KNIGHT] = dk;
 }
 
 // Initialize Shaman roles
@@ -401,7 +410,7 @@ void RoleDefinitions::InitializeShamanRoles()
     shaman.specializations.push_back(resto);
 
     shaman.hybridCapabilities = {GroupRole::HEALER, GroupRole::RANGED_DPS, GroupRole::MELEE_DPS};
-    _classDefinitions[CLASS_SHAMAN] = shaman;
+    GetClassDefinitions()[CLASS_SHAMAN] = shaman;
 }
 
 // Initialize Mage roles
@@ -430,7 +439,7 @@ void RoleDefinitions::InitializeMageRoles()
     };
     mage.specializations.push_back(frost);
 
-    _classDefinitions[CLASS_MAGE] = mage;
+    GetClassDefinitions()[CLASS_MAGE] = mage;
 }
 
 // Initialize Warlock roles
@@ -459,7 +468,7 @@ void RoleDefinitions::InitializeWarlockRoles()
     };
     warlock.specializations.push_back(destro);
 
-    _classDefinitions[CLASS_WARLOCK] = warlock;
+    GetClassDefinitions()[CLASS_WARLOCK] = warlock;
 }
 
 // Initialize Monk roles
@@ -490,7 +499,7 @@ void RoleDefinitions::InitializeMonkRoles()
     monk.specializations.push_back(wind);
 
     monk.hybridCapabilities = {GroupRole::TANK, GroupRole::HEALER, GroupRole::MELEE_DPS};
-    _classDefinitions[CLASS_MONK] = monk;
+    GetClassDefinitions()[CLASS_MONK] = monk;
 }
 
 // Initialize Druid roles
@@ -531,7 +540,7 @@ void RoleDefinitions::InitializeDruidRoles()
     druid.specializations.push_back(resto);
 
     druid.hybridCapabilities = {GroupRole::TANK, GroupRole::HEALER, GroupRole::RANGED_DPS, GroupRole::MELEE_DPS};
-    _classDefinitions[CLASS_DRUID] = druid;
+    GetClassDefinitions()[CLASS_DRUID] = druid;
 }
 
 // Initialize Demon Hunter roles
@@ -554,7 +563,7 @@ void RoleDefinitions::InitializeDemonHunterRoles()
     };
     dh.specializations.push_back(veng);
 
-    _classDefinitions[CLASS_DEMON_HUNTER] = dh;
+    GetClassDefinitions()[CLASS_DEMON_HUNTER] = dh;
 }
 
 // Initialize Evoker roles
@@ -586,7 +595,7 @@ void RoleDefinitions::InitializeEvokerRoles()
     evoker.specializations.push_back(aug);
 
     evoker.hybridCapabilities = {GroupRole::HEALER, GroupRole::RANGED_DPS};
-    _classDefinitions[CLASS_EVOKER] = evoker;
+    GetClassDefinitions()[CLASS_EVOKER] = evoker;
 }
 
 } // namespace Playerbot

@@ -580,9 +580,9 @@ private:
     void ApplyTracking(uint32 /*trackingSpell*/) { /* Applied by AI */ }
 
     // Pet command interface - delegated to pet manager
-    void CommandPetAttack(::Unit* target) override { _petManager.CommandPetAttack(target); }
-    void CommandPetFollow() override { _petManager.CommandPetFollow(); }
-    void CommandPetStay() override { /* Handled by pet AI */ }
+    void CommandPetAttack(::Unit* target) { _petManager.CommandPetAttack(target); }
+    void CommandPetFollow() { _petManager.CommandPetFollow(); }
+    void CommandPetStay() { /* Handled by pet AI */ }
 
     // Positioning interface - ranged DPS positioning
     // Note: GetOptimalRange is final in RangedDpsSpecialization (returns 25-40 yards)

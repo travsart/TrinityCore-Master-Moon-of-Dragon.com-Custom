@@ -235,20 +235,20 @@ public:
         Player* bot = this->GetBot();
 
         // Enter stealth out of combat
-        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH, bot))
+        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, STEALTH);
+            this->CastSpell(bot, RogueAI::STEALTH);
         }
 
         // Defensive cooldowns
-        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS, bot))
+        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, CLOAK_OF_SHADOWS);
+            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
         }
 
-        if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(EVASION, bot))
+        if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(RogueAI::EVASION, bot))
         {
-            this->CastSpell(bot, EVASION);
+            this->CastSpell(bot, RogueAI::EVASION);
         }
     }
 
@@ -263,18 +263,18 @@ protected:
         uint32 maxCp = this->_resource.maxComboPoints;
 
         // Priority 1: Symbols of Death on cooldown
-        if (this->CanCastSpell(SYMBOLS_OF_DEATH, this->GetBot()))
+        if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SYMBOLS_OF_DEATH);
+            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = getMSTime() + 10000;
             return;
         }
 
         // Priority 2: Shadow Blades on cooldown (talent)
-        if (this->CanCastSpell(SHADOW_BLADES, this->GetBot()))
+        if (this->CanCastSpell(RogueAI::SHADOW_BLADES, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SHADOW_BLADES);
+            this->CastSpell(this->GetBot(), RogueAI::SHADOW_BLADES);
             _shadowBladesActive = true;
             _shadowBladesEndTime = getMSTime() + 20000;
             return;
@@ -283,9 +283,9 @@ protected:
         // Priority 3: Shadow Dance to build combo points
         if (_shadowDanceTracker.ShouldUse(cp))
         {
-            if (this->CanCastSpell(SHADOW_DANCE, this->GetBot()))
+            if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), SHADOW_DANCE);
+                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
                 _shadowDanceTracker.Use();
                 _inStealth = true; // Enables stealth abilities
                 return;
@@ -336,9 +336,9 @@ protected:
         // Priority 7: Rupture if not active
         if (!HasRupture(target) && cp >= 4 && energy >= 25)
         {
-            if (this->CanCastSpell(RUPTURE, target))
+            if (this->CanCastSpell(RogueAI::RUPTURE, target))
             {
-                this->CastSpell(target, RUPTURE);
+                this->CastSpell(target, RogueAI::RUPTURE);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -348,9 +348,9 @@ protected:
         // Priority 8: Backstab for combo points (from behind)
         if (energy >= 35 && cp < maxCp)
         {
-            if (this->IsBehindTarget(target) && this->CanCastSpell(BACKSTAB, target))
+            if (this->IsBehindTarget(target) && this->CanCastSpell(RogueAI::BACKSTAB, target))
             {
-                this->CastSpell(target, BACKSTAB);
+                this->CastSpell(target, RogueAI::BACKSTAB);
                 _lastBackstabTime = getMSTime();
                 ConsumeEnergy(35);
                 GenerateComboPoints(1);
@@ -387,9 +387,9 @@ protected:
         }
 
         // Priority 2: Symbols of Death
-        if (this->CanCastSpell(SYMBOLS_OF_DEATH, this->GetBot()))
+        if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SYMBOLS_OF_DEATH);
+            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = getMSTime() + 10000;
             return;
@@ -398,9 +398,9 @@ protected:
         // Priority 3: Shadow Dance
         if (_shadowDanceTracker.CanUse())
         {
-            if (this->CanCastSpell(SHADOW_DANCE, this->GetBot()))
+            if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), SHADOW_DANCE);
+                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
                 _shadowDanceTracker.Use();
                 _inStealth = true;
                 return;
@@ -491,21 +491,21 @@ private:
     bool HasRupture(::Unit* target) const
     {
         // Simplified - check if target has Rupture aura
-        return target && target->HasAura(RUPTURE, this->GetBot()->GetGUID());
+        return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());
     }
 
     void InitializeCooldowns()
     {
-        this->RegisterCooldown(SHADOW_DANCE, 60000);           // 60 sec per charge
-        this->RegisterCooldown(SYMBOLS_OF_DEATH, 30000);       // 30 sec CD
-        this->RegisterCooldown(SHADOW_BLADES, 180000);         // 3 min CD
-        this->RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000); // 1 min CD
-        this->RegisterCooldown(VANISH, 120000);            // 2 min CD
-        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000);  // 2 min CD
-        this->RegisterCooldown(EVASION, 120000);               // 2 min CD
-        this->RegisterCooldown(KICK, 15000);               // 15 sec CD
-        this->RegisterCooldown(BLIND, 120000);             // 2 min CD
-        this->RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);   // 1 min CD
+        this->RegisterCooldown(RogueAI::SHADOW_DANCE, 60000);        // 60 sec per charge
+        this->RegisterCooldown(RogueAI::SYMBOLS_OF_DEATH, 30000);    // 30 sec CD
+        this->RegisterCooldown(RogueAI::SHADOW_BLADES, 180000);      // 3 min CD
+        this->RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000);      // 1 min CD
+        this->RegisterCooldown(RogueAI::VANISH, 120000);             // 2 min CD
+        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000);   // 2 min CD
+        this->RegisterCooldown(RogueAI::EVASION, 120000);            // 2 min CD
+        this->RegisterCooldown(RogueAI::KICK, 15000);                // 15 sec CD
+        this->RegisterCooldown(RogueAI::BLIND, 120000);              // 2 min CD
+        this->RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);         // 1 min CD
     }
 
 private:

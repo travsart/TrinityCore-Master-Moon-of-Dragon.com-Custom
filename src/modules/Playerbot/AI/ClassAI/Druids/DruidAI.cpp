@@ -1097,7 +1097,7 @@ bool DruidAI::ShiftToForm(DruidForm form)
     return false;
 }
 
-DruidForm DruidAI::GetCurrentForm() const
+DruidAI::DruidForm DruidAI::GetCurrentForm() const
 {
     return _currentForm;
 }

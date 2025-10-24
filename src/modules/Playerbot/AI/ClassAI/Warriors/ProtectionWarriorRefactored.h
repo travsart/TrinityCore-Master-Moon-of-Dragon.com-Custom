@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
 #include "Item.h"
 #include "ItemDefines.h"
 #include <unordered_map>
@@ -559,8 +559,8 @@ private:
     std::unordered_map<ObjectGuid, uint32> _sunderStacks;
 
     // Stance management
-    WarriorStance _currentStance;
-    WarriorStance _preferredStance;
+    WarriorAI::WarriorStance _currentStance;
+    WarriorAI::WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

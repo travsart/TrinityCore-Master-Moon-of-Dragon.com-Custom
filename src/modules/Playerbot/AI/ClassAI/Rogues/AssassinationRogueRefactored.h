@@ -52,9 +52,9 @@ public:
 
     AssassinationDotTracker()
     {
-        _dots[GARROTE] = DotInfo(GARROTE, 18000);
-        _dots[RUPTURE] = DotInfo(RUPTURE, 24000); // 4s per CP
-        _dots[CRIMSON_TEMPEST] = DotInfo(CRIMSON_TEMPEST, 14000);
+        _dots[RogueAI::GARROTE] = DotInfo(RogueAI::GARROTE, 18000);
+        _dots[RogueAI::RUPTURE] = DotInfo(RogueAI::RUPTURE, 24000); // 4s per CP
+        _dots[RogueAI::CRIMSON_TEMPEST] = DotInfo(RogueAI::CRIMSON_TEMPEST, 14000);
     }
 
     void ApplyDot(uint32 spellId, uint32 comboPoints = 0)
@@ -62,7 +62,7 @@ public:
         if (_dots.find(spellId) != _dots.end())
         {
             uint32 duration = _dots[spellId].duration;
-            if (spellId == RUPTURE)
+            if (spellId == RogueAI::RUPTURE)
                 duration = 4000 * std::max(1u, comboPoints); // 4s per CP
 
             _dots[spellId].active = true;
@@ -145,8 +145,8 @@ public:
         , _vendettaEndTime(0)
     {
         // Initialize energy/combo resources
-        this->_resource.maxEnergy = bot->HasSpell(VIGOR) ? 120 : 100;
-        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM) ? 6 : 5;
+        this->_resource.maxEnergy = bot->HasSpell(RogueAI::VIGOR) ? 120 : 100;
+        this->_resource.maxComboPoints = bot->HasSpell(RogueAI::DEEPER_STRATAGEM) ? 6 : 5;
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
@@ -190,21 +190,21 @@ public:
         Player* bot = this->GetBot();
 
         // Maintain poisons
-        if (!bot->HasAura(DEADLY_POISON) && this->CanCastSpell(DEADLY_POISON, bot))
+        if (!bot->HasAura(RogueAI::DEADLY_POISON) && this->CanCastSpell(RogueAI::DEADLY_POISON, bot))
         {
-            this->CastSpell(bot, DEADLY_POISON);
+            this->CastSpell(bot, RogueAI::DEADLY_POISON);
         }
 
         // Enter stealth out of combat
-        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH, bot))
+        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, STEALTH);
+            this->CastSpell(bot, RogueAI::STEALTH);
         }
 
         // Defensive cooldowns
-        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS, bot))
+        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, CLOAK_OF_SHADOWS);
+            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
         }
     }
 
@@ -228,19 +228,19 @@ protected:
         }
 
         // Priority 2: Deathmark on cooldown
-        if (this->CanCastSpell(DEATHMARK, target))
+        if (this->CanCastSpell(RogueAI::DEATHMARK, target))
         {
-            this->CastSpell(target, DEATHMARK);
+            this->CastSpell(target, RogueAI::DEATHMARK);
             return;
         }
 
         // Priority 3: Refresh Garrote
-        if (_dotTracker.NeedsRefresh(GARROTE) && energy >= 45)
+        if (_dotTracker.NeedsRefresh(RogueAI::GARROTE) && energy >= 45)
         {
-            if (this->CanCastSpell(GARROTE, target))
+            if (this->CanCastSpell(RogueAI::GARROTE, target))
             {
-                this->CastSpell(target, GARROTE);
-                _dotTracker.ApplyDot(GARROTE);
+                this->CastSpell(target, RogueAI::GARROTE);
+                _dotTracker.ApplyDot(RogueAI::GARROTE);
                 ConsumeEnergy(45);
                 return;
             }
@@ -250,12 +250,12 @@ protected:
         if (cp >= (maxCp - 1))
         {
             // Refresh Rupture if needed
-            if (_dotTracker.NeedsRefresh(RUPTURE) && energy >= 25)
+            if (_dotTracker.NeedsRefresh(RogueAI::RUPTURE) && energy >= 25)
             {
-                if (this->CanCastSpell(RUPTURE, target))
+                if (this->CanCastSpell(RogueAI::RUPTURE, target))
                 {
-                    this->CastSpell(target, RUPTURE);
-                    _dotTracker.ApplyDot(RUPTURE, cp);
+                    this->CastSpell(target, RogueAI::RUPTURE);
+                    _dotTracker.ApplyDot(RogueAI::RUPTURE, cp);
                     ConsumeEnergy(25);
                     this->_resource.comboPoints = 0;
                     return;
@@ -297,9 +297,9 @@ protected:
         // Priority 7: Poisoned Knife if can't melee
         if (GetDistanceToTarget(target) > 10.0f && energy >= 40)
         {
-            if (this->CanCastSpell(POISONED_KNIFE, target))
+            if (this->CanCastSpell(RogueAI::POISONED_KNIFE, target))
             {
-                this->CastSpell(target, POISONED_KNIFE);
+                this->CastSpell(target, RogueAI::POISONED_KNIFE);
                 ConsumeEnergy(40);
                 GenerateComboPoints(1);
                 return;
@@ -316,10 +316,10 @@ protected:
         // Priority 1: Crimson Tempest finisher
         if (cp >= 4 && energy >= 35)
         {
-            if (this->GetBot()->HasSpell(CRIMSON_TEMPEST) && this->CanCastSpell(CRIMSON_TEMPEST, this->GetBot()))
+            if (this->GetBot()->HasSpell(RogueAI::CRIMSON_TEMPEST) && this->CanCastSpell(RogueAI::CRIMSON_TEMPEST, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), CRIMSON_TEMPEST);
-                _dotTracker.ApplyDot(CRIMSON_TEMPEST);
+                this->CastSpell(this->GetBot(), RogueAI::CRIMSON_TEMPEST);
+                _dotTracker.ApplyDot(RogueAI::CRIMSON_TEMPEST);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -345,27 +345,27 @@ protected:
     void ExecuteStealthOpener(::Unit* target)
     {
         // Priority 1: Garrote from stealth (silence)
-        if (this->CanCastSpell(GARROTE, target))
+        if (this->CanCastSpell(RogueAI::GARROTE, target))
         {
-            this->CastSpell(target, GARROTE);
-            _dotTracker.ApplyDot(GARROTE);
+            this->CastSpell(target, RogueAI::GARROTE);
+            _dotTracker.ApplyDot(RogueAI::GARROTE);
             _inStealth = false;
             return;
         }
 
         // Priority 2: Cheap Shot for stun
-        if (this->CanCastSpell(CHEAP_SHOT, target))
+        if (this->CanCastSpell(RogueAI::CHEAP_SHOT, target))
         {
-            this->CastSpell(target, CHEAP_SHOT);
+            this->CastSpell(target, RogueAI::CHEAP_SHOT);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
         }
 
         // Priority 3: Ambush for damage
-        if (this->CanCastSpell(AMBUSH, target))
+        if (this->CanCastSpell(RogueAI::AMBUSH, target))
         {
-            this->CastSpell(target, AMBUSH);
+            this->CastSpell(target, RogueAI::AMBUSH);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -417,14 +417,14 @@ private:
 
     void InitializeCooldowns()
     {
-        this->RegisterCooldown(VENDETTA, 120000);         // 2 min CD
-        this->RegisterCooldown(DEATHMARK, 120000);        // 2 min CD
-        this->RegisterCooldown(KINGSBANE, 60000);         // 1 min CD
-        this->RegisterCooldown(EXSANGUINATE, 45000);      // 45 sec CD
-        this->RegisterCooldown(VANISH, 120000);           // 2 min CD
-        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000); // 2 min CD
-        this->RegisterCooldown(KICK, 15000);              // 15 sec CD
-        this->RegisterCooldown(BLIND, 120000);            // 2 min CD
+        this->RegisterCooldown(VENDETTA, 120000);                // 2 min CD
+        this->RegisterCooldown(RogueAI::DEATHMARK, 120000);      // 2 min CD
+        this->RegisterCooldown(KINGSBANE, 60000);                // 1 min CD
+        this->RegisterCooldown(EXSANGUINATE, 45000);             // 45 sec CD
+        this->RegisterCooldown(RogueAI::VANISH, 120000);         // 2 min CD
+        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000); // 2 min CD
+        this->RegisterCooldown(RogueAI::KICK, 15000);            // 15 sec CD
+        this->RegisterCooldown(RogueAI::BLIND, 120000);          // 2 min CD
     }
 
 private:

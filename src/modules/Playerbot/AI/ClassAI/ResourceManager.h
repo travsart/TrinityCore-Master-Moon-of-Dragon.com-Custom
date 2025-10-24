@@ -238,11 +238,11 @@ public:
     static uint32 GetChiFromSpell(uint32 spellId);
 
 private:
-    // Cache for resource calculations
-    static std::unordered_map<uint32, uint32> _manaCostCache;
-    static std::unordered_map<uint32, uint32> _rageCostCache;
-    static std::unordered_map<uint32, uint32> _energyCostCache;
-    static std::recursive_mutex _cacheMutex;
+    // Meyer's singleton accessors for DLL-safe static data
+    static std::unordered_map<uint32, uint32>& GetManaCostCache();
+    static std::unordered_map<uint32, uint32>& GetRageCostCache();
+    static std::unordered_map<uint32, uint32>& GetEnergyCostCache();
+    static std::recursive_mutex& GetCacheMutex();
 
     static void CacheSpellResourceCost(uint32 spellId);
 };

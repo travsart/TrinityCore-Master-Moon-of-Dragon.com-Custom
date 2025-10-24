@@ -97,8 +97,9 @@ public:
     static void Initialize();
 
 private:
-    static std::unordered_map<uint8, ClassData> _classDefinitions;
-    static bool _initialized;
+    // Meyer's singleton accessors for DLL-safe static data
+    static std::unordered_map<uint8, ClassData>& GetClassDefinitions();
+    static bool& GetInitialized();
 
     // Role mapping initialization
     static void InitializeWarriorRoles();
@@ -209,10 +210,10 @@ inline bool RoleDefinitions::IsPureClass(uint8 classId)
 
 inline GroupRole RoleDefinitions::GetPrimaryRole(uint8 classId, uint8 specId)
 {
-    if (!_initialized) Initialize();
+    if (!GetInitialized()) Initialize();
 
-    auto it = _classDefinitions.find(classId);
-    if (it != _classDefinitions.end())
+    auto it = GetClassDefinitions().find(classId);
+    if (it != GetClassDefinitions().end())
     {
         for (const auto& spec : it->second.specializations)
         {

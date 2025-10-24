@@ -820,19 +820,39 @@ bool ResourceManager::IsResourceTypeUsedBySpell(uint32 spellId, ResourceType typ
 
 // ResourceCalculator implementation
 
-std::unordered_map<uint32, uint32> ResourceCalculator::_manaCostCache;
-std::unordered_map<uint32, uint32> ResourceCalculator::_rageCostCache;
-std::unordered_map<uint32, uint32> ResourceCalculator::_energyCostCache;
-std::recursive_mutex ResourceCalculator::_cacheMutex;
+// Meyer's singleton accessors for DLL-safe static data
+std::unordered_map<uint32, uint32>& ResourceCalculator::GetManaCostCache()
+{
+    static std::unordered_map<uint32, uint32> manaCostCache;
+    return manaCostCache;
+}
+
+std::unordered_map<uint32, uint32>& ResourceCalculator::GetRageCostCache()
+{
+    static std::unordered_map<uint32, uint32> rageCostCache;
+    return rageCostCache;
+}
+
+std::unordered_map<uint32, uint32>& ResourceCalculator::GetEnergyCostCache()
+{
+    static std::unordered_map<uint32, uint32> energyCostCache;
+    return energyCostCache;
+}
+
+std::recursive_mutex& ResourceCalculator::GetCacheMutex()
+{
+    static std::recursive_mutex cacheMutex;
+    return cacheMutex;
+}
 
 uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
 {
     if (!spellId || !caster)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
-    auto it = _manaCostCache.find(spellId);
-    if (it != _manaCostCache.end())
+    std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+    auto it = GetManaCostCache().find(spellId);
+    if (it != GetManaCostCache().end())
         return it->second;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -856,7 +876,7 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
 
     if (cost == 0)
         return 0;
-    _manaCostCache[spellId] = cost;
+    GetManaCostCache()[spellId] = cost;
     return cost;
 }
 
@@ -1000,7 +1020,7 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
 
     // Cache costs for each power type the spell uses
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
@@ -1011,13 +1031,13 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
         switch (powerEntry->PowerType)
         {
             case POWER_MANA:
-                _manaCostCache[spellId] = powerEntry->ManaCost;
+                GetManaCostCache()[spellId] = powerEntry->ManaCost;
                 break;
             case POWER_RAGE:
-                _rageCostCache[spellId] = powerEntry->ManaCost;
+                GetRageCostCache()[spellId] = powerEntry->ManaCost;
                 break;
             case POWER_ENERGY:
-                _energyCostCache[spellId] = powerEntry->ManaCost;
+                GetEnergyCostCache()[spellId] = powerEntry->ManaCost;
                 break;
             default:
                 break;

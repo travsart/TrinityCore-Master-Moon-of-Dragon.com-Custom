@@ -183,8 +183,8 @@ void WarriorAI::UpdateRotation(::Unit* target)
     }
 
     // Priority 7: Execute specialization-specific rotation
-    uint32 spec = GetBot()->GetPrimarySpecialization();
-    if (spec > 0)
+    ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
+    if (spec != ChrSpecialization(0))
     {
         // Delegation to spec-specific rotation is handled by the spec implementations
         // This is handled through the template system (ArmsWarriorRefactored, etc.)

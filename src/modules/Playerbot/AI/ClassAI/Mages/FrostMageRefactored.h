@@ -171,7 +171,7 @@ private:
     uint32 _maxIcicles;
 };
 
-class FrostMageRefactored : public RangedDpsSpecialization<ManaResource>, public MageSpecialization
+class FrostMageRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     using Base = RangedDpsSpecialization<ManaResource>;
@@ -181,7 +181,6 @@ public:
     using Base::_resource;
     explicit FrostMageRefactored(Player* bot)
         : RangedDpsSpecialization<ManaResource>(bot)
-        , MageSpecialization(bot)
         , _fofTracker()
         , _brainFreezeTracker()
         , _icicleTracker()

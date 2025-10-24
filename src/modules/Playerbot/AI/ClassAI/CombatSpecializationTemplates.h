@@ -102,6 +102,20 @@ struct ResourceTraits<RuneSystem>
     static constexpr const char* name = "Runes";
 };
 
+// Forward declaration for Essence resource
+class EssenceResource;
+
+template<>
+struct ResourceTraits<EssenceResource>
+{
+    static constexpr bool is_simple = false;
+    static constexpr bool is_complex = true;
+    static constexpr bool regenerates = true;
+    static constexpr uint32 regen_rate_ms = 5000; // 1 essence per 5 seconds
+    static constexpr float critical_threshold = 0.4f; // Need at least 2 essence
+    static constexpr const char* name = "Essence";
+};
+
 // ============================================================================
 // BASE COMBAT SPECIALIZATION TEMPLATE
 // ============================================================================

@@ -365,8 +365,9 @@ public:
     static void DumpStatistics();
 
 private:
-    static bool _initialized;
-    static HookStatistics _stats;
+    // Meyer's singleton accessors for DLL-safe static data
+    static bool& GetInitialized();
+    static HookStatistics& GetStats();
 
     // Private helper functions
     static void RegisterHooks();

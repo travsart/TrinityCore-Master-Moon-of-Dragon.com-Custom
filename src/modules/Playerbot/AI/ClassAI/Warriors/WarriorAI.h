@@ -43,6 +43,15 @@ public:
     void OnCombatStart(::Unit* target) override;
     void OnCombatEnd() override;
 
+    // Warrior stance management (public for specialization classes)
+    enum class WarriorStance : uint8
+    {
+        NONE = 0,
+        BATTLE = 1,
+        DEFENSIVE = 2,
+        BERSERKER = 3
+    };
+
 protected:
     // Resource management
     bool HasEnoughResource(uint32 spellId) override;
@@ -51,16 +60,6 @@ protected:
     // Positioning
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
-
-
-    // Warrior stance management
-    enum class WarriorStance : uint8
-    {
-        NONE = 0,
-        BATTLE = 1,
-        DEFENSIVE = 2,
-        BERSERKER = 3
-    };
 
 private:
     // Enhanced performance tracking

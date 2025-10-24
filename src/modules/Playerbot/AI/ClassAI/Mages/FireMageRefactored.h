@@ -144,7 +144,7 @@ private:
     uint32 _lastChargeTime;
 };
 
-class FireMageRefactored : public RangedDpsSpecialization<ManaResource>, public MageSpecialization
+class FireMageRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     // Use base class members directly with this-> or explicit qualification
@@ -158,7 +158,6 @@ public:
 
     explicit FireMageRefactored(Player* bot)
         : RangedDpsSpecialization<ManaResource>(bot)
-        , MageSpecialization(bot)
         , _hotStreakTracker()
         , _fireBlastTracker()
         , _combustionActive(false)

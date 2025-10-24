@@ -136,7 +136,7 @@ private:
     uint32 _clearcastingEndTime;
 };
 
-class ArcaneMageRefactored : public RangedDpsSpecialization<ManaResource>, public MageSpecialization
+class ArcaneMageRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     using Base = RangedDpsSpecialization<ManaResource>;
@@ -149,7 +149,6 @@ public:
 
     explicit ArcaneMageRefactored(Player* bot)
         : RangedDpsSpecialization<ManaResource>(bot)
-        , MageSpecialization(bot)
         , _chargeTracker()
         , _clearcastingTracker()
         , _arcaneSurgeActive(false)

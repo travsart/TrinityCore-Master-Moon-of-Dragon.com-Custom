@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
-#include "../CombatSpecializationTemplates.h"
 #include "Item.h"
 #include "ItemDefines.h"
 #include "UnitDefines.h"
@@ -450,8 +450,8 @@ private:
     bool _hasDualWield;
 
     // Stance management
-    WarriorStance _currentStance;
-    WarriorStance _preferredStance;
+    WarriorAI::WarriorStance _currentStance;
+    WarriorAI::WarriorStance _preferredStance;
 };
 
 } // namespace Playerbot

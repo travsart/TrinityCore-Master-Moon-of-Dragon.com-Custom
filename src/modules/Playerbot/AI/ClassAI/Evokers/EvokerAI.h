@@ -193,6 +193,9 @@ protected:
     Position GetOptimalPosition(::Unit* target) override;
     float GetOptimalRange(::Unit* target) override;
 
+    // Spec detection
+    EvokerSpec DetectSpecialization();
+
 private:
     // Evoker-specific data
     EvokerAspect _currentAspect;

@@ -76,9 +76,11 @@ protected:
         uint32 cooldown;
         uint32 lastCast;
         ::Unit* totemUnit;
+        uint32 deployTime;
+        Position position;
 
         TotemInfo() : spellId(0), type(TotemType::EARTH), behavior(TotemBehavior::AGGRESSIVE),
-                     duration(0), cooldown(0), lastCast(0), totemUnit(nullptr) {}
+                     duration(0), cooldown(0), lastCast(0), totemUnit(nullptr), deployTime(0), position() {}
 
         bool IsActive() const { return totemUnit != nullptr; }
         bool IsOnCooldown(uint32 currentTime) const { return (currentTime - lastCast) < cooldown; }

@@ -260,15 +260,15 @@ public:
         Player* bot = this->GetBot();
 
         // Enter stealth out of combat
-        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(STEALTH, bot))
+        if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, STEALTH);
+            this->CastSpell(bot, RogueAI::STEALTH);
         }
 
         // Defensive cooldowns
-        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(CLOAK_OF_SHADOWS, bot))
+        if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, CLOAK_OF_SHADOWS);
+            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(FEINT_OUTLAW, bot))
@@ -288,9 +288,9 @@ protected:
         uint32 maxCp = this->_resource.maxComboPoints;
 
         // Priority 1: Adrenaline Rush on cooldown
-        if (this->CanCastSpell(ADRENALINE_RUSH, this->GetBot()))
+        if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), ADRENALINE_RUSH);
+            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = getMSTime() + 20000;
             return;
@@ -358,9 +358,9 @@ protected:
         // Priority 7: Sinister Strike for combo points
         if (energy >= 45 && cp < maxCp)
         {
-            if (this->CanCastSpell(SINISTER_STRIKE, target))
+            if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
             {
-                this->CastSpell(target, SINISTER_STRIKE);
+                this->CastSpell(target, RogueAI::SINISTER_STRIKE);
                 _lastSinisterStrikeTime = getMSTime();
                 ConsumeEnergy(45);
                 GenerateComboPoints(1);
@@ -393,9 +393,9 @@ protected:
         // Priority 1: Enable Blade Flurry for cleave
         if (!_bladeFlurryActive && energy >= 15)
         {
-            if (this->CanCastSpell(BLADE_FLURRY, this->GetBot()))
+            if (this->CanCastSpell(RogueAI::BLADE_FLURRY, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), BLADE_FLURRY);
+                this->CastSpell(this->GetBot(), RogueAI::BLADE_FLURRY);
                 _bladeFlurryActive = true;
                 _bladeFlurryEndTime = getMSTime() + 12000;
                 ConsumeEnergy(15);
@@ -404,9 +404,9 @@ protected:
         }
 
         // Priority 2: Adrenaline Rush
-        if (this->CanCastSpell(ADRENALINE_RUSH, this->GetBot()))
+        if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), ADRENALINE_RUSH);
+            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = getMSTime() + 20000;
             return;
@@ -444,18 +444,18 @@ protected:
     void ExecuteStealthOpener(::Unit* target)
     {
         // Ambush from stealth for high damage
-        if (this->CanCastSpell(AMBUSH, target))
+        if (this->CanCastSpell(RogueAI::AMBUSH, target))
         {
-            this->CastSpell(target, AMBUSH);
+            this->CastSpell(target, RogueAI::AMBUSH);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
         }
 
         // Cheap Shot for control
-        if (this->CanCastSpell(CHEAP_SHOT, target))
+        if (this->CanCastSpell(RogueAI::CHEAP_SHOT, target))
         {
-            this->CastSpell(target, CHEAP_SHOT);
+            this->CastSpell(target, RogueAI::CHEAP_SHOT);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -516,15 +516,15 @@ private:
 
     void InitializeCooldowns()
     {
-        this->RegisterCooldown(ADRENALINE_RUSH, 180000);       // 3 min CD
-        this->RegisterCooldown(KILLING_SPREE, 120000);         // 2 min CD
-        this->RegisterCooldown(BLADE_RUSH, 45000);             // 45 sec CD
-        this->RegisterCooldown(VANISH, 120000);                // 2 min CD
-        this->RegisterCooldown(CLOAK_OF_SHADOWS, 120000);      // 2 min CD
-        this->RegisterCooldown(KICK, 15000);                   // 15 sec CD
-        this->RegisterCooldown(BLIND, 120000);                 // 2 min CD
-        this->RegisterCooldown(GOUGE, 15000);                  // 15 sec CD
-        this->RegisterCooldown(MARKED_FOR_DEATH, 60000);       // 1 min CD
+        this->RegisterCooldown(RogueAI::ADRENALINE_RUSH, 180000);       // 3 min CD
+        this->RegisterCooldown(RogueAI::KILLING_SPREE, 120000);         // 2 min CD
+        this->RegisterCooldown(BLADE_RUSH, 45000);                      // 45 sec CD
+        this->RegisterCooldown(RogueAI::VANISH, 120000);                // 2 min CD
+        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000);      // 2 min CD
+        this->RegisterCooldown(RogueAI::KICK, 15000);                   // 15 sec CD
+        this->RegisterCooldown(RogueAI::BLIND, 120000);                 // 2 min CD
+        this->RegisterCooldown(RogueAI::GOUGE, 15000);                  // 15 sec CD
+        this->RegisterCooldown(MARKED_FOR_DEATH, 60000);                // 1 min CD
     }
 
 private:

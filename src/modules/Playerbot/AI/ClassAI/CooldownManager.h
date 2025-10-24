@@ -189,10 +189,10 @@ public:
     static uint32 ApplyCooldownReduction(uint32 cooldownMs, Player* caster, uint32 spellId);
 
 private:
-    // Cache for spell cooldown data
-    static std::unordered_map<uint32, uint32> _cooldownCache;
-    static std::unordered_map<uint32, bool> _gcdCache;
-    static std::recursive_mutex _cacheMutex;
+    // Meyer's singleton accessors for DLL-safe static data
+    static std::unordered_map<uint32, uint32>& GetCooldownCache();
+    static std::unordered_map<uint32, bool>& GetGcdCache();
+    static std::recursive_mutex& GetCacheMutex();
 
     static void CacheSpellData(uint32 spellId);
 };

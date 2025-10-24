@@ -242,6 +242,62 @@ private:
     static constexpr uint32 PET_HEAL_THRESHOLD = 50;   // Heal pet below 50% HP
     static constexpr uint32 DEFENSIVE_HEALTH_THRESHOLD = 30; // Use defensives below 30% HP
     static constexpr uint32 FEIGN_DEATH_THRESHOLD = 20; // Feign death below 20% HP
+
+public:
+    // Hunter Spell IDs
+    enum HunterSpells
+    {
+        // Shots and Attacks
+        STEADY_SHOT = 56641,
+        ARCANE_SHOT = 3044,
+        MULTI_SHOT = 2643,
+        AIMED_SHOT = 19434,
+        KILL_SHOT = 53351,
+        EXPLOSIVE_SHOT = 53301,
+        SERPENT_STING = 1978,
+        CONCUSSIVE_SHOT = 5116,
+
+        // Pet Abilities
+        KILL_COMMAND = 34026,
+        MEND_PET = 136,
+        REVIVE_PET = 982,
+        CALL_PET = 883,
+        MASTER_S_CALL = 53271,
+
+        // Traps
+        FREEZING_TRAP = 187650,
+        EXPLOSIVE_TRAP = 191433,
+        SNAKE_TRAP = 34600,
+
+        // Defensive/Utility
+        HUNTER_DISENGAGE = 781,
+        FEIGN_DEATH = 5384,
+        DETERRENCE = 19263,
+        EXHILARATION = 109304,
+        WING_CLIP = 2974,
+        SCATTER_SHOT = 19503,
+        COUNTER_SHOT = 147362,
+        SILENCING_SHOT = 34490,
+
+        // Aspects
+        ASPECT_OF_THE_HAWK = 13165,
+        ASPECT_OF_THE_WILD = 20043,
+        ASPECT_OF_THE_CHEETAH = 5118,
+        ASPECT_OF_THE_TURTLE = 186265,
+        ASPECT_OF_THE_DRAGONHAWK = 61846,
+        ASPECT_OF_THE_PACK = 13159,
+        ASPECT_OF_THE_VIPER = 34074,
+
+        // Marks/Debuffs
+        HUNTER_S_MARK = 1130,
+
+        // Cooldowns
+        RAPID_FIRE = 3045,
+        BESTIAL_WRATH = 19574,
+        TRUESHOT = 288613,
+        BARRAGE = 120360,
+        VOLLEY = 260243
+    };
 };
 
 } // namespace Playerbot

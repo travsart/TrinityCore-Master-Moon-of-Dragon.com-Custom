@@ -482,7 +482,7 @@ bool WarlockAI::HandlePetManagement()
     }
 
     // Demonic Empowerment for Demonology (spec ID 266)
-    if (bot->GetSpecialization() == 266)
+    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -512,7 +512,7 @@ bool WarlockAI::SummonPet()
         return false;
 
     uint32 summonSpell = 0;
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Choose pet based on spec and situation
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
@@ -618,7 +618,7 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     if (nearbyEnemies < 3)
         return false;
 
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Seed of Corruption for Affliction (265) or when many enemies
     if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)
@@ -679,7 +679,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
         return false;
 
     bool usedCooldown = false;
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Dark Soul variants based on spec
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
@@ -812,7 +812,7 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
         return true;
 
     // Conflagrate for Destruction (267)
-    if (bot->GetSpecialization() == 267)
+    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 267)
     {
         if (bot->HasSpell(CONFLAGRATE) && target->HasAura(IMMOLATE))
         {
@@ -859,7 +859,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
     }
 
     // Spec-specific DoTs
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     if (static_cast<uint32>(spec) == 265) // Affliction
     {
@@ -923,7 +923,7 @@ bool WarlockAI::ApplyCurse(Unit* target)
         // Curse of Tongues for casters
         curseSpell = CURSE_OF_TONGUES;
     }
-    else if (bot->GetSpecialization() == 265) // Affliction
+    else if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265) // Affliction
     {
         // Curse of Agony for Affliction
         curseSpell = CURSE_OF_AGONY;
@@ -1367,7 +1367,7 @@ void WarlockAI::UpdateWarlockBuffs()
     }
 
     // Soul Link for Demonology (266)
-    if (bot->GetSpecialization() == 266)
+    if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)
     {
         if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive)
         {
@@ -1490,7 +1490,7 @@ void WarlockAI::OptimizePetPositioning()
     float distance = 0.0f;
 
     // Determine optimal position based on pet type
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
     if (static_cast<uint32>(spec) == 266 && bot->HasSpell(SUMMON_FELGUARD)) // Demonology
     {
         // Melee pet - position in front of target
@@ -1592,7 +1592,7 @@ void WarlockAI::ManageWarlockCooldowns()
     if (!bot || !bot->IsInCombat())
         return;
 
-    uint32 spec = bot->GetSpecialization();
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Demonic Empowerment for Demonology (266)
     if (static_cast<uint32>(spec) == 266 && _petActive)
@@ -1643,7 +1643,7 @@ void WarlockAI::HandleAoESituations()
     if (nearbyEnemies >= 3)
     {
         // Seed of Corruption for Affliction (265)
-        if (bot->GetSpecialization() == 265 && bot->HasSpell(SEED_OF_CORRUPTION))
+        if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265 && bot->HasSpell(SEED_OF_CORRUPTION))
         {
             Unit* target = bot->GetVictim();
             if (target && !target->HasAura(SEED_OF_CORRUPTION) && !bot->GetSpellHistory()->HasCooldown(SEED_OF_CORRUPTION))
@@ -1684,7 +1684,7 @@ void WarlockAI::OptimizeDoTRotation()
         return;
 
     // Affliction (265) focuses heavily on DoTs
-    if (bot->GetSpecialization() != 265)
+    if (static_cast<uint32>(bot->GetPrimarySpecialization()) != 265)
         return;
 
     Unit* target = bot->GetVictim();

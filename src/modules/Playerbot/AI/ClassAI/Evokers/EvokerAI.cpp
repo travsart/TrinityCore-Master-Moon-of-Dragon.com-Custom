@@ -991,17 +991,24 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
 
 EvokerSpec EvokerAI::DetectSpecialization()
 {
-    if (!_bot)
+    Player* bot = GetBot();
+    if (!bot)
         return EvokerSpec::DEVASTATION;
 
-    // Simple detection based on known spells
-    if (_bot->HasSpell(EMERALD_BLOSSOM) || _bot->HasSpell(DREAM_BREATH))
-        return EvokerSpec::PRESERVATION;
+    // Use TrinityCore's GetPrimarySpecialization to determine specialization
+    // 1467 = Devastation, 1468 = Preservation, 1473 = Augmentation
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
-    if (_bot->HasSpell(EBON_MIGHT) || _bot->HasSpell(PRESCIENCE))
-        return EvokerSpec::AUGMENTATION;
-
-    return EvokerSpec::DEVASTATION;
+    switch (spec)
+    {
+        case 1468: // ChrSpecialization::EvokerPreservation
+            return EvokerSpec::PRESERVATION;
+        case 1473: // ChrSpecialization::EvokerAugmentation
+            return EvokerSpec::AUGMENTATION;
+        case 1467: // ChrSpecialization::EvokerDevastation
+        default:
+            return EvokerSpec::DEVASTATION;
+    }
 }
 
 bool EvokerAI::IsEmpoweredSpell(uint32 spellId)
