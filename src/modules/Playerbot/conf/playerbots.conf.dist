@@ -1252,3 +1252,540 @@ Playerbot.LevelManager.MaxBotsPerUpdate = 10
 Playerbot.LevelManager.VerboseLogging = 0
 Playerbot.LevelManager.EnableStatistics = 1
 Playerbot.LevelManager.PrintReportOnShutdown = 1
+
+###################################################################################################
+# BOT SPAWNING & POOLING SYSTEM
+#
+# Purpose: Control how bots are spawned and managed in the world
+#
+# Features:
+# - Batch spawning for performance optimization
+# - Per-zone and per-map limits to prevent overcrowding
+# - Bot pooling for efficient resource management
+# - Configurable spawn delays to spread server load
+#
+# Performance:
+# - Batch spawning reduces database queries
+# - Pool management prevents memory fragmentation
+# - Zone/map limits ensure balanced population distribution
+#
+###################################################################################################
+
+###################################################################################################
+# BOT SPAWNING - CORE SETTINGS
+#
+#    Playerbot.Spawn.MaxTotal
+#        Description: Maximum total number of bots that can be spawned server-wide
+#        Default:     100
+#        Range:       1-5000
+#        Note:        Overrides Playerbot.MaxBots if set
+#                     Use this for strict spawn control
+#
+#    Playerbot.Spawn.MaxPerZone
+#        Description: Maximum bots allowed in a single zone
+#        Default:     50
+#        Range:       1-500
+#        Note:        Prevents zone overcrowding
+#                     Distributes bots across multiple zones
+#
+#    Playerbot.Spawn.MaxPerMap
+#        Description: Maximum bots allowed on a single map (continent)
+#        Default:     200
+#        Range:       10-2000
+#        Note:        Balances load across Eastern Kingdoms, Kalimdor, etc.
+#
+#    Playerbot.Spawn.BatchSize
+#        Description: Number of bots to spawn in a single batch
+#        Default:     10
+#        Range:       1-100
+#        Note:        Higher values = faster spawning but higher CPU spikes
+#                     Lower values = smoother spawning but takes longer
+#
+#    Playerbot.Spawn.DelayMs
+#        Description: Delay between spawn batches (milliseconds)
+#        Default:     1000 (1 second)
+#        Range:       100-10000
+#        Note:        Time to wait between spawning each batch
+#                     Prevents server stalls during mass bot spawning
+#
+###################################################################################################
+
+Playerbot.Spawn.MaxTotal = 100
+Playerbot.Spawn.MaxPerZone = 50
+Playerbot.Spawn.MaxPerMap = 200
+Playerbot.Spawn.BatchSize = 10
+Playerbot.Spawn.DelayMs = 1000
+
+###################################################################################################
+# BOT POOLING - RESOURCE MANAGEMENT
+#
+#    Playerbot.Pool.MinSize
+#        Description: Minimum number of bot objects to keep in memory pool
+#        Default:     10
+#        Range:       0-100
+#        Note:        Pre-allocated bot objects for fast spawning
+#                     Reduces memory allocation overhead
+#                     0 = No pre-allocation (slower spawning)
+#
+#    Playerbot.Pool.MaxSize
+#        Description: Maximum number of bot objects in memory pool
+#        Default:     100
+#        Range:       10-500
+#        Note:        Prevents unlimited memory growth
+#                     Objects beyond this are deleted immediately
+#                     Should be >= Playerbot.MaxBots for best performance
+#
+###################################################################################################
+
+Playerbot.Pool.MinSize = 10
+Playerbot.Pool.MaxSize = 100
+
+###################################################################################################
+# TRADING SYSTEM
+#
+# Purpose: Enable player-to-bot and bot-to-bot trading with security controls
+#
+# Features:
+# - Auto-accept trades from trusted sources (group, guild, owner, whitelist)
+# - Trade value validation and scam protection
+# - Protected items system (prevents accidental trade of important items)
+# - Loot distribution for group play
+# - Comprehensive logging and statistics
+#
+# Security Levels:
+# - Level 0 (None):     Accept all trades without validation
+# - Level 1 (Basic):    Ownership checks only
+# - Level 2 (Standard): Value comparison + whitelist (recommended)
+# - Level 3 (Strict):   All validations + manual approval for high-value trades
+#
+###################################################################################################
+
+###################################################################################################
+# TRADING - CORE SETTINGS
+#
+#    Playerbot.Trade.Enable
+#        Description: Master switch for trading system
+#        Default:     1 (enabled)
+#        Note:        When disabled, bots will reject all trade requests
+#
+#    Playerbot.Trade.UpdateInterval
+#        Description: Trade window update frequency (milliseconds)
+#        Default:     1000 (1 second)
+#        Range:       100-5000
+#        Note:        How often bots check and update active trades
+#                     Lower values = more responsive, higher CPU usage
+#
+#    Playerbot.Trade.Timeout
+#        Description: Trade session timeout (milliseconds)
+#        Default:     60000 (60 seconds)
+#        Range:       10000-300000
+#        Note:        Time before automatically canceling inactive trades
+#
+#    Playerbot.Trade.RequestTimeout
+#        Description: Trade request acceptance timeout (milliseconds)
+#        Default:     30000 (30 seconds)
+#        Range:       5000-120000
+#        Note:        Time to accept/reject incoming trade requests
+#
+###################################################################################################
+
+Playerbot.Trade.Enable = 1
+Playerbot.Trade.UpdateInterval = 1000
+Playerbot.Trade.Timeout = 60000
+Playerbot.Trade.RequestTimeout = 30000
+
+###################################################################################################
+# TRADING - AUTO-ACCEPT SETTINGS
+#
+# Description: Control which trade requests are automatically accepted
+# Note: All auto-accept settings respect SecurityLevel restrictions
+#
+#    Playerbot.Trade.AutoAccept.Enable
+#        Description: Master switch for auto-accepting trades
+#        Default:     1 (enabled)
+#        Note:        When disabled, all trades require manual approval
+#
+#    Playerbot.Trade.AutoAccept.Owner
+#        Description: Auto-accept trades from bot owner
+#        Default:     1 (enabled)
+#        Note:        Bot owner = account that created the bot character
+#
+#    Playerbot.Trade.AutoAccept.Group
+#        Description: Auto-accept trades from group members
+#        Default:     1 (enabled)
+#        Note:        Only applies when bot is in a group
+#
+#    Playerbot.Trade.AutoAccept.Guild
+#        Description: Auto-accept trades from guild members
+#        Default:     0 (disabled)
+#        Note:        More permissive, enable if guild is trusted
+#
+#    Playerbot.Trade.AutoAccept.Whitelist
+#        Description: Auto-accept trades from whitelisted players
+#        Default:     1 (enabled)
+#        Note:        Whitelist managed via bot commands
+#
+###################################################################################################
+
+Playerbot.Trade.AutoAccept.Enable = 1
+Playerbot.Trade.AutoAccept.Owner = 1
+Playerbot.Trade.AutoAccept.Group = 1
+Playerbot.Trade.AutoAccept.Guild = 0
+Playerbot.Trade.AutoAccept.Whitelist = 1
+
+###################################################################################################
+# TRADING - SECURITY & LIMITS
+#
+#    Playerbot.Trade.SecurityLevel
+#        Description: Trade security validation level
+#        Default:     2 (Standard)
+#        Range:       0-3
+#        Values:      0 = None (accept all)
+#                     1 = Basic (ownership checks)
+#                     2 = Standard (value comparison + whitelist)
+#                     3 = Strict (all validations + high-value approval)
+#
+#    Playerbot.Trade.MaxGold
+#        Description: Maximum gold bots can trade in a single transaction
+#        Default:     100000 (1000 gold, in copper)
+#        Range:       1-10000000
+#        Note:        Value in copper (10000 = 1 gold)
+#                     Prevents large gold transfers
+#
+#    Playerbot.Trade.MaxItemValue
+#        Description: Maximum estimated value of items in trade (copper)
+#        Default:     10000 (100 gold)
+#        Range:       100-1000000
+#        Note:        Based on vendor sell price and quality multipliers
+#
+#    Playerbot.Trade.MaxItems
+#        Description: Maximum number of items per trade
+#        Default:     6
+#        Range:       1-6
+#        Note:        6 is TrinityCore's trade window limit
+#
+#    Playerbot.Trade.MaxDistance
+#        Description: Maximum distance (yards) for trading
+#        Default:     10.0
+#        Range:       1.0-100.0
+#        Note:        Bots reject trades from players too far away
+#
+#    Playerbot.Trade.ValueTolerance
+#        Description: Acceptable value imbalance ratio (0.0-1.0)
+#        Default:     0.3 (30% difference allowed)
+#        Range:       0.0-1.0
+#        Note:        0.3 means bot accepts if trade is within 70%-130% fair value
+#                     0.0 = Requires perfectly balanced trades
+#                     1.0 = Accepts any value difference
+#
+#    Playerbot.Trade.ScamProtection
+#        Description: Enable advanced scam detection
+#        Default:     1 (enabled)
+#        Note:        Detects suspicious patterns (empty trades, low-value for high-value, etc.)
+#
+#    Playerbot.Trade.WhitelistOnly
+#        Description: Only accept trades from whitelisted players
+#        Default:     0 (disabled)
+#        Note:        When enabled, ignores all auto-accept settings except whitelist
+#                     Maximum security mode
+#
+###################################################################################################
+
+Playerbot.Trade.SecurityLevel = 2
+Playerbot.Trade.MaxGold = 100000
+Playerbot.Trade.MaxItemValue = 10000
+Playerbot.Trade.MaxItems = 6
+Playerbot.Trade.MaxDistance = 10.0
+Playerbot.Trade.ValueTolerance = 0.3
+Playerbot.Trade.ScamProtection = 1
+Playerbot.Trade.WhitelistOnly = 0
+
+###################################################################################################
+# TRADING - PROTECTED ITEMS
+#
+#    Playerbot.Trade.ProtectedItems
+#        Description: Comma-separated list of item IDs that cannot be traded
+#        Default:     "" (empty - no protected items)
+#        Example:     "19019,21221,22736" (Thunderfury, Scarab Lord, Atiesh)
+#        Note:        Prevents bots from accidentally trading rare/important items
+#                     Item IDs from item_template.entry in world database
+#
+###################################################################################################
+
+Playerbot.Trade.ProtectedItems = ""
+
+###################################################################################################
+# TRADING - LOOT DISTRIBUTION
+#
+# Description: Configure how bots distribute loot in group play
+# Note: Works with group loot settings and master looter
+#
+#    Playerbot.Trade.LootDistribution.Enable
+#        Description: Enable automated loot distribution in groups
+#        Default:     1 (enabled)
+#        Note:        Bots will participate in loot rolls and distribution
+#
+#    Playerbot.Trade.LootDistribution.NeedGreed
+#        Description: Use Need/Greed loot system
+#        Default:     1 (enabled)
+#        Note:        Bots roll Need on usable upgrades, Greed otherwise
+#                     Follows standard WoW loot etiquette
+#
+#    Playerbot.Trade.LootDistribution.RoundRobin
+#        Description: Use round-robin loot distribution
+#        Default:     0 (disabled)
+#        Note:        Each player gets items in turn
+#                     Alternative to Need/Greed
+#
+#    Playerbot.Trade.LootDistribution.BySpec
+#        Description: Consider specialization when rolling Need
+#        Default:     1 (enabled)
+#        Note:        Bots only roll Need on spec-appropriate items
+#                     Example: Tank spec won't Need on DPS trinkets
+#
+###################################################################################################
+
+Playerbot.Trade.LootDistribution.Enable = 1
+Playerbot.Trade.LootDistribution.NeedGreed = 1
+Playerbot.Trade.LootDistribution.RoundRobin = 0
+Playerbot.Trade.LootDistribution.BySpec = 1
+
+###################################################################################################
+# TRADING - LOGGING & STATISTICS
+#
+#    Playerbot.Trade.Logging.Enable
+#        Description: Enable trade event logging
+#        Default:     1 (enabled)
+#        Note:        Logs trade requests, acceptances, rejections
+#                     Useful for debugging and audit trails
+#                     Logs to: Logger.playerbot.trade
+#
+#    Playerbot.Trade.Logging.Detailed
+#        Description: Enable detailed trade logging
+#        Default:     0 (disabled)
+#        Note:        Logs item details, values, calculations
+#                     Generates significant log volume
+#
+#    Playerbot.Trade.Logging.Statistics
+#        Description: Track trade statistics
+#        Default:     1 (enabled)
+#        Note:        Tracks: total trades, gold transferred, items traded
+#                     Minimal performance impact
+#
+###################################################################################################
+
+Playerbot.Trade.Logging.Enable = 1
+Playerbot.Trade.Logging.Detailed = 0
+Playerbot.Trade.Logging.Statistics = 1
+
+###################################################################################################
+# AUCTION HOUSE SYSTEM
+#
+# Purpose: Enable bots to participate in auction house economy
+#
+# Features:
+# - Automated buying and selling based on market prices
+# - Multiple pricing strategies (conservative, aggressive, smart AI-driven)
+# - Commodity trading (ores, herbs, consumables)
+# - Market maker functionality (buy low, sell high)
+# - Price history tracking for trend analysis
+# - Risk management and profit controls
+#
+# Strategies:
+# - Strategy 0 (Conservative): Undercut by 1%, safe pricing
+# - Strategy 1 (Aggressive):   Undercut by 5-10%, fast sales
+# - Strategy 2 (Premium):      List at market average, quality focus
+# - Strategy 3 (Quick Sale):   Undercut by 20%, immediate sales
+# - Strategy 4 (Market Maker): Buy underpriced, sell at fair value
+# - Strategy 5 (Smart AI):     Adaptive based on market trends (default)
+#
+###################################################################################################
+
+###################################################################################################
+# AUCTION HOUSE - CORE SETTINGS
+#
+#    Playerbot.Auction.Enable
+#        Description: Master switch for auction house system
+#        Default:     1 (enabled)
+#        Note:        When disabled, bots will not use auction houses
+#
+#    Playerbot.Auction.MarketScanInterval
+#        Description: How often to scan auction house (seconds)
+#        Default:     300 (5 minutes)
+#        Range:       60-3600
+#        Warning:     Low values cause heavy database load
+#        Note:        Time between market price updates
+#
+#    Playerbot.Auction.MaxActiveAuctions
+#        Description: Maximum active auctions per bot
+#        Default:     10
+#        Range:       1-50
+#        Note:        Limits total auctions bot can have listed
+#
+#    Playerbot.Auction.MinProfit
+#        Description: Minimum profit margin required (copper)
+#        Default:     10 (10 copper)
+#        Range:       1-100000
+#        Note:        Bots won't create auctions with less profit
+#                     Prevents listing items at a loss
+#
+###################################################################################################
+
+Playerbot.Auction.Enable = 1
+Playerbot.Auction.MarketScanInterval = 300
+Playerbot.Auction.MaxActiveAuctions = 10
+Playerbot.Auction.MinProfit = 10
+
+###################################################################################################
+# AUCTION HOUSE - PRICING & STRATEGY
+#
+#    Playerbot.Auction.DefaultStrategy
+#        Description: Default pricing strategy
+#        Default:     5 (Smart AI)
+#        Range:       0-5
+#        Values:      0 = Conservative (undercut 1%)
+#                     1 = Aggressive (undercut 5-10%)
+#                     2 = Premium (market average)
+#                     3 = Quick Sale (undercut 20%)
+#                     4 = Market Maker (buy low, sell high)
+#                     5 = Smart AI (adaptive, recommended)
+#
+#    Playerbot.Auction.UndercutPercentage
+#        Description: Default undercut percentage for strategies 0-3
+#        Default:     5.0 (5%)
+#        Range:       0.1-50.0
+#        Note:        Used when strategy doesn't specify fixed undercut
+#
+#    Playerbot.Auction.PriceHistoryDays
+#        Description: Days of price history to track
+#        Default:     7
+#        Range:       1-30
+#        Note:        Longer history = better trend analysis
+#                     Higher memory usage
+#
+#    Playerbot.Auction.MaxRiskScore
+#        Description: Maximum risk score for Market Maker strategy
+#        Default:     50
+#        Range:       0-100
+#        Note:        0 = Zero risk (safest investments)
+#                     100 = High risk (volatile items)
+#                     Only applies to Strategy 4 (Market Maker)
+#
+###################################################################################################
+
+Playerbot.Auction.DefaultStrategy = 5
+Playerbot.Auction.UndercutPercentage = 5.0
+Playerbot.Auction.PriceHistoryDays = 7
+Playerbot.Auction.MaxRiskScore = 50
+
+###################################################################################################
+# AUCTION HOUSE - TRADING FEATURES
+#
+#    Playerbot.Auction.CommodityEnabled
+#        Description: Allow bots to trade commodities
+#        Default:     1 (enabled)
+#        Note:        Commodities = ores, herbs, cloth, consumables
+#                     High-volume, low-margin trading
+#
+#    Playerbot.Auction.MarketMakerEnabled
+#        Description: Allow Market Maker strategy (buy low, sell high)
+#        Default:     0 (disabled)
+#        Warning:     Can significantly affect server economy
+#        Note:        Bots actively buy underpriced items for resale
+#                     Enable only if you want active bot economy participation
+#
+###################################################################################################
+
+Playerbot.Auction.CommodityEnabled = 1
+Playerbot.Auction.MarketMakerEnabled = 0
+
+###################################################################################################
+# DEATH RECOVERY SYSTEM (LEGACY COMPATIBILITY)
+#
+# Purpose: Handle bot death and resurrection automatically
+#
+# Note: Many of these settings are legacy aliases for Playerbot.Death.* settings
+#       They are provided for backward compatibility with older configurations
+#       New deployments should use Playerbot.Death.* settings instead
+#
+# Features:
+# - Automatic spirit release
+# - Intelligent corpse run vs spirit healer decision
+# - Configurable delays to simulate human behavior
+# - Pathfinding and navigation during corpse recovery
+# - Battleground resurrection support
+#
+###################################################################################################
+
+###################################################################################################
+# DEATH RECOVERY - LEGACY SETTINGS
+#
+#    Playerbot.AutoReleaseDelay
+#        Description: Legacy alias for Playerbot.Death.ReleaseDelay
+#        Default:     5 (seconds)
+#        Note:        Use Playerbot.Death.ReleaseDelay for new configurations
+#
+#    Playerbot.PreferCorpseRun
+#        Description: Legacy alias for Playerbot.Death.PreferCorpseRun
+#        Default:     1 (enabled)
+#        Note:        Use Playerbot.Death.PreferCorpseRun for new configurations
+#
+#    Playerbot.MaxCorpseRunDistance
+#        Description: Legacy alias for Playerbot.Death.MaxCorpseRunDistance
+#        Default:     200.0 (yards)
+#        Note:        Use Playerbot.Death.MaxCorpseRunDistance for new configurations
+#
+#    Playerbot.AutoSpiritHealer
+#        Description: Legacy alias for Playerbot.Death.AutoSpiritHealer
+#        Default:     1 (enabled)
+#        Note:        Use Playerbot.Death.AutoSpiritHealer for new configurations
+#
+#    Playerbot.SpiritHealerSearchRadius
+#        Description: Legacy alias for Playerbot.Death.SpiritHealerSearchRadius
+#        Default:     150.0 (yards)
+#        Note:        Use Playerbot.Death.SpiritHealerSearchRadius for new configurations
+#
+#    Playerbot.AllowBattleResurrection
+#        Description: Legacy alias for Playerbot.Death.AllowBattleResurrection
+#        Default:     1 (enabled)
+#        Note:        Use Playerbot.Death.AllowBattleResurrection for new configurations
+#
+#    Playerbot.ResurrectionTimeout
+#        Description: Legacy alias for Playerbot.Death.ResurrectionTimeout
+#        Default:     300 (seconds)
+#        Note:        Use Playerbot.Death.ResurrectionTimeout for new configurations
+#
+#    Playerbot.SkipResurrectionSickness
+#        Description: Legacy alias for Playerbot.Death.SkipResurrectionSickness
+#        Default:     0 (disabled)
+#        Warning:     FOR TESTING ONLY
+#        Note:        Use Playerbot.Death.SkipResurrectionSickness for new configurations
+#
+#    Playerbot.LogDeathRecovery
+#        Description: Legacy alias for Playerbot.Death.LogRecovery
+#        Default:     1 (enabled)
+#        Note:        Use Playerbot.Death.LogRecovery for new configurations
+#
+#    Playerbot.DeathRecovery.NavigationInterval
+#        Description: Legacy alias for Playerbot.Death.NavigationUpdateInterval
+#        Default:     500 (milliseconds)
+#        Note:        Use Playerbot.Death.NavigationUpdateInterval for new configurations
+#
+#    Playerbot.DeathRecovery.DistanceCheckInterval
+#        Description: Legacy alias for Playerbot.Death.DistanceCheckInterval
+#        Default:     1000 (milliseconds)
+#        Note:        Use Playerbot.Death.DistanceCheckInterval for new configurations
+#
+###################################################################################################
+
+Playerbot.AutoReleaseDelay = 5
+Playerbot.PreferCorpseRun = 1
+Playerbot.MaxCorpseRunDistance = 200.0
+Playerbot.AutoSpiritHealer = 1
+Playerbot.SpiritHealerSearchRadius = 150.0
+Playerbot.AllowBattleResurrection = 1
+Playerbot.ResurrectionTimeout = 300
+Playerbot.SkipResurrectionSickness = 0
+Playerbot.LogDeathRecovery = 1
+Playerbot.DeathRecovery.NavigationInterval = 500
+Playerbot.DeathRecovery.DistanceCheckInterval = 1000
