@@ -71,7 +71,7 @@ void BotThreatManager::UpdateThreat(uint32 diff)
     _lastUpdate = 0;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        // No lock needed - threat data is per-bot instance data
 
         // Update threat table
         UpdateThreatTable(diff);
@@ -102,7 +102,7 @@ void BotThreatManager::UpdateThreat(uint32 diff)
 
 void BotThreatManager::ResetThreat()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
     _threatMap.clear();
     _threatHistory.clear();
     _analysisDirty = true;
@@ -176,7 +176,7 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     ObjectGuid targetGuid = target->GetGUID();
     uint32 now = getMSTime();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
@@ -225,7 +225,7 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -253,7 +253,7 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
         return _cachedAnalysis;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     ThreatAnalysis analysis;
     std::vector<ThreatTarget> targets;
@@ -354,7 +354,7 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
@@ -375,7 +375,7 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -386,7 +386,7 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 
 void BotThreatManager::UpdateTargetPriorities()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     for (auto& [guid, info] : _threatMap)
     {
@@ -470,7 +470,7 @@ bool BotThreatManager::HasThreat(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     return it != _threatMap.end() && it->second.isActive && it->second.threatValue > 0.0f;
@@ -483,7 +483,7 @@ float BotThreatManager::GetThreat(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -499,7 +499,7 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -515,7 +515,7 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())
@@ -528,7 +528,7 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 {
     std::vector<Unit*> targets;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     for (const auto& [guid, info] : _threatMap)
     {
@@ -553,7 +553,7 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
 {
     std::vector<Unit*> targets;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     for (const auto& [guid, info] : _threatMap)
     {
@@ -576,7 +576,7 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
 
 uint32 BotThreatManager::GetThreatTargetCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     uint32 count = 0;
     for (const auto& [guid, info] : _threatMap)
@@ -634,7 +634,7 @@ void BotThreatManager::OnSpellInterrupt(Unit* target)
 
     ObjectGuid targetGuid = target->GetGUID();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - threat data is per-bot instance data
 
     auto it = _threatMap.find(targetGuid);
     if (it != _threatMap.end())

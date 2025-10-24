@@ -95,7 +95,7 @@ void BotLevelManager::Shutdown()
 
     // Clear task queue
     {
-        std::lock_guard<std::mutex> lock(_queueMutex);
+        // No lock needed - level queue is per-bot instance data
         while (!_mainThreadQueue.empty())
             _mainThreadQueue.pop();
     }
@@ -567,7 +567,7 @@ bool BotLevelManager::ApplyZone(Player* bot, BotCreationTask* task)
 
 void BotLevelManager::QueueMainThreadTask(std::shared_ptr<BotCreationTask> task)
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    // No lock needed - level queue is per-bot instance data
     _mainThreadQueue.push(task);
 
     _stats.currentQueueSize = static_cast<uint32>(_mainThreadQueue.size());
@@ -577,7 +577,7 @@ void BotLevelManager::QueueMainThreadTask(std::shared_ptr<BotCreationTask> task)
 
 std::shared_ptr<BotCreationTask> BotLevelManager::DequeueTask()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    // No lock needed - level queue is per-bot instance data
 
     if (_mainThreadQueue.empty())
         return nullptr;

@@ -82,7 +82,7 @@ namespace Playerbot
 
     bool InteractionManager::Initialize()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         if (m_initialized)
             return true;
@@ -116,7 +116,7 @@ namespace Playerbot
 
     void InteractionManager::Shutdown()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         if (!m_initialized)
             return;
@@ -154,7 +154,7 @@ namespace Playerbot
 
     void InteractionManager::Update(uint32 diff)
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         if (!m_initialized)
             return;
@@ -235,7 +235,7 @@ namespace Playerbot
         if (!bot || !target)
             return InteractionResult::InvalidTarget;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         // Check if bot already has active interaction
         if (HasActiveInteraction(bot))
@@ -317,7 +317,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (it != m_activeInteractions.end())
@@ -336,7 +336,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
         return m_activeInteractions.find(bot->GetGUID()) != m_activeInteractions.end();
     }
 
@@ -345,7 +345,7 @@ namespace Playerbot
         if (!bot)
             return nullptr;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (it != m_activeInteractions.end())
@@ -708,7 +708,7 @@ namespace Playerbot
 
     InteractionMetrics InteractionManager::GetMetrics(InteractionType type) const
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
 
         if (type == InteractionType::None)
         {
@@ -739,7 +739,7 @@ namespace Playerbot
 
     void InteractionManager::ResetMetrics()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // No lock needed - interaction state is per-bot instance data
         m_metrics.clear();
         m_totalInteractionsStarted = 0;
         m_totalInteractionsCompleted = 0;

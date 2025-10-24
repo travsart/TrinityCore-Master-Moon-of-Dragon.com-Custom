@@ -45,7 +45,7 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
     auto startTime = std::chrono::steady_clock::now();
     LoSResult result;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - line of sight cache is per-bot instance data
 
     try
     {
@@ -444,14 +444,14 @@ bool LineOfSightManager::HasElevationAdvantage(Unit* target)
 
 void LineOfSightManager::ClearCache()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - line of sight cache is per-bot instance data
     _losCache.clear();
     TC_LOG_DEBUG("playerbot.los", "LoS cache cleared for bot {}", _bot->GetName());
 }
 
 void LineOfSightManager::ClearExpiredCacheEntries()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - line of sight cache is per-bot instance data
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)

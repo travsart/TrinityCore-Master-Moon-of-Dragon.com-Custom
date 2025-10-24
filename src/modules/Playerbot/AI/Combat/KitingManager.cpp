@@ -50,7 +50,7 @@ KitingManager::KitingManager(Player* bot)
 
 void KitingManager::UpdateKiting(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - kiting state is per-bot instance data
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastMovementTime < _updateInterval && !_emergencyKiting)
@@ -261,7 +261,7 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
 
 void KitingManager::StopKiting()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - kiting state is per-bot instance data
 
     if (!_kitingActive)
         return;

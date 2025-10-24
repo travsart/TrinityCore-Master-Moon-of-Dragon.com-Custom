@@ -44,7 +44,7 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
     auto startTime = std::chrono::steady_clock::now();
     PathResult result;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - pathfinding data is per-bot instance data
 
     try
     {
@@ -583,7 +583,7 @@ float PathfindingManager::CalculateTerrainCost(const Position& pos)
 
 void PathfindingManager::RegisterDangerZone(const DangerZone& zone)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - pathfinding data is per-bot instance data
     _dangerZones.push_back(zone);
 
     TC_LOG_DEBUG("playerbot.pathfinding", "Registered danger zone for bot {} at ({:.2f}, {:.2f}) radius {:.2f}",
@@ -710,7 +710,7 @@ std::string PathfindingManager::GenerateCacheKey(const Position& start, const Po
 
 void PathfindingManager::ClearExpiredCacheEntries()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - pathfinding data is per-bot instance data
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)

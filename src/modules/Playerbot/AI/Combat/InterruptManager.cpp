@@ -54,7 +54,7 @@ InterruptManager::InterruptManager(Player* bot)
 
 void InterruptManager::UpdateInterruptSystem(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - interrupt tracking is per-bot instance data
 
     uint32 currentTime = getMSTime();
     if (currentTime - _lastScan < _scanInterval && !_emergencyMode)
@@ -189,7 +189,7 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
     InterruptResult result;
     result.originalTarget = target;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - interrupt tracking is per-bot instance data
 
     try
     {

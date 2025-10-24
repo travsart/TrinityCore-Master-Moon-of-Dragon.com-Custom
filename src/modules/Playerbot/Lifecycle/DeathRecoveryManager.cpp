@@ -152,7 +152,7 @@ DeathRecoveryManager::~DeathRecoveryManager()
 
 void DeathRecoveryManager::OnDeath()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (!ValidateBotState())
     {
@@ -185,7 +185,7 @@ void DeathRecoveryManager::OnDeath()
 
 void DeathRecoveryManager::OnResurrection()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return;
@@ -207,7 +207,7 @@ void DeathRecoveryManager::OnResurrection()
 
 void DeathRecoveryManager::Reset()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     m_state = DeathRecoveryState::NOT_DEAD;
     m_method = ResurrectionMethod::UNDECIDED;
@@ -232,7 +232,7 @@ void DeathRecoveryManager::Update(uint32 diff)
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (!ValidateBotState())
     {
@@ -1107,7 +1107,7 @@ bool DeathRecoveryManager::CanInteractWithSpiritHealer() const
 
 bool DeathRecoveryManager::TriggerCorpseResurrection()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return false;
@@ -1119,7 +1119,7 @@ bool DeathRecoveryManager::TriggerCorpseResurrection()
 
 bool DeathRecoveryManager::TriggerSpiritHealerResurrection()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return false;
@@ -1148,7 +1148,7 @@ bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint3
 
 bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
 
     if (!m_bot)
         return false;
@@ -1176,13 +1176,13 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 
 void DeathRecoveryManager::SetConfig(DeathRecoveryConfig const& config)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
     m_config = config;
 }
 
 void DeathRecoveryManager::ReloadConfig()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
     m_config = DeathRecoveryConfig::LoadFromConfig();
     TC_LOG_INFO("playerbot.death", "Death recovery configuration reloaded");
 }
@@ -1193,7 +1193,7 @@ void DeathRecoveryManager::ReloadConfig()
 
 void DeathRecoveryManager::ResetStatistics()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    // No lock needed - death recovery state is per-bot instance data
     m_stats = DeathRecoveryStatistics();
 }
 

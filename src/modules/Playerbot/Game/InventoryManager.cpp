@@ -1293,7 +1293,7 @@ void InventoryManager::InitializeStatWeights()
 
 void InventoryManager::UpdateEquipmentCache()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - inventory data is per-bot instance data
 
     _equippedItems.clear();
 
@@ -1310,7 +1310,7 @@ void InventoryManager::UpdateEquipmentCache()
 
 void InventoryManager::UpdateInventoryCache()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - inventory data is per-bot instance data
 
     _inventoryItems.clear();
     _itemCounts.clear();
@@ -1350,7 +1350,7 @@ void InventoryManager::UpdateInventoryCache()
 
 void InventoryManager::InvalidateCaches()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - inventory data is per-bot instance data
 
     _itemScoreCache.Clear();
     _itemUsableCache.Clear();

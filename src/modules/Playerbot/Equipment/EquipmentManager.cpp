@@ -711,7 +711,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - equipment data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     EquipmentAutomationProfile profile = GetAutomationProfile(playerGuid);
@@ -1393,13 +1393,13 @@ int32 EquipmentManager::GetItemStatValue(::Item* item, StatType stat)
 
 void EquipmentManager::SetAutomationProfile(uint32 playerGuid, EquipmentAutomationProfile const& profile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - equipment data is per-bot instance data
     _playerProfiles[playerGuid] = profile;
 }
 
 EquipmentManager::EquipmentAutomationProfile EquipmentManager::GetAutomationProfile(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - equipment data is per-bot instance data
 
     auto it = _playerProfiles.find(playerGuid);
     if (it != _playerProfiles.end())
@@ -1414,7 +1414,7 @@ EquipmentManager::EquipmentAutomationProfile EquipmentManager::GetAutomationProf
 
 EquipmentManager::EquipmentMetrics const& EquipmentManager::GetPlayerMetrics(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - equipment data is per-bot instance data
 
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
@@ -1660,7 +1660,7 @@ float EquipmentManager::CalculateTotalStats(ItemTemplate const* proto, std::vect
 
 void EquipmentManager::UpdateMetrics(uint32 playerGuid, bool wasEquipped, bool wasUpgrade, uint32 goldValue)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - equipment data is per-bot instance data
 
     auto& metrics = _playerMetrics[playerGuid];
 

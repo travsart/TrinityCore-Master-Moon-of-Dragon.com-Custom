@@ -56,7 +56,7 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
     auto startTime = std::chrono::steady_clock::now();
     MovementResult result;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - position data is per-bot instance data
 
     try
     {
@@ -573,7 +573,7 @@ Position PositionManager::FindSafePosition(const Position& fromPos, float minDis
 
 void PositionManager::RegisterAoEZone(const AoEZone& zone)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - position data is per-bot instance data
     _activeZones.push_back(zone);
 
     TC_LOG_DEBUG("playerbot.position", "Registered AoE zone for bot {} at ({:.2f}, {:.2f}) radius {:.2f}",

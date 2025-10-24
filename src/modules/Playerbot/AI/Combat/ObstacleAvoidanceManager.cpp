@@ -53,7 +53,7 @@ void ObstacleAvoidanceManager::UpdateObstacleDetection(const DetectionContext& c
 {
     auto startTime = std::chrono::steady_clock::now();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - obstacle detection is per-bot instance data
 
     try
     {
@@ -105,7 +105,7 @@ std::vector<CollisionPrediction> ObstacleAvoidanceManager::PredictCollisions(con
     std::vector<CollisionPrediction> predictions;
     predictions.reserve(_obstacles.size());
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - obstacle detection is per-bot instance data
 
     for (const auto& [guid, obstacle] : _obstacles)
     {
@@ -659,7 +659,7 @@ void ObstacleAvoidanceManager::ExecuteEmergencyStop()
 
 bool ObstacleAvoidanceManager::CanSafelyProceed(const Position& nextPosition)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // No lock needed - obstacle detection is per-bot instance data
 
     for (const auto& [guid, obstacle] : _obstacles)
     {

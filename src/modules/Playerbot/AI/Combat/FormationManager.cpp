@@ -47,8 +47,7 @@ FormationManager::FormationManager(Player* bot)
 
 bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - _members is per-bot instance data
     try
     {
         if (_inFormation)
@@ -123,8 +122,7 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
 bool FormationManager::LeaveFormation()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - _inFormation and _members are per-bot instance data
     if (!_inFormation)
         return false;
 
@@ -141,8 +139,7 @@ bool FormationManager::LeaveFormation()
 
 bool FormationManager::ChangeFormation(FormationType newFormation)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - _currentFormation is per-bot instance data
     if (!_inFormation || newFormation == _currentFormation)
         return false;
 
@@ -172,8 +169,7 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
 
 void FormationManager::UpdateFormation(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - all formation data is per-bot instance
     if (!_inFormation)
         return;
 
@@ -218,8 +214,7 @@ void FormationManager::UpdateFormation(uint32 diff)
 
 bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - command execution modifies per-bot instance data
     if (!_inFormation)
         return false;
 
@@ -325,8 +320,7 @@ std::vector<Position> FormationManager::CalculateAllFormationPositions()
 
 Position FormationManager::GetAssignedPosition() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - reading per-bot instance data (_members)
     for (const FormationMember& member : _members)
     {
         if (member.player == _bot)
@@ -340,8 +334,7 @@ Position FormationManager::GetAssignedPosition() const
 
 bool FormationManager::IsInFormationPosition(float tolerance) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - GetAssignedPosition() reads per-bot instance data
     Position assignedPos = GetAssignedPosition();
     Position currentPos = _bot->GetPosition();
 
@@ -350,8 +343,7 @@ bool FormationManager::IsInFormationPosition(float tolerance) const
 
 FormationIntegrity FormationManager::AssessFormationIntegrity()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - assessing per-bot instance data (_members, _formationSpacing)
     if (_members.empty())
         return FormationIntegrity::BROKEN;
 
@@ -424,8 +416,7 @@ void FormationManager::CoordinateMovement(const Position& destination)
 
 bool FormationManager::CanMoveWithoutBreakingFormation(const Position& newPos)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - checking per-bot instance data (_formationCenter, _cohesionRadius)
     if (!_inFormation)
         return true;
 
@@ -439,8 +430,7 @@ bool FormationManager::CanMoveWithoutBreakingFormation(const Position& newPos)
 
 Position FormationManager::AdjustMovementForFormation(const Position& intendedPos)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
+    // No lock needed - adjusting based on per-bot instance data
     if (!_inFormation)
         return intendedPos;
 

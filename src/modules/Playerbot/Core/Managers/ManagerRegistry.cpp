@@ -269,7 +269,10 @@ void ManagerRegistry::ShutdownAll()
 
 uint32 ManagerRegistry::UpdateAll(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_managerMutex);
+    // PERFORMANCE FIX: Removed global lock that was serializing all bot updates
+    // Each bot has its own ManagerRegistry instance, so _managers is per-bot data
+    // No cross-bot access means no lock needed for UpdateAll()
+    // See: CORRECTED_RUNTIME_BOTTLENECK_ANALYSIS.md for details
 
     if (!_initialized)
         return 0;

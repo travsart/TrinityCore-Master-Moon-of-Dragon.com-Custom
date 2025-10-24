@@ -25,8 +25,7 @@ CooldownManager::CooldownManager()
 
 void CooldownManager::Update(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     _totalUpdates.fetch_add(1);
 
     // Update global cooldown
@@ -39,7 +38,7 @@ void CooldownManager::Update(uint32 diff)
 
     // Update category cooldowns
     {
-        std::lock_guard<std::recursive_mutex> categoryLock(_categoryMutex);
+        // No lock needed - _spellCategories and _categoryCooldowns are per-bot instance data
         for (auto& pair : _categoryCooldowns)
         {
             if (pair.second > diff)
@@ -77,8 +76,7 @@ void CooldownManager::StartCooldown(uint32 spellId, uint32 cooldownMs, bool trig
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     // Apply cooldown multiplier
     uint32 adjustedCooldown = ApplyCooldownMultiplier(cooldownMs);
 
@@ -103,8 +101,7 @@ void CooldownManager::ResetCooldown(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -119,8 +116,7 @@ void CooldownManager::ReduceCooldown(uint32 spellId, uint32 reductionMs)
     if (!spellId || !reductionMs)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -138,8 +134,7 @@ bool CooldownManager::IsReady(uint32 spellId) const
     if (!spellId)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -154,8 +149,7 @@ uint32 CooldownManager::GetRemaining(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -170,8 +164,7 @@ float CooldownManager::GetRemainingPercent(uint32 spellId) const
     if (!spellId)
         return 0.0f;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -186,8 +179,7 @@ uint32 CooldownManager::GetTotalCooldown(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -218,8 +210,7 @@ void CooldownManager::SetCharges(uint32 spellId, uint32 current, uint32 maximum,
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -245,8 +236,7 @@ uint32 CooldownManager::GetCharges(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -261,8 +251,7 @@ uint32 CooldownManager::GetMaxCharges(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -277,8 +266,7 @@ void CooldownManager::ConsumeCharge(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end() && it->second.charges > 0)
     {
@@ -299,8 +287,7 @@ void CooldownManager::AddCharge(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -318,8 +305,7 @@ uint32 CooldownManager::GetNextChargeTime(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -334,8 +320,7 @@ void CooldownManager::StartChanneling(uint32 spellId, uint32 channelDurationMs)
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -359,8 +344,7 @@ void CooldownManager::StopChanneling(uint32 spellId)
     if (!spellId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -375,8 +359,7 @@ bool CooldownManager::IsChanneling(uint32 spellId) const
     if (!spellId)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -388,8 +371,7 @@ bool CooldownManager::IsChanneling(uint32 spellId) const
 
 bool CooldownManager::IsChannelingAny() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     for (const auto& pair : _cooldowns)
     {
         if (pair.second.isChanneling)
@@ -404,8 +386,7 @@ uint32 CooldownManager::GetChannelRemaining(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end() && it->second.isChanneling)
     {
@@ -417,8 +398,7 @@ uint32 CooldownManager::GetChannelRemaining(uint32 spellId) const
 
 void CooldownManager::ResetAllCooldowns()
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     for (auto& pair : _cooldowns)
     {
         pair.second.remainingMs = 0;
@@ -435,8 +415,7 @@ void CooldownManager::ReduceAllCooldowns(uint32 reductionMs)
     if (!reductionMs)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     for (auto& pair : _cooldowns)
     {
         if (pair.second.remainingMs > reductionMs)
@@ -450,8 +429,7 @@ void CooldownManager::ReduceAllCooldowns(uint32 reductionMs)
 
 std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     std::vector<uint32> result;
     for (const auto& pair : _cooldowns)
     {
@@ -466,8 +444,7 @@ std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
 
 std::vector<uint32> CooldownManager::GetReadySpells(const std::vector<uint32>& spellIds) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     std::vector<uint32> result;
     for (uint32 spellId : spellIds)
     {
@@ -486,7 +463,7 @@ void CooldownManager::SetCooldownCategory(uint32 spellId, uint32 categoryId)
     if (!spellId || !categoryId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
+    // No lock needed - _spellCategories and _categoryCooldowns are per-bot instance data
     _spellCategories[spellId] = categoryId;
 
     TC_LOG_DEBUG("playerbot.cooldown", "Set spell {} to category {}", spellId, categoryId);
@@ -497,7 +474,7 @@ void CooldownManager::StartCategoryCooldown(uint32 categoryId, uint32 cooldownMs
     if (!categoryId)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
+    // No lock needed - _spellCategories and _categoryCooldowns are per-bot instance data
     _categoryCooldowns[categoryId] = ApplyCooldownMultiplier(cooldownMs);
 
     TC_LOG_DEBUG("playerbot.cooldown", "Started category {} cooldown: {}ms", categoryId, cooldownMs);
@@ -508,8 +485,7 @@ bool CooldownManager::IsCategoryReady(uint32 categoryId) const
     if (!categoryId)
         return true;
 
-    std::lock_guard<std::recursive_mutex> lock(_categoryMutex);
-
+    // No lock needed - _spellCategories and _categoryCooldowns are per-bot instance data
     auto it = _categoryCooldowns.find(categoryId);
     return (it == _categoryCooldowns.end() || it->second == 0);
 }
@@ -519,8 +495,7 @@ uint32 CooldownManager::GetTimeUntilReady(uint32 spellId) const
     if (!spellId)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
@@ -539,7 +514,7 @@ bool CooldownManager::WillBeReadyIn(uint32 spellId, uint32 timeMs) const
 
 uint32 CooldownManager::GetTotalSpellsTracked() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
+    // No lock needed - _cooldowns is per-bot instance data
     return static_cast<uint32>(_cooldowns.size());
 }
 
@@ -556,8 +531,7 @@ uint32 CooldownManager::GetAverageActiveCooldowns() const
 
 void CooldownManager::DumpCooldowns() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     TC_LOG_DEBUG("playerbot.cooldown", "=== Cooldown Manager Dump ===");
     TC_LOG_DEBUG("playerbot.cooldown", "GCD Remaining: {}ms", _globalCooldown.load());
     TC_LOG_DEBUG("playerbot.cooldown", "Total Spells Tracked: {}", _cooldowns.size());
@@ -576,8 +550,7 @@ CooldownInfo CooldownManager::GetCooldownInfo(uint32 spellId) const
     if (!spellId)
         return CooldownInfo();
 
-    std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
+    // No lock needed - _cooldowns is per-bot instance data
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {

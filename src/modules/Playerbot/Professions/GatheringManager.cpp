@@ -67,11 +67,8 @@ void GatheringManager::OnShutdown()
         StopGathering();
     }
 
-    // Clear detected nodes
-    {
-        std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
-        _detectedNodes.clear();
-    }
+    // Clear detected nodes (no lock needed - per-bot instance data)
+    _detectedNodes.clear();
 
     _detectedNodeCount.store(0, std::memory_order_release);
     _hasNearbyResources.store(false, std::memory_order_release);
@@ -161,8 +158,7 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes(float range)
 
 GatheringNode const* GatheringManager::FindNearestNode(GatheringNodeType nodeType) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
-
+    // No lock needed - _detectedNodes is per-bot instance data
     GatheringNode const* nearest = nullptr;
     float minDistance = std::numeric_limits<float>::max();
 
@@ -698,7 +694,7 @@ void GatheringManager::HandleGatheringResult(GatheringNode const& node, bool suc
     // Mark node as inactive if successfully gathered
     if (success)
     {
-        std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
+        // No lock needed - _detectedNodes is per-bot instance data
         auto it = std::find_if(_detectedNodes.begin(), _detectedNodes.end(),
             [&node](GatheringNode const& n) { return n.guid == node.guid; });
 
@@ -713,8 +709,7 @@ void GatheringManager::HandleGatheringResult(GatheringNode const& node, bool suc
 
 void GatheringManager::UpdateDetectedNodes()
 {
-    std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
-
+    // No lock needed - _detectedNodes is per-bot instance data
     // Clear old nodes
     _detectedNodes.clear();
 
@@ -727,8 +722,7 @@ void GatheringManager::UpdateDetectedNodes()
 
 GatheringNode const* GatheringManager::SelectBestNode() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
-
+    // No lock needed - _detectedNodes is per-bot instance data
     GatheringNode const* bestNode = nullptr;
     float bestScore = 0.0f;
 
@@ -797,8 +791,7 @@ void GatheringManager::ProcessCurrentGathering()
 
 void GatheringManager::CleanupExpiredNodes()
 {
-    std::lock_guard<std::recursive_mutex> lock(_nodeMutex);
-
+    // No lock needed - _detectedNodes is per-bot instance data
     uint32 currentTime = getMSTime();
 
     // Remove nodes that are too old or no longer valid
