@@ -308,16 +308,15 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
             return false;
         }
 
-        // Queue ACCEPT_QUEST action (handler already implemented in BotActionProcessor!)
-        BotAction action;
-        action.type = BotActionType::ACCEPT_QUEST;
-        action.botGuid = bot->GetGUID();
-        action.targetGuid = questGiverObjectGuid;
-        action.questId = questId;
-        action.priority = 7;  // Quest pickup is important
-        action.queuedTime = getMSTime();
-
-        BotActionQueue::Instance()->Push(action);
+        // TODO: Queue ACCEPT_QUEST action (experimental - BotActionQueue singleton not implemented)
+        // BotAction action;
+        // action.type = BotActionType::ACCEPT_QUEST;
+        // action.botGuid = bot->GetGUID();
+        // action.targetGuid = questGiverObjectGuid;
+        // action.questId = questId;
+        // action.priority = 7;  // Quest pickup is important
+        // action.queuedTime = getMSTime();
+        // BotActionQueue::Instance()->Push(action);
 
         // Update metrics
         uint32 elapsedTime = getMSTimeDiff(startTime, getMSTime());
