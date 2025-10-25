@@ -4,7 +4,6 @@
 
 #include "BotWorldEntry.h"
 #include "BotSession.h"
-#include "BotCleanupHelper.h"
 #include "Player.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -740,11 +739,7 @@ void BotWorldEntry::Cleanup()
     {
         if (_player->IsInWorld())
         {
-            // CRITICAL FIX: Use BotCleanupHelper to safely remove from world
-            // This prevents Map::SendObjectUpdates() crashes by removing bot from
-            // Map's _updateObjects queue BEFORE calling RemoveFromWorld()
-            // See BotCleanupHelper.h for detailed explanation of the TOCTOU race fix
-            Playerbot::BotCleanupHelper::SafeRemoveFromWorld(_player);
+            _player->RemoveFromWorld();
         }
 
         // Clean logout

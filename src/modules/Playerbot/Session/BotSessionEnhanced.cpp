@@ -4,7 +4,6 @@
 
 #include "BotSession.h"
 #include "Lifecycle/BotWorldEntry.h"
-#include "Lifecycle/BotCleanupHelper.h"
 #include "AccountMgr.h"
 #include "Log.h"
 #include "WorldPacket.h"
@@ -239,11 +238,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         {
             if (GetPlayer()->IsInWorld())
             {
-                // CRITICAL FIX: Use BotCleanupHelper to safely remove from world
-                // This prevents Map::SendObjectUpdates() crashes by removing bot from
-                // Map's _updateObjects queue BEFORE calling RemoveFromWorld()
-                // See BotCleanupHelper.h for detailed explanation of the TOCTOU race fix
-                BotCleanupHelper::SafeRemoveFromWorld(GetPlayer());
+                GetPlayer()->RemoveFromWorld();
             }
             SetPlayer(nullptr);
         }
