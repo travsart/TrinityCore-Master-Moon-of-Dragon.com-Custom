@@ -21,6 +21,7 @@
 #include "WorldSession.h"
 #include "ObjectAccessor.h"
 #include "Session/BotSession.h"
+#include "Spatial/SpatialGridQueryHelpers.h"
 #include <algorithm>
 #include <random>
 
@@ -77,9 +78,14 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     uint32 rollId = _nextRollId++;
     LootRoll roll(rollId, item.itemId, item.lootSlot, group->GetGUID().GetCounter());
 
-    // Add all eligible group members to the roll
+    // PHASE 2H: Add all eligible group members to the roll (snapshot-based early validation)
     for (auto const& slot : group->GetMemberSlots())
     {
+        // Early validation with snapshot (lock-free)
+        auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, slot.guid);
+        if (!memberSnapshot)
+            continue;  // Member offline/invalid - skip ObjectAccessor call entirely
+
         Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (member && CanParticipateInRoll(member, item))
         {
@@ -100,10 +106,16 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     // Broadcast roll to group members
     BroadcastLootRoll(group, roll);
 
-    // Process automatic bot decisions
+    // PHASE 2H: Process automatic bot decisions (snapshot-based early validation)
     for (uint32 memberGuid : roll.eligiblePlayers)
     {
-        Player* member = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(memberGuid));
+        // Early validation with snapshot (lock-free)
+        ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(memberGuid);
+        auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
+        if (!memberSnapshot)
+            continue;  // Member disconnected after roll started - skip ObjectAccessor call
+
+        Player* member = ObjectAccessor::FindConnectedPlayer(guid);
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             LootRollType decision = DetermineLootDecision(member, item);
@@ -379,7 +391,13 @@ uint32 LootDistribution::DetermineRollWinner(const LootRoll& roll)
 
 void LootDistribution::DistributeLootToWinner(uint32 rollId, uint32 winnerGuid)
 {
-    Player* winner = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(winnerGuid));
+    // PHASE 2H: Hybrid validation - snapshot check before ObjectAccessor
+    ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(winnerGuid);
+    auto winnerSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
+    if (!winnerSnapshot)
+        return;  // Winner offline/disconnected - skip ObjectAccessor call
+
+    Player* winner = ObjectAccessor::FindConnectedPlayer(guid);
     if (!winner)
         return;
 
@@ -659,12 +677,22 @@ PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
     if (it != _playerLootProfiles.end())
         return it->second;
 
-    // Return default profile for player's class
-    Player* player = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
+    // PHASE 2H: Return default profile for player's class (hybrid validation)
+    ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(playerGuid);
+    auto playerSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
+    if (!playerSnapshot)
+        return PlayerLootProfile(playerGuid, CLASS_WARRIOR, 0);  // Player offline - return default
+
+    // Use snapshot data for class if available (PlayerSnapshot doesn't have spec, need ObjectAccessor for that)
+    Player* player = ObjectAccessor::FindConnectedPlayer(guid);
     if (player)
     {
         return PlayerLootProfile(playerGuid, player->GetClass(), AsUnderlyingType(player->GetPrimarySpecialization()));
     }
+
+    // Fallback to snapshot class data if ObjectAccessor fails (rare edge case)
+    if (playerSnapshot->classId != 0)
+        return PlayerLootProfile(playerGuid, static_cast<Classes>(playerSnapshot->classId), 0);
 
     return PlayerLootProfile(playerGuid, CLASS_WARRIOR, 0);
 }
