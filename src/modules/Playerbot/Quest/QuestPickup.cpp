@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
+#include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 2G: For snapshot-based player validation
+#include "../Threading/BotActionQueue.h"    // OPTION B: Lock-free action queue
 
 namespace Playerbot
 {
@@ -293,30 +295,45 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
         return false;
     }
 
-    // Resolve GUID to pointer (safe if method runs on main thread context)
-    questGiver = ObjectAccessor::GetCreature(*bot, questGiverObjectGuid);
-    if (!questGiver)
-        questGiver = ObjectAccessor::GetGameObject(*bot, questGiverObjectGuid);
-
-    if (!questGiver)
+    // OPTION B LOCK-FREE: Queue ACCEPT_QUEST action for main thread execution
+    if (!questGiverObjectGuid.IsEmpty())
     {
-        TC_LOG_DEBUG("playerbot.quest", "QuestPickup::PickupQuest: Quest giver object not accessible");
-        HandleQuestPickupFailure(questId, bot, "Quest giver not accessible");
-        return false;
+        // Validate bot can accept quest (local check - no Map access)
+        if (!bot->CanTakeQuest(quest, false))
+        {
+            TC_LOG_DEBUG("playerbot.quest",
+                "QuestPickup::PickupQuest: Bot {} cannot accept quest {} (requirements not met)",
+                bot->GetName(), questId);
+            HandleQuestPickupFailure(questId, bot, "Cannot take quest - requirements not met");
+            return false;
+        }
+
+        // Queue ACCEPT_QUEST action (handler already implemented in BotActionProcessor!)
+        BotAction action;
+        action.type = BotActionType::ACCEPT_QUEST;
+        action.botGuid = bot->GetGUID();
+        action.targetGuid = questGiverObjectGuid;
+        action.questId = questId;
+        action.priority = 7;  // Quest pickup is important
+        action.queuedTime = getMSTime();
+
+        BotActionQueue::Instance()->Push(action);
+
+        // Update metrics
+        uint32 elapsedTime = getMSTimeDiff(startTime, getMSTime());
+        UpdateQuestPickupStatistics(bot->GetGUID().GetCounter(), true, elapsedTime);
+        NotifyQuestPickupSuccess(questId, bot);
+
+        TC_LOG_INFO("playerbot.quest",
+            "Bot {} queued quest acceptance for quest {} from giver {}",
+            bot->GetName(), questId, questGiverObjectGuid.ToString());
+
+        return true;
     }
 
-    // Accept the quest
-    bot->AddQuestAndCheckCompletion(quest, questGiver);
-
-    // Update metrics
-    uint32 elapsedTime = getMSTimeDiff(startTime, getMSTime());
-    UpdateQuestPickupStatistics(bot->GetGUID().GetCounter(), true, elapsedTime);
-    NotifyQuestPickupSuccess(questId, bot);
-
-    TC_LOG_INFO("playerbot.quest", "Bot {} successfully picked up quest {} from giver {}",
-                bot->GetName(), questId, questGiverGuid);
-
-    return true;
+    TC_LOG_DEBUG("playerbot.quest", "QuestPickup::PickupQuest: Quest giver GUID is empty");
+    HandleQuestPickupFailure(questId, bot, "Quest giver GUID empty");
+    return false;
 }
 
 // Pick up quest from specific giver
@@ -900,9 +917,15 @@ void QuestPickup::CoordinateGroupQuestPickup(Group* group, uint32 questId)
 
     TC_LOG_DEBUG("playerbot.quest", "Coordinating quest {} pickup for group", questId);
 
-    // Get all group members who can accept the quest
+    // PHASE 2G: Hybrid validation pattern (snapshot + ObjectAccessor fallback)
     for (auto const& memberSlot : group->GetMemberSlots())
     {
+        // Quick snapshot check first
+        auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, memberSlot.guid);
+        if (!memberSnapshot)
+            continue;
+
+        // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
         if (!member)
             continue;
@@ -1732,10 +1755,22 @@ void QuestPickup::ShareQuestWithGroup(Group* group, uint32 questId, Player* send
 
     TC_LOG_DEBUG("playerbot.quest", "Sharing quest {} from {} with group", questId, sender->GetName());
 
+    // PHASE 2G: Use snapshot-based validation for group iteration (eliminates ObjectAccessor in offline cases)
     for (auto const& memberSlot : group->GetMemberSlots())
     {
+        // Skip sender
+        if (memberSlot.guid == sender->GetGUID())
+            continue;
+
+        // PHASE 2G: Hybrid validation pattern (snapshot + ObjectAccessor fallback)
+        // Quick snapshot check first
+        auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, memberSlot.guid);
+        if (!memberSnapshot)
+            continue;
+
+        // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindPlayer(memberSlot.guid);
-        if (!member || member == sender)
+        if (!member)
             continue;
 
         if (CanGroupMemberAcceptQuest(member, questId))

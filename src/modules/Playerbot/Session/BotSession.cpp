@@ -43,6 +43,7 @@
 #include "Core/Events/BotEventTypes.h"  // PHASE 0 - Quick Win #3: For GROUP_JOINED event
 #include "Core/Events/EventDispatcher.h"  // PHASE 0 - Quick Win #3: For event dispatch
 #include "PhasingHandler.h"  // For bot phase initialization
+#include "Spatial/SpatialGridQueryHelpers.h"  // PHASE 2F: For snapshot-based player validation
 
 namespace Playerbot {
 
@@ -1157,7 +1158,16 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         TC_LOG_INFO("module.playerbot.group", "Bot {} received group invitation from {} (GUID: {}, CanAccept: {}, Roles: {}, XRealm: {})",
             bot->GetName(), inviterName, inviterGUID.ToString(), canAccept, proposedRoles, isXRealm);
 
-        // Find the inviter player using TrinityCore APIs
+        // PHASE 2F: Hybrid validation pattern (snapshot + ObjectAccessor fallback)
+        // Quick snapshot check first (fast, lock-free)
+        auto inviterSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, inviterGUID);
+        if (!inviterSnapshot)
+        {
+            TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Inviter {} not in spatial grid (likely offline)", inviterName);
+            return;
+        }
+
+        // Fallback to ObjectAccessor for full validation
         Player* inviter = ObjectAccessor::FindPlayer(inviterGUID);
         if (!inviter)
         {

@@ -78,14 +78,15 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     uint32 rollId = _nextRollId++;
     LootRoll roll(rollId, item.itemId, item.lootSlot, group->GetGUID().GetCounter());
 
-    // PHASE 2H: Add all eligible group members to the roll (snapshot-based early validation)
+    // PHASE 2H: Hybrid validation pattern (snapshot + ObjectAccessor fallback)
     for (auto const& slot : group->GetMemberSlots())
     {
-        // Early validation with snapshot (lock-free)
+        // Quick snapshot check first (fast, lock-free)
         auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, slot.guid);
         if (!memberSnapshot)
-            continue;  // Member offline/invalid - skip ObjectAccessor call entirely
+            continue;
 
+        // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (member && CanParticipateInRoll(member, item))
         {
@@ -106,15 +107,17 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     // Broadcast roll to group members
     BroadcastLootRoll(group, roll);
 
-    // PHASE 2H: Process automatic bot decisions (snapshot-based early validation)
+    // PHASE 2H: Hybrid validation pattern for bot roll decisions
     for (uint32 memberGuid : roll.eligiblePlayers)
     {
-        // Early validation with snapshot (lock-free)
         ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(memberGuid);
+
+        // Quick snapshot check first
         auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
         if (!memberSnapshot)
-            continue;  // Member disconnected after roll started - skip ObjectAccessor call
+            continue;
 
+        // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindConnectedPlayer(guid);
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
@@ -391,12 +394,10 @@ uint32 LootDistribution::DetermineRollWinner(const LootRoll& roll)
 
 void LootDistribution::DistributeLootToWinner(uint32 rollId, uint32 winnerGuid)
 {
-    // PHASE 2H: Hybrid validation - snapshot check before ObjectAccessor
+    // PHASE 2H HOTFIX: Removed snapshot pre-check to eliminate TOCTOU race condition
+    // The snapshot check created a window where player could be deleted between check and use
+    // Now using ObjectAccessor directly with proper null checking (thread-safe)
     ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(winnerGuid);
-    auto winnerSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
-    if (!winnerSnapshot)
-        return;  // Winner offline/disconnected - skip ObjectAccessor call
-
     Player* winner = ObjectAccessor::FindConnectedPlayer(guid);
     if (!winner)
         return;
@@ -677,20 +678,16 @@ PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
     if (it != _playerLootProfiles.end())
         return it->second;
 
-    // PHASE 2H: Return default profile for player's class (hybrid validation)
+    // PHASE 2H HOTFIX: Snapshot-only validation (eliminates TOCTOU race condition)
+    // Using ObjectAccessor after snapshot check creates race condition where player can be
+    // deleted between snapshot validation and ObjectAccessor call, causing crashes
     ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(playerGuid);
     auto playerSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
     if (!playerSnapshot)
         return PlayerLootProfile(playerGuid, CLASS_WARRIOR, 0);  // Player offline - return default
 
-    // Use snapshot data for class if available (PlayerSnapshot doesn't have spec, need ObjectAccessor for that)
-    Player* player = ObjectAccessor::FindConnectedPlayer(guid);
-    if (player)
-    {
-        return PlayerLootProfile(playerGuid, player->GetClass(), AsUnderlyingType(player->GetPrimarySpecialization()));
-    }
-
-    // Fallback to snapshot class data if ObjectAccessor fails (rare edge case)
+    // Use snapshot class data only (safe, no TOCTOU race)
+    // PlayerSnapshot doesn't have spec, so we default to 0 (spec will be learned from actual loot behavior)
     if (playerSnapshot->classId != 0)
         return PlayerLootProfile(playerGuid, static_cast<Classes>(playerSnapshot->classId), 0);
 

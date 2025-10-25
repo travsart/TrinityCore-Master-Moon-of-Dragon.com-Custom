@@ -23,6 +23,7 @@
 #include "MapManager.h"
 #include "ObjectAccessor.h"
 #include "Session/BotSession.h"
+#include "Spatial/SpatialGridQueryHelpers.h"  // PHASE 2G: For snapshot-based player validation
 #include <algorithm>
 #include <random>
 #include <cmath>
@@ -452,9 +453,15 @@ void DynamicQuestSystem::CoordinateGroupQuest(Group* group, uint32 questId)
     // Coordinate quest execution among group members
     ShareQuestProgress(group, questId);
 
-    // Assign roles and objectives to different group members
+    // PHASE 2G: Hybrid validation pattern (snapshot + ObjectAccessor fallback)
     for (auto const& slot : group->GetMemberSlots())
     {
+        // Quick snapshot check first
+        auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, slot.guid);
+        if (!memberSnapshot)
+            continue;
+
+        // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
