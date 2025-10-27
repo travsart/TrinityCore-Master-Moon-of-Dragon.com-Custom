@@ -156,6 +156,15 @@ public:
      */
     bool IsItemUpgrade(::Player* player, ::Item* item);
 
+    /**
+     * Calculate item score for an ItemTemplate (quest rewards, vendor items, etc.)
+     * Uses class/spec stat priorities to evaluate items before they exist
+     * @param player Player to evaluate for
+     * @param itemTemplate Item template to evaluate
+     * @return Weighted score based on stat priorities
+     */
+    float CalculateItemTemplateScore(::Player* player, ItemTemplate const* itemTemplate);
+
     // ============================================================================
     // JUNK IDENTIFICATION
     // ============================================================================

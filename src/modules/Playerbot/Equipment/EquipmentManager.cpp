@@ -911,6 +911,34 @@ bool EquipmentManager::IsItemUpgrade(::Player* player, ::Item* item)
     return result.isUpgrade;
 }
 
+float EquipmentManager::CalculateItemTemplateScore(::Player* player, ItemTemplate const* itemTemplate)
+{
+    if (!player || !itemTemplate)
+        return 0.0f;
+
+    StatPriority const& priority = GetStatPriority(player);
+
+    // Calculate weighted stat total using the same algorithm as CalculateItemScore()
+    float totalScore = 0.0f;
+
+    for (const auto& [statType, weight] : priority.statWeights)
+    {
+        int32 statValue = ExtractStatValue(itemTemplate, statType);
+        if (statValue > 0)
+        {
+            totalScore += static_cast<float>(statValue) * weight;
+        }
+    }
+
+    // Add item level as base score
+    totalScore += static_cast<float>(itemTemplate->GetBaseItemLevel()) * priority.GetStatWeight(StatType::ITEM_LEVEL);
+
+    TC_LOG_TRACE("playerbot.equipment", "ItemTemplate {} score for player {}: {:.2f}",
+                 itemTemplate->GetName(DEFAULT_LOCALE), player->GetName(), totalScore);
+
+    return totalScore;
+}
+
 // ============================================================================
 // JUNK IDENTIFICATION - COMPLETE IMPLEMENTATION
 // ============================================================================

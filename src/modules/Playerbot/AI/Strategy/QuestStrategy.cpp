@@ -28,8 +28,10 @@
 #include "../../Quest/QuestHubDatabase.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "../../Equipment/EquipmentManager.h"  // For reward evaluation
 #include "../../Movement/Arbiter/MovementArbiter.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
+#include "LootItemType.h"  // For LootItemType enum used in RewardQuest
 #include "UnitAI.h"
 #include <limits>
 
@@ -2182,24 +2184,145 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
     Player* bot = ai->GetBot();
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ CompleteQuestTurnIn: Invalid quest template for questId {}", questId);
+        return false;
+    }
+
     TC_LOG_ERROR("module.playerbot.quest", "🏆 CompleteQuestTurnIn: Bot {} completing quest {} ({}) with NPC {}",
-                 bot->GetName(), questId,
-                 quest ? quest->GetLogTitle() : "UNKNOWN",
-                 questEnder->GetName());
+                 bot->GetName(), questId, quest->GetLogTitle(), questEnder->GetName());
 
-    // Prepare quest menu for this NPC
-    bot->PrepareQuestMenu(questEnder->GetGUID());
+    // ========================================================================
+    // PHASE 1: Determine if quest has choice rewards
+    // ========================================================================
 
-    // Send prepared quest to trigger turn-in
-    bot->SendPreparedQuest(questEnder);
+    bool hasChoiceRewards = false;
+    for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+    {
+        if (quest->RewardChoiceItemId[i] > 0)
+        {
+            hasChoiceRewards = true;
+            break;
+        }
+    }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ CompleteQuestTurnIn: Bot {} quest turn-in interaction sent for quest {}",
-                 bot->GetName(), questId);
+    // ========================================================================
+    // PHASE 2: Select best reward using EquipmentManager evaluation system
+    // ========================================================================
 
-    // Increment quest completion counter
-    _questsCompleted++;
+    uint32 selectedRewardIndex = 0; // Default to first choice
 
-    return true;
+    if (hasChoiceRewards)
+    {
+        Playerbot::EquipmentManager* equipMgr = Playerbot::EquipmentManager::instance();
+
+        float bestScore = -10000.0f; // Start with very low score
+        uint32 bestChoice = 0;
+        bool foundUsableReward = false;
+
+        TC_LOG_ERROR("module.playerbot.quest", "🎁 Evaluating {} reward choices for quest {}",
+                     QUEST_REWARD_CHOICES_COUNT, questId);
+
+        for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+        {
+            uint32 itemId = quest->RewardChoiceItemId[i];
+            if (itemId == 0)
+                continue;
+
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
+            if (!itemTemplate)
+            {
+                TC_LOG_WARN("module.playerbot.quest", "⚠️ Invalid item template for reward choice {} (itemId {})",
+                            i, itemId);
+                continue;
+            }
+
+            // Check if bot can equip this item (class/level restrictions)
+            if (!equipMgr->CanPlayerEquipItem(bot, itemTemplate))
+            {
+                TC_LOG_TRACE("module.playerbot.quest", "❌ Bot {} cannot equip reward choice {}: {} (class/level restriction)",
+                             bot->GetName(), i, itemTemplate->GetName(LOCALE_enUS));
+                continue;
+            }
+
+            // Calculate comprehensive item score using EquipmentManager's stat priority system
+            float itemScore = equipMgr->CalculateItemTemplateScore(bot, itemTemplate);
+
+            TC_LOG_ERROR("module.playerbot.quest", "   Choice {}: {} - Score: {:.2f} (ilvl {}, quality {})",
+                         i,
+                         itemTemplate->GetName(LOCALE_enUS),
+                         itemScore,
+                         itemTemplate->GetBaseItemLevel(),
+                         itemTemplate->GetQuality());
+
+            if (itemScore > bestScore)
+            {
+                bestScore = itemScore;
+                bestChoice = i;
+                foundUsableReward = true;
+            }
+        }
+
+        if (foundUsableReward)
+        {
+            selectedRewardIndex = bestChoice;
+            ItemTemplate const* selectedItem = sObjectMgr->GetItemTemplate(quest->RewardChoiceItemId[bestChoice]);
+
+            TC_LOG_ERROR("module.playerbot.quest", "✅ Selected reward choice {}: {} (score: {:.2f})",
+                         bestChoice,
+                         selectedItem ? selectedItem->GetName(LOCALE_enUS) : "UNKNOWN",
+                         bestScore);
+        }
+        else
+        {
+            // No usable rewards found, select first available for vendor value
+            for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+            {
+                if (quest->RewardChoiceItemId[i] > 0)
+                {
+                    selectedRewardIndex = i;
+                    TC_LOG_WARN("module.playerbot.quest", "⚠️ No usable rewards found, selecting first available choice {} for vendor value",
+                                i);
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        TC_LOG_TRACE("module.playerbot.quest", "📦 Quest {} has no choice rewards (fixed rewards only)", questId);
+    }
+
+    // ========================================================================
+    // PHASE 3: Actually complete the quest and receive rewards
+    // ========================================================================
+
+    // Get the selected reward item ID (0 if no choice rewards)
+    uint32 selectedItemId = 0;
+    if (hasChoiceRewards && selectedRewardIndex < QUEST_REWARD_CHOICES_COUNT)
+    {
+        selectedItemId = quest->RewardChoiceItemId[selectedRewardIndex];
+    }
+
+    if (bot->CanRewardQuest(quest, LootItemType::Item, selectedItemId, false))
+    {
+        bot->RewardQuest(quest, LootItemType::Item, selectedItemId, questEnder, false);
+
+        TC_LOG_ERROR("module.playerbot.quest", "✅ CompleteQuestTurnIn: Bot {} successfully completed quest {} with reward choice {} (itemId: {})",
+                     bot->GetName(), questId, selectedRewardIndex, selectedItemId);
+
+        // Increment quest completion counter
+        _questsCompleted++;
+
+        return true;
+    }
+    else
+    {
+        TC_LOG_ERROR("module.playerbot.quest", "❌ CompleteQuestTurnIn: Bot {} failed CanRewardQuest check for quest {} (missing requirements?)",
+                     bot->GetName(), questId);
+        return false;
+    }
 }
 
 // ========================================================================
