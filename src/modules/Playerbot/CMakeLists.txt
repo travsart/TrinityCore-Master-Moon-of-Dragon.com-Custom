@@ -131,6 +131,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
 
+    # Core Services - Enterprise Infrastructure
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Services/BotNpcLocationService.h
+
     # Phase 7.3: Event System - Streamlined Architecture (Legacy code eliminated)
     ${CMAKE_CURRENT_SOURCE_DIR}/Events/BotEventData.h
     # BotEventSystem.cpp/h - DELETED (legacy singleton removed)
@@ -373,6 +377,13 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotCustomizationGenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
+
+    # Phase 2: Companion Systems - Mount and Battle Pet Management
+    # TODO: Re-enable when API compatibility is fixed (see PlayerbotWorldScript.cpp)
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.h
 
     # Phase 2: Bot Lifecycle Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
@@ -903,6 +914,13 @@ source_group("Character" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Character/BotLevelManager.h
 )
+
+# source_group("Companion" FILES
+#     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.h
+#     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.h
+# )
 
 source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp

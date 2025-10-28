@@ -15,6 +15,7 @@
 #include "BotSession.h"
 #include "BotAI.h"
 #include "ObjectAccessor.h"
+#include "Core/Services/BotNpcLocationService.h"
 #include <sstream>
 
 namespace Playerbot
@@ -43,6 +44,19 @@ void PlayerBotHooks::Initialize()
 
     TC_LOG_INFO("module.playerbot", "Initializing PlayerBot hook system...");
 
+    // Initialize core services (NPC location resolution, etc.)
+    TC_LOG_INFO("module.playerbot", "Initializing BotNpcLocationService...");
+    if (!sBotNpcLocationService->Initialize())
+    {
+        TC_LOG_FATAL("module.playerbot", "Failed to initialize BotNpcLocationService! Quest and navigation systems will not function.");
+    }
+    else
+    {
+        auto stats = sBotNpcLocationService->GetCacheStats();
+        TC_LOG_INFO("module.playerbot", "BotNpcLocationService initialized: {} creature spawns, {} gameobject spawns, {} profession trainers, {} service NPCs",
+                    stats.creatureSpawnsCached, stats.gameObjectSpawnsCached, stats.professionTrainersCached, stats.serviceNpcsCached);
+    }
+
     RegisterHooks();
 
     GetInitialized() = true;
@@ -57,6 +71,10 @@ void PlayerBotHooks::Shutdown()
         return;
 
     TC_LOG_INFO("module.playerbot", "Shutting down PlayerBot hook system...");
+
+    // Shutdown core services
+    TC_LOG_INFO("module.playerbot", "Shutting down BotNpcLocationService...");
+    sBotNpcLocationService->Shutdown();
 
     DumpStatistics();
     UnregisterHooks();

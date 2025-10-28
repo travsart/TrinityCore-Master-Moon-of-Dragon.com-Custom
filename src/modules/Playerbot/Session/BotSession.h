@@ -137,6 +137,7 @@ private:
     std::queue<std::unique_ptr<WorldPacket>> _incomingPackets;
     std::queue<std::unique_ptr<WorldPacket>> _outgoingPackets;
     mutable std::recursive_timed_mutex _packetMutex;
+    mutable std::timed_mutex _updateMutex;  // TIMED MUTEX: Prevents both deadlock AND race conditions
 
     // Bot state
     std::atomic<bool> _active{true};

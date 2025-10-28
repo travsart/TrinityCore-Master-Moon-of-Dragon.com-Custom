@@ -93,7 +93,7 @@ void KitingManager::UpdateKiting(uint32 diff)
                     // Resolve GUIDs to Unit pointers and filter enemies
                     for (ObjectGuid guid : nearbyGuids)
                     {
-                        ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                         if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
                             context.threats.push_back(enemy);
                     }

@@ -19,6 +19,10 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Character/BotLevelManager.h"
+#include "Core/PlayerBotHooks.h"
+// TODO: Re-enable when API compatibility is fixed
+// #include "Companion/MountManager.h"
+// #include "Companion/BattlePetManager.h"
 
 PlayerbotWorldScript::PlayerbotWorldScript() : WorldScript("PlayerbotWorldScript")
 {
@@ -121,9 +125,26 @@ void PlayerbotWorldScript::OnStartup()
 {
     TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript::OnStartup called");
 
+    // Initialize PlayerBot hook system (BotNpcLocationService, GroupEventBus, etc.)
+    TC_LOG_INFO("module.playerbot.script", "Initializing PlayerBot hook system...");
+    Playerbot::PlayerBotHooks::Initialize();
+
+    // TODO: Initialize companion systems (MountManager, BattlePetManager)
+    // DISABLED: These systems need API updates for current TrinityCore version
+    // Errors to fix:
+    // - PassengerInfo boolean conversion (use VehicleSeat::IsEmpty())
+    // - SpellMgr::GetSpellInfo signature changed
+    // - Map::IsFlyingAllowed doesn't exist
+    // - Map::IsArena doesn't exist
+    // TC_LOG_INFO("module.playerbot.script", "Initializing MountManager...");
+    // Playerbot::MountManager::instance()->Initialize();
+
+    // TC_LOG_INFO("module.playerbot.script", "Initializing BattlePetManager...");
+    // Playerbot::BattlePetManager::instance()->Initialize();
+
     // Note: OnStartup is called before Playerbot module initialization,
     // so we defer enabling check to OnUpdate() when module is ready
-    TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Deferring initialization to OnUpdate (module loads later)");
+    TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: All core systems initialized, deferring bot spawning to OnUpdate (module loads later)");
 }
 
 void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMask mask)
@@ -142,6 +163,10 @@ void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMas
             TC_LOG_INFO("module.playerbot.script", "Despawning all active bots for shutdown");
             Playerbot::sBotSpawner->DespawnAllBots();
         }
+
+        // Shutdown PlayerBot hook system
+        TC_LOG_INFO("module.playerbot.script", "Shutting down PlayerBot hook system...");
+        Playerbot::PlayerBotHooks::Shutdown();
 
         // Log final performance metrics
         if (_updateCount > 0)

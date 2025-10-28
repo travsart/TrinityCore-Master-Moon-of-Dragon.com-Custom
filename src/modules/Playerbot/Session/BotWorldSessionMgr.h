@@ -14,6 +14,7 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <boost/lockfree/queue.hpp>
 
 class WorldSession;
 class Player;
@@ -103,6 +104,13 @@ private:
     // ENTERPRISE SYSTEM: Priority-based update management
     // Managed by BotPriorityManager, BotPerformanceMonitor, and BotHealthCheck
     bool _enterpriseMode{true};  // Toggle between simple and enterprise mode
+
+    // OPTION 5: Lock-free async cleanup queue for disconnected sessions
+    // Worker threads push disconnected bot GUIDs here (thread-safe, no mutex needed)
+    boost::lockfree::queue<ObjectGuid> _asyncDisconnections{1000};
+
+    // Atomic counter for bot updates completed asynchronously
+    std::atomic<uint32> _asyncBotsUpdated{0};
 };
 
 // Global instance accessor

@@ -335,7 +335,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
     // Resolve GUIDs to Unit pointers and filter visible enemies
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -377,7 +377,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
     // Resolve GUIDs to Unit pointers and filter visible allies
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -643,7 +643,7 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     // Resolve GUIDs to Unit pointers and check for blocking
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || unit == _bot || unit == ignoreUnit)
             continue;
 

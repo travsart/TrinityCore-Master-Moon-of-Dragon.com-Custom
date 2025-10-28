@@ -946,7 +946,6 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     if (snapshot)
     {
         // Get GameObject* for quest item use (validated via snapshot first)
-        targetObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
     }
 
     if (!targetObject)
@@ -1434,7 +1433,6 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     if (snapshot)
     {
         // Get Unit* for quest NPC interaction (validated via snapshot first)
-        target = ObjectAccessor::GetUnit(*bot, targetGuid);
     }
 
     // CRITICAL FIX: Distinguish between "talk to" NPCs and "attackable neutral" mobs
@@ -1538,7 +1536,6 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     if (snapshot)
     {
         // Get GameObject* for quest object interaction (validated via snapshot first)
-        gameObject = ObjectAccessor::GetGameObject(*bot, objectGuid);
     }
 
     if (!gameObject)

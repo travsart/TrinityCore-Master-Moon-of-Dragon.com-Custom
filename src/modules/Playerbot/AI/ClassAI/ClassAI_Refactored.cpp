@@ -176,7 +176,6 @@ void ClassAI::UpdateTargeting()
 
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), targetGuid);
 
         }
 
@@ -229,7 +228,6 @@ void ClassAI::UpdateTargeting()
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
         }
         if (!entity)
             continue;

@@ -526,6 +526,28 @@ void BotSession::QueuePacket(WorldPacket* packet)
 
 bool BotSession::Update(uint32 diff, PacketFilter& updater)
 {
+    // OPTION 1: TIMED LOCK WITH SHUTDOWN SAFEGUARDS
+    // - Prevents Ghost aura race condition (concurrent ResurrectPlayer calls)
+    // - Prevents shutdown deadlock (100ms timeout)
+    // - Prevents strategy freezing (skips update instead of blocking)
+    std::unique_lock<std::timed_mutex> lock(_updateMutex, std::defer_lock);
+
+    // Try to acquire lock with 100ms timeout
+    if (!lock.try_lock_for(std::chrono::milliseconds(100))) {
+        // Failed to acquire lock within 100ms
+
+        // Check if shutting down - bail immediately
+        if (_destroyed.load() || !_active.load()) {
+            return false;  // Shutdown detected - exit gracefully
+        }
+
+        // Otherwise: Another thread is updating this bot
+        // Just skip this update cycle (bot updates 5-10 times/sec anyway)
+        // No need to log - this is normal concurrent behavior
+        return false;
+    }
+
+    // Successfully acquired lock - proceed with update
     // DIAGNOSTIC: Track update entry for debugging - PER SESSION instead of global
     static thread_local uint32 updateCounter = 0;
     uint32 thisUpdateId = ++updateCounter;

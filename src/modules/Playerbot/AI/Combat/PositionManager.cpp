@@ -912,7 +912,7 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
                     continue;
 
                 // Validate with Unit* for IsHostileTo check
-                Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+                /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
                 if (!enemy || !_bot->IsHostileTo(enemy))
                     continue;
 

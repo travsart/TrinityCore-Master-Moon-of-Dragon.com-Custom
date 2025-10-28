@@ -778,13 +778,11 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -1111,7 +1109,6 @@ bool ShamanAI::HandleResourceManagement()
                 Unit* target = nullptr;
                 if (snapshot_target)
                 {
-                    target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
                 }
         
@@ -1144,7 +1141,6 @@ bool ShamanAI::HandleResourceManagement()
                 Unit* target = nullptr;
                 if (snapshot_target)
                 {
-                    target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
                 }
         
@@ -1343,13 +1339,11 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -1466,7 +1460,6 @@ bool ShamanAI::HandleMaelstromWeapon()
     Unit* target = nullptr;
     if (snapshot_target)
     {
-        target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
     }
         
@@ -1617,7 +1610,6 @@ bool ShamanAI::NeedsTotemRefresh(TotemType type) const
         Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
         }
         
@@ -1808,7 +1800,6 @@ bool ShamanAI::ShouldUseAscendance() const
         Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
         }
         
@@ -1846,13 +1837,11 @@ bool ShamanAI::ShouldUseAscendance() const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -1873,7 +1862,6 @@ bool ShamanAI::ShouldUseElementalMastery() const
         Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
         }
         
@@ -1975,13 +1963,11 @@ bool ShamanAI::HandleCrashLightning()
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -1998,7 +1984,6 @@ bool ShamanAI::HandleCrashLightning()
         Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
         }
         
@@ -2075,13 +2060,11 @@ bool ShamanAI::HandleEarthquake()
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -2670,7 +2653,6 @@ bool ShamanAI::ShouldUseBloodlust() const
         Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), _currentTarget);
 
         }
         

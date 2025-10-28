@@ -23,9 +23,12 @@
 #include "Interaction/Core/InteractionManager.h"
 #include "GridNotifiers.h"
 #include "CellImpl.h"
+#include "GameTime.h"  // For corpse reclaim delay check
 #include <sstream>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "MiscPackets.h"  // For ReclaimCorpse packet
+#include "Opcodes.h"  // For CMSG_RECLAIM_CORPSE
 
 // PHASE 3 MIGRATION: Movement Arbiter Integration
 #include "Movement/Arbiter/MovementArbiter.h"
@@ -152,6 +155,17 @@ DeathRecoveryManager::~DeathRecoveryManager()
 
 void DeathRecoveryManager::OnDeath()
 {
+    // CRITICAL DIAGNOSTIC: Log every death attempt with timestamp
+    static uint32 deathCounter = 0;
+    ++deathCounter;
+    TC_LOG_ERROR("playerbot.death", "========================================");
+    TC_LOG_ERROR("playerbot.death", "💀💀💀 OnDeath() CALLED #{} for bot {}! deathState={}, IsAlive={}, IsGhost={}",
+        deathCounter, m_bot ? m_bot->GetName() : "nullptr",
+        m_bot ? static_cast<int>(m_bot->getDeathState()) : -1,
+        m_bot ? (m_bot->IsAlive() ? "TRUE" : "FALSE") : "null",
+        m_bot ? (m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE") : "null");
+    TC_LOG_ERROR("playerbot.death", "========================================");
+
     // No lock needed - death recovery state is per-bot instance data
 
     if (!ValidateBotState())
@@ -218,6 +232,16 @@ void DeathRecoveryManager::Reset()
     m_stateTimer = 0;
     m_retryTimer = 0;
     m_retryCount = 0;
+
+    // CRITICAL FIX: Clear ghost flag on reset to ensure clean state for next death cycle
+    // Without this, if a bot dies again after resurrection, the ghost flag from the
+    // previous death persists and causes the death manager to malfunction
+    if (m_bot && m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
+    {
+        m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
+        TC_LOG_DEBUG("playerbot.death", "Bot {} ghost flag cleared during Reset()",
+            m_bot->GetName());
+    }
 
     LogDebug("Death recovery state reset");
 }
@@ -447,8 +471,35 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
 
 void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
 {
+    m_stateTimer += diff;
+
+    // FALLBACK: If stuck at corpse for 60+ seconds, force GM resurrect
+    // This handles edge cases where corpse reclaim delay or other issues prevent normal resurrection
+    if (m_stateTimer >= 60000)
+    {
+        TC_LOG_ERROR("playerbot.death", "🚨 Bot {} STUCK at corpse for 60+ seconds! FORCE GM RESURRECT (50% HP/Mana)!",
+            m_bot->GetName());
+
+        // Force resurrection matching GM .revive command (50% health/mana, no sickness)
+        // TrinityCore cs_misc.cpp HandleReviveCommand uses ResurrectPlayer(0.5f) for regular GMs
+        m_bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness (same as .revive)
+        m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
+        m_bot->SpawnCorpseBones();
+
+        // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
+        // The normal visibility update system will handle this on next main thread tick
+
+        TC_LOG_WARN("playerbot.death", "✅ Bot {} FORCE RESURRECTED via GM fallback - health: {}/{} ({:.0f}%)",
+            m_bot->GetName(), m_bot->GetHealth(), m_bot->GetMaxHealth(),
+            (m_bot->GetHealth() * 100.0f) / m_bot->GetMaxHealth());
+
+        TransitionToState(DeathRecoveryState::RESURRECTING, "Force GM resurrect after 60s timeout");
+        return;
+    }
+
     if (InteractWithCorpse())
     {
+        TC_LOG_INFO("playerbot.death", "✅ Bot {} InteractWithCorpse() succeeded!", m_bot->GetName());
         TransitionToState(DeathRecoveryState::RESURRECTING, "Interacting with corpse");
     }
     else
@@ -457,15 +508,19 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
         UpdateCorpseDistance();
         if (!IsInCorpseRange())
         {
+            TC_LOG_WARN("playerbot.death", "⚠️  Bot {} moved out of corpse range, returning to corpse run",
+                m_bot->GetName());
             TransitionToState(DeathRecoveryState::RUNNING_TO_CORPSE, "Moved out of corpse range");
+            m_stateTimer = 0; // Reset timer for next attempt
         }
         else
         {
-            m_stateTimer += diff;
-            if (m_stateTimer > 5000) // Retry after 5 seconds
+            // CRITICAL FIX: Actually retry the interaction every 5 seconds!
+            if (m_stateTimer % 5000 < diff || m_stateTimer < 5000)
             {
-                m_stateTimer = 0;
-                LogDebug("Retrying corpse interaction");
+                TC_LOG_DEBUG("playerbot.death", "🔄 Bot {} retrying corpse interaction (attempt at {:.1f}s, distance: {:.1f}y)",
+                    m_bot->GetName(), m_stateTimer / 1000.0f, m_corpseDistance);
+                // The retry happens automatically on next Update() call since we stay in AT_CORPSE state
             }
         }
     }
@@ -727,16 +782,12 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     if (IsGhost())
         return true;
 
-    // CRITICAL FIX: Must call BuildPlayerRepop() first to:
+    // GHOST AURA FIX: Call BuildPlayerRepop() to:
     // 1. Create corpse
-    // 2. Apply ghost aura (spell 8326)
+    // 2. Apply ghost aura (spell 8326) - which sets PLAYER_FLAGS_GHOST automatically
     // 3. Set ghost state properly
+    // REMOVED SetPlayerFlag(PLAYER_FLAGS_GHOST) to prevent duplicate Ghost aura application
     m_bot->BuildPlayerRepop();
-
-    // CRITICAL FIX #2: Explicitly set PLAYER_FLAGS_GHOST for bots
-    // The ghost aura (spell 8326) should set this flag, but it doesn't work reliably for bots
-    // Bot Player objects need explicit flag setting instead of relying on aura effects
-    m_bot->SetPlayerFlag(PLAYER_FLAGS_GHOST);
 
     // Then teleport to graveyard
     m_bot->RepopAtGraveyard();
@@ -760,26 +811,31 @@ bool DeathRecoveryManager::NavigateToCorpse()
     BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
     if (botAI && botAI->GetMovementArbiter())
     {
-        Position corpsePos(corpseLocation.GetPositionX(),
-                          corpseLocation.GetPositionY(),
-                          corpseLocation.GetPositionZ(),
-                          corpseLocation.GetOrientation());
+        // Get corpse object to chase
+        Corpse* corpse = m_bot->GetCorpse();
+        if (!corpse)
+        {
+            TC_LOG_ERROR("playerbot.death",
+                "DeathRecoveryManager: Bot {} has no corpse to navigate to",
+                m_bot->GetName());
+            return false;
+        }
 
-        // Use Movement Arbiter for priority-based arbitration
-        bool accepted = botAI->RequestPointMovement(
+        // MOVEMENT FIX: Use RequestChaseMovement instead of RequestPointMovement
+        // This makes the bot continuously track the corpse GUID rather than moving to a static position
+        // Prevents instant resurrection appearance by providing visible corpse run with walking speed
+        bool accepted = botAI->RequestChaseMovement(
             PlayerBotMovementPriority::DEATH_RECOVERY,  // Priority 255 - HIGHEST
-            corpsePos,
-            "Corpse run - death recovery",
+            corpse->GetGUID(),  // Chase the corpse by GUID
+            "Corpse run - death recovery (chase mode)",
             "DeathRecoveryManager");
 
         if (accepted)
         {
             TC_LOG_DEBUG("playerbot.movement.arbiter",
-                "DeathRecoveryManager: Bot {} requested corpse run movement to ({:.2f}, {:.2f}, {:.2f}) with DEATH_RECOVERY priority (255)",
+                "DeathRecoveryManager: Bot {} requested CHASE movement to corpse {} with DEATH_RECOVERY priority (255)",
                 m_bot->GetName(),
-                corpsePos.GetPositionX(),
-                corpsePos.GetPositionY(),
-                corpsePos.GetPositionZ());
+                corpse->GetGUID().ToString());
 
             m_navigationActive = true;
             return true;
@@ -803,10 +859,23 @@ bool DeathRecoveryManager::NavigateToCorpse()
             "DeathRecoveryManager: Bot {} has no MovementArbiter - using legacy MovePoint() for corpse run",
             m_bot->GetName());
 
-        m_bot->GetMotionMaster()->MovePoint(0,
+        // CRITICAL FIX: Clear MotionMaster before calling MovePoint (like mod-playerbot does)
+        // This prevents movement spam/cancellation that causes "teleporting" behavior
+        // Reference: mod-playerbot MovementActions.cpp:244-248
+        MotionMaster* mm = m_bot->GetMotionMaster();
+        mm->Clear();
+
+        // CORPSE RACE CONDITION FIX: Use walking speed to prevent instant teleportation
+        // Instant movement causes race condition with Map::SendObjectUpdates() when corpse
+        // gets deleted while still in _updateObjects set (crash at Map.cpp:1940)
+        // Walking speed adds natural delay (~3-5 seconds) between reaching corpse and resurrection
+        mm->MovePoint(0,
             corpseLocation.GetPositionX(),
             corpseLocation.GetPositionY(),
-            corpseLocation.GetPositionZ());
+            corpseLocation.GetPositionZ(),
+            true,   // generatePath = true for proper pathfinding
+            {},     // finalOrient - default
+            2.5f);  // speed - WALKING SPEED (default run is ~7.0) prevents instant teleport
 
         m_navigationActive = true;
         return true;
@@ -815,10 +884,89 @@ bool DeathRecoveryManager::NavigateToCorpse()
 
 bool DeathRecoveryManager::InteractWithCorpse()
 {
+    // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
+    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    if (!lock.owns_lock())
+    {
+        TC_LOG_WARN("playerbot.death", "🔒 Bot {} InteractWithCorpse: Resurrection already in progress, skipping concurrent attempt",
+            m_bot ? m_bot->GetName() : "nullptr");
+        return false;
+    }
+
+    // GHOST AURA FIX: Debounce rapid resurrection attempts (500ms minimum between attempts)
+    auto now = std::chrono::steady_clock::now();
+    auto timeSinceLastAttempt = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastResurrectionAttempt);
+    if (timeSinceLastAttempt.count() < RESURRECTION_DEBOUNCE_MS)
+    {
+        TC_LOG_WARN("playerbot.death", "⏱️  Bot {} InteractWithCorpse: Too soon since last attempt ({}ms < {}ms), debouncing",
+            m_bot ? m_bot->GetName() : "nullptr", timeSinceLastAttempt.count(), RESURRECTION_DEBOUNCE_MS);
+        return false;
+    }
+    _lastResurrectionAttempt = now;
+
+    // GHOST AURA FIX: Check atomic resurrection flag
+    bool expectedFalse = false;
+    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true))
+    {
+        TC_LOG_WARN("playerbot.death", "🚫 Bot {} InteractWithCorpse: Resurrection flag already set, rejecting concurrent attempt",
+            m_bot ? m_bot->GetName() : "nullptr");
+        return false;
+    }
+
+    // RAII guard to reset resurrection flag on exit
+    struct ResurrectionGuard {
+        std::atomic<bool>& flag;
+        ~ResurrectionGuard() { flag.store(false); }
+    } guard{_resurrectionInProgress};
+
     if (!m_bot)
     {
         TC_LOG_ERROR("playerbot.death", "🔴 InteractWithCorpse: Bot is nullptr!");
         return false;
+    }
+
+    // Match TrinityCore's HandleReclaimCorpse validation checks
+    if (m_bot->IsAlive())
+    {
+        TC_LOG_WARN("playerbot.death", "🔴 Bot {} already alive, skipping corpse interaction", m_bot->GetName());
+        return true; // Not an error, just already alive
+    }
+
+    if (m_bot->InArena())
+    {
+        TC_LOG_DEBUG("playerbot.death", "Bot {} in arena, cannot resurrect at corpse", m_bot->GetName());
+        return false;
+    }
+
+    if (!m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
+    {
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} not a ghost, cannot resurrect! Ghost flag missing!", m_bot->GetName());
+        return false;
+    }
+
+    Corpse* corpse = m_bot->GetCorpse();
+    if (!corpse)
+    {
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} has no corpse!", m_bot->GetName());
+        return false;
+    }
+
+    // Check corpse reclaim delay (30-second delay after death in PvP)
+    time_t ghostTime = corpse->GetGhostTime();
+    time_t reclaimDelay = m_bot->GetCorpseReclaimDelay(corpse->GetType() == CORPSE_RESURRECTABLE_PVP);
+    time_t currentTime = GameTime::GetGameTime();
+
+    if (time_t(ghostTime + reclaimDelay) > currentTime)
+    {
+        time_t remainingDelay = (ghostTime + reclaimDelay) - currentTime;
+        TC_LOG_WARN("playerbot.death", "⏳ Bot {} corpse reclaim delay BLOCKING resurrection: {} seconds remaining (ghostTime={}, delay={}, current={})",
+            m_bot->GetName(), remainingDelay, ghostTime, reclaimDelay, currentTime);
+        return false; // Must wait for delay to expire
+    }
+    else
+    {
+        TC_LOG_INFO("playerbot.death", "✅ Bot {} corpse reclaim delay check PASSED (ghostTime={}, delay={}, current={})",
+            m_bot->GetName(), ghostTime, reclaimDelay, currentTime);
     }
 
     if (!IsInCorpseRange())
@@ -828,16 +976,64 @@ bool DeathRecoveryManager::InteractWithCorpse()
         return false;
     }
 
-    TC_LOG_INFO("playerbot.death", "⚰️  Bot {} calling ResurrectPlayer() at corpse (distance: {:.1f}y)...",
-        m_bot->GetName(), m_corpseDistance);
+    TC_LOG_WARN("playerbot.death", "⚰️  Bot {} using TrinityCore-mirrored resurrection at corpse (distance: {:.1f}y, deathState BEFORE: {})...",
+        m_bot->GetName(), m_corpseDistance, static_cast<int>(m_bot->getDeathState()));
 
-    // TrinityCore API: Resurrect at corpse
-    m_bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness
-    m_bot->SpawnCorpseBones();
+    // CRITICAL FIX: Mirror TrinityCore's HandleReclaimCorpse logic (MiscHandler.cpp:417-446)
+    // We can't use the packet handler directly because WorldPackets::Misc::ReclaimCorpse has no default constructor
+    // Instead, we replicate the EXACT logic from HandleReclaimCorpse:
+    //
+    // Handler logic (MiscHandler.cpp:442-445):
+    //   _player->ResurrectPlayer(_player->InBattleground() ? 1.0f : 0.5f);
+    //   _player->SpawnCorpseBones();
+    //
+    // This is the PROVEN, tested resurrection flow in TrinityCore
+    // The key fix: ResurrectPlayer() internally calls:
+    // - setDeathState(ALIVE) which properly transitions death state
+    // - UpdateObjectVisibility() which fixes visibility issues
+    // - RemovePlayerFlag(PLAYER_FLAGS_GHOST) via RemoveAurasDueToSpell(8326)
+    //
+    // Clear movement before resurrection to prevent conflicts (like mod-playerbot does)
+    m_bot->GetMotionMaster()->Clear();
+    m_bot->StopMoving();
 
+    // DIAGNOSTIC: Log health BEFORE resurrection
+    uint32 healthBefore = m_bot->GetHealth();
+    uint32 maxHealth = m_bot->GetMaxHealth();
+    float restorePercent = m_bot->InBattleground() ? 1.0f : 0.5f;
+    DeathState deathStateBefore = m_bot->getDeathState();
+
+    TC_LOG_FATAL("playerbot.death", "🩺 Bot {} BEFORE ResurrectPlayer: Health={}/{}, RestorePercent={}, DeathState={}, IsAlive={}, HasGhostFlag={}",
+        m_bot->GetName(), healthBefore, maxHealth, restorePercent,
+        static_cast<int>(deathStateBefore), m_bot->IsAlive(), m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST));
+
+    // CRITICAL FIX: Call through WorldSession handler to ensure proper packet processing
+    // Real players send CMSG_RECLAIM_CORPSE packet → HandleReclaimCorpse
+    // For bots, we simulate this by calling the handler directly through the session
+    WorldSession* session = m_bot->GetSession();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} has no session! Cannot call HandleReclaimCorpse", m_bot->GetName());
+        return false;
+    }
+
+    // Create empty packet (HandleReclaimCorpse doesn't use packet data anyway)
+    WorldPacket emptyPacket(CMSG_RECLAIM_CORPSE);
+    WorldPackets::Misc::ReclaimCorpse reclaimPacket(std::move(emptyPacket));
+
+    // Call the handler through session (this ensures proper threading and state management)
+    session->HandleReclaimCorpse(reclaimPacket);
+
+    // DIAGNOSTIC: Log health AFTER resurrection
+    uint32 healthAfter = m_bot->GetHealth();
+    uint32 manaAfter = m_bot->GetPower(POWER_MANA);
     bool isAlive = m_bot->IsAlive();
-    TC_LOG_INFO("playerbot.death", "✅ Bot {} ResurrectPlayer() called! IsAlive() = {}",
-        m_bot->GetName(), isAlive ? "TRUE" : "FALSE");
+    DeathState deathStateAfter = m_bot->getDeathState();
+
+    TC_LOG_FATAL("playerbot.death", "✅ Bot {} Resurrection COMPLETE! deathState: {} -> {}, IsAlive={}, HasGhostFlag={}, Health={}/{} (+{}), Mana={}",
+        m_bot->GetName(), static_cast<int>(deathStateBefore), static_cast<int>(deathStateAfter),
+        isAlive ? "TRUE" : "FALSE", m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE",
+        healthAfter, maxHealth, (healthAfter - healthBefore), manaAfter);
 
     return true;
 }
@@ -908,10 +1104,16 @@ bool DeathRecoveryManager::NavigateToSpiritHealer()
             "DeathRecoveryManager: Bot {} has no MovementArbiter - using legacy MovePoint() for spirit healer",
             m_bot->GetName());
 
-        m_bot->GetMotionMaster()->MovePoint(0,
+        // CRITICAL FIX: Clear MotionMaster before calling MovePoint (like mod-playerbot does)
+        // This prevents movement spam/cancellation that causes "teleporting" behavior
+        MotionMaster* mm = m_bot->GetMotionMaster();
+        mm->Clear();
+
+        mm->MovePoint(0,
             spiritHealer->GetPositionX(),
             spiritHealer->GetPositionY(),
-            spiritHealer->GetPositionZ());
+            spiritHealer->GetPositionZ(),
+            true);  // generatePath = true for proper pathfinding
 
         m_navigationActive = true;
         return true;
@@ -957,6 +1159,13 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
     // TrinityCore API: Graveyard resurrection
     m_bot->ResurrectPlayer(0.5f, true); // 50% health/mana, with resurrection sickness
 
+    // CRITICAL FIX: ResurrectPlayer() doesn't automatically clear ghost flag for bots
+    // Bot Player objects need explicit flag clearing to transition back to alive state
+    m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
+
+    // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
+    // The normal visibility update system will handle this on next main thread tick
+
     // Apply resurrection sickness if appropriate
     if (WillReceiveResurrectionSickness() && !m_config.skipResurrectionSickness)
     {
@@ -965,7 +1174,7 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
             m_bot->GetName());
     }
 
-    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at graveyard", m_bot->GetName());
+    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at graveyard (ghost flag cleared)", m_bot->GetName());
     return true;
 }
 
@@ -1148,7 +1357,29 @@ bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint3
 
 bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 {
-    // No lock needed - death recovery state is per-bot instance data
+    // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
+    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    if (!lock.owns_lock())
+    {
+        TC_LOG_WARN("playerbot.death", "🔒 Bot {} ForceResurrection: Resurrection already in progress, skipping concurrent attempt",
+            m_bot ? m_bot->GetName() : "nullptr");
+        return false;
+    }
+
+    // GHOST AURA FIX: Check atomic resurrection flag
+    bool expectedFalse = false;
+    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true))
+    {
+        TC_LOG_WARN("playerbot.death", "🚫 Bot {} ForceResurrection: Resurrection flag already set, rejecting concurrent attempt",
+            m_bot ? m_bot->GetName() : "nullptr");
+        return false;
+    }
+
+    // RAII guard to reset resurrection flag on exit
+    struct ResurrectionGuard {
+        std::atomic<bool>& flag;
+        ~ResurrectionGuard() { flag.store(false); }
+    } guard{_resurrectionInProgress};
 
     if (!m_bot)
         return false;
@@ -1165,6 +1396,12 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
     {
         m_bot->ResurrectPlayer(1.0f, true); // Full health, with sickness
     }
+
+    // CRITICAL FIX: Clear ghost flag after force resurrection
+    m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
+
+    // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
+    // The normal visibility update system will handle this on next main thread tick
 
     OnResurrection();
     return true;

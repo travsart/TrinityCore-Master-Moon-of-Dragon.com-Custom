@@ -1165,7 +1165,6 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)
@@ -1388,7 +1387,6 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)
@@ -1446,7 +1444,6 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)

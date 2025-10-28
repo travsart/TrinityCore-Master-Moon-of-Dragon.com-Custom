@@ -258,7 +258,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                 // Resolve GUIDs to Unit pointers and apply filtering logic
                 for (ObjectGuid guid : nearbyGuids)
                 {
-                    Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                    /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                     if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
                         continue;
 

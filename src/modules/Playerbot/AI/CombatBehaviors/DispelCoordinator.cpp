@@ -769,7 +769,6 @@ bool DispelCoordinator::ExecuteDispel()
     if (snapshot && snapshot->IsAlive())
     {
         // Get Unit* for aura checks (main thread operation)
-        target = ObjectAccessor::GetUnit(*m_bot, m_currentAssignment.target);
     }
 
     if (!target || target->isDead())
@@ -853,7 +852,6 @@ bool DispelCoordinator::ExecutePurge()
     if (snapshot && snapshot->IsAlive())
     {
         // Get Unit* for spell casting (main thread operation)
-        enemy = ObjectAccessor::GetUnit(*m_bot, bestTarget.enemyGuid);
     }
 
     if (!enemy || enemy->isDead())

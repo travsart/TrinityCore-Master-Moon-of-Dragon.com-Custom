@@ -724,13 +724,11 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;

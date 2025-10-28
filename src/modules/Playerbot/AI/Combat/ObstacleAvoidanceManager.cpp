@@ -368,7 +368,7 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
             continue;
 
         // Get Unit* for complex checks if needed
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit || !unit->IsInWorld())
             continue;
 

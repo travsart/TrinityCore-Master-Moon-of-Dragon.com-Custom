@@ -1107,7 +1107,6 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)
@@ -1160,7 +1159,6 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)

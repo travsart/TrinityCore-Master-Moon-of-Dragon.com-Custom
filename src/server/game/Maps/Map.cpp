@@ -1937,6 +1937,26 @@ void Map::SendObjectUpdates()
     while (!_updateObjects.empty())
     {
         Object* obj = *_updateObjects.begin();
+
+        // DEBUG: Log object details before assertion to identify crash source
+        if (!obj->IsInWorld())
+        {
+            TC_LOG_ERROR("maps", "Map::SendObjectUpdates - Object NOT in world! TypeId: {}, GUID: {}, Address: {:p}",
+                obj->GetTypeId(),
+                obj->GetGUID().ToString(),
+                static_cast<void*>(obj));
+
+            if (WorldObject* wobj = obj->ToWorldObject())
+            {
+                TC_LOG_ERROR("maps", "  -> WorldObject Entry: {}, MapId: {}, Position: ({}, {}, {})",
+                    wobj->GetEntry(),
+                    wobj->GetMapId(),
+                    wobj->GetPositionX(),
+                    wobj->GetPositionY(),
+                    wobj->GetPositionZ());
+            }
+        }
+
         ASSERT(obj->IsInWorld());
         _updateObjects.erase(_updateObjects.begin());
         obj->BuildUpdate(update_players);

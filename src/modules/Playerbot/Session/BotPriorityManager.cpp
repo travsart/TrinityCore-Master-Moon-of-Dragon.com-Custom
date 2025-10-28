@@ -327,6 +327,15 @@ void BotPriorityManager::RecordUpdateStart(ObjectGuid botGuid, uint32 currentTim
 {
     // No lock needed - priority metrics are per-bot instance data
     auto& metrics = _botMetrics[botGuid];
+
+    // CRITICAL FIX: Initialize lastUpdateTime to current time on first access
+    // When a bot GUID is accessed for the first time, C++ creates a new BotUpdateMetrics
+    // with lastUpdateTime = 0 (default initialization). If stall detection runs before
+    // the first RecordUpdateStart call, we get a massive time delta (currentTime - 0),
+    // causing false "4294967295ms" stall warnings due to unsigned integer underflow.
+    if (metrics.lastUpdateTime == 0)
+        metrics.lastUpdateTime = currentTime;
+
     metrics.lastUpdateTime = currentTime;
     metrics.ticksSinceLastUpdate = 0;
 }

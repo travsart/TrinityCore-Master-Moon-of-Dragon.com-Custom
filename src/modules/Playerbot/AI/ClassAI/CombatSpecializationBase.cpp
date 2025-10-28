@@ -413,27 +413,23 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
 }
 
 // Efficient nearby unit detection with spatial indexing
-std::vector<::Unit*> CombatSpecializationBase::GetNearbyEnemies(float range) const
+std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 {
-    std::vector<::Unit*> enemies;
-    enemies.reserve(16); // Pre-allocate for typical case
+    std::vector<ObjectGuid> guids;
 
-    // Use Trinity's built-in searcher for efficiency
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(_bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, enemies, checker);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();
-    if (!map)
-        return; // Adjust return value as needed
+    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());
+    if (!grid) return guids;
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return; // Adjust return value as needed
+    float range = range;
+    auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
+
+    for (auto const& snapshot : creatures) {
+        if (snapshot.isAlive && snapshot.isHostile)
+            guids.push_back(snapshot.guid);
     }
+
+    return guids;
+}
 
     // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
@@ -447,7 +443,6 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyEnemies(float range) con
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)
@@ -464,26 +459,23 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyEnemies(float range) con
     return enemies;
 }
 
-std::vector<::Unit*> CombatSpecializationBase::GetNearbyAllies(float range) const
+std::vector<ObjectGuid> GetNearbyAllies(float range) const
 {
-    std::vector<::Unit*> allies;
-    allies.reserve(10); // Pre-allocate
+    std::vector<ObjectGuid> guids;
 
-    Trinity::AnyFriendlyUnitInObjectRangeCheck checker(_bot, range);
-    Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(_bot, allies, checker);
-    // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();
-    if (!map)
-        return; // Adjust return value as needed
+    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());
+    if (!grid) return guids;
 
-    DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
-    if (!spatialGrid)
-    {
-        sSpatialGridManager.CreateGrid(map);
-        spatialGrid = sSpatialGridManager.GetGrid(map);
-        if (!spatialGrid)
-            return; // Adjust return value as needed
+    float range = range;
+    auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
+
+    for (auto const& snapshot : creatures) {
+        if (snapshot.isAlive && snapshot.isHostile)
+            guids.push_back(snapshot.guid);
     }
+
+    return guids;
+}
 
     // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
@@ -497,7 +489,6 @@ std::vector<::Unit*> CombatSpecializationBase::GetNearbyAllies(float range) cons
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*_bot, guid);
 
         }
         if (!entity)

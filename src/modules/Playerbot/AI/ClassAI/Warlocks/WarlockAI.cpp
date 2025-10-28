@@ -979,7 +979,6 @@ Unit* WarlockAI::GetNearestEnemy(float range)
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*bot, guid);
 
         } 
         if (!entity)
@@ -1042,7 +1041,6 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*bot, guid);
 
         } 
         if (!entity)

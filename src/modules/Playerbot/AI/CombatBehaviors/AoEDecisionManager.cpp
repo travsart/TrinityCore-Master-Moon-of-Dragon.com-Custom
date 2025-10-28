@@ -235,7 +235,7 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
             continue;
 
         // Get Unit* for additional validation
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !_bot->IsValidAttackTarget(unit))
             continue;
 
@@ -556,9 +556,6 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
             continue;
 
         // Get Unit* for additional validation
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
-        if (!unit || !IsValidAoETarget(unit))
-            continue;
 
         // Calculate priority
         float priority = 100.0f;
@@ -578,6 +575,9 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
         float distance = _bot->GetDistance(snapshot->position);
         priority -= distance * 2.0f;
 
+        // MIGRATION TODO: Convert to GUID-based
+        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        if (!unit) continue;
         candidates.push_back({unit, priority});
     }
 
@@ -666,7 +666,7 @@ void AoEDecisionManager::UpdateTargetCache()
             continue;
 
         // Get Unit* for additional validation
-        ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !IsValidAoETarget(unit))
             continue;
 

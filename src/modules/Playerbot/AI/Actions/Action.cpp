@@ -225,7 +225,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     // Resolve GUIDs to Unit pointers and find nearest enemy
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
         if (!unit || !unit->IsAlive())
             continue;
 

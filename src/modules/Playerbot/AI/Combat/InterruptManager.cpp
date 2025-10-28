@@ -133,7 +133,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
     // Resolve GUIDs to Unit pointers and apply filtering logic
     for (ObjectGuid guid : nearbyGuids)
     {
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!IsValidInterruptTarget(unit))
             continue;
 

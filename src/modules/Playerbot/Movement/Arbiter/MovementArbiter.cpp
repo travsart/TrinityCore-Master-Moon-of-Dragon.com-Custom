@@ -327,6 +327,18 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
     if (!motionMaster)
         return;
 
+    // CRITICAL FIX: Clear MotionMaster before executing ANY movement request
+    // This prevents movement spam/cancellation that causes "teleporting" behavior
+    // Reference: mod-playerbot MovementActions.cpp:244-248
+    //
+    // Why this is safe and necessary:
+    // 1. MovementArbiter already handles interruption logic (line 244-298)
+    // 2. We only reach here if we've decided to execute this movement
+    // 3. Clearing ensures clean slate for new movement generator
+    // 4. Prevents stacking of conflicting movement commands
+    // 5. Matches mod-playerbot's proven approach
+    motionMaster->Clear();
+
     // Map PlayerBot priority to TrinityCore priority
     TrinityCorePriority tcPriority = MovementPriorityMapper::Map(request.GetPriority());
 

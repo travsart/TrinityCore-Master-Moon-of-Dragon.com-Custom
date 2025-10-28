@@ -729,7 +729,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     // Resolve GUIDs to Unit pointers and filter appropriate units
     for (ObjectGuid guid : nearbyGuids)
     {
-        ::Unit* unit = ObjectAccessor::GetUnit(*_observer, guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_observer, guid);
         if (!unit || unit == _observer)
             continue;
 
@@ -746,7 +746,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     }
 
     // Fallback: Add current target if grid search didn't find it
-    if (Unit* target = ObjectAccessor::GetUnit(*_observer, _observer->GetTarget()))
+    /* MIGRATION TODO: Convert to spatial grid */ if (Unit* target = ObjectAccessor::GetUnit(*_observer, _observer->GetTarget()))
     {
         if (_observer->GetDistance(target) <= _config.maxDetectionRange)
         {
@@ -867,7 +867,7 @@ void InterruptAwareness::NotifySpellDetected(DetectedSpellCast const& cast)
     if (auto coordinator = _coordinator.lock())
     {
         // Notify coordinator of the cast with cast time
-        Unit* caster = ObjectAccessor::GetUnit(*_observer, cast.casterGuid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* caster = ObjectAccessor::GetUnit(*_observer, cast.casterGuid);
         if (caster)
         {
             coordinator->OnEnemyCastStart(caster, cast.spellId, cast.castTimeMs);

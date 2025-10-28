@@ -229,7 +229,7 @@ void ThreatCoordinator::InitiateTankSwap(ObjectGuid fromTank, ObjectGuid toTank)
     // Queue taunt from new tank
     for (const auto& targetGuid : _groupStatus.activeTargets)
     {
-        Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(toTank), targetGuid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(toTank), targetGuid);
         if (!target)
             continue;
 
@@ -512,7 +512,7 @@ void ThreatCoordinator::UpdateGroupThreatStatus()
     // Analyze threat distribution
     for (const auto& targetGuid : _groupStatus.activeTargets)
     {
-        Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTank), targetGuid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTank), targetGuid);
         if (!target)
             continue;
 
@@ -574,7 +574,7 @@ void ThreatCoordinator::UpdateBotAssignments()
         // Update current threat levels
         for (const auto& targetGuid : _groupStatus.activeTargets)
         {
-            Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), targetGuid);
+            /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), targetGuid);
             if (!target)
                 continue;
 
@@ -613,7 +613,7 @@ void ThreatCoordinator::GenerateThreatResponses()
         {
             if (assignment.currentThreatPercent < 100.0f && _groupStatus.requiresTaunt)
             {
-                Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), assignment.targetGuid);
+                /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), assignment.targetGuid);
                 if (target && target->GetVictim() != ObjectAccessor::FindPlayer(botGuid))
                 {
                     ThreatResponseAction action;
@@ -688,7 +688,7 @@ void ThreatCoordinator::ExecuteQueuedResponses()
         {
             case ThreatAbilityType::TAUNT:
             {
-                Unit* target = ObjectAccessor::GetUnit(*executor, action.targetUnit);
+                /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*executor, action.targetUnit);
                 success = ExecuteTaunt(action.executorBot, target);
                 if (success)
                     _metrics.tauntSuccesses++;
@@ -703,7 +703,7 @@ void ThreatCoordinator::ExecuteQueuedResponses()
             case ThreatAbilityType::THREAT_TRANSFER:
             {
                 // Find appropriate target for transfer (usually tank)
-                Unit* target = ObjectAccessor::GetUnit(*executor, action.targetUnit);
+                /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*executor, action.targetUnit);
                 success = ExecuteThreatTransfer(action.executorBot, _primaryTank, target);
                 break;
             }
@@ -723,7 +723,7 @@ void ThreatCoordinator::InitiateEmergencyProtocol()
     // Execute immediate taunts on all loose targets
     for (const auto& targetGuid : _groupStatus.activeTargets)
     {
-        Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTank), targetGuid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTank), targetGuid);
         if (!target)
             continue;
 

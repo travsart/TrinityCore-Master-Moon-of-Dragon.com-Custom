@@ -421,7 +421,6 @@ void ClassAI::UpdateTargeting()
         ::Unit* target = nullptr;
         if (snapshot_target)
         {
-            target = ObjectAccessor::GetUnit(*GetBot(), guid);
         }
         if (!target || !GetBot()->IsValidAttackTarget(target))
             continue;

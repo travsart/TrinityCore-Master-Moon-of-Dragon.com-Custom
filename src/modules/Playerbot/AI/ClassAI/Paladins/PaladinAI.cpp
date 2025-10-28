@@ -940,13 +940,11 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;
@@ -999,13 +997,11 @@ uint32 PaladinAI::GetNearbyAllyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
  entity = nullptr;
  if (snapshot_entity)
  {
-     entity = ObjectAccessor::GetCreature(*GetBot(), guid);
  }
         if (!entity)
             continue;

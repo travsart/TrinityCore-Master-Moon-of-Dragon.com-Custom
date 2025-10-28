@@ -629,7 +629,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
         if (snapshot && snapshot->IsAlive())
         {
             // Get Unit* for spell casting (main thread operation)
-            target = ObjectAccessor::GetUnit(*_bot, targetGuid);
         }
 
         if (target && target->IsAlive())
@@ -1075,7 +1074,7 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
             continue;
 
         // Validate with Unit* for IsHostileTo check
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (!unit || !_bot->IsHostileTo(unit))
             continue;
 

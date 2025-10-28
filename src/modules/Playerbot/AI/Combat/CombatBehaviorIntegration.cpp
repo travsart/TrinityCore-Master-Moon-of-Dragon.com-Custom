@@ -154,7 +154,8 @@ void CombatBehaviorIntegration::UpdateManagers(uint32 diff)
 
 void CombatBehaviorIntegration::UpdatePriorities()
 {
-    const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
+    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+        const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     // Clear old actions
     if (getMSTime() - _lastActionTime > 1000)
@@ -280,7 +281,8 @@ void CombatBehaviorIntegration::GenerateRecommendations()
 
 void CombatBehaviorIntegration::PrioritizeActions()
 {
-    // Sort actions by priority and score
+    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+        // Sort actions by priority and score
     std::sort(_actionQueue.begin(), _actionQueue.end(),
         [this](const RecommendedAction& a, const RecommendedAction& b)
         {
@@ -540,7 +542,8 @@ void CombatBehaviorIntegration::DeactivateStrategy(uint32 flags)
 
 RecommendedAction CombatBehaviorIntegration::GetNextAction()
 {
-    if (_actionQueue.empty())
+    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+        if (_actionQueue.empty())
         return RecommendedAction();
 
     RecommendedAction action = _actionQueue.front();
@@ -553,12 +556,14 @@ RecommendedAction CombatBehaviorIntegration::GetNextAction()
 
 bool CombatBehaviorIntegration::HasPendingAction() const
 {
-    return !_actionQueue.empty();
+    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+        return !_actionQueue.empty();
 }
 
 void CombatBehaviorIntegration::ClearPendingActions()
 {
-    _actionQueue.clear();
+    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+        _actionQueue.clear();
 }
 
 void CombatBehaviorIntegration::RecordActionResult(const RecommendedAction& action, bool success)
@@ -600,7 +605,7 @@ void CombatBehaviorIntegration::DumpState() const
     TC_LOG_INFO("bot.playerbot", "Emergency Mode: {}", _emergencyMode);
     TC_LOG_INFO("bot.playerbot", "Survival Mode: {}", _survivalMode);
     TC_LOG_INFO("bot.playerbot", "Active Strategies: 0x{:08X}", GetActiveStrategies());
-    TC_LOG_INFO("bot.playerbot", "Pending Actions: {}", _actionQueue.size());
+{ std::lock_guard<std::mutex> lock(_actionQueueMutex);     TC_LOG_INFO("bot.playerbot", "Pending Actions: {}", _actionQueue.size()); }
     TC_LOG_INFO("bot.playerbot", "Success Rate: {}/{}",
         _successfulActions, _successfulActions + _failedActions);
 
@@ -613,7 +618,7 @@ void CombatBehaviorIntegration::DumpState() const
 
 void CombatBehaviorIntegration::Reset()
 {
-    _actionQueue.clear();
+    { std::lock_guard<std::mutex> lock(_actionQueueMutex); _actionQueue.clear(); }
     _currentAction = RecommendedAction();
     _lastActionTime = 0;
     _inCombat = false;
@@ -714,7 +719,7 @@ ActionUrgency CombatBehaviorIntegration::EvaluateMovementPriority()
 
 ActionUrgency CombatBehaviorIntegration::EvaluateTargetSwitchPriority()
 {
-    Unit* currentTarget = ObjectAccessor::GetUnit(*_bot, _bot->GetTarget());
+    /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* currentTarget = ObjectAccessor::GetUnit(*_bot, _bot->GetTarget());
     Unit* priorityTarget = _targetManager->GetPriorityTarget();
 
     if (!currentTarget || !priorityTarget)

@@ -476,7 +476,7 @@ std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
             continue;
 
         // Get Unit* for callers that need it
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot->guid);
         if (unit && unit->IsAlive())
             enemies.push_back(unit);
     }
@@ -514,7 +514,7 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
             continue;
 
         // Get Unit* to check if pet and owner (need actual object)
-        Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
+        /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
         if (!unit)
             continue;
 
@@ -828,7 +828,7 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
         {
             nearestDistance = distance;
             // Get Unit* for return (needed by caller)
-            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
             if (unit && unit->IsAlive())
                 nearestEnemy = unit;
         }
@@ -859,7 +859,7 @@ Unit* TargetSelectionUtils::GetWeakestEnemy(Player* bot, float maxRange)
         {
             lowestHealth = healthPct;
             // Get Unit* for return (needed by caller)
-            Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
+            /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
             if (unit && unit->IsAlive())
                 weakestEnemy = unit;
         }

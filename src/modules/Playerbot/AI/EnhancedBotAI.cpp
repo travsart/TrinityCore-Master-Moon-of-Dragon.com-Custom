@@ -458,7 +458,6 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow movement (validated via snapshot first)
-            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
         }
 
         if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
@@ -500,7 +499,6 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow movement (validated via snapshot first)
-            leader = ObjectAccessor::GetPlayer(*GetBot(), _followTarget);
         }
 
         if (leader)
@@ -549,7 +547,6 @@ void EnhancedBotAI::UpdateGroupCoordination(uint32 diff)
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow target setup (validated via snapshot first)
-            leader = ObjectAccessor::GetPlayer(*GetBot(), _currentGroup->GetLeaderGUID());
         }
 
         if (leader && leader != GetBot())

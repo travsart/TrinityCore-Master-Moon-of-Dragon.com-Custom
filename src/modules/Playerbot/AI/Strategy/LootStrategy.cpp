@@ -354,7 +354,6 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
     if (snapshot)
     {
         // Get Creature* for loot access (validated via snapshot first)
-        creature = ObjectAccessor::GetCreature(*bot, corpseGuid);
     }
 
     if (!creature)
@@ -454,7 +453,6 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
     if (snapshot)
     {
         // Get GameObject* for loot access (validated via snapshot first)
-        object = ObjectAccessor::GetGameObject(*bot, objectGuid);
     }
 
     if (!object)

@@ -533,11 +533,17 @@ private:
     // Thread safety
     mutable std::recursive_mutex m_mutex;
 
+    // GHOST AURA FIX: Resurrection synchronization to prevent duplicate aura application
+    mutable std::recursive_timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts (RECURSIVE to allow nested calls)
+    std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
+    std::chrono::steady_clock::time_point _lastResurrectionAttempt; ///< Last resurrection attempt timestamp (for debouncing)
+
     // Constants
     static constexpr float CORPSE_RESURRECTION_RANGE = 39.0f;      ///< WoW corpse rez range
     static constexpr float SPIRIT_HEALER_INTERACTION_RANGE = 10.0f; ///< Spirit healer range
     static constexpr uint32 MAX_RETRY_ATTEMPTS = 5;                ///< Max resurrection retries
     static constexpr uint32 RETRY_DELAY_MS = 5000;                 ///< Delay between retries
+    static constexpr uint32 RESURRECTION_DEBOUNCE_MS = 500;        ///< Minimum time between resurrection attempts
 };
 
 } // namespace Playerbot

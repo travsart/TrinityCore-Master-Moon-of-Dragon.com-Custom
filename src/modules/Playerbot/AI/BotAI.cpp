@@ -40,6 +40,7 @@
 #include "Movement/Arbiter/MovementArbiter.h"
 #include "Movement/Arbiter/MovementRequest.h"
 #include "Movement/Arbiter/MovementPriorityMapper.h"
+#include "Session/BotPriorityManager.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Creature.h"
@@ -346,6 +347,35 @@ void BotAI::UpdateAI(uint32 diff)
         return;
 
     // ========================================================================
+    // STALL DETECTION - Record update timestamp for health monitoring
+    // ========================================================================
+    // CRITICAL FIX: BotPriorityManager::RecordUpdateStart() was never called!
+    // This caused all bots to be flagged as stalled after stallThresholdMs elapsed.
+    // We must call this at the start of EVERY UpdateAI() to keep lastUpdateTime current.
+    sBotPriorityMgr->RecordUpdateStart(_bot->GetGUID(), now);
+
+    // ========================================================================
+    // DEATH RECOVERY - Runs BEFORE all other AI (even when dead/ghost)
+    // ========================================================================
+    // Death recovery MUST run even when bot is dead (ghost state)
+    // This allows bots to release spirit, run to corpse, and resurrect
+    if (_deathRecoveryManager)
+        _deathRecoveryManager->Update(diff);
+
+    // PRIORITY: If bot is in death recovery, skip expensive AI updates
+    // Death recovery handles its own movement (corpse run), so we don't need strategies/combat
+    // But we still allow managers to update (see PHASE 5) to prevent system freezing
+    bool isInDeathRecovery = _deathRecoveryManager && _deathRecoveryManager->IsInDeathRecovery();
+
+    // Performance tracking - declare BEFORE the if block so it's accessible after
+    auto startTime = std::chrono::high_resolution_clock::now();
+    _performanceMetrics.totalUpdates++;
+
+    // Only run normal AI if NOT in death recovery
+    if (!isInDeathRecovery)
+    {
+
+    // ========================================================================
     // SOLO STRATEGY ACTIVATION - Once per bot after first login
     // ========================================================================
     // For bots not in a group, activate solo-relevant strategies on first UpdateAI() call
@@ -440,11 +470,6 @@ void BotAI::UpdateAI(uint32 diff)
         _objectCache.SetFollowTarget(nullptr);
     }
 
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    // Track performance
-    _performanceMetrics.totalUpdates++;
-
     // ========================================================================
     // PHASE 1: CORE BEHAVIORS - Always run every frame
     // ========================================================================
@@ -465,11 +490,6 @@ void BotAI::UpdateAI(uint32 diff)
     // Update movement based on strategy decisions
     // CRITICAL: Must run every frame for smooth movement
     UpdateMovement(diff);
-
-    // Update movement arbiter for priority-based request arbitration
-    // CRITICAL: Must run every frame to process pending movement requests
-    if (_movementArbiter)
-        _movementArbiter->Update(diff);
 
     // ========================================================================
     // PHASE 2: STATE MANAGEMENT - Check for state transitions
@@ -502,16 +522,24 @@ void BotAI::UpdateAI(uint32 diff)
         _groupInvitationHandler->Update(diff);
     }
 
+    }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
+
+    // ========================================================================
+    // CRITICAL: Movement Arbiter MUST update even during death recovery
+    // ========================================================================
+    // Death recovery uses MovementArbiter for corpse navigation with HIGHEST priority (255)
+    // If we skip this, bots can't move to their corpse!
+    if (_movementArbiter)
+        _movementArbiter->Update(diff);
+
     // ========================================================================
     // PHASE 5: MANAGER UPDATES - Throttled heavyweight operations
     // ========================================================================
 
-    // Update death recovery system (if dead or in recovery)
-    if (_deathRecoveryManager)
-        _deathRecoveryManager->Update(diff);
-
+    // Managers run even during death recovery to prevent system freezing
     // Update all BehaviorManager-based managers
     // These handle quest, trade, gathering with their own throttling
+    // NOTE: Managers continue to update even during death recovery to prevent system freezing
     UpdateManagers(diff);
 
     // ========================================================================
