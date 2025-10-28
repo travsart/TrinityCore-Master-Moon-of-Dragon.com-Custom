@@ -163,7 +163,7 @@ void DeathRecoveryManager::OnDeath()
         deathCounter, m_bot ? m_bot->GetName() : "nullptr",
         m_bot ? static_cast<int>(m_bot->getDeathState()) : -1,
         m_bot ? (m_bot->IsAlive() ? "TRUE" : "FALSE") : "null",
-        m_bot ? (m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE") : "null");
+        IsGhost() ? "TRUE" : "FALSE");
     TC_LOG_ERROR("playerbot.death", "========================================");
 
     // No lock needed - death recovery state is per-bot instance data
@@ -233,15 +233,9 @@ void DeathRecoveryManager::Reset()
     m_retryTimer = 0;
     m_retryCount = 0;
 
-    // CRITICAL FIX: Clear ghost flag on reset to ensure clean state for next death cycle
-    // Without this, if a bot dies again after resurrection, the ghost flag from the
-    // previous death persists and causes the death manager to malfunction
-    if (m_bot && m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
-    {
-        m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
-        TC_LOG_DEBUG("playerbot.death", "Bot {} ghost flag cleared during Reset()",
-            m_bot->GetName());
-    }
+    // OPTION 3 REFACTOR: No longer manage Ghost flag manually
+    // TrinityCore handles Ghost aura (spell 8326) and PLAYER_FLAGS_GHOST automatically
+    // We only need to reset our internal state tracking
 
     LogDebug("Death recovery state reset");
 }
@@ -482,8 +476,8 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
 
         // Force resurrection matching GM .revive command (50% health/mana, no sickness)
         // TrinityCore cs_misc.cpp HandleReviveCommand uses ResurrectPlayer(0.5f) for regular GMs
+        // OPTION 3 REFACTOR: ResurrectPlayer() automatically removes Ghost aura and flag
         m_bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness (same as .revive)
-        m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
         m_bot->SpawnCorpseBones();
 
         // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
@@ -782,17 +776,18 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     if (IsGhost())
         return true;
 
-    // GHOST AURA FIX: Call BuildPlayerRepop() to:
-    // 1. Create corpse
-    // 2. Apply ghost aura (spell 8326) - which sets PLAYER_FLAGS_GHOST automatically
-    // 3. Set ghost state properly
-    // REMOVED SetPlayerFlag(PLAYER_FLAGS_GHOST) to prevent duplicate Ghost aura application
+    // OPTION 3 REFACTOR: Let TrinityCore handle Ghost aura (spell 8326) and PLAYER_FLAGS_GHOST
+    // BuildPlayerRepop() automatically:
+    // 1. Creates corpse
+    // 2. Applies Ghost aura (spell 8326) which sets PLAYER_FLAGS_GHOST
+    // 3. Sets ghost state properly
+    // We never touch Ghost aura or flag manually - TrinityCore manages the entire lifecycle
     m_bot->BuildPlayerRepop();
 
     // Then teleport to graveyard
     m_bot->RepopAtGraveyard();
 
-    TC_LOG_ERROR("playerbot.death", "✅ Bot {} released spirit (corpse created, ghost flag SET, teleported to graveyard). IsGhost={}",
+    TC_LOG_ERROR("playerbot.death", "✅ Bot {} released spirit (corpse created, teleported to graveyard). IsGhost={}",
         m_bot->GetName(), IsGhost());
     return true;
 }
@@ -885,7 +880,7 @@ bool DeathRecoveryManager::NavigateToCorpse()
 bool DeathRecoveryManager::InteractWithCorpse()
 {
     // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
-    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    std::unique_lock<std::recursive_timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
     if (!lock.owns_lock())
     {
         TC_LOG_WARN("playerbot.death", "🔒 Bot {} InteractWithCorpse: Resurrection already in progress, skipping concurrent attempt",
@@ -938,11 +933,9 @@ bool DeathRecoveryManager::InteractWithCorpse()
         return false;
     }
 
-    if (!m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
-    {
-        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} not a ghost, cannot resurrect! Ghost flag missing!", m_bot->GetName());
-        return false;
-    }
+    // OPTION 3 REFACTOR: No longer check Ghost flag manually
+    // TrinityCore's HandleReclaimCorpse will validate the ghost state internally
+    // We trust TrinityCore to handle resurrection validation
 
     Corpse* corpse = m_bot->GetCorpse();
     if (!corpse)
@@ -988,10 +981,12 @@ bool DeathRecoveryManager::InteractWithCorpse()
     //   _player->SpawnCorpseBones();
     //
     // This is the PROVEN, tested resurrection flow in TrinityCore
-    // The key fix: ResurrectPlayer() internally calls:
+    // OPTION 3 REFACTOR: ResurrectPlayer() automatically handles:
     // - setDeathState(ALIVE) which properly transitions death state
     // - UpdateObjectVisibility() which fixes visibility issues
     // - RemovePlayerFlag(PLAYER_FLAGS_GHOST) via RemoveAurasDueToSpell(8326)
+    // - All Ghost aura (spell 8326) lifecycle management
+    // We never touch Ghost aura or flag - TrinityCore handles everything
     //
     // Clear movement before resurrection to prevent conflicts (like mod-playerbot does)
     m_bot->GetMotionMaster()->Clear();
@@ -1003,9 +998,9 @@ bool DeathRecoveryManager::InteractWithCorpse()
     float restorePercent = m_bot->InBattleground() ? 1.0f : 0.5f;
     DeathState deathStateBefore = m_bot->getDeathState();
 
-    TC_LOG_FATAL("playerbot.death", "🩺 Bot {} BEFORE ResurrectPlayer: Health={}/{}, RestorePercent={}, DeathState={}, IsAlive={}, HasGhostFlag={}",
+    TC_LOG_FATAL("playerbot.death", "🩺 Bot {} BEFORE ResurrectPlayer: Health={}/{}, RestorePercent={}, DeathState={}, IsAlive={}, IsGhost={}",
         m_bot->GetName(), healthBefore, maxHealth, restorePercent,
-        static_cast<int>(deathStateBefore), m_bot->IsAlive(), m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST));
+        static_cast<int>(deathStateBefore), m_bot->IsAlive(), IsGhost());
 
     // CRITICAL FIX: Call through WorldSession handler to ensure proper packet processing
     // Real players send CMSG_RECLAIM_CORPSE packet → HandleReclaimCorpse
@@ -1030,9 +1025,9 @@ bool DeathRecoveryManager::InteractWithCorpse()
     bool isAlive = m_bot->IsAlive();
     DeathState deathStateAfter = m_bot->getDeathState();
 
-    TC_LOG_FATAL("playerbot.death", "✅ Bot {} Resurrection COMPLETE! deathState: {} -> {}, IsAlive={}, HasGhostFlag={}, Health={}/{} (+{}), Mana={}",
+    TC_LOG_FATAL("playerbot.death", "✅ Bot {} Resurrection COMPLETE! deathState: {} -> {}, IsAlive={}, IsGhost={}, Health={}/{} (+{}), Mana={}",
         m_bot->GetName(), static_cast<int>(deathStateBefore), static_cast<int>(deathStateAfter),
-        isAlive ? "TRUE" : "FALSE", m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE",
+        isAlive ? "TRUE" : "FALSE", IsGhost() ? "TRUE" : "FALSE",
         healthAfter, maxHealth, (healthAfter - healthBefore), manaAfter);
 
     return true;
@@ -1157,24 +1152,24 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
         return false;
 
     // TrinityCore API: Graveyard resurrection
+    // OPTION 3 REFACTOR: ResurrectPlayer() automatically:
+    // - Removes Ghost aura (spell 8326) and clears PLAYER_FLAGS_GHOST
+    // - Sets death state to ALIVE
+    // - Restores health/mana
+    // - Applies resurrection sickness if applySickness=true
     m_bot->ResurrectPlayer(0.5f, true); // 50% health/mana, with resurrection sickness
-
-    // CRITICAL FIX: ResurrectPlayer() doesn't automatically clear ghost flag for bots
-    // Bot Player objects need explicit flag clearing to transition back to alive state
-    m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
 
     // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
     // The normal visibility update system will handle this on next main thread tick
 
-    // Apply resurrection sickness if appropriate
+    // Log resurrection sickness if appropriate
     if (WillReceiveResurrectionSickness() && !m_config.skipResurrectionSickness)
     {
-        // Sickness is automatically applied by ResurrectPlayer with applySickness=true
         TC_LOG_DEBUG("playerbot.death", "Bot {} received resurrection sickness",
             m_bot->GetName());
     }
 
-    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at graveyard (ghost flag cleared)", m_bot->GetName());
+    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at graveyard via TrinityCore API", m_bot->GetName());
     return true;
 }
 
@@ -1190,6 +1185,9 @@ uint64 DeathRecoveryManager::GetTimeSinceDeath() const
 
 bool DeathRecoveryManager::IsGhost() const
 {
+    // OPTION 3 REFACTOR: Let TrinityCore manage Ghost state entirely
+    // We only query the state, never modify it manually
+    // TrinityCore automatically sets/clears PLAYER_FLAGS_GHOST via Ghost aura (spell 8326)
     return m_bot && m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST);
 }
 
@@ -1358,7 +1356,7 @@ bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint3
 bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 {
     // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
-    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    std::unique_lock<std::recursive_timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
     if (!lock.owns_lock())
     {
         TC_LOG_WARN("playerbot.death", "🔒 Bot {} ForceResurrection: Resurrection already in progress, skipping concurrent attempt",
@@ -1388,6 +1386,7 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
         m_bot->GetName(),
         method == ResurrectionMethod::CORPSE_RUN ? "corpse" : "spirit healer");
 
+    // OPTION 3 REFACTOR: ResurrectPlayer() handles Ghost aura/flag automatically
     if (method == ResurrectionMethod::CORPSE_RUN)
     {
         m_bot->ResurrectPlayer(1.0f, false); // Full health, no sickness
@@ -1396,9 +1395,6 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
     {
         m_bot->ResurrectPlayer(1.0f, true); // Full health, with sickness
     }
-
-    // CRITICAL FIX: Clear ghost flag after force resurrection
-    m_bot->RemovePlayerFlag(PLAYER_FLAGS_GHOST);
 
     // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
     // The normal visibility update system will handle this on next main thread tick
