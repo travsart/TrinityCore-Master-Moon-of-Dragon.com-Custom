@@ -233,14 +233,14 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
 
         _loginState = LoginState::LOGIN_FAILED;
 
-        // Clean up player if created
+        // PLAYERBOT FIX: Use LogoutPlayer() to match TrinityCore's logout flow
+        // Issue: Direct RemoveFromWorld() call from worker thread causes Map iterator crash (Map.cpp:686)
+        // Solution: Call LogoutPlayer() which sets m_playerLogout flag, then RemovePlayerFromMap()
+        // is called during next Update() cycle on main thread (WorldSession.cpp:716)
+        // This matches how real players logout and prevents race conditions
         if (GetPlayer())
         {
-            if (GetPlayer()->IsInWorld())
-            {
-                GetPlayer()->RemoveFromWorld();
-            }
-            SetPlayer(nullptr);
+            LogoutPlayer(false);  // false = don't save (login failed)
         }
 
         return false;
