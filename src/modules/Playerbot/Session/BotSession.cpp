@@ -352,7 +352,8 @@ BotSession::BotSession(uint32 bnetAccountId)
         ClientBuild::VariantId{},      // Client build variant
         LOCALE_enUS,                   // Locale
         0,                             // Recruiter
-        false),                        // Is recruiter
+        false,                         // Is recruiter
+        true),                         // is_bot = true ⭐ CRITICAL FIX: Makes IsBot() work correctly!
     _bnetAccountId(bnetAccountId),
     _simulatedLatency(50)
 {
