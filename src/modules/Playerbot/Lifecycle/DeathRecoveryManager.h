@@ -54,6 +54,7 @@ enum class DeathRecoveryState : uint8
     NOT_DEAD = 0,           ///< Bot is alive
     JUST_DIED,              ///< Bot just died, waiting to release spirit
     RELEASING_SPIRIT,       ///< Releasing spirit (becoming ghost)
+    PENDING_TELEPORT_ACK,   ///< Waiting to complete teleport ack (prevents spell mod crash)
     GHOST_DECIDING,         ///< Ghost state, deciding corpse vs spirit healer
     RUNNING_TO_CORPSE,      ///< Running back to corpse
     AT_CORPSE,              ///< At corpse location, ready to resurrect
@@ -355,6 +356,7 @@ private:
 
     void HandleJustDied(uint32 diff);
     void HandleReleasingSpirit(uint32 diff);
+    void HandlePendingTeleportAck(uint32 diff);
     void HandleGhostDeciding(uint32 diff);
     void HandleRunningToCorpse(uint32 diff);
     void HandleAtCorpse(uint32 diff);
@@ -537,6 +539,10 @@ private:
     mutable std::recursive_timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts (RECURSIVE to allow nested calls)
     std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
     std::chrono::steady_clock::time_point _lastResurrectionAttempt; ///< Last resurrection attempt timestamp (for debouncing)
+
+    // SPELL MOD CRASH FIX: Deferred teleport ack to prevent Spell.cpp:603 crash
+    std::chrono::steady_clock::time_point m_teleportAckTime;  ///< Time when teleport ack was deferred
+    bool m_needsTeleportAck;                                  ///< True if teleport ack needs to be processed
 
     // Constants
     static constexpr float CORPSE_RESURRECTION_RANGE = 39.0f;      ///< WoW corpse rez range

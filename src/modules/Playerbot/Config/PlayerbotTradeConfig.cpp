@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotTradeConfig.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Log.h"
 #include "StringConvert.h"
 #include "Util.h"
@@ -55,39 +55,39 @@ namespace Playerbot
         TC_LOG_INFO("bot.trade", "Loading Playerbot Trade Configuration...");
 
         // Trading enabled
-        m_tradeEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.Enable", true);
+        m_tradeEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.Enable", true);
 
         // Auto-accept settings
-        m_tradeAutoAccept = sConfigMgr->GetBoolDefault("Playerbot.Trade.AutoAccept.Enable", true);
-        m_tradeAutoAcceptGroup = sConfigMgr->GetBoolDefault("Playerbot.Trade.AutoAccept.Group", true);
-        m_tradeAutoAcceptGuild = sConfigMgr->GetBoolDefault("Playerbot.Trade.AutoAccept.Guild", false);
-        m_tradeAutoAcceptOwner = sConfigMgr->GetBoolDefault("Playerbot.Trade.AutoAccept.Owner", true);
-        m_tradeAutoAcceptWhitelist = sConfigMgr->GetBoolDefault("Playerbot.Trade.AutoAccept.Whitelist", true);
+        m_tradeAutoAccept = sPlayerbotConfig->GetBool("Playerbot.Trade.AutoAccept.Enable", true);
+        m_tradeAutoAcceptGroup = sPlayerbotConfig->GetBool("Playerbot.Trade.AutoAccept.Group", true);
+        m_tradeAutoAcceptGuild = sPlayerbotConfig->GetBool("Playerbot.Trade.AutoAccept.Guild", false);
+        m_tradeAutoAcceptOwner = sPlayerbotConfig->GetBool("Playerbot.Trade.AutoAccept.Owner", true);
+        m_tradeAutoAcceptWhitelist = sPlayerbotConfig->GetBool("Playerbot.Trade.AutoAccept.Whitelist", true);
 
         // Trade limits
-        m_tradeUpdateInterval = sConfigMgr->GetIntDefault("Playerbot.Trade.UpdateInterval", 1000);
-        m_tradeMaxGold = sConfigMgr->GetIntDefault("Playerbot.Trade.MaxGold", 100000 * GOLD);
-        m_tradeMaxItemValue = sConfigMgr->GetIntDefault("Playerbot.Trade.MaxItemValue", 10000 * GOLD);
-        m_tradeMaxItems = sConfigMgr->GetIntDefault("Playerbot.Trade.MaxItems", 6);
-        m_tradeMaxDistance = sConfigMgr->GetFloatDefault("Playerbot.Trade.MaxDistance", 10.0f);
-        m_tradeTimeout = sConfigMgr->GetIntDefault("Playerbot.Trade.Timeout", 60000);
-        m_tradeRequestTimeout = sConfigMgr->GetIntDefault("Playerbot.Trade.RequestTimeout", 30000);
+        m_tradeUpdateInterval = sPlayerbotConfig->GetInt("Playerbot.Trade.UpdateInterval", 1000);
+        m_tradeMaxGold = sPlayerbotConfig->GetInt("Playerbot.Trade.MaxGold", 100000 * GOLD);
+        m_tradeMaxItemValue = sPlayerbotConfig->GetInt("Playerbot.Trade.MaxItemValue", 10000 * GOLD);
+        m_tradeMaxItems = sPlayerbotConfig->GetInt("Playerbot.Trade.MaxItems", 6);
+        m_tradeMaxDistance = sPlayerbotConfig->GetFloat("Playerbot.Trade.MaxDistance", 10.0f);
+        m_tradeTimeout = sPlayerbotConfig->GetInt("Playerbot.Trade.Timeout", 60000);
+        m_tradeRequestTimeout = sPlayerbotConfig->GetInt("Playerbot.Trade.RequestTimeout", 30000);
 
         // Security
-        m_tradeWhitelistOnly = sConfigMgr->GetBoolDefault("Playerbot.Trade.WhitelistOnly", false);
-        m_tradeSecurityLevel = sConfigMgr->GetIntDefault("Playerbot.Trade.SecurityLevel", 2);
-        m_tradeValueTolerance = sConfigMgr->GetFloatDefault("Playerbot.Trade.ValueTolerance", 0.3f);
-        m_tradeScamProtection = sConfigMgr->GetBoolDefault("Playerbot.Trade.ScamProtection", true);
+        m_tradeWhitelistOnly = sPlayerbotConfig->GetBool("Playerbot.Trade.WhitelistOnly", false);
+        m_tradeSecurityLevel = sPlayerbotConfig->GetInt("Playerbot.Trade.SecurityLevel", 2);
+        m_tradeValueTolerance = sPlayerbotConfig->GetFloat("Playerbot.Trade.ValueTolerance", 0.3f);
+        m_tradeScamProtection = sPlayerbotConfig->GetBool("Playerbot.Trade.ScamProtection", true);
 
         // Loot distribution
-        m_lootDistributionEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.LootDistribution.Enable", true);
-        m_needGreedEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.LootDistribution.NeedGreed", true);
-        m_roundRobinEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.LootDistribution.RoundRobin", false);
-        m_lootBySpecEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.LootDistribution.BySpec", true);
+        m_lootDistributionEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.LootDistribution.Enable", true);
+        m_needGreedEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.LootDistribution.NeedGreed", true);
+        m_roundRobinEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.LootDistribution.RoundRobin", false);
+        m_lootBySpecEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.LootDistribution.BySpec", true);
 
         // Protected items
         m_protectedItems.clear();
-        std::string protectedItemsStr = sConfigMgr->GetStringDefault("Playerbot.Trade.ProtectedItems", "");
+        std::string protectedItemsStr = sPlayerbotConfig->GetString("Playerbot.Trade.ProtectedItems", "");
         if (!protectedItemsStr.empty())
         {
             std::stringstream ss(protectedItemsStr);
@@ -110,9 +110,9 @@ namespace Playerbot
         }
 
         // Logging
-        m_tradeLoggingEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.Logging.Enable", true);
-        m_detailedLoggingEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.Logging.Detailed", false);
-        m_statisticsTrackingEnabled = sConfigMgr->GetBoolDefault("Playerbot.Trade.Logging.Statistics", true);
+        m_tradeLoggingEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.Logging.Enable", true);
+        m_detailedLoggingEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.Logging.Detailed", false);
+        m_statisticsTrackingEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.Logging.Statistics", true);
 
         // Validate configuration
         if (m_tradeUpdateInterval < 100)

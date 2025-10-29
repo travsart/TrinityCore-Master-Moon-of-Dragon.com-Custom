@@ -1789,3 +1789,331 @@ Playerbot.SkipResurrectionSickness = 0
 Playerbot.LogDeathRecovery = 1
 Playerbot.DeathRecovery.NavigationInterval = 500
 Playerbot.DeathRecovery.DistanceCheckInterval = 1000
+
+###################################################################################################
+# PHASE 2/3: ADAPTIVE THROTTLING SYSTEM
+#
+# Comprehensive bot spawning management system with resource pressure detection,
+# circuit breaker protection, priority queue management, adaptive throttling,
+# and phased startup orchestration.
+#
+# Components:
+#   1. StartupSpawnOrchestrator - 4-phase graduated bot spawning over 30 minutes
+#   2. AdaptiveSpawnThrottler - Dynamic spawn interval (50ms-5000ms = 20-0.2 bots/sec)
+#   3. SpawnCircuitBreaker - Failure cascade prevention (CLOSED/OPEN/HALF_OPEN states)
+#   4. SpawnPriorityQueue - 4-tier priority queue (CRITICAL/HIGH/NORMAL/LOW)
+#   5. ResourceMonitor - CPU/memory/DB connection monitoring
+#
+# Performance Target: 5000 concurrent bots with <10% server performance impact
+#                     <10MB memory per bot, <0.1% CPU per bot
+#
+# Quality Level: Enterprise-Grade Production-Ready
+#
+###################################################################################################
+
+#
+#    Playerbot.Startup.EnablePhased
+#        Description: Enable phased startup orchestration for gradual bot spawning
+#        Type:        Boolean (0 = disabled, 1 = enabled)
+#        Default:     1 (enabled)
+#        Impact:      When enabled, bots spawn in 4 phases over ~30 minutes:
+#                     Phase 1 (CRITICAL): Guild leaders, raid leaders (first 5 min)
+#                     Phase 2 (HIGH): Specific character requests, group members (5-10 min)
+#                     Phase 3 (NORMAL): Zone population, general spawns (10-25 min)
+#                     Phase 4 (LOW): Random background bots (25-30 min)
+#        Recommendation: Enable for production servers with >500 bots
+#                        Disable for small test servers (<100 bots)
+#
+#    Playerbot.Startup.InitialDelaySeconds
+#        Description: Delay in seconds before starting Phase 1 bot spawning
+#        Type:        Integer (0-300 seconds)
+#        Default:     5 (seconds)
+#        Impact:      Allows server initialization to complete before bot load
+#        Recommendation: 5-10 seconds for normal startup
+#                        0 seconds if manually controlling spawn timing
+#
+#    Playerbot.Startup.EnableParallelLoading
+#        Description: Enable parallel database loading during bot spawn preparation
+#        Type:        Boolean (0 = disabled, 1 = enabled)
+#        Default:     0 (disabled)
+#        Impact:      When enabled, loads multiple bot characters from DB concurrently
+#        Warning:     May increase DB connection pool pressure
+#        Recommendation: Enable only if DB connection pool has 50+ connections
+#                        Disable for low-spec servers or shared DB hosts
+#
+#    Playerbot.Startup.MaxConcurrentDbLoads
+#        Description: Maximum concurrent database load operations during parallel loading
+#        Type:        Integer (1-50)
+#        Default:     10
+#        Impact:      Higher = faster bot loading, but more DB connection pressure
+#        Recommendation: 5-10 for shared DB, 20-30 for dedicated DB server
+#
+#    Playerbot.Startup.Phase1.TargetBots
+#        Description: Target number of CRITICAL priority bots to spawn in Phase 1
+#        Type:        Integer (0-5000)
+#        Default:     100
+#        Impact:      Phase 1 spawns guild leaders, raid leaders (highest priority)
+#        Recommendation: 50-100 for guilds/raids, 0 if no CRITICAL bots needed
+#
+#    Playerbot.Startup.Phase2.TargetBots
+#        Description: Target number of HIGH priority bots to spawn in Phase 2
+#        Type:        Integer (0-5000)
+#        Default:     500
+#        Impact:      Phase 2 spawns specific character requests, group members
+#        Recommendation: 100-500 for active groups, adjust based on player demand
+#
+#    Playerbot.Startup.Phase3.TargetBots
+#        Description: Target number of NORMAL priority bots to spawn in Phase 3
+#        Type:        Integer (0-5000)
+#        Default:     3000
+#        Impact:      Phase 3 spawns zone population, general world bots
+#        Recommendation: 1000-3000 for populated world, 60% of total bot capacity
+#
+#    Playerbot.Startup.Phase4.TargetBots
+#        Description: Target number of LOW priority bots to spawn in Phase 4
+#        Type:        Integer (0-5000)
+#        Default:     1400
+#        Impact:      Phase 4 spawns random background bots (lowest priority)
+#        Recommendation: 500-1500 for background atmosphere, 30% of total capacity
+#        Note:        Phase1 + Phase2 + Phase3 + Phase4 = Total bot capacity
+#                     Default: 100 + 500 + 3000 + 1400 = 5000 bots
+#
+
+Playerbot.Startup.EnablePhased = 1
+Playerbot.Startup.InitialDelaySeconds = 5
+Playerbot.Startup.EnableParallelLoading = 0
+Playerbot.Startup.MaxConcurrentDbLoads = 10
+Playerbot.Startup.Phase1.TargetBots = 100
+Playerbot.Startup.Phase2.TargetBots = 500
+Playerbot.Startup.Phase3.TargetBots = 3000
+Playerbot.Startup.Phase4.TargetBots = 1400
+
+#
+#    Playerbot.Throttler.BaseSpawnIntervalMs
+#        Description: Base spawn interval in milliseconds between bot spawns
+#        Type:        Integer (50-5000 milliseconds)
+#        Default:     100 (milliseconds = 10 bots/second baseline)
+#        Impact:      Lower = faster spawning, higher = slower spawning
+#        Calculation: Spawn rate = 1000 / BaseSpawnIntervalMs bots/second
+#                     100ms = 10 bots/sec, 50ms = 20 bots/sec, 200ms = 5 bots/sec
+#        Recommendation: 50-100ms for high-spec servers (20-10 bots/sec)
+#                        100-200ms for medium-spec servers (10-5 bots/sec)
+#                        200-500ms for low-spec servers (5-2 bots/sec)
+#
+#    Playerbot.Throttler.MinSpawnIntervalMs
+#        Description: Minimum allowed spawn interval under low resource pressure
+#        Type:        Integer (50-1000 milliseconds)
+#        Default:     50 (milliseconds = 20 bots/second maximum)
+#        Impact:      Prevents spawning faster than this rate even under ideal conditions
+#        Recommendation: 50ms for high-spec, 100ms for medium, 200ms for low-spec
+#
+#    Playerbot.Throttler.MaxSpawnIntervalMs
+#        Description: Maximum spawn interval under extreme resource pressure
+#        Type:        Integer (1000-10000 milliseconds)
+#        Default:     5000 (milliseconds = 0.2 bots/second minimum)
+#        Impact:      Adaptive throttling slows down to this rate under CRITICAL pressure
+#        Recommendation: 5000ms for graceful degradation, 10000ms for very low-spec
+#
+#    Playerbot.Throttler.EnableAdaptive
+#        Description: Enable adaptive spawn interval adjustment based on resource pressure
+#        Type:        Boolean (0 = disabled, 1 = enabled)
+#        Default:     1 (enabled)
+#        Impact:      When enabled, spawn interval dynamically adjusts:
+#                     NORMAL pressure: BaseSpawnIntervalMs * 1.0 (full speed)
+#                     ELEVATED pressure: BaseSpawnIntervalMs * 2.0 (50% speed)
+#                     HIGH pressure: BaseSpawnIntervalMs * 4.0 (25% speed)
+#                     CRITICAL pressure: BaseSpawnIntervalMs * inf (paused)
+#        Recommendation: Enable for production (prevents server overload)
+#                        Disable for testing (consistent spawn timing)
+#
+#    Playerbot.Throttler.EnableCircuitBreaker
+#        Description: Enable circuit breaker to prevent spawn failure cascades
+#        Type:        Boolean (0 = disabled, 1 = enabled)
+#        Default:     1 (enabled)
+#        Impact:      When enabled, monitors spawn failure rate and trips circuit:
+#                     CLOSED: Normal operation (<5% failure rate)
+#                     OPEN: Spawning paused (>10% failure rate, 60s cooldown)
+#                     HALF_OPEN: Testing recovery (5 test spawns)
+#        Recommendation: Enable for production (critical fault tolerance)
+#                        Disable for debugging (see all spawn failures)
+#
+#    Playerbot.Throttler.EnableBurstPrevention
+#        Description: Enable burst prevention to limit spawn request rate spikes
+#        Type:        Boolean (0 = disabled, 1 = enabled)
+#        Default:     1 (enabled)
+#        Impact:      When enabled, prevents >50 spawn requests within 10 seconds
+#        Recommendation: Enable for production (prevents request floods)
+#                        Disable for batch spawn testing
+#
+#    Playerbot.Throttler.PressureMultiplier.Normal
+#        Description: Spawn interval multiplier under NORMAL resource pressure
+#        Type:        Float (0.5-2.0)
+#        Default:     1.0 (no slowdown)
+#        Impact:      Multiplies BaseSpawnIntervalMs when CPU <60%, Memory <70%
+#        Recommendation: Keep at 1.0 (full speed under normal conditions)
+#
+#    Playerbot.Throttler.PressureMultiplier.Elevated
+#        Description: Spawn interval multiplier under ELEVATED resource pressure
+#        Type:        Float (1.0-4.0)
+#        Default:     2.0 (50% slowdown)
+#        Impact:      Multiplies BaseSpawnIntervalMs when CPU 60-75% or Memory 70-80%
+#        Recommendation: 2.0 for balanced throttling, 1.5 for aggressive spawning
+#
+#    Playerbot.Throttler.PressureMultiplier.High
+#        Description: Spawn interval multiplier under HIGH resource pressure
+#        Type:        Float (2.0-8.0)
+#        Default:     4.0 (75% slowdown)
+#        Impact:      Multiplies BaseSpawnIntervalMs when CPU 75-85% or Memory 80-90%
+#        Recommendation: 4.0 for conservative, 3.0 for aggressive, 6.0 for safety
+#
+#    Playerbot.Throttler.PressureMultiplier.Critical
+#        Description: Spawn interval multiplier under CRITICAL resource pressure
+#        Type:        Float (0.0 = pause)
+#        Default:     0.0 (spawning paused)
+#        Impact:      When CPU >85% or Memory >90%, spawning is paused completely
+#        Warning:     Setting >0.0 may cause server instability under extreme load
+#        Recommendation: Keep at 0.0 (pause spawning during critical pressure)
+#
+#    Playerbot.Throttler.BurstWindow.Requests
+#        Description: Maximum spawn requests allowed within burst prevention window
+#        Type:        Integer (10-200)
+#        Default:     50
+#        Impact:      Rejects spawn requests if >50 requests within WindowSeconds
+#        Recommendation: 50-100 for production, 200 for batch spawn testing
+#
+#    Playerbot.Throttler.BurstWindow.Seconds
+#        Description: Time window in seconds for burst prevention monitoring
+#        Type:        Integer (5-60 seconds)
+#        Default:     10 (seconds)
+#        Impact:      Monitors spawn request rate over this sliding window
+#        Recommendation: 10s for normal, 30s for lenient, 5s for strict
+#
+
+Playerbot.Throttler.BaseSpawnIntervalMs = 100
+Playerbot.Throttler.MinSpawnIntervalMs = 50
+Playerbot.Throttler.MaxSpawnIntervalMs = 5000
+Playerbot.Throttler.EnableAdaptive = 1
+Playerbot.Throttler.EnableCircuitBreaker = 1
+Playerbot.Throttler.EnableBurstPrevention = 1
+Playerbot.Throttler.PressureMultiplier.Normal = 1.0
+Playerbot.Throttler.PressureMultiplier.Elevated = 2.0
+Playerbot.Throttler.PressureMultiplier.High = 4.0
+Playerbot.Throttler.PressureMultiplier.Critical = 0.0
+Playerbot.Throttler.BurstWindow.Requests = 50
+Playerbot.Throttler.BurstWindow.Seconds = 10
+
+#
+#    Playerbot.CircuitBreaker.OpenThresholdPercent
+#        Description: Spawn failure rate threshold to trip circuit to OPEN state
+#        Type:        Float (5.0-50.0 percent)
+#        Default:     10.0 (percent = 10% failure rate)
+#        Impact:      When spawn failures exceed this rate, circuit opens (pauses spawning)
+#        Calculation: Failures / TotalAttempts >= (OpenThreshold / 100.0)
+#        Recommendation: 10% for production, 20% for lenient, 5% for strict
+#
+#    Playerbot.CircuitBreaker.CloseThresholdPercent
+#        Description: Spawn failure rate threshold to close circuit from HALF_OPEN
+#        Type:        Float (1.0-10.0 percent)
+#        Default:     5.0 (percent = 5% failure rate)
+#        Impact:      During recovery testing, if failures drop below this, circuit closes
+#        Recommendation: Half of OpenThreshold (e.g., Open=10%, Close=5%)
+#
+#    Playerbot.CircuitBreaker.CooldownSeconds
+#        Description: Cooldown period in OPEN state before transitioning to HALF_OPEN
+#        Type:        Integer (30-300 seconds)
+#        Default:     60 (seconds)
+#        Impact:      Circuit remains OPEN (spawning paused) for this duration
+#        Recommendation: 60s for production, 30s for testing, 120s for conservative
+#
+#    Playerbot.CircuitBreaker.RecoveryWindowSeconds
+#        Description: Time window for HALF_OPEN state recovery testing
+#        Type:        Integer (60-600 seconds)
+#        Default:     120 (seconds)
+#        Impact:      Circuit monitors failure rate over this window during recovery
+#        Recommendation: 2x CooldownSeconds (e.g., Cooldown=60s, Recovery=120s)
+#
+#    Playerbot.CircuitBreaker.FailureWindowSeconds
+#        Description: Sliding window for failure rate calculation
+#        Type:        Integer (30-300 seconds)
+#        Default:     60 (seconds)
+#        Impact:      Circuit monitors spawn failures over this time period
+#        Recommendation: 60s for responsive, 120s for stable, 30s for aggressive
+#
+#    Playerbot.CircuitBreaker.MinimumSampleSize
+#        Description: Minimum spawn attempts required before circuit can trip
+#        Type:        Integer (10-100)
+#        Default:     20
+#        Impact:      Prevents circuit from tripping on small sample sizes (e.g., 1/1 = 100%)
+#        Recommendation: 20 for production, 10 for testing, 50 for conservative
+#
+
+Playerbot.CircuitBreaker.OpenThresholdPercent = 10.0
+Playerbot.CircuitBreaker.CloseThresholdPercent = 5.0
+Playerbot.CircuitBreaker.CooldownSeconds = 60
+Playerbot.CircuitBreaker.RecoveryWindowSeconds = 120
+Playerbot.CircuitBreaker.FailureWindowSeconds = 60
+Playerbot.CircuitBreaker.MinimumSampleSize = 20
+
+#
+#    Playerbot.ResourceMonitor.CpuThreshold.Elevated
+#        Description: CPU usage threshold to trigger ELEVATED resource pressure
+#        Type:        Float (50.0-80.0 percent)
+#        Default:     60.0 (percent)
+#        Impact:      When CPU exceeds this, adaptive throttling applies 2x multiplier
+#        Recommendation: 60% for medium-spec, 70% for high-spec, 50% for low-spec
+#
+#    Playerbot.ResourceMonitor.CpuThreshold.High
+#        Description: CPU usage threshold to trigger HIGH resource pressure
+#        Type:        Float (60.0-90.0 percent)
+#        Default:     75.0 (percent)
+#        Impact:      When CPU exceeds this, adaptive throttling applies 4x multiplier
+#        Recommendation: 75% for medium-spec, 80% for high-spec, 65% for low-spec
+#
+#    Playerbot.ResourceMonitor.CpuThreshold.Critical
+#        Description: CPU usage threshold to trigger CRITICAL resource pressure
+#        Type:        Float (70.0-95.0 percent)
+#        Default:     85.0 (percent)
+#        Impact:      When CPU exceeds this, spawning is PAUSED completely
+#        Warning:     Server may become unresponsive above this threshold
+#        Recommendation: 85% for production, 90% for high-spec, 80% for low-spec
+#
+#    Playerbot.ResourceMonitor.MemoryThreshold.Elevated
+#        Description: Memory usage threshold to trigger ELEVATED resource pressure
+#        Type:        Float (60.0-85.0 percent)
+#        Default:     70.0 (percent)
+#        Impact:      When memory exceeds this, adaptive throttling applies 2x multiplier
+#        Recommendation: 70% for medium RAM, 75% for high RAM, 60% for low RAM
+#
+#    Playerbot.ResourceMonitor.MemoryThreshold.High
+#        Description: Memory usage threshold to trigger HIGH resource pressure
+#        Type:        Float (70.0-90.0 percent)
+#        Default:     80.0 (percent)
+#        Impact:      When memory exceeds this, adaptive throttling applies 4x multiplier
+#        Recommendation: 80% for medium RAM, 85% for high RAM, 75% for low RAM
+#
+#    Playerbot.ResourceMonitor.MemoryThreshold.Critical
+#        Description: Memory usage threshold to trigger CRITICAL resource pressure
+#        Type:        Float (80.0-95.0 percent)
+#        Default:     90.0 (percent)
+#        Impact:      When memory exceeds this, spawning is PAUSED completely
+#        Warning:     Server may crash or swap to disk above this threshold
+#        Recommendation: 90% for production, 95% for high RAM, 85% for low RAM
+#
+#    Playerbot.ResourceMonitor.DbConnectionThreshold
+#        Description: Database connection usage threshold to trigger pressure
+#        Type:        Float (70.0-95.0 percent)
+#        Default:     80.0 (percent of pool size)
+#        Impact:      When DB connections exceed this, triggers ELEVATED pressure
+#        Warning:     Exhausting DB connection pool will block all database queries
+#        Recommendation: 80% for production, 85% for large pool, 75% for small pool
+#
+
+Playerbot.ResourceMonitor.CpuThreshold.Elevated = 60.0
+Playerbot.ResourceMonitor.CpuThreshold.High = 75.0
+Playerbot.ResourceMonitor.CpuThreshold.Critical = 85.0
+Playerbot.ResourceMonitor.MemoryThreshold.Elevated = 70.0
+Playerbot.ResourceMonitor.MemoryThreshold.High = 80.0
+Playerbot.ResourceMonitor.MemoryThreshold.Critical = 90.0
+Playerbot.ResourceMonitor.DbConnectionThreshold = 80.0
+
+###################################################################################################

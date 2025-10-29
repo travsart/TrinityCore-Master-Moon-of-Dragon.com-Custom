@@ -561,35 +561,18 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
         // OPTION 3 REFACTOR: ResurrectPlayer() automatically removes Ghost aura and flag
         // CRITICAL FIX: Remove all auras before ResurrectPlayer to prevent double-application crash
         // Quest auras like Fire Extinguisher (80209) remain after KillAllEvents() and cause assertion failure
-        // CRITICAL FIX: Clear m_spellModTakingSpell and kill all spell events FIRST
-        // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
-        // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
-        // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-        // CRITICAL FIX: Schedule resurrection on MAIN THREAD to prevent proc aura iterator deadlock
-        // Worker thread calls ResurrectPlayer → CastAllObtainSpells → SpellEvents → proc auras
-        // GetProcAurasTriggeredOnEvent iterates aura map while processAuraApplication modifies it
-        // Iterator invalidation → infinite loop → 60s hang → crash (Unit.cpp:10397)
-        ObjectGuid botGuid = m_bot->GetGUID();
-        std::string botName = m_bot->GetName();
+        m_bot->RemoveAllAuras();
+        m_bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness (same as .revive)
+        m_bot->SpawnCorpseBones();
 
-        m_bot->GetMap()->AddFarSpellCallback([botGuid, botName](Map* map)
-        {
-            Player* bot = ObjectAccessor::FindPlayer(botGuid);
-            if (!bot)
-                return;
+        // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
+        // The normal visibility update system will handle this on next main thread tick
 
-            bot->m_spellModTakingSpell = nullptr;
-            bot->m_Events.KillAllEvents(false);
-            bot->RemoveAllAuras();
-            bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness
-            bot->SpawnCorpseBones();
+        TC_LOG_WARN("playerbot.death", "✅ Bot {} FORCE RESURRECTED via GM fallback - health: {}/{} ({:.0f}%)",
+            m_bot->GetName(), m_bot->GetHealth(), m_bot->GetMaxHealth(),
+            (m_bot->GetHealth() * 100.0f) / m_bot->GetMaxHealth());
 
-            TC_LOG_WARN("playerbot.death", "✅ Bot {} GM resurrect on MAIN THREAD - HP: {}/{} ({:.0f}%)",
-                botName, bot->GetHealth(), bot->GetMaxHealth(),
-                (bot->GetHealth() * 100.0f) / bot->GetMaxHealth());
-        });
-
-        TransitionToState(DeathRecoveryState::RESURRECTING, "Scheduled GM resurrect on main thread");
+        TransitionToState(DeathRecoveryState::RESURRECTING, "Force GM resurrect after 60s timeout");
         return;
     }
 
@@ -904,7 +887,7 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     // Issue: Spells cast before death are queued in the EventProcessor and can fire during corpse run
     // This causes crashes when trying to reapply auras that weren't properly cleaned (e.g., quest auras like Fire Extinguisher)
     // Solution: Clear all events immediately after BuildPlayerRepop() to ensure no stale spell events execute
-    m_bot->m_spellModTakingSpell = nullptr;  // CRITICAL: Clear before KillAllEvents to prevent Spell::~Spell assertion
+    m_bot->SetSpellModTakingSpell(nullptr, false);  // CRITICAL: Clear before KillAllEvents to prevent Spell::~Spell assertion
     m_bot->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
     TC_LOG_ERROR("playerbot.death", "🧹 Bot {} cleared all pending spell events to prevent duplicate aura application", m_bot->GetName());
 
@@ -1224,46 +1207,34 @@ bool DeathRecoveryManager::InteractWithCorpse()
         m_bot->GetName(), healthBefore, maxHealth, restorePercent,
         static_cast<int>(deathStateBefore), m_bot->IsAlive(), IsGhost());
 
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD to prevent proc aura iterator deadlock
-    // Worker thread calls ResurrectPlayer → CastAllObtainSpells → SpellEvents → proc auras
-    // GetProcAurasTriggeredOnEvent iterates aura map while processAuraApplication modifies it
-    // Iterator invalidation → infinite loop → 60s hang → crash (Unit.cpp:10397)
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
-    bool inBattleground = m_bot->InBattleground();
-
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName, inBattleground, healthBefore, maxHealth, restorePercent, deathStateBefore](Map* map)
+    // CRITICAL FIX: Call through WorldSession handler to ensure proper packet processing
+    // Real players send CMSG_RECLAIM_CORPSE packet → HandleReclaimCorpse
+    // For bots, we simulate this by calling the handler directly through the session
+    WorldSession* session = m_bot->GetSession();
+    if (!session)
     {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.death", "🔴 Bot {} corpse resurrect callback: Bot not found!", botName);
-            return;
-        }
+        TC_LOG_ERROR("playerbot.death", "🔴 Bot {} has no session! Cannot call HandleReclaimCorpse", m_bot->GetName());
+        return false;
+    }
 
-        TC_LOG_INFO("playerbot.death", "🩺 Bot {} corpse resurrect on MAIN THREAD - Starting...", botName);
+    // Create empty packet (HandleReclaimCorpse doesn't use packet data anyway)
+    WorldPacket emptyPacket(CMSG_RECLAIM_CORPSE);
+    WorldPackets::Misc::ReclaimCorpse reclaimPacket(std::move(emptyPacket));
 
-        // Execute resurrection on MAIN THREAD (safe from iterator deadlock)
-        // Mirror HandleReclaimCorpse logic (MiscHandler.cpp:442-445)
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(restorePercent); // 50% health (or 100% in BG)
-        bot->SpawnCorpseBones();
+    // Call the handler through session (this ensures proper threading and state management)
+    session->HandleReclaimCorpse(reclaimPacket);
 
-        // DIAGNOSTIC: Log health AFTER resurrection
-        uint32 healthAfter = bot->GetHealth();
-        uint32 manaAfter = bot->GetPower(POWER_MANA);
-        bool isAlive = bot->IsAlive();
-        DeathState deathStateAfter = bot->getDeathState();
+    // DIAGNOSTIC: Log health AFTER resurrection
+    uint32 healthAfter = m_bot->GetHealth();
+    uint32 manaAfter = m_bot->GetPower(POWER_MANA);
+    bool isAlive = m_bot->IsAlive();
+    DeathState deathStateAfter = m_bot->getDeathState();
 
-        TC_LOG_WARN("playerbot.death", "✅ Bot {} corpse resurrect on MAIN THREAD COMPLETE! deathState: {} -> {}, IsAlive={}, IsGhost={}, Health={}/{} (+{}), Mana={}",
-            botName, static_cast<int>(deathStateBefore), static_cast<int>(deathStateAfter),
-            isAlive ? "TRUE" : "FALSE", bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE",
-            healthAfter, maxHealth, (healthAfter - healthBefore), manaAfter);
-    });
+    TC_LOG_FATAL("playerbot.death", "✅ Bot {} Resurrection COMPLETE! deathState: {} -> {}, IsAlive={}, IsGhost={}, Health={}/{} (+{}), Mana={}",
+        m_bot->GetName(), static_cast<int>(deathStateBefore), static_cast<int>(deathStateAfter),
+        isAlive ? "TRUE" : "FALSE", IsGhost() ? "TRUE" : "FALSE",
+        healthAfter, maxHealth, (healthAfter - healthBefore), manaAfter);
 
-    TC_LOG_INFO("playerbot.death", "📅 Bot {} scheduled corpse resurrect on main thread", m_bot->GetName());
     return true;
 }
 
@@ -1392,27 +1363,8 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
     // - Restores health/mana
     // - Applies resurrection sickness if applySickness=true
     // CRITICAL FIX: Remove all auras before ResurrectPlayer to prevent double-application crash
-        // CRITICAL FIX: Clear m_spellModTakingSpell and kill all spell events FIRST
-        // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
-        // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
-        // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
-
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName](Map* map)
-    {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-            return;
-
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(0.5f, true); // 50% health/mana, with resurrection sickness
-
-        TC_LOG_INFO("playerbot.death", "✅ Bot {} graveyard resurrect on MAIN THREAD", botName);
-    });
+    m_bot->RemoveAllAuras();
+    m_bot->ResurrectPlayer(0.5f, true); // 50% health/mana, with resurrection sickness
 
     // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
     // The normal visibility update system will handle this on next main thread tick
@@ -1643,28 +1595,16 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 
     // OPTION 3 REFACTOR: ResurrectPlayer() handles Ghost aura/flag automatically
     // CRITICAL FIX: Remove all auras before ResurrectPlayer to prevent double-application crash
-        // CRITICAL FIX: Clear m_spellModTakingSpell and kill all spell events FIRST
-        // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
-        // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
-        // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
-    bool useSickness = (method != ResurrectionMethod::CORPSE_RUN);
+    m_bot->RemoveAllAuras();
 
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName, useSickness](Map* map)
+    if (method == ResurrectionMethod::CORPSE_RUN)
     {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-            return;
-
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(1.0f, useSickness); // Full health
-
-        TC_LOG_WARN("playerbot.death", "✅ Bot {} force resurrect on MAIN THREAD", botName);
-    });
+        m_bot->ResurrectPlayer(1.0f, false); // Full health, no sickness
+    }
+    else
+    {
+        m_bot->ResurrectPlayer(1.0f, true); // Full health, with sickness
+    }
 
     // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
     // The normal visibility update system will handle this on next main thread tick

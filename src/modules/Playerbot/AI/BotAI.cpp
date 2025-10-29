@@ -325,6 +325,23 @@ void BotAI::UpdateAI(uint32 diff)
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
     // No more confusion with DoUpdateAI/UpdateEnhanced
 
+    // ========================================================================
+    // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear events on first update to prevent LOGINEFFECT crash
+    // ========================================================================
+    // Issue: LOGINEFFECT (Spell 836) is cast during SendInitialPacketsAfterAddToMap() at Player.cpp:24742
+    //        and queued in EventProcessor. It fires during first Player::Update() → EventProcessor::Update()
+    //        which causes Spell.cpp:603 assertion failure: m_spellModTakingSpell != this
+    // Root Cause: Bot doesn't send CMSG_CAST_SPELL ACK packets like real players, leaving stale spell references
+    // Solution: Clear ALL pending events HERE on first update, BEFORE EventProcessor::Update() can fire them
+    // Timing: This runs in UpdateAI() which is called DURING Player::Update(), BEFORE EventProcessor::Update()
+    if (!_firstUpdateComplete)
+    {
+        _bot->m_spellModTakingSpell = nullptr;  // CRITICAL: Clear before KillAllEvents to prevent Spell::~Spell assertion
+        _bot->m_Events.KillAllEvents(false);  // false = graceful shutdown, not forced
+        _firstUpdateComplete = true;
+        TC_LOG_DEBUG("module.playerbot", "🧹 Bot {} cleared login spell events on FIRST UPDATE to prevent m_spellModTakingSpell crash", _bot->GetName());
+    }
+
     // DIAGNOSTIC: Log UpdateAI entry for first bot only, once per 10 seconds
     static uint32 lastUpdateLog = 0;
     static bool loggedFirstBot = false;

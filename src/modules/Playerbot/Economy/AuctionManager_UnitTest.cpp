@@ -336,7 +336,7 @@ void RunAuctionManagerTests()
  * USAGE:
  *
  * 1. Add to worldserver startup:
- *    if (sConfigMgr->GetOption<bool>("Playerbot.RunTests", false))
+ *    if (sPlayerbotConfig->GetBool("Playerbot.RunTests", false))
  *        RunAuctionManagerTests();
  *
  * 2. Add to playerbots.conf:

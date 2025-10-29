@@ -4,6 +4,7 @@
 
 #include "BotSession.h"
 #include "BotPacketRelay.h"
+#include "BotPacketSimulator.h"  // PHASE 1: Packet forging infrastructure
 #include "AccountMgr.h"
 #include "Log.h"
 #include "WorldPacket.h"
@@ -425,6 +426,20 @@ BotSession::~BotSession()
         TC_LOG_WARN("module.playerbot.session", "BotSession destructor: Packet processing still active after 500ms wait for account {}", accountId);
     }
 
+    // CRITICAL FIX: Clear m_spellModTakingSpell BEFORE player cleanup to prevent crash
+    // When bot logs out, delayed spells (like Detect Sparkle Aura 84459) are still in EventProcessor
+    // The SpellEvent destructor will fire and Spell::~Spell() checks m_spellModTakingSpell
+    // We MUST clear this pointer before the base WorldSession destructor cleans up the player
+    if (Player* player = GetPlayer()) {
+        try {
+            player->m_spellModTakingSpell = nullptr;
+            player->m_Events.KillAllEvents(false);
+            TC_LOG_DEBUG("module.playerbot.session", "Bot {} cleared spell events during logout", player->GetName());
+        } catch (...) {
+            TC_LOG_ERROR("module.playerbot.session", "Exception clearing spell events during logout for account {}", accountId);
+        }
+    }
+
     // MEMORY SAFETY: Clean up AI with exception protection
     if (_ai) {
         try {
@@ -599,6 +614,12 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // CRITICAL FIX: Process query holder callbacks (missing from original implementation)
         // This is required for async login callbacks to be processed
         ProcessQueryCallbacks();
+
+        // PHASE 1 REFACTORING: Update packet simulator for periodic time synchronization
+        if (_packetSimulator)
+        {
+            _packetSimulator->Update(diff);
+        }
 
         // Process bot-specific packets
         ProcessBotPackets();
@@ -971,15 +992,37 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // CRITICAL FIX: Add bot to world (missing step that prevented bots from entering world)
         pCurrChar->SendInitialPacketsBeforeAddToMap();
 
-        if (!pCurrChar->GetMap()->AddPlayerToMap(pCurrChar))
+        // THREAD SAFETY: Ensure map is created and ready before adding bot
+        // Maps are loaded on-demand when first player enters - we must ensure it's loaded
+        uint32 mapId = pCurrChar->GetMapId();
+        uint32 instanceId = pCurrChar->GetInstanceId();
+
+        TC_LOG_DEBUG("module.playerbot.session", "Bot {} attempting to join MapId={} InstanceId={}",
+            pCurrChar->GetName(), mapId, instanceId);
+
+        // CreateMap will find existing map or create it if it doesn't exist yet
+        // This is what CharacterHandler.cpp does for real players
+        Map* map = sMapMgr->CreateMap(mapId, pCurrChar);
+        if (!map)
+        {
+            TC_LOG_ERROR("module.playerbot.session",
+                "❌ CRITICAL: Bot {} cannot create/find map! MapId={} InstanceId={} - Login FAILED",
+                pCurrChar->GetName(), mapId, instanceId);
+            _loginState.store(LoginState::LOGIN_FAILED);
+            m_playerLoading.Clear();
+            return;
+        }
+
+        TC_LOG_DEBUG("module.playerbot.session", "✅ Bot {} map ready: MapId={} InstanceId={} MapPtr=0x{:X}",
+            pCurrChar->GetName(), mapId, instanceId, reinterpret_cast<uintptr_t>(map));
+
+        // Now safely add bot to the map
+        if (!map->AddPlayerToMap(pCurrChar))
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to add bot player {} to map", characterGuid.ToString());
-            // Try to teleport to homebind if map addition fails
-            AreaTriggerTeleport const* at = sObjectMgr->GetGoBackTrigger(pCurrChar->GetMapId());
-            if (at)
-                pCurrChar->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, pCurrChar->GetOrientation());
-            else
-                pCurrChar->TeleportTo(pCurrChar->m_homebind);
+            _loginState.store(LoginState::LOGIN_FAILED);
+            m_playerLoading.Clear();
+            return;
         }
 
         ObjectAccessor::AddObject(pCurrChar);
@@ -990,13 +1033,26 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // This happens AFTER AddPlayerToMap(), matching real player login flow
         pCurrChar->SendInitialPacketsAfterAddToMap();
 
-        // CRITICAL FIX: Set PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME for bots
-        // Real players get this flag when they send CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE packet (MovementHandler.cpp:886)
-        // Bots don't have network clients, so they never send this packet
-        // Without this flag, Player::CanNeverSee() returns TRUE, making bots unable to see ANY objects
-        // See Player.cpp:24131 - returns !HasPlayerLocalFlag(PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME) || WorldObject::CanNeverSee()
-        pCurrChar->SetPlayerLocalFlag(PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME);
-        TC_LOG_INFO("module.playerbot.session", "✅ Set PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME for bot {} (enables object visibility)", pCurrChar->GetName());
+        // PHASE 1 REFACTORING: Create packet simulator for this bot session
+        // This replaces manual workarounds with proper packet forging
+        _packetSimulator = std::make_unique<BotPacketSimulator>(this);
+
+        // PHASE 1 REFACTORING: Simulate CMSG_QUEUED_MESSAGES_END packet
+        // Real clients send this after SMSG_RESUME_COMMS to resume communication
+        // Triggers time synchronization and allows login to proceed
+        _packetSimulator->SimulateQueuedMessagesEnd();
+
+        // PHASE 1 REFACTORING: Simulate CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE packet
+        // Real clients send this after SMSG_MOVE_INIT_ACTIVE_MOVER
+        // Automatically sets PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME
+        // Enables object visibility (fixes CanNeverSee() check)
+        // Updates player visibility
+        _packetSimulator->SimulateMoveInitActiveMoverComplete();
+
+        // PHASE 1 REFACTORING: Enable periodic time synchronization
+        // Maintains clock delta calculations over time
+        // Prevents movement prediction drift
+        _packetSimulator->EnablePeriodicTimeSync();
 
         // DIAGNOSTIC: Log phase information after SendInitialPacketsAfterAddToMap
         PhaseShift const& phaseShift = pCurrChar->GetPhaseShift();
@@ -1008,7 +1064,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         }
         if (botPhases.empty()) botPhases = "NONE";
 
-        TC_LOG_INFO("module.playerbot.session", "✅ Bot {} phase initialization complete (TrinityCore pattern) - Phases: [{}]",
+        TC_LOG_INFO("module.playerbot.session", "✅ Bot {} phase initialization complete (TrinityCore pattern + packet simulation) - Phases: [{}]",
             pCurrChar->GetName(), botPhases);
 
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
@@ -1064,6 +1120,23 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             {
                 TC_LOG_ERROR("module.playerbot.session", "Failed to create BotAI for character {}", characterGuid.ToString());
             }
+        }
+
+        // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear all pending spell events to prevent m_spellModTakingSpell crash
+        // Issue: LOGINEFFECT (Spell 836) and other login spells are queued in EventProcessor during bot login
+        // These spells modify spell behavior (m_spellModTakingSpell) but bots don't send client ACK packets
+        // When the SpellEvent destructor fires, it tries to destroy a spell that's still referenced → ASSERTION FAILURE
+        // Root Cause: When KillAllEvents() destroys a delayed spell, handle_delayed() never runs to clear m_spellModTakingSpell
+        // Solution: Clear m_spellModTakingSpell FIRST, then kill events to prevent Spell::~Spell assertion failure
+        if (Player* player = GetPlayer())
+        {
+            // CRITICAL FIX: Clear m_spellModTakingSpell BEFORE killing events
+            // When KillAllEvents destroys a delayed spell, the spell destructor checks this pointer
+            // If we don't clear it first, we get: ASSERT(m_caster->ToPlayer()->m_spellModTakingSpell != this)
+            player->m_spellModTakingSpell = nullptr;
+
+            player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
+            TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
         }
 
         // Mark login as complete

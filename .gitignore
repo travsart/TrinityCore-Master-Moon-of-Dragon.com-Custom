@@ -43,3 +43,12 @@ __pycache__/
 
 # SQL dumps and temporary data
 *.sql.backup
+
+# Claude Code Enhancement - Environment variables (contains secrets)
+.env
+.env.local
+
+# Playerbot vendored dependencies (tracked via git submodules)
+# Git automatically manages submodule contents via .gitmodules
+# build*/ pattern above catches TBB build artifacts
+

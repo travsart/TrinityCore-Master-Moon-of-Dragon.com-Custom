@@ -21,7 +21,7 @@
 #include "../Talents/BotTalentManager.h"
 #include "../Movement/BotWorldPositioner.h"
 #include "Player.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -69,8 +69,8 @@ bool BotLevelManager::Initialize()
     }
 
     // Load configuration
-    _maxBotsPerUpdate.store(sConfigMgr->GetIntDefault("Playerbot.LevelManager.MaxBotsPerUpdate", 10), std::memory_order_release);
-    _verboseLogging.store(sConfigMgr->GetBoolDefault("Playerbot.LevelManager.VerboseLogging", false), std::memory_order_release);
+    _maxBotsPerUpdate.store(sPlayerbotConfig->GetInt("Playerbot.LevelManager.MaxBotsPerUpdate", 10), std::memory_order_release);
+    _verboseLogging.store(sPlayerbotConfig->GetBool("Playerbot.LevelManager.VerboseLogging", false), std::memory_order_release);
 
     // Reset statistics
     _stats = LevelManagerStats();

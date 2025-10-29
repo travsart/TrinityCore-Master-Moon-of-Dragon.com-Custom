@@ -16,6 +16,12 @@
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
 #include "LoginDatabase.h"
+// Phase 2: Adaptive Throttling System
+#include "Lifecycle/ResourceMonitor.h"
+#include "Lifecycle/SpawnCircuitBreaker.h"
+#include "Lifecycle/SpawnPriorityQueue.h"
+#include "Lifecycle/AdaptiveSpawnThrottler.h"
+#include "Lifecycle/StartupSpawnOrchestrator.h"
 #include <memory>
 #include <vector>
 #include <atomic>
@@ -151,6 +157,9 @@ private:
     bool CreateBotSession(uint32 accountId, ObjectGuid characterGuid);
     bool ValidateSpawnRequest(SpawnRequest const& request) const;
 
+    // Phase 2: Priority assignment for spawn requests
+    SpawnPriority DeterminePriority(SpawnRequest const& request) const;
+
     // Character selection
     ObjectGuid SelectCharacterForSpawn(SpawnRequest const& request);
     void SelectCharacterForSpawnAsync(SpawnRequest const& request, std::function<void(ObjectGuid)> callback);
@@ -205,6 +214,70 @@ private:
     std::atomic<uint32> _lastRealPlayerCount{0};
     std::atomic<bool> _inCheckAndSpawn{false}; // Prevent reentrant calls causing deadlock
     bool _initialCalculationDone = false; // Track if initial zone calculation happened in Initialize()
+
+    // ========================================================================
+    // Phase 2: Adaptive Throttling System Components
+    // ========================================================================
+    // Enterprise-grade spawn rate control with resource monitoring,
+    // circuit breaker protection, priority queueing, and phased startup
+
+    /**
+     * @brief Real-time server resource monitor
+     *
+     * Monitors CPU, memory, DB connections, and map instances.
+     * Provides pressure level detection (NORMAL/ELEVATED/HIGH/CRITICAL)
+     * and automatic spawn rate multipliers.
+     */
+    ResourceMonitor _resourceMonitor;
+
+    /**
+     * @brief Circuit breaker for spawn failure protection
+     *
+     * Implements circuit breaker pattern (CLOSED/OPEN/HALF_OPEN).
+     * Automatically detects failure patterns and blocks spawning
+     * when failure rate exceeds threshold (>10%).
+     */
+    SpawnCircuitBreaker _circuitBreaker;
+
+    /**
+     * @brief Priority-based spawn request queue
+     *
+     * 4-tier priority system: CRITICAL → HIGH → NORMAL → LOW
+     * Ensures guild leaders and raid leaders spawn first.
+     */
+    SpawnPriorityQueue _priorityQueue;
+
+    /**
+     * @brief Adaptive spawn throttler (core throttling logic)
+     *
+     * Integrates ResourceMonitor and CircuitBreaker to dynamically
+     * adjust spawn interval (50ms-5000ms = 20-0.2 bots/sec).
+     * Includes burst prevention (max 50 spawns per 10s).
+     */
+    AdaptiveSpawnThrottler _throttler;
+
+    /**
+     * @brief Phased startup orchestrator
+     *
+     * Manages graduated bot spawning in 4 phases:
+     * - Phase 1: CRITICAL bots (0-2min, 100 bots)
+     * - Phase 2: HIGH priority (2-5min, 500 bots)
+     * - Phase 3: NORMAL bots (5-15min, 3000 bots)
+     * - Phase 4: LOW priority (15-30min, 1400 bots)
+     */
+    StartupSpawnOrchestrator _orchestrator;
+
+    /**
+     * @brief Phase 2 initialization status
+     *
+     * Tracks whether Phase 2 components have been successfully initialized.
+     * Used to prevent premature spawning before throttling system is ready.
+     */
+    bool _phase2Initialized = false;
+
+    // ========================================================================
+    // End Phase 2 Components
+    // ========================================================================
 
     static constexpr uint32 POPULATION_UPDATE_INTERVAL = 5000; // 5 seconds
     static constexpr uint32 TARGET_CALCULATION_INTERVAL = 2000; // 2 seconds for faster response

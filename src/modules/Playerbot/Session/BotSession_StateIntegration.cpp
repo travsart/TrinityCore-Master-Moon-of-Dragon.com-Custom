@@ -109,6 +109,18 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
             }
         }
 
+        // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear all pending spell events to prevent m_spellModTakingSpell crash
+        // Issue: LOGINEFFECT (Spell 836) and other login spells are queued in EventProcessor during bot login
+        // These spells modify spell behavior (m_spellModTakingSpell) but bots don't send client ACK packets
+        // When the SpellEvent destructor fires, it tries to destroy a spell that's still referenced → ASSERTION FAILURE
+        // Solution: Clear all events immediately after AI initialization to ensure no stale spell events execute
+        if (Player* player = GetPlayer())
+        {
+            player->m_spellModTakingSpell = nullptr;  // CRITICAL: Clear before KillAllEvents to prevent Spell::~Spell assertion
+            player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
+            TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
+        }
+
         // Mark login as complete
         _loginState.store(LoginState::LOGIN_COMPLETE);
 

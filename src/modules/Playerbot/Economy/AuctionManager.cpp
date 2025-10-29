@@ -7,7 +7,7 @@
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "World.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "ItemTemplate.h"
 #include "WorldSession.h"
 #include <algorithm>
@@ -83,18 +83,18 @@ namespace Playerbot
 
     void AuctionManager::LoadConfiguration()
     {
-        SetEnabled(sConfigMgr->GetBoolDefault("Playerbot.Auction.Enable", false));
+        SetEnabled(sPlayerbotConfig->GetBool("Playerbot.Auction.Enable", false));
         // Update interval is managed by BehaviorManager base class (10 seconds)
-        _maxActiveAuctions = sConfigMgr->GetIntDefault("Playerbot.Auction.MaxActiveAuctions", 10);
-        _minProfit = sConfigMgr->GetIntDefault("Playerbot.Auction.MinProfit", 10000);
+        _maxActiveAuctions = sPlayerbotConfig->GetInt("Playerbot.Auction.MaxActiveAuctions", 10);
+        _minProfit = sPlayerbotConfig->GetInt("Playerbot.Auction.MinProfit", 10000);
         _defaultStrategy = static_cast<AuctionStrategy>(
-            sConfigMgr->GetIntDefault("Playerbot.Auction.DefaultStrategy", 5));
-        _commodityEnabled = sConfigMgr->GetBoolDefault("Playerbot.Auction.CommodityEnabled", true);
-        _marketMakerEnabled = sConfigMgr->GetBoolDefault("Playerbot.Auction.MarketMakerEnabled", false);
-        _marketScanInterval = sConfigMgr->GetIntDefault("Playerbot.Auction.MarketScanInterval", 300000);
-        _maxRiskScore = sConfigMgr->GetIntDefault("Playerbot.Auction.MaxRiskScore", 50);
-        _undercutPercentage = sConfigMgr->GetFloatDefault("Playerbot.Auction.UndercutPercentage", 2.0f);
-        _priceHistoryDays = sConfigMgr->GetIntDefault("Playerbot.Auction.PriceHistoryDays", 7);
+            sPlayerbotConfig->GetInt("Playerbot.Auction.DefaultStrategy", 5));
+        _commodityEnabled = sPlayerbotConfig->GetBool("Playerbot.Auction.CommodityEnabled", true);
+        _marketMakerEnabled = sPlayerbotConfig->GetBool("Playerbot.Auction.MarketMakerEnabled", false);
+        _marketScanInterval = sPlayerbotConfig->GetInt("Playerbot.Auction.MarketScanInterval", 300000);
+        _maxRiskScore = sPlayerbotConfig->GetInt("Playerbot.Auction.MaxRiskScore", 50);
+        _undercutPercentage = sPlayerbotConfig->GetFloat("Playerbot.Auction.UndercutPercentage", 2.0f);
+        _priceHistoryDays = sPlayerbotConfig->GetInt("Playerbot.Auction.PriceHistoryDays", 7);
     }
 
     void AuctionManager::ScanAuctionHouse(Player* bot, uint32 auctionHouseId)

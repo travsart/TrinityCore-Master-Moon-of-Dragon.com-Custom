@@ -613,6 +613,9 @@ protected:
     // Solo strategy activation tracking
     bool _soloStrategiesActivated = false;
 
+    // Login spell event cleanup tracking (prevents LOGINEFFECT crash)
+    bool _firstUpdateComplete = false;
+
     // Target scanning for autonomous engagement
     std::unique_ptr<TargetScanner> _targetScanner;
 

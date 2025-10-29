@@ -25,6 +25,7 @@ namespace Playerbot {
 // Forward declarations
 namespace Playerbot {
 class BotAI;
+class BotPacketSimulator;
 }
 
 namespace Playerbot {
@@ -151,6 +152,9 @@ private:
 
     // Bot AI system
     BotAI* _ai{nullptr};
+
+    // Packet simulation system (Phase 1 refactoring)
+    std::unique_ptr<BotPacketSimulator> _packetSimulator;
 
     // Account information
     uint32 _bnetAccountId;

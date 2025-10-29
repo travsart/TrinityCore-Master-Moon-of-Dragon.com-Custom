@@ -8,7 +8,7 @@
  */
 
 #include "PlayerbotConfig.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -22,28 +22,28 @@ namespace Playerbot
     void PlayerbotConfig::LoadQuestConfig()
     {
         // Quest system enable/disable
-        m_questEnabled = sConfigMgr->GetBoolDefault("Playerbot.Quest.Enable", true);
+        m_questEnabled = sPlayerbotConfig->GetBool("Playerbot.Quest.Enable", true);
 
         // Quest automation settings
-        m_questAutoAccept = sConfigMgr->GetBoolDefault("Playerbot.Quest.AutoAccept", true);
-        m_questAutoAcceptShared = sConfigMgr->GetBoolDefault("Playerbot.Quest.AutoAcceptShared", true);
-        m_questAutoComplete = sConfigMgr->GetBoolDefault("Playerbot.Quest.AutoComplete", true);
+        m_questAutoAccept = sPlayerbotConfig->GetBool("Playerbot.Quest.AutoAccept", true);
+        m_questAutoAcceptShared = sPlayerbotConfig->GetBool("Playerbot.Quest.AutoAcceptShared", true);
+        m_questAutoComplete = sPlayerbotConfig->GetBool("Playerbot.Quest.AutoComplete", true);
 
         // Quest system timings
-        m_questUpdateInterval = sConfigMgr->GetIntDefault("Playerbot.Quest.UpdateInterval", 5000);
-        m_questCacheUpdateInterval = sConfigMgr->GetIntDefault("Playerbot.Quest.CacheUpdateInterval", 30000);
+        m_questUpdateInterval = sPlayerbotConfig->GetInt("Playerbot.Quest.UpdateInterval", 5000);
+        m_questCacheUpdateInterval = sPlayerbotConfig->GetInt("Playerbot.Quest.CacheUpdateInterval", 30000);
 
         // Quest limits
-        m_questMaxActive = sConfigMgr->GetIntDefault("Playerbot.Quest.MaxActiveQuests", 20);
-        m_questMaxTravelDistance = sConfigMgr->GetIntDefault("Playerbot.Quest.MaxTravelDistance", 1000);
+        m_questMaxActive = sPlayerbotConfig->GetInt("Playerbot.Quest.MaxActiveQuests", 20);
+        m_questMaxTravelDistance = sPlayerbotConfig->GetInt("Playerbot.Quest.MaxTravelDistance", 1000);
 
         // Quest types
-        m_questDailyEnabled = sConfigMgr->GetBoolDefault("Playerbot.Quest.PrioritizeDaily", true);
-        m_questDungeonEnabled = sConfigMgr->GetBoolDefault("Playerbot.Quest.AcceptDungeon", false);
-        m_questPrioritizeGroup = sConfigMgr->GetBoolDefault("Playerbot.Quest.PrioritizeGroup", true);
+        m_questDailyEnabled = sPlayerbotConfig->GetBool("Playerbot.Quest.PrioritizeDaily", true);
+        m_questDungeonEnabled = sPlayerbotConfig->GetBool("Playerbot.Quest.AcceptDungeon", false);
+        m_questPrioritizeGroup = sPlayerbotConfig->GetBool("Playerbot.Quest.PrioritizeGroup", true);
 
         // Quest strategy
-        std::string strategy = sConfigMgr->GetStringDefault("Playerbot.Quest.SelectionStrategy", "optimal");
+        std::string strategy = sPlayerbotConfig->GetString("Playerbot.Quest.SelectionStrategy", "optimal");
         if (strategy == "simple")
             m_questStrategy = 0;
         else if (strategy == "optimal")

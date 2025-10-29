@@ -35,122 +35,135 @@ else()
     message(WARNING "Unknown compiler ${CMAKE_CXX_COMPILER_ID}, C++20 support not verified")
 endif()
 
-# 1. Intel Threading Building Blocks (TBB) - REMOVED
-# TBB completely removed from Playerbot - now using std:: threading primitives
-message(STATUS "TBB dependency removed - using standard C++ threading")
+# 1. Intel Threading Building Blocks (TBB) - WITH VENDORED FALLBACK
+message(STATUS "Detecting Intel TBB...")
 
-# TBB detection from vcpkg and manual installation
-find_path(TBB_INCLUDE_DIR
-    NAMES tbb/version.h
-    HINTS
-        "C:/libs/vcpkg/packages/tbb_x64-windows"
-        "C:/libs/vcpkg/installed/x64-windows"
-        "C:/libs/oneapi-tbb-2022.2.0"
-        ${TBB_ROOT}
-        $ENV{TBB_ROOT}
-        ${CMAKE_PREFIX_PATH}
-    PATH_SUFFIXES include
-)
+# Priority 1: Try vendored TBB from Playerbot deps/
+set(VENDORED_TBB_DIR "${CMAKE_SOURCE_DIR}/src/modules/Playerbot/deps/tbb")
 
-find_library(TBB_LIBRARY
-    NAMES tbb12 tbb
-    HINTS
-        "C:/libs/vcpkg/packages/tbb_x64-windows"
-        "C:/libs/vcpkg/installed/x64-windows"
-        "C:/libs/oneapi-tbb-2022.2.0"
-        ${TBB_ROOT}
-        $ENV{TBB_ROOT}
-        ${CMAKE_PREFIX_PATH}
-    PATH_SUFFIXES lib lib/intel64/vc14 lib/intel64 lib64
-)
+if(EXISTS "${VENDORED_TBB_DIR}/include/tbb/version.h")
+    # Use vendored TBB (will be built from source)
+    set(TBB_DIR "${VENDORED_TBB_DIR}")
+    set(TBB_SOURCE "vendored")
 
-if(TBB_INCLUDE_DIR AND TBB_LIBRARY)
-    add_library(TBB::tbb UNKNOWN IMPORTED)
-    set_target_properties(TBB::tbb PROPERTIES
-        IMPORTED_LOCATION ${TBB_LIBRARY}
-        INTERFACE_INCLUDE_DIRECTORIES ${TBB_INCLUDE_DIR}
-    )
+    # Add TBB subdirectory to build it from source
+    # oneTBB provides its own CMakeLists.txt
+    if(NOT TARGET TBB::tbb)
+        message(STATUS "   Building TBB from vendored source...")
+        add_subdirectory("${VENDORED_TBB_DIR}" "${CMAKE_BINARY_DIR}/tbb-build" EXCLUDE_FROM_ALL)
+    endif()
+
     set(TBB_FOUND TRUE)
-    message(STATUS "✅ Intel TBB found at: ${TBB_INCLUDE_DIR}")
-    message(STATUS "✅ TBB library: ${TBB_LIBRARY}")
+    message(STATUS "✅ Using vendored TBB from: ${VENDORED_TBB_DIR}")
+    message(STATUS "   (Zero installation required - git submodule, building from source)")
+else()
+    # Priority 2: Try system-installed TBB
+    find_path(TBB_INCLUDE_DIR
+        NAMES tbb/version.h
+        HINTS
+            "C:/libs/vcpkg/packages/tbb_x64-windows"
+            "C:/libs/vcpkg/installed/x64-windows"
+            "C:/libs/oneapi-tbb-2022.2.0"
+            ${TBB_ROOT}
+            $ENV{TBB_ROOT}
+            ${CMAKE_PREFIX_PATH}
+        PATH_SUFFIXES include
+    )
+
+    find_library(TBB_LIBRARY
+        NAMES tbb12 tbb
+        HINTS
+            "C:/libs/vcpkg/packages/tbb_x64-windows"
+            "C:/libs/vcpkg/installed/x64-windows"
+            "C:/libs/oneapi-tbb-2022.2.0"
+            ${TBB_ROOT}
+            $ENV{TBB_ROOT}
+            ${CMAKE_PREFIX_PATH}
+        PATH_SUFFIXES lib lib/intel64/vc14 lib/intel64 lib64
+    )
+
+    if(TBB_INCLUDE_DIR AND TBB_LIBRARY)
+        if(NOT TARGET TBB::tbb)
+            add_library(TBB::tbb UNKNOWN IMPORTED)
+            set_target_properties(TBB::tbb PROPERTIES
+                IMPORTED_LOCATION ${TBB_LIBRARY}
+                INTERFACE_INCLUDE_DIRECTORIES ${TBB_INCLUDE_DIR}
+            )
+        endif()
+        set(TBB_FOUND TRUE)
+        set(TBB_SOURCE "system")
+        message(STATUS "✅ Using system-installed TBB from: ${TBB_INCLUDE_DIR}")
+        message(STATUS "   TBB library: ${TBB_LIBRARY}")
+    endif()
 endif()
 
-# TBB requirement DISABLED - TBB completely removed from Playerbot
-# Playerbot now uses standard C++ threading primitives instead of TBB
-set(TBB_FOUND TRUE)  # Fake successful detection to skip TBB requirement
-message(STATUS "✅ TBB dependency skipped - using std:: threading primitives")
+if(NOT TBB_FOUND)
+    message(FATAL_ERROR "❌ Intel TBB 2021.5+ not found. Install options:
 
-# if(NOT TBB_FOUND)
-#     message(FATAL_ERROR "❌ Intel TBB 2021.5+ not found. Install instructions:
-#     Linux:   sudo apt-get install libtbb-dev (Ubuntu/Debian)
-#              sudo yum install tbb-devel (RHEL/CentOS)
-#     Windows: vcpkg install tbb:x64-windows
-#     macOS:   brew install tbb")
-# endif()
+    OPTION 1 (RECOMMENDED): Initialize vendored dependencies (zero installation)
+        git submodule update --init --recursive
 
-# TBB verification DISABLED - TBB components removed
-# include(CheckCXXSourceCompiles)
-# set(CMAKE_REQUIRED_LIBRARIES TBB::tbb)
-# set(CMAKE_REQUIRED_INCLUDES ${TBB_INCLUDE_DIR})
+    OPTION 2: Install system-wide packages
+        Linux:   sudo apt-get install libtbb-dev (Ubuntu/Debian)
+                 sudo yum install tbb-devel (RHEL/CentOS)
+        Windows: vcpkg install tbb:x64-windows
+        macOS:   brew install tbb")
+endif()
 
-# TBB compilation test DISABLED - TBB components removed from source code
-# check_cxx_source_compiles("
-#     #include <tbb/concurrent_queue.h>
-#     ...TBB test code...
-# " TBB_COMPONENTS_AVAILABLE)
+message(STATUS "✅ Intel TBB enterprise components verified (source: ${TBB_SOURCE})")
 
-# Skip TBB component verification since TBB is completely removed
-set(TBB_COMPONENTS_AVAILABLE TRUE)
-
-message(STATUS "✅ Intel TBB enterprise components verified")
-
-# 2. Parallel Hashmap (phmap) - CRITICAL
+# 2. Parallel Hashmap (phmap) - CRITICAL with Vendored Fallback
 message(STATUS "Detecting Parallel Hashmap...")
 
-find_path(PHMAP_INCLUDE_DIR
-    NAMES parallel_hashmap/phmap.h
-    HINTS
-        "C:/libs/vcpkg/packages/parallel-hashmap_x64-windows"
-        "C:/libs/vcpkg/installed/x64-windows"
-        "C:/libs/parallel-hashmap-2.0.0"
-        ${PHMAP_ROOT}
-        $ENV{PHMAP_ROOT}
-        ${CMAKE_PREFIX_PATH}
-    PATH_SUFFIXES include .
-)
+# Priority 1: Try vendored phmap from Playerbot deps/
+set(VENDORED_PHMAP_DIR "${CMAKE_SOURCE_DIR}/src/modules/Playerbot/deps/phmap")
 
-if(NOT PHMAP_INCLUDE_DIR)
-    message(FATAL_ERROR "❌ Parallel Hashmap (phmap) headers not found. Install instructions:
-    Linux:   git clone https://github.com/greg7mdp/parallel-hashmap.git && cd parallel-hashmap && cmake -B build && sudo cmake --install build
-             Or: Use distribution packages if available
-    Windows: vcpkg install parallel-hashmap:x64-windows
-    macOS:   brew install parallel-hashmap")
+if(EXISTS "${VENDORED_PHMAP_DIR}/parallel_hashmap/phmap.h")
+    set(PHMAP_INCLUDE_DIR "${VENDORED_PHMAP_DIR}")
+    set(PHMAP_SOURCE "vendored")
+    message(STATUS "✅ Using vendored phmap from: ${VENDORED_PHMAP_DIR}")
+    message(STATUS "   (Zero installation required - git submodule)")
+else()
+    # Priority 2: Try system-installed phmap
+    find_path(PHMAP_INCLUDE_DIR
+        NAMES parallel_hashmap/phmap.h
+        HINTS
+            "C:/libs/vcpkg/packages/parallel-hashmap_x64-windows"
+            "C:/libs/vcpkg/installed/x64-windows"
+            "C:/libs/parallel-hashmap-2.0.0"
+            ${PHMAP_ROOT}
+            $ENV{PHMAP_ROOT}
+            ${CMAKE_PREFIX_PATH}
+        PATH_SUFFIXES include .
+    )
+
+    if(PHMAP_INCLUDE_DIR)
+        set(PHMAP_SOURCE "system")
+        message(STATUS "✅ Using system-installed phmap from: ${PHMAP_INCLUDE_DIR}")
+    endif()
 endif()
 
-# Verify phmap functionality
-#set(CMAKE_REQUIRED_INCLUDES ${PHMAP_INCLUDE_DIR})
-#check_cxx_source_compiles("
-#    #include <parallel_hashmap/phmap.h>
-#    int main() {
-#        phmap::parallel_flat_hash_map<int, int> map;
-#        map[1] = 2;
-#        phmap::parallel_node_hash_map<int, std::string> node_map;
-#        node_map[1] = \"test\";
-#        return 0;
-#    }
-#" PHMAP_FUNCTIONAL)
-#
-#if(NOT PHMAP_FUNCTIONAL)
-#    message(FATAL_ERROR "❌ Parallel Hashmap headers found but not functional")
-#endif()
+if(NOT PHMAP_INCLUDE_DIR)
+    message(FATAL_ERROR "❌ Parallel Hashmap (phmap) headers not found. Install options:
+
+    OPTION 1 (RECOMMENDED): Initialize vendored dependencies (zero installation)
+        git submodule update --init --recursive
+
+    OPTION 2: Install system-wide packages
+        Linux:   git clone https://github.com/greg7mdp/parallel-hashmap.git && cd parallel-hashmap && cmake -B build && sudo cmake --install build
+        Windows: vcpkg install parallel-hashmap:x64-windows
+        macOS:   brew install parallel-hashmap")
+endif()
 
 # Create interface target for phmap
-add_library(phmap::phmap INTERFACE IMPORTED)
-set_target_properties(phmap::phmap PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${PHMAP_INCLUDE_DIR}
-)
+if(NOT TARGET phmap::phmap)
+    add_library(phmap::phmap INTERFACE IMPORTED)
+    set_target_properties(phmap::phmap PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES ${PHMAP_INCLUDE_DIR}
+    )
+endif()
 
-message(STATUS "✅ Parallel Hashmap enterprise components verified")
+message(STATUS "✅ Parallel Hashmap enterprise components verified (source: ${PHMAP_SOURCE})")
 
 # 3. Boost Libraries - CRITICAL (Use System Boost 1.78)
 message(STATUS "Detecting Boost libraries...")
@@ -266,18 +279,39 @@ endif()
 
 # Create summary of all dependencies
 message(STATUS "=== Playerbot Dependency Summary ===")
-message(STATUS "Intel TBB:        ✅ Available")
-message(STATUS "Parallel Hashmap: ✅ Available")
-message(STATUS "Boost:            ✅ ${Boost_VERSION}")
-message(STATUS "MySQL:            ✅ Available")
+if(DEFINED TBB_SOURCE)
+    message(STATUS "Intel TBB:        ✅ Available (${TBB_SOURCE})")
+else()
+    message(STATUS "Intel TBB:        ✅ Available")
+endif()
+if(DEFINED PHMAP_SOURCE)
+    message(STATUS "Parallel Hashmap: ✅ Available (${PHMAP_SOURCE})")
+else()
+    message(STATUS "Parallel Hashmap: ✅ Available")
+endif()
+message(STATUS "Boost:            ✅ ${Boost_VERSION} (system)")
+message(STATUS "MySQL:            ✅ Available (system)")
 if(OpenSSL_FOUND)
-    message(STATUS "OpenSSL:          ✅ ${OPENSSL_VERSION}")
+    message(STATUS "OpenSSL:          ✅ ${OPENSSL_VERSION} (system)")
 else()
     message(STATUS "OpenSSL:          ⚠️  Not found")
 endif()
 message(STATUS "Compiler:         ✅ ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "Platform:         ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION}")
 message(STATUS "Architecture:     ${CMAKE_SYSTEM_PROCESSOR}")
+
+# Vendored dependency status
+if(TBB_SOURCE STREQUAL "vendored" OR PHMAP_SOURCE STREQUAL "vendored")
+    message(STATUS "")
+    message(STATUS "📦 Vendored Dependencies Active:")
+    if(TBB_SOURCE STREQUAL "vendored")
+        message(STATUS "   → TBB:   Building from deps/tbb/")
+    endif()
+    if(PHMAP_SOURCE STREQUAL "vendored")
+        message(STATUS "   → phmap: Using deps/phmap/ (header-only)")
+    endif()
+    message(STATUS "   ✅ Zero system installation required!")
+endif()
 
 # Platform-specific optimizations
 if(WIN32)

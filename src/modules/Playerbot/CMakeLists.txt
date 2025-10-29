@@ -51,6 +51,8 @@ set(PLAYERBOT_SOURCES
     # Session management (essential for bot functionality)
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.cpp
@@ -396,6 +398,18 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.h
+
+    # Phase 2: Adaptive Throttling System (Bot Login Refactoring)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnPriorityQueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnPriorityQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnCircuitBreaker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnCircuitBreaker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/AdaptiveSpawnThrottler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/AdaptiveSpawnThrottler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/StartupSpawnOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/StartupSpawnOrchestrator.h
 
     # WoW 11.2 Character Creation Data (header-only)
     ${CMAKE_CURRENT_SOURCE_DIR}/Data/WoW112CharacterCreation.h
@@ -940,11 +954,23 @@ source_group("Lifecycle" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnPriorityQueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnPriorityQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnCircuitBreaker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/SpawnCircuitBreaker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/AdaptiveSpawnThrottler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/AdaptiveSpawnThrottler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/StartupSpawnOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/StartupSpawnOrchestrator.h
 )
 
 source_group("Session" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.cpp

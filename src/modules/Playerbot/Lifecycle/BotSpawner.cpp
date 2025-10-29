@@ -104,6 +104,64 @@ bool BotSpawner::Initialize()
         _lastTargetCalculation = 0;
     }
 
+    // ========================================================================
+    // Phase 2: Initialize Adaptive Throttling System
+    // ========================================================================
+    TC_LOG_INFO("module.playerbot", "BotSpawner: Step 5 - Initializing Phase 2 Adaptive Throttling System...");
+
+    // Step 5.1: Initialize ResourceMonitor
+    TC_LOG_INFO("module.playerbot", "  - Initializing ResourceMonitor...");
+    if (!_resourceMonitor.Initialize())
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize ResourceMonitor");
+        return false;
+    }
+    TC_LOG_INFO("module.playerbot", "  ✅ ResourceMonitor initialized successfully");
+
+    // Step 5.2: Initialize SpawnCircuitBreaker
+    TC_LOG_INFO("module.playerbot", "  - Initializing SpawnCircuitBreaker...");
+    if (!_circuitBreaker.Initialize())
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize SpawnCircuitBreaker");
+        return false;
+    }
+    TC_LOG_INFO("module.playerbot", "  ✅ SpawnCircuitBreaker initialized successfully");
+
+    // Step 5.3: Initialize AdaptiveSpawnThrottler (requires ResourceMonitor and CircuitBreaker)
+    TC_LOG_INFO("module.playerbot", "  - Initializing AdaptiveSpawnThrottler...");
+    if (!_throttler.Initialize(&_resourceMonitor, &_circuitBreaker))
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize AdaptiveSpawnThrottler");
+        return false;
+    }
+    TC_LOG_INFO("module.playerbot", "  ✅ AdaptiveSpawnThrottler initialized successfully");
+
+    // Step 5.4: Initialize StartupSpawnOrchestrator (requires PriorityQueue and Throttler)
+    TC_LOG_INFO("module.playerbot", "  - Initializing StartupSpawnOrchestrator...");
+    if (!_orchestrator.Initialize(&_priorityQueue, &_throttler))
+    {
+        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize StartupSpawnOrchestrator");
+        return false;
+    }
+    TC_LOG_INFO("module.playerbot", "  ✅ StartupSpawnOrchestrator initialized successfully");
+
+    // Step 5.5: Begin phased startup sequence
+    TC_LOG_INFO("module.playerbot", "  - Beginning phased startup sequence...");
+    _orchestrator.BeginStartup();
+    TC_LOG_INFO("module.playerbot", "  ✅ Phased startup sequence initiated");
+
+    // Mark Phase 2 as initialized
+    _phase2Initialized = true;
+    TC_LOG_INFO("module.playerbot", "✅ Phase 2 Adaptive Throttling System fully initialized");
+    TC_LOG_INFO("module.playerbot", "   - ResourceMonitor: Monitoring CPU, memory, DB, maps");
+    TC_LOG_INFO("module.playerbot", "   - CircuitBreaker: Protecting against spawn failures");
+    TC_LOG_INFO("module.playerbot", "   - SpawnThrottler: Dynamic spawn rate (0.2-20 bots/sec)");
+    TC_LOG_INFO("module.playerbot", "   - Phased Startup: 4-phase graduated spawning (0-30 min)");
+
+    // ========================================================================
+    // End Phase 2 Initialization
+    // ========================================================================
+
     return true;
 }
 
@@ -129,7 +187,7 @@ void BotSpawner::Shutdown()
     TC_LOG_INFO("module.playerbot.spawner", "Bot Spawner shutdown complete");
 }
 
-void BotSpawner::Update(uint32 /*diff*/)
+void BotSpawner::Update(uint32 diff)
 {
     if (!_enabled.load())
         return;
@@ -137,6 +195,24 @@ void BotSpawner::Update(uint32 /*diff*/)
     // CRITICAL SAFETY: Wrap update in try-catch to prevent crashes
     try
     {
+
+    // ========================================================================
+    // Phase 2: Update Adaptive Throttling System Components
+    // ========================================================================
+    if (_phase2Initialized)
+    {
+        // Update all Phase 2 components (called every world tick)
+        _resourceMonitor.Update(diff);
+        _circuitBreaker.Update(diff);
+        _throttler.Update(diff);
+        _orchestrator.Update(diff);
+
+        // Update total active bot count for resource monitoring
+        _resourceMonitor.SetActiveBotCount(GetActiveBotCount());
+    }
+    // ========================================================================
+    // End Phase 2 Updates
+    // ========================================================================
 
     static uint32 updateCounter = 0;
     ++updateCounter;
@@ -154,9 +230,18 @@ void BotSpawner::Update(uint32 /*diff*/)
             updateCounter, GetActiveBotCount(), timeSinceLastSpawn);
     }
 
-    // Process spawn queue (mutex-protected)
+    // ====================================================================
+    // Phase 2: Check appropriate queue based on initialization status
+    // ====================================================================
     bool queueHasItems = false;
+    if (_phase2Initialized)
     {
+        // Phase 2 ENABLED: Check priority queue
+        queueHasItems = !_priorityQueue.IsEmpty();
+    }
+    else
+    {
+        // Phase 2 DISABLED: Check legacy spawn queue
         std::lock_guard<std::recursive_mutex> lock(_spawnQueueMutex);
         queueHasItems = !_spawnQueue.empty();
     }
@@ -165,9 +250,60 @@ void BotSpawner::Update(uint32 /*diff*/)
     {
         _processingQueue.store(true);
 
-        // Extract batch of requests to minimize lock time
-        std::vector<SpawnRequest> requestBatch;
+        // ====================================================================
+        // Phase 2: Adaptive Throttling Integration
+        // ====================================================================
+        // Check if Phase 2 allows spawning (throttler + orchestrator + circuit breaker)
+        bool canSpawn = true;
+        if (_phase2Initialized)
         {
+            // Check orchestrator phase allows spawning
+            canSpawn = _orchestrator.ShouldSpawnNext();
+
+            // Check throttler allows spawning (checks circuit breaker internally)
+            if (canSpawn)
+                canSpawn = _throttler.CanSpawnNow();
+
+            if (!canSpawn)
+            {
+                TC_LOG_TRACE("module.playerbot.spawner",
+                    "Phase 2 throttling active - spawn deferred (pressure: {}, circuit: {}, phase: {})",
+                    static_cast<uint8>(_resourceMonitor.GetPressureLevel()),
+                    static_cast<uint8>(_circuitBreaker.GetState()),
+                    static_cast<uint8>(_orchestrator.GetCurrentPhase()));
+                _processingQueue.store(false);
+                return; // Skip spawning this update
+            }
+        }
+        // ====================================================================
+        // End Phase 2 Throttling Check
+        // ====================================================================
+
+        // ====================================================================
+        // Phase 2: Dequeue from appropriate queue
+        // ====================================================================
+        std::vector<SpawnRequest> requestBatch;
+
+        if (_phase2Initialized)
+        {
+            // Phase 2 ENABLED: Dequeue from priority queue
+            // Limit batch size to 1 for precise throttle control
+            auto prioRequest = _priorityQueue.DequeueNextRequest();
+            if (prioRequest.has_value())
+            {
+                // Extract original SpawnRequest from PrioritySpawnRequest
+                requestBatch.push_back(prioRequest->originalRequest);
+
+                TC_LOG_TRACE("module.playerbot.spawner",
+                    "Phase 2: Dequeued spawn request with priority {} (reason: {}, age: {}ms)",
+                    static_cast<uint8>(prioRequest->priority),
+                    prioRequest->reason,
+                    prioRequest->GetAge().count());
+            }
+        }
+        else
+        {
+            // Phase 2 DISABLED: Dequeue from legacy spawn queue
             std::lock_guard<std::recursive_mutex> lock(_spawnQueueMutex);
             uint32 batchSize = std::min(_config.spawnBatchSize, static_cast<uint32>(_spawnQueue.size()));
             requestBatch.reserve(batchSize);
@@ -177,14 +313,33 @@ void BotSpawner::Update(uint32 /*diff*/)
                 requestBatch.push_back(_spawnQueue.front());
                 _spawnQueue.pop();
             }
-        }
 
-        TC_LOG_TRACE("module.playerbot.spawner", "Processing {} spawn requests", requestBatch.size());
+            TC_LOG_TRACE("module.playerbot.spawner", "Legacy: Processing {} spawn requests", requestBatch.size());
+        }
 
         // Process requests outside the lock
         for (SpawnRequest const& request : requestBatch)
         {
-            SpawnBotInternal(request);
+            bool spawnSuccess = SpawnBotInternal(request);
+
+            // ================================================================
+            // Phase 2: Record spawn result for circuit breaker and throttler
+            // ================================================================
+            if (_phase2Initialized)
+            {
+                if (spawnSuccess)
+                {
+                    _throttler.RecordSpawnSuccess();
+                    _orchestrator.OnBotSpawned();
+                }
+                else
+                {
+                    _throttler.RecordSpawnFailure("SpawnBotInternal failed");
+                }
+            }
+            // ================================================================
+            // End Phase 2 Result Recording
+            // ================================================================
         }
 
         _processingQueue.store(false);
@@ -346,18 +501,74 @@ uint32 BotSpawner::SpawnBots(std::vector<SpawnRequest> const& requests)
         }
     }
 
-    // Add all valid requests to queue in one lock
+    // ========================================================================
+    // Phase 2: Route to appropriate queue based on initialization status
+    // ========================================================================
     if (!validRequests.empty())
     {
-        std::lock_guard<std::recursive_mutex> lock(_spawnQueueMutex);
-        for (SpawnRequest const& request : validRequests)
+        if (_phase2Initialized)
         {
-            _spawnQueue.push(request);
+            // Phase 2 ENABLED: Use priority queue with priority assignment
+            for (SpawnRequest const& request : validRequests)
+            {
+                // Convert SpawnRequest to PrioritySpawnRequest
+                PrioritySpawnRequest prioRequest{};
+                prioRequest.characterGuid = request.characterGuid;
+                prioRequest.accountId = request.accountId;
+                prioRequest.priority = DeterminePriority(request);
+                prioRequest.requestTime = GameTime::Now();
+                prioRequest.retryCount = 0;
+                prioRequest.originalRequest = request;  // Preserve full request for SpawnBotInternal()
+
+                // Generate reason string for debugging/metrics
+                switch (request.type)
+                {
+                    case SpawnRequest::SPECIFIC_CHARACTER:
+                        prioRequest.reason = "SPECIFIC_CHARACTER";
+                        break;
+                    case SpawnRequest::GROUP_MEMBER:
+                        prioRequest.reason = "GROUP_MEMBER";
+                        break;
+                    case SpawnRequest::SPECIFIC_ZONE:
+                        prioRequest.reason = fmt::format("ZONE_{}", request.zoneId);
+                        break;
+                    case SpawnRequest::RANDOM:
+                        prioRequest.reason = "RANDOM";
+                        break;
+                    default:
+                        prioRequest.reason = "UNKNOWN";
+                        break;
+                }
+
+                // Enqueue to priority queue
+                bool enqueued = _priorityQueue.EnqueuePrioritySpawnRequest(prioRequest);
+                if (!enqueued)
+                {
+                    TC_LOG_TRACE("module.playerbot.spawner",
+                        "Duplicate spawn request rejected for character {}",
+                        prioRequest.characterGuid.ToString());
+                    --successCount; // Adjust count for duplicate
+                }
+            }
+
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Phase 2: Queued {} spawn requests to priority queue ({} total requested, priority levels used)",
+                successCount, requests.size());
+        }
+        else
+        {
+            // Phase 2 DISABLED: Use legacy spawn queue (backward compatibility)
+            std::lock_guard<std::recursive_mutex> lock(_spawnQueueMutex);
+            for (SpawnRequest const& request : validRequests)
+            {
+                _spawnQueue.push(request);
+            }
+
+            TC_LOG_DEBUG("module.playerbot.spawner",
+                "Legacy: Queued {} spawn requests to spawn queue ({} total requested)",
+                successCount, requests.size());
         }
     }
-
-    TC_LOG_DEBUG("module.playerbot.spawner",
-        "Queued {} spawn requests ({} total requested)", successCount, requests.size());
 
     return successCount;
 }
@@ -487,6 +698,48 @@ bool BotSpawner::ValidateSpawnRequest(SpawnRequest const& request) const
     }
 
     return true;
+}
+
+SpawnPriority BotSpawner::DeterminePriority(SpawnRequest const& request) const
+{
+    // ========================================================================
+    // Phase 2: Priority Assignment Logic
+    // ========================================================================
+    // Assign spawn priority based on request type and context
+    //
+    // Priority Levels:
+    // - CRITICAL (0): Guild leaders, raid leaders (future: check database)
+    // - HIGH (1): Specific characters, group members, friends
+    // - NORMAL (2): Zone population requests
+    // - LOW (3): Random background filler bots
+    //
+    // This implements a simple heuristic for MVP. Future enhancements could:
+    // - Query database for guild leadership status
+    // - Check social relationships (friends, party members)
+    // - Consider zone population pressure
+    // - Implement dynamic priority adjustment based on server load
+    // ========================================================================
+
+    switch (request.type)
+    {
+        case SpawnRequest::SPECIFIC_CHARACTER:
+            // Specific character spawn - likely important (friend, specific request)
+            // Future: Check if guild leader → CRITICAL
+            return SpawnPriority::HIGH;
+
+        case SpawnRequest::GROUP_MEMBER:
+            // Party/raid member - needs priority for group functionality
+            return SpawnPriority::HIGH;
+
+        case SpawnRequest::SPECIFIC_ZONE:
+            // Zone population request - standard priority
+            return SpawnPriority::NORMAL;
+
+        case SpawnRequest::RANDOM:
+        default:
+            // Random background bot - lowest priority
+            return SpawnPriority::LOW;
+    }
 }
 
 ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)

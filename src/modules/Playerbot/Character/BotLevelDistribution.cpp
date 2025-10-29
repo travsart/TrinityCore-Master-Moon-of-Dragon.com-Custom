@@ -16,7 +16,7 @@
  */
 
 #include "BotLevelDistribution.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "Log.h"
 #include <sstream>
 #include <iomanip>
@@ -36,17 +36,17 @@ bool BotLevelDistribution::LoadConfig()
 {
     TC_LOG_INFO("playerbot", "BotLevelDistribution: Loading configuration...");
 
-    m_enabled = sConfigMgr->GetBoolDefault("Playerbot.Population.Enabled", false);
+    m_enabled = sPlayerbotConfig->GetBool("Playerbot.Population.Enabled", false);
     if (!m_enabled)
     {
         TC_LOG_INFO("playerbot", "BotLevelDistribution: System disabled in config");
         return false;
     }
 
-    m_numBrackets = sConfigMgr->GetIntDefault("Playerbot.Population.NumBrackets", 17);
-    m_dynamicDistribution = sConfigMgr->GetBoolDefault("Playerbot.Population.DynamicDistribution", false);
-    m_realPlayerWeight = sConfigMgr->GetFloatDefault("Playerbot.Population.RealPlayerWeight", 1.0f);
-    m_syncFactions = sConfigMgr->GetBoolDefault("Playerbot.Population.SyncFactions", false);
+    m_numBrackets = sPlayerbotConfig->GetInt("Playerbot.Population.NumBrackets", 17);
+    m_dynamicDistribution = sPlayerbotConfig->GetBool("Playerbot.Population.DynamicDistribution", false);
+    m_realPlayerWeight = sPlayerbotConfig->GetFloat("Playerbot.Population.RealPlayerWeight", 1.0f);
+    m_syncFactions = sPlayerbotConfig->GetBool("Playerbot.Population.SyncFactions", false);
 
     // Clear existing data
     m_allianceBrackets.clear();
@@ -86,9 +86,9 @@ void BotLevelDistribution::LoadBrackets(TeamId faction, std::string const& prefi
     {
         std::string rangeKey = prefix + ".Range" + std::to_string(i);
 
-        uint32 minLevel = sConfigMgr->GetIntDefault(rangeKey + ".Min", 0);
-        uint32 maxLevel = sConfigMgr->GetIntDefault(rangeKey + ".Max", 0);
-        float percentage = sConfigMgr->GetFloatDefault(rangeKey + ".Pct", 0.0f);
+        uint32 minLevel = sPlayerbotConfig->GetInt(rangeKey + ".Min", 0);
+        uint32 maxLevel = sPlayerbotConfig->GetInt(rangeKey + ".Max", 0);
+        float percentage = sPlayerbotConfig->GetFloat(rangeKey + ".Pct", 0.0f);
 
         // Skip invalid brackets
         if (minLevel == 0 || maxLevel == 0 || percentage == 0.0f)

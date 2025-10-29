@@ -14,7 +14,7 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "WorldSession.h"
-#include "Config.h"
+#include "Config/PlayerbotConfig.h"
 #include "../Performance/ThreadPool/ThreadPool.h"
 #include "../Spatial/SpatialGridManager.h"
 #include "../Spatial/SpatialGridScheduler.h"
@@ -83,7 +83,7 @@ bool BotWorldSessionMgr::Initialize()
     }
 
     // Load spawn throttling config
-    _maxSpawnsPerTick = sConfigMgr->GetIntDefault("Playerbot.LevelManager.MaxBotsPerUpdate", 10);
+    _maxSpawnsPerTick = sPlayerbotConfig->GetInt("Playerbot.LevelManager.MaxBotsPerUpdate", 10);
 
     // Initialize spatial grid system (grids created on-demand per map)
     TC_LOG_INFO("module.playerbot.session",
@@ -204,7 +204,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     }
 
     // CRITICAL FIX: Enforce MaxBots limit
-    uint32 maxBots = sConfigMgr->GetIntDefault("Playerbot.MaxBots", 100);
+    uint32 maxBots = sPlayerbotConfig->GetInt("Playerbot.MaxBots", 100);
     uint32 totalBots = static_cast<uint32>(_botSessions.size() + _pendingSpawns.size());
     if (totalBots >= maxBots)
     {
