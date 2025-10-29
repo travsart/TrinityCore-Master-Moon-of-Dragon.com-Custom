@@ -565,29 +565,25 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
         // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
         // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
         // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-        // CRITICAL FIX: Schedule resurrection on MAIN THREAD to prevent proc aura iterator deadlock
-        // Worker thread calls ResurrectPlayer → CastAllObtainSpells → SpellEvents → proc auras
-        // GetProcAurasTriggeredOnEvent iterates aura map while processAuraApplication modifies it
-        // Iterator invalidation → infinite loop → 60s hang → crash (Unit.cpp:10397)
-        ObjectGuid botGuid = m_bot->GetGUID();
-        std::string botName = m_bot->GetName();
-
-        m_bot->GetMap()->AddFarSpellCallback([botGuid, botName](Map* map)
+        // PACKET-BASED RESURRECTION (v8): Use TrinityCore's packet system
+        // Queue CMSG_RECLAIM_CORPSE packet for main thread processing
+        // This completely hands over resurrection to TrinityCore's proven packet handler
+        Corpse* corpse = m_bot->GetCorpse();
+        if (!corpse)
         {
-            Player* bot = ObjectAccessor::FindPlayer(botGuid);
-            if (!bot)
-                return;
+            TC_LOG_ERROR("playerbot.death", "🔴 Bot {} has no corpse for packet-based resurrection!", m_bot->GetName());
+            return;
+        }
 
-            bot->m_spellModTakingSpell = nullptr;
-            bot->m_Events.KillAllEvents(false);
-            bot->RemoveAllAuras();
-            bot->ResurrectPlayer(0.5f, false); // 50% health/mana, no sickness
-            bot->SpawnCorpseBones();
+        // Create CMSG_RECLAIM_CORPSE packet (opcode 0x300073)
+        WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
+        *reclaimPacket << corpse->GetGUID();
 
-            TC_LOG_WARN("playerbot.death", "✅ Bot {} GM resurrect on MAIN THREAD - HP: {}/{} ({:.0f}%)",
-                botName, bot->GetHealth(), bot->GetMaxHealth(),
-                (bot->GetHealth() * 100.0f) / bot->GetMaxHealth());
-        });
+        // Queue packet for main thread processing
+        m_bot->GetSession()->QueuePacket(reclaimPacket);
+
+        TC_LOG_WARN("playerbot.death", "📨 Bot {} queued CMSG_RECLAIM_CORPSE packet for main thread resurrection",
+            m_bot->GetName());
 
         TransitionToState(DeathRecoveryState::RESURRECTING, "Scheduled GM resurrect on main thread");
         return;
@@ -1101,44 +1097,42 @@ bool DeathRecoveryManager::NavigateToCorpse()
 
 bool DeathRecoveryManager::InteractWithCorpse()
 {
-    // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
-    std::unique_lock<std::recursive_timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
-    if (!lock.owns_lock())
+    // RACE CONDITION FIX: Single mutex-protected critical section
+    // Replaces three-layer protection (mutex + debounce + atomic) that had race windows
+    std::lock_guard<std::timed_mutex> lock(_resurrectionMutex);
+    
+    // Check atomic debounce inside mutex protection (prevents TOCTOU race)
+    uint64 now = getMSTime();
+    uint64 lastAttempt = _lastResurrectionAttemptMs.load(std::memory_order_acquire);
+    
+    if (now - lastAttempt < RESURRECTION_DEBOUNCE_MS)
     {
-        TC_LOG_WARN("playerbot.death", "🔒 Bot {} InteractWithCorpse: Resurrection already in progress, skipping concurrent attempt",
-            m_bot ? m_bot->GetName() : "nullptr");
+        TC_LOG_WARN("playerbot.death", "Bot {} InteractWithCorpse: Too soon since last attempt ({}ms < {}ms), debouncing",
+            m_bot ? m_bot->GetName() : "nullptr", now - lastAttempt, RESURRECTION_DEBOUNCE_MS);
         return false;
     }
-
-    // GHOST AURA FIX: Debounce rapid resurrection attempts (500ms minimum between attempts)
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastAttempt = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastResurrectionAttempt);
-    if (timeSinceLastAttempt.count() < RESURRECTION_DEBOUNCE_MS)
-    {
-        TC_LOG_WARN("playerbot.death", "⏱️  Bot {} InteractWithCorpse: Too soon since last attempt ({}ms < {}ms), debouncing",
-            m_bot ? m_bot->GetName() : "nullptr", timeSinceLastAttempt.count(), RESURRECTION_DEBOUNCE_MS);
-        return false;
-    }
-    _lastResurrectionAttempt = now;
-
-    // GHOST AURA FIX: Check atomic resurrection flag
+    
+    // Check atomic resurrection flag inside mutex protection (prevents concurrent resurrections)
     bool expectedFalse = false;
-    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true))
+    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true, std::memory_order_acq_rel))
     {
-        TC_LOG_WARN("playerbot.death", "🚫 Bot {} InteractWithCorpse: Resurrection flag already set, rejecting concurrent attempt",
+        TC_LOG_WARN("playerbot.death", "Bot {} InteractWithCorpse: Resurrection flag already set, rejecting concurrent attempt",
             m_bot ? m_bot->GetName() : "nullptr");
         return false;
     }
-
-    // RAII guard to reset resurrection flag on exit
+    
+    // Update last attempt timestamp atomically
+    _lastResurrectionAttemptMs.store(now, std::memory_order_release);
+    
+    // RAII guard to reset resurrection flag on exit (exception-safe)
     struct ResurrectionGuard {
         std::atomic<bool>& flag;
-        ~ResurrectionGuard() { flag.store(false); }
+        ~ResurrectionGuard() { flag.store(false, std::memory_order_release); }
     } guard{_resurrectionInProgress};
 
     if (!m_bot)
     {
-        TC_LOG_ERROR("playerbot.death", "🔴 InteractWithCorpse: Bot is nullptr!");
+        TC_LOG_ERROR("playerbot.death", "Bot is nullptr!");
         return false;
     }
 
@@ -1224,46 +1218,20 @@ bool DeathRecoveryManager::InteractWithCorpse()
         m_bot->GetName(), healthBefore, maxHealth, restorePercent,
         static_cast<int>(deathStateBefore), m_bot->IsAlive(), IsGhost());
 
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD to prevent proc aura iterator deadlock
-    // Worker thread calls ResurrectPlayer → CastAllObtainSpells → SpellEvents → proc auras
-    // GetProcAurasTriggeredOnEvent iterates aura map while processAuraApplication modifies it
-    // Iterator invalidation → infinite loop → 60s hang → crash (Unit.cpp:10397)
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
-    bool inBattleground = m_bot->InBattleground();
+    // PACKET-BASED RESURRECTION (v8): Queue CMSG_RECLAIM_CORPSE packet
+    // This is the MAIN resurrection path - mirrors real players exactly
 
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName, inBattleground, healthBefore, maxHealth, restorePercent, deathStateBefore](Map* map)
-    {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.death", "🔴 Bot {} corpse resurrect callback: Bot not found!", botName);
-            return;
-        }
+    // Create CMSG_RECLAIM_CORPSE packet with corpse GUID
+    WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
+    *reclaimPacket << corpse->GetGUID();
 
-        TC_LOG_INFO("playerbot.death", "🩺 Bot {} corpse resurrect on MAIN THREAD - Starting...", botName);
+    // Queue packet for main thread processing via WorldSession
+    // TrinityCore's HandleReclaimCorpse will execute on main thread and call ResurrectPlayer
+    m_bot->GetSession()->QueuePacket(reclaimPacket);
 
-        // Execute resurrection on MAIN THREAD (safe from iterator deadlock)
-        // Mirror HandleReclaimCorpse logic (MiscHandler.cpp:442-445)
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(restorePercent); // 50% health (or 100% in BG)
-        bot->SpawnCorpseBones();
+    TC_LOG_WARN("playerbot.death", "Bot {} queued CMSG_RECLAIM_CORPSE packet (distance: {:.1f}y, deathState: {}) - Main thread will handle resurrection",
+        m_bot->GetName(), m_corpseDistance, static_cast<int>(deathStateBefore));
 
-        // DIAGNOSTIC: Log health AFTER resurrection
-        uint32 healthAfter = bot->GetHealth();
-        uint32 manaAfter = bot->GetPower(POWER_MANA);
-        bool isAlive = bot->IsAlive();
-        DeathState deathStateAfter = bot->getDeathState();
-
-        TC_LOG_WARN("playerbot.death", "✅ Bot {} corpse resurrect on MAIN THREAD COMPLETE! deathState: {} -> {}, IsAlive={}, IsGhost={}, Health={}/{} (+{}), Mana={}",
-            botName, static_cast<int>(deathStateBefore), static_cast<int>(deathStateAfter),
-            isAlive ? "TRUE" : "FALSE", bot->HasPlayerFlag(PLAYER_FLAGS_GHOST) ? "TRUE" : "FALSE",
-            healthAfter, maxHealth, (healthAfter - healthBefore), manaAfter);
-    });
-
-    TC_LOG_INFO("playerbot.death", "📅 Bot {} scheduled corpse resurrect on main thread", m_bot->GetName());
     return true;
 }
 
@@ -1385,46 +1353,16 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
     if (!m_bot)
         return false;
 
-    // TrinityCore API: Graveyard resurrection
-    // OPTION 3 REFACTOR: ResurrectPlayer() automatically:
-    // - Removes Ghost aura (spell 8326) and clears PLAYER_FLAGS_GHOST
-    // - Sets death state to ALIVE
-    // - Restores health/mana
-    // - Applies resurrection sickness if applySickness=true
-    // CRITICAL FIX: Remove all auras before ResurrectPlayer to prevent double-application crash
-        // CRITICAL FIX: Clear m_spellModTakingSpell and kill all spell events FIRST
-        // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
-        // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
-        // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
+    // PACKET-BASED RESURRECTION (v8): Spirit healer uses CMSG_REPOP_REQUEST
+    // Queue packet for main thread processing via HandleRepopRequest handler
+    WorldPacket* repopPacket = new WorldPacket(CMSG_REPOP_REQUEST, 1);
+    *repopPacket << uint8(0); // CheckInstance = false
 
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName](Map* map)
-    {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-            return;
+    m_bot->GetSession()->QueuePacket(repopPacket);
 
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(0.5f, true); // 50% health/mana, with resurrection sickness
+    TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_REPOP_REQUEST packet for spirit healer resurrection",
+        m_bot->GetName());
 
-        TC_LOG_INFO("playerbot.death", "✅ Bot {} graveyard resurrect on MAIN THREAD", botName);
-    });
-
-    // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
-    // The normal visibility update system will handle this on next main thread tick
-
-    // Log resurrection sickness if appropriate
-    if (WillReceiveResurrectionSickness() && !m_config.skipResurrectionSickness)
-    {
-        TC_LOG_DEBUG("playerbot.death", "Bot {} received resurrection sickness",
-            m_bot->GetName());
-    }
-
-    TC_LOG_INFO("playerbot.death", "Bot {} resurrected at graveyard via TrinityCore API", m_bot->GetName());
     return true;
 }
 
@@ -1611,7 +1549,7 @@ bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint3
 bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 {
     // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
-    std::unique_lock<std::recursive_timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
     if (!lock.owns_lock())
     {
         TC_LOG_WARN("playerbot.death", "🔒 Bot {} ForceResurrection: Resurrection already in progress, skipping concurrent attempt",
@@ -1641,33 +1579,28 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
         m_bot->GetName(),
         method == ResurrectionMethod::CORPSE_RUN ? "corpse" : "spirit healer");
 
-    // OPTION 3 REFACTOR: ResurrectPlayer() handles Ghost aura/flag automatically
-    // CRITICAL FIX: Remove all auras before ResurrectPlayer to prevent double-application crash
-        // CRITICAL FIX: Clear m_spellModTakingSpell and kill all spell events FIRST
-        // Delayed spell events (like Fire Extinguisher 80209) still have m_spellModTakingSpell set
-        // When SpellEvent destructor fires during Player::Update(), Spell::~Spell() checks this pointer
-        // Must clear before KillAllEvents() to prevent Spell::~Spell assertion failure
-    // CRITICAL FIX: Schedule resurrection on MAIN THREAD
-    ObjectGuid botGuid = m_bot->GetGUID();
-    std::string botName = m_bot->GetName();
-    bool useSickness = (method != ResurrectionMethod::CORPSE_RUN);
-
-    m_bot->GetMap()->AddFarSpellCallback([botGuid, botName, useSickness](Map* map)
+    // PACKET-BASED RESURRECTION (v8): Force resurrect via packet
+    Corpse* corpse = m_bot->GetCorpse();
+    if (corpse)
     {
-        Player* bot = ObjectAccessor::FindPlayer(botGuid);
-        if (!bot)
-            return;
+        // Use CMSG_RECLAIM_CORPSE for force resurrect at corpse
+        WorldPacket* reclaimPacket = new WorldPacket(CMSG_RECLAIM_CORPSE, 16);
+        *reclaimPacket << corpse->GetGUID();
+        m_bot->GetSession()->QueuePacket(reclaimPacket);
 
-        bot->m_spellModTakingSpell = nullptr;
-        bot->m_Events.KillAllEvents(false);
-        bot->RemoveAllAuras();
-        bot->ResurrectPlayer(1.0f, useSickness); // Full health
+        TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_RECLAIM_CORPSE for force resurrection (method: {})",
+            m_bot->GetName(), static_cast<int>(method));
+    }
+    else
+    {
+        // No corpse - use CMSG_REPOP_REQUEST to resurrect at graveyard
+        WorldPacket* repopPacket = new WorldPacket(CMSG_REPOP_REQUEST, 1);
+        *repopPacket << uint8(0);
+        m_bot->GetSession()->QueuePacket(repopPacket);
 
-        TC_LOG_WARN("playerbot.death", "✅ Bot {} force resurrect on MAIN THREAD", botName);
-    });
-
-    // NOTE: UpdateObjectVisibility() removed - calling from worker thread causes Map lock deadlock
-    // The normal visibility update system will handle this on next main thread tick
+        TC_LOG_INFO("playerbot.death", "Bot {} queued CMSG_REPOP_REQUEST for force resurrection (no corpse)",
+            m_bot->GetName());
+    }
 
     OnResurrection();
     return true;

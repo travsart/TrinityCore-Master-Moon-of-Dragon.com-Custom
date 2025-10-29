@@ -536,9 +536,9 @@ private:
     mutable std::recursive_mutex m_mutex;
 
     // GHOST AURA FIX: Resurrection synchronization to prevent duplicate aura application
-    mutable std::recursive_timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts (RECURSIVE to allow nested calls)
+    mutable std::timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts with timeout support
     std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
-    std::chrono::steady_clock::time_point _lastResurrectionAttempt; ///< Last resurrection attempt timestamp (for debouncing)
+    std::atomic<uint64> _lastResurrectionAttemptMs{0}; ///< Last resurrection attempt timestamp (for debouncing)
 
     // SPELL MOD CRASH FIX: Deferred teleport ack to prevent Spell.cpp:603 crash
     std::chrono::steady_clock::time_point m_teleportAckTime;  ///< Time when teleport ack was deferred
