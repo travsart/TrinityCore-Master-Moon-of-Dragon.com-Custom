@@ -737,12 +737,11 @@ void BotWorldEntry::Cleanup()
 
     if (_player)
     {
-        if (_player->IsInWorld())
-        {
-            _player->RemoveFromWorld();
-        }
+        // PLAYERBOT FIX: Do NOT call RemoveFromWorld() directly - causes Map.cpp:686 crash
+        // LogoutPlayer() properly handles removal via deferred mechanism on main thread
+        // This prevents Map iterator invalidation from worker threads
 
-        // Clean logout
+        // Clean logout - this handles RemoveFromWorld() safely
         _session->LogoutPlayer(false);
         _player = nullptr;
     }
