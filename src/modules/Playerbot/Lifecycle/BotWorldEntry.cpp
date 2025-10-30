@@ -788,9 +788,9 @@ void BotWorldEntryQueue::ProcessQueue(uint32 maxConcurrent)
                     {
                         _totalFailed++;
                     }
-                    return true;
+                    return true;  // Remove completed or failed entries
                 }
-                return;
+                return false;  // Keep entries that are still processing
             }),
         _activeEntries.end()
     );
