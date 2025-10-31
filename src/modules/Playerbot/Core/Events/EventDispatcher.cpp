@@ -80,6 +80,17 @@ void EventDispatcher::Unsubscribe(StateMachine::EventType eventType, IManagerBas
     if (!manager)
         return;
 
+    // SAFETY: Capture manager ID early in case of destruction
+    std::string managerId;
+    try
+    {
+        managerId = manager->GetManagerId();
+    }
+    catch (...)
+    {
+        managerId = "<unknown>";
+    }
+
     std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
     auto subIt = _subscriptions.find(eventType);
@@ -90,13 +101,28 @@ void EventDispatcher::Unsubscribe(StateMachine::EventType eventType, IManagerBas
     subscribers.erase(std::remove(subscribers.begin(), subscribers.end(), manager), subscribers.end());
 
     TC_LOG_DEBUG("module.playerbot", "EventDispatcher::Unsubscribe: Manager {} unsubscribed from event type {}",
-        manager->GetManagerId(), static_cast<uint16_t>(eventType));
+        managerId, static_cast<uint16_t>(eventType));
 }
 
 void EventDispatcher::UnsubscribeAll(IManagerBase* manager)
 {
     if (!manager)
         return;
+
+    // SAFETY: Capture manager ID before unsubscribing to prevent accessing
+    // potentially destructed object after removal from subscriptions.
+    // Manager may be in destructor when this is called, so we must not
+    // call GetManagerId() after unsubscription completes.
+    std::string managerId;
+    try
+    {
+        managerId = manager->GetManagerId();
+    }
+    catch (...)
+    {
+        // If GetManagerId() throws (object partially destructed), use fallback
+        managerId = "<unknown>";
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
 
@@ -107,7 +133,7 @@ void EventDispatcher::UnsubscribeAll(IManagerBase* manager)
     }
 
     TC_LOG_DEBUG("module.playerbot", "EventDispatcher::UnsubscribeAll: Manager {} unsubscribed from all events",
-        manager->GetManagerId());
+        managerId);
 }
 
 void EventDispatcher::Dispatch(BotEvent const& event)
