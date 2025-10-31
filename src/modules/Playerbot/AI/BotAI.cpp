@@ -323,8 +323,111 @@ BotAI::~BotAI()
     // Phase 4: CRITICAL - Unsubscribe from all event buses to prevent dangling pointers
     UnsubscribeFromEventBuses();
 
-    // Phase 7.3: Legacy observer cleanup removed (dead code)
-    // Managers automatically unsubscribe via EventDispatcher on destruction
+    // ========================================================================
+    // CRITICAL FIX: Explicit Manager Destruction Order
+    // ========================================================================
+    //
+    // Problem: C++ destroys members in REVERSE declaration order
+    // - _eventDispatcher (line 640) destroyed BEFORE _combatStateManager (line 637)
+    // - Managers try to UnsubscribeAll() from already-destroyed EventDispatcher
+    // - Results in ACCESS_VIOLATION at EventDispatcher.cpp:132
+    //
+    // Solution: Manually destroy managers HERE, before automatic destruction
+    // - Ensures EventDispatcher is still alive during manager cleanup
+    // - Managers can safely call UnsubscribeAll() during OnShutdown()
+    // - EventDispatcher will then be destroyed after all managers are gone
+    //
+    // Destruction Order (CORRECT):
+    // 1. Manual reset() of managers (HERE) ← Managers alive, EventDispatcher alive ✅
+    // 2. Automatic _eventDispatcher destruction ← All managers gone, safe ✅
+    // ========================================================================
+
+    TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Begin explicit manager cleanup for bot '{}'",
+                 _bot ? _bot->GetName() : "Unknown");
+
+    // Destroy managers in dependency order (most dependent first)
+    // Each manager's OnShutdown() will safely call EventDispatcher::UnsubscribeAll()
+
+    // 1. Combat state manager - monitors other managers
+    if (_combatStateManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying CombatStateManager");
+        _combatStateManager.reset();
+    }
+
+    // 2. Death recovery manager - may interact with combat
+    if (_deathRecoveryManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying DeathRecoveryManager");
+        _deathRecoveryManager.reset();
+    }
+
+    // 3. Movement arbiter - coordinates movement requests
+    if (_movementArbiter)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying MovementArbiter");
+        _movementArbiter.reset();
+    }
+
+    // 4. Game system managers (order doesn't matter, no interdependencies)
+    if (_questManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying QuestManager");
+        _questManager.reset();
+    }
+
+    if (_tradeManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying TradeManager");
+        _tradeManager.reset();
+    }
+
+    if (_gatheringManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GatheringManager");
+        _gatheringManager.reset();
+    }
+
+    if (_auctionManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying AuctionManager");
+        _auctionManager.reset();
+    }
+
+    if (_groupCoordinator)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GroupCoordinator");
+        _groupCoordinator.reset();
+    }
+
+    // 5. Support systems
+    if (_targetScanner)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying TargetScanner");
+        _targetScanner.reset();
+    }
+
+    if (_groupInvitationHandler)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GroupInvitationHandler");
+        _groupInvitationHandler.reset();
+    }
+
+    if (_priorityManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying BehaviorPriorityManager");
+        _priorityManager.reset();
+    }
+
+    TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: ✅ All managers destroyed, EventDispatcher can now safely destruct");
+
+    // Now automatic destruction proceeds:
+    // - _managerRegistry destroyed (no dependencies)
+    // - _eventDispatcher destroyed (all subscribers already unsubscribed during manager cleanup above)
+    // - No more ACCESS_VIOLATION because all managers are already gone!
+
+    TC_LOG_INFO("module.playerbot", "BotAI::~BotAI: Destructor complete for bot '{}'",
+                _bot ? _bot->GetName() : "Unknown");
 }
 
 // ============================================================================
