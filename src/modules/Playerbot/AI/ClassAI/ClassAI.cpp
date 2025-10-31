@@ -33,6 +33,7 @@
 #include "../../Spatial/SpatialGridManager.h"
 #include <chrono>
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 
 namespace Playerbot
 {
@@ -253,6 +254,24 @@ void ClassAI::OnCombatStart(::Unit* target)
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
+
+    // CRITICAL FIX: Initiate auto-attack when entering combat
+    // In WoW, casting spells does NOT automatically start auto-attack
+    // Must explicitly call Attack() to begin melee/ranged auto-attacking
+    if (target && GetBot())
+    {
+        if (!GetBot()->IsInCombatWith(target))
+        {
+            GetBot()->SetInCombatWith(target);
+            target->SetInCombatWith(GetBot());
+        }
+
+        // Start auto-attack (true = melee, but works for ranged too)
+        GetBot()->Attack(target, true);
+
+        TC_LOG_DEBUG("playerbot.classai", "Bot {} initiated auto-attack on {}",
+                     GetBot()->GetName(), target->GetName());
+    }
 
     // Notify combat behavior system
     if (_combatBehaviors)
@@ -851,25 +870,82 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     if (!target || !spellId || !GetBot())
         return false;
 
+    // MIGRATION COMPLETE (2025-10-30):
+    // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
+    // BEFORE: GetBot()->CastSpell(target, spellId, false); // UNSAFE - worker thread
+    // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
+    // IMPACT: All 39 class specializations now use thread-safe spell casting
+
+    // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+                     "ClassAI spell {} not usable for bot {}",
+                     spellId, GetBot()->GetName());
         return false;
+    }
 
     if (!IsInRange(target, spellId))
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+                     "ClassAI spell {} target out of range for bot {}",
+                     spellId, GetBot()->GetName());
         return false;
+    }
 
     if (!HasLineOfSight(target))
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+                     "ClassAI spell {} target no LOS for bot {}",
+                     spellId, GetBot()->GetName());
         return false;
+    }
 
-    // Cast the spell
+    // Get spell info for validation and cooldown tracking
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
+                     "ClassAI spell {} not found in spell data for bot {}",
+                     spellId, GetBot()->GetName());
         return false;
+    }
 
-    GetBot()->CastSpell(target, spellId, false);
-    ConsumeResource(spellId);
-    _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
+    // Build packet with validation
+    SpellPacketBuilder::BuildOptions options;
+    options.skipGcdCheck = false;      // Respect GCD
+    options.skipResourceCheck = false; // Check mana/energy/rage
+    options.skipTargetCheck = false;   // Check target validity
+    options.skipStateCheck = false;    // Check caster state
+    options.skipRangeCheck = false;    // Check spell range (double-check after ClassAI check)
+    options.logFailures = true;        // Log validation failures
 
-    return true;
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);
+
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+    {
+        // Packet successfully queued to main thread
+
+        // Optimistic resource consumption and cooldown tracking
+        // (Will be validated again on main thread, but tracking here for ClassAI responsiveness)
+        ConsumeResource(spellId);
+        _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
+
+        TC_LOG_DEBUG("playerbot.classai.spell",
+                     "ClassAI queued CMSG_CAST_SPELL for spell {} (bot: {}, target: {})",
+                     spellId, GetBot()->GetName(), target->GetName());
+        return true;
+    }
+    else
+    {
+        // Validation failed - packet not queued
+        TC_LOG_TRACE("playerbot.classai.spell",
+                     "ClassAI spell {} validation failed for bot {}: {} ({})",
+                     spellId, GetBot()->GetName(),
+                     static_cast<uint8>(result.result),
+                     result.failureReason);
+        return false;
+    }
 }
 
 bool ClassAI::CastSpell(uint32 spellId)

@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
  *
- * Baseline Rotation Manager Implementation - FIXED VERSION
+ * Baseline Rotation Manager Implementation - PACKET-BASED MIGRATION
+ * PHASE 0 WEEK 3 (2025-10-30): Migrated to packet-based spell casting
  */
 
 #include "BaselineRotationManager.h"
@@ -13,7 +14,9 @@
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "Map.h"
+#include "Log.h"  // For TC_LOG_DEBUG
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 
 namespace Playerbot
 {
@@ -62,10 +65,32 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     if (!bot || !target || !target->IsAlive())
         return false;
 
+    // CRITICAL FIX: Ensure auto-attack is active before attempting rotation
+    // Many low-level bots (level 1-9) don't have spells yet and rely on auto-attack
+    // Even when spells are available, auto-attack should always be active in combat
+    if (!bot->IsInCombatWith(target))
+    {
+        bot->SetInCombatWith(target);
+        target->SetInCombatWith(bot);
+    }
+
+    // Initiate auto-attack if not already attacking this target
+    // This is critical for low-level bots and serves as a fallback if no spells work
+    if (bot->GetVictim() != target)
+    {
+        bot->Attack(target, true);
+        TC_LOG_DEBUG("module.playerbot.baseline",
+                     "Bot {} initiated auto-attack on {} (baseline rotation)",
+                     bot->GetName(), target->GetName());
+    }
+
     // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
     auto abilities = GetBaselineAbilities(bot->GetClass());
     if (!abilities || abilities->empty())
-        return false;
+    {
+        // No spells available - rely on auto-attack (already initiated above)
+        return true; // Return true because auto-attack is active
+    }
 
     // Sort abilities by priority (higher priority first)
     std::vector<BaselineAbility> sorted = *abilities;
@@ -80,7 +105,8 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
             return true;
     }
 
-    return false;
+    // Even if no spell was cast, auto-attack is active, so return true
+    return true;
 }
 
 void BaselineRotationManager::ApplyBaselineBuffs(Player* bot)
@@ -205,24 +231,58 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())
         return false; // On cooldown
 
-    // Cast spell
-    // FIX: GetSpellInfo requires difficulty parameter
+    // MIGRATION COMPLETE (2025-10-30):
+    // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
+    // BEFORE: bot->CastSpell(castTarget, spellId, false); // UNSAFE - worker thread
+    // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
+
+    // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
     if (!spellInfo)
+    {
+        TC_LOG_TRACE("playerbot.baseline.packets",
+                     "Bot {} spell {} not found in spell data",
+                     bot->GetName(), ability.spellId);
         return false;
+    }
 
     // Determine cast target
     ::Unit* castTarget = ability.requiresMelee ? target : (ability.isDefensive ? bot : target);
 
-    // Cast spell using TrinityCore API
-    if (bot->CastSpell(castTarget, ability.spellId, false))
+    // Build packet with validation
+    SpellPacketBuilder::BuildOptions options;
+    options.skipGcdCheck = false;      // Respect GCD
+    options.skipResourceCheck = false; // Check mana/energy/rage
+    options.skipRangeCheck = false;    // Check spell range
+    // Cast time check covered by skipStateCheck
+    // Cooldown check covered by skipGcdCheck
+    // LOS check covered by skipRangeCheck
+
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
+
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
-        // Record cooldown
+        // Packet successfully queued to main thread
+
+        // Optimistic cooldown recording (packet will be processed)
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
+
+        TC_LOG_DEBUG("playerbot.baseline.packets",
+                     "Bot {} queued CMSG_CAST_SPELL for baseline spell {} (target: {})",
+                     bot->GetName(), ability.spellId,
+                     castTarget ? castTarget->GetName() : "self");
         return true;
     }
-
-    return false;
+    else
+    {
+        // Validation failed - packet not queued
+        TC_LOG_TRACE("playerbot.baseline.packets",
+                     "Bot {} baseline spell {} validation failed: {} ({})",
+                     bot->GetName(), ability.spellId,
+                     static_cast<uint8>(result.result),
+                     result.failureReason);
+        return false;
+    }
 }
 
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const

@@ -22,6 +22,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <algorithm>
 
 namespace Playerbot
@@ -592,16 +593,46 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(SPELL_SILENCE))
                 {
-                    _bot->CastSpell(caster, SPELL_SILENCE, false);
-                    return true;
+                    // MIGRATION COMPLETE (2025-10-30): Packet-based Silence fallback
+                    SpellPacketBuilder::BuildOptions options;
+                    options.skipGcdCheck = false;
+                    options.skipResourceCheck = false;
+                    options.skipTargetCheck = false;
+                    options.skipStateCheck = false;
+                    options.skipRangeCheck = false;
+                    options.logFailures = true;
+
+                    auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, SPELL_SILENCE, caster, options);
+                    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                    {
+                        TC_LOG_DEBUG("playerbot.interrupt.fallback",
+                                     "Bot {} queued SILENCE fallback (target: {})",
+                                     _bot->GetName(), caster->GetName());
+                        return true;
+                    }
                 }
             }
             else if (_bot->GetClass() == CLASS_DRUID)
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(SPELL_SOLAR_BEAM))
                 {
-                    _bot->CastSpell(caster, SPELL_SOLAR_BEAM, false);
-                    return true;
+                    // MIGRATION COMPLETE (2025-10-30): Packet-based Solar Beam fallback
+                    SpellPacketBuilder::BuildOptions options;
+                    options.skipGcdCheck = false;
+                    options.skipResourceCheck = false;
+                    options.skipTargetCheck = false;
+                    options.skipStateCheck = false;
+                    options.skipRangeCheck = false;
+                    options.logFailures = true;
+
+                    auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, SPELL_SOLAR_BEAM, caster, options);
+                    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                    {
+                        TC_LOG_DEBUG("playerbot.interrupt.fallback",
+                                     "Bot {} queued SOLAR_BEAM fallback (target: {})",
+                                     _bot->GetName(), caster->GetName());
+                        return true;
+                    }
                 }
             }
             break;
@@ -646,8 +677,23 @@ bool InterruptRotationManager::TryAlternativeInterrupt(Unit* target)
                     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
                     if (spellInfo && _bot->IsWithinLOSInMap(target))
                     {
-                        _bot->CastSpell(target, spellId, false);
-                        return true;
+                        // MIGRATION COMPLETE (2025-10-30): Packet-based alternative interrupt
+                        SpellPacketBuilder::BuildOptions options;
+                        options.skipGcdCheck = false;
+                        options.skipResourceCheck = false;
+                        options.skipTargetCheck = false;
+                        options.skipStateCheck = false;
+                        options.skipRangeCheck = false;
+                        options.logFailures = true;
+
+                        auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, spellId, target, options);
+                        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                        {
+                            TC_LOG_DEBUG("playerbot.interrupt.alternative",
+                                         "Bot {} queued alternative interrupt {} (target: {})",
+                                         _bot->GetName(), spellId, target->GetName());
+                            return true;
+                        }
                     }
                 }
             }
@@ -693,8 +739,25 @@ void InterruptRotationManager::ProcessDelayedInterrupts()
 
             if (interrupter && target && target->IsNonMeleeSpellCast(false))
             {
-                interrupter->CastSpell(target, it->spellId, false);
-                MarkInterruptUsed(it->interrupter, currentTime);
+                // MIGRATION COMPLETE (2025-10-30): Packet-based delayed interrupt
+                SpellPacketBuilder::BuildOptions options;
+                options.skipGcdCheck = false;
+                options.skipResourceCheck = false;
+                options.skipTargetCheck = false;
+                options.skipStateCheck = false;
+                options.skipRangeCheck = false;
+                options.logFailures = true;
+
+                auto result = SpellPacketBuilder::BuildCastSpellPacket(
+                    dynamic_cast<Player*>(interrupter), it->spellId, target, options);
+
+                if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                {
+                    TC_LOG_DEBUG("playerbot.interrupt.delayed",
+                                 "Bot {} queued delayed interrupt {} (target: {})",
+                                 interrupter->GetName(), it->spellId, target->GetName());
+                    MarkInterruptUsed(it->interrupter, currentTime);
+                }
             }
 
             it = _delayedInterrupts.erase(it);

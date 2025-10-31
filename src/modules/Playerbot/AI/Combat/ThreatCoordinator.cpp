@@ -21,6 +21,7 @@
 #include "SpellHistory.h"
 #include "ObjectAccessor.h"
 #include "Log.h"
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <algorithm>
 #include <sstream>
 
@@ -286,7 +287,39 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
     if (aiIt != _botAIs.end() && aiIt->second)
     {
         // Cast the taunt
-        tank->CastSpell(target, tauntSpell, false);
+        // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+
+        SpellPacketBuilder::BuildOptions options;
+
+        options.skipGcdCheck = false;
+
+        options.skipResourceCheck = false;
+
+        options.skipTargetCheck = false;
+
+        options.skipStateCheck = false;
+
+        options.skipRangeCheck = false;
+
+        options.logFailures = true;
+
+
+        auto result = SpellPacketBuilder::BuildCastSpellPacket(
+
+            dynamic_cast<Player*>(tank), tauntSpell, target, options);
+
+
+        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+
+        {
+
+            TC_LOG_DEBUG("playerbot.threat.taunt",
+
+                         "Bot {} queued taunt spell {} (target: {})",
+
+                         tank->GetName(), tauntSpell, target->GetName());
+
+        }
 
         _metrics.tauntExecutions++;
 
@@ -319,7 +352,39 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reducti
         {
             if (bot->HasSpell(ability.spellId) && !bot->GetSpellHistory()->HasCooldown(ability.spellId))
             {
-                bot->CastSpell(bot, ability.spellId, false);
+                // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+
+                SpellPacketBuilder::BuildOptions options;
+
+                options.skipGcdCheck = false;
+
+                options.skipResourceCheck = false;
+
+                options.skipTargetCheck = false;
+
+                options.skipStateCheck = false;
+
+                options.skipRangeCheck = false;
+
+                options.logFailures = true;
+
+
+                auto result = SpellPacketBuilder::BuildCastSpellPacket(
+
+                    dynamic_cast<Player*>(bot), ability.spellId, bot, options);
+
+
+                if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+
+                {
+
+                    TC_LOG_DEBUG("playerbot.threat.threat_reduce",
+
+                                 "Bot {} queued threat_reduce spell {} (target: {})",
+
+                                 bot->GetName(), ability.spellId, bot->GetName());
+
+                }
 
                 _metrics.threatReductions++;
 
@@ -353,7 +418,39 @@ bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toB
         {
             if (from->HasSpell(ability.spellId) && !from->GetSpellHistory()->HasCooldown(ability.spellId))
             {
-                from->CastSpell(to, ability.spellId, false);
+                // MIGRATION COMPLETE (2025-10-30): Packet-based threat management
+
+                SpellPacketBuilder::BuildOptions options;
+
+                options.skipGcdCheck = false;
+
+                options.skipResourceCheck = false;
+
+                options.skipTargetCheck = false;
+
+                options.skipStateCheck = false;
+
+                options.skipRangeCheck = false;
+
+                options.logFailures = true;
+
+
+                auto result = SpellPacketBuilder::BuildCastSpellPacket(
+
+                    dynamic_cast<Player*>(from), ability.spellId, to, options);
+
+
+                if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+
+                {
+
+                    TC_LOG_DEBUG("playerbot.threat.threat_transfer",
+
+                                 "Bot {} queued threat_transfer spell {} (target: {})",
+
+                                 from->GetName(), ability.spellId, to->GetName());
+
+                }
 
                 TC_LOG_DEBUG("playerbots", "ThreatCoordinator: {} transferred threat to {} using {}",
                             from->GetName(), to->GetName(), ability.name);

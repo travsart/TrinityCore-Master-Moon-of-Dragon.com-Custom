@@ -23,6 +23,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h" // Thread-safe spatial grid queries
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <algorithm>
 #include <execution>
 #include "../../Spatial/SpatialGridManager.h"
@@ -449,8 +450,23 @@ void DefensiveBehaviorManager::PrepareForIncoming(uint32 spellId)
         uint32 defensive = SelectDefensive();
         if (defensive && !_bot->GetSpellHistory()->HasCooldown(defensive))
         {
-            _bot->CastSpell(_bot, defensive, false);
-            MarkDefensiveUsed(defensive);
+            // MIGRATION COMPLETE (2025-10-30): Packet-based defensive cooldown
+            SpellPacketBuilder::BuildOptions options;
+            options.skipGcdCheck = false;
+            options.skipResourceCheck = false;
+            options.skipTargetCheck = false;
+            options.skipStateCheck = false;
+            options.skipRangeCheck = false;
+            options.logFailures = true;
+
+            auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, defensive, _bot, options);
+            if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+            {
+                TC_LOG_DEBUG("playerbot.defensive.cooldown",
+                             "Bot {} queued defensive cooldown {} (self-cast, major threat detected)",
+                             _bot->GetName(), defensive);
+                MarkDefensiveUsed(defensive);
+            }
         }
     }
 }
@@ -640,26 +656,86 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                 case CLASS_PALADIN:
                     if (!_bot->GetSpellHistory()->HasCooldown(HAND_OF_PROTECTION))
                     {
-                        _bot->CastSpell(target, HAND_OF_PROTECTION, false);
-                        provided = true;
+                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        SpellPacketBuilder::BuildOptions options;
+                        options.skipGcdCheck = false;
+                        options.skipResourceCheck = false;
+                        options.skipTargetCheck = false;
+                        options.skipStateCheck = false;
+                        options.skipRangeCheck = false;
+                        options.logFailures = true;
+
+                        auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, HAND_OF_PROTECTION, target, options);
+                        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                        {
+                            TC_LOG_DEBUG("playerbot.defensive.save",
+                                         "Bot {} queued HAND_OF_PROTECTION for {} (emergency save)",
+                                         _bot->GetName(), target->GetName());
+                            provided = true;
+                        }
                     }
                     else if (!_bot->GetSpellHistory()->HasCooldown(HAND_OF_SACRIFICE))
                     {
-                        _bot->CastSpell(target, HAND_OF_SACRIFICE, false);
-                        provided = true;
+                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        SpellPacketBuilder::BuildOptions options;
+                        options.skipGcdCheck = false;
+                        options.skipResourceCheck = false;
+                        options.skipTargetCheck = false;
+                        options.skipStateCheck = false;
+                        options.skipRangeCheck = false;
+                        options.logFailures = true;
+
+                        auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, HAND_OF_SACRIFICE, target, options);
+                        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                        {
+                            TC_LOG_DEBUG("playerbot.defensive.save",
+                                         "Bot {} queued HAND_OF_SACRIFICE for {} (emergency save)",
+                                         _bot->GetName(), target->GetName());
+                            provided = true;
+                        }
                     }
                     break;
 
                 case CLASS_PRIEST:
                     if (!_bot->GetSpellHistory()->HasCooldown(PAIN_SUPPRESSION))
                     {
-                        _bot->CastSpell(target, PAIN_SUPPRESSION, false);
-                        provided = true;
+                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        SpellPacketBuilder::BuildOptions options;
+                        options.skipGcdCheck = false;
+                        options.skipResourceCheck = false;
+                        options.skipTargetCheck = false;
+                        options.skipStateCheck = false;
+                        options.skipRangeCheck = false;
+                        options.logFailures = true;
+
+                        auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, PAIN_SUPPRESSION, target, options);
+                        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                        {
+                            TC_LOG_DEBUG("playerbot.defensive.save",
+                                         "Bot {} queued PAIN_SUPPRESSION for {} (emergency save)",
+                                         _bot->GetName(), target->GetName());
+                            provided = true;
+                        }
                     }
                     else if (!_bot->GetSpellHistory()->HasCooldown(GUARDIAN_SPIRIT))
                     {
-                        _bot->CastSpell(target, GUARDIAN_SPIRIT, false);
-                        provided = true;
+                        // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
+                        SpellPacketBuilder::BuildOptions options;
+                        options.skipGcdCheck = false;
+                        options.skipResourceCheck = false;
+                        options.skipTargetCheck = false;
+                        options.skipStateCheck = false;
+                        options.skipRangeCheck = false;
+                        options.logFailures = true;
+
+                        auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, GUARDIAN_SPIRIT, target, options);
+                        if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+                        {
+                            TC_LOG_DEBUG("playerbot.defensive.save",
+                                         "Bot {} queued GUARDIAN_SPIRIT for {} (emergency save)",
+                                         _bot->GetName(), target->GetName());
+                            provided = true;
+                        }
                     }
                     break;
             }

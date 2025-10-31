@@ -23,6 +23,7 @@
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
+#include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
 #include <mutex>
 #include <algorithm>
 #include <cmath>
@@ -804,8 +805,18 @@ bool DispelCoordinator::ExecuteDispel()
     if (m_bot->GetPowerPct(POWER_MANA) < m_config.minManaPctForDispel)
         return false;
 
-    // Cast dispel
-    if (m_bot->CastSpell(target, dispelSpell, false))
+    // Cast dispel (MIGRATION COMPLETE 2025-10-30: Packet-based dispel)
+    SpellPacketBuilder::BuildOptions options;
+    options.skipGcdCheck = false;
+    options.skipResourceCheck = false;
+    options.skipTargetCheck = false;
+    options.skipStateCheck = false;
+    options.skipRangeCheck = false;
+    options.logFailures = true;
+
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(m_bot, dispelSpell, target, options);
+
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
         m_lastDispelAttempt = now;
         m_globalCooldownUntil = now + m_config.dispelGCD;
@@ -815,7 +826,19 @@ bool DispelCoordinator::ExecuteDispel()
         ++m_statistics.dispelsByType[m_currentAssignment.dispelType];
 
         MarkDispelComplete(m_currentAssignment);
+
+        TC_LOG_DEBUG("playerbot.dispel.packets",
+                     "Bot {} queued CMSG_CAST_SPELL for dispel {} (target: {}, type: {})",
+                     m_bot->GetName(), dispelSpell, target->GetName(),
+                     static_cast<uint8>(m_currentAssignment.dispelType));
         return true;
+    }
+    else
+    {
+        TC_LOG_TRACE("playerbot.dispel.packets",
+                     "Bot {} dispel {} validation failed: {} ({})",
+                     m_bot->GetName(), dispelSpell,
+                     static_cast<uint8>(result.result), result.failureReason);
     }
 
     ++m_statistics.failedDispels;
@@ -869,13 +892,34 @@ bool DispelCoordinator::ExecutePurge()
         return false;
     }
 
-    // Cast purge
-    if (m_bot->CastSpell(enemy, purgeSpell, false))
+    // Cast purge (MIGRATION COMPLETE 2025-10-30: Packet-based purge)
+    SpellPacketBuilder::BuildOptions options;
+    options.skipGcdCheck = false;
+    options.skipResourceCheck = false;
+    options.skipTargetCheck = false;
+    options.skipStateCheck = false;
+    options.skipRangeCheck = false;
+    options.logFailures = true;
+
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(m_bot, purgeSpell, enemy, options);
+
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
         m_lastPurgeAttempt = now;
         m_globalCooldownUntil = now + m_config.dispelGCD;
         ++m_statistics.successfulPurges;
+
+        TC_LOG_DEBUG("playerbot.dispel.packets",
+                     "Bot {} queued CMSG_CAST_SPELL for purge {} (target: {})",
+                     m_bot->GetName(), purgeSpell, enemy->GetName());
         return true;
+    }
+    else
+    {
+        TC_LOG_TRACE("playerbot.dispel.packets",
+                     "Bot {} purge {} validation failed: {} ({})",
+                     m_bot->GetName(), purgeSpell,
+                     static_cast<uint8>(result.result), result.failureReason);
     }
 
     ++m_statistics.failedPurges;
