@@ -61,6 +61,7 @@
 #include "Log.h"
 #include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
 #include "Session/BotSession.h"          // PHASE 4: BotSession for command context
+#include "Scripting/BotResurrectionScript.h"  // Bot Auto-Resurrection
 
 using namespace Playerbot::Events;
 using namespace Playerbot::StateMachine;
@@ -1081,6 +1082,11 @@ void AddSC_playerbot_event_scripts()
     new PlayerbotItemScript();
     // TODO Phase 6: Re-enable when AuctionHouseScript is available
     // new PlayerbotAuctionHouseScript();
+
+    // Bot Auto-Resurrection Script - OnPlayerRepop hook
+    TC_LOG_INFO("module.playerbot.scripts", "🔧 DEBUG: About to instantiate BotResurrectionScript...");
+    new Playerbot::BotResurrectionScript();
+    TC_LOG_INFO("module.playerbot.scripts", "✅ DEBUG: BotResurrectionScript instantiated successfully");
 
     TC_LOG_INFO("module.playerbot.scripts",
         "✅ Playerbot Event Scripts registered:");

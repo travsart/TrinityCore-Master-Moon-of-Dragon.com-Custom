@@ -963,7 +963,8 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
     if (goTarget)
     {
         castRequest.Target.Flags = TARGET_FLAG_GAMEOBJECT;
-        castRequest.Target.Object = goTarget->GetGUID();
+        // GameObjects use the Unit field for their GUID in SpellTargetData
+        castRequest.Target.Unit = goTarget->GetGUID();
     }
     else
     {

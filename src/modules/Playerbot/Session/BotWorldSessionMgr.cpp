@@ -617,10 +617,14 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         if (!bot || !bot->IsInWorld())
                         {
                             TC_LOG_WARN("module.playerbot.session", "?? Bot disconnected: {}", guid.ToString());
-                            if (session->GetPlayer())
-                                session->LogoutPlayer(true);
 
-                            _asyncDisconnections.push(guid);  // Lock-free push
+                            // PLAYERBOT FIX: Do NOT call LogoutPlayer() from worker thread!
+                            // This causes Map.cpp:686 crash by removing player from map on worker thread
+                            // Instead, push to _asyncDisconnections - main thread will handle cleanup
+                            // if (session->GetPlayer())
+                            //     session->LogoutPlayer(true);  // REMOVED - worker thread unsafe!
+
+                            _asyncDisconnections.push(guid);  // Lock-free push - main thread handles logout
                             return;
                         }
 

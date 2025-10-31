@@ -44,6 +44,7 @@ class AuctionManager;
 class GroupCoordinator;
 class DeathRecoveryManager;
 class MovementArbiter;
+class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
 // Phase 4: Event structure forward declarations
@@ -631,6 +632,9 @@ protected:
 
     // Movement arbiter - Enterprise movement request arbitration
     std::unique_ptr<MovementArbiter> _movementArbiter;
+
+    // Combat state manager - Automatic combat state synchronization via DAMAGE_TAKEN events
+    std::unique_ptr<CombatStateManager> _combatStateManager;
 
     // Phase 7.1: Event system integration
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;

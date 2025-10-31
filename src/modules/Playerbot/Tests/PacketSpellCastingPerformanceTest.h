@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _PLAYERBOT_WEEK4_PERFORMANCE_TEST_H
-#define _PLAYERBOT_WEEK4_PERFORMANCE_TEST_H
+#ifndef _PLAYERBOT_PACKET_SPELL_CASTING_PERFORMANCE_TEST_H
+#define _PLAYERBOT_PACKET_SPELL_CASTING_PERFORMANCE_TEST_H
 
 #include "PerformanceValidator.h"
 #include "TestUtilities.h"
@@ -275,4 +275,4 @@ private:
 } // namespace Test
 } // namespace Playerbot
 
-#endif // _PLAYERBOT_WEEK4_PERFORMANCE_TEST_H
+#endif // _PLAYERBOT_PACKET_SPELL_CASTING_PERFORMANCE_TEST_H

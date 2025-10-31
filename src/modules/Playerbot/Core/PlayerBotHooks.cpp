@@ -16,6 +16,7 @@
 #include "BotAI.h"
 #include "ObjectAccessor.h"
 #include "Core/Services/BotNpcLocationService.h"
+#include "Scripting/BotResurrectionScript.h"
 #include <sstream>
 
 namespace Playerbot

@@ -1,11 +1,5 @@
 ﻿# PlayerBot Automation Dependencies
-pathlib
-logging
-argparse
-json
-subprocess
-typing
-datetime
+# Note: pathlib, logging, argparse, json, subprocess, typing, datetime are built-in
 
 # Optional for advanced features
 pandas>=1.3.0

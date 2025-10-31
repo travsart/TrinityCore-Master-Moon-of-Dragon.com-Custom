@@ -8,9 +8,9 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-# Use system Boost 1.78 when building with playerbot to avoid vcpkg conflicts
+# Use system Boost 1.89 when building with playerbot to avoid vcpkg conflicts
 if(BUILD_PLAYERBOT)
-    message(STATUS "Using system Boost 1.78 for Playerbot compatibility")
+    message(STATUS "Using system Boost 1.89 for Playerbot compatibility")
     include(${CMAKE_SOURCE_DIR}/cmake/FindSystemBoost.cmake)
 
     # Create the boost interface target using system boost
@@ -55,7 +55,7 @@ endif()
 
 if (WIN32)
   # On windows the requirements are higher according to the wiki.
-  set(BOOST_REQUIRED_VERSION 1.78)
+  set(BOOST_REQUIRED_VERSION 1.89)
 else()
   set(BOOST_REQUIRED_VERSION 1.74)
 endif()

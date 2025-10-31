@@ -735,18 +735,28 @@ void BotWorldEntry::Cleanup()
 {
     TransitionToState(BotWorldEntryState::CLEANUP);
 
-    if (_player)
+    // PLAYERBOT FIX: Do NOT call LogoutPlayer() or RemoveFromWorld() directly!
+    // Problem: BotWorldEntry::Cleanup() can be called from ANY thread (including Map worker threads)
+    //          If we call LogoutPlayer() here, it removes player from map IMMEDIATELY (WorldSession.cpp:715)
+    //          This invalidates Map iterators, causing Map.cpp:686 crash
+    //
+    // Solution: Use KickPlayer() → sets forceExit flag → BotSession::Update() returns false
+    //           → BotWorldSessionMgr removes session from map → ~WorldSession() calls LogoutPlayer()
+    //
+    // Flow: Cleanup() → KickPlayer() (sets forceExit) → _session.reset() (releases our reference)
+    //       → Update() returns false → _botSessions.erase() (last reference gone)
+    //       → ~WorldSession() → LogoutPlayer() on main thread during next UpdateSessions() = SAFE!
+
+    if (_session && _player)
     {
-        // PLAYERBOT FIX: Do NOT call RemoveFromWorld() directly - causes Map.cpp:686 crash
-        // LogoutPlayer() properly handles removal via deferred mechanism on main thread
-        // This prevents Map iterator invalidation from worker threads
-
-        // Clean logout - this handles RemoveFromWorld() safely
-        _session->LogoutPlayer(false);
+        // Signal session termination - BotSession::Update() will return false next cycle
+        _session->KickPlayer("BotWorldEntry::Cleanup - Bot lifecycle ended");
         _player = nullptr;
-    }
 
-    _session.reset();
+        // Release our reference to session - when _botSessions.erase() is called,
+        // this will be the last reference, triggering destructor on main thread
+        _session.reset();
+    }
 }
 
 // === BotWorldEntryQueue Implementation ===

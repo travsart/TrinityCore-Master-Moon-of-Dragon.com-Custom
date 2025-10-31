@@ -147,6 +147,10 @@ set(PLAYERBOT_SOURCES
     # Phase 4.1: Script System Integration - Non-Invasive Event Hooks
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotEventScripts.cpp
 
+    # Bot Resurrection Script - TrinityCore ScriptMgr Integration for Auto-Resurrection
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.h
+
     # AI Trigger System
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.h
@@ -429,6 +433,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
 
+    # Phase 0 (Week 1): Spell Packet Builder - Enterprise packet helpers for bot spell casting
+    ${CMAKE_CURRENT_SOURCE_DIR}/Packets/SpellPacketBuilder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Packets/SpellPacketBuilder.h
+
     # Phase 2: Enhanced Session Management
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionFactory.h
@@ -452,6 +460,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetScanner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatStateManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatStateManager.h
 
     # Spatial Grid System - Lock-Free Double-Buffered Spatial Partitioning (Phase 1: Deadlock Fix)
     ${CMAKE_CURRENT_SOURCE_DIR}/Spatial/DoubleBufferedSpatialGrid.cpp
@@ -997,6 +1007,11 @@ source_group("Performance" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/PacketPoolManager.h
 )
 
+source_group("Packets" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Packets/SpellPacketBuilder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Packets/SpellPacketBuilder.h
+)
+
 source_group("Adapters" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Adapters/BotSpawnerAdapter.h
@@ -1005,6 +1020,8 @@ source_group("Adapters" FILES
 source_group("Scripts" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.h
 )
 
 source_group("Social" FILES
@@ -1214,6 +1231,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Adapters
         ${CMAKE_CURRENT_SOURCE_DIR}/Economy
         ${CMAKE_CURRENT_SOURCE_DIR}/LFG
+        ${CMAKE_CURRENT_SOURCE_DIR}/Packets
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
     PRIVATE

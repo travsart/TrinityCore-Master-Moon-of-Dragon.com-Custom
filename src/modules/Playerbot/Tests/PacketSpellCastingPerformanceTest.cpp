@@ -15,7 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Week4PerformanceTest.h"
+#include "PacketSpellCastingPerformanceTest.h"
 #include "Log.h"
 #include "World.h"
 #include "MapManager.h"

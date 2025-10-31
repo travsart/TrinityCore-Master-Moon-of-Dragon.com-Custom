@@ -28,6 +28,7 @@
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
 #include "Combat/TargetScanner.h"
+#include "Combat/CombatStateManager.h"
 #include "Equipment/EquipmentManager.h"
 #include "Professions/ProfessionManager.h"
 #include "Advanced/GroupCoordinator.h"
@@ -105,7 +106,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize movement arbiter for priority-based movement request arbitration
     _movementArbiter = std::make_unique<MovementArbiter>(_bot);
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter systems ready",
+    // Initialize combat state manager for automatic combat state synchronization
+    _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
+
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -198,11 +202,18 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             TC_LOG_INFO("module.playerbot.managers", "✅ GroupCoordinator initialized - Dungeon/Raid coordination active");
         }
 
+        // CRITICAL: Initialize combat state manager for automatic combat state synchronization
+        if (_combatStateManager)
+        {
+            _combatStateManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ CombatStateManager initialized - DAMAGE_TAKEN event subscription active");
+        }
+
         TC_LOG_INFO("module.playerbot.managers",
             "🎯 PHASE 7.1 INTEGRATION COMPLETE: {} - {} managers initialized, {} events subscribed",
             _bot->GetName(),
-            (_questManager ? 1 : 0) + (_tradeManager ? 1 : 0) + (_gatheringManager ? 1 : 0) + (_auctionManager ? 1 : 0),
-            16 + 11 + 5); // Quest + Trade + Auction event subscriptions
+            (_questManager ? 1 : 0) + (_tradeManager ? 1 : 0) + (_gatheringManager ? 1 : 0) + (_auctionManager ? 1 : 0) + (_combatStateManager ? 1 : 0),
+            16 + 11 + 5 + 1); // Quest + Trade + Auction + Combat event subscriptions
     }
 
     // Initialize default strategies for basic functionality
@@ -336,7 +347,8 @@ void BotAI::UpdateAI(uint32 diff)
     // Timing: This runs in UpdateAI() which is called DURING Player::Update(), BEFORE EventProcessor::Update()
     if (!_firstUpdateComplete)
     {
-        _bot->m_spellModTakingSpell = nullptr;  // CRITICAL: Clear before KillAllEvents to prevent Spell::~Spell assertion
+        // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
+        // No longer need to manually clear - KillAllEvents() will properly clean up spell mods
         _bot->m_Events.KillAllEvents(false);  // false = graceful shutdown, not forced
         _firstUpdateComplete = true;
         TC_LOG_DEBUG("module.playerbot", "🧹 Bot {} cleared login spell events on FIRST UPDATE to prevent m_spellModTakingSpell crash", _bot->GetName());
