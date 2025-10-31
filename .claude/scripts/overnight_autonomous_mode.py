@@ -152,10 +152,10 @@ class OvernightAutonomousMode:
                 check=True
             )
 
-            # Push overnight branch
+            # Push overnight branch (force push since we recreate it each time)
             self.log(f"Pushing {self.overnight_branch} to origin...")
             subprocess.run(
-                ['git', 'push', '-u', 'origin', self.overnight_branch],
+                ['git', 'push', '-f', '-u', 'origin', self.overnight_branch],
                 cwd=self.trinity_root,
                 check=True
             )
