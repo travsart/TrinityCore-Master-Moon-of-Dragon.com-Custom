@@ -511,6 +511,66 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
             self.log("❌ Failed to setup overnight branch - aborting", "ERROR")
             return
 
+        # Check if worldserver is running, start it if not
+        self.log("")
+        self.log("=" * 70)
+        self.log("WORLDSERVER STARTUP CHECK")
+        self.log("=" * 70)
+
+        try:
+            # Check if worldserver is already running
+            result = subprocess.run(
+                ['tasklist', '/FI', 'IMAGENAME eq worldserver.exe'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if 'worldserver.exe' in result.stdout:
+                self.log("✅ worldserver is already running")
+            else:
+                self.log("ℹ️ worldserver is not running, starting it...")
+
+                worldserver_path = self.deploy_dir / "worldserver.exe"
+                worldserver_conf = self.deploy_dir / "worldserver.conf"
+
+                if not worldserver_path.exists():
+                    self.log(f"❌ worldserver.exe not found at {worldserver_path}", "ERROR")
+                    self.log("   Cannot start worldserver - aborting", "ERROR")
+                    return
+
+                if not worldserver_conf.exists():
+                    self.log(f"⚠️ worldserver.conf not found at {worldserver_conf}, starting without config", "WARN")
+                    args = [str(worldserver_path)]
+                else:
+                    args = [str(worldserver_path), '-c', 'worldserver.conf']
+
+                # Start worldserver
+                process = subprocess.Popen(
+                    args,
+                    cwd=self.deploy_dir,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0
+                )
+
+                self.log(f"✅ worldserver started (PID: {process.pid})")
+                time.sleep(5)  # Wait for server to initialize
+
+                # Verify it's still running
+                if process.poll() is None:
+                    self.log("✅ worldserver is running and ready")
+                else:
+                    self.log("❌ worldserver exited immediately - check configuration", "ERROR")
+                    self.log("   Continuing anyway - will process crashes if server starts later", "WARN")
+
+        except Exception as e:
+            self.log(f"ERROR checking/starting worldserver: {e}", "ERROR")
+            self.log("   Continuing anyway - will process crashes if server is running", "WARN")
+
+        self.log("=" * 70)
+        self.log("")
+
         self.log("🌙 OVERNIGHT MODE ACTIVE - Processing crashes until Ctrl+C")
         self.log(f"   All fixes will go to branch: {self.overnight_branch}")
         self.log(f"   Review in morning and merge good fixes to playerbot-dev")
