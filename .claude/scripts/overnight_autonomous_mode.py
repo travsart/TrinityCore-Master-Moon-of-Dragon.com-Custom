@@ -285,14 +285,14 @@ class OvernightAutonomousMode:
             response_data = response_info['data']
 
             # Step 1: Apply fix
-            self.log("📝 Step 1/5: Applying fix to source files...")
+            self.log("📝 Step 1/6: Applying fix to source files...")
             if not self.apply_fix_to_filesystem(response_data):
                 self.log("❌ Fix application failed", "ERROR")
                 self.fixes_failed += 1
                 return False
 
             # Step 2: Compile
-            self.log("🔨 Step 2/5: Compiling worldserver...")
+            self.log("🔨 Step 2/6: Compiling worldserver...")
             if not self.compile_worldserver():
                 self.log("❌ Compilation failed - skipping deployment", "ERROR")
                 self.log("   Fix applied but not compiled - will be in git diff")
@@ -302,19 +302,30 @@ class OvernightAutonomousMode:
                 return False
 
             # Step 3: Create commit
-            self.log("💾 Step 3/5: Creating git commit...")
+            self.log("💾 Step 3/6: Creating git commit...")
             if not self.create_git_commit_overnight(response_data):
                 self.log("⚠️ Git commit failed", "WARN")
 
             # Step 4: Push to overnight branch
-            self.log("📤 Step 4/5: Pushing to overnight branch...")
+            self.log("📤 Step 4/6: Pushing to overnight branch...")
             if not self.push_to_overnight_branch():
                 self.log("⚠️ Push failed", "WARN")
 
-            # Step 5: Deploy worldserver + pdb
-            self.log("🚀 Step 5/5: Copying worldserver + pdb to Wplayerbot...")
+            # Step 5: Stop worldserver before deployment
+            self.log("🛑 Step 5/6: Stopping worldserver for deployment...")
+            if not self.stop_worldserver():
+                self.log("⚠️ Failed to stop worldserver - deployment may fail", "WARN")
+
+            # Deploy worldserver + pdb
+            self.log("📦 Copying worldserver + pdb to Wplayerbot...")
             if not self.copy_worldserver_to_deploy():
                 self.log("⚠️ Deployment copy failed", "WARN")
+
+            # Step 6: Restart worldserver
+            self.log("🚀 Step 6/6: Restarting worldserver...")
+            if not self.restart_worldserver():
+                self.log("⚠️ Failed to restart worldserver", "WARN")
+                self.log("   worldserver may not be running - check manually", "WARN")
 
             # Mark as deployed
             overnight_deployed_dir = self.queue_dir / "overnight_deployed"
@@ -329,6 +340,7 @@ Deployed: {datetime.now().isoformat()}
 Branch: {self.overnight_branch}
 Compilation: SUCCESS
 Deployment: SUCCESS
+Worldserver: RESTARTED
 """
             marker_file.write_text(deployment_info, encoding='utf-8')
 
@@ -338,6 +350,7 @@ Deployment: SUCCESS
             self.log("✅ OVERNIGHT DEPLOYMENT COMPLETE")
             self.log(f"   Fix applied, compiled, committed to {self.overnight_branch}")
             self.log(f"   worldserver deployed to {self.deploy_dir}")
+            self.log(f"   worldserver restarted and ready")
             self.log(f"   Total fixes applied: {self.fixes_applied}")
             self.log("")
 
