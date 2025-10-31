@@ -25,6 +25,8 @@ import time
 import subprocess
 import sys
 import shutil
+import os
+import atexit
 from pathlib import Path
 from datetime import datetime
 import traceback
@@ -421,17 +423,42 @@ Worldserver: RESTARTED
         return True
 
     def create_git_commit_overnight(self, response_data: dict) -> bool:
-        """Create git commit on overnight branch"""
-        try:
-            crash_analysis = response_data['crash_analysis']
-            fix_info = response_data['fix']
+        """Create git commit on overnight branch with retry logic"""
+        max_retries = 3
+        retry_delay = 2  # seconds
 
-            # Git add modified files
-            for file_info in fix_info.get('files_modified', []):
-                subprocess.run(['git', 'add', file_info['path']], cwd=self.trinity_root, check=True)
+        for attempt in range(max_retries):
+            try:
+                crash_analysis = response_data['crash_analysis']
+                fix_info = response_data['fix']
 
-            # Create commit message
-            commit_msg = f"""fix(playerbot): {crash_analysis['category']} in {crash_analysis['crash_location']['function']}
+                # Check if there are any changes to commit
+                status_result = subprocess.run(
+                    ['git', 'status', '--porcelain'],
+                    cwd=self.trinity_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                if not status_result.stdout.strip():
+                    self.log("[!] No changes to commit (files already committed)")
+                    return True
+
+                # Git add modified files
+                for file_info in fix_info.get('files_modified', []):
+                    add_result = subprocess.run(
+                        ['git', 'add', file_info['path']],
+                        cwd=self.trinity_root,
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    if add_result.returncode != 0:
+                        self.log(f"[!] Warning: git add failed for {file_info['path']}: {add_result.stderr}", "WARN")
+
+                # Create commit message
+                commit_msg = f"""fix(playerbot): {crash_analysis['category']} in {crash_analysis['crash_location']['function']}
 
 Crash ID: {crash_analysis['crash_id']}
 Location: {crash_analysis['crash_location']['file']}:{crash_analysis['crash_location']['line']}
@@ -440,21 +467,59 @@ Root Cause: {crash_analysis['root_cause']['summary']}
 
 Fix: {fix_info['strategy']}
 
-🌙 Overnight Autonomous Fix - Branch: {self.overnight_branch}
-✅ Compilation: VERIFIED
-⏰ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Overnight Autonomous Fix - Branch: {self.overnight_branch}
+Compilation: VERIFIED
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 Review in morning and merge to playerbot-dev if acceptable.
 
 Co-Authored-By: Claude <noreply@anthropic.com>"""
 
-            subprocess.run(['git', 'commit', '--no-verify', '-m', commit_msg], cwd=self.trinity_root, check=True)
-            self.log("✅ Git commit created")
-            return True
+                # Remove git lock files if they exist
+                git_index_lock = self.trinity_root / ".git/index.lock"
+                if git_index_lock.exists():
+                    self.log(f"[!] Removing stale git index lock")
+                    git_index_lock.unlink()
 
-        except Exception as e:
-            self.log(f"ERROR creating commit: {e}", "ERROR")
-            return False
+                # Create commit
+                commit_result = subprocess.run(
+                    ['git', 'commit', '--no-verify', '-m', commit_msg],
+                    cwd=self.trinity_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+
+                if commit_result.returncode == 0:
+                    self.log("[OK] Git commit created")
+                    return True
+                else:
+                    # Check if "nothing to commit" error
+                    if "nothing to commit" in commit_result.stdout.lower() or "nothing to commit" in commit_result.stderr.lower():
+                        self.log("[!] Nothing to commit (working tree clean)")
+                        return True
+
+                    raise Exception(f"Git commit failed: {commit_result.stderr}")
+
+            except subprocess.TimeoutExpired as e:
+                self.log(f"[!] Git commit timeout (attempt {attempt + 1}/{max_retries})", "WARN")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    self.log(f"[X] Git commit failed after {max_retries} attempts (timeout)", "ERROR")
+                    return False
+
+            except Exception as e:
+                self.log(f"[!] Git commit error (attempt {attempt + 1}/{max_retries}): {e}", "WARN")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    self.log(f"[X] Git commit failed after {max_retries} attempts: {e}", "ERROR")
+                    return False
+
+        return False
 
     def push_to_overnight_branch(self) -> bool:
         """Push commits to overnight branch"""
@@ -508,6 +573,80 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         except Exception as e:
             self.log(f"ERROR copying files: {e}", "ERROR")
             return False
+
+    def stop_worldserver(self) -> bool:
+        """Stop worldserver.exe if it's running"""
+        try:
+            self.log("  Stopping worldserver.exe...")
+            result = subprocess.run(
+                ['tasklist', '/FI', 'IMAGENAME eq worldserver.exe'],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace'
+            )
+
+            if 'worldserver.exe' in result.stdout:
+                # Kill worldserver.exe
+                subprocess.run(
+                    ['taskkill', '/F', '/IM', 'worldserver.exe'],
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    timeout=30
+                )
+                time.sleep(2)  # Wait for process to fully terminate
+                self.log("  [OK] worldserver.exe stopped")
+                return True
+            else:
+                self.log("  worldserver.exe was not running")
+                return True
+
+        except Exception as e:
+            self.log(f"  [!] ERROR stopping worldserver: {e}", "WARN")
+            return False
+
+    def start_worldserver(self) -> bool:
+        """Start worldserver.exe with config file"""
+        try:
+            worldserver_exe = self.deploy_dir / "worldserver.exe"
+            worldserver_conf = self.deploy_dir / "worldserver.conf"
+
+            if not worldserver_exe.exists():
+                self.log(f"  [X] worldserver.exe not found: {worldserver_exe}", "ERROR")
+                return False
+
+            if not worldserver_conf.exists():
+                self.log(f"  [!] worldserver.conf not found: {worldserver_conf}", "WARN")
+
+            self.log(f"  Starting worldserver from: {worldserver_exe}")
+
+            # Start worldserver as a detached process
+            subprocess.Popen(
+                [str(worldserver_exe)],
+                cwd=self.deploy_dir,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
+            time.sleep(3)  # Wait for startup
+            self.log("  [OK] worldserver.exe started")
+            return True
+
+        except Exception as e:
+            self.log(f"  [X] ERROR starting worldserver: {e}", "ERROR")
+            return False
+
+    def restart_worldserver(self) -> bool:
+        """Stop and restart worldserver"""
+        self.log("  Restarting worldserver...")
+        if not self.stop_worldserver():
+            self.log("  [!] Failed to stop worldserver", "WARN")
+            # Continue anyway - maybe it wasn't running
+
+        return self.start_worldserver()
 
     def run_overnight_mode(self):
         """Main overnight loop - runs until Ctrl+C"""
@@ -651,12 +790,68 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                 time.sleep(60)
 
 
+def acquire_lockfile(trinity_root: Path) -> bool:
+    """
+    Acquire lockfile to ensure only one overnight mode instance runs.
+    Returns True if lockfile acquired, False if another instance is running.
+    """
+    lockfile = trinity_root / ".claude/overnight_mode.lock"
+
+    if lockfile.exists():
+        # Check if process is still alive
+        try:
+            with open(lockfile, 'r') as f:
+                pid = int(f.read().strip())
+
+            # Check if PID exists on Windows
+            result = subprocess.run(
+                ['tasklist', '/FI', f'PID eq {pid}'],
+                capture_output=True,
+                text=True
+            )
+
+            if f"{pid}" in result.stdout:
+                print(f"[X] Another overnight mode instance is already running (PID {pid})")
+                print(f"    If this is incorrect, delete: {lockfile}")
+                return False
+            else:
+                # PID doesn't exist, remove stale lockfile
+                print(f"[!] Removing stale lockfile (PID {pid} not found)")
+                lockfile.unlink()
+        except Exception as e:
+            print(f"[!] Error checking lockfile: {e}")
+            return False
+
+    # Create lockfile with current PID
+    lockfile.parent.mkdir(parents=True, exist_ok=True)
+    with open(lockfile, 'w') as f:
+        f.write(str(os.getpid()))
+
+    print(f"[OK] Lockfile acquired: {lockfile} (PID {os.getpid()})")
+
+    # Register cleanup on exit
+    def cleanup_lockfile():
+        try:
+            if lockfile.exists():
+                lockfile.unlink()
+                print(f"[OK] Lockfile removed: {lockfile}")
+        except:
+            pass
+
+    atexit.register(cleanup_lockfile)
+    return True
+
+
 def main():
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
 
     script_path = Path(__file__).resolve()
     trinity_root = script_path.parent.parent.parent
+
+    # Acquire lockfile to prevent multiple instances
+    if not acquire_lockfile(trinity_root):
+        sys.exit(1)
 
     overnight = OvernightAutonomousMode(trinity_root)
     overnight.run_overnight_mode()
