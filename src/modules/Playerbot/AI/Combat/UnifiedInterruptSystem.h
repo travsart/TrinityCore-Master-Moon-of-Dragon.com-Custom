@@ -22,6 +22,7 @@
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "InterruptDatabase.h"
+#include "InterruptManager.h"
 #include <map>
 #include <vector>
 #include <set>
@@ -35,39 +36,14 @@ class Player;
 class Unit;
 class Group;
 class SpellInfo;
+class Spell;
 
 namespace Playerbot
 {
 
 class BotAI;
 
-/**
- * @brief Interrupt priority levels (unified from all 3 systems)
- */
-enum class InterruptPriority : uint8
-{
-    IGNORE    = 0,  // Don't interrupt
-    TRIVIAL   = 1,  // Optional interrupts
-    LOW       = 2,  // Minor impact
-    MODERATE  = 3,  // Standard priority
-    HIGH      = 4,  // Important/dangerous
-    CRITICAL  = 5   // Must interrupt or wipe
-};
-
-/**
- * @brief Interrupt execution methods
- */
-enum class InterruptMethod : uint8
-{
-    SPELL_INTERRUPT,  // Direct interrupt (Kick, Counterspell, etc.)
-    STUN,             // Stun to interrupt
-    SILENCE,          // Silence effect
-    FEAR,             // Fear effect
-    KNOCKBACK,        // Knockback
-    LINE_OF_SIGHT,    // Move to break LoS
-    MOVEMENT,         // Move out of range
-    DEFENSIVE         // Use defensive cooldowns instead
-};
+// InterruptPriority and InterruptMethod are defined in InterruptManager.h
 
 /**
  * @brief Fallback methods when primary interrupt fails
@@ -118,9 +94,9 @@ struct CastingSpellInfo
 };
 
 /**
- * @brief Interrupt assignment for a bot
+ * @brief Bot interrupt assignment (renamed to avoid conflict with enum in InterruptManager.h)
  */
-struct InterruptAssignment
+struct BotInterruptAssignment
 {
     ObjectGuid assignedBot;
     ObjectGuid targetCaster;
@@ -426,7 +402,7 @@ public:
      * @param botGuid Bot to query
      * @return Assignment pointer or nullptr
      */
-    InterruptAssignment const* GetNextAssignment(ObjectGuid botGuid) const;
+    BotInterruptAssignment const* GetNextAssignment(ObjectGuid botGuid) const;
 
     /**
      * @brief Mark assignment as executed
@@ -596,7 +572,7 @@ private:
     // ASSIGNMENT SYSTEM
     // =====================================================================
 
-    std::vector<InterruptAssignment> _pendingAssignments;
+    std::vector<BotInterruptAssignment> _pendingAssignments;
     std::set<ObjectGuid> _assignedBots;
 
     // =====================================================================

@@ -24,6 +24,8 @@
 #include <mutex>
 #include <variant>
 #include <optional>
+#include <functional>
+#include <vector>
 
 namespace Playerbot
 {

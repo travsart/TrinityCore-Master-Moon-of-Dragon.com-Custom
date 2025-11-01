@@ -20,12 +20,14 @@
 
 #include "PerformanceMetrics.h"
 #include "Define.h"
+#include "ObjectGuid.h"
 #include <map>
 #include <vector>
 #include <deque>
 #include <mutex>
 #include <chrono>
 #include <functional>
+#include <set>
 
 namespace Playerbot
 {

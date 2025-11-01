@@ -612,7 +612,7 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
 
         ObjectGuid assignedBot = availableBots[botIndex];
 
-        InterruptAssignment assignment;
+        BotInterruptAssignment assignment;
         assignment.targetGuid = castInfo.casterGuid;
         assignment.spellId = castInfo.spellId;
         assignment.assignedBotGuid = assignedBot;
@@ -635,7 +635,7 @@ bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& 
     if (it == _groupAssignments.end())
         return false;
 
-    InterruptAssignment& assignment = it->second;
+    BotInterruptAssignment& assignment = it->second;
 
     if (assignment.executed)
         return false;
@@ -647,7 +647,7 @@ bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& 
     return true;
 }
 
-InterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGuid) const
+BotInterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGuid) const
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
@@ -655,7 +655,7 @@ InterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGuid)
     if (it != _groupAssignments.end())
         return it->second;
 
-    return InterruptAssignment();
+    return BotInterruptAssignment();
 }
 
 void UnifiedInterruptSystem::ClearAssignments(ObjectGuid groupGuid)
