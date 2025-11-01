@@ -23,7 +23,7 @@
 #include "ObjectAccessor.h"
 #include "PathGenerator.h"
 #include "Player.h"
-#include "QuestHubDatabase.h"
+#include "Quest/QuestHubDatabase.h"
 #include "World.h"
 #include <algorithm>
 #include <cmath>

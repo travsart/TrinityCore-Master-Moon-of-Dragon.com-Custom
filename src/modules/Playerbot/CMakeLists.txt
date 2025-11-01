@@ -370,9 +370,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
-    # TODO Phase 4D: Re-enable after implementing QuestHubDatabase
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.h
 
