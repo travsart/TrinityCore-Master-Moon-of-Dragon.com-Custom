@@ -37,13 +37,10 @@
 
 namespace Playerbot
 {
-    BotMonitor* BotMonitor::_instance = nullptr;
-
     BotMonitor* BotMonitor::instance()
     {
-        if (!_instance)
-            _instance = new BotMonitor();
-        return _instance;
+        static BotMonitor instance;
+        return &instance;
     }
 
     BotMonitor::BotMonitor()

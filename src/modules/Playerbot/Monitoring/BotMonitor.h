@@ -288,9 +288,6 @@ namespace Playerbot
         uint32 GetActiveThreadCount() const;
         double CalculateNetworkThroughput() const;
 
-        // Singleton instance
-        static BotMonitor* _instance;
-
         // Thread safety
         mutable std::recursive_mutex _mutex;
 
