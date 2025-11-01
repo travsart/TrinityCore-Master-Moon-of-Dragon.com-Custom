@@ -64,6 +64,36 @@ class OvernightAutonomousMode:
         except:
             pass
 
+    def cleanup_problematic_files(self) -> bool:
+        """
+        Remove problematic files that can break git operations
+        (e.g., NUL, CON, PRN - Windows reserved names)
+        Returns True if successful, False otherwise
+        """
+        try:
+            # Windows reserved filenames that can cause git add failures
+            problematic_files = ['NUL', 'CON', 'PRN', 'AUX', 'COM1', 'COM2', 'COM3', 'COM4',
+                                'LPT1', 'LPT2', 'LPT3', 'CLOCK$']
+
+            removed_count = 0
+            for filename in problematic_files:
+                file_path = self.trinity_root / filename
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                        self.log(f"[OK] Removed problematic file: {filename}")
+                        removed_count += 1
+                    except Exception as e:
+                        self.log(f"[!] Warning: Could not remove {filename}: {e}", "WARN")
+
+            if removed_count > 0:
+                self.log(f"[OK] Cleaned up {removed_count} problematic file(s)")
+
+            return True
+        except Exception as e:
+            self.log(f"[!] Error cleaning problematic files: {e}", "WARN")
+            return True  # Non-critical, continue anyway
+
     def setup_overnight_branch(self) -> bool:
         """
         Setup overnight branch for safe autonomous operation
@@ -79,6 +109,9 @@ class OvernightAutonomousMode:
             self.log("=" * 70)
             self.log("OVERNIGHT BRANCH SETUP")
             self.log("=" * 70)
+
+            # Clean up problematic files first (NUL, CON, etc.)
+            self.cleanup_problematic_files()
 
             # Check current branch
             result = subprocess.run(
