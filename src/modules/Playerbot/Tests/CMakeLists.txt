@@ -48,7 +48,10 @@ if(BUILD_PLAYERBOT_TESTS)
         # Phase3/Unit/Specializations/DisciplinePriestSpecializationTest.cpp
         Phase3/Unit/Specializations/HolyPriestSpecializationTest.cpp
         Phase3/Unit/Specializations/ShadowPriestSpecializationTest.cpp
-        # Future test files will be added here
+
+        # Phase 4: Unified Interrupt System Tests (Phase 4B Integration)
+        # 32 comprehensive tests for interrupt coordination and rotation system
+        UnifiedInterruptSystemTest.cpp
     )
 
     # Create test executable

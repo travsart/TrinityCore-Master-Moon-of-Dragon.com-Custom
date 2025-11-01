@@ -350,5 +350,114 @@ private:
     EXPECT_GE(metrics.GetSuccessRate(), minRate) \
     << "Success rate " << metrics.GetSuccessRate() << " is below minimum " << minRate
 
+/**
+ * @class MockUnit
+ * @brief Mock implementation of Unit for testing (enemy casters)
+ */
+class MockUnit
+{
+public:
+    MOCK_METHOD(ObjectGuid, GetGUID, (), (const));
+    MOCK_METHOD(std::string, GetName, (), (const));
+    MOCK_METHOD(Position, GetPosition, (), (const));
+    MOCK_METHOD(bool, HasUnitState, (uint32), (const));
+    MOCK_METHOD(bool, IsAlive, (), (const));
+    MOCK_METHOD(bool, IsCasting, (), (const));
+    MOCK_METHOD(uint32, GetCurrentSpellId, (uint8), (const));
+    MOCK_METHOD(void*, GetCurrentSpell, (uint8), (const));
+    MOCK_METHOD(uint64, GetHealth, (), (const));
+    MOCK_METHOD(uint64, GetMaxHealth, (), (const));
+    MOCK_METHOD(bool, IsWithinDist, (Position const&, float), (const));
+    MOCK_METHOD(bool, IsWithinLOSInMap, (Position const&), (const));
+    MOCK_METHOD(void, CastSpell, (Unit*, uint32, bool));
+    MOCK_METHOD(void, InterruptSpell, (uint8, bool));
+    MOCK_METHOD(bool, IsInCombat, (), (const));
+    MOCK_METHOD(uint8, GetLevel, (), (const));
+    MOCK_METHOD(Map*, GetMap, (), (const));
+};
+
+/**
+ * @class MockBotAI
+ * @brief Mock implementation of BotAI for testing
+ */
+class MockBotAI
+{
+public:
+    MOCK_METHOD(Player*, GetBot, (), (const));
+    MOCK_METHOD(bool, IsActive, (), (const));
+    MOCK_METHOD(void, SetActive, (bool));
+    MOCK_METHOD(bool, CanCastSpell, (uint32), (const));
+    MOCK_METHOD(bool, CastSpell, (Unit*, uint32));
+    MOCK_METHOD(void, OnEnemyCastStart, (Unit*, uint32, uint32));
+    MOCK_METHOD(void, OnEnemyCastInterrupted, (ObjectGuid, uint32));
+    MOCK_METHOD(bool, HasSpell, (uint32), (const));
+    MOCK_METHOD(uint32, GetInterruptSpellId, (), (const));
+};
+
+/**
+ * @struct CastAttempt
+ * @brief Records a spell cast attempt for testing
+ */
+struct CastAttempt
+{
+    ObjectGuid casterGuid;
+    ObjectGuid targetGuid;
+    uint32 spellId;
+    std::chrono::steady_clock::time_point timestamp;
+
+    CastAttempt(ObjectGuid caster, ObjectGuid target, uint32 spell)
+        : casterGuid(caster), targetGuid(target), spellId(spell),
+          timestamp(std::chrono::steady_clock::now())
+    {}
+};
+
+/**
+ * @class SpellPacketBuilderMock
+ * @brief Mock implementation of SpellPacketBuilder for testing
+ */
+class SpellPacketBuilderMock
+{
+public:
+    MOCK_METHOD(bool, CastSpell, (Player*, Unit*, uint32));
+    MOCK_METHOD(bool, CastSpellOnTarget, (Player*, ObjectGuid, uint32));
+    MOCK_METHOD(void, RecordCastAttempt, (ObjectGuid, ObjectGuid, uint32));
+    MOCK_METHOD(std::vector<CastAttempt>, GetCastHistory, ());
+    MOCK_METHOD(void, ClearHistory, ());
+    MOCK_METHOD(uint32, GetCastCount, ());
+    MOCK_METHOD(bool, WasSpellCast, (uint32));
+};
+
+/**
+ * @struct MovementRequest
+ * @brief Records a movement request for testing
+ */
+struct MovementRequest
+{
+    ObjectGuid botGuid;
+    Position destination;
+    uint32 priority; // PlayerBotMovementPriority enum value
+    std::chrono::steady_clock::time_point timestamp;
+
+    MovementRequest(ObjectGuid bot, Position const& dest, uint32 prio)
+        : botGuid(bot), destination(dest), priority(prio),
+          timestamp(std::chrono::steady_clock::now())
+    {}
+};
+
+/**
+ * @class MovementArbiterMock
+ * @brief Mock implementation of MovementArbiter for testing
+ */
+class MovementArbiterMock
+{
+public:
+    MOCK_METHOD(bool, RequestMovement, (Player*, Position const&, uint32));
+    MOCK_METHOD(void, RecordMovementRequest, (ObjectGuid, Position const&, uint32));
+    MOCK_METHOD(std::vector<MovementRequest>, GetMovementHistory, ());
+    MOCK_METHOD(void, ClearHistory, ());
+    MOCK_METHOD(uint32, GetMovementCount, ());
+    MOCK_METHOD(bool, HasMovementRequest, (ObjectGuid));
+};
+
 } // namespace Test
 } // namespace Playerbot
