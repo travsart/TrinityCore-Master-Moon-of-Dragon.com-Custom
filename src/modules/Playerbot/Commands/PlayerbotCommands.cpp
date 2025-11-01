@@ -19,6 +19,7 @@
 #include "Movement/GroupFormationManager.h"
 #include "Config/ConfigManager.h"
 #include "Monitoring/BotMonitor.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -40,45 +41,45 @@ namespace Playerbot
     {
         static ChatCommandTable botFormationCommandTable =
         {
-            { "list",    HandleBotFormationListCommand, rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "",        HandleBotFormationCommand,     rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No }
+            { "list",    HandleBotFormationListCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotFormationCommand,     rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
         static ChatCommandTable botConfigCommandTable =
         {
-            { "show",    HandleBotConfigShowCommand, rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "",        HandleBotConfigCommand,     rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No }
+            { "show",    HandleBotConfigShowCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotConfigCommand,     rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
         static ChatCommandTable botSummonCommandTable =
         {
-            { "all",     HandleBotSummonAllCommand, rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "",        HandleBotSummonCommand,    rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No }
+            { "all",     HandleBotSummonAllCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotSummonCommand,    rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
         static ChatCommandTable botMonitorCommandTable =
         {
-            { "trends",  HandleBotMonitorTrendsCommand, rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "",        HandleBotMonitorCommand,       rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No }
+            { "trends",  HandleBotMonitorTrendsCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotMonitorCommand,       rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
         static ChatCommandTable botAlertsCommandTable =
         {
-            { "history", HandleBotAlertsHistoryCommand, rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "clear",   HandleBotAlertsClearCommand,   rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "",        HandleBotAlertsCommand,        rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No }
+            { "history", HandleBotAlertsHistoryCommand, rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "clear",   HandleBotAlertsClearCommand,   rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "",        HandleBotAlertsCommand,        rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No }
         };
 
         static ChatCommandTable botCommandTable =
         {
-            { "spawn",     HandleBotSpawnCommand,     rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "delete",    HandleBotDeleteCommand,    rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "list",      HandleBotListCommand,      rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "teleport",  HandleBotTeleportCommand,  rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
+            { "spawn",     HandleBotSpawnCommand,     rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "delete",    HandleBotDeleteCommand,    rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "list",      HandleBotListCommand,      rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "teleport",  HandleBotTeleportCommand,  rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
             { "summon",    botSummonCommandTable },
             { "formation", botFormationCommandTable },
-            { "stats",     HandleBotStatsCommand,     rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
-            { "info",      HandleBotInfoCommand,      rbac::RBAC_PERM_COMMAND_GM_NOTIFY, Console::No },
+            { "stats",     HandleBotStatsCommand,     rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
+            { "info",      HandleBotInfoCommand,      rbac::RBAC_PERM_COMMAND_GMNOTIFY, Console::No },
             { "config",    botConfigCommandTable },
             { "monitor",   botMonitorCommandTable },
             { "alerts",    botAlertsCommandTable }
@@ -255,9 +256,9 @@ namespace Playerbot
         uint32 summonedCount = 0;
 
         // Summon all bots in group
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr->GetSource();
+            Player* member = itr.GetSource();
             if (!member || member == player)
                 continue;
 
@@ -315,9 +316,9 @@ namespace Playerbot
 
         // Collect group members
         std::vector<Player*> groupMembers;
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference const& itr : group->GetMembers())
         {
-            if (Player* member = itr->GetSource())
+            if (Player* member = itr.GetSource())
                 groupMembers.push_back(member);
         }
 
@@ -599,12 +600,8 @@ namespace Playerbot
             return false;
         }
 
-        // Check if race can be this class
-        if (!classEntry->IsRaceValid(raceEntry->MaskId))
-        {
-            handler->PSendSysMessage("Race %u cannot be class %u (invalid combination).", race, classId);
-            return false;
-        }
+        // Note: Race/class validation removed in TrinityCore 11.2
+        // DB2 now handles this through ChrCustomizationReq and other tables
 
         return true;
     }

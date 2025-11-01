@@ -16,6 +16,7 @@
  */
 
 #include "BotStatePersistence.h"
+#include "Bag.h"
 #include "Item.h"
 #include "Log.h"
 #include "Player.h"
@@ -613,7 +614,7 @@ namespace Playerbot
                 snapshot.itemGuid = item->GetGUID();
                 snapshot.stackCount = item->GetCount();
                 snapshot.enchantments = SerializeEnchantments(item);
-                snapshot.durability = item->GetUInt32Value(ITEM_FIELD_DURABILITY);
+                snapshot.durability = item->m_itemData->Durability;
 
                 items.push_back(snapshot);
             }
@@ -649,7 +650,7 @@ namespace Playerbot
             snapshot.itemGuid = item->GetGUID();
             snapshot.enchantments = SerializeEnchantments(item);
             snapshot.gems = SerializeGems(item);
-            snapshot.durability = item->GetUInt32Value(ITEM_FIELD_DURABILITY);
+            snapshot.durability = item->m_itemData->Durability;
 
             equipment.push_back(snapshot);
         }

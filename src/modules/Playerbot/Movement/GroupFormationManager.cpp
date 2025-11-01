@@ -257,7 +257,7 @@ namespace Playerbot
             return BotRole::UTILITY;
 
         uint8 classId = bot->GetClass();
-        uint32 specId = bot->GetPrimarySpecialization();
+        uint32 specId = static_cast<uint32>(bot->GetPrimarySpecialization());
 
         // Determine role based on class and specialization
         switch (classId)

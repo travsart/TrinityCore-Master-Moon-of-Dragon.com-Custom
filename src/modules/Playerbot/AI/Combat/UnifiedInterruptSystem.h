@@ -99,12 +99,12 @@ struct CastingSpellInfo
  */
 struct BotInterruptAssignment
 {
-    ObjectGuid assignedBot;
-    ObjectGuid targetCaster;
-    uint32 targetSpell{0};
-    uint32 interruptSpell{0};
-    uint32 executionDeadline{0};  // When to execute (getMSTime)
-    bool isPrimary{true};         // Primary or backup
+    ObjectGuid targetGuid;         // Target to interrupt (was targetCaster)
+    uint32 spellId{0};             // Spell being cast (was targetSpell)
+    ObjectGuid assignedBotGuid;    // Bot assigned to interrupt (was assignedBot)
+    ObjectGuid backupBotGuid;      // Backup bot if primary fails
+    uint32 assignmentTime{0};      // When assignment was made (getMSTime)
+    InterruptPriority priority{InterruptPriority::MODERATE};
     bool executed{false};
     bool inProgress{false};
 };

@@ -24,6 +24,7 @@
 #include "Player.h"
 #include "RBAC.h"
 #include "ScriptMgr.h"
+#include <optional>
 #include <string_view>
 
 namespace Playerbot
@@ -69,8 +70,8 @@ namespace Playerbot
     private:
         // Bot spawning commands
         static bool HandleBotSpawnCommand(ChatHandler* handler, std::string name,
-                                         Trinity::ChatCommands::Optional<uint8> race,
-                                         Trinity::ChatCommands::Optional<uint8> classId);
+                                         std::optional<uint8> race,
+                                         std::optional<uint8> classId);
         static bool HandleBotDeleteCommand(ChatHandler* handler, std::string name);
         static bool HandleBotListCommand(ChatHandler* handler);
 
