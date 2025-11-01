@@ -160,7 +160,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, spellData] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -273,51 +273,51 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
     }
 }
 
-std::vector<CastingSpellInfo> UnifiedInterruptSystem::GetActiveCasts() const
-{
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
-    std::vector<CastingSpellInfo> casts;
-    casts.reserve(_activeCasts.size());
-
-    for (auto const& [guid, castInfo] : _activeCasts)
-    {
-        if (!castInfo.interrupted)
-            casts.push_back(castInfo);
-    }
-
-    return casts;
-}
+// TODO Phase 4D: std::vector<CastingSpellInfo> UnifiedInterruptSystem::GetActiveCasts() const
+// TODO Phase 4D: {
+// TODO Phase 4D:     std::lock_guard<std::recursive_mutex> lock(_mutex);
+// TODO Phase 4D: 
+// TODO Phase 4D:     std::vector<CastingSpellInfo> casts;
+// TODO Phase 4D:     casts.reserve(_activeCasts.size());
+// TODO Phase 4D: 
+// TODO Phase 4D:     for (auto const& [guid, castInfo] : _activeCasts)
+// TODO Phase 4D:     {
+// TODO Phase 4D:         if (!castInfo.interrupted)
+// TODO Phase 4D:             casts.push_back(castInfo);
+// TODO Phase 4D:     }
+// TODO Phase 4D: 
+// TODO Phase 4D:     return casts;
+// TODO Phase 4D: }
 
 // =====================================================================
 // SPELL DATABASE ACCESS
 // =====================================================================
 
-InterruptPriority UnifiedInterruptSystem::GetSpellPriority(uint32 spellId) const
-{
-    // Query InterruptDatabase for WoW 11.2 spell priority
-    InterruptSpellInfo const* spellInfo = InterruptDatabase::GetSpellInfo(spellId);
-    if (spellInfo)
-        return spellInfo->priority;
+// TODO Phase 4D: InterruptPriority UnifiedInterruptSystem::GetSpellPriority(uint32 spellId) const
+// TODO Phase 4D: {
+// TODO Phase 4D:     // Query InterruptDatabase for WoW 11.2 spell priority
+// TODO Phase 4D:     InterruptSpellInfo const* spellInfo = InterruptDatabase::GetSpellInfo(spellId, DIFFICULTY_NONE);
+// TODO Phase 4D:     if (spellInfo)
+// TODO Phase 4D:         return spellInfo->priority;
+// TODO Phase 4D: 
+// TODO Phase 4D:     // Default to MODERATE for unknown spells
+// TODO Phase 4D:     return InterruptPriority::MODERATE;
+// TODO Phase 4D: }
 
-    // Default to MODERATE for unknown spells
-    return InterruptPriority::MODERATE;
-}
+// TODO Phase 4D: InterruptSpellInfo const* UnifiedInterruptSystem::GetSpellInfo(uint32 spellId, DIFFICULTY_NONE) const
+// TODO Phase 4D: {
+// TODO Phase 4D:     return InterruptDatabase::GetSpellInfo(spellId, DIFFICULTY_NONE);
+// TODO Phase 4D: }
 
-InterruptSpellInfo const* UnifiedInterruptSystem::GetSpellInfo(uint32 spellId) const
-{
-    return InterruptDatabase::GetSpellInfo(spellId);
-}
+// TODO Phase 4D: std::vector<InterruptSpellInfo> UnifiedInterruptSystem::GetDungeonSpells(std::string const& dungeonName) const
+// TODO Phase 4D: {
+// TODO Phase 4D:     return InterruptDatabase::GetDungeonSpells(dungeonName);
+// TODO Phase 4D: }
 
-std::vector<InterruptSpellInfo> UnifiedInterruptSystem::GetDungeonSpells(std::string const& dungeonName) const
-{
-    return InterruptDatabase::GetDungeonSpells(dungeonName);
-}
-
-std::vector<InterruptSpellInfo> UnifiedInterruptSystem::GetSpellsByPriority(InterruptPriority minPriority) const
-{
-    return InterruptDatabase::GetSpellsByPriority(minPriority);
-}
+// TODO Phase 4D: std::vector<InterruptSpellInfo> UnifiedInterruptSystem::GetSpellsByPriority(InterruptPriority minPriority) const
+// TODO Phase 4D: {
+// TODO Phase 4D:     return InterruptDatabase::GetSpellsByPriority(minPriority);
+// TODO Phase 4D: }
 
 // =====================================================================
 // DECISION MAKING AND PLANNING
@@ -737,7 +737,7 @@ void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellI
     if (!bot)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return;
 
@@ -804,7 +804,7 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     // 2. Try stun
     for (uint32 altSpellId : botInfo.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -821,7 +821,7 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     // 3. Try silence
     for (uint32 altSpellId : botInfo.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -1101,7 +1101,7 @@ bool UnifiedInterruptSystem::ExecuteStun(Player* bot, Unit* target)
     // Find stun spell
     for (uint32 spellId : it->second.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -1133,7 +1133,7 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
     // Find silence spell
     for (uint32 spellId : it->second.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -1159,7 +1159,7 @@ bool UnifiedInterruptSystem::ExecuteKnockback(Player* bot, Unit* target)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, _] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
@@ -1184,7 +1184,7 @@ bool UnifiedInterruptSystem::ExecuteDispel(Player* bot, Unit* target)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, _] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 

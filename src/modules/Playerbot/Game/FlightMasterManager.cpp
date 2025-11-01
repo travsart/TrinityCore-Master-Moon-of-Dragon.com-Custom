@@ -201,7 +201,7 @@ namespace Playerbot
                 continue;
 
             // Check if creature is a flight master
-            if (!creature->IsFlightMaster())
+            if (!creature->IsTaxi())
                 continue;
 
             // Calculate distance to player

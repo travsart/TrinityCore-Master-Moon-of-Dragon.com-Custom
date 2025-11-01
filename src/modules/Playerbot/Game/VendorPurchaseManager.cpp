@@ -16,6 +16,7 @@
  */
 
 #include "VendorPurchaseManager.h"
+#include "Bag.h"
 #include "Creature.h"
 #include "CreatureData.h"
 #include "Item.h"
@@ -278,8 +279,14 @@ namespace Playerbot
         if (!(itemTemplate->GetAllowableClass() & player->GetClassMask()))
             return false;
 
-        // Get player's current item in same slot
-        uint8 equipSlot = Player::GetEquipSlotForItem(itemTemplate);
+        // TODO Phase 4D: Implement equipment upgrade comparison
+        // Note: TrinityCore 11.2 changed GetEquipSlotForItem → FindEquipSlot(Item*)
+        // For Phase 4C compilation, stub this out
+        upgradeScore = 0.0f;
+        return false;
+
+        /*
+        uint8 equipSlot = player->FindEquipSlot(nullptr, NULL_SLOT, false);
         Item* currentItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot);
 
         // If no item equipped, new item is always an upgrade
@@ -315,6 +322,7 @@ namespace Playerbot
         // For now, just consider it equal (not an upgrade)
         upgradeScore = 0.0f;
         return false;
+        */
     }
 
     ItemPurchasePriority VendorPurchaseManager::CalculateItemPriority(
@@ -338,7 +346,7 @@ namespace Playerbot
         // CRITICAL: Food and water
         if (itemClass == ITEM_CLASS_CONSUMABLE)
         {
-            if (itemSubClass == ITEM_SUBCLASS_FOOD || itemSubClass == ITEM_SUBCLASS_CONSUMABLE) // Water is CONSUMABLE subclass
+            if (itemSubClass == ITEM_SUBCLASS_FOOD_DRINK|| itemSubClass == ITEM_SUBCLASS_CONSUMABLE) // Water is CONSUMABLE subclass
             {
                 // Check current food/water stock
                 uint32 currentCount = player->GetItemCount(itemTemplate->GetId());
@@ -388,11 +396,11 @@ namespace Playerbot
         if (itemClass == ITEM_CLASS_MISCELLANEOUS)
         {
             // Companion pets
-            if (itemSubClass == ITEM_SUBCLASS_JUNK_PET)
+            if (itemSubClass == ITEM_SUBCLASS_MISCELLANEOUS_COMPANION_PET)
                 return ItemPurchasePriority::LOW;
 
             // Mounts
-            if (itemSubClass == ITEM_SUBCLASS_JUNK_MOUNT)
+            if (itemSubClass == ITEM_SUBCLASS_MISCELLANEOUS_MOUNT)
                 return ItemPurchasePriority::LOW;
         }
 
@@ -495,7 +503,9 @@ namespace Playerbot
         // Check limited stock
         if (vendorItem->maxcount != 0)
         {
-            if (vendor->GetVendorItemCurrentCount(vendorItem) < quantity)
+            // Note: GetVendorItemCurrentCount is not const in TrinityCore 11.2
+            Creature* mutableVendor = const_cast<Creature*>(vendor);
+            if (mutableVendor->GetVendorItemCurrentCount(vendorItem) < quantity)
                 return VendorPurchaseResult::ITEM_SOLD_OUT;
         }
 
@@ -606,7 +616,7 @@ namespace Playerbot
 
         if (itemClass == ITEM_CLASS_CONSUMABLE)
         {
-            if (itemSubClass == ITEM_SUBCLASS_FOOD || itemSubClass == ITEM_SUBCLASS_CONSUMABLE)
+            if (itemSubClass == ITEM_SUBCLASS_FOOD_DRINK|| itemSubClass == ITEM_SUBCLASS_CONSUMABLE)
             {
                 // Food/water: Stock up to 40
                 targetStock = 40;

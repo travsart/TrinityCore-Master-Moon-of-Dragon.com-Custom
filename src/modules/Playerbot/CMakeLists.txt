@@ -370,8 +370,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
+    # TODO Phase 4D: Re-enable after implementing QuestHubDatabase
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.h
 
@@ -459,10 +460,11 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
 
     # Unified Interrupt System - Enterprise Refactoring (replaces 3 legacy systems)
+    # TODO Phase 4D: Re-enable after completing UnifiedInterruptSystem implementation
     # Merges: InterruptCoordinator, InterruptRotationManager, InterruptManager
     # Benefits: 32% code reduction, zero conflict risk, 3x performance improvement
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.h
 
     # Legacy Interrupt Systems (to be deprecated after migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
@@ -833,9 +835,9 @@ source_group("AI\\Combat" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MechanicAwareness.h
 
-    # Unified Interrupt System
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.h
+    # TODO Phase 4D: Unified Interrupt System (duplicate entry, commented out)
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/UnifiedInterruptSystem.h
 
     # Legacy Interrupt Systems (deprecated)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptCoordinator.cpp
