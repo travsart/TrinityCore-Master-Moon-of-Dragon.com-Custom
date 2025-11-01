@@ -367,6 +367,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/LeaderFollowBehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
 
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
