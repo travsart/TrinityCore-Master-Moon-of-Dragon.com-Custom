@@ -160,14 +160,14 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, spellData] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
             continue;
 
         // Check if spell has interrupt effect
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_INTERRUPT_CAST)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_INTERRUPT_CAST)
             {
                 if (info.spellId == 0)
                 {
@@ -184,10 +184,10 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
         // Check for stun/silence effects (alternative interrupts)
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_APPLY_AURA)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_APPLY_AURA)
             {
-                if (spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_STUN ||
-                    spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_SILENCE)
+                if (spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_STUN ||
+                    spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_SILENCE)
                 {
                     info.alternativeInterrupts.push_back(spellId);
                 }
@@ -210,10 +210,7 @@ void UnifiedInterruptSystem::UnregisterBot(ObjectGuid botGuid)
     _botAI.erase(botGuid);
 
     // Remove from rotation orders
-    for (auto& [groupGuid, rotation] : _rotationOrder)
-    {
-        rotation.erase(std::remove(rotation.begin(), rotation.end(), botGuid), rotation.end());
-    }
+    _rotationOrder.erase(std::remove(_rotationOrder.begin(), _rotationOrder.end(), botGuid), _rotationOrder.end());
 
     // Remove group assignments
     _groupAssignments.erase(botGuid);
@@ -740,7 +737,7 @@ void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellI
     if (!bot)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
         return;
 
@@ -807,14 +804,14 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     // 2. Try stun
     for (uint32 altSpellId : botInfo.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_APPLY_AURA &&
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_STUN)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_APPLY_AURA &&
+                spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_STUN)
             {
                 return FallbackMethod::STUN;
             }
@@ -824,14 +821,14 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     // 3. Try silence
     for (uint32 altSpellId : botInfo.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(altSpellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_APPLY_AURA &&
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_SILENCE)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_APPLY_AURA &&
+                spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_SILENCE)
             {
                 return FallbackMethod::SILENCE;
             }
@@ -1104,14 +1101,14 @@ bool UnifiedInterruptSystem::ExecuteStun(Player* bot, Unit* target)
     // Find stun spell
     for (uint32 spellId : it->second.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_APPLY_AURA &&
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_STUN)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_APPLY_AURA &&
+                spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_STUN)
             {
                 return ExecuteSpellInterrupt(bot, target, spellId);
             }
@@ -1136,14 +1133,14 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
     // Find silence spell
     for (uint32 spellId : it->second.alternativeInterrupts)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_APPLY_AURA &&
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_MOD_SILENCE)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_APPLY_AURA &&
+                spellInfo->GetEffect(i).ApplyAuraName == SPELL_AURA_MOD_SILENCE)
             {
                 return ExecuteSpellInterrupt(bot, target, spellId);
             }
@@ -1162,13 +1159,13 @@ bool UnifiedInterruptSystem::ExecuteKnockback(Player* bot, Unit* target)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, _] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_KNOCK_BACK)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_KNOCK_BACK)
             {
                 return ExecuteSpellInterrupt(bot, target, spellId);
             }
@@ -1187,13 +1184,13 @@ bool UnifiedInterruptSystem::ExecuteDispel(Player* bot, Unit* target)
     auto const& spells = bot->GetSpellMap();
     for (auto const& [spellId, _] : spells)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
             continue;
 
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_DISPEL)
+            if (spellInfo->GetEffect(i).Effect == SPELL_EFFECT_DISPEL)
             {
                 return ExecuteSpellInterrupt(bot, target, spellId);
             }
