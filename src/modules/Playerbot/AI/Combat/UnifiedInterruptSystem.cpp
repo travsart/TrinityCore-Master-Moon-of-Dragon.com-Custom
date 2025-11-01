@@ -326,12 +326,12 @@ std::vector<InterruptSpellInfo> UnifiedInterruptSystem::GetSpellsByPriority(Inte
 // DECISION MAKING AND PLANNING
 // =====================================================================
 
-std::vector<InterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Player* bot)
+std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Player* bot)
 {
     if (!bot)
         return {};
 
-    std::vector<InterruptTarget> targets;
+    std::vector<UnifiedInterruptTarget> targets;
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
@@ -352,7 +352,7 @@ std::vector<InterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Pla
             continue;
 
         // Build interrupt target
-        InterruptTarget target;
+        UnifiedInterruptTarget target;
         target.casterGuid = casterGuid;
         target.spellId = castInfo.spellId;
         target.priority = castInfo.priority;
@@ -367,7 +367,7 @@ std::vector<InterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Pla
     }
 
     // Sort by priority and remaining time
-    std::sort(targets.begin(), targets.end(), [](InterruptTarget const& a, InterruptTarget const& b) {
+    std::sort(targets.begin(), targets.end(), [](UnifiedInterruptTarget const& a, UnifiedInterruptTarget const& b) {
         if (a.priority != b.priority)
             return a.priority > b.priority;
         return a.remainingCastTime < b.remainingCastTime;
@@ -376,7 +376,7 @@ std::vector<InterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Pla
     return targets;
 }
 
-InterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, InterruptTarget const& target)
+UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, UnifiedInterruptTarget const& target)
 {
     if (!bot)
         return {};
@@ -385,8 +385,8 @@ InterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Interrupt
 
     ObjectGuid botGuid = bot->GetGUID();
 
-    InterruptPlan plan;
-    plan.target = const_cast<InterruptTarget*>(&target);
+    UnifiedInterruptPlan plan;
+    plan.target = const_cast<UnifiedInterruptTarget*>(&target);
 
     // Find bot's interrupt capability
     auto botIt = _registeredBots.find(botGuid);
@@ -396,7 +396,7 @@ InterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Interrupt
     BotInterruptInfo const& botInfo = botIt->second;
 
     // Create capability structure
-    InterruptCapability capability;
+    UnifiedInterruptCapability capability;
     capability.botGuid = botGuid;
     capability.spellId = botInfo.spellId;
     capability.range = botInfo.interruptRange;
@@ -472,7 +472,7 @@ InterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Interrupt
     return plan;
 }
 
-bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, InterruptPlan const& plan)
+bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptPlan const& plan)
 {
     if (!bot || !plan.target || !plan.capability)
         return false;
@@ -928,10 +928,10 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
 // METRICS AND STATISTICS
 // =====================================================================
 
-InterruptMetrics UnifiedInterruptSystem::GetMetrics() const
+UnifiedInterruptMetrics UnifiedInterruptSystem::GetMetrics() const
 {
     // Atomic loads are thread-safe without lock
-    InterruptMetrics metrics;
+    UnifiedInterruptMetrics metrics;
     metrics.spellsDetected.store(_metrics.spellsDetected.load(std::memory_order_relaxed));
     metrics.interruptAttempts.store(_metrics.interruptAttempts.load(std::memory_order_relaxed));
     metrics.interruptSuccesses.store(_metrics.interruptSuccesses.load(std::memory_order_relaxed));
@@ -1028,7 +1028,7 @@ uint32 UnifiedInterruptSystem::CalculateThreatLevel(CastingSpellInfo const& cast
     return baseThreat;
 }
 
-uint32 UnifiedInterruptSystem::CalculateInterruptPriority(InterruptTarget const& target, InterruptCapability const& capability) const
+uint32 UnifiedInterruptSystem::CalculateInterruptPriority(UnifiedInterruptTarget const& target, UnifiedInterruptCapability const& capability) const
 {
     uint32 priority = static_cast<uint32>(target.priority) * 1000;
 
@@ -1054,9 +1054,9 @@ uint32 UnifiedInterruptSystem::CalculateInterruptPriority(InterruptTarget const&
 }
 
 std::string UnifiedInterruptSystem::GeneratePlanReasoning(
-    InterruptTarget const& target,
-    InterruptCapability const& capability,
-    InterruptPlan const& plan) const
+    UnifiedInterruptTarget const& target,
+    UnifiedInterruptCapability const& capability,
+    UnifiedInterruptPlan const& plan) const
 {
     std::ostringstream reasoning;
 

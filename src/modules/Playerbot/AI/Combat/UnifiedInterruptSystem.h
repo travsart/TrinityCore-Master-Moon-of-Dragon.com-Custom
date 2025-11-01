@@ -88,6 +88,7 @@ struct CastingSpellInfo
     InterruptPriority priority{InterruptPriority::MODERATE};
     bool isChanneled{false};
     bool wasInterrupted{false};
+    bool interrupted{false};  // Added for UnifiedInterruptSystem.cpp usage
     ObjectGuid assignedInterrupter;  // Primary
     ObjectGuid backupInterrupter;    // Backup for critical spells
     uint32 assignedBots{0};
@@ -111,7 +112,7 @@ struct BotInterruptAssignment
 /**
  * @brief Target information for interrupt decision-making
  */
-struct InterruptTarget
+struct UnifiedInterruptTarget
 {
     ObjectGuid guid;
     Unit* unit{nullptr};
@@ -134,7 +135,7 @@ struct InterruptTarget
 /**
  * @brief Interrupt capability of a bot
  */
-struct InterruptCapability
+struct UnifiedInterruptCapability
 {
     uint32 spellId{0};
     std::string spellName;
@@ -153,10 +154,10 @@ struct InterruptCapability
 /**
  * @brief Interrupt execution plan
  */
-struct InterruptPlan
+struct UnifiedInterruptPlan
 {
-    InterruptTarget* target{nullptr};
-    InterruptCapability* capability{nullptr};
+    UnifiedInterruptTarget* target{nullptr};
+    UnifiedInterruptCapability* capability{nullptr};
     InterruptMethod method{InterruptMethod::SPELL_INTERRUPT};
     float executionTime{0.0f};
     float reactionTime{0.0f};
@@ -166,7 +167,7 @@ struct InterruptPlan
     uint32 priority{0};
     std::string reasoning;
 
-    bool operator<(InterruptPlan const& other) const
+    bool operator<(UnifiedInterruptPlan const& other) const
     {
         return priority > other.priority; // Higher priority first
     }
@@ -175,7 +176,7 @@ struct InterruptPlan
 /**
  * @brief Performance metrics (thread-safe atomic counters)
  */
-struct InterruptMetrics
+struct UnifiedInterruptMetrics
 {
     std::atomic<uint64> spellsDetected{0};
     std::atomic<uint64> interruptsAssigned{0};
@@ -186,6 +187,14 @@ struct InterruptMetrics
     std::atomic<uint64> movementRequested{0};
     std::atomic<uint64> backupInterruptsUsed{0};
     std::atomic<uint64> assignmentTimeUs{0};  // Microseconds
+
+    // Additional metrics for detailed tracking
+    std::atomic<uint64> interruptAttempts{0};
+    std::atomic<uint64> interruptSuccesses{0};
+    std::atomic<uint64> interruptFailures{0};
+    std::atomic<uint64> movementRequired{0};
+    std::atomic<uint64> groupCoordinations{0};
+    std::atomic<uint64> rotationViolations{0};
 
     void Reset()
     {
@@ -198,6 +207,12 @@ struct InterruptMetrics
         movementRequested = 0;
         backupInterruptsUsed = 0;
         assignmentTimeUs = 0;
+        interruptAttempts = 0;
+        interruptSuccesses = 0;
+        interruptFailures = 0;
+        movementRequired = 0;
+        groupCoordinations = 0;
+        rotationViolations = 0;
     }
 };
 
@@ -352,7 +367,7 @@ public:
      * @param bot The scanning bot
      * @return Vector of interrupt targets
      */
-    std::vector<InterruptTarget> ScanForInterruptTargets(Player* bot);
+    std::vector<UnifiedInterruptTarget> ScanForInterruptTargets(Player* bot);
 
     /**
      * @brief Create interrupt plan for target
@@ -360,7 +375,7 @@ public:
      * @param target The interrupt target
      * @return Interrupt plan with reasoning
      */
-    InterruptPlan CreateInterruptPlan(Player* bot, InterruptTarget const& target);
+    UnifiedInterruptPlan CreateInterruptPlan(Player* bot, UnifiedInterruptTarget const& target);
 
     /**
      * @brief Generate plans for all targets
@@ -368,7 +383,7 @@ public:
      * @param targets Vector of targets
      * @return Vector of executable plans (sorted by priority)
      */
-    std::vector<InterruptPlan> GenerateInterruptPlans(Player* bot, std::vector<InterruptTarget> const& targets);
+    std::vector<UnifiedInterruptPlan> GenerateInterruptPlans(Player* bot, std::vector<UnifiedInterruptTarget> const& targets);
 
     /**
      * @brief Execute interrupt plan
@@ -376,7 +391,7 @@ public:
      * @param plan The plan to execute
      * @return True if execution successful
      */
-    bool ExecuteInterruptPlan(Player* bot, InterruptPlan const& plan);
+    bool ExecuteInterruptPlan(Player* bot, UnifiedInterruptPlan const& plan);
 
     // =====================================================================
     // GROUP COORDINATION & ASSIGNMENT
@@ -488,7 +503,7 @@ public:
      * @brief Get system-wide metrics (thread-safe atomic reads)
      * @return Current metrics snapshot
      */
-    InterruptMetrics GetMetrics() const;
+    UnifiedInterruptMetrics GetMetrics() const;
 
     /**
      * @brief Get bot-specific statistics
@@ -531,12 +546,12 @@ private:
 
     std::vector<ObjectGuid> GetAvailableInterrupters(CastingSpellInfo const& castInfo);
     uint32 CalculateInterruptTime(CastingSpellInfo const& castInfo) const;
-    float CalculateInterruptUrgency(InterruptTarget const& target) const;
-    float CalculateInterruptEffectiveness(InterruptCapability const& capability, InterruptTarget const& target) const;
+    float CalculateInterruptUrgency(UnifiedInterruptTarget const& target) const;
+    float CalculateInterruptEffectiveness(UnifiedInterruptCapability const& capability, UnifiedInterruptTarget const& target) const;
     bool IsValidInterruptTarget(Player* bot, Unit* unit) const;
     float GetBotDistanceToTarget(ObjectGuid botGuid, ObjectGuid targetGuid) const;
     bool IsBotInRange(ObjectGuid botGuid, ObjectGuid targetGuid, float range) const;
-    InterruptCapability* GetBestInterruptForTarget(Player* bot, InterruptTarget const& target);
+    UnifiedInterruptCapability* GetBestInterruptForTarget(Player* bot, UnifiedInterruptTarget const& target);
     void InitializeInterruptCapabilities(Player* bot);
     bool CastInterruptSpell(Player* bot, uint32 spellId, Unit* target);
 
@@ -559,7 +574,7 @@ private:
 
     std::map<ObjectGuid, BotInterruptInfo> _registeredBots;
     std::map<ObjectGuid, BotAI*> _botAI;
-    std::map<ObjectGuid, std::vector<InterruptCapability>> _botCapabilities;
+    std::map<ObjectGuid, std::vector<UnifiedInterruptCapability>> _botCapabilities;
     std::map<ObjectGuid, BotInterruptStats> _botStats;
 
     // =====================================================================
@@ -580,12 +595,15 @@ private:
     // =====================================================================
 
     std::map<Group*, std::queue<ObjectGuid>> _groupRotations;
+    std::map<ObjectGuid, std::vector<uint32>> _interruptHistory;  // Bot GUID → spell IDs interrupted
+    std::vector<ObjectGuid> _rotationOrder;  // Global rotation order
+    std::map<ObjectGuid, ObjectGuid> _groupAssignments;  // Target GUID → Assigned Bot GUID
 
     // =====================================================================
     // PERFORMANCE METRICS (Atomic for thread-safe access)
     // =====================================================================
 
-    InterruptMetrics _metrics;
+    UnifiedInterruptMetrics _metrics;
 
     // =====================================================================
     // CONFIGURATION
