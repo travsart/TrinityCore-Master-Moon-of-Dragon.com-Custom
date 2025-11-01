@@ -44,6 +44,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotTradeConfig.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotLog.h
+    # Runtime configuration manager (Integration & Polish Task I.2)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigManager.h
     # Temporarily disabled: DependencyValidator (needs MySQL headers fix)
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/DependencyValidator.h
@@ -369,6 +372,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/BotWorldPositioner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.h
 
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
@@ -515,6 +520,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotDatabaseStatements.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/PlayerbotMigrationMgr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotStatePersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotStatePersistence.h
 
     # Script integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
@@ -583,6 +590,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/NPCInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Game/InventoryManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/VendorPurchaseManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/FlightMasterManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Game/FlightMasterManager.h
     # Config files commented out - incomplete implementations
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotInventoryConfig.h
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp
@@ -701,6 +712,12 @@ set(PLAYERBOT_SOURCES
 
     # Commands - Chat command system for bot management
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.h
+
+    # Monitoring - Performance monitoring and alerting system (Integration & Polish Task I.3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/BotMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/BotMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/PerformanceMetrics.h
 
     # LFG System - Looking For Group Bot Management
     ${CMAKE_CURRENT_SOURCE_DIR}/LFG/LFGBotManager.cpp
@@ -1181,6 +1198,13 @@ source_group("Interaction" FILES
 
 source_group("Commands" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Commands/PlayerbotCommands.h
+)
+
+source_group("Monitoring" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/BotMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/BotMonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Monitoring/PerformanceMetrics.h
 )
 
 source_group("LFG" FILES

@@ -85,6 +85,32 @@ enum PlayerbotDatabaseStatements : uint32
     PBDB_SEL_ZONE_SUMMARY_VIEW,         // SELECT * FROM v_zone_population_summary
     PBDB_SEL_RECENT_EVENTS_VIEW,        // SELECT * FROM v_recent_lifecycle_events
 
+    // Bot State Persistence (PBDB_STATE_*)
+    PBDB_SEL_BOT_STATE,                 // SELECT * FROM playerbot_state WHERE bot_guid = ?
+    PBDB_INS_BOT_STATE,                 // INSERT INTO playerbot_state (bot_guid, position_x, position_y, position_z, map_id, zone_id, gold_copper, ...) VALUES (?, ?, ?, ?, ?, ?, ?, ...)
+    PBDB_UPD_BOT_POSITION,              // UPDATE playerbot_state SET position_x = ?, position_y = ?, position_z = ?, map_id = ?, zone_id = ?, orientation = ?, last_updated = NOW() WHERE bot_guid = ?
+    PBDB_UPD_BOT_GOLD,                  // UPDATE playerbot_state SET gold_copper = ?, last_updated = NOW() WHERE bot_guid = ?
+    PBDB_UPD_BOT_FULL_STATE,            // UPDATE playerbot_state SET position_x = ?, position_y = ?, position_z = ?, map_id = ?, zone_id = ?, orientation = ?, gold_copper = ?, health = ?, mana = ?, last_updated = NOW() WHERE bot_guid = ?
+    PBDB_DEL_BOT_STATE,                 // DELETE FROM playerbot_state WHERE bot_guid = ?
+
+    // Bot Inventory Persistence (PBDB_INV_*)
+    PBDB_SEL_BOT_INVENTORY,             // SELECT * FROM playerbot_inventory WHERE bot_guid = ?
+    PBDB_SEL_BOT_INVENTORY_SLOT,        // SELECT * FROM playerbot_inventory WHERE bot_guid = ? AND bag = ? AND slot = ?
+    PBDB_INS_INVENTORY_ITEM,            // INSERT INTO playerbot_inventory (bot_guid, bag, slot, item_id, item_guid, stack_count, ...) VALUES (?, ?, ?, ?, ?, ?, ...)
+    PBDB_UPD_INVENTORY_ITEM,            // UPDATE playerbot_inventory SET item_id = ?, stack_count = ?, enchantments = ?, durability = ?, last_updated = NOW() WHERE bot_guid = ? AND bag = ? AND slot = ?
+    PBDB_DEL_INVENTORY_ITEM,            // DELETE FROM playerbot_inventory WHERE bot_guid = ? AND bag = ? AND slot = ?
+    PBDB_DEL_BOT_INVENTORY,             // DELETE FROM playerbot_inventory WHERE bot_guid = ?
+    PBDB_SEL_INVENTORY_SUMMARY,         // SELECT COUNT(*) as item_count, SUM(stack_count) as total_items FROM playerbot_inventory WHERE bot_guid = ?
+
+    // Bot Equipment Persistence (PBDB_EQUIP_*)
+    PBDB_SEL_BOT_EQUIPMENT,             // SELECT * FROM playerbot_equipment WHERE bot_guid = ?
+    PBDB_SEL_EQUIPMENT_SLOT,            // SELECT * FROM playerbot_equipment WHERE bot_guid = ? AND slot = ?
+    PBDB_INS_EQUIPMENT_ITEM,            // INSERT INTO playerbot_equipment (bot_guid, slot, item_id, item_guid, enchantments, ...) VALUES (?, ?, ?, ?, ?, ...)
+    PBDB_UPD_EQUIPMENT_ITEM,            // UPDATE playerbot_equipment SET item_id = ?, enchantments = ?, gems = ?, durability = ?, last_updated = NOW() WHERE bot_guid = ? AND slot = ?
+    PBDB_DEL_EQUIPMENT_ITEM,            // DELETE FROM playerbot_equipment WHERE bot_guid = ? AND slot = ?
+    PBDB_DEL_BOT_EQUIPMENT,             // DELETE FROM playerbot_equipment WHERE bot_guid = ?
+    PBDB_SEL_EQUIPMENT_SUMMARY,         // SELECT slot, item_id, durability FROM playerbot_equipment WHERE bot_guid = ? ORDER BY slot
+
     MAX_PLAYERBOTDATABASE_STATEMENTS
 };
 
