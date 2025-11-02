@@ -19,6 +19,7 @@
 #include "Bag.h"
 #include "Creature.h"
 #include "CreatureData.h"
+#include "Equipment/EquipmentManager.h"
 #include "Item.h"
 #include "ItemTemplate.h"
 #include "Log.h"
@@ -279,50 +280,60 @@ namespace Playerbot
         if (!(itemTemplate->GetAllowableClass() & player->GetClassMask()))
             return false;
 
-        // TODO Phase 4D: Implement equipment upgrade comparison
-        // Note: TrinityCore 11.2 changed GetEquipSlotForItem → FindEquipSlot(Item*)
-        // For Phase 4C compilation, stub this out
-        upgradeScore = 0.0f;
-        return false;
+        // Delegate to EquipmentManager for gear evaluation
+        // This ensures consistent gear scoring across all bot systems
+        EquipmentManager* equipMgr = EquipmentManager::instance();
+        if (!equipMgr)
+        {
+            TC_LOG_ERROR("playerbot.vendor", "VendorPurchaseManager: EquipmentManager instance not available");
+            return false;
+        }
 
-        /*
-        uint8 equipSlot = player->FindEquipSlot(nullptr, NULL_SLOT, false);
-        Item* currentItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot);
+        // Get equipment slot for this item
+        uint8 equipSlot = equipMgr->GetItemEquipmentSlot(itemTemplate);
+        if (equipSlot == NULL_SLOT)
+        {
+            TC_LOG_DEBUG("playerbot.vendor", "VendorPurchaseManager: Item {} has no valid equipment slot", itemTemplate->GetId());
+            return false;
+        }
 
-        // If no item equipped, new item is always an upgrade
+        // Get currently equipped item in that slot
+        Player* mutablePlayer = const_cast<Player*>(player);
+        Item* currentItem = mutablePlayer->GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot);
+
+        // Calculate score for vendor item using class/spec stat priorities
+        float vendorItemScore = equipMgr->CalculateItemTemplateScore(mutablePlayer, itemTemplate);
+
+        // If no item equipped, vendor item is an upgrade if it has positive score
         if (!currentItem)
         {
-            upgradeScore = 50.0f; // Base score for filling empty slot
-            return true;
-        }
-
-        ItemTemplate const* currentTemplate = currentItem->GetTemplate();
-        if (!currentTemplate)
+            if (vendorItemScore > 0.0f)
+            {
+                upgradeScore = vendorItemScore;
+                TC_LOG_DEBUG("playerbot.vendor", "VendorPurchaseManager: Item {} fills empty slot {} (score: {:.1f})",
+                    itemTemplate->GetId(), equipSlot, upgradeScore);
+                return true;
+            }
             return false;
-
-        // Compare item levels (primary upgrade metric)
-        uint32 newItemLevel = itemTemplate->GetBaseItemLevel();
-        uint32 currentItemLevel = currentTemplate->GetBaseItemLevel();
-
-        if (newItemLevel > currentItemLevel)
-        {
-            // Calculate upgrade score based on item level difference
-            uint32 itemLevelDiff = newItemLevel - currentItemLevel;
-            upgradeScore = 50.0f + (itemLevelDiff * 5.0f); // 5 points per item level
-            upgradeScore = std::min(100.0f, upgradeScore);  // Cap at 100
-            return true;
-        }
-        else if (newItemLevel < currentItemLevel)
-        {
-            return false; // Definite downgrade
         }
 
-        // Same item level - compare stats (simplified)
-        // In production, this would use stat weights from gear optimizer
-        // For now, just consider it equal (not an upgrade)
-        upgradeScore = 0.0f;
-        return false;
-        */
+        // Calculate score for currently equipped item
+        float currentItemScore = equipMgr->CalculateItemScore(mutablePlayer, currentItem);
+
+        // Compare scores
+        float scoreDifference = vendorItemScore - currentItemScore;
+        upgradeScore = scoreDifference;
+
+        // Item is upgrade if vendor item scores higher
+        bool isUpgrade = scoreDifference > 0.0f;
+
+        if (isUpgrade)
+        {
+            TC_LOG_DEBUG("playerbot.vendor", "VendorPurchaseManager: Item {} is upgrade over {} (score: {:.1f} vs {:.1f}, diff: +{:.1f})",
+                itemTemplate->GetId(), currentItem->GetEntry(), vendorItemScore, currentItemScore, scoreDifference);
+        }
+
+        return isUpgrade;
     }
 
     ItemPurchasePriority VendorPurchaseManager::CalculateItemPriority(
