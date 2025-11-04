@@ -1500,9 +1500,17 @@ Creature* DeathRecoveryManager::FindNearestSpiritHealer() const
             entity = ObjectAccessor::GetCreature(*m_bot, guid);
         }
 
-        if (!entity)
+        if (!entity || !entity->IsAlive())
             continue;
-        // Original filtering logic goes here
+
+        // CRITICAL FIX: Filter for spirit healers and add to list
+        // BUG: Previous code never populated spiritHealers list, causing FindNearestSpiritHealer() to always return nullptr
+        // This is why bots got stuck in FINDING_SPIRIT_HEALER state (state 7) without resurrecting
+        uint64 npcFlags = entity->GetNpcFlags();
+        if ((npcFlags & UNIT_NPC_FLAG_SPIRIT_HEALER) || (npcFlags & UNIT_NPC_FLAG_AREA_SPIRIT_HEALER))
+        {
+            spiritHealers.push_back(entity);
+        }
     }
     // End of spatial grid fix
 
