@@ -440,6 +440,11 @@ void ClassAI::UpdateTargeting()
         ::Unit* target = nullptr;
         if (snapshot_target)
         {
+            // CRITICAL FIX: Actually assign the target pointer!
+            // BUG: Previous code retrieved snapshot but never assigned target variable
+            // This caused target to always be nullptr, making bots unable to find ANY targets
+            // This is why 2.4M "in combat but no victim" warnings occurred - target selection was broken!
+            target = ObjectAccessor::GetCreature(*GetBot(), guid);
         }
         if (!target || !GetBot()->IsValidAttackTarget(target))
             continue;
