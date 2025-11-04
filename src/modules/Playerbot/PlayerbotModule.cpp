@@ -25,6 +25,7 @@
 #include "Chat/BotChatCommandHandler.h"
 #include "Professions/ProfessionManager.h"
 #include "Quest/QuestHubDatabase.h"
+#include "Equipment/BotGearFactory.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
@@ -188,6 +189,11 @@ bool PlayerbotModule::Initialize()
     }
     TC_LOG_INFO("server.loading", "Quest Hub Database initialized successfully - {} quest hubs loaded",
         Playerbot::QuestHubDatabase::Instance().GetQuestHubCount());
+
+    // Initialize Bot Gear Factory (automated gear generation for instant level-up)
+    TC_LOG_INFO("server.loading", "Initializing Bot Gear Factory...");
+    Playerbot::sBotGearFactory->Initialize();
+    TC_LOG_INFO("server.loading", "Bot Gear Factory initialized successfully");
 
     // Initialize Packet Sniffer (centralized event detection system)
     TC_LOG_INFO("server.loading", "Initializing Packet Sniffer...");

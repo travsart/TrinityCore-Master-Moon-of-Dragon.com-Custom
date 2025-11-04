@@ -254,6 +254,7 @@ private:
 
     ClassCache _gearCache;
     std::vector<QualityDistribution> _qualityDistributions;
+    std::vector<CachedItem> _rawItems;  // Temporary storage for items before organizing into cache
     std::atomic<bool> _cacheReady{false};
     mutable GearFactoryStats _stats;
     std::mutex _initMutex;

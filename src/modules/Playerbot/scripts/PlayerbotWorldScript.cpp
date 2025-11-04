@@ -33,6 +33,7 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
 {
     static bool initialized = false;
     static uint32 initRetryCount = 0;
+    static uint32 updatesSinceModuleReady = 0;
 
     // Handle deferred initialization - check if Playerbot module is ready
     if (!initialized)
@@ -47,8 +48,19 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
             return;
         }
 
-        // Module is now ready
-        TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Playerbot module initialized");
+        // Module is now ready, but wait for database to be fully stable
+        // Give it 100 update cycles (~10 seconds) before attempting database queries
+        if (++updatesSinceModuleReady < 100)
+        {
+            if (updatesSinceModuleReady == 1)
+            {
+                TC_LOG_INFO("module.playerbot.script", "PlayerbotWorldScript: Playerbot module initialized - waiting for database stability...");
+            }
+            return;
+        }
+
+        // Database should be stable now
+        // NOTE: BotGearFactory is initialized in PlayerbotModule::Initialize() (before world starts)
         initialized = true;
 
         // Initialize Automated World Population System

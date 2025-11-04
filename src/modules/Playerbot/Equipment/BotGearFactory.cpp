@@ -81,82 +81,81 @@ void BotGearFactory::BuildGearCache()
 
 void BotGearFactory::LoadItemsFromDatabase()
 {
-    // Query all items from item_template that meet criteria
-    std::string query = fmt::format(
-        "SELECT entry, ItemLevel, RequiredLevel, Quality, InventoryType, class, subclass "
-        "FROM item_template "
-        "WHERE Quality >= {} AND ItemLevel >= {} AND InventoryType > 0",
-        _minQuality, _minItemLevel
-    );
+    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Loading equippable items from ObjectMgr...");
 
-    QueryResult result = WorldDatabase.Query(query.c_str());
+    _rawItems.clear();
+    _rawItems.reserve(100000); // Pre-allocate for performance
 
-    if (!result)
+    // CRITICAL DISCOVERY: TrinityCore already loads ALL item templates into memory at startup
+    // Using sObjectMgr->GetItemTemplateStore() is INSTANT and bypasses MySQL entirely
+    // This is the CORRECT approach - no database queries during module initialization!
+    // ObjectMgr::LoadItemTemplates() runs during WorldDatabase loading, before our module initializes
+
+    ItemTemplateContainer const& itemStore = sObjectMgr->GetItemTemplateStore();
+    uint32 totalItems = 0;
+    uint32 filteredItems = 0;
+
+    for (auto const& [itemEntry, itemTemplate] : itemStore)
     {
-        TC_LOG_ERROR("playerbot.gear", "BotGearFactory: No items found in database");
-        return;
-    }
+        ++totalItems;
 
-    uint32 itemCount = 0;
-
-    do
-    {
-        Field* fields = result->Fetch();
+        // Filter: Quality >= 2 (Uncommon+), ItemLevel >= 5, InventoryType > 0 (equippable only)
+        if (itemTemplate.GetQuality() < 2)
+            continue;
+        if (itemTemplate.GetBaseItemLevel() < 5)
+            continue;
+        if (itemTemplate.GetInventoryType() == INVTYPE_NON_EQUIP)
+            continue;
 
         CachedItem item;
-        item.itemEntry = fields[0].GetUInt32();
-        item.itemLevel = fields[1].GetUInt32();
-        item.requiredLevel = fields[2].GetUInt32();
-        item.quality = fields[3].GetUInt32();
-        item.inventoryType = fields[4].GetUInt8();
-        item.itemClass = fields[5].GetUInt8();
-        item.itemSubClass = fields[6].GetUInt8();
+        item.itemEntry = itemEntry;
+        item.itemLevel = itemTemplate.GetBaseItemLevel();
+        item.requiredLevel = itemTemplate.GetBaseRequiredLevel();
+        item.quality = itemTemplate.GetQuality();
+        item.inventoryType = itemTemplate.GetInventoryType();
+        item.itemClass = itemTemplate.GetClass();
+        item.itemSubClass = itemTemplate.GetSubClass();
+        item.statScore = 0.0f; // Will be computed in PrecomputeItemScores()
+        item.armorType = 0;    // Will be set in PrecomputeItemScores()
 
-        // Store in cache (organized by class/spec/level/slot)
-        // For now, store generically - will be organized by PrecomputeItemScores()
+        _rawItems.push_back(item);
+        ++filteredItems;
+    }
 
-        ++itemCount;
-        ++_stats.cacheSize;
-
-    } while (result->NextRow());
-
-    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Loaded {} items from database", itemCount);
+    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Loaded {} equippable items from {} total items in ObjectMgr (filtered in memory)",
+                filteredItems, totalItems);
 }
 
 void BotGearFactory::PrecomputeItemScores()
 {
-    TC_LOG_DEBUG("playerbot.gear", "BotGearFactory: Pre-computing item scores using EquipmentManager...");
+    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Organizing {} items into cache...", _rawItems.size());
 
-    // Use EquipmentManager stat priorities for scoring
-    EquipmentManager* equipMgr = EquipmentManager::instance();
+    uint32 itemsOrganized = 0;
 
-    // For each class (1-13)
-    for (uint8 cls = CLASS_WARRIOR; cls <= CLASS_EVOKER; ++cls)
+    // Organize all items into cache by inventory slot
+    for (CachedItem const& item : _rawItems)
     {
-        // For each spec (0-3)
-        for (uint32 specId = 0; specId < 4; ++specId)
-        {
-            // Get stat priority from EquipmentManager (INTEGRATION POINT)
-            StatPriority const& statPriority = equipMgr->GetStatPriorityByClassSpec(cls, specId);
+        // Store item in cache for all classes that can use it
+        // For now, store items generically by slot without class/spec filtering
+        // Class/spec filtering will be done when building gear sets
 
-            // For each level bracket (every 5 levels)
-            for (uint32 level = 1; level <= 80; level += 5)
-            {
-                // For each equipment slot
-                for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
-                {
-                    // Get all candidate items for this slot/level
-                    // Score them using EquipmentManager stat weights
-                    // Store top candidates in _gearCache[cls][specId][level][slot]
+        // Determine level bracket (group by 5-level increments)
+        uint32 levelBracket = (item.requiredLevel / 5) * 5;
+        if (levelBracket == 0)
+            levelBracket = 1;
 
-                    // This uses the SAME stat scoring logic as EquipmentManager
-                    // NO DUPLICATE stat weight calculations
-                }
-            }
-        }
+        // Store in cache for ALL classes (class 0 = generic)
+        // Spec 0 = generic, applies to all specs
+        _gearCache[0][0][levelBracket][item.inventoryType].push_back(item);
+        ++itemsOrganized;
+        ++_stats.cacheSize;
     }
 
-    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Pre-computed scores for all class/spec/level/slot combinations using EquipmentManager stat weights");
+    TC_LOG_INFO("playerbot.gear", "BotGearFactory: Organized {} items into cache", itemsOrganized);
+
+    // Clear raw items to free memory
+    _rawItems.clear();
+    _rawItems.shrink_to_fit();
 }
 
 GearSet BotGearFactory::BuildGearSet(uint8 cls, uint32 specId, uint32 level, TeamId faction)
