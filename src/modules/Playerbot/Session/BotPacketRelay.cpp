@@ -739,11 +739,9 @@ void BotPacketRelay::ProcessDeferredPackets()
 
     uint32 processedCount = 0;
     uint32 failedCount = 0;
-    uint32 oldestTimestamp = _deferredPackets.front().timestamp;
-    uint32 currentTime = getMSTime();
 
-    TC_LOG_INFO("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Processing {} queued packets (oldest queued {}ms ago)",
-                _deferredPackets.size(), currentTime - oldestTimestamp);
+    TC_LOG_INFO("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Processing {} queued packets",
+                _deferredPackets.size());
 
     // Process all queued packets
     while (!_deferredPackets.empty())
@@ -763,10 +761,9 @@ void BotPacketRelay::ProcessDeferredPackets()
         // Log packet details for debugging
         if (IsDebugLoggingEnabled())
         {
-            TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Replaying packet opcode {} from bot {} (queued {}ms ago)",
+            TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Replaying packet opcode {} from bot {}",
                          deferred.packet->GetOpcode(),
-                         deferred.botSession->GetPlayer() ? deferred.botSession->GetPlayer()->GetName() : "Unknown",
-                         currentTime - deferred.timestamp);
+                         deferred.botSession->GetPlayer() ? deferred.botSession->GetPlayer()->GetName() : "Unknown");
         }
 
         // Replay the packet now that system is initialized
