@@ -52,6 +52,10 @@ public:
     // Session updates
     void UpdateSessions(uint32 diff);
 
+    // Deferred packet processing (main thread only!)
+    // Processes packets queued by worker threads that require serialization with Map::Update()
+    uint32 ProcessAllDeferredPackets();
+
     // Administrative
     uint32 GetBotCount() const;
     bool IsEnabled() const { return _enabled.load(); }

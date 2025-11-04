@@ -56,6 +56,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSession.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotPacketSimulator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/PacketDeferralClassifier.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Session/PacketDeferralClassifier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotSessionMgr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Session/BotWorldSessionMgr.cpp

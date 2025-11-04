@@ -246,6 +246,15 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
 
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
 {
+    // CRITICAL FIX (Map.cpp:686 crash): Do NOT call LogoutPlayer() synchronously!
+    // Problem: RemovePlayerBot() can be called from commands while Map::Update() is running
+    // If we call LogoutPlayer() here, it removes player from map IMMEDIATELY (WorldSession.cpp:715)
+    // This invalidates Map iterators, causing Map.cpp:686 crash
+    //
+    // Solution: Use async disconnection queue (same pattern as worker thread disconnects)
+    // The session will be cleaned up in next UpdateSessions() call on main thread
+    // when Map::Update() is NOT iterating over players
+
     std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
@@ -256,21 +265,28 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     }
 
     std::shared_ptr<BotSession> session = it->second;
-    if (session && session->GetPlayer())
+    if (session)
     {
-        // MEMORY SAFETY: Protect against use-after-free when accessing Player name
-        Player* player = session->GetPlayer();
-        try {
-            TC_LOG_INFO("module.playerbot.session", "?? Removing bot: {}", player->GetName());
+        // Log removal (safely handle name access)
+        if (session->GetPlayer())
+        {
+            try {
+                TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal: {}", session->GetPlayer()->GetName());
+            }
+            catch (...) {
+                TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal (name unavailable)");
+            }
         }
-        catch (...) {
-            TC_LOG_INFO("module.playerbot.session", "?? Removing bot (name unavailable - use-after-free protection)");
-        }
-        session->LogoutPlayer(true);
+
+        // Signal session termination - BotSession::Update() will return false next cycle
+        session->KickPlayer("BotWorldSessionMgr::RemovePlayerBot - Bot removal requested");
     }
 
-    // Remove from map - shared_ptr will automatically clean up when no more references exist
-    _botSessions.erase(it);
+    // Push to async disconnection queue (lock-free, thread-safe)
+    // Will be processed in UpdateSessions() Phase 3 when safe (after Map::Update() completes)
+    _asyncDisconnections.push(playerGuid);
+
+    TC_LOG_DEBUG("module.playerbot.session", "?? Bot {} queued for async removal", playerGuid.ToString());
 }
 
 Player* BotWorldSessionMgr::GetPlayerBot(ObjectGuid playerGuid) const
@@ -740,6 +756,67 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             sBotPerformanceMon->LogPerformanceReport();
         }
     }
+}
+
+uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
+{
+    // CRITICAL: This method MUST be called from the main world thread ONLY!
+    // Purpose: Process packets queued by bot worker threads that require serialization with Map::Update()
+    //
+    // Thread Safety:
+    // - This method runs on main thread
+    // - BotSession::QueueDeferredPacket() runs on worker threads (thread-safe with mutex)
+    // - Deferred packets execute on main thread, synchronized with Map::Update()
+    //
+    // Performance:
+    // - Processes all deferred packets across all bot sessions
+    // - Each session limited to 50 packets/update (MAX_DEFERRED_PACKETS_PER_UPDATE)
+    // - Expected load: 300-400 packets/sec with 5000 bots
+    // - Main thread capacity: 1000 packets/sec (2.5x safety margin)
+
+    uint32 totalProcessed = 0;
+
+    // Collect sessions that need deferred packet processing
+    std::vector<std::shared_ptr<BotSession>> sessionsToProcess;
+    {
+        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        sessionsToProcess.reserve(_botSessions.size());
+
+        for (auto const& [guid, session] : _botSessions)
+        {
+            if (session && session->HasDeferredPackets())
+            {
+                sessionsToProcess.push_back(session);
+            }
+        }
+    } // Release mutex before processing
+
+    // Process deferred packets for each session
+    for (auto const& session : sessionsToProcess)
+    {
+        if (!session)
+            continue;
+
+        uint32 processed = session->ProcessDeferredPackets();
+        totalProcessed += processed;
+
+        if (processed > 0)
+        {
+            TC_LOG_TRACE("playerbot.packets.deferred",
+                "Bot {} processed {} deferred packets on main thread",
+                session->GetPlayerName(), processed);
+        }
+    }
+
+    // Log statistics if significant activity
+    if (totalProcessed > 0)
+    {
+        TC_LOG_DEBUG("playerbot.packets.deferred",
+            "ProcessAllDeferredPackets: {} total packets processed from {} bot sessions",
+            totalProcessed, sessionsToProcess.size());
+    }
+
+    return totalProcessed;
 }
 
 uint32 BotWorldSessionMgr::GetBotCount() const

@@ -92,6 +92,34 @@ public:
     // Group invitation handling
     void HandleGroupInvitation(WorldPacket const& packet);
 
+    // === Deferred Packet System (Main Thread Processing) ===
+    /**
+     * @brief Queue packet for main thread execution (thread-safe)
+     * @param packet Packet to defer (ownership transferred)
+     *
+     * Used for packets that modify game state and require serialization
+     * with Map::Update() to prevent race conditions.
+     *
+     * Called from: Bot worker threads (ProcessBotPackets)
+     * Executed by: Main world thread (World::UpdateSessions)
+     */
+    void QueueDeferredPacket(std::unique_ptr<WorldPacket> packet);
+
+    /**
+     * @brief Process all deferred packets (main thread only!)
+     * @return Number of packets processed
+     *
+     * CRITICAL: Must only be called from World::UpdateSessions() on main thread
+     * Processes packets that were deferred due to race condition risk.
+     */
+    uint32 ProcessDeferredPackets();
+
+    /**
+     * @brief Check if session has deferred packets pending
+     * @return true if deferred packet queue is non-empty
+     */
+    bool HasDeferredPackets() const;
+
 
     // Character Login System (SYNCHRONOUS Pattern)
     bool LoginCharacter(ObjectGuid characterGuid);
@@ -139,6 +167,11 @@ private:
     std::queue<std::unique_ptr<WorldPacket>> _outgoingPackets;
     mutable std::recursive_timed_mutex _packetMutex;
     mutable std::timed_mutex _updateMutex;  // TIMED MUTEX: Prevents both deadlock AND race conditions
+
+    // Deferred packet queue (main thread processing)
+    // Packets that require serialization with Map::Update() to prevent race conditions
+    std::queue<std::unique_ptr<WorldPacket>> _deferredPackets;
+    mutable std::mutex _deferredPacketMutex; // Simple mutex (no recursion needed)
 
     // Bot state
     std::atomic<bool> _active{true};

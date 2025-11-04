@@ -5,6 +5,7 @@
 #include "BotSession.h"
 #include "BotPacketRelay.h"
 #include "BotPacketSimulator.h"  // PHASE 1: Packet forging infrastructure
+#include "PacketDeferralClassifier.h"  // Selective main thread deferral
 #include "AccountMgr.h"
 #include "Log.h"
 #include "WorldPacket.h"
@@ -664,8 +665,28 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
             ClientOpcodeHandler const* opHandle = opcodeTable[opcode];
 
+            // ======================================================================
+            // CRITICAL: SELECTIVE DEFERRAL - Only defer packets that need main thread
+            // ======================================================================
+            if (PacketDeferralClassifier::RequiresMainThread(opcode))
+            {
+                TC_LOG_TRACE("playerbot.packets",
+                    "Bot {} DEFERRING packet opcode {} ({}) to main thread - Reason: {}",
+                    GetPlayerName(),
+                    static_cast<uint32>(opcode),
+                    opHandle->Name,
+                    PacketDeferralClassifier::GetDeferralReason(opcode));
+
+                // Transfer ownership to deferred queue (processed by World::UpdateSessions)
+                QueueDeferredPacket(std::unique_ptr<WorldPacket>(packet));
+                packet = nullptr; // Ownership transferred
+                processedPackets++;
+                continue; // Skip to next packet
+            }
+            // ======================================================================
+
             TC_LOG_TRACE("playerbot.packets",
-                "Bot {} processing packet opcode {} ({}) with status {}",
+                "Bot {} processing packet opcode {} ({}) with status {} on WORKER THREAD",
                 GetPlayerName(),
                 static_cast<uint32>(opcode),
                 opHandle->Name,
@@ -1104,6 +1125,149 @@ void BotSession::ProcessBotPackets()
     //     TC_LOG_DEBUG("module.playerbot.session", "Processed {} outgoing packets for account {}", outgoingBatch.size(), GetAccountId());
     // }
 }
+
+// ============================================================================
+// DEFERRED PACKET SYSTEM - Main Thread Processing for Race Condition Prevention
+// ============================================================================
+
+void BotSession::QueueDeferredPacket(std::unique_ptr<WorldPacket> packet)
+{
+    if (!packet)
+        return;
+
+    // Log BEFORE moving (packet will be invalid after move)
+    OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
+
+    std::lock_guard<std::mutex> lock(_deferredPacketMutex);
+    _deferredPackets.emplace(std::move(packet));
+
+    TC_LOG_TRACE("playerbot.packets.deferred",
+        "Bot {} queued packet opcode {} for main thread processing",
+        GetPlayerName(), static_cast<uint32>(opcode));
+}
+
+uint32 BotSession::ProcessDeferredPackets()
+{
+    // CRITICAL: This must ONLY be called from World::UpdateSessions() on main thread!
+    // Processing deferred packets on worker threads defeats the entire purpose.
+
+    uint32 processed = 0;
+    constexpr uint32 MAX_DEFERRED_PACKETS_PER_UPDATE = 50; // Prevent main thread starvation
+
+    while (processed < MAX_DEFERRED_PACKETS_PER_UPDATE)
+    {
+        std::unique_ptr<WorldPacket> packet;
+
+        // Quick lock to extract one packet
+        {
+            std::lock_guard<std::mutex> lock(_deferredPacketMutex);
+            if (_deferredPackets.empty())
+                break;
+
+            packet = std::move(_deferredPackets.front());
+            _deferredPackets.pop();
+        }
+
+        // Process packet outside lock (avoid holding mutex during execution)
+        try
+        {
+            OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
+            ClientOpcodeHandler const* opHandle = opcodeTable[opcode];
+
+            TC_LOG_TRACE("playerbot.packets.deferred",
+                "Bot {} processing deferred packet opcode {} ({}) on main thread",
+                GetPlayerName(),
+                static_cast<uint32>(opcode),
+                opHandle->Name);
+
+            // Process based on opcode status (same logic as ProcessBotPackets)
+            switch (opHandle->Status)
+            {
+                case STATUS_LOGGEDIN:
+                {
+                    Player* player = GetPlayer();
+                    if (!player)
+                    {
+                        TC_LOG_WARN("playerbot.packets.deferred",
+                            "Bot {} deferred packet {} but player is nullptr",
+                            GetPlayerName(), opHandle->Name);
+                        break;
+                    }
+
+                    if (!player->IsInWorld())
+                    {
+                        TC_LOG_WARN("playerbot.packets.deferred",
+                            "Bot {} deferred packet {} but player not in world",
+                            GetPlayerName(), opHandle->Name);
+                        break;
+                    }
+
+                    // Execute opcode handler on main thread (thread-safe with Map::Update)
+                    opHandle->Call(this, *packet);
+
+                    TC_LOG_DEBUG("playerbot.packets.deferred",
+                        "✅ Bot {} executed deferred opcode {} ({}) on main thread",
+                        GetPlayerName(),
+                        opHandle->Name,
+                        static_cast<uint32>(opcode));
+                    break;
+                }
+
+                case STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT:
+                case STATUS_TRANSFER:
+                case STATUS_AUTHED:
+                {
+                    opHandle->Call(this, *packet);
+                    break;
+                }
+
+                case STATUS_NEVER:
+                case STATUS_UNHANDLED:
+                case STATUS_IGNORED:
+                default:
+                {
+                    TC_LOG_ERROR("playerbot.packets.deferred",
+                        "❌ Bot {} deferred packet has invalid status: {} (opcode {})",
+                        GetPlayerName(),
+                        static_cast<uint32>(opHandle->Status),
+                        opHandle->Name);
+                    break;
+                }
+            }
+
+            processed++;
+        }
+        catch (std::exception const& ex)
+        {
+            TC_LOG_ERROR("playerbot.packets.deferred",
+                "Exception processing deferred packet for bot {}: {}",
+                GetPlayerName(), ex.what());
+        }
+        catch (...)
+        {
+            TC_LOG_ERROR("playerbot.packets.deferred",
+                "Unknown exception processing deferred packet for bot {}",
+                GetPlayerName());
+        }
+    }
+
+    if (processed > 0)
+    {
+        TC_LOG_DEBUG("playerbot.packets.deferred",
+            "Bot {} processed {} deferred packets on main thread",
+            GetPlayerName(), processed);
+    }
+
+    return processed;
+}
+
+bool BotSession::HasDeferredPackets() const
+{
+    std::lock_guard<std::mutex> lock(_deferredPacketMutex);
+    return !_deferredPackets.empty();
+}
+
+// ============================================================================
 
 bool BotSession::LoginCharacter(ObjectGuid characterGuid)
 {

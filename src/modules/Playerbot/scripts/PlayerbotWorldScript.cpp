@@ -220,6 +220,19 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
         try
         {
             Playerbot::sBotWorldSessionMgr->UpdateSessions(diff);
+
+            // CRITICAL FIX: Process deferred packets on main thread (spell 49416 crash fix)
+            // Bot worker threads classify packets - race-prone packets (spells, items, combat)
+            // are deferred here for serialization with Map::Update() to prevent aura race conditions
+            if (Playerbot::sBotWorldSessionMgr->IsEnabled())
+            {
+                uint32 processed = Playerbot::sBotWorldSessionMgr->ProcessAllDeferredPackets();
+                if (processed > 0 && shouldLog)
+                {
+                    TC_LOG_DEBUG("playerbot.packets.deferred",
+                        "PlayerbotWorldScript: Processed {} deferred packets on main thread", processed);
+                }
+            }
         }
         catch (std::exception const& e)
         {
