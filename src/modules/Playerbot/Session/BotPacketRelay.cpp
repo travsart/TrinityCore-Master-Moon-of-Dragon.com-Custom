@@ -99,6 +99,9 @@ void BotPacketRelay::Initialize()
     // Mark as initialized
     _initialized.store(true);
 
+    // RACE CONDITION FIX: Process any packets that were queued during initialization
+    ProcessDeferredPackets();
+
     TC_LOG_INFO("playerbot", "BotPacketRelay: Initialization complete. {} opcodes registered for relay.",
         _relayOpcodes.size());
 }
@@ -145,11 +148,20 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
         return;
     }
 
-    // Check initialization
+    // Check initialization - RACE CONDITION FIX: Queue packets until initialized
     if (!_initialized.load())
     {
-        _statistics.totalRelayErrors++;
-        TC_LOG_ERROR("playerbot", "BotPacketRelay::RelayToGroupMembers() called but system not initialized");
+        // Queue packet for delivery after initialization completes
+        std::lock_guard<std::recursive_mutex> lock(_deferredMutex);
+
+        // Create a copy of the packet (WorldPacket must be copied, not moved)
+        auto packetCopy = std::make_unique<WorldPacket>(*packet);
+
+        // Queue the deferred packet with timestamp
+        _deferredPackets.push({botSession, std::move(packetCopy), getMSTime()});
+
+        TC_LOG_DEBUG("playerbot", "BotPacketRelay: Queued packet (opcode {}) from bot {} for delivery after initialization",
+                     packet->GetOpcode(), botSession->GetPlayer() ? botSession->GetPlayer()->GetName() : "Unknown");
         return;
     }
 
@@ -708,6 +720,125 @@ char const* BotPacketRelay::GetPacketCategory(uint32 opcode)
 
         default:
             return "Unknown";
+    }
+}
+
+// ============================================================================
+// RACE CONDITION FIX: Deferred Packet Processing
+// ============================================================================
+
+void BotPacketRelay::ProcessDeferredPackets()
+{
+    std::lock_guard<std::recursive_mutex> lock(_deferredMutex);
+
+    if (_deferredPackets.empty())
+    {
+        TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - No deferred packets to process");
+        return;
+    }
+
+    uint32 processedCount = 0;
+    uint32 failedCount = 0;
+    uint32 oldestTimestamp = _deferredPackets.front().timestamp;
+    uint32 currentTime = getMSTime();
+
+    TC_LOG_INFO("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Processing {} queued packets (oldest queued {}ms ago)",
+                _deferredPackets.size(), currentTime - oldestTimestamp);
+
+    // Process all queued packets
+    while (!_deferredPackets.empty())
+    {
+        DeferredPacket& deferred = _deferredPackets.front();
+
+        // Validate bot session is still valid
+        if (!deferred.botSession || !deferred.packet)
+        {
+            TC_LOG_ERROR("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Invalid deferred packet (botSession={}, packet={})",
+                         deferred.botSession != nullptr, deferred.packet != nullptr);
+            failedCount++;
+            _deferredPackets.pop();
+            continue;
+        }
+
+        // Log packet details for debugging
+        if (IsDebugLoggingEnabled())
+        {
+            TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Replaying packet opcode {} from bot {} (queued {}ms ago)",
+                         deferred.packet->GetOpcode(),
+                         deferred.botSession->GetPlayer() ? deferred.botSession->GetPlayer()->GetName() : "Unknown",
+                         currentTime - deferred.timestamp);
+        }
+
+        // Replay the packet now that system is initialized
+        // Note: We don't call RelayToGroupMembers() directly to avoid re-checking initialization
+        // Instead, we duplicate the relay logic here (packet is already validated for relay)
+        Player* bot = deferred.botSession->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_WARN("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Bot player no longer exists for deferred packet");
+            failedCount++;
+            _deferredPackets.pop();
+            continue;
+        }
+
+        // Get human group members
+        std::vector<Player*> humanMembers = GetHumanGroupMembers(bot);
+        if (humanMembers.empty())
+        {
+            // Bot may have left group during initialization - not an error
+            if (IsDebugLoggingEnabled())
+            {
+                TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Bot {} no longer in group with humans",
+                             bot->GetName());
+            }
+            _deferredPackets.pop();
+            processedCount++;
+            continue;
+        }
+
+        // Send packet to each human group member
+        for (Player* human : humanMembers)
+        {
+            if (SendPacketToPlayer(human, deferred.packet.get()))
+            {
+                if (IsDebugLoggingEnabled())
+                {
+                    TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Sent deferred packet to {}",
+                                 human->GetName());
+                }
+            }
+            else
+            {
+                TC_LOG_WARN("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Failed to send deferred packet to {}",
+                            human->GetName());
+            }
+        }
+
+        // Update statistics
+        UpdateStatistics(deferred.packet->GetOpcode(), true);
+        _statistics.totalPacketsRelayed++;
+
+        // Log relay event
+        if (IsDebugLoggingEnabled())
+        {
+            LogRelayEvent(bot, deferred.packet.get(), humanMembers.size());
+        }
+
+        // Remove processed packet
+        _deferredPackets.pop();
+        processedCount++;
+    }
+
+    // Log summary
+    if (failedCount > 0)
+    {
+        TC_LOG_WARN("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Processed {} packets, {} failed",
+                    processedCount, failedCount);
+    }
+    else
+    {
+        TC_LOG_INFO("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Successfully processed {} deferred packets",
+                    processedCount);
     }
 }
 

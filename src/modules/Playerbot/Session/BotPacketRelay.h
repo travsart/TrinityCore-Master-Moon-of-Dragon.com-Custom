@@ -49,6 +49,7 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <queue>
 
 class Player;
 class Group;
@@ -364,6 +365,23 @@ private:
 
     // Debug logging
     static inline std::atomic<bool> _debugLogging{false};
+
+    // RACE CONDITION FIX: Deferred packet queue for early relay attempts
+    // Packets sent before Initialize() completes are queued here and processed after initialization
+    struct DeferredPacket
+    {
+        BotSession* botSession;
+        std::unique_ptr<WorldPacket> packet;
+        uint32 timestamp; // getMSTime() when queued
+    };
+    static inline std::queue<DeferredPacket> _deferredPackets;
+    static inline std::recursive_mutex _deferredMutex;
+
+    /**
+     * @brief Process deferred packets that were queued before initialization
+     * Called at end of Initialize() to replay queued packets
+     */
+    static void ProcessDeferredPackets();
 
     // Deleted constructors (static class)
     BotPacketRelay() = delete;
