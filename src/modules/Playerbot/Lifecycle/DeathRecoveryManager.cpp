@@ -988,131 +988,61 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
         return false;  // Try again next update after TrinityCore auto-release fires
     }
 
-    m_bot->BuildPlayerRepop();
+    // GHOST SPELL CRASH FIX: Queue CMSG_REPOP_REQUEST packet instead of calling BuildPlayerRepop() directly
+    // Direct call executes on bot worker thread → race condition with Map::Update() during Ghost aura application
+    // Packet-based approach defers to main thread via PacketDeferralClassifier (already includes CMSG_REPOP_REQUEST)
+    //
+    // HandleRepopRequest (MiscHandler.cpp:82-83) will execute on main thread:
+    //   1. BuildPlayerRepop() - Creates corpse + applies Ghost spell 8326
+    //   2. RepopAtGraveyard() - Teleports to graveyard
+    //
+    // This serializes Ghost spell application with Map::Update(), preventing SpellAuras.cpp:168 crash
+    WorldPacket* repopPacket = new WorldPacket(CMSG_REPOP_REQUEST, 1);
+    *repopPacket << uint8(0);  // CheckInstance = false (not in instance recovery)
+
+    m_bot->GetSession()->QueuePacket(repopPacket);
+
+    TC_LOG_WARN("playerbot.death",
+        "Bot {} queued CMSG_REPOP_REQUEST packet for main thread execution (Ghost spell crash fix)",
+        m_bot->GetName());
 
     // BOT AUTO-RESURRECTION DETECTION: Check if BotResurrectionScript auto-resurrected during BuildPlayerRepop()
-    // OnPlayerRepop hook fires at end of BuildPlayerRepop() and may call ResurrectPlayer() if bot is at corpse
-    // If successful, bot is already alive and we should exit death recovery immediately
-    // This prevents unnecessary Spirit Healer fallback when corpse resurrection succeeds
-    if (m_bot->IsAlive())
-    {
-        TC_LOG_INFO("playerbot.death",
-            "✅ Bot {} was auto-resurrected during BuildPlayerRepop() by BotResurrectionScript! "
-            "Health={}/{}, Mana={}/{}, Position=({:.2f}, {:.2f}, {:.2f})",
-            m_bot->GetName(),
-            m_bot->GetHealth(), m_bot->GetMaxHealth(),
-            m_bot->GetPower(POWER_MANA), m_bot->GetMaxPower(POWER_MANA),
-            m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ());
-
-        TransitionToState(DeathRecoveryState::NOT_DEAD, "Auto-resurrected at corpse successfully");
-        return true;  // Exit HandleReleasingSpirit(), death recovery complete
-    }
-
-    // SPELL EVENT CLEANUP: Clear all pending spell events to prevent duplicate aura application
-    // Issue: Spells cast before death are queued in the EventProcessor and can fire during corpse run
-    // This causes crashes when trying to reapply auras that weren't properly cleaned (e.g., quest auras like Fire Extinguisher)
-    // Solution: Clear all events immediately after BuildPlayerRepop() to ensure no stale spell events execute
-    // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
-    // No longer need to manually clear - KillAllEvents() will properly clean up spell mods
-    m_bot->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
-    TC_LOG_ERROR("playerbot.death", "🧹 Bot {} cleared all pending spell events to prevent duplicate aura application", m_bot->GetName());
-
-    // GHOST SPEED HANDLING:
-    // Ghost speed is handled by spell 8326 (Ghost aura) cast in BuildPlayerRepop()
-    // The Ghost spell applies SPELL_AURA_MOD_INCREASE_SPEED which increases base speed (7.0) by 50% = 10.5 yards/sec
+    // NOTE: With packet-based approach, BuildPlayerRepop() executes asynchronously on main thread
+    // We can't check IsAlive() immediately - the packet hasn't been processed yet
+    // Instead, we defer this check to next Update() cycle (see GHOST_DECIDING state handling)
+    // Old synchronous check removed:
+    // if (m_bot->IsAlive())
+    // {
+    //     TC_LOG_INFO("playerbot.death",
+    //         "✅ Bot {} was auto-resurrected during BuildPlayerRepop() by BotResurrectionScript! "
+    //         "Health={}/{}, Mana={}/{}, Position=({:.2f}, {:.2f}, {:.2f})",
+    //         m_bot->GetName(),
+    //         m_bot->GetHealth(), m_bot->GetMaxHealth(),
+    //         m_bot->GetPower(POWER_MANA), m_bot->GetMaxPower(POWER_MANA),
+    //         m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ());
     //
-    // REMOVED: m_bot->SetSpeed(MOVE_RUN, 1.5f);
-    // Originally added because bots were "instantly appearing at their corpse" (likely teleporting instead of running)
-    // However, SetSpeed(MOVE_RUN, 1.5f) sets ABSOLUTE speed to 1.5 yards/sec (not multiplier), making ghosts crawl
-    // Current approach: Let Ghost spell handle speed naturally
+    //     TransitionToState(DeathRecoveryState::NOT_DEAD, "Auto-resurrected at corpse successfully");
+    //     return true;  // Exit HandleReleasingSpirit(), death recovery complete
+    // }
+
+    // PACKET-BASED APPROACH: HandleRepopRequest will execute asynchronously on main thread
+    // The handler will call BuildPlayerRepop() + RepopAtGraveyard() in the correct sequence
+    // We transition to PENDING_TELEPORT_ACK state and let the next Update() cycle check the results
     //
-    // TODO: If bots start teleporting to corpse again, investigate proper fix:
-    //   - Option 1: Check if movement generator is being bypassed
-    //   - Option 2: Add delay/throttle to corpse proximity checks
-    //   - Option 3: Use SetSpeedRate() instead of SetSpeed() to multiply, not override
+    // NOTE: All the following logic (corpse checks, zone validation, RepopAtGraveyard() call, teleport ack)
+    // is now handled by HandleRepopRequest on the main thread. We can't execute it here because the
+    // packet hasn't been processed yet - everything is asynchronous now.
+    //
+    // The state machine will handle teleport ack when IsBeingTeleportedNear() becomes true after
+    // HandleRepopRequest completes (see PENDING_TELEPORT_ACK state in Update() method)
 
-    // ZONE VALIDATION: Verify that bot's location determination matches TrinityCore's method
-    // GetClosestGraveyard() internally calls sTerrainMgr.GetZoneId() using PhaseShift + coordinates
-    // Let's verify this matches the bot's cached zone
-    uint32 botCachedZoneId = m_bot->GetZoneId();
-    uint32 botMapId = m_bot->GetMapId();
-    uint32 terrainZoneId = sTerrainMgr.GetZoneId(m_bot->GetPhaseShift(), botMapId,
-                                                  posBeforeRepop.GetPositionX(),
-                                                  posBeforeRepop.GetPositionY(),
-                                                  posBeforeRepop.GetPositionZ());
+    TransitionToState(DeathRecoveryState::PENDING_TELEPORT_ACK,
+        "Waiting for CMSG_REPOP_REQUEST to execute on main thread");
 
-    TC_LOG_ERROR("playerbot.death", "🗺️ Bot {} ZONE VALIDATION: Cached={} TerrainMgr={} Match={}",
-        m_bot->GetName(), botCachedZoneId, terrainZoneId, (botCachedZoneId == terrainZoneId ? "YES" : "NO"));
+    TC_LOG_WARN("playerbot.death",
+        "✅ Bot {} queued spirit release - waiting for main thread execution (async packet-based approach)",
+        m_bot->GetName());
 
-    if (botCachedZoneId != terrainZoneId)
-    {
-        TC_LOG_ERROR("playerbot.death", "⚠️ WARNING: Bot {}'s cached zone {} doesn't match TerrainMgr calculated zone {}!",
-            m_bot->GetName(), botCachedZoneId, terrainZoneId);
-    }
-
-    // DEBUG: Log corpse position after BuildPlayerRepop
-    Corpse* corpse = m_bot->GetCorpse();
-    if (corpse)
-    {
-        TC_LOG_ERROR("playerbot.death", "⚰️ Bot {} corpse created at: Map={} Pos=({:.2f}, {:.2f}, {:.2f})",
-            m_bot->GetName(), corpse->GetMapId(),
-            corpse->GetPositionX(), corpse->GetPositionY(), corpse->GetPositionZ());
-    }
-    else
-    {
-        TC_LOG_ERROR("playerbot.death", "❌ Bot {} has NO CORPSE after BuildPlayerRepop!", m_bot->GetName());
-    }
-
-    // DEBUG: Log position BEFORE graveyard teleport
-    Position posBeforeTeleport = m_bot->GetPosition();
-    TC_LOG_ERROR("playerbot.death", "🔍 Bot {} BEFORE graveyard teleport: Pos=({:.2f}, {:.2f}, {:.2f})",
-        m_bot->GetName(),
-        posBeforeTeleport.GetPositionX(), posBeforeTeleport.GetPositionY(), posBeforeTeleport.GetPositionZ());
-
-    // BOT-SPECIFIC GRAVEYARD TELEPORT: Use TrinityCore's RepopAtGraveyard()
-    // This handles graveyard lookup (battlefield, instance, normal), transport scenarios, and sends SMSG_DEATH_RELEASE_LOC
-    // It calls TeleportTo() internally, which queues the teleport and sets IsBeingTeleportedNear() for same-map teleports
-    TC_LOG_ERROR("playerbot.death", "📍 Bot {} calling RepopAtGraveyard() (handles graveyard lookup + teleport)", m_bot->GetName());
-    m_bot->RepopAtGraveyard();
-
-    // BOT-SPECIFIC TELEPORT COMPLETION: For same-map teleports, TrinityCore waits for client CMSG_MOVE_TELEPORT_ACK
-    // Bots don't have real clients, so we need to call HandleMoveTeleportAck() to complete the teleport
-    // SPELL MOD CRASH FIX: DEFER this call by 100ms to prevent Spell.cpp:603 crash
-    // Immediate call causes m_spellModTakingSpell corruption as Ghost spell (8326) hasn't stabilized yet
-    if (m_bot->IsBeingTeleportedNear())
-    {
-        TC_LOG_ERROR("playerbot.death", "⏸️  Bot {} DEFERRING HandleMoveTeleportAck() by 100ms to prevent spell mod crash",
-            m_bot->GetName());
-
-        // Set flag and timestamp for deferred processing
-        m_needsTeleportAck = true;
-        m_teleportAckTime = std::chrono::steady_clock::now();
-
-        // Transition to PENDING_TELEPORT_ACK state
-        // HandlePendingTeleportAck() will complete the teleport ack after 100ms delay
-        TransitionToState(DeathRecoveryState::PENDING_TELEPORT_ACK,
-            "Deferring teleport ack to prevent Spell.cpp:603 crash");
-
-        TC_LOG_ERROR("playerbot.death", "✅ Bot {} teleport ack deferred - will complete in 100ms", m_bot->GetName());
-        return true; // Successfully initiated deferred teleport ack
-    }
-    else
-    {
-        // No teleport needed (cross-map teleport completed immediately)
-        // Transition directly to GHOST_DECIDING state
-        TC_LOG_ERROR("playerbot.death", "✅ Bot {} no teleport ack needed (cross-map or instant teleport)", m_bot->GetName());
-        TransitionToState(DeathRecoveryState::GHOST_DECIDING, "No teleport ack needed, proceeding to decision");
-    }
-
-    // DEBUG: Log position AFTER graveyard teleport
-    Position posAfterTeleport = m_bot->GetPosition();
-    TC_LOG_ERROR("playerbot.death", "🔍 Bot {} AFTER graveyard teleport: Pos=({:.2f}, {:.2f}, {:.2f}) Distance moved={:.2f}y",
-        m_bot->GetName(),
-        posAfterTeleport.GetPositionX(), posAfterTeleport.GetPositionY(), posAfterTeleport.GetPositionZ(),
-        posBeforeTeleport.GetExactDist2d(&posAfterTeleport));
-
-    TC_LOG_ERROR("playerbot.death", "✅ Bot {} released spirit (corpse created, teleported to graveyard). IsGhost={}",
-        m_bot->GetName(), IsGhost());
     return true;
 }
 
