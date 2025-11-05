@@ -1470,8 +1470,10 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         // DIAGNOSTIC: Log phase information after SendInitialPacketsAfterAddToMap
         PhaseShift const& phaseShift = pCurrChar->GetPhaseShift();
-        std::string botPhases = "";
-        for (auto const& phaseRef : phaseShift.GetPhases())
+        std::string botPhases;
+        auto const& phases = phaseShift.GetPhases();
+        botPhases.reserve(phases.size() * 8); // Pre-allocate approximate size
+        for (auto const& phaseRef : phases)
         {
             if (!botPhases.empty()) botPhases += ",";
             botPhases += std::to_string(phaseRef.Id);

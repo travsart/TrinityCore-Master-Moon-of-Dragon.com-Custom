@@ -113,8 +113,9 @@ bool PlayerbotMigrationMgr::Initialize()
 bool PlayerbotMigrationMgr::CreateMigrationTable()
 {
     // Create migration table only if it doesn't exist (don't drop existing data!)
-    std::string createTableSQL = R"(
-        CREATE TABLE IF NOT EXISTS `)" + std::string(MIGRATION_TABLE) + R"(` (
+    std::string createTableSQL = "\n        CREATE TABLE IF NOT EXISTS `";
+    createTableSQL += MIGRATION_TABLE;
+    createTableSQL += R"(` (
             `version` VARCHAR(20) NOT NULL,
             `description` VARCHAR(255) NOT NULL,
             `applied_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -131,7 +132,9 @@ bool PlayerbotMigrationMgr::CreateMigrationTable()
 
 bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
 {
-    std::string query = "SELECT version, description, checksum, execution_time_ms FROM " + std::string(MIGRATION_TABLE) + " ORDER BY applied_at";
+    std::string query = "SELECT version, description, checksum, execution_time_ms FROM ";
+    query += MIGRATION_TABLE;
+    query += " ORDER BY applied_at";
 
     QueryResult result = sPlayerbotDatabase->Query(query);
     if (!result)

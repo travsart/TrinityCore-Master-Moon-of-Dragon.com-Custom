@@ -307,7 +307,12 @@ namespace Playerbot
         m_lastInteractionTime[bot->GetGUID()] = std::chrono::steady_clock::now();
 
         if (m_config.logInteractions)
-            LogInteraction(bot, "Starting " + std::string(InteractionTypeToString(type)) + " interaction");
+        {
+            std::string msg = "Starting ";
+            msg += InteractionTypeToString(type);
+            msg += " interaction";
+            LogInteraction(bot, msg);
+        }
 
         return InteractionResult::Pending;
     }
@@ -769,9 +774,11 @@ namespace Playerbot
 
         if (m_config.logInteractions)
         {
-            LogInteraction(bot, "State transition: " +
-                         std::to_string(static_cast<int>(context->state)) + " -> " +
-                         std::to_string(static_cast<int>(newState)));
+            std::string msg = "State transition: ";
+            msg += std::to_string(static_cast<int>(context->state));
+            msg += " -> ";
+            msg += std::to_string(static_cast<int>(newState));
+            LogInteraction(bot, msg);
         }
 
         context->state = newState;
@@ -857,9 +864,11 @@ namespace Playerbot
 
         if (m_config.logInteractions)
         {
-            LogInteraction(bot, "Attempting recovery, attempt " +
-                         std::to_string(context->attemptCount + 1) + "/" +
-                         std::to_string(context->maxAttempts));
+            std::string msg = "Attempting recovery, attempt ";
+            msg += std::to_string(context->attemptCount + 1);
+            msg += "/";
+            msg += std::to_string(context->maxAttempts);
+            LogInteraction(bot, msg);
         }
 
         return true;

@@ -792,7 +792,7 @@ void BotAI::UpdateStrategies(uint32 diff)
 
     if (isTestBot)
     {
-        std::string botName = _bot->GetName();
+        std::string const& botName = _bot->GetName();
         strategyLogAccumulators[botName] += diff;
         if (strategyLogAccumulators[botName] >= 50000)
         {
@@ -1506,7 +1506,7 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         return;
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
-    std::string name = strategy->GetName();
+    std::string const& name = strategy->GetName();
     Strategy* strategyPtr = strategy.get();
     _strategies[name] = std::move(strategy);
 

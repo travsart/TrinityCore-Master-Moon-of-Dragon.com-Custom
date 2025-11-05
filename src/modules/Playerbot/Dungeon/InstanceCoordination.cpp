@@ -345,7 +345,8 @@ void InstanceCoordination::PrepareForEncounter(Group* group, uint32 encounterId)
     CoordinateGroupMovement(group, encounter.encounterLocation);
 
     // Broadcast encounter information
-    std::string encounterInfo = "Preparing for encounter: " + encounter.encounterName;
+    std::string encounterInfo = "Preparing for encounter: ";
+    encounterInfo += encounter.encounterName;
     BroadcastInstanceInformation(group, encounterInfo);
 
     // Update progress
@@ -767,7 +768,9 @@ void InstanceCoordination::ResolveeLootConflicts(Group* group, uint32 itemId)
         groupId, itemId);
 
     // Use decision-making system to resolve conflicts
-    HandleGroupDecisionMaking(group, "loot_priority_" + std::to_string(itemId));
+    std::string decision = "loot_priority_";
+    decision += std::to_string(itemId);
+    HandleGroupDecisionMaking(group, decision);
 }
 
 // ============================================================================

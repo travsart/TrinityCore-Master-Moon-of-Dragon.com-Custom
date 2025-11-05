@@ -155,7 +155,10 @@ void BotPerformanceMonitor::RecordDatabaseQueryTime(uint32_t botGuid, uint64_t m
 
 void BotPerformanceMonitor::RecordSpellCastTime(uint32_t botGuid, uint64_t microseconds, uint32_t spellId)
 {
-    std::string context = "SpellId: " + std::to_string(spellId);
+    std::string context;
+    context.reserve(32); // Pre-allocate reasonable size
+    context = "SpellId: ";
+    context += std::to_string(spellId);
     RecordMetric(MetricType::SPELL_CAST_TIME, microseconds, botGuid, context);
 }
 
@@ -228,10 +231,18 @@ void BotPerformanceMonitor::CheckPerformanceThresholds(const PerformanceMetric& 
         auto thresholdIt = thresholds.find(level);
         if (thresholdIt != thresholds.end() && metric.value >= thresholdIt->second)
         {
-            std::string message = "Performance threshold exceeded: " +
-                                GetMetricTypeName(metric.type) + " = " + std::to_string(metric.value);
+            std::string message;
+            message.reserve(128); // Pre-allocate for efficiency
+            message = "Performance threshold exceeded: ";
+            message += GetMetricTypeName(metric.type);
+            message += " = ";
+            message += std::to_string(metric.value);
             if (!metric.context.empty())
-                message += " (" + metric.context + ")";
+            {
+                message += " (";
+                message += metric.context;
+                message += ")";
+            }
 
             GenerateAlert(level, metric.type, metric.botGuid, metric.value, thresholdIt->second, message);
             break; // Only generate the highest severity alert

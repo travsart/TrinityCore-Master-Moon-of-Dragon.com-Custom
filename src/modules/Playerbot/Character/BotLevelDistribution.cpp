@@ -84,7 +84,11 @@ void BotLevelDistribution::LoadBrackets(TeamId faction, std::string const& prefi
 
     for (uint32 i = 1; i <= m_numBrackets; ++i)
     {
-        std::string rangeKey = prefix + ".Range" + std::to_string(i);
+        std::string rangeKey;
+        rangeKey.reserve(32);
+        rangeKey = prefix;
+        rangeKey += ".Range";
+        rangeKey += std::to_string(i);
 
         uint32 minLevel = sPlayerbotConfig->GetInt(rangeKey + ".Min", 0);
         uint32 maxLevel = sPlayerbotConfig->GetInt(rangeKey + ".Max", 0);
@@ -373,7 +377,10 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
         {
             maxDeviation = deviation;
             maxDevBracket = bracket.GetDeviation(stats.allianceBots);
-            maxDevName = "Alliance L" + std::to_string(bracket.minLevel) + "-" + std::to_string(bracket.maxLevel);
+            maxDevName = "Alliance L";
+            maxDevName += std::to_string(bracket.minLevel);
+            maxDevName += "-";
+            maxDevName += std::to_string(bracket.maxLevel);
         }
     }
 
@@ -389,7 +396,10 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
         {
             maxDeviation = deviation;
             maxDevBracket = bracket.GetDeviation(stats.hordeBots);
-            maxDevName = "Horde L" + std::to_string(bracket.minLevel) + "-" + std::to_string(bracket.maxLevel);
+            maxDevName = "Horde L";
+            maxDevName += std::to_string(bracket.minLevel);
+            maxDevName += "-";
+            maxDevName += std::to_string(bracket.maxLevel);
         }
     }
 

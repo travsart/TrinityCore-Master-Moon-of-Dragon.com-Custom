@@ -117,6 +117,44 @@ struct LoSCacheEntry
     }
 };
 
+// Optimized cache key structure (eliminates string allocations)
+struct LoSCacheKey
+{
+    uint64 sourceGuid;
+    uint64 targetGuid;
+    uint8 checkType;
+
+    LoSCacheKey(ObjectGuid source, ObjectGuid target, LoSCheckType type)
+        : sourceGuid(source.GetRawValue())
+        , targetGuid(target.GetRawValue())
+        , checkType(static_cast<uint8>(type))
+    {}
+
+    bool operator==(const LoSCacheKey& other) const
+    {
+        return sourceGuid == other.sourceGuid &&
+               targetGuid == other.targetGuid &&
+               checkType == other.checkType;
+    }
+};
+
+// Hash function for LoSCacheKey
+struct LoSCacheKeyHash
+{
+    std::size_t operator()(const LoSCacheKey& key) const noexcept
+    {
+        // FNV-1a hash algorithm for combining three values
+        std::size_t hash = 14695981039346656037ULL;
+        hash ^= key.sourceGuid;
+        hash *= 1099511628211ULL;
+        hash ^= key.targetGuid;
+        hash *= 1099511628211ULL;
+        hash ^= key.checkType;
+        hash *= 1099511628211ULL;
+        return hash;
+    }
+};
+
 // Line of sight context for checks
 struct LoSContext
 {
@@ -280,7 +318,6 @@ private:
     LoSCacheEntry* FindCacheEntry(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType);
     void AddCacheEntry(const LoSCacheEntry& entry);
     void CleanupCache();
-    std::string GenerateCacheKey(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType);
 
     // Utility methods
     float CalculateDistance3D(const Position& from, const Position& to);
@@ -307,8 +344,8 @@ private:
 private:
     Player* _bot;
 
-    // Cache system
-    std::unordered_map<std::string, LoSCacheEntry> _losCache;
+    // Cache system (using struct key eliminates string allocations)
+    std::unordered_map<LoSCacheKey, LoSCacheEntry, LoSCacheKeyHash> _losCache;
     uint32 _cacheDuration;
     uint32 _lastCacheCleanup;
 

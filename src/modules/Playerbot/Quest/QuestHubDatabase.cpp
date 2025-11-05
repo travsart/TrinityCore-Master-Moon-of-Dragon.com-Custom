@@ -439,7 +439,10 @@ namespace Playerbot
                 case 646: mapName = "Broken Isles (Dalaran)"; break;
                 case 1643: mapName = "Ardenweald"; break;
                 case 1220: mapName = "Broken Shore"; break;
-                default: mapName = "Map " + std::to_string(mapCounts[i].first); break;
+                default:
+                    mapName = "Map ";
+                    mapName += std::to_string(mapCounts[i].first);
+                    break;
             }
             TC_LOG_INFO("playerbot", "  {}: {} quest givers", mapName, mapCounts[i].second);
         }
@@ -674,7 +677,8 @@ namespace Playerbot
             hub.factionMask = 0x07; // All factions initially
 
             // Generate name (will be refined with zone data)
-            hub.name = "Quest Hub " + std::to_string(hub.hubId);
+            hub.name = "Quest Hub ";
+            hub.name += std::to_string(hub.hubId);
 
             _questHubs.push_back(std::move(hub));
         }
@@ -711,6 +715,8 @@ namespace Playerbot
 
             // Build IN clause for this batch
             std::string creatureList;
+            size_t batchSize = batchEnd - batchStart;
+            creatureList.reserve(batchSize * 8); // Pre-allocate approximate size
             for (size_t i = batchStart; i < batchEnd; ++i)
             {
                 if (i != batchStart)

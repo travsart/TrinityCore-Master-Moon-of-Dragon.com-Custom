@@ -255,7 +255,7 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
     catch (const std::exception& e)
     {
         result.success = false;
-        result.failureReason = "Exception during interrupt: " + std::string(e.what());
+        result.failureReason = std::string("Exception during interrupt: ") + e.what();
         TC_LOG_ERROR("playerbot.interrupt", "Exception in AttemptInterrupt for bot {}: {}", _bot->GetName(), e.what());
     }
 

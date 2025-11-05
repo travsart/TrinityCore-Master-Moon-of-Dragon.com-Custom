@@ -102,7 +102,7 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
     catch (const std::exception& e)
     {
         result.hasLineOfSight = false;
-        result.failureReason = "Exception during LoS check: " + std::string(e.what());
+        result.failureReason = std::string("Exception during LoS check: ") + e.what();
         TC_LOG_ERROR("playerbot.los", "Exception in CheckLineOfSight for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -676,7 +676,7 @@ bool LineOfSightManager::CheckWaterBlocking(const Position& from, const Position
 
 LoSCacheEntry* LineOfSightManager::FindCacheEntry(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType)
 {
-    std::string key = GenerateCacheKey(sourceGuid, targetGuid, checkType);
+    LoSCacheKey key(sourceGuid, targetGuid, checkType);
     auto it = _losCache.find(key);
     return (it != _losCache.end()) ? &it->second : nullptr;
 }
@@ -688,15 +688,8 @@ void LineOfSightManager::AddCacheEntry(const LoSCacheEntry& entry)
         ClearExpiredCacheEntries();
     }
 
-    std::string key = GenerateCacheKey(entry.sourceGuid, entry.targetGuid, entry.checkType);
+    LoSCacheKey key(entry.sourceGuid, entry.targetGuid, entry.checkType);
     _losCache[key] = entry;
-}
-
-std::string LineOfSightManager::GenerateCacheKey(ObjectGuid sourceGuid, ObjectGuid targetGuid, LoSCheckType checkType)
-{
-    return std::to_string(sourceGuid.GetRawValue()) + "_" +
-           std::to_string(targetGuid.GetRawValue()) + "_" +
-           std::to_string(static_cast<uint8>(checkType));
 }
 
 float LineOfSightManager::CalculateDistance3D(const Position& from, const Position& to)

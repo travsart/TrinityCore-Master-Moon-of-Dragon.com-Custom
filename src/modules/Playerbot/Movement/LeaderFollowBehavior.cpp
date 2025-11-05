@@ -339,7 +339,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
 
     if (isTestBot)
     {
-        std::string botName = bot->GetName();
+        std::string const& botName = bot->GetName();
         // Throttle by call count (every 1000 calls ~= 50s)
         followLogAccumulators[botName]++;
         if (followLogAccumulators[botName] >= 1000)

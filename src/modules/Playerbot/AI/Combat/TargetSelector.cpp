@@ -128,7 +128,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
     catch (const std::exception& e)
     {
         result.success = false;
-        result.failureReason = "Exception during target selection: " + std::string(e.what());
+        result.failureReason = std::string("Exception during target selection: ") + e.what();
         TC_LOG_ERROR("playerbot.target", "Exception in SelectBestTarget for bot {}: {}", _bot->GetName(), e.what());
     }
 

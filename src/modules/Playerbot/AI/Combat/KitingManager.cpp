@@ -252,7 +252,7 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
     catch (const std::exception& e)
     {
         result.success = false;
-        result.failureReason = "Exception during kiting execution: " + std::string(e.what());
+        result.failureReason = std::string("Exception during kiting execution: ") + e.what();
         TC_LOG_ERROR("playerbot.kiting", "Exception in ExecuteKiting for bot {}: {}", _bot->GetName(), e.what());
     }
 

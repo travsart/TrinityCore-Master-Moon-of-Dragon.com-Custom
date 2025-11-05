@@ -100,9 +100,11 @@ std::string BotCharacterCreator::GenerateDefaultBotName(uint8 race, uint8 gender
     std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
     std::uniform_int_distribution<> numberDist(1, 9999);
 
-    std::string name = prefixes[prefixDist(gen)] +
-                      suffixes[suffixDist(gen)] +
-                      std::to_string(numberDist(gen));
+    std::string name;
+    name.reserve(32); // Pre-allocate reasonable size for name
+    name = prefixes[prefixDist(gen)];
+    name += suffixes[suffixDist(gen)];
+    name += std::to_string(numberDist(gen));
 
     // Capitalize first letter
     if (!name.empty())
@@ -210,8 +212,9 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
     uint32 currentCount = 0;
     if (!CanCreateCharacter(accountId, currentCount))
     {
-        outErrorMsg = "Account has reached character limit (" +
-                     std::to_string(sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM)) + ")";
+        outErrorMsg = "Account has reached character limit (";
+        outErrorMsg += std::to_string(sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM));
+        outErrorMsg += ")";
         return CreateResult::REALM_LIMIT;
     }
 

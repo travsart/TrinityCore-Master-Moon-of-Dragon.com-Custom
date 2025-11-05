@@ -473,7 +473,8 @@ namespace Playerbot
             }
             catch (std::exception const& ex)
             {
-                errorMsg = std::string("Invalid value format: ") + ex.what();
+                errorMsg = "Invalid value format: ";
+                errorMsg += ex.what();
             }
         }, entry->defaultValue);
 
