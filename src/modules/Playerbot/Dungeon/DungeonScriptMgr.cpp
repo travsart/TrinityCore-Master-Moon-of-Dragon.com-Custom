@@ -88,18 +88,18 @@ void DungeonScriptMgr::RegisterScript(DungeonScript* script)
     uint32 mapId = script->GetMapId();
     char const* name = script->GetName();
 
-    // Check for duplicate registration
+    // Check for duplicate registration (unique_ptr auto-deletes old script)
     if (_mapScripts.count(mapId))
     {
         TC_LOG_WARN("playerbot", "DungeonScriptMgr: Script '{}' already registered for map {}, overwriting",
             name, mapId);
-        delete _mapScripts[mapId];
+        // No manual delete needed - unique_ptr will auto-delete when replaced
     }
 
-    // Register by map ID
-    _mapScripts[mapId] = script;
+    // Register by map ID (take ownership with unique_ptr)
+    _mapScripts[mapId] = std::unique_ptr<DungeonScript>(script);
 
-    // Register by name
+    // Register by name (non-owning raw pointer for lookup)
     _namedScripts[name] = script;
 
     _scriptCount++;
@@ -145,7 +145,7 @@ DungeonScript* DungeonScriptMgr::GetScriptForMap(uint32 mapId) const
     if (it != _mapScripts.end())
     {
         _scriptHits++;
-        return it->second;
+        return it->second.get();  // Return raw pointer from unique_ptr
     }
 
     _scriptMisses++;
