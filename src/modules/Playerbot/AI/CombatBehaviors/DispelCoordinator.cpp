@@ -821,15 +821,11 @@ bool DispelCoordinator::ExecuteDispel()
     // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_currentAssignment.target);
     Unit* target = nullptr;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-        return nullptr;
-    }
-
     if (snapshot && snapshot->IsAlive())
     {
-        // Get Unit* for aura checks (main thread operation)
+        // CRITICAL FIX: Actually assign the target pointer!
+        // BUG: Previous code retrieved snapshot but never assigned target variable
+        target = ObjectAccessor::GetUnit(*m_bot, m_currentAssignment.target);
     }
 
     if (!target || target->isDead())
@@ -942,15 +938,11 @@ bool DispelCoordinator::ExecutePurge()
     // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, bestTarget.enemyGuid);
     Unit* enemy = nullptr;
-    if (!enemy)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetName");
-        return nullptr;
-    }
-
     if (snapshot && snapshot->IsAlive())
     {
-        // Get Unit* for spell casting (main thread operation)
+        // CRITICAL FIX: Actually assign the enemy pointer!
+        // BUG: Previous code retrieved snapshot but never assigned enemy variable
+        enemy = ObjectAccessor::GetUnit(*m_bot, bestTarget.enemyGuid);
     }
 
     if (!enemy || enemy->isDead())
