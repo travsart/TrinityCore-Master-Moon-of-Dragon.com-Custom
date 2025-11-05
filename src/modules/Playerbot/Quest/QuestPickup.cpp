@@ -180,6 +180,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
         return;
     }
 {
@@ -202,6 +207,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
         HandleQuestPickupFailure(questId, bot, "Quest template not found");
         return false;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     // Check eligibility
     if (!bot->CanTakeQuest(quest, false))
@@ -210,6 +220,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return nullptr;
+                         }
                          return;
                      }
                      bot->GetName(), questId);
@@ -258,6 +273,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
     Map* map = bot->GetMap();
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return;
     }
@@ -275,6 +295,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
     }
 
     ObjectGuid questGiverObjectGuid;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 
     if (spatialGrid)
     {
@@ -303,6 +328,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     return nullptr;
                 }
                 spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 100.0f);
@@ -320,11 +350,21 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
 
     if (questGiverObjectGuid.IsEmpty())
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot.quest", "QuestPickup::PickupQuest: Quest giver {} not found in world", questGiverGuid);
         HandleQuestPickupFailure(questId, bot, "Quest giver not in world");
         return false;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // OPTION B LOCK-FREE: Queue ACCEPT_QUEST action for main thread execution
     if (!questGiverObjectGuid.IsEmpty())
     {
@@ -366,13 +406,28 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
         // action.questId = questId;
         // action.priority = 7;  // Quest pickup is important
         // action.queuedTime = getMSTime();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         // BotActionQueue::Instance()->Push(action);
 
         // Update metrics
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return 0;
+        }
         uint32 elapsedTime = getMSTimeDiff(startTime, getMSTime());
         UpdateQuestPickupStatistics(bot->GetGUID().GetCounter(), true, elapsedTime);
         NotifyQuestPickupSuccess(questId, bot);
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         TC_LOG_INFO("playerbot.quest",
             "Bot {} queued quest acceptance for quest {} from giver {}",
             bot->GetName(), questId, questGiverObjectGuid.ToString());
@@ -387,6 +442,11 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
 
 // Pick up quest from specific giver
 bool QuestPickup::PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     if (!bot || questGiverGuid == 0)
         return false;
@@ -397,6 +457,11 @@ bool QuestPickup::PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint3
 
     // Otherwise, get all available quests from this giver
     std::vector<uint32> availableQuests = GetAvailableQuestsFromGiver(questGiverGuid, bot);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return 0;
+}
 
     if (availableQuests.empty())
     {
@@ -427,6 +492,11 @@ void QuestPickup::PickupAvailableQuests(Player* bot)
     QuestPickupFilter filter = GetQuestPickupFilter(bot->GetGUID().GetCounter());
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
         return nullptr;
     }
@@ -440,12 +510,27 @@ void QuestPickup::PickupAvailableQuests(Player* bot)
         return nullptr;
     }
     std::vector<uint32> prioritizedQuests = PrioritizeQuests(filteredQuests, bot, strategy);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
 
     // Pick up quests until quest log is full
     uint32 pickedUp = 0;
     for (uint32 questId : prioritizedQuests)
     {
         if (bot->FindQuestSlot(0) >= MAX_QUEST_LOG_SIZE)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -462,6 +547,11 @@ void QuestPickup::PickupAvailableQuests(Player* bot)
 
 // Pick up quests in specific area
 void QuestPickup::PickupQuestsInArea(Player* bot, float radius)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 {
     if (!bot)
         return;
@@ -516,6 +606,11 @@ std::vector<uint32> QuestPickup::DiscoverNearbyQuests(Player* bot, float scanRad
 
 // Scan for quest givers using Cell visitor
 std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float scanRadius)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
 {
     if (!bot)
         return {};
@@ -548,6 +643,11 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     {
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!spatialGrid)
             return {};
     }
@@ -599,6 +699,11 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
                                      *it);
                     else
                         TC_LOG_DEBUG("playerbot.quest", "      ❌ Quest {} - INVALID (no template)", *it);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                    return nullptr;
+                }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -621,6 +726,11 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
 
     for (auto const& snapshot : nearbyGameObjects)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
+            return nullptr;
+        }
         if (!snapshot.isSpawned || !snapshot.isQuestObject)
             continue;
 
@@ -717,6 +827,11 @@ QuestEligibility QuestPickup::CheckQuestEligibility(uint32 questId, Player* bot)
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
         return;
     }
     uint32 questMaxLevel = quest->GetMaxLevel();
@@ -766,6 +881,11 @@ bool QuestPickup::CanAcceptQuest(uint32 questId, Player* bot)
 
 // Check if bot meets quest requirements
 bool QuestPickup::MeetsQuestRequirements(uint32 questId, Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     return CheckQuestEligibility(questId, bot) == QuestEligibility::ELIGIBLE;
 }
@@ -806,12 +926,22 @@ std::vector<std::string> QuestPickup::GetEligibilityIssues(uint32 questId, Playe
         case QuestEligibility::FACTION_LOCKED:
             issues.push_back("Faction requirement not met");
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         case QuestEligibility::CLASS_LOCKED:
             issues.push_back("Wrong class for this quest");
             break;
         case QuestEligibility::RACE_LOCKED:
             issues.push_back("Wrong race for this quest");
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         case QuestEligibility::SKILL_REQUIRED:
             issues.push_back("Required skill not met");
             break;
@@ -824,6 +954,11 @@ std::vector<std::string> QuestPickup::GetEligibilityIssues(uint32 questId, Playe
         default:
             break;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
 
     return issues;
 }
@@ -837,6 +972,11 @@ std::vector<uint32> QuestPickup::FilterQuests(const std::vector<uint32>& questId
         return filteredQuests;
 
     uint32 botLevel = bot->GetLevel();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
@@ -859,6 +999,11 @@ std::vector<uint32> QuestPickup::FilterQuests(const std::vector<uint32>& questId
         {
             if (botLevel < filter.minLevel || botLevel > filter.maxLevel)
                 continue;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
             uint32 levelDiff = (botLevel > questMaxLevel) ? (botLevel - questMaxLevel) : 0;
             if (levelDiff > filter.maxLevelDifference && !filter.acceptGrayQuests)
@@ -917,6 +1062,11 @@ std::vector<uint32> QuestPickup::PrioritizeQuests(const std::vector<uint32>& que
     std::vector<uint32> prioritizedQuests;
     for (auto const& [questId, priority] : questPriorities)
         prioritizedQuests.push_back(questId);
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
 
     return prioritizedQuests;
 }
@@ -1019,6 +1169,11 @@ bool QuestPickup::InteractWithQuestGiver(Player* bot, uint32 questGiverGuid)
     for (uint32 questId : availableQuests)
     {
         if (bot->FindQuestSlot(0) >= MAX_QUEST_LOG_SIZE)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
             break;
 
         PickupQuest(questId, bot, questGiverGuid);
@@ -1105,6 +1260,11 @@ bool QuestPickup::ShareQuestPickup(Group* group, uint32 questId, Player* initiat
 
     ShareQuestWithGroup(group, questId, initiator);
     return true;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 }
 
 // Synchronize group quest progress
@@ -1226,6 +1386,11 @@ void QuestPickup::ScheduleQuestPickup(const QuestPickupRequest& request)
     std::lock_guard<std::recursive_mutex> lock(_pickupMutex);
     _botPickupQueues[request.botGuid].push_back(request);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+        return;
+    }
     TC_LOG_DEBUG("playerbot.quest", "Scheduled quest {} pickup for bot {}",
                  request.questId, request.botGuid);
 }
@@ -1386,6 +1551,11 @@ void QuestPickup::OptimizeQuestPickupRoute(Player* bot, const std::vector<uint32
 
 // Should bot move to next zone
 bool QuestPickup::ShouldMoveToNextZone(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 {
     if (!bot)
         return false;
@@ -1457,6 +1627,11 @@ QuestPickupFilter QuestPickup::GetQuestPickupFilter(uint32 botGuid)
 
     auto it = _botFilters.find(botGuid);
     if (it != _botFilters.end())
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
         return it->second;
 
     return QuestPickupFilter();
@@ -1543,10 +1718,20 @@ void QuestPickup::CleanupExpiredRequests()
 void QuestPickup::ValidateQuestStates()
 {
     // Validate quest states are consistent
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     TC_LOG_DEBUG("playerbot.quest", "Validating quest states");
 }
 
 // Performance optimization
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 void QuestPickup::OptimizeQuestPickupPerformance()
 {
     CacheFrequentlyAccessedQuests();
@@ -1554,6 +1739,16 @@ void QuestPickup::OptimizeQuestPickupPerformance()
 }
 
 void QuestPickup::PreloadQuestData(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1574,11 +1769,21 @@ void QuestPickup::CacheFrequentlyAccessedQuests()
 }
 
 void QuestPickup::UpdateQuestPickupStatistics(uint32 botGuid, bool wasSuccessful, uint32 timeSpent)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 {
     std::lock_guard<std::recursive_mutex> lock(_pickupMutex);
 
     // Update bot metrics
     auto& botMetrics = _botMetrics[botGuid];
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+            return nullptr;
+        }
     if (wasSuccessful)
     {
         botMetrics.successfulPickups++;
@@ -1600,6 +1805,16 @@ void QuestPickup::UpdateQuestPickupStatistics(uint32 botGuid, bool wasSuccessful
     // Update efficiency
     float successRate = botMetrics.GetSuccessRate();
     botMetrics.questPickupEfficiency = successRate;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 }
 
 // Helper functions
@@ -1621,6 +1836,11 @@ bool QuestPickup::ValidateQuestGiver(uint32 questGiverGuid)
 }
 
 float QuestPickup::CalculateQuestValue(uint32 questId, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
 {
     if (!bot)
         return 0.0f;
@@ -1654,6 +1874,16 @@ float QuestPickup::CalculateQuestValue(uint32 questId, Player* bot)
     if (questMaxLevel > 0)
     {
         int32 levelDiff = static_cast<int32>(botLevel) - static_cast<int32>(questMaxLevel);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
         if (levelDiff > 5)
             value *= GRAY_QUEST_VALUE_MULTIPLIER;
     }
@@ -1721,6 +1951,16 @@ void QuestPickup::UpdateQuestGiverInteraction(uint32 questGiverGuid, Player* bot
 }
 
 void QuestPickup::HandleQuestPickupFailure(uint32 questId, Player* bot, const std::string& reason)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1733,6 +1973,11 @@ void QuestPickup::HandleQuestPickupFailure(uint32 questId, Player* bot, const st
     if (bot)
     {
         uint32 botGuid = bot->GetGUID().GetCounter();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -1755,6 +2000,11 @@ void QuestPickup::NotifyQuestPickupSuccess(uint32 questId, Player* bot)
                 bot ? bot->GetName() : "unknown", questId);
 }
 
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return nullptr;
+}
 // Strategy implementation functions
 void QuestPickup::ExecuteAcceptAllStrategy(Player* bot)
 {

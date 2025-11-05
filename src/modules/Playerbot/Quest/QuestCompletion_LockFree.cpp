@@ -52,6 +52,16 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return nullptr;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -81,6 +91,11 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
 
         // Check creature entry matches quest target
         if (snapshot.entry != objective.targetId)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             continue;
 
         // Check if hostile to bot
@@ -92,6 +107,11 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -110,11 +130,31 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
     {
         // Check if in combat range
         if (minDistance <= bot->GetAttackDistance())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         {
             // Queue kill action for main thread
             BotAction action;
             action.type = BotActionType::KILL_QUEST_TARGET;
             action.botGuid = bot->GetGUID();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -158,6 +198,11 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                     return nullptr;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                    return nullptr;
+                }
                 bot->GetGUID(), moveTarget, getMSTime()
             );
             moveAction.priority = 7;  // Movement for quest is moderately important
@@ -169,6 +214,11 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return nullptr;
+                    }
                     return nullptr;
                 }
                 bot->GetName().c_str(), minDistance);
@@ -188,6 +238,11 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
 /**
  * Lock-Free Implementation of HandleTalkToNpcObjective
  * Uses spatial grid snapshots and action queuing
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+     return;
+ }
  */
 void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObjectiveData& objective)
 {
@@ -199,6 +254,16 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
         return;
 
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -224,10 +289,20 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
     ObjectGuid npcGuid = ObjectGuid::Empty;
     float minDistance = searchRange + 1.0f;
     Position npcPosition;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 
     for (auto const& snapshot : creatures)
     {
         // Check if creature is the quest NPC
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (snapshot.entry != objective.targetId)
             continue;
 
@@ -236,6 +311,11 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
 
         // Check if NPC is accessible (not in combat, not hostile)
         if (snapshot.isInCombat && snapshot.threatListSize > 0)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -260,6 +340,16 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
             BotAction action;
             action.type = BotActionType::TALK_TO_QUEST_NPC;
             action.botGuid = bot->GetGUID();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -288,6 +378,11 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
         else
         {
             // Need to move closer first
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             Position targetPos = CalculateApproachPosition(
                 if (!bot)
                 {
@@ -304,6 +399,11 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
                     return nullptr;
                 }
                 bot->GetGUID(), targetPos, getMSTime()
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             );
             moveAction.priority = 6;
 
@@ -316,6 +416,11 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 bot->GetName().c_str(), minDistance);
         }
     }
@@ -323,10 +428,20 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
     {
         // NPC not found, navigate to known location if available
         if (objective.targetLocation.GetPositionX() != 0)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
         {
             NavigateToObjective_LockFree(bot, objective);
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 }
 
 /**
@@ -334,6 +449,11 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
  * Uses spatial grid snapshots for GameObjects
  */
 void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestObjectiveData& objective)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 {
     if (!bot)
         return;
@@ -342,6 +462,11 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
         return;
 
     Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -371,6 +496,11 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
     for (auto const& snapshot : objects)
     {
         // Check if object matches quest requirements
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         if (snapshot.entry != objective.targetId)
             continue;
 
@@ -379,6 +509,16 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -400,6 +540,11 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
             BotAction action;
             action.type = BotActionType::INTERACT_QUEST_OBJECT;
             action.botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -429,6 +574,11 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
                 bot->GetName().c_str(), objective.questId,
                 objectGuid.ToString().c_str());
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         else
         {
             // Move closer to object
@@ -455,10 +605,20 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return;
+                }
                 bot->GetName().c_str(), minDistance);
         }
     }
     else
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     {
         // Object not found, navigate to known location
         if (objective.targetLocation.GetPositionX() != 0)
@@ -478,6 +638,16 @@ void QuestCompletion::HandleEscortObjective_LockFree(Player* bot, QuestObjective
         return;
 
     Map* map = bot->GetMap();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");

@@ -98,6 +98,16 @@ namespace Playerbot
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
                     return;
                 }
             {
@@ -193,6 +203,11 @@ namespace Playerbot
                         TC_LOG_INFO("playerbot.test", "✅ Target successfully blacklisted");
                     }
                     else
+                    if (!newTarget)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+                        return nullptr;
+                    }
                     {
                         TC_LOG_ERROR("playerbot.test", "❌ Blacklist add failed");
                     }

@@ -11,6 +11,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         // Ensure we have a valid player
         if (!bot)
@@ -77,12 +82,27 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
 
                 // ========================================================================
                 // CRITICAL FIX FOR ISSUE #1: Remove old group check
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 // ========================================================================
 
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
                 // OLD BROKEN CODE (lines 944-960) - REMOVED:
                 // if (Player* player = GetPlayer())
                 // {
                 //     Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
@@ -107,6 +127,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
                 //         if (BotAI* ai = GetAI())
                 //         {
                 //             TC_LOG_ERROR("module.playerbot.session", "About to call OnGroupJoined with group={}", (void*)group);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
                 //             ai->OnGroupJoined(group);  // TOO EARLY! Bot not IsInWorld() yet!
                 //         }
                 //     }

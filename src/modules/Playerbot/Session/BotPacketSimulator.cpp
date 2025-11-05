@@ -40,6 +40,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     }
 
     Player* bot = _session->GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -66,6 +71,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     WorldPackets::Auth::QueuedMessagesEnd queuedMessagesEnd(std::move(packet));
     queuedMessagesEnd.Read();  // Extract data from WorldPacket
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Call the handler directly (packet forging)
     _session->HandleQueuedMessagesEnd(queuedMessagesEnd);
 
@@ -91,6 +101,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
     if (!bot)
@@ -110,6 +125,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     // See: MovementHandler.cpp:843-848
     TC_LOG_DEBUG("module.playerbot.packet",
         "Bot {} simulating CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE (ticks: {})",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), _simulatedClientTime);
 
     // Create WorldPacket with CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE opcode
@@ -119,6 +139,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     // Construct packet structure from WorldPacket
     WorldPackets::Movement::MoveInitActiveMoverComplete moveInitComplete(std::move(packet));
     moveInitComplete.Read();  // Extract data from WorldPacket
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+    return;
+}
 
     // Call the handler directly (packet forging)
     _session->HandleMoveInitActiveMoverComplete(moveInitComplete);
@@ -136,9 +161,19 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
 void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
 {
     if (!_session)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return;
 
     Player* bot = _session->GetPlayer();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
@@ -163,6 +198,11 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
 
     // Call the handler directly
     _session->HandleTimeSyncResponse(timeSyncResponse);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     TC_LOG_TRACE("module.playerbot.packet",
         "Bot {} simulated CMSG_TIME_SYNC_RESPONSE (counter: {}, clientTime: {})",

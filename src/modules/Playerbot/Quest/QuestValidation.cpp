@@ -55,6 +55,16 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return nullptr;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (cached.cacheExpiry > getMSTime())
         {
             _metrics.cacheHits++;
@@ -159,6 +169,11 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
     if (valid && !ValidateQuestAvailability(questId, bot))
     {
         result.eligibility = QuestEligibility::NOT_AVAILABLE;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         result.errors.push_back("Quest not currently available");
         valid = false;
     }
@@ -191,6 +206,11 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
     _metrics.averageValidationTime.store(currentAvg * 0.9f + duration * 0.1f);
 
     return valid;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
 }
 
 QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player* bot)
@@ -251,6 +271,11 @@ QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player*
 }
 
 std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
 {
     std::vector<std::string> errors;
 
@@ -324,6 +349,11 @@ std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Pl
     if (!ValidateSkillRequirements(questId, bot))
         errors.push_back("Skill requirement not met");
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
     if (IsQuestLogFull(bot))
         errors.push_back("Quest log is full");
 
@@ -350,6 +380,11 @@ bool QuestValidation::ValidateLevelRequirements(uint32 questId, Player* bot)
         return false;
 
     uint32 botLevel = bot->GetLevel();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
@@ -370,6 +405,11 @@ bool QuestValidation::ValidateLevelRequirements(uint32 questId, Player* bot)
 }
 
 bool QuestValidation::ValidateClassRequirements(uint32 questId, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
+        return nullptr;
+    }
 {
     if (!bot)
         return false;
@@ -807,6 +847,11 @@ bool QuestValidation::ValidateQuestTimer(uint32 questId, Player* bot)
 // ========== Zone and Location Validation ==========
 
 bool QuestValidation::ValidateZoneRequirements(uint32 questId, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
 {
     if (!bot)
         return false;
@@ -826,6 +871,11 @@ bool QuestValidation::ValidateAreaRequirements(uint32 questId, Player* bot)
 }
 
 bool QuestValidation::IsInCorrectZone(uint32 questId, Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 {
     return ValidateZoneRequirements(questId, bot);
 }
@@ -855,6 +905,11 @@ bool QuestValidation::ValidateGroupRequirements(uint32 questId, Player* bot)
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            if (!sharer)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sharer in method GetGroup");
+                return nullptr;
+            }
             return nullptr;
         }
         if (!group || group->GetMembersCount() < quest->GetSuggestedPlayers())
@@ -922,6 +977,11 @@ bool QuestValidation::CanGroupMemberShareQuest(uint32 questId, Player* sharer, P
 bool QuestValidation::ValidateWithContext(ValidationContext& context)
 {
     if (!context.bot || context.questId == 0)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     {
         context.errors.push_back("Invalid validation context");
         return false;
@@ -1032,6 +1092,11 @@ void QuestValidation::InvalidateValidationCache(uint32 botGuid)
     {
         uint32_t cachedBot = it->first & 0xFFFFFFFF;
         if (cachedBot == botGuid)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
             it = _validationCache.erase(it);
         else
             ++it;
@@ -1086,6 +1151,11 @@ std::vector<uint32> QuestValidation::FilterValidQuests(const std::vector<uint32>
 }
 
 std::vector<uint32> QuestValidation::GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     return FilterValidQuests(candidates, bot);
 }

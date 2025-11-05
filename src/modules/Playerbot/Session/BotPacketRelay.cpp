@@ -189,6 +189,11 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
         return nullptr;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     if (!group)
     {
         // Bot not in group - nothing to relay
@@ -290,6 +295,11 @@ void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const*
 
     // Get bot player
     Player* bot = botSession->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
     if (!bot)
     {
         _statistics.totalRelayErrors++;
@@ -385,6 +395,11 @@ std::unordered_set<uint32> const& BotPacketRelay::GetRelayOpcodes()
 }
 
 // ============================================================================
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 // GROUP MEMBER ENUMERATION
 // ============================================================================
 
@@ -421,6 +436,11 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
 
         // Filter out the bot itself (redundant check, but safe)
         if (member == bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return nullptr;
+            }
             continue;
 
         humanPlayers.push_back(member);
@@ -446,6 +466,11 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
         return allPlayers;
 
     // Reserve space for typical group size
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return;
+    }
     allPlayers.reserve(5);
 
     // Iterate through all group members using TrinityCore 11.2 API
@@ -461,6 +486,11 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
 }
 
 bool BotPacketRelay::IsBot(Player const* player)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
 {
     if (!player)
         return false;
@@ -479,9 +509,19 @@ bool BotPacketRelay::IsBot(Player const* player)
     // This is safe because BotSession inherits from WorldSession
     BotSession const* botSession = dynamic_cast<BotSession const*>(session);
     return (botSession != nullptr);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 }
 
 Group* BotPacketRelay::GetBotGroup(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -615,6 +655,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     _relayOpcodes.insert(SMSG_SPELL_ABSORB_LOG);             // Damage absorption (shields)
 
     // NOTE: SMSG_SPELL_HEAL_ABSORB_LOG available but not yet added - may add in future
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
+        return nullptr;
+    }
     // NOTE: SMSG_PROC_RESIST available but not yet added - may add in future
     // NOTE: SMSG_SPELL_OR_DAMAGE_IMMUNE available but not yet added - may add in future
 
@@ -622,6 +667,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     // CHAT PACKETS
     // ========================================================================
     // These packets enable bot chat to appear for human players
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
 
     _relayOpcodes.insert(SMSG_CHAT);                         // Main chat packet (all types)
     _relayOpcodes.insert(SMSG_CHAT_AUTO_RESPONDED);          // Auto-response (AFK, DND)
@@ -629,6 +679,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     // ========================================================================
     // PARTY UPDATE PACKETS
     // ========================================================================
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     // These packets update party frames with bot health/mana/position
 
     _relayOpcodes.insert(SMSG_PARTY_MEMBER_FULL_STATE);      // Full party member state
@@ -640,6 +695,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     // Future: Add emote opcodes when implementing social features
     // Examples: SMSG_TEXT_EMOTE, SMSG_EMOTE
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_INFO("playerbot", "BotPacketRelay: Initialized {} opcodes in relay whitelist", _relayOpcodes.size());
 }
 

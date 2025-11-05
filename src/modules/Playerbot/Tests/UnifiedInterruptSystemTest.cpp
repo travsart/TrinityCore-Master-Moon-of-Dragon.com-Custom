@@ -265,6 +265,16 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotRegistration)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     // EXPECT_NE(info.spellId, 0);
     */
 }
@@ -294,6 +304,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUnregistration)
 
     // Verify bot was unregistered
     // auto info = sUnifiedInterruptSystem->GetBotInfo(botGuid);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     // EXPECT_EQ(info.spellId, 0);
     */
 }
@@ -309,6 +324,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUpdate)
     /*
     Player* bot = CreateMockBot(1);
     BotAI* ai = CreateMockBotAI(bot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -352,6 +372,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastDetection)
 
     /*
     Unit* caster = CreateMockCaster(1);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     ASSERT_NE(caster, nullptr);
 
     uint32 spellId = 12345; // Test spell
@@ -381,6 +406,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastInterrupted)
 
     /*
     Unit* caster = CreateMockCaster(1);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     if (!caster)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
@@ -530,6 +560,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_GroupCoordination)
     ASSERT_NE(group, nullptr);
 
     // Start multiple casts
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     for (int i = 0; i < 3; ++i)
     {
         Unit* caster = CreateMockCaster(i + 1);
@@ -604,6 +639,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_RotationFairness)
     // This test would verify:
     // 1. Rotation cycles through all bots
     // 2. Each bot gets equal chances
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     // 3. Index wraps around correctly
 
     /*
@@ -739,6 +779,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_MovementRequested)
 
     /*
     Player* bot = CreateMockBot(1);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
     Unit* target = CreateMockCaster(1);
 
     bool success = sUnifiedInterruptSystem->RequestInterruptPositioning(bot, target);

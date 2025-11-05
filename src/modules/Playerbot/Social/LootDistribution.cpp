@@ -71,6 +71,11 @@ void LootDistribution::HandleGroupLoot(Group* group, Loot* loot)
 }
 
 void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return nullptr;
+}
     if (!group)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
@@ -88,6 +93,11 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     {
         // Quick snapshot check first (fast, lock-free)
         auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, slot.guid);
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return;
+}
         if (!memberSnapshot)
             continue;
 
@@ -119,6 +129,11 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
 
     // PHASE 2H: Hybrid validation pattern for bot roll decisions
     for (uint32 memberGuid : roll.eligiblePlayers)
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
+        return nullptr;
+    }
     {
         ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(memberGuid);
 
@@ -141,8 +156,23 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         }
     }
 }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 
 void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, LootRollType rollType)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 {
     if (!player)
         return;
@@ -188,6 +218,11 @@ void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, 
 
     // Check if all players have rolled
     if (roll.playerRolls.size() == roll.eligiblePlayers.size())
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     {
         CompleteLootRoll(rollId);
     }
@@ -251,6 +286,11 @@ LootRollType LootDistribution::DetermineLootDecision(Player* player, const LootI
 }
 
 LootPriority LootDistribution::AnalyzeItemPriority(Player* player, const LootItem& item)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+            return nullptr;
+        }
 {
     if (!player)
         return LootPriority::NOT_USEFUL;
@@ -260,6 +300,11 @@ LootPriority LootDistribution::AnalyzeItemPriority(Player* player, const LootIte
     {
         // Determine upgrade significance
         float upgradeValue = CalculateUpgradeValue(player, item);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return nullptr;
+}
 
         if (upgradeValue > 0.3f)
             return LootPriority::CRITICAL_UPGRADE;
@@ -283,6 +328,11 @@ LootPriority LootDistribution::AnalyzeItemPriority(Player* player, const LootIte
 }
 
 bool LootDistribution::IsItemUpgrade(Player* player, const LootItem& item)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return nullptr;
+}
 {
     if (!player || !item.itemTemplate)
         return false;
@@ -306,6 +356,11 @@ bool LootDistribution::IsItemUpgrade(Player* player, const LootItem& item)
     // Compare item levels and stats
     float currentScore = CalculateItemScore(player, equippedItem);
     float newScore = CalculateItemScore(player, item);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 
     return newScore > currentScore * (1.0f + UPGRADE_THRESHOLD);
 }
@@ -325,6 +380,11 @@ bool LootDistribution::IsClassAppropriate(Player* player, const LootItem& item)
             return nullptr;
         }
         return std::find(item.allowedClasses.begin(), item.allowedClasses.end(), playerClass) != item.allowedClasses.end();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
@@ -518,6 +578,11 @@ void LootDistribution::HandleLootRollTimeout(uint32 rollId)
 }
 
 void LootDistribution::ExecuteNeedBeforeGreedStrategy(Player* player, const LootItem& item, LootRollType& decision)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
 {
     if (CanPlayerNeedItem(player, item))
     {
@@ -552,6 +617,11 @@ void LootDistribution::ExecuteClassPriorityStrategy(Player* player, const LootIt
 void LootDistribution::ExecuteUpgradePriorityStrategy(Player* player, const LootItem& item, LootRollType& decision)
 {
     LootPriority priority = AnalyzeItemPriority(player, item);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 
     switch (priority)
     {
@@ -855,6 +925,11 @@ void LootDistribution::HandleAutoLoot(Group* group, const LootItem& item)
         ItemPosCountVec dest;
         InventoryResult msg = recipient->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, item.itemId, item.itemCount);
 
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
         if (msg == EQUIP_ERR_OK)
         {
             Item* newItem = recipient->StoreNewItem(dest, item.itemId, true);
@@ -906,6 +981,11 @@ LootRollType LootDistribution::ExecuteStrategy(Player* player, const LootItem& i
             // Only roll on significant upgrades
             {
                 LootPriority priority = AnalyzeItemPriority(player, item);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+                return nullptr;
+            }
                 if (priority == LootPriority::CRITICAL_UPGRADE)
                     decision = LootRollType::NEED;
                 else
@@ -926,6 +1006,11 @@ void LootDistribution::ApplyStrategyModifiers(Player* player, const LootItem& it
         return;
 
     Group* group = player->GetGroup();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");

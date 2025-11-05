@@ -46,7 +46,17 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
                 return;
             }
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+                return;
+            }
             session->GetAccountId(), e.what());
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return;
+    }
     }
     catch (...)
     {
@@ -60,6 +70,11 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
             session->GetAccountId());
     }
 }
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+    return;
+}
 
 void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
 {
@@ -68,6 +83,11 @@ void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
 
     std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
     s_botAIRegistry[session] = ai;
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return;
+    }
         if (!session)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
@@ -99,7 +119,17 @@ void BotSessionManager::UnregisterBotAI(WorldSession* session)
 }
 
 BotSession* BotSessionManager::GetBotSession(WorldSession* session)
+if (!session)
 {
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return;
+}
+{
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+        return nullptr;
+    }
     if (!session)
         return nullptr;
 
@@ -120,6 +150,16 @@ void BotSessionManager::ProcessBotAI(WorldSession* session, uint32 diff)
         return;
 
     Player* player = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return;
+    }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
