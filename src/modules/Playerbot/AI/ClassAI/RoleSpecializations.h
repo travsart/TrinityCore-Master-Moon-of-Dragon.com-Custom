@@ -100,7 +100,7 @@ protected:
         if (Group* group = this->GetBot()->GetGroup())
         {
             // First pass: Find tanks under 60%
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
                 {
@@ -119,7 +119,7 @@ protected:
                 return lowestHealth;
 
             // Second pass: Anyone critically injured
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
                 {
@@ -168,7 +168,7 @@ protected:
 
         if (Group* group = this->GetBot()->GetGroup())
         {
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
                 {
@@ -185,7 +185,7 @@ protected:
     {
         if (Group* group = this->GetBot()->GetGroup())
         {
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
                 {

@@ -855,7 +855,7 @@ Player* CombatSpecializationBase::GetGroupTank() const
         return nullptr;
 
     Group* group = _bot->GetGroup();
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference* itr : *group)
     {
         Player* member = itr->GetSource();
         if (!member || member == _bot)
@@ -892,7 +892,7 @@ std::vector<Player*> CombatSpecializationBase::GetGroupMembers() const
     Group* group = _bot->GetGroup();
     members.reserve(group->GetMembersCount());
 
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference* itr : *group)
     {
         Player* member = itr->GetSource();
         if (member && member->IsAlive())
@@ -1242,7 +1242,7 @@ Player* CombatSpecializationBase::GetGroupHealer() const
         return nullptr;
 
     Group* group = _bot->GetGroup();
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference* itr : *group)
     {
         Player* member = itr->GetSource();
         if (!member || member == _bot)

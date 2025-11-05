@@ -265,7 +265,7 @@ void ClassAI::UpdateTargeting()
 
     // Check group members
     Group* group = GetBot()->GetGroup();
-    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    for (GroupReference* itr : *group)
     {
         if (Player* member = itr->GetSource())
         {
