@@ -61,7 +61,7 @@
 #include "Log.h"
 #include "Chat/BotChatCommandHandler.h"  // PHASE 4: Command processing
 #include "Session/BotSession.h"          // PHASE 4: BotSession for command context
-#include "Scripting/BotResurrectionScript.h"  // Bot Auto-Resurrection
+// #include "Scripting/BotResurrectionScript.h"  // DEPRECATED: Script disabled - bypassed graveyard teleport
 
 using namespace Playerbot::Events;
 using namespace Playerbot::StateMachine;
@@ -1084,9 +1084,16 @@ void AddSC_playerbot_event_scripts()
     // new PlayerbotAuctionHouseScript();
 
     // Bot Auto-Resurrection Script - OnPlayerRepop hook
-    TC_LOG_INFO("module.playerbot.scripts", "🔧 DEBUG: About to instantiate BotResurrectionScript...");
-    new Playerbot::BotResurrectionScript();
-    TC_LOG_INFO("module.playerbot.scripts", "✅ DEBUG: BotResurrectionScript instantiated successfully");
+    // DISABLED: BotResurrectionScript was intercepting OnPlayerRepop and auto-resurrecting bots
+    // BEFORE TrinityCore's RepopAtGraveyard() teleport could execute, causing bots to revive
+    // instantly at death location instead of going through proper graveyard sequence.
+    // Root Cause: OnPlayerRepop fires BEFORE RepopAtGraveyard() teleport occurs.
+    // Solution: Let DeathRecoveryManager handle resurrection after corpse run completes.
+    // TODO: DELETE BotResurrectionScript.h/cpp files - no longer needed
+    // TC_LOG_INFO("module.playerbot.scripts", "🔧 DEBUG: About to instantiate BotResurrectionScript...");
+    // new Playerbot::BotResurrectionScript();
+    // TC_LOG_INFO("module.playerbot.scripts", "✅ DEBUG: BotResurrectionScript instantiated successfully");
+    TC_LOG_INFO("module.playerbot.scripts", "⚠️  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
 
     TC_LOG_INFO("module.playerbot.scripts",
         "✅ Playerbot Event Scripts registered:");
