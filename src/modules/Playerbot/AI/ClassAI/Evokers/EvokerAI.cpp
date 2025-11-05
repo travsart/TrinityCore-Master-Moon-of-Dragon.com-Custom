@@ -107,7 +107,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
         // Fallback: basic ranged attack
         if (!_bot->IsNonMeleeSpellCast(false))
         {
-            if (_bot->GetDistance(target) <= 35.0f)
+            float rangeSq = 35.0f * 35.0f; // 1225.0f
+            if (_bot->GetExactDistSq(target) <= rangeSq)
             {
                 _bot->AttackerStateUpdate(target);
             }
@@ -180,7 +181,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->NeedsRepositioning())
     {
         Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = _bot->GetDistance(target);
+        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 
         // Too close - use Hover to gain distance
         if (distance < 15.0f && CanUseAbility(HOVER))
@@ -550,7 +551,7 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
         return _bot->GetPosition();
 
     Position pos = _bot->GetPosition();
-    float distance = _bot->GetDistance(target);
+    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float optimalRange = GetOptimalRange(target);
 
     if (distance > optimalRange || distance < optimalRange * 0.8f)
@@ -902,11 +903,12 @@ bool EvokerAI::CanShiftAspect()
     // Check group members
     if (Group* group = _bot->GetGroup())
     {
+        float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
         {
             if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
-                if (player->GetHealthPct() < lowestHealth && player->GetDistance(_bot) <= OPTIMAL_CASTING_RANGE)
+                if (player->GetHealthPct() < lowestHealth && player->GetExactDistSq(_bot) <= rangeSq)
                 {
                     lowestTarget = player;
                     lowestHealth = player->GetHealthPct();
@@ -923,11 +925,12 @@ bool EvokerAI::CanShiftAspect()
     // Find ally DPS for augmentation buffs
     if (Group* group = _bot->GetGroup())
     {
+        float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
         {
             if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
-                if (player->GetDistance(_bot) <= OPTIMAL_CASTING_RANGE && player != _bot)
+                if (player->GetExactDistSq(_bot) <= rangeSq && player != _bot)
                 {
                     // Prefer DPS classes for augmentation
                     return player;

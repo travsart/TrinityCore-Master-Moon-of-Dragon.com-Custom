@@ -262,7 +262,7 @@ bool TankPositioning::IsInSwapPosition(Player* tank, Player* otherTank, Unit* ta
     if (!tank || !otherTank || !target)
         return false;
 
-    float distance = tank->GetDistance(otherTank);
+    float distance = std::sqrt(tank->GetExactDistSq(otherTank)); // Calculate once from squared distance
     float angleiBetween = std::abs(target->GetRelativeAngle(tank) - target->GetRelativeAngle(otherTank));
 
     // Tanks should be at correct distance and angle for swap
@@ -389,9 +389,9 @@ bool TankPositioning::ValidateTankPosition(const Position& pos, Unit* target,
     if (!target)
         return false;
 
-    // Check distance
-    float distance = target->GetDistance(pos);
-    if (distance < MIN_TANK_DISTANCE || distance > MAX_TANK_DISTANCE)
+    // Check distance (use squared distance for comparison)
+    float distSq = target->GetExactDistSq(pos);
+    if (distSq < (MIN_TANK_DISTANCE * MIN_TANK_DISTANCE) || distSq > (MAX_TANK_DISTANCE * MAX_TANK_DISTANCE))
         return false;
 
     // Check if position is in front of target
@@ -411,7 +411,7 @@ float TankPositioning::ScoreTankPosition(const Position& pos, const CombatPositi
     float score = 100.0f;
 
     // Distance score
-    float distance = context.primaryTarget->GetDistance(pos);
+    float distance = std::sqrt(context.primaryTarget->GetExactDistSq(pos)); // Calculate once from squared distance
     float distanceScore = 100.0f - std::abs(distance - _config.optimalDistance) * 10.0f;
     score += distanceScore * 0.3f;
 
@@ -423,7 +423,7 @@ float TankPositioning::ScoreTankPosition(const Position& pos, const CombatPositi
     // Stability score (minimize movement)
     if (context.bot)
     {
-        float moveDistance = context.bot->GetDistance(pos);
+        float moveDistance = std::sqrt(context.bot->GetExactDistSq(pos)); // Calculate once from squared distance
         float stabilityScore = 100.0f - moveDistance * 2.0f;
         score += stabilityScore * 0.3f;
     }
@@ -529,14 +529,14 @@ bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const std::vecto
     if (!healer || allies.empty())
         return false;
 
-    float maxDistance = 0.0f;
+    float maxDistSq = 0.0f;
     for (const Player* ally : allies)
     {
-        float distance = healer->GetDistance(ally);
-        maxDistance = std::max(maxDistance, distance);
+        float distSq = healer->GetExactDistSq(ally);
+        maxDistSq = std::max(maxDistSq, distSq);
     }
 
-    return maxDistance <= _config.optimalRange;
+    return maxDistSq <= (_config.optimalRange * _config.optimalRange);
 }
 
 float HealerPositioning::CalculateHealingCoverage(const Position& healerPos,
@@ -1112,7 +1112,7 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
         // Move out of cleave range
         float safeAngle = Position::NormalizeOrientation(
             targetFacing + (angleToTarget > targetFacing ? cleaveAngle/2 + 0.2f : -cleaveAngle/2 - 0.2f));
-        Position safePos = RotateAroundTarget(target, safeAngle, dps->GetDistance(target));
+        Position safePos = RotateAroundTarget(target, safeAngle, std::sqrt(dps->GetExactDistSq(target)));
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
@@ -1250,9 +1250,9 @@ Position DPSPositioning::OptimizeDPSPosition(Player* dps, Unit* target,
     if (!dps || !target)
         return {};
 
-    // Determine if melee or ranged
-    float currentDistance = dps->GetDistance(target);
-    bool isMelee = currentDistance <= MELEE_MAX_DISTANCE ||
+    // Determine if melee or ranged (use squared distance for comparison)
+    float currentDistSq = dps->GetExactDistSq(target);
+    bool isMelee = currentDistSq <= (MELEE_MAX_DISTANCE * MELEE_MAX_DISTANCE) ||
                    GetOptimalDPSRange(dps, target) <= MELEE_MAX_DISTANCE;
 
     if (isMelee)
@@ -1615,10 +1615,10 @@ CombatPositionStrategy RoleBasedCombatPositioning::SelectStrategy(const CombatPo
         {
             if (context.bot)
             {
-                float distance = context.primaryTarget ?
-                    context.bot->GetDistance(context.primaryTarget) : 0.0f;
+                float distSq = context.primaryTarget ?
+                    context.bot->GetExactDistSq(context.primaryTarget) : 0.0f;
 
-                if (distance <= 5.0f)  // Melee range
+                if (distSq <= (5.0f * 5.0f))  // Melee range (squared)
                     return context.cleaveAngle > 0 ? CombatPositionStrategy::MELEE_FLANK :
                                                     CombatPositionStrategy::MELEE_BEHIND;
                 else  // Ranged
@@ -1668,8 +1668,8 @@ PositionalRequirement RoleBasedCombatPositioning::GetPositionalRequirements(Play
             break;
         case ThreatRole::DPS:
         {
-            float distance = bot->GetDistance(target);
-            if (distance <= 5.0f)
+            float distSq = bot->GetExactDistSq(target);
+            if (distSq <= (5.0f * 5.0f)) // 25.0f
                 requirements = PositionalRequirement::MELEE_DPS_REQUIREMENTS;
             else
                 requirements = PositionalRequirement::RANGED_DPS_REQUIREMENTS;
@@ -2023,7 +2023,7 @@ std::vector<Position> RoleBasedCombatPositioning::GenerateCandidatePositions(Pla
             baseDistance = 25.0f;
             break;
         case ThreatRole::DPS:
-            baseDistance = bot->GetDistance(context.primaryTarget) <= 5.0f ? 3.0f : 25.0f;
+            baseDistance = bot->GetExactDistSq(context.primaryTarget) <= (5.0f * 5.0f) ? 3.0f : 25.0f;
             break;
         default:
             baseDistance = 15.0f;
@@ -2138,11 +2138,11 @@ void RoleBasedCombatPositioning::UpdateGroupRoles(Group* group, CombatPositionCo
 
                     case ThreatRole::DPS:
                     {
-                        // Determine if melee or ranged
-                        float distance = context.primaryTarget ?
-                            member->GetDistance(context.primaryTarget) : 30.0f;
+                        // Determine if melee or ranged (use squared distance)
+                        float distSq = context.primaryTarget ?
+                            member->GetExactDistSq(context.primaryTarget) : (30.0f * 30.0f);
 
-                        if (distance <= 5.0f)
+                        if (distSq <= (5.0f * 5.0f)) // 25.0f
                             context.meleeDPS.push_back(member);
                         else
                             context.rangedDPS.push_back(member);

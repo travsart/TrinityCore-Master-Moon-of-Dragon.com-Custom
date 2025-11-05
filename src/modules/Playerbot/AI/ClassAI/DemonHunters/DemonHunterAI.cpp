@@ -553,7 +553,7 @@ void DemonHunterAI::HandleMobility(::Unit* target)
     if (behaviors->NeedsRepositioning())
     {
         Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = _bot->GetDistance(target);
+        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 
         // Fel Rush to close gap or reposition
         if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
@@ -1181,7 +1181,8 @@ bool DemonHunterAI::IsInMeleeRange(::Unit* target) const
     if (!target || !_bot)
         return false;
 
-    return _bot->GetDistance(target) <= OPTIMAL_MELEE_RANGE;
+    float rangeSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // Squared distance comparison
+    return _bot->GetExactDistSq(target) <= rangeSq;
 }
 
 bool DemonHunterAI::IsTargetInterruptible(::Unit* target) const

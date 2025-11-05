@@ -462,7 +462,7 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
     if (Unit* target = ai->GetTargetUnit())
     {
         features.push_back(target->GetHealthPct() / 100.0f);
-        features.push_back(bot->GetDistance(target) / 50.0f);
+        features.push_back(std::sqrt(bot->GetExactDistSq(target)) / 50.0f); // Calculate once from squared distance
         features.push_back(target->GetLevel() / 80.0f);
         features.push_back(target->IsPlayer() ? 1.0f : 0.0f);
     }

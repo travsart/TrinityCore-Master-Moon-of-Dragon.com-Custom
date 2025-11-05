@@ -356,7 +356,7 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
         target.castStartTime = castInfo.castStartTime;
         target.castEndTime = castInfo.castEndTime;
         target.remainingCastTime = castInfo.castEndTime - currentTime;
-        target.distance = bot->GetDistance(caster);
+        target.distance = std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
         target.inLineOfSight = bot->IsWithinLOSInMap(caster);
         target.threatLevel = CalculateThreatLevel(castInfo);
 
@@ -424,7 +424,7 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
     Unit* caster = ObjectAccessor::GetUnit(*bot, target.casterGuid);
     if (caster)
     {
-        float distance = bot->GetDistance(caster);
+        float distance = std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
 
         // Check if movement required
         if (distance > botInfo.interruptRange)

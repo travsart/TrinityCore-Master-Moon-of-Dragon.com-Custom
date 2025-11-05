@@ -154,7 +154,7 @@ bool CombatStrategy::ShouldFlee(BotAI* ai) const
 
     // Find nearest hostile target
     ::Unit* nearestEnemy = nullptr;
-    float nearestDistance = 30.0f; // Max combat range
+    float nearestDistanceSq = 30.0f * 30.0f; // 900.0f - Max combat range squared
 
     auto const& attackers = bot->getAttackers();
     for (::Unit* attacker : attackers)
@@ -162,10 +162,10 @@ bool CombatStrategy::ShouldFlee(BotAI* ai) const
         if (!attacker || !attacker->IsAlive())
             continue;
 
-        float distance = bot->GetDistance(attacker);
-        if (distance < nearestDistance)
+        float distanceSq = bot->GetExactDistSq(attacker);
+        if (distanceSq < nearestDistanceSq)
         {
-            nearestDistance = distance;
+            nearestDistanceSq = distanceSq;
             nearestEnemy = attacker;
         }
     }
@@ -209,6 +209,7 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
         {
             uint32 nearbyPlayerCount = 0;
             float maxRange = 30.0f; // 30 yard detection range
+            float maxRangeSq = maxRange * maxRange; // 900.0f
 
             // Iterate through all players on the map
             Map::PlayerList const& players = map->GetPlayers();
@@ -218,7 +219,7 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
                 if (player && player != bot && player->IsInWorld())
                 {
                     // Check if player is within range
-                    if (bot->GetDistance(player) <= maxRange)
+                    if (bot->GetExactDistSq(player) <= maxRangeSq)
                     {
                         ++nearbyPlayerCount;
                     }

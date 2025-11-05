@@ -554,7 +554,7 @@ bool BattlegroundAI::PickupFlag(::Player* player)
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     // Move to enemy flag location
-    float distance = player->GetDistance(strategy.enemyFlagSpawn);
+    float distance = std::sqrt(player->GetExactDistSq(strategy.enemyFlagSpawn)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Use PathGenerator to move to flag
@@ -617,7 +617,7 @@ bool BattlegroundAI::EscortFlagCarrier(::Player* player, ::Player* fc)
         return false;
 
     // Follow flag carrier
-    float distance = player->GetDistance(fc);
+    float distance = std::sqrt(player->GetExactDistSq(fc)); // Calculate once from squared distance
     if (distance > 15.0f)
     {
         // Full implementation: Move closer to FC
@@ -640,7 +640,7 @@ bool BattlegroundAI::DefendFlagRoom(::Player* player)
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     // Move to friendly flag room
-    float distance = player->GetDistance(strategy.friendlyFlagSpawn);
+    float distance = std::sqrt(player->GetExactDistSq(strategy.friendlyFlagSpawn)); // Calculate once from squared distance
     if (distance > strategy.friendlyFlagSpawn.GetExactDist(player))
     {
         // Full implementation: Move to flag room
@@ -708,7 +708,7 @@ bool BattlegroundAI::CaptureBase(::Player* player, Position const& baseLocation)
         return false;
 
     // Move to base
-    float distance = player->GetDistance(baseLocation);
+    float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Move to base
@@ -731,7 +731,7 @@ bool BattlegroundAI::DefendBase(::Player* player, Position const& baseLocation)
         return false;
 
     // Move to base
-    float distance = player->GetDistance(baseLocation);
+    float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
     if (distance > 30.0f)
     {
         // Full implementation: Move to base
@@ -769,14 +769,14 @@ Position BattlegroundAI::FindBestBaseToCapture(::Player* player) const
 
     // Find closest neutral/enemy base
     Position closestBase;
-    float closestDistance = 9999.0f;
+    float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
 
     for (Position const& base : strategy.baseLocations)
     {
-        float distance = player->GetDistance(base);
-        if (distance < closestDistance)
+        float distanceSq = player->GetExactDistSq(base);
+        if (distanceSq < closestDistanceSq)
         {
-            closestDistance = distance;
+            closestDistanceSq = distanceSq;
             closestBase = base;
         }
     }
@@ -914,7 +914,8 @@ void BattlegroundAI::ExecuteEOTSStrategy(::Player* player)
 
             default:
                 // Assist with both objectives
-                if (player->GetDistance(strategy.flagLocation) < 30.0f)
+                float distanceSq = player->GetExactDistSq(strategy.flagLocation);
+                if (distanceSq < (30.0f * 30.0f)) // 900.0f
                     CaptureFlagEOTS(player);
                 else
                     CaptureBaseEOTS(player);
@@ -932,7 +933,7 @@ bool BattlegroundAI::CaptureFlagEOTS(::Player* player)
     EOTSStrategy strategy = _eotsStrategies[bgType];
 
     // Move to flag location
-    float distance = player->GetDistance(strategy.flagLocation);
+    float distance = std::sqrt(player->GetExactDistSq(strategy.flagLocation)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to EOTS flag",
@@ -1190,7 +1191,7 @@ bool BattlegroundAI::RespondToBackupCall(::Player* player, Position const& locat
         return false;
 
     // Move to backup location
-    float distance = player->GetDistance(location);
+    float distance = std::sqrt(player->GetExactDistSq(location)); // Calculate once from squared distance
     if (distance > 5.0f)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} responding to backup call",
@@ -1210,7 +1211,7 @@ bool BattlegroundAI::MoveToObjective(::Player* player, BGObjective const& object
     if (!player)
         return false;
 
-    float distance = player->GetDistance(objective.location);
+    float distance = std::sqrt(player->GetExactDistSq(objective.location)); // Calculate once from squared distance
     if (distance <= OBJECTIVE_RANGE)
         return true;
 
@@ -1391,7 +1392,8 @@ bool BattlegroundAI::IsObjectiveInRange(::Player* player, Position const& objLoc
     if (!player)
         return false;
 
-    return player->GetDistance(objLocation) <= range;
+    float rangeSq = range * range;
+    return player->GetExactDistSq(objLocation) <= rangeSq;
 }
 
 uint32 BattlegroundAI::CountPlayersAtObjective(Position const& objLocation, float range) const

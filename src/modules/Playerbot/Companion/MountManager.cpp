@@ -907,7 +907,7 @@ bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
     if (!CanCastMountSpell(player, spellId))
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
     {
         TC_LOG_ERROR("module.playerbot", "MountManager::CastMountSpell - Invalid spell ID {}", spellId);

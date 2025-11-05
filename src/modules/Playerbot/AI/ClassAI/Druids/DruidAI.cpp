@@ -61,7 +61,7 @@ void DruidAI::UpdateRotation(::Unit* target)
         // Fallback: basic melee or ranged attack based on form
         if (!GetBot()->IsNonMeleeSpellCast(false))
         {
-            float distance = GetBot()->GetDistance(target);
+            float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
             if (distance <= 5.0f || GetBot()->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
             {
                 GetBot()->AttackerStateUpdate(target);
@@ -157,7 +157,8 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     }
 
     // Typhoon - knockback interrupt
-    if (GetBot()->GetDistance(interruptTarget) <= 15.0f && CanUseAbility(TYPHOON))
+    float rangeSq_typhoon = 15.0f * 15.0f; // 225.0f
+    if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_typhoon && CanUseAbility(TYPHOON))
     {
         if (CastSpell(interruptTarget, TYPHOON))
         {
@@ -168,7 +169,8 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     }
 
     // Mighty Bash - stun interrupt
-    if (GetBot()->GetDistance(interruptTarget) <= 5.0f && CanUseAbility(MIGHTY_BASH))
+    float rangeSq_bash = 5.0f * 5.0f; // 25.0f
+    if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_bash && CanUseAbility(MIGHTY_BASH))
     {
         if (CastSpell(interruptTarget, MIGHTY_BASH))
         {

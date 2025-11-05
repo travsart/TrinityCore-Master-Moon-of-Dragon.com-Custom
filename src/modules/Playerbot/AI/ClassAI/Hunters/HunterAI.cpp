@@ -1175,7 +1175,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
 
         if (target)
         {
-            minDistance = _bot->GetDistance(target);
+            minDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
         }
         return minDistance > DEAD_ZONE_MIN && minDistance <= DEAD_ZONE_MAX;
     }
@@ -1190,7 +1190,8 @@ bool HunterAI::NeedsToKite(::Unit* target) const
         return false;
 
     // Kite if target is melee and dangerous
-    return target->GetDistance(_bot) < 10.0f && IsTargetDangerous(target);
+    float kiteSq = 10.0f * 10.0f; // 100.0f
+    return target->GetExactDistSq(_bot) < kiteSq && IsTargetDangerous(target);
 }
 
 void HunterAI::MaintainRange(::Unit* target)
@@ -1238,7 +1239,7 @@ float HunterAI::GetDistanceToTarget(::Unit* target) const
 {
     if (!target || !_bot)
         return 0.0f;
-    return _bot->GetDistance(target);
+    return std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // Hunter-specific mechanics implementation

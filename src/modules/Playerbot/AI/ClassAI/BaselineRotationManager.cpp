@@ -297,12 +297,12 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
     // Range check
     if (ability.requiresMelee)
     {
-        if (bot->GetDistance(target) > 5.0f)
+        if (bot->GetExactDistSq(target) > (5.0f * 5.0f)) // 25.0f
             return false;
     }
     else
     {
-        if (bot->GetDistance(target) > 30.0f || !bot->IsWithinLOSInMap(target))
+        if (bot->GetExactDistSq(target) > (30.0f * 30.0f) || !bot->IsWithinLOSInMap(target)) // 900.0f
             return false;
     }
 
@@ -410,8 +410,9 @@ void BaselineRotationManager::InitializeWarriorBaseline()
 
 bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
 {
-    // Charge if not in melee range
-    if (bot->GetDistance(target) > 8.0f && bot->GetDistance(target) < 25.0f)
+    // Charge if not in melee range (using squared distance for comparison)
+    float distSq = bot->GetExactDistSq(target);
+    if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
     {
         // FIX: Use HasSpell check correctly
         if (bot->HasSpell(CHARGE))

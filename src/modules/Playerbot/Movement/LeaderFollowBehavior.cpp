@@ -559,7 +559,7 @@ bool LeaderFollowBehavior::ShouldTeleportToLeader(Player* bot, Player* leader)
         return false;
 
     // Check distance
-    float distance = bot->GetDistance(leader);
+    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     if (distance > _config.teleportDistance)
         return true;
 
@@ -673,7 +673,7 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
     }
 
     // Check if we're already close enough
-    float distance = bot->GetDistance(targetPos);
+    float distance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
     if (distance <= POSITION_TOLERANCE)
     {
         TC_LOG_ERROR("module.playerbot", "⛔ MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
@@ -713,7 +713,7 @@ void LeaderFollowBehavior::UpdateFollowTarget(Player* bot, Player* leader)
         return;
 
     _followTarget.lastKnownPosition = leader->GetPosition();
-    _followTarget.currentDistance = bot->GetDistance(leader);
+    _followTarget.currentDistance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     _followTarget.isMoving = leader->isMoving();
     _followTarget.currentSpeed = leader->GetSpeed(MOVE_RUN);
 
@@ -760,7 +760,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     Position targetPos = CalculateFollowPosition(leader, _formationRole);
 
     // Check current distance
-    float currentDistance = bot->GetDistance(targetPos);
+    float currentDistance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
 
     TC_LOG_ERROR("module.playerbot", "🚶 UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
                  bot->GetName(), currentDistance, _config.minDistance, _config.maxDistance);
@@ -823,7 +823,7 @@ void LeaderFollowBehavior::UpdateFormation(BotAI* ai)
     Position formationPos = CalculateFollowPosition(leader, _formationRole);
 
     // Move to formation position
-    float distance = bot->GetDistance(formationPos);
+    float distance = std::sqrt(bot->GetExactDistSq(formationPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 1.5f)
     {
         MoveToFollowPosition(ai, formationPos);
@@ -857,7 +857,7 @@ void LeaderFollowBehavior::UpdateCombatFollowing(BotAI* ai)
     Position combatPos = CalculateCombatPosition(bot, leader, target);
 
     // Move to combat position if needed
-    float distance = bot->GetDistance(combatPos);
+    float distance = std::sqrt(bot->GetExactDistSq(combatPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 2)
     {
         MoveToFollowPosition(ai, combatPos);
@@ -1521,7 +1521,7 @@ bool FollowBehaviorUtils::IsInFollowRange(Player* bot, Player* leader, float min
     if (!bot || !leader)
         return false;
 
-    float distance = bot->GetDistance(leader);
+    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     return distance >= minDist && distance <= maxDist;
 }
 

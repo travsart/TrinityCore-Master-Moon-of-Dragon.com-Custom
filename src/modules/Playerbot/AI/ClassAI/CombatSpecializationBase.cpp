@@ -807,7 +807,7 @@ float CombatSpecializationBase::GetDistance(::Unit* target) const
         return g_distanceCache[0];
     }
 
-    float dist = _bot->GetDistance(target);
+    float dist = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 
     // Update cache
     g_distanceCache[0] = dist;

@@ -530,7 +530,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                         continue;  // Skip this creature - it should be attacked via FindQuestTarget(), not interacted with
                     }
 
-                    float distance = bot->GetDistance(creature);
+                    float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
                     TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) with spell click at distance {:.1f}",
                                  bot->GetName(), creature->GetName(), questObjective.ObjectID, distance);
 
@@ -613,7 +613,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} found target {} (Entry: {}) at distance {:.1f}",
-                 bot->GetName(), target->GetName(), target->GetEntry(), bot->GetDistance(target));
+                 bot->GetName(), target->GetName(), target->GetEntry(), std::sqrt(bot->GetExactDistSq(target)));
 
     // Check if we should engage this target
     if (!ShouldEngageTarget(ai, target, objective))
@@ -665,7 +665,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
         {
             // Move to optimal range instead of melee
             float optimalRange = 25.0f; // Standard ranged distance
-            float currentDistance = bot->GetDistance(target);
+            float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
 
             TC_LOG_ERROR("module.playerbot.quest", "📏 EngageQuestTargets: Bot {} is RANGED class ({}), currentDistance={:.1f}yd, optimalRange={:.1f}yd",
                          bot->GetName(), bot->GetClass(), currentDistance, optimalRange);
@@ -784,11 +784,11 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
         return;
     }
 
+    float distance = std::sqrt(bot->GetExactDistSq(questObject)); // Calculate once from squared distance
     TC_LOG_ERROR("module.playerbot.quest", "✅ CollectQuestItems: Bot {} found quest object {} at distance {:.1f}",
-                 bot->GetName(), questObject->GetEntry(), bot->GetDistance(questObject));
+                 bot->GetName(), questObject->GetEntry(), distance);
 
     // Move to object
-    float distance = bot->GetDistance(questObject);
     if (distance > INTERACTION_DISTANCE)
     {
         Position objPos;
@@ -1053,7 +1053,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                  gameObjectScale, damageRadius, safeDistance);
 
     // Calculate bot's current distance to target
-    float currentDistance = bot->GetDistance(targetObject);
+    float currentDistance = std::sqrt(bot->GetExactDistSq(targetObject)); // Calculate once from squared distance
 
     TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: Bot distance to target={:.1f}yd (safe range: {:.1f}-{:.1f}yd)",
                  currentDistance, minSafeDistance, maxUseDistance);
@@ -1548,7 +1548,7 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Bot {} found GameObject {} (Entry: {}) at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
                  bot->GetName(), gameObject->GetName(), questObjective.ObjectID,
                  gameObject->GetPositionX(), gameObject->GetPositionY(), gameObject->GetPositionZ(),
-                 bot->GetDistance(gameObject));
+                 std::sqrt(bot->GetExactDistSq(gameObject)));
 
     return gameObject;
 }
@@ -1700,7 +1700,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         questGiversWithEligibleQuests++;
 
         // Find the closest quest giver WITH ELIGIBLE QUESTS
-        float distance = bot->GetDistance(creature);
+        float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
         TC_LOG_ERROR("module.playerbot.quest", "✅ Found quest giver WITH ELIGIBLE QUESTS: {} (Entry: {}) at distance {:.1f}",
                      creature->GetName(), creature->GetEntry(), distance);
 
@@ -2081,7 +2081,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
             continue;
         }
 
-        float distance = bot->GetDistance(creature);
+        float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
 
         TC_LOG_ERROR("module.playerbot.quest", "✅ CheckForQuestEnderInRange: Found valid quest ender {} (Entry: {}) at distance {:.1f}",
                      creature->GetName(), creature->GetEntry(), distance);

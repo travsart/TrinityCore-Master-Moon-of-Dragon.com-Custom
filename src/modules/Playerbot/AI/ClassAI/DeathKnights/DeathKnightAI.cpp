@@ -252,7 +252,7 @@ public:
             return _bot->GetPosition();
 
         Position optimalPos = _bot->GetPosition();
-        float currentDistance = _bot->GetDistance(target);
+        float currentDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 
         switch (detectedSpec)
         {
@@ -340,11 +340,11 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     DetectSpecialization();
 
     // Initialize performance tracking
-    _metrics = new DeathKnightMetrics();
-    _combatMetrics = new DeathKnightCombatMetrics();
-    _runeManager = new RuneManager(bot);
+    _metrics = std::make_unique<DeathKnightMetrics>();
+    _combatMetrics = std::make_unique<DeathKnightCombatMetrics>();
+    _runeManager = std::make_unique<RuneManager>(bot);
     _diseaseManager = std::make_unique<DiseaseManager>(bot);
-    _positioning = new DeathKnightCombatPositioning(bot);
+    _positioning = std::make_unique<DeathKnightCombatPositioning>(bot);
 
     TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
@@ -426,7 +426,8 @@ void DeathKnightAI::UpdateRotation(Unit* target)
             return;
 
         // Fallback: Use Death Grip if available for ranged pull
-        if (GetBot()->GetDistance(target) > OPTIMAL_MELEE_RANGE && ShouldUseDeathGrip(target))
+        float rangeCheckSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // 25.0f
+        if (GetBot()->GetExactDistSq(target) > rangeCheckSq && ShouldUseDeathGrip(target))
         {
             if (CanUseAbility(DEATH_GRIP))
             {
@@ -498,7 +499,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     if (!target || !GetBot())
         return;
 
-    float distance = GetBot()->GetDistance(target);
+    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     uint32 runicPower = GetBot()->GetPower(POWER_RUNIC_POWER);
 
     // Apply diseases first
@@ -1014,7 +1015,7 @@ bool DeathKnightAI::HandleInterrupts(Unit* target)
     if (!interruptTarget || !interruptTarget->HasUnitState(UNIT_STATE_CASTING))
         return false;
 
-    float distance = GetBot()->GetDistance(interruptTarget);
+    float distance = std::sqrt(GetBot()->GetExactDistSq(interruptTarget)); // Calculate once from squared distance
 
     // Priority: Mind Freeze for melee range, Strangulate for ranged
     if (distance <= OPTIMAL_MELEE_RANGE && CanUseAbility(MIND_FREEZE))
@@ -1166,7 +1167,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
                  GetBot()->GetName(), priorityTarget->GetName());
 
     // Use Death Grip on new target if needed
-    float distance = GetBot()->GetDistance(priorityTarget);
+    float distance = std::sqrt(GetBot()->GetExactDistSq(priorityTarget)); // Calculate once from squared distance
     if (distance > DEATH_GRIP_MIN_RANGE && distance <= DEATH_GRIP_MAX_RANGE)
     {
         if (ShouldUseDeathGrip(priorityTarget) && CanUseAbility(DEATH_GRIP))
@@ -1501,7 +1502,7 @@ bool DeathKnightAI::ShouldUseDeathGrip(Unit* target) const
     if (currentTime - _lastDeathGrip < DEATH_GRIP_COOLDOWN)
         return false;
 
-    float distance = GetBot()->GetDistance(target);
+    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance < DEATH_GRIP_MIN_RANGE || distance > DEATH_GRIP_MAX_RANGE)
         return false;
 
@@ -1611,7 +1612,8 @@ bool DeathKnightAI::IsInMeleeRange(Unit* target) const
     if (!target || !GetBot())
         return false;
 
-    return GetBot()->GetDistance(target) <= OPTIMAL_MELEE_RANGE;
+    float rangeSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // 25.0f
+    return GetBot()->GetExactDistSq(target) <= rangeSq;
 }
 
 bool DeathKnightAI::HasRunesForSpell(uint32 spellId) const
@@ -1685,11 +1687,8 @@ void DeathKnightAI::OnTargetChanged(Unit* newTarget)
 
 DeathKnightAI::~DeathKnightAI()
 {
-    // Cleanup is handled by smart pointers for unique_ptr members
-    delete _runeManager;
-    delete _combatMetrics;
-    delete _positioning;
-    delete _metrics;
+    // Cleanup is now fully handled by smart pointers (std::unique_ptr)
+    // No manual delete calls needed - automatic memory management
 }
 
 } // namespace Playerbot

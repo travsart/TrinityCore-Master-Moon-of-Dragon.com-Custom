@@ -71,7 +71,7 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
         return false;
 
     // Check if already within desired distance
-    float currentDistance = bot->GetDistance(unit);
+    float currentDistance = std::sqrt(bot->GetExactDistSq(unit)); // Calculate once from squared distance
     if (currentDistance <= distance)
     {
         TC_LOG_DEBUG("module.playerbot", "✅ BotMovement: Bot {} already within {:.1f}yd of {} (current: {:.1f}yd)",
@@ -110,7 +110,7 @@ bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
     // Check if already chasing this target at this distance
     if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == CHASE_MOTION_TYPE)
     {
-        float currentDistance = bot->GetDistance(target);
+        float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
         float tolerance = 2.0f;
 
         if (std::abs(currentDistance - distance) <= tolerance)

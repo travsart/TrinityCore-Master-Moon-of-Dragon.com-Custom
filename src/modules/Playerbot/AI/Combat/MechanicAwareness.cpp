@@ -398,8 +398,8 @@ void MechanicAwareness::HandleGroundEffect(const Position& center, float radius,
     if (!bot)
         return;
 
-    float distance = bot->GetDistance(center);
-    if (distance <= radius)
+    float distSq = bot->GetExactDistSq(center);
+    if (distSq <= (radius * radius))
     {
         // Move out of ground effect
         float angle = center.GetRelativeAngle(bot);
@@ -744,7 +744,7 @@ Position MechanicAwareness::GetCleaveAvoidancePosition(Player* bot, Unit* source
 
     // Calculate safe position to side of cleave
     float safeAngle = it->second.GetSafeAngle(true);
-    float distance = bot->GetDistance(source);
+    float distance = std::sqrt(bot->GetExactDistSq(source)); // Calculate once from squared distance
 
     Position safePos;
     safePos.m_positionX = source->GetPositionX() + distance * cos(safeAngle);
@@ -1160,7 +1160,7 @@ std::vector<MechanicInfo> MechanicAwareness::ScanForThreats(Player* bot, float s
     uint32 currentTime = getMSTime();
     for (const AOEZone& zone : _activeAOEZones)
     {
-        if (zone.IsActive(currentTime) && bot->GetDistance(zone.center) <= scanRadius)
+        if (zone.IsActive(currentTime) && bot->GetExactDistSq(zone.center) <= (scanRadius * scanRadius))
         {
             MechanicInfo threat;
             threat.type = zone.type;
@@ -1262,8 +1262,7 @@ bool MechanicAwareness::ValidateSafePosition(const Position& pos, Player* bot)
     // Would need actual pathfinding check
 
     // Check if position is reasonable distance
-    float distance = bot->GetDistance(pos);
-    if (distance > 50.0f)
+    if (bot->GetExactDistSq(pos) > (50.0f * 50.0f)) // 2500.0f
         return false;
 
     return true;

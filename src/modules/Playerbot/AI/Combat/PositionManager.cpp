@@ -992,8 +992,7 @@ bool PositionUtils::IsInMeleeRange(Player* bot, Unit* target)
     if (!bot || !target)
         return false;
 
-    float distance = bot->GetDistance(target);
-    return distance <= 5.0f;
+    return bot->GetExactDistSq(target) <= (5.0f * 5.0f); // 25.0f
 }
 
 bool PositionUtils::IsInOptimalRange(Player* bot, Unit* target, PositionType type)
@@ -1001,18 +1000,18 @@ bool PositionUtils::IsInOptimalRange(Player* bot, Unit* target, PositionType typ
     if (!bot || !target)
         return false;
 
-    float distance = bot->GetDistance(target);
+    float distSq = bot->GetExactDistSq(target);
 
     switch (type)
     {
         case PositionType::MELEE_COMBAT:
-            return distance <= 5.0f;
+            return distSq <= (5.0f * 5.0f); // 25.0f
         case PositionType::RANGED_DPS:
-            return distance >= 20.0f && distance <= 40.0f;
+            return distSq >= (20.0f * 20.0f) && distSq <= (40.0f * 40.0f); // 400.0f - 1600.0f
         case PositionType::HEALING:
-            return distance <= 40.0f;
+            return distSq <= (40.0f * 40.0f); // 1600.0f
         case PositionType::KITING:
-            return distance >= 15.0f;
+            return distSq >= (15.0f * 15.0f); // 225.0f
         default:
             return true;
     }

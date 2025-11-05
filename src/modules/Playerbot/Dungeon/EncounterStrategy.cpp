@@ -1300,7 +1300,7 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
             continue;
 
         // Check if spell is dangerous
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId(), DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 

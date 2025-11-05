@@ -393,7 +393,8 @@ void FormationManager::CoordinateMovement(const Position& destination)
     else
     {
         Position myAssignedPos = GetAssignedPosition();
-        if (_bot->GetDistance(myAssignedPos) > _formationSpacing)
+        float spacingSq = _formationSpacing * _formationSpacing;
+        if (_bot->GetExactDistSq(myAssignedPos) > spacingSq)
         {
             // PHASE 6B: Use Movement Arbiter with FORMATION priority (160)
             BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());

@@ -234,7 +234,8 @@ bool TargetAssistAction::IsInAssistRange(Player* bot, Unit* target) const
         return false;
 
     float range = GetClassAssistRange(bot);
-    return bot->GetDistance(target) <= range;
+    float rangeSq = range * range;
+    return bot->GetExactDistSq(target) <= rangeSq;
 }
 
 float TargetAssistAction::GetClassAssistRange(Player* bot) const
@@ -269,7 +270,7 @@ float TargetAssistAction::CalculateAssistPriority(Player* bot, Unit* target, Gro
     priority += attackers * 5.0f;
 
     // Distance factor (closer = higher priority)
-    float distance = bot->GetDistance(target);
+    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     priority += std::max(0.0f, 30.0f - distance);
 
     // Health factor (lower health = higher priority)

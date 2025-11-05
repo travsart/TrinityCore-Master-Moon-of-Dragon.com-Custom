@@ -134,9 +134,9 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
             return leader;
     }
 
-    // Find nearest group member
+    // Find nearest group member (using squared distance for comparison)
     ::Unit* nearestMember = nullptr;
-    float nearestDistance = 100.0f;
+    float nearestDistanceSq = 100.0f * 100.0f; // 10000.0f
 
     for (GroupReference const& ref : group->GetMembers())
     {
@@ -145,10 +145,10 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
             if (member == bot || !member->IsInWorld())
                 continue;
 
-            float distance = bot->GetDistance(member);
-            if (distance < nearestDistance)
+            float distanceSq = bot->GetExactDistSq(member);
+            if (distanceSq < nearestDistanceSq)
             {
-                nearestDistance = distance;
+                nearestDistanceSq = distanceSq;
                 nearestMember = member;
             }
         }
@@ -202,8 +202,9 @@ ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
     bot->Attack(target, true);
 
     // Move to melee range if needed
-    float distance = bot->GetDistance(target);
-    if (distance > GetRange())
+    float range = GetRange();
+    float rangeSq = range * range;
+    if (bot->GetExactDistSq(target) > rangeSq)
     {
         // CRITICAL FIX: Only issue MoveChase if not already chasing
         // Re-issuing MoveChase causes speed multiplication bug (blinking/teleporting)
@@ -343,7 +344,7 @@ bool BuffAction::IsUseful(BotAI* ai) const
             if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
-                    bot->GetDistance(member) <= 40.0f &&
+                    bot->GetExactDistSq(member) <= (40.0f * 40.0f) && // 1600.0f
                     !member->HasAura(GetSpellId()))
                 {
                     return true;
@@ -399,7 +400,7 @@ ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& context)
             if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
-                    bot->GetDistance(member) <= 40.0f &&
+                    bot->GetExactDistSq(member) <= (40.0f * 40.0f) && // 1600.0f
                     !member->HasAura(GetSpellId()))
                 {
                     return member;

@@ -1154,7 +1154,8 @@ uint32 DefensiveBehaviorManager::CountNearbyEnemies(float range) const
         if (!unit || !_bot->IsHostileTo(unit))
             continue;
 
-        if (_bot->GetDistance(snapshot->position) > range)
+        float rangeSq = range * range;
+        if (_bot->GetExactDistSq(snapshot->position) > rangeSq)
             continue;
 
         count++;

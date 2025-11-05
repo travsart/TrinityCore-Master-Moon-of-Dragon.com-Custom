@@ -939,7 +939,7 @@ bool InterruptRotationManager::CanReachInTime(const InterrupterBot& bot, Unit* t
     if (!botUnit)
         return false;
 
-    float distance = botUnit->GetDistance(target);
+    float distance = std::sqrt(botUnit->GetExactDistSq(target)); // Calculate once from squared distance
     float range = bot.range + _config.interruptRangeBuffer;
 
     if (distance <= range)
@@ -968,7 +968,7 @@ void InterruptRotationManager::UpdateRangeStatus(Unit* target)
             continue;
 
         // Use snapshot position for distance calculation (lock-free)
-        float distance = _bot->GetDistance(snapshot->position);
+        float distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
         interrupter.isInRange = (distance <= interrupter.range + _config.interruptRangeBuffer);
     }
 }

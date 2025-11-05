@@ -63,7 +63,7 @@ ActionResult SpellInterruptAction::Execute(BotAI* ai, ActionContext const& conte
     // Update context with current target information
     if (Player* bot = ai->GetBot())
     {
-        interruptContext.targetDistance = bot->GetDistance(target);
+        interruptContext.targetDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     }
 
     // Execute the interrupt
@@ -253,7 +253,7 @@ uint32 SpellInterruptAction::GetBestInterruptSpell(BotAI* ai, ::Unit* target) co
         return 0;
 
     Classes playerClass = static_cast<Classes>(bot->GetClass());
-    float targetDistance = target ? bot->GetDistance(static_cast<const WorldObject*>(target)) : 0.0f;
+    float targetDistance = target ? std::sqrt(bot->GetExactDistSq(static_cast<const WorldObject*>(target))) : 0.0f; // Calculate once from squared distance
 
     // Return best available interrupt for this class
     switch (playerClass)
@@ -450,7 +450,7 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
     if (!bot)
         return ActionResult::FAILED;
 
-    float currentDistance = bot->GetDistance(target);
+    float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (currentDistance <= requiredRange + RANGE_TOLERANCE)
         return ActionResult::SUCCESS;
 
@@ -469,16 +469,17 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
 
     // Wait a short time for movement to start
     auto moveStart = std::chrono::steady_clock::now();
+    float rangeCheckSq = (requiredRange + RANGE_TOLERANCE) * (requiredRange + RANGE_TOLERANCE);
     while (std::chrono::steady_clock::now() - moveStart < std::chrono::milliseconds(100))
     {
-        if (bot->GetDistance(target) <= requiredRange + RANGE_TOLERANCE)
+        if (bot->GetExactDistSq(target) <= rangeCheckSq)
             return ActionResult::SUCCESS;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Check if we made progress
-    float newDistance = bot->GetDistance(target);
+    float newDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (newDistance < currentDistance && newDistance <= requiredRange + RANGE_TOLERANCE)
         return ActionResult::SUCCESS;
 
@@ -496,7 +497,8 @@ bool SpellInterruptAction::IsInInterruptRange(BotAI* ai, ::Unit* target, float r
     if (!bot)
         return false;
 
-    return bot->GetDistance(target) <= requiredRange + RANGE_TOLERANCE;
+    float rangeCheckSq = (requiredRange + RANGE_TOLERANCE) * (requiredRange + RANGE_TOLERANCE);
+    return bot->GetExactDistSq(target) <= rangeCheckSq;
 }
 
 bool SpellInterruptAction::IsValidInterruptTarget(::Unit* target) const

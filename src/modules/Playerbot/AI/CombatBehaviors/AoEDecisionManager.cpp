@@ -277,9 +277,10 @@ std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClu
 
     // Build spatial grid
     _spatialGrid.clear();
+    float maxRangeSq = maxRange * maxRange;
     for (auto const& [guid, info] : _targetCache)
     {
-        if (_bot->GetDistance(info.position) > maxRange)
+        if (_bot->GetExactDistSq(info.position) > maxRangeSq)
             continue;
 
         uint32 key = GetGridKey(info.position);
@@ -388,9 +389,10 @@ float AoEDecisionManager::GetCleavePriority() const
     // Check average health
     float avgHealth = 0.0f;
     uint32 validTargets = 0;
+    float rangeSq = 8.0f * 8.0f; // 64.0f
     for (auto const& [guid, info] : _targetCache)
     {
-        if (_bot->GetDistance(info.position) <= 8.0f)
+        if (_bot->GetExactDistSq(info.position) <= rangeSq)
         {
             avgHealth += info.healthPercent;
             ++validTargets;
@@ -572,7 +574,7 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
             priority += 30.0f;
 
         // Deprioritize distant targets (use snapshot position for lock-free calculation)
-        float distance = _bot->GetDistance(snapshot->position);
+        float distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
         priority -= distance * 2.0f;
 
         // MIGRATION TODO: Convert to GUID-based
@@ -717,7 +719,7 @@ float AoEDecisionManager::ScoreAoEPosition(Position const& pos, float radius) co
     }
 
     // Penalize positions too far from bot
-    float botDistance = _bot->GetDistance(pos);
+    float botDistance = std::sqrt(_bot->GetExactDistSq(pos)); // Calculate once from squared distance
     if (botDistance > 30.0f)
         score *= 0.5f;
     else if (botDistance > 20.0f)

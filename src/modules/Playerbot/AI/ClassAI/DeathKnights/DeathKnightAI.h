@@ -110,10 +110,10 @@ private:
     std::unique_ptr<CooldownManager> _cooldownManager;
 
     // Death Knight-specific systems
-    DeathKnightMetrics* _metrics;
-    DeathKnightCombatMetrics* _combatMetrics;
-    DeathKnightCombatPositioning* _positioning;
-    RuneManager* _runeManager;
+    std::unique_ptr<DeathKnightMetrics> _metrics;
+    std::unique_ptr<DeathKnightCombatMetrics> _combatMetrics;
+    std::unique_ptr<DeathKnightCombatPositioning> _positioning;
+    std::unique_ptr<RuneManager> _runeManager;
     std::unique_ptr<DiseaseManager> _diseaseManager;
 
     // Specialization

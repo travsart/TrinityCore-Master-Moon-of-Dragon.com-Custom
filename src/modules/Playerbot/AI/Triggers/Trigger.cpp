@@ -201,8 +201,9 @@ bool DistanceTrigger::Check(BotAI* ai) const
     if (!bot || !_referenceUnit)
         return false;
 
-    float distance = bot->GetDistance(_referenceUnit);
-    return distance <= _distance;
+    float distanceSq = bot->GetExactDistSq(_referenceUnit);
+    float thresholdSq = _distance * _distance;
+    return distanceSq <= thresholdSq;
 }
 
 // QuestTrigger implementation

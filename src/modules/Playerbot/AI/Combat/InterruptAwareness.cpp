@@ -338,10 +338,10 @@ SpellScanResult InterruptAwareness::ScanNearbyUnits()
                      if (priorityA != priorityB)
                          return priorityA > priorityB;
 
-                     // If priorities are equal, prefer closer units
-                     float distA = _observer->GetDistance(a);
-                     float distB = _observer->GetDistance(b);
-                     return distA < distB;
+                     // If priorities are equal, prefer closer units (using squared distance for comparison)
+                     float distSqA = _observer->GetExactDistSq(a);
+                     float distSqB = _observer->GetExactDistSq(b);
+                     return distSqA < distSqB;
                  });
 
         units.resize(MAX_SCAN_UNITS);
@@ -489,7 +489,7 @@ DetectedSpellCast InterruptAwareness::AnalyzeSpellCast(Unit* caster, Spell const
     cast.schoolMask = spellInfo->SchoolMask;
 
     if (_observer)
-        cast.detectionRange = _observer->GetDistance(caster);
+        cast.detectionRange = std::sqrt(_observer->GetExactDistSq(caster)); // Calculate once from squared distance
 
     // Calculate cast timing
     if (cast.isChanneled)
@@ -538,8 +538,8 @@ bool InterruptAwareness::ShouldDetectSpell(Unit* caster, Spell const* spell) con
     // Check range
     if (_observer)
     {
-        float distance = _observer->GetDistance(caster);
-        if (distance > _config.maxDetectionRange)
+        float maxRangeSq = _config.maxDetectionRange * _config.maxDetectionRange;
+        if (_observer->GetExactDistSq(caster) > maxRangeSq)
             return false;
 
         // Check line of sight if required
@@ -748,7 +748,8 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     // Fallback: Add current target if grid search didn't find it
     /* MIGRATION TODO: Convert to spatial grid */ if (Unit* target = ObjectAccessor::GetUnit(*_observer, _observer->GetTarget()))
     {
-        if (_observer->GetDistance(target) <= _config.maxDetectionRange)
+        float maxRangeSq = _config.maxDetectionRange * _config.maxDetectionRange;
+        if (_observer->GetExactDistSq(target) <= maxRangeSq)
         {
             // Check if target is already in the list
             auto it = std::find(units.begin(), units.end(), target);

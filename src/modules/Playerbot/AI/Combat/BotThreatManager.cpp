@@ -187,7 +187,7 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     info.lastUpdate = now;
     info.isActive = true;
     info.isInCombat = target->IsInCombat();
-    info.distance = _bot->GetDistance2d(target);
+    info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
     info.lastPosition = target->GetPosition();
 
     // Update specific threat metrics based on type
@@ -832,7 +832,7 @@ void BotThreatManager::UpdateThreatTable(uint32 diff)
         // Update current threat values
         info.threatValue = CalculateThreat(target);
         info.threatPercent = CalculateThreatPercent(target);
-        info.distance = _bot->GetDistance2d(target);
+        info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
         info.isInCombat = target->IsInCombat();
         info.lastPosition = target->GetPosition();
         info.lastUpdate = now;
@@ -870,7 +870,7 @@ void BotThreatManager::UpdateDistances()
             continue;
 
         // Use snapshot data directly (lock-free)
-        info.distance = _bot->GetDistance(snapshot->position);
+        info.distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared 3D distance
         info.lastPosition = snapshot->position;
     }
 }

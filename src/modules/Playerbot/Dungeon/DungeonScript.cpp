@@ -313,7 +313,7 @@ bool DungeonScript::IsDangerousGroundEffect(::DynamicObject* obj) const
         return false;
 
     // Check if spell has damage component
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(obj->GetSpellId());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(obj->GetSpellId(), DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 

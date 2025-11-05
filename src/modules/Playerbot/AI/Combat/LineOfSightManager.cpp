@@ -403,7 +403,7 @@ Unit* LineOfSightManager::GetBestVisibleTarget(const std::vector<Unit*>& candida
         if (!candidate || !CanSeeTarget(candidate))
             continue;
 
-        float distance = _bot->GetDistance(candidate);
+        float distance = std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
         float healthPct = candidate->GetHealthPct();
 
         float score = 100.0f - (distance * 2.0f);
@@ -602,7 +602,7 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
         if (obj->GetGoType() == GAMEOBJECT_TYPE_DOOR && obj->GetGoState() == GO_STATE_ACTIVE)
             continue;
 
-        float objDistance = obj->GetDistance(from);
+        float objDistance = std::sqrt(obj->GetExactDistSq(from)); // Calculate once from squared distance
         float totalDistance = from.GetExactDist(&to);
 
         if (objDistance < totalDistance && objDistance > 1.0f)
@@ -738,7 +738,7 @@ bool LineOfSightManager::CheckInterruptLineOfSight(Unit* target)
     if (!target)
         return false;
 
-    return target->HasUnitState(UNIT_STATE_CASTING) && _bot->GetDistance(target) <= 30.0f;
+    return target->HasUnitState(UNIT_STATE_CASTING) && _bot->GetExactDistSq(target) <= (30.0f * 30.0f); // 900.0f
 }
 
 bool LineOfSightManager::CheckHealingLineOfSight(Unit* target)
@@ -746,7 +746,7 @@ bool LineOfSightManager::CheckHealingLineOfSight(Unit* target)
     if (!target)
         return false;
 
-    return !_bot->IsHostileTo(target) && _bot->GetDistance(target) <= 40.0f;
+    return !_bot->IsHostileTo(target) && _bot->GetExactDistSq(target) <= (40.0f * 40.0f); // 1600.0f
 }
 
 void LineOfSightManager::TrackPerformance(std::chrono::microseconds duration, bool cacheHit, bool successful)
@@ -793,7 +793,7 @@ float LoSUtils::GetLoSDistance(Player* source, Unit* target)
     if (!source || !target)
         return 0.0f;
 
-    return source->GetDistance(target);
+    return std::sqrt(source->GetExactDistSq(target)); // Calculate actual distance
 }
 
 bool LoSUtils::CanCastSpellAtTarget(Player* caster, Unit* target, uint32 spellId)
@@ -805,7 +805,8 @@ bool LoSUtils::CanCastSpellAtTarget(Player* caster, Unit* target, uint32 spellId
     if (!spellInfo)
         return false;
 
-    if (caster->GetDistance(target) > spellInfo->GetMaxRange())
+    float maxRange = spellInfo->GetMaxRange();
+    if (caster->GetExactDistSq(target) > (maxRange * maxRange))
         return false;
 
     return HasLoS(caster, target);

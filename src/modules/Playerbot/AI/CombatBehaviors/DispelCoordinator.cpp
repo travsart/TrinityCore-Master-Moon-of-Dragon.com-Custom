@@ -795,8 +795,9 @@ bool DispelCoordinator::ExecuteDispel()
     }
 
     // Check range
+    float maxRangeSq = m_config.maxDispelRange * m_config.maxDispelRange;
     if (!m_bot->IsWithinLOSInMap(target) ||
-        m_bot->GetDistance(target) > m_config.maxDispelRange)
+        m_bot->GetExactDistSq(target) > maxRangeSq)
     {
         return false;
     }
@@ -886,8 +887,9 @@ bool DispelCoordinator::ExecutePurge()
         return false;
 
     // Check range
+    float maxPurgeRangeSq = m_config.maxPurgeRange * m_config.maxPurgeRange;
     if (!m_bot->IsWithinLOSInMap(enemy) ||
-        m_bot->GetDistance(enemy) > m_config.maxPurgeRange)
+        m_bot->GetExactDistSq(enemy) > maxPurgeRangeSq)
     {
         return false;
     }
@@ -1050,7 +1052,7 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
             target.isEnrage = buffData->isEnrage;
             target.isImmunity = buffData->providesImmunity;
             target.threatLevel = m_bot->GetThreatManager().GetThreat(enemy);
-            target.distance = m_bot->GetDistance(enemy);
+            target.distance = std::sqrt(m_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
 
             targets.push_back(target);
         }
@@ -1102,7 +1104,8 @@ uint32 DispelCoordinator::GetNearbyAlliesCount(Unit* center, float radius) const
         if (!member || member == center || member->isDead())
             continue;
 
-        if (center->GetDistance(member) <= radius)
+        float radiusSq = radius * radius;
+        if (center->GetExactDistSq(member) <= radiusSq)
             ++count;
     }
 

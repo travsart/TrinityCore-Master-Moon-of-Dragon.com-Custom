@@ -530,17 +530,17 @@ ArenaPillar const* ArenaAI::FindBestPillar(::Player* player) const
 
     // Find closest pillar
     ArenaPillar const* bestPillar = nullptr;
-    float closestDistance = 9999.0f;
+    float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
 
     for (ArenaPillar const& pillar : pillars)
     {
         if (!pillar.isAvailable)
             continue;
 
-        float distance = player->GetDistance(pillar.position);
-        if (distance < closestDistance)
+        float distanceSq = player->GetExactDistSq(pillar.position);
+        if (distanceSq < closestDistanceSq)
         {
-            closestDistance = distance;
+            closestDistanceSq = distanceSq;
             bestPillar = &pillar;
         }
     }
@@ -553,7 +553,7 @@ bool ArenaAI::MoveToPillar(::Player* player, ArenaPillar const& pillar)
     if (!player)
         return false;
 
-    float distance = player->GetDistance(pillar.position);
+    float distance = std::sqrt(player->GetExactDistSq(pillar.position)); // Calculate once from squared distance
     if (distance < 5.0f)
         return true;
 
@@ -590,7 +590,7 @@ bool ArenaAI::MaintainOptimalDistance(::Player* player)
 
     for (::Unit* enemy : enemies)
     {
-        float distance = player->GetDistance(enemy);
+        float distance = std::sqrt(player->GetExactDistSq(enemy)); // Calculate once from squared distance
         if (distance < optimalRange)
         {
             // Too close - kite away
@@ -615,7 +615,7 @@ bool ArenaAI::RegroupWithTeam(::Player* player)
 
     // Find teammate position
     Position teammatePos = teammates[0]->GetPosition();
-    float distance = player->GetDistance(teammatePos);
+    float distance = std::sqrt(player->GetExactDistSq(teammatePos)); // Calculate once from squared distance
 
     if (distance > REGROUP_RANGE)
     {
@@ -739,7 +739,7 @@ bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
     // Check if teammates are in range and have cooldowns
     for (::Player* teammate : teammates)
     {
-        float distance = player->GetDistance(teammate);
+        float distance = std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
         if (distance > BURST_COORDINATION_RANGE)
             return false;
 

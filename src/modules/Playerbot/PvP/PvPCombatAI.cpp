@@ -189,7 +189,7 @@ ThreatAssessment PvPCombatAI::AssessThreat(::Player* player, ::Unit* target) con
     ThreatAssessment assessment;
     assessment.targetGuid = target->GetGUID();
     assessment.healthPercent = target->GetHealthPct();
-    assessment.distanceToPlayer = static_cast<uint32>(player->GetDistance(target));
+    assessment.distanceToPlayer = static_cast<uint32>(std::sqrt(player->GetExactDistSq(target))); // Calculate once from squared distance
 
     // Check if healer
     assessment.isHealer = IsHealer(target);
@@ -927,7 +927,7 @@ float PvPCombatAI::CalculateThreatScore(::Player* player, ::Unit* target) const
         score *= ATTACKING_ALLY_MULTIPLIER;
 
     // Distance penalty
-    float distance = player->GetDistance(target);
+    float distance = std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance > 30.0f)
         score *= 0.5f;
 
@@ -943,7 +943,7 @@ bool PvPCombatAI::IsInCCRange(::Player* player, ::Unit* target, CCType ccType) c
     if (!player || !target)
         return false;
 
-    float distance = player->GetDistance(target);
+    float distance = std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
 
     // Range check based on CC type
     switch (ccType)

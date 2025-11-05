@@ -349,7 +349,8 @@ bool WarriorAI::IsInMeleeRange(::Unit* target) const
     if (!target || !GetBot())
         return false;
 
-    return GetBot()->GetDistance(target) <= OPTIMAL_MELEE_RANGE;
+    float rangeSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // 25.0f
+    return GetBot()->GetExactDistSq(target) <= rangeSq;
 }
 
 bool WarriorAI::CanCharge(::Unit* target) const
@@ -357,7 +358,7 @@ bool WarriorAI::CanCharge(::Unit* target) const
     if (!target || !GetBot())
         return false;
 
-    float distance = GetBot()->GetDistance(target);
+    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     return distance >= CHARGE_MIN_RANGE && distance <= CHARGE_MAX_RANGE;
 }
 

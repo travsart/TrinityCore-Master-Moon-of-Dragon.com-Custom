@@ -318,9 +318,9 @@ Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
     if (groupTarget && IsValidGroupTarget(bot, groupTarget) && IsInEngagementRange(bot, groupTarget))
         return groupTarget;
 
-    // Find nearest valid target being attacked by group
+    // Find nearest valid target being attacked by group (using squared distance for comparison)
     Unit* nearestTarget = nullptr;
-    float nearestDistance = _maxEngagementRange;
+    float nearestDistanceSq = _maxEngagementRange * _maxEngagementRange;
 
     for (GroupReference const& itr : group->GetMembers())
     {
@@ -334,10 +334,10 @@ Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
                 if (!IsValidGroupTarget(bot, victim))
                     continue;
 
-                float distance = bot->GetDistance(victim);
-                if (distance < nearestDistance)
+                float distanceSq = bot->GetExactDistSq(victim);
+                if (distanceSq < nearestDistanceSq)
                 {
-                    nearestDistance = distance;
+                    nearestDistanceSq = distanceSq;
                     nearestTarget = victim;
                 }
             }
@@ -405,7 +405,7 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
     if (!bot || !target)
         return false;
 
-    float distance = bot->GetDistance(target);
+    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
 
     // Check maximum range
     if (distance > _maxEngagementRange)

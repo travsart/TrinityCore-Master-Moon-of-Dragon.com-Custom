@@ -37,7 +37,8 @@ void MageAI::UpdateRotation(::Unit* target)
         // Fallback: basic ranged attack
         if (!_bot->IsNonMeleeSpellCast(false))
         {
-            if (_bot->GetDistance(target) <= 35.0f)
+            float rangeSq = 35.0f * 35.0f; // 1225.0f
+            if (_bot->GetExactDistSq(target) <= rangeSq)
             {
                 _bot->AttackerStateUpdate(target);
             }

@@ -196,7 +196,7 @@ void ClassAI::UpdateTargeting()
         return nullptr;
 
     ::Unit* nearestEnemy = nullptr;
-    float nearestDistance = maxRange;
+    float nearestDistanceSq = maxRange * maxRange; // Use squared distance for comparison
 
     // Find nearest enemy within range
     std::list<::Unit*> targets;
@@ -240,10 +240,10 @@ void ClassAI::UpdateTargeting()
         if (!target || !GetBot()->IsValidAttackTarget(target))
             continue;
 
-        float distance = GetBot()->GetDistance(target);
-        if (distance < nearestDistance)
+        float distanceSq = GetBot()->GetExactDistSq(target);
+        if (distanceSq < nearestDistanceSq)
         {
-            nearestDistance = distance;
+            nearestDistanceSq = distanceSq;
             nearestEnemy = target;
         }
     }
@@ -337,7 +337,8 @@ bool ClassAI::IsInRange(::Unit* target, uint32 spellId)
     if (range <= 0.0f)
         return true; // No range restriction
 
-    return GetBot()->GetDistance(target) <= range;
+    float rangeSq = range * range;
+    return GetBot()->GetExactDistSq(target) <= rangeSq;
 }
 
 bool ClassAI::HasLineOfSight(::Unit* target)
@@ -486,7 +487,7 @@ bool ClassAI::ShouldMoveToTarget(::Unit* target) const
     // ClassAI doesn't control movement, just provides information
     // Actual movement is handled by BotAI strategies
     float optimalRange = const_cast<ClassAI*>(this)->GetOptimalRange(target);
-    float currentDistance = GetBot()->GetDistance(target);
+    float currentDistance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 
     return currentDistance > optimalRange;
 }
@@ -496,7 +497,7 @@ float ClassAI::GetDistanceToTarget(::Unit* target) const
     if (!target || !GetBot())
         return 0.0f;
 
-    return GetBot()->GetDistance(target);
+    return std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // ============================================================================

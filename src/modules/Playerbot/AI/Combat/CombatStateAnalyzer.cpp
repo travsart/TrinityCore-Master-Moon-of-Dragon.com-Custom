@@ -268,7 +268,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                     _enemyCache.push_back(enemy);
                     _currentMetrics.enemyCount++;
 
-                    float distance = _bot->GetDistance(enemy);
+                    float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
                     _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
                     _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
 
@@ -297,7 +297,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
             if (!enemy || !enemy->IsAlive())
                 continue;
 
-            float distance = _bot->GetDistance(enemy);
+            float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
             _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
             _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
         }
@@ -313,12 +313,12 @@ void CombatStateAnalyzer::UpdatePositioningMetrics()
     Player* healer = GetMainHealer();
 
     if (tank && tank != _bot)
-        _currentMetrics.distanceToTank = _bot->GetDistance(tank);
+        _currentMetrics.distanceToTank = std::sqrt(_bot->GetExactDistSq(tank)); // Calculate once from squared distance
     else
         _currentMetrics.distanceToTank = 0.0f;
 
     if (healer && healer != _bot)
-        _currentMetrics.distanceToHealer = _bot->GetDistance(healer);
+        _currentMetrics.distanceToHealer = std::sqrt(_bot->GetExactDistSq(healer)); // Calculate once from squared distance
     else
         _currentMetrics.distanceToHealer = 0.0f;
 
@@ -439,7 +439,7 @@ bool CombatStateAnalyzer::CheckForAOESituation() const
     uint32 meleeCount = 0;
     for (Unit* enemy : _enemyCache)
     {
-        if (enemy && enemy->IsAlive() && _bot->GetDistance(enemy) <= 8.0f)
+        if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= (8.0f * 8.0f)) // 64.0f
             meleeCount++;
     }
 
@@ -734,9 +734,10 @@ uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
 std::vector<Unit*> CombatStateAnalyzer::GetNearbyEnemies(float range) const
 {
     std::vector<Unit*> result;
+    float rangeSq = range * range;
     for (Unit* enemy : _enemyCache)
     {
-        if (enemy && enemy->IsAlive() && _bot->GetDistance(enemy) <= range)
+        if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= rangeSq)
             result.push_back(enemy);
     }
     return result;
@@ -769,7 +770,7 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
             danger *= 3.0f;
 
         // Close enemies are dangerous
-        float distance = _bot->GetDistance(enemy);
+        float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
         if (distance < 5.0f)
             danger *= 2.0f;
 
@@ -793,7 +794,7 @@ bool CombatStateAnalyzer::HasCleaveTargets() const
     uint32 cleaveCount = 0;
     for (Unit* enemy : _enemyCache)
     {
-        if (enemy && enemy->IsAlive() && _bot->GetDistance(enemy) <= 8.0f)
+        if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= (8.0f * 8.0f)) // 64.0f
             cleaveCount++;
     }
     return cleaveCount >= 2;
@@ -1134,7 +1135,7 @@ bool CombatStateAnalyzer::IsBeingKited() const
 
         if (enemy->GetTarget() == _bot->GetGUID())
         {
-            float distance = _bot->GetDistance(enemy);
+            float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
             if (distance > 15.0f && distance < 40.0f)
                 return true;
         }

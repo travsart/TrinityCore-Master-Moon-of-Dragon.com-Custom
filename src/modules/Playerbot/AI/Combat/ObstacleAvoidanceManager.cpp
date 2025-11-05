@@ -974,11 +974,11 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
         bool isDamaging = false;
         for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
-            if (spellInfo->Effects[i].Effect == SPELL_EFFECT_SCHOOL_DAMAGE ||
-                spellInfo->Effects[i].Effect == SPELL_EFFECT_ENVIRONMENTAL_DAMAGE ||
-                spellInfo->Effects[i].Effect == SPELL_EFFECT_HEALTH_LEECH ||
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
-                spellInfo->Effects[i].ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
+            if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_SCHOOL_DAMAGE ||
+                spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_ENVIRONMENTAL_DAMAGE ||
+                spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_HEALTH_LEECH ||
+                spellInfo->GetEffect(SpellEffIndex(i)).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
+                spellInfo->GetEffect(SpellEffIndex(i)).ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT)
             {
                 isDamaging = true;
                 break;

@@ -409,8 +409,7 @@ bool KitingManager::ShouldMaintainDistance(Unit* target)
     if (!target || !_bot->IsHostileTo(target))
         return false;
 
-    float currentDistance = _bot->GetDistance(target);
-    return currentDistance < _optimalKitingDistance;
+    return _bot->GetExactDistSq(target) < (_optimalKitingDistance * _optimalKitingDistance);
 }
 
 float KitingManager::GetOptimalKitingDistance(Unit* target)
@@ -438,7 +437,7 @@ bool KitingManager::IsAtOptimalKitingDistance(Unit* target)
     if (!target)
         return false;
 
-    float distance = _bot->GetDistance(target);
+    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float optimal = GetOptimalKitingDistance(target);
 
     return distance >= optimal * 0.9f && distance <= optimal * 1.1f;
@@ -584,8 +583,7 @@ KitingResult KitingManager::ExecuteFigureEight(const KitingContext& context)
 
         if (ExecuteMovementToPosition(nextWaypoint))
         {
-            float distance = _bot->GetDistance(nextWaypoint);
-            if (distance <= 2.0f)
+            if (_bot->GetExactDistSq(nextWaypoint) <= (2.0f * 2.0f)) // 4.0f
             {
                 _currentWaypointIndex = (_currentWaypointIndex + 1) % _kitingWaypoints.size();
             }
@@ -748,9 +746,10 @@ Position KitingManager::GetRetreatPosition(const std::vector<Unit*>& threats, fl
 
 bool KitingManager::CanAttackWhileKiting()
 {
+    float optimalDistance = GetOptimalKitingDistance(_kitingTarget);
     return IsInAttackWindow() && _kitingTarget &&
            _bot->IsWithinLOSInMap(_kitingTarget) &&
-           _bot->GetDistance(_kitingTarget) <= GetOptimalKitingDistance(_kitingTarget);
+           _bot->GetExactDistSq(_kitingTarget) <= (optimalDistance * optimalDistance);
 }
 
 Position KitingManager::GetAttackPosition(Unit* target)
@@ -820,7 +819,7 @@ void KitingManager::UpdateKitingState()
         return;
     }
 
-    float distance = _bot->GetDistance(_kitingTarget);
+    float distance = std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
     if (distance > _maxKitingDistance)
     {
         _currentState = KitingState::REPOSITIONING;
@@ -840,9 +839,8 @@ void KitingManager::ExecuteCurrentPattern()
         _currentWaypointIndex = 0;
 
     Position targetWaypoint = _kitingWaypoints[_currentWaypointIndex];
-    float distance = _bot->GetDistance(targetWaypoint);
 
-    if (distance <= 2.0f)
+    if (_bot->GetExactDistSq(targetWaypoint) <= (2.0f * 2.0f)) // 4.0f
     {
         _currentWaypointIndex++;
         if (_currentWaypointIndex >= _kitingWaypoints.size())
@@ -1034,7 +1032,7 @@ void KitingManager::UpdateKitingStatistics()
     if (!_kitingActive || !_kitingTarget)
         return;
 
-    float currentDistance = _bot->GetDistance(_kitingTarget);
+    float currentDistance = std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
     _metrics.averageDistanceMaintained = _metrics.averageDistanceMaintained * 0.95f + currentDistance * 0.05f;
 
     float optimalDistance = GetOptimalKitingDistance(_kitingTarget);

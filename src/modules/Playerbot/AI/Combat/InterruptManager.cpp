@@ -459,7 +459,8 @@ InterruptCapability* InterruptManager::GetBestInterruptForTarget(const Interrupt
         if (capability.minPriority > target.priority)
             continue;
 
-        if (capability.range < _bot->GetDistance(target.unit))
+        float rangeSq = capability.range * capability.range;
+        if (rangeSq < _bot->GetExactDistSq(target.unit))
             continue;
 
         float effectiveness = CalculateInterruptEffectiveness(capability, target);
@@ -718,7 +719,8 @@ bool InterruptManager::IsValidInterruptTarget(Unit* unit)
     // if (unit->IsImmunedToSpellEffect(...))
     //     return false;
 
-    if (_bot->GetDistance(unit) > _maxInterruptRange)
+    float maxRangeSq = _maxInterruptRange * _maxInterruptRange;
+    if (_bot->GetExactDistSq(unit) > maxRangeSq)
         return false;
 
     return true;
@@ -752,7 +754,9 @@ bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
     if (!_bot->IsWithinLOSInMap(target))
         return false;
 
-    if (_bot->GetDistance(target) > spellInfo->GetMaxRange())
+    float maxRange = spellInfo->GetMaxRange();
+    float maxRangeSq = maxRange * maxRange;
+    if (_bot->GetExactDistSq(target) > maxRangeSq)
         return false;
 
     _bot->CastSpell(target, spellId, false);

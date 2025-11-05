@@ -189,8 +189,9 @@ void WarlockAI::UpdateRotation(::Unit* target)
         return;
     }
 
+    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
-                 bot->GetName(), bot->GetLevel(), target->GetName(), bot->GetDistance(target));
+                 bot->GetName(), bot->GetLevel(), target->GetName(), distance);
 
     // Check if bot should use baseline rotation (levels 1-9 or no spec)
     if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
@@ -353,7 +354,7 @@ bool WarlockAI::HandleInterrupt(Unit* target)
     // Shadowfury - stun interrupt
     if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))
     {
-        float distance = bot->GetDistance(target);
+        float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
         if (distance <= 30.0f)
         {
             bot->CastSpell(target, SHADOWFURY, false);
@@ -575,7 +576,8 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
     // Fear - primary CC
     if (bot->HasSpell(FEAR) && (now - _lastFear > 5000))
     {
-        if (!target->HasAura(FEAR) && bot->GetDistance(target) <= 20.0f)
+        float distanceSq = bot->GetExactDistSq(target);
+        if (!target->HasAura(FEAR) && distanceSq <= (20.0f * 20.0f)) // 400.0f
         {
             bot->CastSpell(target, FEAR, false);
             _lastFear = now;
@@ -988,17 +990,17 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     // End of spatial grid fix
 
     Unit* nearest = nullptr;
-    float minDist = range;
+    float minDistSq = range * range; // Squared distance
 
     for (Unit* enemy : enemies)
     {
         if (!enemy->IsAlive() || !bot->CanSeeOrDetect(enemy))
             continue;
 
-        float dist = bot->GetDistance(enemy);
-        if (dist < minDist)
+        float distSq = bot->GetExactDistSq(enemy);
+        if (distSq < minDistSq)
         {
-            minDist = dist;
+            minDistSq = distSq;
             nearest = enemy;
         }
     }
@@ -1509,7 +1511,8 @@ void WarlockAI::OptimizePetPositioning()
     }
 
     // Command pet to move if needed
-    if (pet->GetDistance(optimalPos) > 5.0f)
+    float distanceSq = pet->GetExactDistSq(optimalPos);
+    if (distanceSq > (5.0f * 5.0f)) // 25.0f
     {
         pet->GetMotionMaster()->MovePoint(0, optimalPos);
     }

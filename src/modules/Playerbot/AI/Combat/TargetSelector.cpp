@@ -89,7 +89,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             TargetInfo targetInfo;
             targetInfo.guid = candidate->GetGUID();
             targetInfo.unit = candidate;
-            targetInfo.distance = _bot->GetDistance(candidate);
+            targetInfo.distance = std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
             targetInfo.healthPercent = candidate->GetHealthPct();
             targetInfo.threatLevel = _threatManager ? _threatManager->GetThreat(candidate) : 0.0f;
             targetInfo.isInterruptTarget = IsInterruptible(candidate);
@@ -333,7 +333,7 @@ bool TargetSelector::IsValidTarget(Unit* target, TargetValidation validation) co
     if (HasFlag(validation & TargetValidation::NOT_FRIENDLY) && _bot->IsFriendlyTo(target))
         return false;
 
-    if (HasFlag(validation & TargetValidation::IN_RANGE) && _bot->GetDistance(target) > _defaultMaxRange)
+    if (HasFlag(validation & TargetValidation::IN_RANGE) && _bot->GetExactDistSq(target) > (_defaultMaxRange * _defaultMaxRange))
         return false;
 
     if (HasFlag(validation & TargetValidation::LINE_OF_SIGHT) && !_bot->IsWithinLOSInMap(target))
@@ -371,7 +371,7 @@ bool TargetSelector::IsInRange(Unit* target, float range) const
     if (!target)
         return false;
 
-    return _bot->GetDistance(target) <= range;
+    return _bot->GetExactDistSq(target) <= (range * range);
 }
 
 bool TargetSelector::HasLineOfSight(Unit* target) const
@@ -399,7 +399,8 @@ bool TargetSelector::CanCast(Unit* target, uint32 spellId) const
     if (!spellInfo)
         return false;
 
-    if (_bot->GetDistance(target) > spellInfo->GetMaxRange())
+    float maxRange = spellInfo->GetMaxRange();
+    if (_bot->GetExactDistSq(target) > (maxRange * maxRange))
         return false;
 
     if (!_bot->IsWithinLOSInMap(target))
@@ -456,7 +457,7 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
     if (target->GetHealthPct() < 30.0f)
         return TargetPriority::PRIMARY;
 
-    if (_bot->GetDistance(target) <= 8.0f)
+    if (_bot->GetExactDistSq(target) <= (8.0f * 8.0f)) // 64.0f
         return TargetPriority::SECONDARY;
 
     return TargetPriority::SECONDARY;
@@ -490,11 +491,12 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
 
     if (Group* group = _bot->GetGroup())
     {
+        float rangeSq = range * range;
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
             {
-                if (member != _bot && _bot->GetDistance(member) <= range)
+                if (member != _bot && _bot->GetExactDistSq(member) <= rangeSq)
                     allies.push_back(member);
             }
         }
@@ -574,7 +576,7 @@ float TargetSelector::CalculateDistanceScore(Unit* target, const SelectionContex
     if (!target)
         return 0.0f;
 
-    float distance = _bot->GetDistance(target);
+    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float maxRange = context.maxRange;
 
     if (distance > maxRange)
@@ -812,21 +814,21 @@ Unit* TargetSelectionUtils::GetNearestEnemy(Player* bot, float maxRange)
         return nullptr;
 
     Unit* nearestEnemy = nullptr;
-    float nearestDistance = maxRange;
+    float nearestDistSq = maxRange * maxRange;
 
     // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(bot, maxRange, true);
 
-    // Find nearest hostile
+    // Find nearest hostile using squared distances
     for (auto const* snapshot : hostileSnapshots)
     {
         if (!snapshot)
             continue;
 
-        float distance = bot->GetDistance(snapshot->position);
-        if (distance < nearestDistance)
+        float distSq = bot->GetExactDistSq(snapshot->position);
+        if (distSq < nearestDistSq)
         {
-            nearestDistance = distance;
+            nearestDistSq = distSq;
             // Get Unit* for return (needed by caller)
             /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*bot, snapshot->guid);
             if (unit && unit->IsAlive())
@@ -878,11 +880,12 @@ Unit* TargetSelectionUtils::GetMostWoundedAlly(Player* bot, float maxRange)
 
     if (Group* group = bot->GetGroup())
     {
+        float maxRangeSq = maxRange * maxRange;
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
             {
-                if (member != bot && bot->GetDistance(member) <= maxRange)
+                if (member != bot && bot->GetExactDistSq(member) <= maxRangeSq)
                 {
                     float healthPct = member->GetHealthPct();
                     if (healthPct < lowestHealth && healthPct < 95.0f)
@@ -909,7 +912,7 @@ bool TargetSelectionUtils::IsGoodHealTarget(Unit* target, Player* healer)
     if (healer->IsHostileTo(target))
         return false;
 
-    if (healer->GetDistance(target) > 40.0f)
+    if (healer->GetExactDistSq(target) > (40.0f * 40.0f)) // 1600.0f
         return false;
 
     return true;
@@ -923,7 +926,7 @@ bool TargetSelectionUtils::IsGoodInterruptTarget(Unit* target, Player* interrupt
     if (!target->HasUnitState(UNIT_STATE_CASTING))
         return false;
 
-    if (interrupter->GetDistance(target) > 30.0f)
+    if (interrupter->GetExactDistSq(target) > (30.0f * 30.0f)) // 900.0f
         return false;
 
     if (!interrupter->IsWithinLOSInMap(target))

@@ -521,11 +521,11 @@ namespace Playerbot
         if (!target)
             return false;
 
-        float dist = m_bot->GetDistance(target);
         float maxRange = GetMaxEngageRange();
+        float maxRangeSq = maxRange * maxRange;
 
-        // Too far away
-        if (dist > maxRange)
+        // Too far away (using squared distance for comparison)
+        if (m_bot->GetExactDistSq(target) > maxRangeSq)
             return false;
 
         // Check if path exists (basic check)

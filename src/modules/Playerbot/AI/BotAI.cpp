@@ -1144,7 +1144,7 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                             // 2. Check if creature is attackable (isHostile flag)
                             // 3. Check distance is within engage range (60.0f)
 
-                            float distance = _bot->GetDistance(snapshot.position);
+                            float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distance
                             if (!snapshot.isDead &&
                                 snapshot.isHostile &&
                                 distance <= 60.0f)

@@ -100,7 +100,8 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
     if (target)
     {
         float range = spellInfo->GetMaxRange();
-        if (bot->GetDistance(target) > range)
+        float rangeSq = range * range;
+        if (bot->GetExactDistSq(target) > rangeSq)
             return false;
     }
 
@@ -202,7 +203,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         return nullptr;
 
     ::Unit* nearestEnemy = nullptr;
-    float nearestDistance = range;
+    float nearestDistanceSq = range * range; // Use squared distance for comparison
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
@@ -233,10 +234,10 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         if (!bot->IsHostileTo(unit))
             continue;
 
-        float distance = bot->GetDistance(unit);
-        if (distance < nearestDistance)
+        float distanceSq = bot->GetExactDistSq(unit);
+        if (distanceSq < nearestDistanceSq)
         {
-            nearestDistance = distance;
+            nearestDistanceSq = distanceSq;
             nearestEnemy = unit;
         }
     }
@@ -266,7 +267,8 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
                 if (member == bot || !member->IsAlive())
                     continue;
 
-                if (bot->GetDistance(member) > range)
+                float rangeSq = range * range;
+                if (bot->GetExactDistSq(member) > rangeSq)
                     continue;
 
                 float healthPct = member->GetHealthPct();
@@ -292,7 +294,7 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
         return nullptr;
 
     Player* nearestPlayer = nullptr;
-    float nearestDistance = range;
+    float nearestDistanceSq = range * range; // Use squared distance for comparison
 
     // Use Map API to find nearby players
     Map* map = bot->GetMap();
@@ -305,10 +307,11 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
             if (!player || player == bot || !player->IsInWorld())
                 continue;
 
-            float distance = bot->GetDistance(player);
-            if (distance <= range && distance < nearestDistance)
+            float distanceSq = bot->GetExactDistSq(player);
+            float rangeSq = range * range;
+            if (distanceSq <= rangeSq && distanceSq < nearestDistanceSq)
             {
-                nearestDistance = distance;
+                nearestDistanceSq = distanceSq;
                 nearestPlayer = player;
             }
         }
