@@ -295,7 +295,7 @@ public:
                         continue;
 
                     // Poison cloud effects
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId());
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId(), DIFFICULTY_NONE);
                     if (spellInfo && spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE))
                     {
                         float distance = player->GetExactDist(dynObj);

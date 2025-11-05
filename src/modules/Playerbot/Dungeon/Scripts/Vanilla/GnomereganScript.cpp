@@ -233,7 +233,7 @@ public:
                         continue;
 
                     // Radiation (spell 6524 and similar)
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId());
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId(), DIFFICULTY_NONE);
                     if (spellInfo && (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
                                       spellInfo->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA)))
                     {

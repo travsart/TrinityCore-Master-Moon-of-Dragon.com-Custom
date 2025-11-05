@@ -264,7 +264,7 @@ public:
                         continue;
 
                     // Disease cloud effects
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId());
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(dynObj->GetSpellId(), DIFFICULTY_NONE);
                     if (spellInfo && (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
                                       spellInfo->Dispel == DISPEL_DISEASE))
                     {
