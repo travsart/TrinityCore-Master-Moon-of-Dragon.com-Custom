@@ -1503,9 +1503,10 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
     try
     {
-        // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character
-        std::string accountQueryStr = fmt::format("SELECT a.id FROM account a WHERE a.id = {} LIMIT 1", accountId);
-        QueryResult accountCheck = LoginDatabase.Query(accountQueryStr.c_str());
+        // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character (prepared statement)
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
+        stmt->SetData(0, accountId);
+        PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
         if (!accountCheck)
         {
@@ -1515,9 +1516,10 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             return ObjectGuid::Empty;
         }
 
-        // Check current character count for this account (enforce 10 character limit)
-        std::string charCountQueryStr = fmt::format("SELECT COUNT(*) FROM characters WHERE account = {}", accountId);
-        QueryResult charCountResult = CharacterDatabase.Query(charCountQueryStr.c_str());
+        // Check current character count for this account (enforce 10 character limit) (prepared statement)
+        CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
+        charStmt->SetData(0, accountId);
+        PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
         if (charCountResult)
         {
