@@ -103,6 +103,11 @@ namespace Playerbot
             return;
 
         AuctionHouseObject* ah = GetAuctionHouse(bot, auctionHouseId);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -151,6 +156,11 @@ namespace Playerbot
             // Save to history
             SavePriceHistory(itemId, priceData.CurrentPrice);
 
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             // Calculate statistics from price history
             CalculatePriceTrends(itemId);
         }
@@ -255,6 +265,11 @@ namespace Playerbot
             opp.RiskScore = CalculateRiskScore(opp);
 
             if (opp.IsViable(_minProfit, _maxRiskScore))
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 opportunities.push_back(opp);
         }
 
@@ -270,12 +285,22 @@ namespace Playerbot
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             opportunities.size(), bot->GetName());
 
         return opportunities;
     }
 
     bool AuctionManager::CreateAuction(Player* bot, Item* item, uint64 bidPrice,
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -296,6 +321,21 @@ namespace Playerbot
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
         AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+                return nullptr;
+            }
         if (!ah)
             return false;
 
@@ -332,12 +372,27 @@ namespace Playerbot
         // Create auction posting
         AuctionPosting posting;
         posting.Owner = bot->GetGUID();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return;
         }
         posting.OwnerAccount = bot->GetSession()->GetAccountGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
@@ -363,12 +418,27 @@ namespace Playerbot
         // Track bot auction
         BotAuctionData auctionData;
         auctionData.AuctionId = posting.Id;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
         auctionData.ItemId = item->GetEntry();
         auctionData.ItemCount = item->GetCount();
         auctionData.StartPrice = bidPrice;
         auctionData.BuyoutPrice = buyoutPrice;
         auctionData.CostBasis = CalculateVendorValue(item); // Use vendor value as baseline
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         auctionData.ListedTime = std::chrono::steady_clock::now();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+            return nullptr;
+        }
         auctionData.ExpiryTime = auctionData.ListedTime + Hours(duration);
         auctionData.IsCommodity = false;
         auctionData.Strategy = strategy;
@@ -393,6 +463,16 @@ namespace Playerbot
     }
 
     bool AuctionManager::CreateCommodityAuction(Player* bot, Item* item,
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return 0;
+        }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -418,6 +498,16 @@ namespace Playerbot
 
         // Calculate deposit for commodity
         uint64 deposit = CalculateDepositCost(bot, item, duration);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
@@ -431,10 +521,25 @@ namespace Playerbot
         posting.Owner = bot->GetGUID();
         if (!bot)
         {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return;
         }
         posting.OwnerAccount = bot->GetSession()->GetAccountGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
@@ -492,6 +597,21 @@ namespace Playerbot
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
         AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -531,14 +651,29 @@ namespace Playerbot
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} does not own auction {}",
                 bot->GetName(), auctionId);
             return false;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+    return;
+}
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Cancel auction (no deposit refund on manual cancel)
         ah->RemoveAuction(trans, auction);
 
@@ -548,9 +683,19 @@ namespace Playerbot
         RecordAuctionCancelled(bot->GetGUID());
 
         TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} cancelled auction {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
             bot->GetName(), auctionId);
 
         return true;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     void AuctionManager::CancelUnprofitableAuctions(Player* bot)
@@ -576,12 +721,27 @@ namespace Playerbot
     }
 
     bool AuctionManager::PlaceBid(Player* bot, uint32 auctionId, uint64 bidAmount)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                return nullptr;
+            }
     {
         if (!ValidateBidPlacement(bot, auctionId, bidAmount))
             return false;
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
         AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
@@ -605,6 +765,11 @@ namespace Playerbot
         // Check bot has enough gold
         if (bot->GetMoney() < bidAmount)
             return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // NOTE: PlaceBid is not a public API in AuctionHouseObject
         // This would require packet-based implementation through WorldSession
@@ -743,11 +908,21 @@ namespace Playerbot
             return nullptr;
         }
         RecordCommodityPurchase(bot->GetGUID(), buyoutPrice);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 
         TC_LOG_DEBUG("playerbot", "AuctionManager::BuyAuction - Bot {} bought auction {} for {}",
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return;
             }
             bot->GetName(), auctionId, buyoutPrice);
@@ -756,6 +931,11 @@ namespace Playerbot
     }
 
     bool AuctionManager::ExecuteFlipOpportunity(Player* bot, const FlipOpportunity& opportunity)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -798,6 +978,11 @@ namespace Playerbot
                 return CalculateUndercutPrice(priceData.CurrentPrice, strategy);
 
             case AuctionStrategy::AGGRESSIVE:
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
                 // Undercut by 5-10%
                 return CalculateUndercutPrice(priceData.CurrentPrice, strategy);
 
@@ -1047,6 +1232,11 @@ namespace Playerbot
     }
 
     AuctionHouseObject* AuctionManager::GetAuctionHouse(Player* bot, uint32 auctionHouseId)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         if (!bot)
             return nullptr;
@@ -1066,6 +1256,16 @@ namespace Playerbot
     }
 
     uint32 AuctionManager::GetAuctionHouseIdForBot(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
     {
         if (!bot)
             return 0;

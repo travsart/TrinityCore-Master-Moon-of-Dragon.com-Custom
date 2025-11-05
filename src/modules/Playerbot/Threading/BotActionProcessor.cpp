@@ -120,6 +120,16 @@ BotActionResult BotActionProcessor::ExecuteAttackTarget(Player* bot, BotAction c
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -154,15 +164,30 @@ BotActionResult BotActionProcessor::ExecuteAttackTarget(Player* bot, BotAction c
 
     // Start attacking
     bot->Attack(target, true);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return;
+}
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} started attacking {} at distance {:.1f}",
         bot->GetName(), target->GetName(), bot->GetDistance(target));
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     return BotActionResult::Success();
 }
 
 BotActionResult BotActionProcessor::ExecuteCastSpell(Player* bot, BotAction const& action)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
@@ -184,6 +209,16 @@ BotActionResult BotActionProcessor::ExecuteCastSpell(Player* bot, BotAction cons
     if (!action.targetGuid.IsEmpty())
     {
         target = GetUnit(bot, action.targetGuid);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -212,6 +247,11 @@ BotActionResult BotActionProcessor::ExecuteCastSpell(Player* bot, BotAction cons
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             return;
         }
         if (!target || !target->IsInWorld())
@@ -229,6 +269,11 @@ BotActionResult BotActionProcessor::ExecuteCastSpell(Player* bot, BotAction cons
 }
 
 BotActionResult BotActionProcessor::ExecuteStopAttack(Player* bot, BotAction const& action)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -247,6 +292,11 @@ BotActionResult BotActionProcessor::ExecuteStopAttack(Player* bot, BotAction con
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            if (!npc)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method GetCreatureTemplate");
+                return nullptr;
+            }
             return nullptr;
         }
 {
@@ -259,6 +309,11 @@ BotActionResult BotActionProcessor::ExecuteStopAttack(Player* bot, BotAction con
 }
 
 BotActionResult BotActionProcessor::ExecuteMoveToPosition(Player* bot, BotAction const& action)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -318,6 +373,11 @@ BotActionResult BotActionProcessor::ExecuteFollowTarget(Player* bot, BotAction c
 }
 
 BotActionResult BotActionProcessor::ExecuteStopMovement(Player* bot, BotAction const& action)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -362,6 +422,11 @@ BotActionResult BotActionProcessor::ExecuteInteractNPC(Player* bot, BotAction co
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return;
     }
         if (!bot)
@@ -388,6 +453,11 @@ BotActionResult BotActionProcessor::ExecuteInteractNPC(Player* bot, BotAction co
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} opened gossip menu {} with NPC {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), menuId, npc->GetName());
 
     return BotActionResult::Success();
@@ -418,6 +488,11 @@ BotActionResult BotActionProcessor::ExecuteLootObject(Player* bot, BotAction con
         Loot* loot = object->GetLootForPlayer(bot);
         if (loot)
             bot->SendLoot(*loot, false);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -431,6 +506,11 @@ BotActionResult BotActionProcessor::ExecuteLootObject(Player* bot, BotAction con
 }
 
 BotActionResult BotActionProcessor::ExecuteAcceptQuest(Player* bot, BotAction const& action)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -454,6 +534,11 @@ BotActionResult BotActionProcessor::ExecuteAcceptQuest(Player* bot, BotAction co
             else if (GameObject* obj = GetGameObject(bot, action.targetGuid))
         if (!bot)
         {
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }

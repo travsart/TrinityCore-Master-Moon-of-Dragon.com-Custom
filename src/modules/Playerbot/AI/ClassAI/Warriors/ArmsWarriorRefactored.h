@@ -70,6 +70,11 @@ public:
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
             return;
         }
     {
@@ -194,6 +199,11 @@ protected:
             this->CastSpell(this->GetBot(), SPELL_WHIRLWIND);
             return;
         }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
         // Priority 8: Rend for DoT (if not already applied)
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
@@ -350,6 +360,11 @@ protected:
         }
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     // ========================================================================
     // DEEP WOUNDS MANAGEMENT
     // ========================================================================
@@ -390,6 +405,11 @@ protected:
     }
 
     bool ShouldUseColossusSmash(::Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return false;
+        }
     {
         // Use on cooldown for damage window
         return !_colossusSmashActive && target;

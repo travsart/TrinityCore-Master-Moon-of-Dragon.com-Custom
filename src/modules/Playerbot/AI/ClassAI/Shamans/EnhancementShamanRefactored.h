@@ -89,6 +89,16 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return nullptr;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return;
+            }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _maelstromEndTime = getMSTime() + aura->GetDuration();
             if (!aura)
             {
@@ -264,6 +274,11 @@ private:
         _lastAscendanceTime = 0;
         _lastFeralSpiritTime = 0;
         _lastSunderingTime = 0;
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return;
+    }
     }
 
     void UpdateEnhancementState()
@@ -284,6 +299,11 @@ private:
         {
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 _ascendanceEndTime = getMSTime() + aura->GetDuration();
                 if (!aura)
                 {
@@ -325,6 +345,11 @@ private:
                     _ascendanceEndTime = getMSTime() + 15000;
                     _lastAscendanceTime = getMSTime();
                     return;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 }
             }
         }
@@ -348,6 +373,11 @@ private:
                 this->CastSpell(target, ENH_STORMSTRIKE);
                 _stormbringerTracker.ConsumeProc();
                 _maelstromWeaponTracker.AddStack(1);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return;
+                }
                 return;
             }
         }
@@ -359,6 +389,11 @@ private:
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
                 return nullptr;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
             }
             if (bot->HasSpell(ENH_LAVA_BURST))
             {
@@ -369,6 +404,11 @@ private:
                     return;
                 }
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
 
         // Lightning Bolt at 5+ Maelstrom Weapon stacks (instant cast)
@@ -426,6 +466,11 @@ private:
                 this->CastSpell(target, ENH_ICE_STRIKE);
                 _maelstromWeaponTracker.AddStack(1);
                 return;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             }
         }
 
@@ -440,6 +485,11 @@ private:
                 _stormbringerTracker.ActivateProc();
 
             return;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
 
         // Lava Lash (filler - consumes Flame Shock for extra damage)
@@ -454,11 +504,26 @@ private:
         if (this->CanCastSpell(ENH_ROCKBITER, target))
         {
             this->CastSpell(target, ENH_ROCKBITER);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             return;
         }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return;
+    }
     }
 
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                    return nullptr;
+                }
     {
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 

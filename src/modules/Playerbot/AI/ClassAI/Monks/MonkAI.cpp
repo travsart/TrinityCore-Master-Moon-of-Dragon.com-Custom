@@ -72,6 +72,16 @@ void MonkAI::UpdateRotation(::Unit* target)
         {
             // Spear Hand Strike is melee range interrupt
             if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
+if (!interruptTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+    return 0;
+}
+if (!interruptTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+    return 0;
+}
                                  if (!interruptTarget)
                                  {
                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
@@ -111,6 +121,11 @@ void MonkAI::UpdateRotation(::Unit* target)
 
     // Priority 2: Handle defensive abilities based on spec
     if (behaviors && behaviors->NeedsDefensive())
+    if (!priorityTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+        return 0;
+    }
     {
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
@@ -534,6 +549,11 @@ void MonkAI::UseDefensiveCooldowns()
     {
         if (CanUseAbility(ZEN_MEDITATION))
         {
+            if (!healTarget)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healTarget in method GetName");
+                return nullptr;
+            }
             if (CastSpell(ZEN_MEDITATION))
             {
                 RecordAbilityUsage(ZEN_MEDITATION);

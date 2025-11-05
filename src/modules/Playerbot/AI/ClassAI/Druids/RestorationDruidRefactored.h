@@ -146,19 +146,44 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                 return;
             }
-
-            // Sync with actual auras
-            if (Aura* rejuv = member->GetAura(RESTO_REJUVENATION))
-                _rejuvenationTargets[guid] = getMSTime() + rejuv->GetDuration();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                 if (!rejuv)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rejuv in method GetDuration");
                     return nullptr;
                 }
+                return;
+            }
+
+            // Sync with actual auras
+            if (Aura* rejuv = member->GetAura(RESTO_REJUVENATION))
+                if (!lifebloom)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: lifebloom in method GetDuration");
+                    return nullptr;
+                }
+                _rejuvenationTargets[guid] = getMSTime() + rejuv->GetDuration();
+                if (!rejuv)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rejuv in method GetDuration");
+                    return nullptr;
+                if (!wildGrowth)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: wildGrowth in method GetDuration");
+                    return;
+                }
+                }
             else
                 _rejuvenationTargets.erase(guid);
 
             if (Aura* lifebloom = member->GetAura(RESTO_LIFEBLOOM))
+                if (!cenarionWard)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cenarionWard in method GetDuration");
+                    return nullptr;
+                }
                 _lifebloomTargets[guid] = getMSTime() + lifebloom->GetDuration();
                 if (!lifebloom)
                 {
@@ -213,6 +238,11 @@ public:
     {
         _lastSwiftmendTime = getMSTime();
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
 private:
     uint32 _lastSwiftmendTime;
@@ -302,6 +332,11 @@ public:
     }
 
 private:
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return;
+    }
     void InitializeCooldowns()
     {
         _lastTranquilityTime = 0;
@@ -416,11 +451,21 @@ private:
 
         // Nature's Swiftness + Regrowth instant cast
         for (Unit* member : group)
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+            return nullptr;
+        }
         {
             if (member && member->GetHealthPct() < 30.0f)
             {
                 if (this->CanCastSpell(RESTO_NATURES_SWIFTNESS, bot))
                 {
+                    if (!tank)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                        return nullptr;
+                    }
                     this->CastSpell(bot, RESTO_NATURES_SWIFTNESS);
                     if (this->CanCastSpell(RESTO_REGROWTH, member))
                     {
@@ -433,6 +478,16 @@ private:
 
         // Ironbark on tank taking heavy damage
         for (Unit* member : group)
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return nullptr;
+        }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return nullptr;
+}
         {
             if (member && member->GetHealthPct() < 50.0f && IsTank(member))
             {
@@ -459,6 +514,11 @@ private:
                 if (!tank)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                        return nullptr;
+                    }
                     return;
                 }
         if (tank && _hotTracker.NeedsLifebloomRefresh(tank->GetGUID()))
@@ -474,6 +534,11 @@ private:
         return false;
     }
 
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+        return false;
+    }
     bool HandleRejuvenation(const std::vector<Unit*>& group)
     {
         uint32 activeRejuvs = _hotTracker.GetActiveRejuvenationCount();
@@ -482,6 +547,11 @@ private:
         if (activeRejuvs < 4)
         {
             for (Unit* member : group)
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                         if (!member)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -511,16 +581,31 @@ private:
     bool HandleWildGrowth(const std::vector<Unit*>& group)
     {
         // Count injured allies without Wild Growth
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         uint32 needsHealing = 0;
         for (Unit* member : group)
             if (!member)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return nullptr;
+                }
                 return nullptr;
             }
         {
             if (member && member->GetHealthPct() < 85.0f && !_hotTracker.HasWildGrowth(member->GetGUID()))
                 ++needsHealing;
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+            return nullptr;
+        }
         }
 
         // Use Wild Growth if 3+ allies need healing
@@ -576,6 +661,11 @@ private:
         }
 
         return false;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return false;
+    }
     }
 
     bool HandleCenarionWard(const std::vector<Unit*>& group)
@@ -584,6 +674,11 @@ private:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                return nullptr;
+            }
             return;
         }
         if (!bot || !bot->HasSpell(RESTO_CENARION_WARD))

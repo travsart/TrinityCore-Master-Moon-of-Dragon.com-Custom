@@ -58,6 +58,11 @@ QuestTurnIn::QuestTurnIn()
  * @return True if quest was turned in successfully
  */
 bool QuestTurnIn::TurnInQuest(uint32 questId, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -107,6 +112,11 @@ bool QuestTurnIn::TurnInQuest(uint32 questId, Player* bot)
  * @param questId Quest ID
  */
 void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -128,6 +138,11 @@ void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
         return;
     }
     if (it == _botTurnInQueues.end())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return;
 
     auto turnInIt = std::find_if(it->second.begin(), it->second.end(),
@@ -138,6 +153,11 @@ void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
 
     // Execute turn-in workflow
     ExecuteTurnInWorkflow(bot, *turnInIt);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
  if (!bot)
  {
      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -151,6 +171,16 @@ void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
  * @param batch Batch of quests to turn in
  */
 void QuestTurnIn::ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -244,6 +274,16 @@ std::vector<uint32> QuestTurnIn::GetCompletedQuests(Player* bot)
     for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
     {
         uint32 questId = bot->GetQuestSlotQuestId(slot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
         if (!questId)
             continue;
 
@@ -261,12 +301,22 @@ std::vector<uint32> QuestTurnIn::GetCompletedQuests(Player* bot)
  * @return True if quest can be turned in
  */
 bool QuestTurnIn::IsQuestReadyForTurnIn(uint32 questId, Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
 {
     if (!bot || !questId)
         return false;
 
     // Check quest status
     QuestStatus status = bot->GetQuestStatus(questId);
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+     return;
+ }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -288,7 +338,17 @@ bool QuestTurnIn::IsQuestReadyForTurnIn(uint32 questId, Player* bot)
     if (!ValidateQuestTurnIn(bot, questId))
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     return true;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 }
 
 /**
@@ -324,6 +384,11 @@ void QuestTurnIn::MonitorQuestCompletion(Player* bot)
  * @param questId Quest ID
  */
 void QuestTurnIn::HandleQuestCompletion(Player* bot, uint32 questId)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -366,6 +431,11 @@ void QuestTurnIn::HandleQuestCompletion(Player* bot, uint32 questId)
             auto& queue = _botTurnInQueues[bot->GetGUID().GetCounter()];
             if (!bot)
             {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return;
+            }
+            if (!bot)
+            {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return;
             }
@@ -392,6 +462,11 @@ void QuestTurnIn::HandleQuestCompletion(Player* bot, uint32 questId)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                     return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return;
                 }
                 ScheduleQuestTurnIn(bot, questId);
             }
@@ -459,6 +534,11 @@ void QuestTurnIn::PlanOptimalTurnInRoute(Player* bot)
 TurnInBatch QuestTurnIn::CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds)
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
         return nullptr;
     }
@@ -485,6 +565,11 @@ TurnInBatch QuestTurnIn::CreateTurnInBatch(Player* bot, const std::vector<uint32
         {
             sumX += pos.GetPositionX();
             sumY += pos.GetPositionY();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return;
+            }
             sumZ += pos.GetPositionZ();
             count++;
         }
@@ -573,6 +658,11 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
     // Resolve GUID to pointer after loop
     if (!questEnderGuid.IsEmpty())
         questEnder = ObjectAccessor::GetCreature(*bot, questEnderGuid);
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+     return;
+ }
 
     if (questEnder)
     {
@@ -666,6 +756,11 @@ bool QuestTurnIn::IsAtQuestGiver(Player* bot, uint32 questGiverGuid)
  * @brief Analyze quest rewards
  * @param turnInData Turn-in data
  * @param bot Bot player
+ if (!member)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+     return;
+ }
  */
 void QuestTurnIn::AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot)
     if (!bot)
@@ -717,6 +812,11 @@ void QuestTurnIn::AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot)
  * @return Index of selected reward
  */
 uint32 QuestTurnIn::SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
 {
     if (!bot || rewards.empty())
         return 0;
@@ -752,6 +852,21 @@ uint32 QuestTurnIn::SelectOptimalReward(const std::vector<QuestRewardItem>& rewa
  * @param bot Bot player
  */
 void QuestTurnIn::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 {
     if (!bot)
         return;
@@ -772,6 +887,16 @@ void QuestTurnIn::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewar
         {
             // Get currently equipped item in same slot
             Item* currentItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, itemTemplate->GetInventoryType());
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                        return;
+                    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
@@ -804,6 +929,11 @@ void QuestTurnIn::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewar
  * @brief Calculate item value for bot
  * @param reward Reward item
  * @param bot Bot player
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+     return;
+ }
  * @return Calculated value
  */
 float QuestTurnIn::CalculateItemValue(const QuestRewardItem& reward, Player* bot)
@@ -830,6 +960,11 @@ float QuestTurnIn::CalculateItemValue(const QuestRewardItem& reward, Player* bot
 
     // Factor in class usability
     if (bot->CanUseItem(itemTemplate) == EQUIP_ERR_OK)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
         value *= 1.5f;
 
     // Factor in item count
@@ -871,6 +1006,11 @@ void QuestTurnIn::CoordinateGroupTurnIns(Group* group)
 
         std::vector<uint32> completedQuests = GetCompletedQuests(member);
         for (uint32 questId : completedQuests)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             questCompletions[questId].push_back(member);
         if (!bot)
@@ -943,6 +1083,11 @@ void QuestTurnIn::SynchronizeGroupRewardSelection(Group* group, uint32 questId)
  * @param questId Quest ID
  */
 void QuestTurnIn::HandleQuestGiverDialog(Player* bot, uint32 questGiverGuid, uint32 questId)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 {
     if (!bot || !questGiverGuid || !questId)
         return;
@@ -1096,6 +1241,21 @@ if (!bot)
 void QuestTurnIn::HandleQuestChainProgression(Player* bot, uint32 completedQuestId)
             if (!bot)
             {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+            if (!bot)
+            {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
             }
@@ -1189,12 +1349,27 @@ TurnInStrategy QuestTurnIn::GetTurnInStrategy(uint32 botGuid)
 /**
  * @brief Set reward selection strategy for bot
  * @param botGuid Bot GUID
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
  * @param strategy Reward selection strategy
  */
 void QuestTurnIn::SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy)
 {
     std::lock_guard<std::recursive_mutex> lock(_turnInMutex);
     _botRewardStrategies[botGuid] = strategy;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 }
 
 /**
@@ -1372,6 +1547,11 @@ void QuestTurnIn::CleanupCompletedTurnIns()
     std::lock_guard<std::recursive_mutex> lock(_turnInMutex);
 
     uint32 currentTime = getMSTime();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return 0;
+}
 
     // Clean up old turn-in data
     for (auto& [botGuid, turnIns] : _botTurnInQueues)
@@ -1415,6 +1595,11 @@ QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetGlobalTurnInMetrics()
 /**
  * @brief Initialize turn-in data for quest
  * @param bot Bot player
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+     return;
+ }
  * @param questId Quest ID
  */
 void QuestTurnIn::InitializeTurnInData(Player* bot, uint32 questId)

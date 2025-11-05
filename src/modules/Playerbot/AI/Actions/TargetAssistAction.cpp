@@ -48,6 +48,26 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return nullptr;
     }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return nullptr;
+                            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -56,9 +76,19 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
     if (!bot || !bot->IsAlive())
         return ActionResult::FAILED;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     // CRITICAL FIX: Implement actual target assistance logic
     TC_LOG_INFO("module.playerbot.combat", "TargetAssistAction::Execute for bot {}", bot->GetName());
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Check if we have a target from context
     Unit* targetFromContext = dynamic_cast<Unit*>(context.target);
     if (targetFromContext)
@@ -67,6 +97,11 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
                     targetFromContext->GetName(), bot->GetName());
 
         // Engage the target
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (EngageTarget(bot, targetFromContext))
         {
             TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Bot {} now attacking {}",
@@ -74,9 +109,24 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
             return ActionResult::SUCCESS;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     // Get group
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -95,6 +145,21 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
 
     // Find best target to assist
     Unit* bestTarget = GetBestAssistTarget(bot, group);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -120,6 +185,11 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
     if (!ShouldSwitchTarget(bot, bestTarget))
     {
         TC_LOG_DEBUG("module.playerbot.combat", "Bot {} keeping current target", bot->GetName());
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+            return nullptr;
+        }
         return ActionResult::IN_PROGRESS;
     }
 
@@ -139,6 +209,11 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
     TC_LOG_DEBUG("module.playerbot.combat", "Failed to engage target for bot {}", bot->GetName());
     return ActionResult::FAILED;
 }
+if (!leader)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInCombat");
+    return;
+}
 
 bool TargetAssistAction::IsPossible(BotAI* ai) const
 {
@@ -156,6 +231,11 @@ bool TargetAssistAction::IsPossible(BotAI* ai) const
 
     return true;
 }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+    return;
+}
 
 bool TargetAssistAction::IsUseful(BotAI* ai) const
 {
@@ -182,6 +262,11 @@ bool TargetAssistAction::IsUseful(BotAI* ai) const
 
     // Check if group members are in combat
     for (GroupReference const& itr : group->GetMembers())
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
     {
         if (Player* member = itr.GetSource())
         {
@@ -222,6 +307,11 @@ Unit* TargetAssistAction::GetBestAssistTarget(Player* bot, Group* group) const
                 {
                     return leaderTarget; // Always prioritize leader
                 }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             }
         }
     }

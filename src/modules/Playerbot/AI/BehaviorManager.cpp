@@ -27,6 +27,11 @@
 namespace Playerbot
 {
     BehaviorManager::BehaviorManager(Player* bot, BotAI* ai, uint32 updateInterval, std::string managerName)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -54,6 +59,11 @@ namespace Playerbot
             m_enabled.store(false, std::memory_order_release);
             return;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // Initialize with current time to prevent immediate update
         m_lastUpdate = getMSTime();
@@ -61,6 +71,11 @@ namespace Playerbot
         TC_LOG_DEBUG("module.playerbot", "[{}] Created for bot {} with {}ms update interval",
                      if (!bot)
                      {
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return nullptr;
+                         }
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
                      }
@@ -69,6 +84,11 @@ namespace Playerbot
 
     void BehaviorManager::Update(uint32 diff)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         // DEBUG: Only log for whitelisted test bots to prevent log spam
         static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
         bool isTestBot = m_bot && (testBots.find(m_bot->GetName()) != testBots.end());
@@ -85,6 +105,11 @@ namespace Playerbot
         if (isTestBot)
         {
             std::string botName = m_bot->GetName();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -107,6 +132,11 @@ namespace Playerbot
                         m_enabled.load(std::memory_order_acquire),
                         m_isBusy.load(std::memory_order_acquire),
                         (void*)m_bot,
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
@@ -130,6 +160,11 @@ namespace Playerbot
                 TC_LOG_ERROR("module.playerbot", "⏳ [{}] BUSY - returning early", m_managerName);
             return;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // Validate pointers are still valid
         if (!ValidatePointers())
@@ -144,6 +179,11 @@ namespace Playerbot
 
         // Handle initialization on first update
         if (!m_initialized.load(std::memory_order_acquire))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             if (!OnInitialize())
             {
@@ -188,6 +228,11 @@ namespace Playerbot
         }
         // Priority 2: Enough time has elapsed
         else if (m_timeSinceLastUpdate >= m_updateInterval)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             shouldUpdate = true;
         }
@@ -195,6 +240,11 @@ namespace Playerbot
         else if (m_needsUpdate.load(std::memory_order_acquire))
         {
             shouldUpdate = true;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             m_needsUpdate.store(false, std::memory_order_release);
         }
 
@@ -213,11 +263,21 @@ namespace Playerbot
     {
         // Mark as busy (prevents re-entrance)
         m_isBusy.store(true, std::memory_order_release);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
         // Performance monitoring - capture start time
         uint32 startTime = getMSTime();
 
         try
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             // Call derived class implementation
             OnUpdate(elapsed);
@@ -226,6 +286,11 @@ namespace Playerbot
             m_updateCount.fetch_add(1, std::memory_order_acq_rel);
         }
         catch (const std::exception& e)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             TC_LOG_ERROR("module.playerbot", "[{}] Exception in OnUpdate for bot {}: {}",
                         if (!bot)
@@ -236,6 +301,11 @@ namespace Playerbot
                         m_managerName, m_bot->GetName(), e.what());
             // Disable manager after exception to prevent spam
             m_enabled.store(false, std::memory_order_release);
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
         }
         catch (...)
         {
@@ -255,6 +325,11 @@ namespace Playerbot
 
         // Performance monitoring - check for slow updates
         if (updateDuration > m_slowUpdateThreshold)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             m_consecutiveSlowUpdates++;
             m_totalSlowUpdates++;
@@ -272,11 +347,21 @@ namespace Playerbot
             }
             else if (m_consecutiveSlowUpdates >= 5)
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 TC_LOG_WARN("module.playerbot", "[{}] {} consecutive slow updates for bot {} (latest: {}ms)",
                            if (!bot)
                            {
                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                                return;
+                           if (!bot)
+                           {
+                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                               return;
+                           }
                            }
                            m_managerName, m_consecutiveSlowUpdates, m_bot->GetName(), updateDuration);
             }
@@ -295,11 +380,21 @@ namespace Playerbot
                 m_updateInterval = newInterval;
                 m_consecutiveSlowUpdates = 0;
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return nullptr;
+        }
         }
         else
         {
             // Reset consecutive slow update counter on fast update
             if (m_consecutiveSlowUpdates > 0)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             {
                 TC_LOG_DEBUG("module.playerbot", "[{}] Performance recovered for bot {} after {} slow updates",
                             if (!bot)
@@ -308,12 +403,22 @@ namespace Playerbot
                                 return;
                             }
                             m_managerName, m_bot->GetName(), m_consecutiveSlowUpdates);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 m_consecutiveSlowUpdates = 0;
             }
         }
 
         // Update last update timestamp
         m_lastUpdate = getMSTime();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // Clear busy flag
         m_isBusy.store(false, std::memory_order_release);
@@ -366,9 +471,19 @@ namespace Playerbot
             // Note: We can't use diff here, so we throttle by call count instead (every 1000 calls ~= 50s)
             validateLogAccumulators[botName]++;
             if (validateLogAccumulators[botName] >= 1000)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
             {
                 shouldLog = true;
                 validateLogAccumulators[botName] = 0;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
@@ -390,6 +505,11 @@ namespace Playerbot
             if (shouldLog)
             {
                 TC_LOG_ERROR("module.playerbot", "❌ [{}] ValidatePointers FAILED: Bot {} IsInWorld()=false (THIS IS THE PROBLEM!)",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");

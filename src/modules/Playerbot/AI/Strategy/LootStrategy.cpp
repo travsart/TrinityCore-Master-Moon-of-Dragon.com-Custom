@@ -85,6 +85,21 @@ bool LootStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -133,6 +148,11 @@ float LootStrategy::GetRelevance(BotAI* ai) const
     }
 
     // Scan for loot
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     std::vector<ObjectGuid> corpses = FindLootableCorpses(ai);
     std::vector<ObjectGuid> objects = FindLootableObjects(ai);
 
@@ -140,12 +160,27 @@ float LootStrategy::GetRelevance(BotAI* ai) const
     return (!corpses.empty() || !objects.empty()) ? 60.0f : 0.0f;
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     if (!ai || !ai->GetBot())
         return;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -223,6 +258,11 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 break;
             }
         }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
+            return nullptr;
+        }
         else if (targetGuid.IsGameObject())
         {
             if (LootObject(ai, targetGuid))
@@ -237,11 +277,21 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 std::vector<ObjectGuid> LootStrategy::FindLootableCorpses(BotAI* ai, float maxDistance) const
 {
     std::vector<ObjectGuid> lootableCorpses;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     if (!ai || !ai->GetBot())
         return lootableCorpses;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
 
     // Find all creatures in range
     std::list<Creature*> nearbyCreatures;
@@ -278,6 +328,16 @@ std::vector<ObjectGuid> LootStrategy::FindLootableObjects(BotAI* ai, float maxDi
 
     Player* bot = ai->GetBot();
     Map* map = bot->GetMap();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -329,7 +389,22 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     Map* map = bot->GetMap();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -365,6 +440,11 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     // Validate corpse exists and is dead
     if (!corpseSnapshot || !corpseSnapshot->isDead)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         return false;
 
     // Check distance using snapshot position
@@ -377,9 +457,19 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
         // PHASE 5 MIGRATION: Use Movement Arbiter with LOOT priority (40)
         BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return;
+                    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -424,6 +514,16 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     // PHASE 5D: Thread-safe spatial grid validation
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, corpseGuid);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
     Creature* creature = nullptr;
 
     if (snapshot)
@@ -438,6 +538,11 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
     if (creature->m_loot)
     {
         bot->SendLoot(*creature->m_loot, false);
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return nullptr;
+                         }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -459,6 +564,11 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
 
     Player* bot = ai->GetBot();
     Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -487,6 +597,11 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
     {
         if (snapshot.guid == objectGuid)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return nullptr;
+            }
             objectSnapshot = &snapshot;
             break;
         }
@@ -498,6 +613,11 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
 
     // Check distance using snapshot position
     float distance = bot->GetExactDist(objectSnapshot->position);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     if (distance > INTERACTION_DISTANCE)
     {
         // Move closer using snapshot position
@@ -509,6 +629,16 @@ bool LootStrategy::LootObject(BotAI* ai, ObjectGuid objectGuid)
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return false;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return false;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");

@@ -64,6 +64,11 @@ void KitingManager::UpdateKiting(uint32 diff)
     _lastMovementTime = currentTime;
 
     try
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     {
         if (!_kitingActive)
         {
@@ -73,6 +78,11 @@ void KitingManager::UpdateKiting(uint32 diff)
             context.currentHealth = _bot->GetHealthPct();
             context.currentMana = _bot->GetPowerPct(POWER_MANA);
             context.inCombat = _bot->IsInCombat();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return;
+            }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -86,6 +96,11 @@ void KitingManager::UpdateKiting(uint32 diff)
             Map* map = _bot->GetMap();
             if (!bot)
             {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
+            if (!bot)
+            {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
                 return;
             }
@@ -94,6 +109,11 @@ void KitingManager::UpdateKiting(uint32 diff)
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
                             return nullptr;
                         }
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                return;
+            }
             if (map)
             {
                 DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -114,6 +134,11 @@ void KitingManager::UpdateKiting(uint32 diff)
                     for (ObjectGuid guid : nearbyGuids)
                     {
                         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
                         if (!enemy)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
@@ -183,6 +208,11 @@ KitingResult KitingManager::EvaluateKitingNeed(const KitingContext& context)
         return result;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     float currentDistance = context.currentPosition.GetExactDist(primaryThreat);
     float optimalDistance = GetOptimalKitingDistance(primaryThreat);
 
@@ -236,6 +266,11 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
         _kitingTarget = context.primaryTarget;
         _kitingActive = true;
         _currentState = KitingState::POSITIONING;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         _kitingStartTime = getMSTime();
 
         switch (kitingType)
@@ -253,6 +288,11 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
                 break;
 
             case KitingType::HIT_AND_RUN:
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 result = ExecuteHitAndRun(context);
                 break;
 
@@ -283,6 +323,11 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
         {
             _metrics.failedKites++;
             StopKiting();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
 
         auto endTime = std::chrono::steady_clock::now();
@@ -314,6 +359,11 @@ void KitingManager::StopKiting()
     _kitingActive = false;
     _currentState = KitingState::INACTIVE;
     _currentKitingType = KitingType::NONE;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     _kitingTarget = nullptr;
     _kitingWaypoints.clear();
     _currentWaypointIndex = 0;
@@ -411,7 +461,17 @@ KitingPattern KitingManager::GenerateKitingPattern(KitingType type, const Kiting
             pattern.attackWindow = 2.5f;
             pattern.movementWindow = 1.0f;
             pattern.description = "Circular kiting around target";
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                return nullptr;
+            }
             break;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return;
+}
 
         case KitingType::LINE_KITING:
             {
@@ -452,11 +512,26 @@ KitingPattern KitingManager::GenerateKitingPattern(KitingType type, const Kiting
 
         default:
             pattern.waypoints = GenerateCircularWaypoints(target, _optimalKitingDistance, 6);
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+    return nullptr;
+}
             pattern.description = "Default kiting pattern";
             break;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+        return nullptr;
+    }
     return pattern;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
+    return;
+}
 }
 
 bool KitingManager::ShouldMaintainDistance(Unit* target)
@@ -503,6 +578,11 @@ bool KitingManager::IsAtOptimalKitingDistance(Unit* target)
         return false;
 
     float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return 0;
+}
     float optimal = GetOptimalKitingDistance(target);
 
     return distance >= optimal * 0.9f && distance <= optimal * 1.1f;
@@ -585,6 +665,11 @@ KitingResult KitingManager::ExecuteStutterStep(const KitingContext& context)
     result.usedType = KitingType::STUTTER_STEP;
 
     Position currentPos = _bot->GetPosition();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     Position retreatPos = GetRetreatPosition(context.threats, 5.0f);
 
     if (ExecuteMovementToPosition(retreatPos))
@@ -606,22 +691,57 @@ KitingResult KitingManager::ExecuteStutterStep(const KitingContext& context)
 }
 
 KitingResult KitingManager::ExecuteHitAndRun(const KitingContext& context)
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+    return nullptr;
+}
 {
     KitingResult result;
     result.usedType = KitingType::HIT_AND_RUN;
 
+    if (!enemy)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
+        return nullptr;
+    }
     if (_currentState == KitingState::ATTACKING)
     {
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetPosition");
+            return nullptr;
+        }
         Position retreatPos = GetRetreatPosition(context.threats, _optimalKitingDistance);
         if (ExecuteMovementToPosition(retreatPos))
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsMoving");
+            return nullptr;
+        }
         {
             result.success = true;
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetName");
+                return nullptr;
+            }
             result.nextPosition = retreatPos;
             _currentState = KitingState::RETREATING;
         }
     }
     else
+    if (!enemy)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetOrientation");
+        return;
+    }
+    {
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetOrientation");
+            return nullptr;
+        }
         Position attackPos = GetAttackPosition(context.primaryTarget);
         if (ExecuteMovementToPosition(attackPos))
         {
@@ -642,6 +762,11 @@ KitingResult KitingManager::ExecuteFigureEight(const KitingContext& context)
     Unit* target = context.primaryTarget;
     if (!target)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return;
+    }
+    if (!target)
+    {
         result.failureReason = "No target for figure-8 kiting";
         return result;
     }
@@ -649,16 +774,31 @@ KitingResult KitingManager::ExecuteFigureEight(const KitingContext& context)
     if (_kitingWaypoints.empty())
     {
         _kitingWaypoints = GenerateFigureEightWaypoints(target, _optimalKitingDistance);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+                return nullptr;
+            }
         _currentWaypointIndex = 0;
     }
 
     if (_currentWaypointIndex < _kitingWaypoints.size())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     {
         Position nextWaypoint = _kitingWaypoints[_currentWaypointIndex];
 
         if (ExecuteMovementToPosition(nextWaypoint))
         {
             if (_bot->GetExactDistSq(nextWaypoint) <= (2.0f * 2.0f)) // 4.0f
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             {
                 _currentWaypointIndex = (_currentWaypointIndex + 1) % _kitingWaypoints.size();
             }
@@ -678,6 +818,11 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
     threats.reserve(enemies.size());
 
     Position botPos = _bot->GetPosition();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
 
     for (Unit* enemy : enemies)
         if (!enemy)
@@ -719,14 +864,29 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
             }
             threat.velocity.m_positionY = enemy->GetSpeedXY() * std::sin(enemy->GetOrientation());
             if (!enemy)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetOrientation");
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+                    return nullptr;
+                }
                 return;
             }
             threat.relativeSpeed = CalculateRelativeSpeed(enemy);
         }
 
         threat.threatLevel = enemy->GetThreatManager().GetThreat(_bot);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
         threats.push_back(threat);
     }
 
@@ -756,8 +916,23 @@ bool KitingManager::IsKiteable(Unit* target)
 
     float targetSpeed = target->GetSpeedXY();
     float botSpeed = _bot->GetSpeedXY();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
 
     return botSpeed >= targetSpeed * 0.9f;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -778,6 +953,11 @@ Position KitingManager::CalculateKitingPosition(Unit* target, KitingType type)
         case KitingType::CIRCULAR_KITING:
             {
                 float angle = std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return nullptr;
+}
                                        botPos.GetPositionX() - targetPos.GetPositionX());
                 return GetCircularKitingPosition(target, angle + M_PI/6);
             }
@@ -869,6 +1049,11 @@ bool KitingManager::CanAttackWhileKiting()
     float optimalDistance = GetOptimalKitingDistance(_kitingTarget);
     return IsInAttackWindow() && _kitingTarget &&
            _bot->IsWithinLOSInMap(_kitingTarget) &&
+           if (!target)
+           {
+               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+               return nullptr;
+           }
            _bot->GetExactDistSq(_kitingTarget) <= (optimalDistance * optimalDistance);
         if (!bot)
         {
@@ -892,6 +1077,11 @@ Position KitingManager::GetAttackPosition(Unit* target)
     Position attackPos;
     attackPos.m_positionX = targetPos.GetPositionX() - attackRange * std::cos(angle);
     attackPos.m_positionY = targetPos.GetPositionY() - attackRange * std::sin(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+        return;
+    }
     attackPos.m_positionZ = targetPos.GetPositionZ();
 
     return attackPos;
@@ -924,6 +1114,16 @@ KitingTrigger KitingManager::EvaluateKitingTriggers(const KitingContext& context
         return;
     }
     if (botClass == CLASS_HUNTER || botClass == CLASS_MAGE || botClass == CLASS_WARLOCK)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
         triggers |= KitingTrigger::FORMATION_ROLE;
 
     return triggers;
@@ -1049,6 +1249,11 @@ bool KitingManager::ExecuteMovementToPosition(const Position& target)
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                            return false;
+                        }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1096,6 +1301,11 @@ bool KitingManager::IsPositionSafe(const Position& pos, const std::vector<Unit*>
         float distance = pos.GetExactDist(threat);
         if (distance < _minKitingDistance * 0.8f)
             return false;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     }
 
     return true;

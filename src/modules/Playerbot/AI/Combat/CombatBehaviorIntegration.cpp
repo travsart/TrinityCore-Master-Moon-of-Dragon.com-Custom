@@ -112,6 +112,11 @@ void CombatBehaviorIntegration::Update(uint32 diff)
 
         _updateTimer = 0;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Track performance
     _lastUpdateTime = getMSTime() - startTime;
@@ -219,6 +224,11 @@ void CombatBehaviorIntegration::UpdatePriorities()
 
     // Check movement needs
     if (_movementIntegration->NeedsUrgentMovement())
+    if (!newTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetGUID");
+        return;
+    }
     {
         RecommendedAction movement;
         movement.type = CombatActionType::MOVEMENT;
@@ -312,6 +322,11 @@ void CombatBehaviorIntegration::PrioritizeActions()
         });
 
     // Keep only top actions
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (_actionQueue.size() > 5)
         _actionQueue.resize(5);
 }
@@ -322,6 +337,11 @@ bool CombatBehaviorIntegration::HandleEmergencies()
     if (!_emergencyMode && !_survivalMode)
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     // Use defensive cooldowns
@@ -462,6 +482,11 @@ float CombatBehaviorIntegration::GetOptimalRange(Unit* target)
     {
         ObjectGuid targetGuid = _bot->GetTarget();
         target = ObjectAccessor::GetUnit(*_bot, targetGuid);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
     }
 
     return _movementIntegration->GetOptimalRange(target);
@@ -599,6 +624,11 @@ void CombatBehaviorIntegration::ClearPendingActions()
 {
     std::lock_guard<std::mutex> lock(_actionQueueMutex);
         _actionQueue.clear();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 }
 
 void CombatBehaviorIntegration::RecordActionResult(const RecommendedAction& action, bool success)
@@ -638,6 +668,11 @@ void CombatBehaviorIntegration::DumpState() const
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return;
     }
     TC_LOG_INFO("bot.playerbot", "Situation: {}", static_cast<uint32>(GetCurrentSituation()));
@@ -661,6 +696,11 @@ void CombatBehaviorIntegration::Reset()
     { std::lock_guard<std::mutex> lock(_actionQueueMutex); _actionQueue.clear(); }
     _currentAction = RecommendedAction();
     _lastActionTime = 0;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     _inCombat = false;
     _emergencyMode = false;
     _survivalMode = false;
@@ -726,6 +766,11 @@ ActionUrgency CombatBehaviorIntegration::EvaluateInterruptPriority(Unit* target)
     if (!target || !target->HasUnitState(UNIT_STATE_CASTING))
         return ActionUrgency::LOW;
 
+    if (!currentTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTarget in method HasAura");
+        return nullptr;
+    }
     // Check if cast is dangerous
     if (_interruptManager->IsCastDangerous(target))
         return ActionUrgency::EMERGENCY;
@@ -746,6 +791,11 @@ ActionUrgency CombatBehaviorIntegration::EvaluateDefensivePriority()
 
     if (metrics.personalHealthPercent < 40.0f)
         return ActionUrgency::CRITICAL;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     if (_defensiveManager->NeedsDefensive())
         return ActionUrgency::HIGH;

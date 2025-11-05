@@ -43,6 +43,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return;
     }
         if (!bot)
@@ -66,6 +71,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     // Create WorldPacket with CMSG_QUEUED_MESSAGES_END opcode
     WorldPacket packet(CMSG_QUEUED_MESSAGES_END);
     packet << _simulatedClientTime;  // Write timestamp
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Construct packet structure from WorldPacket
     WorldPackets::Auth::QueuedMessagesEnd queuedMessagesEnd(std::move(packet));
@@ -95,9 +105,19 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     {
         TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null session in SimulateMoveInitActiveMoverComplete");
         return;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     Player* bot = _session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -119,6 +139,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     // 1. Time synchronization via HandleTimeSync with SPECIAL_INIT_ACTIVE_MOVER_TIME_SYNC_COUNTER
     // 2. Sets PLAYER_LOCAL_FLAG_OVERRIDE_TRANSPORT_SERVER_TIME automatically (MovementHandler.cpp:886)
     // 3. Updates player visibility via UpdateObjectVisibility()
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+        return nullptr;
+    }
     //
     // Without this packet, Player::CanNeverSee() returns TRUE because the flag is missing,
     // making bots unable to see any objects in the world.
@@ -136,6 +161,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     WorldPacket packet(CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE);
     packet << _simulatedClientTime;  // Write ticks
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Construct packet structure from WorldPacket
     WorldPackets::Movement::MoveInitActiveMoverComplete moveInitComplete(std::move(packet));
     moveInitComplete.Read();  // Extract data from WorldPacket
@@ -151,6 +181,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     TC_LOG_INFO("module.playerbot.packet",
         "✅ Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
         if (!bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
@@ -163,6 +198,11 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
     if (!_session)
         if (!bot)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }

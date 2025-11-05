@@ -85,6 +85,11 @@ void PlayerbotPacketSniffer::OnPacketSend(WorldSession* session, WorldPacket con
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!player || !PlayerBotHooks::IsPlayerBot(player))
         return;
 

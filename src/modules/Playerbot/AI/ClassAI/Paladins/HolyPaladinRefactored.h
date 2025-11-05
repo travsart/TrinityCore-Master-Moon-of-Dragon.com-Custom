@@ -118,6 +118,11 @@ struct ManaHolyPowerResource
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         holyPower = 0;
     }
@@ -161,6 +166,11 @@ public:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return false;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return;
         }
     {
@@ -191,6 +201,16 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit HolyPaladinRefactored(Player* bot)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
@@ -236,6 +256,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         if (!bot)
             return;
 
@@ -315,6 +340,11 @@ protected:
         Player* bot = this->GetBot();
 
         // Self emergency
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         if (bot->GetHealthPct() < 25.0f)
         {
             // Lay on Hands
@@ -410,6 +440,11 @@ protected:
         // Critical: Flash of Light
         if (healthPct < 50.0f)
         {
+            if (!tank)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                return nullptr;
+            }
             if (this->CanCastSpell(FLASH_OF_LIGHT, target))
             {
                 this->CastSpell(target, FLASH_OF_LIGHT);
@@ -423,6 +458,11 @@ protected:
             if (this->CanCastSpell(HOLY_LIGHT, target))
             {
                 this->CastSpell(target, HOLY_LIGHT);
+                if (!secondTank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: secondTank in method GetGUID");
+                    return nullptr;
+                }
                 return;
             }
         }
@@ -442,6 +482,11 @@ protected:
                 }
         if (tank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), tank))
         {
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return nullptr;
+            }
             if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
             {
                 this->CastSpell(tank, BEACON_OF_LIGHT);
@@ -491,6 +536,11 @@ protected:
                 {
                     lowestPct = member->GetHealthPct();
                     lowestHealth = member;
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return;
+        }
                 }
             }
         }
@@ -550,6 +600,11 @@ private:
                 if (!member)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    if (!victim)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
+                        return nullptr;
+                    }
                     return nullptr;
                 }
                     count++;

@@ -51,6 +51,16 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -89,6 +99,11 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
                 continue;
 
             if (nodeType == GatheringNodeType::MINERAL &&
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return nullptr;
+                }
                 !HasGatheringSkill(GatheringSkillType::MINING))
                 continue;
 
@@ -100,6 +115,11 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
             node.position = snapshot.position;
             node.skillRequired = GetRequiredSkillLevel(snapshot.entry);
             node.distance = snapshot.position.GetExactDist(bot->GetPosition());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -122,6 +142,11 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
     }
 
     // Scan for skinnable creatures
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     if (HasGatheringSkill(GatheringSkillType::SKINNING))
     {
         std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
@@ -140,6 +165,11 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
             if (!snapshot.lootRecipients.empty())
             {
                 bool canLoot = false;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return;
+                }
                 for (auto const& recipient : snapshot.lootRecipients)
                 {
                     if (recipient == bot->GetGUID())
@@ -194,10 +224,25 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
 /**
  * Lock-Free Implementation of GatherNode
  * Queues gathering action for main thread execution
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+     return;
+ }
  */
 bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
 {
     Player* bot = GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
     if (!bot || node.guid.IsEmpty())
         return false;
 
@@ -225,6 +270,11 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
         TC_LOG_DEBUG("playerbot.gathering",
             "Bot %s lacks skill for node (has %u, needs %u)",
             if (!bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
@@ -235,6 +285,16 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
 
     // Verify node still exists and is in range using spatial grid
     Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -271,6 +331,11 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -294,6 +359,11 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
             spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), GATHERING_SEARCH_RANGE);
 
         for (auto const& snapshot : objects)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             if (snapshot.guid == node.guid)
             {
@@ -302,6 +372,21 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                            return nullptr;
+                        }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                        return;
+                    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -361,6 +446,11 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
         _currentNode = node;
         _isGathering = true;
         _lastGatherTime = getMSTime();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         TC_LOG_DEBUG("playerbot.gathering",
             "Bot %s queued gathering for %s %s",

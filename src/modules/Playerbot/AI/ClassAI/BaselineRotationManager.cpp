@@ -55,6 +55,11 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     if (level < 10)
         return true;
 
@@ -82,6 +87,16 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     // Initiate auto-attack if not already attacking this target
     // This is critical for low-level bots and serves as a fallback if no spells work
     if (bot->GetVictim() != target)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                             return nullptr;
+                         }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -115,6 +130,11 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
 
     // Try to cast highest priority available ability
     for (auto const& ability : sorted)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     {
         if (TryCastAbility(bot, target, ability))
             return true;
@@ -168,6 +188,11 @@ void BaselineRotationManager::ApplyBaselineBuffs(Player* bot)
             WarlockBaselineRotation::ApplyBuffs(bot);
             break;
         case CLASS_MONK:
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                return;
+            }
             MonkBaselineRotation::ApplyBuffs(bot);
             break;
         case CLASS_DRUID:
@@ -199,6 +224,11 @@ bool BaselineRotationManager::HandleAutoSpecialization(Player* bot)
     // Check if already has specialization
     // FIX: Use GetActiveTalentGroup() instead of GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID)
     uint8 activeGroup = bot->GetActiveTalentGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     if (activeGroup != 0)
         return false; // Already has spec
 
@@ -224,6 +254,26 @@ float BaselineRotationManager::GetBaselineOptimalRange(Player* bot)
 
     // FIX: use GetClass() not getClass()
     uint8 classId = bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
@@ -264,12 +314,22 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     }
     auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
         return nullptr;
     }
         return false; // On cooldown
+if (!castTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: castTarget in method GetName");
+    return nullptr;
+}
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
@@ -278,6 +338,16 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
     // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                         return nullptr;
+                     }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -309,6 +379,31 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // LOS check covered by skipRangeCheck
 
     auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                         return nullptr;
+                     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return nullptr;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -326,6 +421,11 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
         // Optimistic cooldown recording (packet will be processed)
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                         return;
+                     }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -348,6 +448,11 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
                      result.failureReason);
         return false;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return;
+}
 }
 
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
@@ -414,6 +519,16 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
             break;
         case CLASS_DEATH_KNIGHT:
             currentResource = bot->GetPower(POWER_RUNIC_POWER);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -422,6 +537,31 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
             break;
         default:
             currentResource = bot->GetPower(POWER_MANA);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return nullptr;
+}
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -437,6 +577,21 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
 }
 
 uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return nullptr;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
 {
     if (!bot)
         return 0;
@@ -449,6 +604,21 @@ uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const
 
     // FIX: use GetClass() not getClass()
     uint8 classId = bot->GetClass();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");

@@ -114,6 +114,11 @@ struct EnergyChiResourceWindwalker
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         chi = 0;
     }
@@ -228,6 +233,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
         , MonkSpecialization(bot)
         , _hitComboTracker()
@@ -235,6 +245,11 @@ public:
         , _lastRisingSunKickTime(0)
         , _comboBreaker(false)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize energy/chi resources
         this->_resource.Initialize(bot);
 

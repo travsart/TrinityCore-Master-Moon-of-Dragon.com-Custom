@@ -37,6 +37,11 @@ namespace Playerbot
 
     FlightResult FlightMasterManager::FlyToPosition(
         Player* player,
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -63,6 +68,16 @@ namespace Playerbot
 
         // Find nearest flight master to player
         auto flightMasterOpt = FindNearestFlightMaster(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+                return nullptr;
+            }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -81,6 +96,16 @@ namespace Playerbot
 
         // Find nearest taxi node to destination
         uint32 destinationNode = FindNearestTaxiNode(destination, player->GetMapId());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");

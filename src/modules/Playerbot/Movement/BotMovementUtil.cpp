@@ -16,6 +16,11 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         return false;
 
     MotionMaster* mm = bot->GetMotionMaster();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -33,6 +38,21 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     {
         // Bot is already moving via MovePoint - check if it's the same destination
         float distToDestination = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -75,6 +95,11 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
 }
 
 bool BotMovementUtil::MoveToTarget(Player* bot, WorldObject* target, uint32 pointId, float minDistanceChange)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 {
     if (!bot || !target)
         return false;
@@ -92,6 +117,11 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
 
     // Check if already within desired distance
     float currentDistance = std::sqrt(bot->GetExactDistSq(unit)); // Calculate once from squared distance
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -115,8 +145,18 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
     // Move backwards from unit position along its facing direction
     destination.m_positionX -= targetDistance * std::cos(angle);
     destination.m_positionY -= targetDistance * std::sin(angle);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     TC_LOG_DEBUG("module.playerbot", "🎯 BotMovement: Bot {} moving to within {:.1f}yd of {} at ({:.2f},{:.2f},{:.2f})",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -134,6 +174,11 @@ bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
         return false;
 
     MotionMaster* mm = bot->GetMotionMaster();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (!mm)
         return false;
 

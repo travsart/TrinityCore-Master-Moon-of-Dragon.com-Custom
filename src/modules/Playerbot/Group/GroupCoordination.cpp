@@ -196,6 +196,11 @@ Position GroupCoordination::GetFormationPosition(uint32 memberGuid) const
 }
 
 bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return nullptr;
+}
 {
     Position assignedPos = GetFormationPosition(memberGuid);
 
@@ -224,6 +229,11 @@ void GroupCoordination::MoveToPosition(const Position& destination, bool maintai
     MovementWaypoint waypoint(destination, 0.0f, true, "Group movement destination");
 
     // Clear current path and add new destination
+    if (!leader)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
+        return nullptr;
+    }
     while (!_movementPath.empty())
         _movementPath.pop();
 
@@ -399,6 +409,11 @@ void GroupCoordination::ProcessCommandQueue()
 
         if (ValidateCommand(command))
         {
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+                return nullptr;
+            }
             ExecuteCommandInternal(command);
             _metrics.commandsExecuted.fetch_add(1);
         }

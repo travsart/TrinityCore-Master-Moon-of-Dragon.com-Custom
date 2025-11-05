@@ -119,6 +119,11 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                     return nullptr;
                 }
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                 info.pendingTeleports.push_back(member->GetGUID());
         }
     }
@@ -170,6 +175,16 @@ bool LFGGroupCoordinator::OnGroupReady(ObjectGuid groupGuid)
 // ============================================================================
 
 bool LFGGroupCoordinator::TeleportPlayerToDungeon(Player* player, uint32 dungeonId)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
 if (!player)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -206,21 +221,46 @@ if (!player)
     }
 
     // Validate entrance data
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!ValidateEntranceData(mapId, x, y, z))
     {
         TC_LOG_ERROR("lfg.playerbot", "Invalid entrance data for dungeon {}", dungeonId);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+            return;
+        }
         HandleTeleportFailure(player, "Invalid dungeon entrance data");
         return false;
     }
 
     // Get dungeon name for notification
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
     std::string dungeonName = dungeonData ? dungeonData->name : "Unknown Dungeon";
 
     // Send notification
     NotifyTeleportStart(player, dungeonName);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
 
     // Track teleport
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -271,16 +311,36 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
 {
     if (!_enabled || !group)
         return false;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+    return nullptr;
+}
 
     TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::TeleportGroupToDungeon - Group: {}, Dungeon: {}",
         group->GetGUID().ToString(), dungeonId);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
 
     uint32 successCount = 0;
     uint32 totalMembers = 0;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
     // Teleport all group members
     for (GroupReference const* ref : *group)
     {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         Player* member = ref->GetSource();
         if (!member)
             continue;
@@ -288,6 +348,11 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
         totalMembers++;
 
         if (TeleportPlayerToDungeon(member, dungeonId))
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
             successCount++;
     }
 
@@ -295,9 +360,19 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
         successCount, totalMembers, dungeonId);
 
     return successCount == totalMembers;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
 }
 
 bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dungeonId) const
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
@@ -458,6 +533,26 @@ uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) con
     std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return 0;
+}
     if (itr != _pendingTeleports.end())
         return itr->second.dungeonId;
 
@@ -477,6 +572,11 @@ void LFGGroupCoordinator::ProcessTeleportTimeouts()
 
     // Find timed-out teleports
     for (auto const& [guid, info] : _pendingTeleports)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     {
         if (currentTime - info.timestamp > _teleportTimeout)
         {
@@ -518,6 +618,11 @@ bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, f
 
     // Check if coordinates are reasonable (not extreme values)
     float const MAX_COORD = 100000.0f;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+        return;
+    }
     if (std::abs(x) > MAX_COORD || std::abs(y) > MAX_COORD || std::abs(z) > MAX_COORD)
     {
         TC_LOG_ERROR("lfg.playerbot", "Extreme entrance coordinates ({}, {}, {}) for map {}",

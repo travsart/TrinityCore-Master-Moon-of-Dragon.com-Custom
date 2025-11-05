@@ -138,6 +138,26 @@ void BotWorldSessionMgr::Shutdown()
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
             return;
         }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            if (!session)
+            {
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+                    return nullptr;
+                }
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
         if (session && session->GetPlayer())
         {
             // MEMORY SAFETY: Protect against use-after-free when accessing Player name
@@ -163,6 +183,11 @@ void BotWorldSessionMgr::Shutdown()
     }
 
     _botSessions.clear();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     _botsLoading.clear();
 
     // Destroy all spatial grids and stop worker threads
@@ -195,6 +220,11 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     }
 
     // FIX #22: CRITICAL - Eliminate ObjectAccessor call to prevent deadlock
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return nullptr;
+    }
     // Check if bot is already added by scanning existing sessions (avoids ObjectAccessor lock)
     for (auto const& [guid, session] : _botSessions)
     {
@@ -268,9 +298,19 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // ROOT CAUSE OF SERVER HANG: "ENTERPRISE FIX V2" removed all throttling, causing:
     // - 296 bots spawning immediately at server startup
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     // - 296 � 66 async queries = 19,536 database queries flooding connection pool
     // - ProcessQueryCallbacks() overwhelmed, world thread hangs 60+ seconds
     //
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return nullptr;
+    }
     // NEW SOLUTION: Queue-based rate-limited spawning
     // - AddPlayerBot() adds to _pendingSpawns queue (no immediate spawn)
     // - UpdateSessions() processes N spawns per tick (configurable, default 10)
@@ -279,6 +319,11 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // Performance: MaxBotsPerUpdate config controls rate (10/tick = 10/50ms = 200 bots/sec)
     // Full 100-bot spawn completes in 500ms instead of overloading database instantly
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method KickPlayer");
+    return nullptr;
+}
 
     TC_LOG_INFO("module.playerbot.session",
         "?? Queueing bot {} for rate-limited spawn (queue position: {}, accountId: {})",
@@ -629,7 +674,17 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Rationale:
         // - 100 task threshold scales with worker count (3-6 tasks per worker)
         // - 80% busy threshold ensures enough free workers to handle new batch quickly
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
         // - Prevents scenario where new tasks queue behind long-running tasks
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return nullptr;
+        }
         // - Priority system spreads bots across ticks, so actual per-tick load is manageable
         uint32 busyThreshold = (workerCount * 4) / 5;  // 80% of workers
 
@@ -637,7 +692,17 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Even with minimum 16 workers enforced by ThreadPool, be defensive
         if (busyThreshold < 3)
             busyThreshold = 3;
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return nullptr;
+}
 
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+            return nullptr;
+        }
         if (queuedTasks > 100 || activeWorkers > busyThreshold)
         {
             TC_LOG_WARN("module.playerbot.session",
@@ -647,6 +712,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     for (auto& [guid, botSession] : sessionsToUpdate)
     {
         // Validate session before submitting task
@@ -658,6 +728,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
         // OPTION 5: Capture weak_ptr for session lifetime detection
         std::weak_ptr<BotSession> weakSession = botSession;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
@@ -899,6 +974,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     // - Deferred packets execute on main thread, synchronized with Map::Update()
     //
     // Performance:
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return 0;
+    }
     // - Processes all deferred packets across all bot sessions
     // - Each session limited to 50 packets/update (MAX_DEFERRED_PACKETS_PER_UPDATE)
     // - Expected load: 300-400 packets/sec with 5000 bots
@@ -919,6 +999,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
                 sessionsToProcess.push_back(session);
             }
         }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return 0;
+    }
     } // Release mutex before processing
 
     // Process deferred packets for each session
@@ -943,6 +1028,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     {
         TC_LOG_DEBUG("playerbot.packets.deferred",
             "ProcessAllDeferredPackets: {} total packets processed from {} bot sessions",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+                return;
+            }
             totalProcessed, sessionsToProcess.size());
     }
 

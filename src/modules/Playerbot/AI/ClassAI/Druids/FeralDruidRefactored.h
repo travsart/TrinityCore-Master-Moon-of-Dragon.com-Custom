@@ -71,8 +71,23 @@ struct EnergyComboResource
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         maxEnergy = bot->GetMaxPower(POWER_ENERGY);
         comboPoints = bot->GetPower(POWER_COMBO_POINTS);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -190,9 +205,24 @@ public:
     {
         auto it = _ripTargets.find(guid);
         if (it != _ripTargets.end())
+    if (!rip)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rip in method GetDuration");
+        return false;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return nullptr;
+    }
+    }
         {
             uint32 now = getMSTime();
             return now < it->second ? (it->second - now) : 0;
+        if (!rake)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rake in method GetDuration");
+            return nullptr;
+        }
         }
         return 0;
     }
@@ -208,6 +238,11 @@ public:
         uint32 remaining = GetRipTimeRemaining(guid);
         return remaining < pandemicWindow; // Refresh in pandemic window
     }
+if (!thrash)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: thrash in method GetDuration");
+    return false;
+}
 
     void Update(Unit* target)
     {
@@ -295,7 +330,17 @@ public:
         {
             if (now >= it->second)
                 it = _moonfireTargets.erase(it);
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             else
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
                 ++it;
         }
     }
@@ -422,6 +467,11 @@ public:
         MaintainCatForm();
     }
 
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return;
+    }
     void UpdateDefensives()
     {
         if (!bot)
@@ -453,6 +503,11 @@ public:
         // Regrowth (if out of combat and low health)
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(FERAL_REGROWTH, bot))
         {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             this->CastSpell(bot, FERAL_REGROWTH);
         }
     }
@@ -562,6 +617,11 @@ private:
 
         // Rip (maintain bleed at 5 combo points)
         if (cp >= 5 && _bleedTracker.NeedsRipRefresh(targetGuid))
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(FERAL_RIP, target))
             {

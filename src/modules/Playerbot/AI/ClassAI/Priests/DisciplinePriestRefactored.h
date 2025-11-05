@@ -209,7 +209,17 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
             return nullptr;
         }
+        if (!bot)
         {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+        {
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return nullptr;
+            }
             std::vector<Unit*> groupMembers;
             for (GroupReference const& ref : group->GetMembers())
             {
@@ -266,6 +276,21 @@ public:
             return;
 
         float healthPct = bot->GetHealthPct();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
 
         // Desperate Prayer (self-heal + damage reduction)
         if (healthPct < 30.0f && this->CanCastSpell(DISC_DESPERATE_PRAYER, bot))
@@ -321,6 +346,11 @@ private:
         _lastPainSuppressionTime = 0;
     }
 
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return;
+    }
     void UpdateDisciplineState()
     {
         Player* bot = this->GetBot();
@@ -414,6 +444,11 @@ private:
                 this->CastSpell(bot, DISC_BARRIER); // Ground-targeted AoE
                 _lastBarrierTime = getMSTime();
                 return true;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             }
         }
 
@@ -424,9 +459,24 @@ private:
             {
                 this->CastSpell(bot, DISC_RAPTURE);
                 _raptureActive = true;
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                 _raptureEndTime = getMSTime() + 8000; // 8 sec duration
                 _lastRaptureTime = getMSTime();
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                 return true;
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                return nullptr;
+            }
             }
         }
 
@@ -441,12 +491,22 @@ private:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
                 return nullptr;
             }
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return;
+        }
         if (!bot)
             return false;
 
         uint32 activeAtonements = _atonementTracker.GetActiveAtonementCount();
 
         // Evangelism (extend all Atonements by 6 sec)
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return nullptr;
+        }
         if (activeAtonements >= 4 && (getMSTime() - _lastEvangelismTime) >= 90000) // 90 sec CD
         {
             if (bot->HasSpell(DISC_EVANGELISM))
@@ -458,6 +518,16 @@ private:
 
                     // Extend all current Atonements
                     for (Unit* member : group)
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return nullptr;
+                            }
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return nullptr;
+                            }
                         if (!member)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -467,6 +537,11 @@ private:
                         if (member && _atonementTracker.HasAtonement(member->GetGUID()))
                         {
                             uint32 remaining = _atonementTracker.GetAtonementTimeRemaining(member->GetGUID());
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return nullptr;
+                            }
                             if (!member)
                             {
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -494,6 +569,11 @@ private:
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                                 return nullptr;
                             }
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return nullptr;
+                            }
                         if (!member)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -501,6 +581,11 @@ private:
                         }
             {
                 if (member && member->GetHealthPct() < 90.0f &&
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                        return nullptr;
+                    }
                     !_atonementTracker.HasAtonement(member->GetGUID()))
                 {
                     if (this->CanCastSpell(DISC_POWER_WORD_RADIANCE, member))
@@ -535,12 +620,27 @@ private:
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                             return;
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                            return;
+                        }
                         }
         {
             if (member && member->GetHealthPct() < 85.0f)
             {
                 if (_atonementTracker.NeedsAtonementRefresh(member->GetGUID()) &&
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                        return nullptr;
+                    }
                     !_shieldTracker.HasShield(member->GetGUID()))
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                 {
                     if (this->CanCastSpell(DISC_POWER_WORD_SHIELD, member))
                     {
@@ -553,12 +653,32 @@ private:
             }
         }
 
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return;
+        }
         return false;
     }
 
     bool HandleDirectHealing(const std::vector<Unit*>& group)
     {
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return false;
+        }
         Player* bot = this->GetBot();
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                        return;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                        return;
+                    }
         if (!bot)
             return false;
 
@@ -581,7 +701,17 @@ private:
             }
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         // Power Word: Life (instant emergency heal)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         for (Unit* member : group)
         {
             if (member && member->GetHealthPct() < 35.0f)
@@ -619,6 +749,11 @@ private:
     }
 
     bool HandleShielding(const std::vector<Unit*>& group)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         // During Rapture, spam shields on everyone
         if (_raptureActive)
@@ -628,6 +763,11 @@ private:
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                     return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return;
                 }
                 if (!member)
                 {
@@ -646,8 +786,18 @@ private:
                     {
                         this->CastSpell(member, DISC_POWER_WORD_SHIELD);
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                            return;
+                        }
                         _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
                         return true;
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                        return nullptr;
+                    }
                     }
                 }
             }
@@ -660,6 +810,11 @@ private:
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
                         return nullptr;
                     }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                    return;
+                }
                 if (!member)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -688,6 +843,11 @@ private:
 
         return false;
     }
+if (!victim)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
+    return false;
+}
 
     bool HandleSelfHealing()
     {

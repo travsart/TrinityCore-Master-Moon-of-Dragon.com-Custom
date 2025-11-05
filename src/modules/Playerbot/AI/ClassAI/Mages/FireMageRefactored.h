@@ -93,6 +93,11 @@ public:
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
                     return nullptr;
                 }
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
         else
         {
@@ -162,6 +167,11 @@ public:
     using Base::_resource;
 
     explicit FireMageRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -263,6 +273,11 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return;
+            }
             return;
 
         // Combustion state
@@ -310,6 +325,11 @@ private:
                 _hotStreakTracker.ConsumeHotStreak();
                 return;
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
 
         // Fire Blast (generate Hot Streak if Heating Up is active)
@@ -322,6 +342,11 @@ private:
                 _hotStreakTracker.ActivateHotStreak(); // Heating Up + crit = Hot Streak
                 return;
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
 
         // Phoenix Flames (high damage, generates Heating Up)

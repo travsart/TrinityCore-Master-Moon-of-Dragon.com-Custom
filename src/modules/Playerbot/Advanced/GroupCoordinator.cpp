@@ -81,6 +81,16 @@ namespace Playerbot
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+                return;
+            }
             m_bot->GetName().c_str(), static_cast<uint32>(m_assignedRole));
     }
 
@@ -143,6 +153,11 @@ namespace Playerbot
     {
         if (!group || !m_bot)
             return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         m_currentGroup = group;
         m_currentState = GroupState::ACTIVE;
@@ -152,17 +167,47 @@ namespace Playerbot
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
         }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s joined group", m_bot->GetName().c_str());
         return true;
     }
 
     bool GroupCoordinator::LeaveGroup()
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         if (!IsInGroup())
             return false;
 
         if (Group* group = m_bot->GetGroup())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                    return nullptr;
+                }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -196,6 +241,11 @@ namespace Playerbot
         {
             // Invite to existing group (must be leader or have invite rights)
             if (Group* group = m_bot->GetGroup())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -210,6 +260,11 @@ namespace Playerbot
                 if (group->IsLeader(m_bot->GetGUID()) || group->IsAssistant(m_bot->GetGUID()))
                 {
                     group->AddInvite(player);
+                    if (!inviter)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
+                        return nullptr;
+                    }
                     TC_LOG_DEBUG("bot.playerbot", "Bot %s invited %s to group",
                         m_bot->GetName().c_str(), player->GetName().c_str());
                     return true;
@@ -222,6 +277,11 @@ namespace Playerbot
             Group* group = new Group;
             if (!group->Create(m_bot))
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 delete group;
                 return false;
             }
@@ -232,9 +292,19 @@ namespace Playerbot
             m_currentGroup = group;
             m_currentState = GroupState::FORMING;
 
+            if (!inviter)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGUID");
+                return;
+            }
             TC_LOG_DEBUG("bot.playerbot", "Bot %s created group and invited %s",
                 if (!bot)
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
@@ -242,11 +312,21 @@ namespace Playerbot
             return true;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         return false;
     }
 
     bool GroupCoordinator::AcceptGroupInvite(Player* inviter)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         if (!inviter || !m_bot)
             return false;
 
@@ -254,6 +334,11 @@ namespace Playerbot
         if (!inviter)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
             return;
         }
         if (!group)
@@ -329,6 +414,11 @@ namespace Playerbot
         Classes botClass = static_cast<Classes>(m_bot->GetClass());
         if (!bot)
         {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
             return;
         }
@@ -336,6 +426,11 @@ namespace Playerbot
         // Tank classes
         if (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
             botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DEMON_HUNTER)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         {
             if (HasTankingAbilities())
                 return GroupRole::TANK;
@@ -345,6 +440,11 @@ namespace Playerbot
         if (botClass == CLASS_PRIEST || botClass == CLASS_PALADIN ||
             botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
             botClass == CLASS_MONK || botClass == CLASS_EVOKER)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
         {
             if (HasHealingAbilities())
                 return GroupRole::HEALER;
@@ -363,6 +463,11 @@ namespace Playerbot
             botClass == CLASS_WARLOCK || botClass == CLASS_PRIEST ||
             botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
             botClass == CLASS_EVOKER)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
         {
             return GroupRole::DPS_RANGED;
         }
@@ -385,6 +490,11 @@ namespace Playerbot
 
     // Raid Coordination
     bool GroupCoordinator::IsInRaid() const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         Group* group = GetGroup();
         return group && group->isRaidGroup();
@@ -399,6 +509,11 @@ namespace Playerbot
     bool GroupCoordinator::IsRaidLeader() const
     {
         if (!m_bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return false;
+            }
             return false;
 
         Group* group = GetGroup();
@@ -438,6 +553,11 @@ namespace Playerbot
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return 0;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return 0;
+        }
         }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s coordinating raid positions", m_bot->GetName().c_str());
     }
@@ -456,6 +576,11 @@ namespace Playerbot
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
             }
             m_bot->GetName().c_str(), strategy->strategyName.c_str(), boss->GetEntry());
 
@@ -511,6 +636,11 @@ namespace Playerbot
     {
         ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
         if (!proto)
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return;
+            }
             return false;
 
         // Check if item is usable by class
@@ -574,6 +704,11 @@ namespace Playerbot
             }
             m_bot->GetName().c_str(), questId, sharer->GetName().c_str());
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return true;
     }
 
@@ -584,9 +719,19 @@ namespace Playerbot
 
         std::vector<uint32> shareable = GetShareableQuests();
         for (uint32 questId : shareable)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return 0;
+            }
             ShareQuest(questId);
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     std::vector<uint32> GroupCoordinator::GetShareableQuests() const
     {
         std::vector<uint32> shareable;
@@ -622,6 +767,11 @@ namespace Playerbot
             Player* member = ref.GetSource();
             if (!member)
                 continue;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
             comp.total++;
 
@@ -634,6 +784,11 @@ namespace Playerbot
             }
 
             if (memberClass == CLASS_WARRIOR || memberClass == CLASS_PALADIN ||
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 memberClass == CLASS_DEATH_KNIGHT)
                 comp.tanks++;
             else if (memberClass == CLASS_PRIEST || memberClass == CLASS_SHAMAN ||
@@ -647,6 +802,11 @@ namespace Playerbot
         comp.isBalanced = (comp.tanks >= 1 && comp.healers >= 1);
         comp.canRaid = (comp.total >= 10);
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return comp;
     }
 
@@ -655,6 +815,11 @@ namespace Playerbot
         return AnalyzeGroupComposition().isBalanced;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     GroupCoordinator::GroupRole GroupCoordinator::GetNeededRole() const
     {
         GroupComposition comp = AnalyzeGroupComposition();
@@ -664,7 +829,17 @@ namespace Playerbot
         if (comp.healers == 0)
             return GroupRole::HEALER;
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         return GroupRole::DPS_MELEE;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     std::vector<Player*> GroupCoordinator::GetGroupMembers() const
@@ -673,7 +848,17 @@ namespace Playerbot
 
         Group* group = GetGroup();
         if (!group)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return;
+            }
             return members;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
         for (GroupReference const& ref : group->GetMembers())
         {
@@ -699,28 +884,58 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s initiated ready check", m_bot->GetName().c_str());
         return true;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     bool GroupCoordinator::RespondToReadyCheck(bool ready)
     {
         if (!m_readyCheckActive)
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return nullptr;
+        }
         if (ready)
             if (!bot)
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return nullptr;
             }
             m_readyMembers.insert(m_bot->GetGUID());
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s responded to ready check: %s",
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
             }
             m_bot->GetName().c_str(), ready ? "ready" : "not ready");
 
@@ -732,6 +947,11 @@ namespace Playerbot
         if (!m_readyCheckActive)
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         Group* group = GetGroup();
         if (!group)
             return false;
@@ -756,10 +976,20 @@ namespace Playerbot
         m_queueInfo.queueTime = getMSTime();
         m_queueInfo.isQueued = true;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s queued for dungeon %u",
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                    return nullptr;
+                }
                 return nullptr;
             }
             m_bot->GetName().c_str(), dungeonId);
@@ -772,6 +1002,11 @@ namespace Playerbot
         m_queueInfo.dungeonId = raidId;
         m_queueInfo.queueTime = getMSTime();
         m_queueInfo.isQueued = true;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s queued for raid %u",
             if (!bot)
@@ -824,6 +1059,11 @@ namespace Playerbot
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
             return;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return;
+        }
         }
         if (!bot)
         {
@@ -835,6 +1075,11 @@ namespace Playerbot
 
     void GroupCoordinator::FocusTarget(Unit* target)
         if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
             return;
@@ -902,6 +1147,11 @@ namespace Playerbot
             return;
 
         if (!bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
@@ -1170,6 +1420,11 @@ namespace Playerbot
             {
                 Player* member = ref.GetSource();
                 if (!member || member == m_bot)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                     continue;
 
                 if (member->GetQuestStatus(questId) != QUEST_STATUS_NONE)
@@ -1187,10 +1442,20 @@ namespace Playerbot
 
     bool GroupCoordinator::ShouldShareQuest(uint32 questId) const
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
         if (!quest || !quest->HasFlag(QUEST_FLAGS_SHARABLE))
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         Group* group = GetGroup();
         if (!group)
             return false;
@@ -1200,6 +1465,16 @@ namespace Playerbot
         {
             Player* member = ref.GetSource();
             if (member && member != m_bot && CanMemberAcceptQuest(member, questId))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
                 return true;
         }
 
@@ -1221,6 +1496,11 @@ namespace Playerbot
     GroupCoordinator::BossStrategy* GroupCoordinator::GetBossStrategy(uint32 bossEntry)
     {
         auto it = m_bossStrategies.find(bossEntry);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (it != m_bossStrategies.end())
             return &it->second;
 

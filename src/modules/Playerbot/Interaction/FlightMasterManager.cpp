@@ -61,6 +61,11 @@ namespace Playerbot
 
         // Get taxi node at flight master's location
         uint32 nodeId = GetCurrentTaxiNode(flightMaster);
+                    if (!flightMaster)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: flightMaster in method GetEntry");
+                        return nullptr;
+                    }
                 if (!flightMaster)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: flightMaster in method GetEntry");
@@ -73,6 +78,11 @@ namespace Playerbot
             m_stats.flightFailures++;
             return false;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
         // Check if already known
         if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
@@ -82,6 +92,11 @@ namespace Playerbot
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
                 }
                 m_bot->GetName().c_str(), nodeId);
             return false;
@@ -164,6 +179,11 @@ namespace Playerbot
 
         // Calculate route
         std::vector<uint32> route;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!CalculateRoute(fromNode, toNode, route))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: No route found from %u to %u",
@@ -234,6 +254,11 @@ namespace Playerbot
             evaluations.push_back(eval);
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (evaluations.empty())
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: No valid destinations to evaluate");
@@ -424,6 +449,11 @@ namespace Playerbot
             priority = DestinationPriority::QUEST_OBJECTIVE;
         }
         // Check if major city (training/vendors)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
         else if (IsMajorCity(nodeEntry))
         {
             priority = DestinationPriority::TRAINER_VENDOR;
@@ -441,6 +471,11 @@ namespace Playerbot
     {
         if (!from || !to)
             return 0;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
 
         // Calculate distance-based cost
         float distance = CalculateDistance(from, to);
@@ -450,6 +485,11 @@ namespace Playerbot
         if (m_bot)
         {
             uint32 level = m_bot->GetLevel();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
@@ -570,6 +610,11 @@ namespace Playerbot
 
         return GetRecommendedLevelingZone();
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+    return;
+}
 
     // Internal Helper Methods
 
@@ -601,6 +646,11 @@ namespace Playerbot
         float dz = to->Pos.Z - from->Pos.Z;
 
         return std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     }
 
     bool FlightMasterManager::IsAppropriateForLevel(TaxiNodesEntry const* nodeEntry) const
@@ -611,6 +661,16 @@ namespace Playerbot
         // This would require zone level range data
         // Simplified - assume nodes in same continent as player are appropriate
         return nodeEntry->ContinentID == m_bot->GetMapId();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");

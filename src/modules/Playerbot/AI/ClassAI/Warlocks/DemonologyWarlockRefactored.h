@@ -122,6 +122,11 @@ struct ManaSoulShardResourceDemo
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
         available = mana > 0;
@@ -250,12 +255,22 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
         , WarlockSpecialization(bot)
         , _demonTracker()
         , _demonicCoreStacks(0)
         , _lastTyrantTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
 
@@ -517,6 +532,11 @@ protected:
         // Summon Felguard (Demonology's main pet)
         if (this->CanCastSpell(SUMMON_FELGUARD, bot))
         {
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             this->CastSpell(bot, SUMMON_FELGUARD);
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Felguard");
         }

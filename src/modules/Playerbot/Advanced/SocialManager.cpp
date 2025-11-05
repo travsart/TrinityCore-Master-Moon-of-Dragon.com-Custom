@@ -83,6 +83,11 @@ void SocialManager::Initialize()
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
         return nullptr;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
+        return nullptr;
+    }
         m_guild = sGuildMgr->GetGuildById(guildId);
 
     ScheduleNextChat();
@@ -156,6 +161,11 @@ bool SocialManager::SendChatMessage(ChatType type, std::string const& message, O
 {
     if (!m_bot || !m_chatEnabled || message.empty())
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return false;
+}
 
     std::string sanitized = SanitizeMessage(message);
     if (sanitized.empty() || IsSpam(sanitized))
@@ -186,6 +196,11 @@ bool SocialManager::SendChatMessage(ChatType type, std::string const& message, O
                 return false;
 
             Player* recipient = ObjectAccessor::FindPlayer(target);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return nullptr;
+            }
             if (!recipient || IsIgnored(target))
                 return false;
 
@@ -232,6 +247,11 @@ bool SocialManager::SendChatMessage(ChatType type, std::string const& message, O
             return SendGuildChat(sanitized);
 
         case ChatType::OFFICER:
+            if (!sender)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+                return nullptr;
+            }
             return SendOfficerChat(sanitized);
 
         case ChatType::EMOTE:
@@ -248,6 +268,11 @@ bool SocialManager::SendChatMessage(ChatType type, std::string const& message, O
 }
 
 bool SocialManager::RespondToChat(Player* sender, std::string const& message, ChatType type)
+    if (!sender)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+        return nullptr;
+    }
     if (!sender)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
@@ -271,9 +296,24 @@ bool SocialManager::RespondToChat(Player* sender, std::string const& message, Ch
     uint32 delay = urand(m_minChatDelay, m_maxChatDelay);
     m_nextChatTime = getMSTime() + delay;
 
+    if (!sender)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+        return nullptr;
+    }
     // Respond via whisper if message was a whisper, otherwise use same channel
     ChatType responseType = (type == ChatType::WHISPER) ? ChatType::WHISPER : type;
     ObjectGuid target = (type == ChatType::WHISPER) ? sender->GetGUID() : ObjectGuid::Empty;
+    if (!sender)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+        return;
+    }
+    if (!sender)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+        return;
+    }
     if (!sender)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
@@ -434,6 +474,11 @@ bool SocialManager::RespondWithEmote(Player* trigger, EmoteType triggerEmote)
             response = EmoteType::BOW;
             break;
         case EmoteType::THANKS:
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             response = EmoteType::BOW;
             break;
         case EmoteType::DANCE:
@@ -447,15 +492,40 @@ bool SocialManager::RespondWithEmote(Player* trigger, EmoteType triggerEmote)
             break;
         default:
             response = EmoteType::WAVE;
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+                return nullptr;
+            }
             break;
     }
 
     return PerformEmote(response);
 }
 
-SocialManager::EmoteType SocialManager::SelectContextualEmote(std::string const& context)
+if (!player)
 {
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
+SocialManager::EmoteType SocialManager::SelectContextualEmote(std::string const& context)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+    return nullptr;
+}
+{
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return "";
+    }
     if (context.find("victory") != std::string::npos || context.find("win") != std::string::npos)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetZoneId");
+            return "";
+        }
         return EmoteType::VICTORY;
     else if (context.find("sad") != std::string::npos || context.find("lost") != std::string::npos)
         return EmoteType::CRY;
@@ -529,6 +599,16 @@ bool SocialManager::AddFriend(ObjectGuid playerGuid, std::string const& note)
     info.zoneId = player->GetZoneId();
     if (!player)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetZoneId");
+        return nullptr;
+    }
+    if (!player)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetZoneId");
         return;
     }
@@ -563,6 +643,11 @@ bool SocialManager::RemoveFriend(ObjectGuid playerGuid)
 bool SocialManager::IsFriend(ObjectGuid playerGuid) const
 {
     return m_friends.find(playerGuid) != m_friends.end();
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return;
+}
 }
 
 std::vector<SocialManager::FriendInfo> SocialManager::GetFriends() const
@@ -598,6 +683,16 @@ void SocialManager::SyncFriendList()
         return;
 
     PlayerSocial* social = m_bot->GetSocial();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
+        return nullptr;
+    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
     if (!social)
         return;
 
@@ -624,6 +719,11 @@ void SocialManager::SyncFriendList()
         }
         else
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             pair.second.isOnline = false;
         }
     }
@@ -636,6 +736,11 @@ void SocialManager::SyncFriendList()
 bool SocialManager::IgnorePlayer(ObjectGuid playerGuid)
 {
     if (!m_bot || playerGuid.IsEmpty())
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
+            return false;
+        }
         return false;
 
     // Get player to obtain account GUID
@@ -669,6 +774,11 @@ bool SocialManager::UnignorePlayer(ObjectGuid playerGuid)
         return false;
 
     PlayerSocial* social = m_bot->GetSocial();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
     if (!social)
         return false;
 
@@ -740,9 +850,19 @@ bool SocialManager::InviteToGuild(Player* target)
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
+            return nullptr;
+        }
         return nullptr;
     }
 {
+    if (!inviter)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGUID");
+        return nullptr;
+    }
     if (!m_bot || !target || !m_guild)
         return false;
 
@@ -750,6 +870,11 @@ bool SocialManager::InviteToGuild(Player* target)
         return false; // Target already in guild
 
     // Bot cannot directly invite without proper permissions
+    if (!inviter)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGUID");
+        return nullptr;
+    }
     // This would require WorldSession packet handling
     return false;
 }
@@ -894,6 +1019,11 @@ void SocialManager::UpdateReputation(ObjectGuid playerGuid, int32 change, bool i
 
     auto& rep = m_reputations[playerGuid];
     rep.playerGuid = playerGuid;
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
     rep.reputation = std::max(-100, std::min(100, rep.reputation + change));
     rep.interactions++;
     rep.lastInteraction = time(nullptr);
@@ -938,8 +1068,18 @@ std::vector<SocialManager::SocialReputation> SocialManager::GetTopFriendlyPlayer
 // ============================================================================
 // RESPONSE TEMPLATES
 // ============================================================================
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 
 void SocialManager::LoadResponseTemplates()
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 {
     // Pre-defined response templates for common scenarios
     AddResponseTemplate({
@@ -1038,6 +1178,11 @@ void SocialManager::GreetPlayer(Player* player)
         return;
 
     std::vector<std::string> greetings = {
+        if (!sender)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sender in method GetGUID");
+            return "";
+        }
         "Hello!",
         "Greetings!",
         "Hi there!",
@@ -1149,6 +1294,11 @@ bool SocialManager::LeaveChannel(std::string const& channelName)
         return false;
 
     Channel* channel = channelMgr->GetChannel(0, channelName, m_bot, false);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
+            return;
+        }
     if (!channel)
         return false;
 

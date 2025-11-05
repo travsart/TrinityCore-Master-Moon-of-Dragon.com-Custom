@@ -60,6 +60,21 @@ bool SoloCombatStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -75,6 +90,11 @@ bool SoloCombatStrategy::IsActive(BotAI* ai) const
     // 1. Strategy is explicitly activated (_active flag)
     // 2. Bot is solo (not in group - checked above)
     // 3. Bot is in combat (bot->IsInCombat() = true)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -97,6 +117,16 @@ bool SoloCombatStrategy::IsActive(BotAI* ai) const
             bot->GetName(), active, inCombat, bot->GetGroup() != nullptr, (active && inCombat));
             if (!bot)
             {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                    return nullptr;
+                }
+            if (!bot)
+            {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
             }
@@ -112,6 +142,16 @@ float SoloCombatStrategy::GetRelevance(BotAI* ai) const
         return 0.0f;
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -139,19 +179,39 @@ float SoloCombatStrategy::GetRelevance(BotAI* ai) const
 
 // ============================================================================
 // MAIN UPDATE LOGIC
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 // ============================================================================
 
 void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     // CRITICAL: This is called EVERY FRAME when strategy is active
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
     // Performance target: <0.1ms per call
     // Only positioning logic - ClassAI handles spell rotation
 
     // Null safety checks
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!ai || !ai->GetBot())
         return;
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -174,6 +234,16 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // Get current combat target
     Unit* target = bot->GetVictim();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -200,6 +270,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // Validate target is alive and attackable
     if (!target->IsAlive())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         TC_LOG_DEBUG("module.playerbot.strategy",
             "SoloCombatStrategy: Bot {} target {} is dead, combat should end",
@@ -224,6 +299,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 return;
             }
             bot->GetName());
@@ -233,6 +313,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // Get optimal range for this bot's class/spec
     float optimalRange = GetOptimalCombatRange(ai, target);
     float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -252,6 +337,16 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // Check if bot is already chasing target
     MotionMaster* mm = bot->GetMotionMaster();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -279,6 +374,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         static_cast<uint32>(currentMotion),
         currentMotion == CHASE_MOTION_TYPE ? "CHASE" :
         currentMotion == FOLLOW_MOTION_TYPE ? "FOLLOW" :
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         currentMotion == POINT_MOTION_TYPE ? "POINT" :
         currentMotion == IDLE_MOTION_TYPE ? "IDLE" : "OTHER",
         currentDistance, optimalRange);
@@ -290,6 +390,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     //
     // The REAL issue is that ClassAI or other systems might be issuing conflicting
     // movement commands. Let MotionMaster handle chase positioning naturally.
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     //
     // Only issue MoveChase if bot is NOT already chasing
     if (currentMotion != CHASE_MOTION_TYPE)
@@ -302,6 +407,11 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 return;
             }
             bot->GetName(), target->GetName(), optimalRange, static_cast<uint32>(currentMotion));

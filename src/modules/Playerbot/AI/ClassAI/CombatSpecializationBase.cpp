@@ -131,6 +131,11 @@ bool CombatSpecializationBase::CanUseAbility(uint32 spellId)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
         return false;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return false;
+    }
     if (!_bot || !_bot->IsAlive())
         return false;
 
@@ -177,12 +182,22 @@ void CombatSpecializationBase::OnCombatStart(::Unit* target)
     // Pre-calculate frequently used values
     if (target)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
         UpdateThreatTable();
         UpdateDoTTracking(target);
     }
 
     // Reset cooldowns if configured
     if (_bot->GetLevel() >= 60) // High level bots get cooldown reset
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
@@ -218,18 +233,43 @@ void CombatSpecializationBase::OnCombatEnd()
     // Log performance if significant combat
     if (combatDuration > std::chrono::seconds(10))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return nullptr;
+        }
         LogPerformance();
     }
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
 
 // Optimized resource management
 bool CombatSpecializationBase::HasEnoughResource(uint32 spellId)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return nullptr;
+}
 {
     SpellInfo const* spellInfo = GetSpellInfo(spellId);
     if (!spellInfo)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         return false;
 
     // Check primary resource based on type
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
     switch (_primaryResource)
     {
         case ResourceType::MANA:
@@ -239,9 +279,19 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId)
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return nullptr;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
 
         case ResourceType::RAGE:
             return _bot->GetPower(POWER_RAGE) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -258,6 +308,11 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId)
 
         case ResourceType::FOCUS:
             return _bot->GetPower(POWER_FOCUS) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -272,6 +327,11 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId)
                 return;
             }
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return;
+        }
         case ResourceType::COMBO_POINTS:
             return _bot->GetPower(POWER_COMBO_POINTS) >= 1; // Minimum 1 combo point
             if (!bot)
@@ -281,8 +341,23 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId)
             }
         if (!bot)
         {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return nullptr;
+            }
             return nullptr;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return;
+        }
         }
 
         default:
@@ -307,6 +382,11 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
     // Calculate based on role
     float optimalDistance = GetOptimalRange(target);
     float currentDistance = GetDistance(target);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return nullptr;
+            }
 
     // If already in optimal range, maintain position
     if (std::abs(currentDistance - optimalDistance) < 2.0f)
@@ -329,6 +409,11 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
         // Try to get behind target
         angle = target->GetOrientation() + M_PI;
         if (!target)
+        if (!spell)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: spell in method GetSpellInfo");
+            return nullptr;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
             return nullptr;
@@ -389,6 +474,11 @@ float CombatSpecializationBase::GetOptimalRange(::Unit* target)
 
 // High-performance interrupt handling with coordination
 bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return;
+}
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
@@ -417,10 +507,20 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
     }
     if (!spellInfo)
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
 
     // Check if spell is interruptible
     if (!spellInfo->HasAttribute(SPELL_ATTR4_CAN_BE_INTERRUPTED))
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return 0;
+}
 
     // High priority interrupts (heals, crowd control)
     if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
@@ -433,6 +533,11 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
 
     // Check remaining cast time (interrupt near end for efficiency)
     uint32 remainingTime = spell->GetCurrentCastTime();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     if (remainingTime > 0 && remainingTime < 1000) // Less than 1 second remaining
         return true;
 
@@ -463,10 +568,20 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
         float distance = GetDistance(target);
         float optimalRange = GetOptimalRange(target);
         float distancePenalty = std::abs(distance - optimalRange);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         score -= distancePenalty;
 
         // Threat factor (tanks want high threat targets)
         if (_role == CombatRole::TANK)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         {
             float threat = CalculateThreatLevel(target);
         if (!target)
@@ -479,6 +594,11 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
 
         // Debuff factor (prefer targets with our DoTs)
         if (_dotTracking.contains(target->GetGUID().GetRawValue()))
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             score += 10.0f;
 
         return score;
@@ -506,8 +626,18 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target)
 std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 {
     std::vector<ObjectGuid> guids;
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
     auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -518,9 +648,19 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
     float range = range;
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
     if (!bot)
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return nullptr;
+    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
         return;
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetId");
+        return;
+    }
     }
         if (!bot)
         {
@@ -544,6 +684,11 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
     for (ObjectGuid guid : nearbyGuids)
     {
         // PHASE 5F: Thread-safe spatial grid validation
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
         Creature* entity = nullptr;
         if (snapshot_entity)
@@ -565,6 +710,11 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 }
 
 std::vector<ObjectGuid> GetNearbyAllies(float range) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+    return;
+}
 {
     std::vector<ObjectGuid> guids;
 
@@ -578,6 +728,11 @@ std::vector<ObjectGuid> GetNearbyAllies(float range) const
 
     float range = range;
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -671,6 +826,11 @@ void CombatSpecializationBase::UpdateDoTTracking(::Unit* target)
         auto& dots = _dotTracking[targetGuid];
         std::erase_if(dots, [currentTime](const auto& pair) {
             return pair.second < currentTime;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         });
 
         // Remove target entry if no DoTs remain
@@ -699,6 +859,11 @@ bool CombatSpecializationBase::ShouldRefreshDoT(::Unit* target, uint32 spellId, 
     auto dotIt = targetIt->second.find(spellId);
     if (dotIt == targetIt->second.end())
         return true; // This DoT not on target
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     // Check remaining time
     uint32 currentTime = getMSTime();
@@ -743,6 +908,11 @@ void CombatSpecializationBase::HandleEmergencySituation()
         {
             Player* healer = GetGroupHealer();
             if (healer && healer != _bot)
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                            return nullptr;
+                        }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -834,12 +1004,27 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
             _bot->GetName(), spellInfo->SpellName[0],
             actualTarget ? actualTarget->GetName() : "self",
             magic_enum::enum_name(result));
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 
         return false;
     }
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 // Performance monitoring and metrics
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method IsRaidGroup");
+    return;
+}
 void CombatSpecializationBase::ResetMetrics()
 {
     _metrics = PerformanceMetrics();
@@ -854,6 +1039,11 @@ void CombatSpecializationBase::LogPerformance() const
     float dps = combatSeconds > 0 ? _metrics.totalDamageDealt / combatSeconds : 0;
     float hps = combatSeconds > 0 ? _metrics.totalHealingDone / combatSeconds : 0;
     float castSuccessRate = _metrics.totalCasts > 0 ?
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         100.0f * (_metrics.totalCasts - _metrics.failedCasts) / _metrics.totalCasts : 0;
 
     TC_LOG_INFO("playerbot.performance",
@@ -863,6 +1053,11 @@ void CombatSpecializationBase::LogPerformance() const
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+            return;
+        }
         }
         _bot->GetName(), dps, hps, castSuccessRate,
         _metrics.interruptsSuccessful,
@@ -889,12 +1084,22 @@ void CombatSpecializationBase::UpdateBuffTimers(uint32 diff)
     uint32 currentTime = getMSTime();
 
     // Update buff expiration times
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     for (auto it = _buffExpirationTimes.begin(); it != _buffExpirationTimes.end();)
     {
         if (it->second <= currentTime)
             it = _buffExpirationTimes.erase(it);
         else
             ++it;
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+        return nullptr;
+    }
     }
 }
 
@@ -978,6 +1183,36 @@ float CombatSpecializationBase::GetDistance(::Unit* target) const
     }
 
     float dist = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
 
     // Update cache
     g_distanceCache[0] = dist;
@@ -1053,6 +1288,11 @@ Player* CombatSpecializationBase::GetGroupTank() const
 
         // Simple tank detection based on spec/stance
         // This would need proper implementation based on your spec system
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         if (member->GetClass() == CLASS_WARRIOR || member->GetClass() == CLASS_PALADIN)
         if (!member)
         {
@@ -1070,6 +1310,11 @@ Player* CombatSpecializationBase::GetGroupTank() const
 }
 
 std::vector<Player*> CombatSpecializationBase::GetGroupMembers() const
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return;
+}
 {
     // Use cached value if recent
     uint32 currentTime = getMSTime();
@@ -1153,10 +1398,20 @@ void CombatSpecializationBase::OnHealingDone(::Unit* target, uint32 amount)
 void CombatSpecializationBase::ConsumeResource(uint32 spellId)
 {
     SpellInfo const* spellInfo = GetSpellInfo(spellId);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsMoving");
+        return;
+    }
     if (!spellInfo)
         return;
 
     uint32 cost = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return;
+        }
     if (cost == 0)
         return;
 
@@ -1192,6 +1447,11 @@ uint32 CombatSpecializationBase::GetCurrentResource() const
     {
         case ResourceType::MANA:
             if (!bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return nullptr;
@@ -1199,6 +1459,11 @@ uint32 CombatSpecializationBase::GetCurrentResource() const
             return _bot->GetPower(POWER_MANA);
         case ResourceType::RAGE:
             if (!bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
@@ -1207,6 +1472,11 @@ uint32 CombatSpecializationBase::GetCurrentResource() const
         case ResourceType::ENERGY:
             if (!bot)
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
@@ -1241,6 +1511,11 @@ uint32 CombatSpecializationBase::GetMaxResource() const
 {
     if (!_bot)
         return 0;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return 0;
+}
 
     switch (_primaryResource)
     {
@@ -1249,9 +1524,29 @@ uint32 CombatSpecializationBase::GetMaxResource() const
         case ResourceType::RAGE:
             return _bot->GetMaxPower(POWER_RAGE);
         case ResourceType::ENERGY:
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return;
+            }
             return _bot->GetMaxPower(POWER_ENERGY);
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+            return;
+        }
         case ResourceType::FOCUS:
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return;
+            }
             return _bot->GetMaxPower(POWER_FOCUS);
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+            return;
+        }
         case ResourceType::RUNIC_POWER:
             return _bot->GetMaxPower(POWER_RUNIC_POWER);
         case ResourceType::COMBO_POINTS:

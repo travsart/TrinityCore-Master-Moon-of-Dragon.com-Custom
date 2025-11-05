@@ -62,6 +62,21 @@ std::vector<Player*> LFGBotSelector::FindDPS(uint8 minLevel, uint8 maxLevel, uin
 }
 
 bool LFGBotSelector::IsBotAvailable(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
@@ -84,6 +99,11 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
     // Must be a bot
     if (!Playerbot::PlayerBotHooks::IsPlayerBot(bot))
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Must be online (have a valid session)
     if (!bot->GetSession())
@@ -98,27 +118,62 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
 
     // Must not be in LFG already
     if (IsInLFG(bot))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return nullptr;
+        }
         }
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is already in LFG", bot->GetName());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return false;
     }
 
     // Must not have deserter debuff
     if (HasDeserterDebuff(bot))
+    if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
+    {
+        if (!bot)
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} has deserter debuff", bot->GetName());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         return false;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Must not be in an instance (except if it's the normal world)
     if (IsInInstance(bot))
@@ -134,6 +189,11 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
 
     // Must not be dead
     if (!bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
         return nullptr;
@@ -154,6 +214,11 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
         return nullptr;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     }
     if (bot->IsInCombat())
     {
@@ -179,7 +244,17 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is already queued via bot manager", bot->GetName());
+        if (!botMap)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botMap in method IsRaid");
+            return;
+        }
         return false;
     }
 
@@ -187,6 +262,11 @@ bool LFGBotSelector::IsBotAvailable(Player* bot)
 }
 
 uint32 LFGBotSelector::CalculateBotPriority(Player* bot, uint8 desiredRole, uint8 desiredLevel)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     if (!bot)
         return 0;
@@ -250,6 +330,11 @@ uint32 LFGBotSelector::CalculateBotPriority(Player* bot, uint8 desiredRole, uint
     // Note: This is a simplified check - real implementation would compare with
     // the human player's location
     Map* botMap = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -279,6 +364,11 @@ uint32 LFGBotSelector::CalculateBotPriority(Player* bot, uint8 desiredRole, uint
 void LFGBotSelector::SetLastQueueTime(ObjectGuid botGuid, time_t queueTime)
 {
     auto& usage = _botUsageTracking[botGuid];
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     usage.lastQueueTime = queueTime;
     usage.totalQueues++;
 }
@@ -331,6 +421,11 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
 
     // Filter and score bots
     for (Player* bot : allBots)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
     {
         // Check basic availability
         if (!IsBotAvailable(bot))
@@ -338,6 +433,11 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
 
         // Check level range
         uint8 botLevel = bot->GetLevel();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");

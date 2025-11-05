@@ -118,6 +118,11 @@ struct ManaHolyPowerResource
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             maxHolyPower = bot->GetMaxPower(POWER_HOLY_POWER);
             holyPower = bot->GetPower(POWER_HOLY_POWER);
             if (!bot)
@@ -202,10 +207,20 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : TankSpecialization<ManaHolyPowerResource>(bot)
         , PaladinSpecialization(bot)
         , _shieldTracker()
         , _consecrationActive(false)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         , _consecrationEndTime(0)
         , _grandCrusaderProc(false)
         , _lastJudgmentTime(0)
@@ -246,6 +261,11 @@ public:
 
     void UpdateBuffs() override
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return;
+        }
         Player* bot = this->GetBot();
         if (!bot)
             return;

@@ -15,6 +15,11 @@ namespace Playerbot
 {
 
 PathCache::PathCache(Map* map)
+if (!map)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+    return nullptr;
+}
         if (!map)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
@@ -212,6 +217,11 @@ void PathCache::Clear()
 
     uint32 clearedCount = _cache.size();
     _cache.clear();
+    if (!map)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+        return;
+    }
     _lruQueue.clear();
     _stats.evictions += clearedCount;
 

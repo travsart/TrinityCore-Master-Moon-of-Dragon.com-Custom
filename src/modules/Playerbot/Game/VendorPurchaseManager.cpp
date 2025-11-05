@@ -305,6 +305,11 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mutablePlayer in method GetItemByPos");
             return;
         }
+        if (!mutablePlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mutablePlayer in method GetItemByPos");
+            return;
+        }
 
         // Calculate score for vendor item using class/spec stat priorities
         float vendorItemScore = equipMgr->CalculateItemTemplateScore(mutablePlayer, itemTemplate);

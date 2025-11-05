@@ -672,6 +672,11 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     if (_profiles.find(guid) == _profiles.end())
     {
         auto profile = std::make_shared<PlayerProfile>(guid);
@@ -699,6 +704,21 @@ std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid g
 }
 
 void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -722,6 +742,11 @@ void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
         profile = GetProfile(player->GetGUID());
         if (!player)
         {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return;
+        }
+        if (!player)
+        {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
             return nullptr;
         }
@@ -730,6 +755,21 @@ void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
     if (profile)
     {
         BehaviorSample sample = CreateBehaviorSample(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsMoving");
+            return nullptr;
+        }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetVictim");
+    return nullptr;
+}
         profile->AddSample(sample);
         _metrics.samplesProcessed++;
     }
@@ -751,6 +791,11 @@ BehaviorSample PlayerPatternRecognition::CreateBehaviorSample(Player* player) co
     sample.resourcePct = player->GetPowerPct(player->GetPowerType());
     sample.isMoving = player->IsMoving();
     sample.isInCombat = player->IsInCombat();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
@@ -781,6 +826,11 @@ void PlayerPatternRecognition::RecordCombatAction(Player* player, uint32_t spell
     if (!player || !_initialized)
         return;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     auto profile = GetProfile(player->GetGUID());
     if (!player)
     {
@@ -829,6 +879,11 @@ void PlayerPatternRecognition::ApplyPlayerStyle(Player* bot, ObjectGuid template
 
     // Apply archetype behavior
     ApplyArchetypeStyle(bot, templateProfile->GetArchetype());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 }
 
 void PlayerPatternRecognition::ApplyArchetypeStyle(Player* bot, PlayerArchetype archetype)
@@ -844,6 +899,11 @@ void PlayerPatternRecognition::ApplyArchetypeStyle(Player* bot, PlayerArchetype 
             TC_LOG_DEBUG("playerbot.pattern", "Bot %s adopting aggressive style", bot->GetName().c_str());
             break;
         case PlayerArchetype::DEFENSIVE:
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return nullptr;
+            }
             // Set defensive behavior parameters
             TC_LOG_DEBUG("playerbot.pattern", "Bot %s adopting defensive style", bot->GetName().c_str());
             break;
@@ -870,6 +930,11 @@ PlayerPatternRecognition::PredictionResult PlayerPatternRecognition::PredictPlay
         return result;
 
     auto profile = GetProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -978,6 +1043,11 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
         {
             for (size_t i = 0; i < pattern.features.size(); i += 2)
             {
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return nullptr;
+                }
                 if (i + 1 < pattern.features.size())
                 {
                     uint32_t spellId = static_cast<uint32_t>(pattern.features[i]);

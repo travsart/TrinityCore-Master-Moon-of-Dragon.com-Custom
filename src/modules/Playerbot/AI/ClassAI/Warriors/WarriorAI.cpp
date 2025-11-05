@@ -26,6 +26,11 @@ namespace Playerbot
 {
 
 WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -76,6 +81,11 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+                                 if (!interruptTarget)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+                                     return 0;
+                                 }
                              if (!interruptTarget)
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
@@ -102,6 +112,11 @@ void WarriorAI::UpdateRotation(::Unit* target)
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
             return;
     }
+if (!priorityTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+    return nullptr;
+}
 
     // Priority 3: Check for target switching
     if (behaviors && behaviors->ShouldSwitchTarget())
@@ -424,6 +439,11 @@ Position WarriorAI::CalculateOptimalChargePosition(::Unit* target)
 }
 
 void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
 {
     if (!target || !GetBot())
         return;
@@ -628,6 +648,11 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         {
 
         } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
+ if (!target)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+     return;
+ }
  entity = nullptr;
  if (snapshot_entity)
  {

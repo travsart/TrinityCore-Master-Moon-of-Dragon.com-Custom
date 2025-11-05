@@ -237,6 +237,11 @@ private:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
                 return nullptr;
             }
+            if (!leader)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
+                return nullptr;
+            }
             : groupId(id), leaderGuid(leader->GetGUID()), coreGroup(nullptr)
             , formationType(type), coordinationMode(GroupCoordinationMode::LEADER_FOLLOW)
             , currentObjective(GroupObjective::REACH_LOCATION)

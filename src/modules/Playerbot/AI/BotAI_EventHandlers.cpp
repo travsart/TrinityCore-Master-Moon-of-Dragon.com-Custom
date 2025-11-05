@@ -311,6 +311,11 @@ void BotAI::EnterCombatWithTarget(::Unit* target)
 
     // Prevent duplicate combat entry
     if (_bot->IsInCombat() && _bot->GetVictim() == target)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
@@ -330,6 +335,11 @@ void BotAI::EnterCombatWithTarget(::Unit* target)
 
     // 3. Update threat if target has threat list
     if (target->CanHaveThreatList())
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return nullptr;
+    }
     {
         target->GetThreatManager().AddThreat(_bot, 1.0f);
     }

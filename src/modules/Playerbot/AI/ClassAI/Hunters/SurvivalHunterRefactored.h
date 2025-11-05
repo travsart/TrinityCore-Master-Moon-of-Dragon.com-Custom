@@ -290,6 +290,11 @@ private:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
             return;
         }
         _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
@@ -301,6 +306,11 @@ private:
             return false;
 
         Pet* pet = _bot->GetPet();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
         return pet && pet->GetHealthPct() < 60.0f;
     }
 
@@ -380,6 +390,11 @@ public:
 
     bool ShouldMaintainRange() const
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Survival wants to be in melee range
         return false;
     }
@@ -416,11 +431,21 @@ public:
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
         if (enemyCount >= 3)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
             ExecuteAoERotation(target);
             return;
         }
 
         // Single target rotation
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         ExecuteSingleTargetRotation(target);
     }
 
@@ -492,6 +517,11 @@ protected:
             case SPELL_KILL_COMMAND_SURV:   return 0;   // Generates 15 focus
             case SPELL_WILDFIRE_BOMB:       return 0;   // No cost
             case SPELL_SERPENT_STING:       return 20;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return;
+            }
             case SPELL_FLANKING_STRIKE:     return 30;
             case SPELL_HARPOON:             return 0;   // No cost
             case SPELL_COORDINATED_ASSAULT: return 0;   // No cost
@@ -669,6 +699,11 @@ private:
             if (aspectStartTime == 0)
                 aspectStartTime = currentTime;
 
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                return nullptr;
+            }
             if (currentTime - aspectStartTime > 90000)
             {
                 _aspectOfEagleActive = false;
@@ -765,8 +800,23 @@ private:
         RegisterCooldown(SPELL_EXHILARATION_SURV, 120000);    // 2 minute CD
         RegisterCooldown(SPELL_SURVIVAL_OF_FITTEST, 180000);  // 3 minute CD
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return;
+}
 
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
+}
 private:
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
     // ========================================================================
     // HUNTER SPECIALIZATION ABSTRACT METHOD IMPLEMENTATIONS
     // ========================================================================

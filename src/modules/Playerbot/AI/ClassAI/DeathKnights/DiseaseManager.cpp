@@ -28,6 +28,11 @@ void DiseaseManager::UpdateDiseases(Unit* target)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
         return;
     }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // Clean up expired diseases
     CleanupExpiredDiseases();
@@ -47,6 +52,11 @@ void DiseaseManager::UpdateDiseases(Unit* target)
 }
 
 bool DiseaseManager::HasDisease(Unit* target, DiseaseType type)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return;
+}
 {
     if (!target)
         return false;
@@ -72,6 +82,11 @@ bool DiseaseManager::HasDisease(Unit* target, DiseaseType type)
 }
 
 bool DiseaseManager::ShouldApplyDisease(Unit* target, DiseaseType type)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
 {
     if (!target)
         return false;
@@ -85,6 +100,11 @@ void DiseaseManager::ApplyDisease(Unit* target, DiseaseType type, uint32 spellId
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");

@@ -194,6 +194,11 @@ public:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
         : HealerSpecialization<ManaResource>(bot)
@@ -217,6 +222,11 @@ public:
     void UpdateRotation(::Unit* target) override
     {
         Player* bot = this->GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
         if (!target || !bot)
             return;
 
@@ -225,6 +235,11 @@ public:
         // Restoration is a healer - check group health first
         if (Group* group = bot->GetGroup())
         if (!bot)
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
             return nullptr;
@@ -327,6 +342,11 @@ private:
         _earthShieldTracker.Update(bot);
         UpdateCooldownStates();
     }
+if (!aura)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+    return;
+}
 
     void UpdateCooldownStates()
     {
@@ -368,6 +388,11 @@ private:
         // Direct healing
         if (HandleDirectHealing(group))
             return true;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return nullptr;
+}
 
         return false;
     }
@@ -424,6 +449,11 @@ private:
 
         // Spirit Link Totem (equalize health)
         if (lowHealthCount >= 3 && (getMSTime() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot))
             {
@@ -457,11 +487,21 @@ private:
             if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
             {
                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
+                if (!tankTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tankTarget in method GetGUID");
+                    return nullptr;
+                }
                 {
                     this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
                     _lastEarthenWallTotemTime = getMSTime();
                     return true;
                 }
+            if (!tankTarget)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tankTarget in method GetGUID");
+                return;
+            }
             }
         }
 
@@ -474,11 +514,21 @@ private:
         if (!bot)
             return false;
 
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return;
+        }
         uint32 activeRiptides = _riptideTracker.GetActiveRiptideCount();
 
         // Earth Shield on tank
         Unit* tankTarget = nullptr;
         for (Unit* member : group)
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return;
+        }
         {
             if (member && IsTankRole(member))
             {
@@ -532,6 +582,11 @@ private:
                             _riptideTracker.ApplyRiptide(member->GetGUID(), 18000);
                             return true;
                         }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                        return nullptr;
+                    }
                     }
                 }
             }
@@ -568,6 +623,11 @@ private:
                     stackedTarget = member;
                 }
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
 
         if (stackedAlliesCount >= 3 && stackedTarget)
@@ -668,6 +728,11 @@ private:
                     return true;
                 }
             }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         }
 
         return false;

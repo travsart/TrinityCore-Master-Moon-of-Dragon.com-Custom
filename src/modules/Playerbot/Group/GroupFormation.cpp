@@ -221,6 +221,16 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
                     return nullptr;
                 }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return 0;
+}
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
                 return distance <= tolerance;
             }
         }
@@ -278,6 +288,11 @@ void GroupFormation::UpdateMetrics()
 {
     std::lock_guard<std::recursive_mutex> lock(_formationMutex);
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return nullptr;
+    }
     if (_members.empty())
         return;
 

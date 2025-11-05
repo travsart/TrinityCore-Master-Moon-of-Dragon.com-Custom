@@ -121,6 +121,11 @@ void MageAI::UpdateCooldowns(uint32 diff)
     ClassAI::UpdateCooldowns(diff);
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return;
+}
 bool MageAI::CanUseAbility(uint32 spellId)
 {
     if (!_bot)
@@ -158,6 +163,11 @@ bool MageAI::HasEnoughResource(uint32 spellId)
     if (!spellInfo)
         return true;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     // Calculate mana cost properly from PowerCosts vector
     uint32 manaCost = 0;
     for (SpellPowerCost const& cost : spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()))
@@ -169,6 +179,16 @@ bool MageAI::HasEnoughResource(uint32 spellId)
         }
     }
     return _bot->GetPower(POWER_MANA) >= manaCost;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
@@ -191,6 +211,11 @@ Position MageAI::GetOptimalPosition(::Unit* target)
     if (!target)
         return _bot->GetPosition();
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     // Mages are ranged DPS, maintain maximum range
     // Calculate optimal position at maximum spell range (30-40 yards for most mage spells)
     float optimalRange = 35.0f;

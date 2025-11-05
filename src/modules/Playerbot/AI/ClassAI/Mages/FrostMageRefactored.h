@@ -85,6 +85,16 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return nullptr;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return;
+            }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _fofEndTime = getMSTime() + aura->GetDuration();
             if (!aura)
             {
@@ -124,6 +134,11 @@ public:
     {
         return _brainFreezeActive && getMSTime() < _brainFreezeEndTime;
     }
+if (!aura)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+    return false;
+}
 
     void Update(Player* bot)
     {
@@ -292,6 +307,11 @@ private:
     }
 
     void UpdateFrostState()
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return nullptr;
+    }
     {
         Player* bot = this->GetBot();
         // Resource (mana) is managed by the base template class automatically
@@ -324,6 +344,16 @@ private:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         Player* bot = this->GetBot();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return nullptr;
+}
         // Icy Veins (major DPS cooldown)
         if (!_icyVeinsActive)
         {
@@ -373,6 +403,11 @@ private:
         }
         if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
             {
                 this->CastSpell(target, FROST_RAY_OF_FROST);
@@ -425,6 +460,11 @@ private:
         // Frostbolt (builder - generates icicles and procs)
         if (this->CanCastSpell(FROST_FROSTBOLT, target))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             this->CastSpell(target, FROST_FROSTBOLT);
             _icicleTracker.AddIcicle();
 

@@ -133,6 +133,21 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     task->accountId = bot->GetSession()->GetAccountId();
     if (!bot)
     {
@@ -427,8 +442,23 @@ void BotLevelManager::SelectZone(BotCreationTask* task)
 
 bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Get bot player object
     Player* bot = ObjectAccessor::FindPlayer(task->botGuid);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -454,6 +484,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     // Apply talents
     if (!ApplyTalents(bot, task))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Talent application failed for {}",
             if (!bot)
             {
@@ -466,6 +501,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
 
     // Apply gear (skip for L1-4)
     if (task->targetLevel > 4)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         if (!ApplyGear(bot, task))
         {
@@ -479,6 +519,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
             success = false;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
 
     // Apply zone placement
     if (!ApplyZone(bot, task))
@@ -496,6 +541,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     // Save to database
     if (success)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         bot->SaveToDB();
 
         if (_verboseLogging.load(std::memory_order_acquire))

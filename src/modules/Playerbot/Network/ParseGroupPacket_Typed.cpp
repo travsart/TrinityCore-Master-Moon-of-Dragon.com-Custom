@@ -38,6 +38,16 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
         return;
     }
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+    if (!bot)
         return;
 
     GroupEvent event;
@@ -58,6 +68,11 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
             return nullptr;
         }
         bot->GetName(), packet.InitiatorGUID.ToString(), Milliseconds(packet.Duration).count(), packet.PartyIndex);
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return nullptr;
+}
 }
 
 /**
@@ -69,6 +84,16 @@ void ParseTypedReadyCheckResponse(WorldSession* session, WorldPackets::Party::Re
         return;
 
     Player* bot = session->GetPlayer();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return;
+}
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -88,6 +113,11 @@ void ParseTypedReadyCheckResponse(WorldSession* session, WorldPackets::Party::Re
     GroupEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_RESPONSE (typed): player={}, ready={}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -110,6 +140,11 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
@@ -124,6 +159,11 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
     GroupEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received READY_CHECK_COMPLETED (typed): partyGuid={}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -136,11 +176,21 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
  * Raid Target Update Single - Typed Handler
  */
 void ParseTypedRaidTargetUpdateSingle(WorldSession* session, WorldPackets::Party::SendRaidTargetUpdateSingle const& packet)
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return nullptr;
+    }
 {
     if (!session)
         return;
 
     Player* bot = session->GetPlayer();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");

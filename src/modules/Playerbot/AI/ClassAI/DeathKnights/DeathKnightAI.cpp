@@ -245,6 +245,16 @@ class DeathKnightCombatPositioning
 {
 public:
     explicit DeathKnightCombatPositioning(Player* bot) : _bot(bot) {}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -258,6 +268,26 @@ public:
 
         Position optimalPos = _bot->GetPosition();
         float currentDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                            return nullptr;
+                        }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                        return nullptr;
+                    }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                    return;
+                }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return nullptr;
+                }
 
         switch (detectedSpec)
         {
@@ -274,6 +304,26 @@ public:
                     optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
                     if (!target)
                     {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                        return nullptr;
+                    }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                            return;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                            return nullptr;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                            return nullptr;
+                        }
+                    if (!target)
+                    {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
                         return nullptr;
                     }
@@ -284,6 +334,36 @@ public:
                         return nullptr;
                     }
                     optimalPos.m_positionZ = target->GetPositionZ();
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                            return;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                            return nullptr;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                            return nullptr;
+                        }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                        return nullptr;
+                    }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                        return;
+                    }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return nullptr;
+                }
                     if (!target)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
@@ -329,6 +409,11 @@ public:
                 {
                     // Stay at mid-range for Death Coil
                     float angle = target->GetRelativeAngle(_bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                     optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 10.0f;
                     if (!target)
                     {
@@ -865,6 +950,11 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
         case BLOOD_STRIKE:
         case HEART_STRIKE:
         case BLOOD_BOIL:
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                return;
+            }
             return _runeManager->HasRunes(1u, 0u, 0u);
         case DEATH_STRIKE:
         case OBLITERATE:
@@ -878,9 +968,24 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     return true;
 }
 
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+    return;
+}
 void DeathKnightAI::ConsumeResource(uint32 spellId)
 {
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+        return;
+    }
     if (!GetBot())
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+            return;
+        }
         return;
 
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
@@ -892,6 +997,11 @@ void DeathKnightAI::ConsumeResource(uint32 spellId)
     for (auto const& cost : powerCosts)
     {
         if (cost.Power == POWER_RUNIC_POWER)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return;
+        }
         {
             _metrics->totalRunicPowerSpent += cost.Amount;
             _runicPowerSpent += cost.Amount;
@@ -1164,6 +1274,11 @@ bool DeathKnightAI::HandleDefensives()
             TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} activated Icebound Fortitude",
                          GetBot()->GetName());
             actionTaken = true;
+        if (!priorityTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+            return nullptr;
+        }
         }
     }
 
@@ -1338,6 +1453,11 @@ bool DeathKnightAI::HandleAoERotation(Unit* target)
         {
             _runeManager->ConsumeRunes(1, 0, 0);
             RecordAbilityUsage(BLOOD_BOIL);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                return;
+            }
             TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} using Blood Boil to spread diseases",
                          GetBot()->GetName());
             return true;
@@ -1507,9 +1627,24 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
                         return true;
                     }
                 }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                    return nullptr;
+                }
                 break;
 
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             case DeathKnightSpec::UNHOLY:
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                    return nullptr;
+                }
                 if (CanUseAbility(DEATH_COIL))
                 {
                     if (CastSpell(target, DEATH_COIL))
@@ -1535,14 +1670,34 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
             return true;
         }
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+    return nullptr;
+}
 
     return false;
 }
 
 void DeathKnightAI::ExecuteSpecializationRotation(Unit* target)
+if (!currentVictim)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentVictim in method GetTypeId");
+    return nullptr;
+}
 {
     if (!target || !GetBot())
+        if (!currentVictim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentVictim in method ToPlayer");
+            return nullptr;
+        }
         return;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return nullptr;
+}
 
     // Update presence if needed
     UpdatePresenceIfNeeded();

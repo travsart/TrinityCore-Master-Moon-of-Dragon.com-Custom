@@ -275,6 +275,11 @@ public:
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
             return;
         }
     {
@@ -353,6 +358,16 @@ public:
     }
 
     Position GetOptimalPosition(::Unit* target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
+            }
     {
         // Havoc prefers to be behind target for Chaos Strike crit bonus
         if (target)
@@ -365,6 +380,16 @@ public:
 
             // Normal positioning - behind target
             float angle = target->GetOrientation() + M_PI;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
@@ -582,6 +607,11 @@ private:
         if (_immolationAuraActive && currentTime > _immolationAuraEndTime)
         {
             _immolationAuraActive = false;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                return;
+            }
             _immolationAuraEndTime = 0;
         }
 
@@ -636,8 +666,23 @@ private:
             {
                 uint32 cooldownRemaining = static_cast<uint32>(this->GetBot()->GetSpellHistory()->GetRemainingCooldown(spellInfo).count());
                 return cooldownRemaining < 2000;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
             }
+            }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return nullptr;
         }
+        }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+    return nullptr;
+}
 
         return true; // No cooldown, ready to cast
     }
@@ -686,6 +731,11 @@ private:
         }
         pos.SetOrientation(bestAngle);
 
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return;
+        }
         return pos;
     }
 

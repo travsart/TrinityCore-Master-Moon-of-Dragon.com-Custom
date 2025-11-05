@@ -45,6 +45,11 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
         if (!bot || !bot->IsInWorld())
             return;
 
@@ -69,10 +74,20 @@ namespace Playerbot
                 catch (std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_BID_PLACED data: {}", e.what());
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     ForceUpdate();
                     return;
                 }
 
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
                 TC_LOG_INFO("module.playerbot", "AuctionManager: Bot {} placed bid on auction {} (Item: {}, Bid: {} copper, Buyout: {} copper)",
                     if (!bot)
                     {
@@ -100,6 +115,11 @@ namespace Playerbot
                 botAuctionData.CostBasis = 0;
                 botAuctionData.IsCommodity = false;
                 botAuctionData.Strategy = AuctionStrategy::SMART_PRICING;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 RegisterBotAuction(bot, auctionData.auctionId, botAuctionData);
 
                 ForceUpdate();
@@ -149,6 +169,11 @@ namespace Playerbot
             case StateMachine::EventType::AUCTION_OUTBID:
             {
                 // Extract outbid data
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 if (!event.eventData.has_value())
                 {
                     TC_LOG_WARN("module.playerbot", "AuctionManager::OnEventInternal: AUCTION_OUTBID event {} missing data", event.eventId);
@@ -159,9 +184,19 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                        return;
+                    }
                     auctionData = std::any_cast<AuctionEventData>(event.eventData);
                 }
                 catch (std::bad_any_cast const& e)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_OUTBID data: {}", e.what());
                     ForceUpdate();
@@ -170,6 +205,11 @@ namespace Playerbot
 
                 TC_LOG_INFO("module.playerbot", "AuctionManager: Bot {} was OUTBID on auction {} (Item: {}, Previous bid: {}, Buyout: {})",
                     if (!bot)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                         return;
@@ -179,6 +219,11 @@ namespace Playerbot
 
                 // Decide whether to re-bid
                 // Calculate optimal next bid amount
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return 0;
+                }
                 uint64 newBidAmount = CalculateOptimalBid(auctionData.itemEntry, auctionData.bidPrice, auctionData.buyoutPrice);
 
                 if (newBidAmount > 0 && newBidAmount <= auctionData.buyoutPrice)
@@ -212,6 +257,11 @@ namespace Playerbot
                         TC_LOG_DEBUG("module.playerbot", "AuctionManager: Bot {} cannot afford re-bid on auction {} (need: {}, have: {})",
                             bot->GetName(), auctionData.auctionId, newBidAmount, bot->GetMoney());
 
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         // Unregister auction (bot can't compete)
                         UnregisterBotAuction(bot, auctionData.auctionId);
                     }
@@ -247,10 +297,20 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     auctionData = std::any_cast<AuctionEventData>(event.eventData);
                 }
                 catch (std::bad_any_cast const& e)
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_EXPIRED data: {}", e.what());
                     ForceUpdate();
                     return;

@@ -43,6 +43,11 @@ namespace Playerbot
      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
      return nullptr;
  }
+ if (!player)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+     return nullptr;
+ }
  *
  * // Execution with fallback:
  * if (script)

@@ -95,6 +95,16 @@ namespace Playerbot
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
                     return;
                 }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
@@ -189,10 +199,20 @@ namespace Playerbot
                 TargetScanner scanner(bot);
 
                 // Find a target to blacklist
+                if (!newTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetGUID");
+                    return;
+                }
                 Unit* target = scanner.FindNearestHostile();
                 if (target)
                 {
                     ObjectGuid guid = target->GetGUID();
+if (!newTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+    return;
+}
 
                     // Add to blacklist
                     scanner.AddToBlacklist(guid, 5000); // 5 second blacklist

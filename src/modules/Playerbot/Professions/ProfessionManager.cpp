@@ -370,6 +370,11 @@ void ProfessionManager::Update(::Player* player, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     // Throttle updates to PROFESSION_UPDATE_INTERVAL
     uint32 now = getMSTime();
@@ -399,6 +404,11 @@ void ProfessionManager::Update(::Player* player, uint32 diff)
 bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profession)
 {
     if (!player || profession == ProfessionType::NONE)
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -423,6 +433,26 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
         // Count current major professions
         uint32 majorProfessionCount = 0;
         std::vector<ProfessionSkillInfo> currentProfessions = GetPlayerProfessions(player);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+                return nullptr;
+            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return nullptr;
+            }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -524,12 +554,27 @@ std::vector<ProfessionSkillInfo> ProfessionManager::GetPlayerProfessions(::Playe
 
     for (ProfessionType profession : allProfessions)
     {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         if (HasProfession(player, profession))
         {
             ProfessionSkillInfo info;
             info.profession = profession;
             info.currentSkill = GetProfessionSkill(player, profession);
             info.maxSkill = GetMaxProfessionSkill(player, profession);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return;
+            }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
+    return;
+}
             info.lastUpdate = getMSTime();
             info.isPrimary = GetProfessionCategory(profession) != ProfessionCategory::SECONDARY;
 
@@ -543,6 +588,11 @@ std::vector<ProfessionSkillInfo> ProfessionManager::GetPlayerProfessions(::Playe
 bool ProfessionManager::UnlearnProfession(::Player* player, ProfessionType profession)
 {
     if (!player || profession == ProfessionType::NONE)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -574,6 +624,11 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
         return;
 
     uint8 classId = player->GetClass();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
@@ -821,6 +876,11 @@ void ProfessionManager::InitializeRaceBonuses()
 {
     _raceBonuses.clear();
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     // WoW 11.2 Racial Profession Bonuses
 
     // TAUREN (+15 Herbalism)
@@ -830,18 +890,38 @@ void ProfessionManager::InitializeRaceBonuses()
     _raceBonuses[RACE_BLOODELF][ProfessionType::ENCHANTING] = 10;
 
     // DRAENEI (+10 Jewelcrafting)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
     _raceBonuses[RACE_DRAENEI][ProfessionType::JEWELCRAFTING] = 10;
 
     // WORGEN (+15 Skinning)
     _raceBonuses[RACE_WORGEN][ProfessionType::SKINNING] = 15;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method LearnSpell");
+        return nullptr;
+    }
     // GOBLIN (+15 Alchemy)
     _raceBonuses[RACE_GOBLIN][ProfessionType::ALCHEMY] = 15;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
     // PANDAREN (+15 Cooking)
     _raceBonuses[RACE_PANDAREN_NEUTRAL][ProfessionType::COOKING] = 15;
     _raceBonuses[RACE_PANDAREN_ALLIANCE][ProfessionType::COOKING] = 15;
     _raceBonuses[RACE_PANDAREN_HORDE][ProfessionType::COOKING] = 15;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 
     // DARK IRON DWARF (+5 Blacksmithing) - Constant may not exist in 11.2, commenting out
     // _raceBonuses[RACE_DARKIRONDWARF][ProfessionType::BLACKSMITHING] = 5;
@@ -857,6 +937,11 @@ void ProfessionManager::InitializeRaceBonuses()
 // ============================================================================
 // RECIPE MANAGEMENT
 // ============================================================================
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
+    return;
+}
 
 bool ProfessionManager::LearnRecipe(::Player* player, uint32 recipeId)
             if (!player)
@@ -925,6 +1010,11 @@ bool ProfessionManager::LearnRecipe(::Player* player, uint32 recipeId)
     _playerMetrics[player->GetGUID().GetCounter()].recipesLearned++;
     _globalMetrics.recipesLearned++;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
+        return;
+    }
     return true;
 }
 
@@ -994,6 +1084,11 @@ RecipeInfo const* ProfessionManager::GetOptimalLevelingRecipe(::Player* player, 
     for (RecipeInfo const& recipe : craftable)
     {
         float chance = GetSkillUpChance(player, recipe);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
         if (chance > bestChance)
         {
             bestChance = chance;
@@ -1005,6 +1100,16 @@ RecipeInfo const* ProfessionManager::GetOptimalLevelingRecipe(::Player* player, 
 }
 
 bool ProfessionManager::CanCraftRecipe(::Player* player, RecipeInfo const& recipe) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
@@ -1119,6 +1224,11 @@ void ProfessionManager::ProcessCraftingQueue(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -1158,6 +1268,11 @@ void ProfessionManager::ProcessCraftingQueue(::Player* player, uint32 diff)
         // Update metrics
         _playerMetrics[playerGuid].itemsCrafted++;
         _globalMetrics.itemsCrafted++;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
 
         TC_LOG_DEBUG("playerbots", "Crafted 1x {} ({} remaining in queue)",
             task.recipeId, task.quantity);
@@ -1169,6 +1284,11 @@ void ProfessionManager::ProcessCraftingQueue(::Player* player, uint32 diff)
 }
 
 bool ProfessionManager::HasMaterialsForRecipe(::Player* player, RecipeInfo const& recipe) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 {
     if (!player)
         return false;

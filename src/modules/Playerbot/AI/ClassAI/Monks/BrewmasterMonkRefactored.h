@@ -117,6 +117,11 @@ struct EnergyChiResource
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         chi = 0;
     }
@@ -262,6 +267,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : TankSpecialization<EnergyChiResource>(bot)
         , MonkSpecialization(bot)
         , _staggerTracker()
@@ -270,6 +280,11 @@ public:
         , _ironskinEndTime(0)
         , _lastKegSmashTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize energy/chi resources
         this->_resource.Initialize(bot);
 
@@ -306,6 +321,11 @@ public:
         }
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return;
+    }
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();

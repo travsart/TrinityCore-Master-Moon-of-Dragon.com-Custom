@@ -120,6 +120,11 @@ struct ManaSoulShardResourceDestro
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
     }
@@ -247,6 +252,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
         , WarlockSpecialization(bot)
         , _immolateTracker()
@@ -254,6 +264,11 @@ public:
         , _backdraftStacks(0)
         , _lastInfernalTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
 
@@ -291,6 +306,11 @@ public:
         else
         {
             ExecuteSingleTargetRotation(target);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         }
     }
 
@@ -360,6 +380,11 @@ public:
 
         // Priority 6: Chaos Bolt (shard spender)
         if (shards >= 2 && this->CanCastSpell(CHAOS_BOLT, target))
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         {
             this->CastSpell(target, CHAOS_BOLT);
             ConsumeSoulShard(2);
@@ -381,6 +406,11 @@ public:
             return;
         }
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         // Priority 9: Incinerate (filler + shard gen)
         if (shards < 5 && this->CanCastSpell(INCINERATE, target))
         {
@@ -455,6 +485,11 @@ public:
     }
 
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
     {
         uint32 shards = this->_resource.soulShards;
 
@@ -548,6 +583,11 @@ public:
             return;
         }
     }
+if (!aura)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+    return;
+}
 
     void EnsurePetActive()
     {

@@ -76,6 +76,11 @@ public:
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
                 return nullptr;
             }
         : _bot(bot)
@@ -157,6 +162,11 @@ public:
             return false;
 
         Pet* pet = _bot->GetPet();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
         return pet && pet->GetHealthPct() < 70.0f;
     }
 
@@ -204,6 +214,11 @@ public:
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
 
     void EnsurePetActive(Unit* target)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return;
+            }
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
@@ -263,6 +278,11 @@ public:
         , _bestialWrathEndTime(0)
         , _aspectOfTheWildActive(false)
         , _aspectEndTime(0)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         , _wildCallProc(false)
         , _lastKillCommand(0)
         , _lastCobraShot(0)
@@ -296,6 +316,11 @@ public:
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
         if (enemyCount >= 3)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                return nullptr;
+            }
             ExecuteAoERotation(target);
             return;
         }
@@ -310,6 +335,11 @@ public:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
             return 0;
         }
 
@@ -511,6 +541,11 @@ private:
         if (_barbedShotCharges < 2)
         {
             if (currentTime - _lastBarbedShotRecharge > 12000)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                return nullptr;
+            }
             {
                 _barbedShotCharges++;
                 _lastBarbedShotRecharge = currentTime;

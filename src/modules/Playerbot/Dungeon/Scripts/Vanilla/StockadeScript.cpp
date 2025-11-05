@@ -147,8 +147,18 @@ public:
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
                     return nullptr;
                 }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 if (!group)
                     break;
+if (!groupMember)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+    return;
+}
 
                 // Check for feared players
                 for (auto const& member : group->GetMemberSlots())
@@ -183,6 +193,21 @@ public:
     }
 
     void HandlePositioning(::Player* player, ::Creature* boss) override
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                    return nullptr;
+                }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                return nullptr;
+            }
     {
         uint32 entry = boss->GetEntry();
 

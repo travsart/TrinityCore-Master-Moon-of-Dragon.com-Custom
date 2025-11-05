@@ -123,6 +123,11 @@ struct ManaSoulShardResource
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
         available = mana > 0;
@@ -256,12 +261,22 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResource>(bot)
         , WarlockSpecialization(bot)
         , _dotTracker()
         , _nightfallProc(false)
         , _lastDarkglareTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
 
@@ -297,6 +312,11 @@ public:
             ExecuteSingleTargetRotation(target);
         }
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return;
+}
 
     void UpdateBuffs() override
     {

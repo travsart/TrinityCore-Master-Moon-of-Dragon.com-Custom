@@ -108,6 +108,11 @@ namespace Playerbot
 
     // Example: Combat state change handler
     void BotAI::OnCombatStart(Unit* target)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                    return nullptr;
+                }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");

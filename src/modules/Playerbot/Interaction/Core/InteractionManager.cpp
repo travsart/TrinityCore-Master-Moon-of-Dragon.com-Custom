@@ -248,11 +248,21 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
             return InteractionResult::InCombat;
 
         // Auto-detect type if not specified
         if (type == InteractionType::None)
         {
+            if (!go)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
+                return nullptr;
+            }
             if (Creature* creature = target->ToCreature())
                 type = DetectNPCType(creature);
             else if (target->GetTypeId() == TYPEID_GAMEOBJECT)
@@ -281,7 +291,17 @@ namespace Playerbot
         // Validate interaction requirements
         if (!m_validator->CanInteract(bot, target, type))
             return InteractionResult::RequirementNotMet;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return 0;
+}
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return 0;
+        }
         // Check range
         if (!IsInInteractionRange(bot, target))
         {
@@ -292,6 +312,16 @@ namespace Playerbot
         // Create interaction context
         auto context = std::make_unique<InteractionContext>();
         context->botGuid = bot->GetGUID();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -319,6 +349,11 @@ namespace Playerbot
             }
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         // Store context
         m_activeInteractions[bot->GetGUID()] = std::move(context);
         if (!bot)
@@ -330,6 +365,11 @@ namespace Playerbot
         // Record metrics
         ++m_totalInteractionsStarted;
         m_lastInteractionTime[bot->GetGUID()] = std::chrono::steady_clock::now();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -348,6 +388,11 @@ namespace Playerbot
     }
 
     void InteractionManager::CancelInteraction(Player* bot, ObjectGuid targetGuid)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -398,6 +443,11 @@ namespace Playerbot
         // No lock needed - interaction state is per-bot instance data
 
         auto it = m_activeInteractions.find(bot->GetGUID());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
         if (it != m_activeInteractions.end())
             return it->second.get();
 
@@ -428,6 +478,11 @@ namespace Playerbot
             type = InteractionType::FlightMaster;
         else if (npcFlags & UNIT_NPC_FLAG_INNKEEPER)
             type = InteractionType::Innkeeper;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         else if (npcFlags & UNIT_NPC_FLAG_BANKER)
             type = InteractionType::Bank;
         else if (npcFlags & UNIT_NPC_FLAG_AUCTIONEER)
@@ -565,6 +620,11 @@ namespace Playerbot
                     nearest = creature;
                 }
             }
+        if (!trainer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trainer in method IsTrainer");
+            return nullptr;
+        }
         }
 
         return nearest;
@@ -632,6 +692,11 @@ namespace Playerbot
 
         if (!trainer->IsTrainer())
             return InteractionResult::InvalidTarget;
+if (!go)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
+    return nullptr;
+}
 
         if (!HasActiveInteraction(bot))
         {
@@ -654,6 +719,11 @@ namespace Playerbot
             return InteractionResult::InvalidTarget;
 
         if (!HasActiveInteraction(bot))
+        if (!mailbox)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
+            return;
+        }
         {
             InteractionResult startResult = StartInteraction(bot, flightMaster, InteractionType::FlightMaster);
             if (startResult != InteractionResult::Pending)
@@ -1019,8 +1089,18 @@ namespace Playerbot
             default:
                 return InteractionResult::NotAvailable;
         }
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+    return nullptr;
+}
 
         return InteractionResult::Failed;
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
+        return;
+    }
     }
 
     bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 diff)
@@ -1124,6 +1204,11 @@ namespace Playerbot
                 }
 
                 return InteractionResult::Pending;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             }
 
             case InteractionState::WaitingGossip:

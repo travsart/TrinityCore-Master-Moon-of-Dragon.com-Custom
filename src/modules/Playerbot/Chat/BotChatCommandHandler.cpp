@@ -555,6 +555,16 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
         return nullptr;
     }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuildId");
+    return nullptr;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return nullptr;
+    }
         return CommandPermission::OWNER;
 
     // TODO: Check if bot admin (requires admin list implementation)
@@ -565,6 +575,16 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
 
     // Check guild membership
     if (player->GetGuildId() != 0 && player->GetGuildId() == bot->GetGuildId())
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuildId");

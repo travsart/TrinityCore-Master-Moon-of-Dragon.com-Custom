@@ -265,6 +265,16 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotRegistration)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
         return;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -304,6 +314,16 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUnregistration)
 
     // Verify bot was unregistered
     // auto info = sUnifiedInterruptSystem->GetBotInfo(botGuid);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -365,6 +385,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastDetection)
 {
     // Disabled - requires TrinityCore test framework
     // This test would verify:
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return nullptr;
+    }
     // 1. Enemy casts are detected
     // 2. Cast info is stored correctly
     // 3. Priority is assigned from InterruptDatabase
@@ -372,6 +397,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastDetection)
 
     /*
     Unit* caster = CreateMockCaster(1);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     if (!caster)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
@@ -531,6 +561,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_PlanExecution)
 
     auto targets = sUnifiedInterruptSystem->ScanForInterruptTargets(bot);
     InterruptPlan plan = sUnifiedInterruptSystem->CreateInterruptPlan(bot, targets[0]);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     bool success = sUnifiedInterruptSystem->ExecuteInterruptPlan(bot, plan);
 
@@ -591,6 +626,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotAssignment)
 
     /*
     Player* bot = CreateMockBot(1);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -730,6 +770,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_FallbackMethodSelection)
 
     /*
     Player* bot = CreateMockBot(1);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
     Unit* target = CreateMockCaster(1);
     uint32 failedSpellId = 1766;
 

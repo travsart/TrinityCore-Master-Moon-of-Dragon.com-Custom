@@ -202,6 +202,11 @@ void DungeonScriptMgr::ExecuteBossMechanic(::Player* player, ::Creature* boss,
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
             return nullptr;
         }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+            return nullptr;
+        }
 
     if (script)
     {
@@ -250,6 +255,11 @@ void DungeonScriptMgr::ExecuteBossMechanic(::Player* player, ::Creature* boss,
                     static_cast<uint32>(mechanic));
                 break;
         }
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+        return nullptr;
     }
     else
     {

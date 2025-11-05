@@ -173,6 +173,21 @@ private:
 // ============================================================================
 
 Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpec spec)
+        if (!target)
+        {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return nullptr;
+            }
 {
     if (!target || !_bot)
         if (!bot)
@@ -193,10 +208,35 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
                 if (!target)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return;
+                }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
                     return nullptr;
                 }
                 float distance = 3.0f; // Close melee range
                 float x = target->GetPositionX() + distance * std::cos(angle);
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                            return;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                            return nullptr;
+                        }
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                            return nullptr;
+                        }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                        return nullptr;
+                    }
                 if (!target)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
@@ -204,6 +244,11 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
                 }
                 float y = target->GetPositionY() + distance * std::sin(angle);
                 if (!target)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                    return nullptr;
+                }
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
                     return;
@@ -246,6 +291,11 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
                     return;
                 }
                 if (!target)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
                     return nullptr;
@@ -307,6 +357,11 @@ RogueAI::RogueAI(Player* bot) :
 void RogueAI::InitializeCombatSystems()
 {
     // Initialize advanced combat system components
+    if (!interruptTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+        return;
+    }
     _threatManager = std::make_unique<BotThreatManager>(GetBot());
     _targetSelector = std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
     _positionManager = std::make_unique<PositionManager>(GetBot(), _threatManager.get());
@@ -331,6 +386,11 @@ void RogueAI::UpdateRotation(Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
+        if (!priorityTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+            return nullptr;
+        }
         if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
             return;
 
@@ -516,6 +576,11 @@ void RogueAI::UpdateRotation(Unit* target)
                 break;
         }
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+    return nullptr;
+}
 
     // Priority 6: Stealth and Openers
     if (!GetBot()->IsInCombat() && !HasAura(STEALTH))
@@ -524,6 +589,11 @@ void RogueAI::UpdateRotation(Unit* target)
         if (CanUseAbility(STEALTH))
         {
             float distance = GetBot()->GetDistance(target);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                        return;
+                    }
             if (distance > 5.0f && distance < 25.0f)
             {
                 if (CastSpell(STEALTH))
@@ -544,6 +614,11 @@ void RogueAI::UpdateRotation(Unit* target)
         if (ExecuteStealthOpener(target))
             return;
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+    return nullptr;
+}
 
     // Priority 7: Execute normal rotation (all specs use baseline logic in RogueAI)
     ExecuteRogueBasicRotation(target);
@@ -601,6 +676,11 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
 
     // Use Expose Armor if no sunder armor debuff present
     if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
@@ -899,6 +979,11 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
 
         // Build combo points
         if (energy >= 40)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return 0;
+        }
         {
             if (BuildComboPoints(target))
                 return;
@@ -1203,6 +1288,11 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
     if (!spellInfo)
         return false;
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+        return;
+    }
     // Check energy cost
     auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
     for (auto const& cost : powerCosts)
@@ -1218,6 +1308,11 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
     // Check combo point requirements for finishers
     if (IsFinisher(spellId))
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return 0;
+        }
         uint8 comboPoints = GetBot()->GetPower(POWER_COMBO_POINTS);
         if (comboPoints < 1)
             return false;

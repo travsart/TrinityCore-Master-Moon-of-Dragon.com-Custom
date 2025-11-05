@@ -64,6 +64,11 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     uint32 currentTime = getMSTime();
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
@@ -97,6 +102,11 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
 }
 
 void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 {
     if (!player)
         return;
@@ -111,6 +121,11 @@ void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
 
     _profiles[playerGuid].autoSellEnabled = enabled;
 }
@@ -146,6 +161,11 @@ ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playe
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _profiles.find(playerGuid);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     if (it != _profiles.end())
         return it->second;
 
@@ -171,6 +191,11 @@ void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
 
     // Get profession items in inventory
     auto items = GetProfessionItemsInInventory(player, true); // Materials only
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
 
     for (auto const& itemInfo : items)
     {
@@ -212,12 +237,22 @@ bool ProfessionAuctionBridge::ShouldSellMaterial(::Player* player, uint32 itemId
 }
 
 bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 itemGuid, MaterialStockpileConfig const& config)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 {
     if (!player || !_auctionHouse)
         return false;
 
     // Get optimal price from AuctionHouse
     uint32 marketPrice = GetOptimalMaterialPrice(player, config.itemId, config.auctionStackSize);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return 0;
+    }
 
     if (marketPrice == 0)
     {
@@ -237,6 +272,11 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -282,6 +322,11 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     ProfessionAuctionProfile const& profile = GetAuctionProfile(playerGuid);
 
     // Get crafted items in inventory
@@ -317,6 +362,16 @@ bool ProfessionAuctionBridge::ShouldSellCraftedItem(::Player* player, uint32 ite
         return false;
 
     ProfessionAuctionProfile const& profile = GetAuctionProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -363,12 +418,22 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
 
     // Delegate to existing AuctionHouse
     bool success = _auctionHouse->CreateAuction(player, itemGuid, 1, // Single item
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
         bidPrice, listingPrice, config.maxListingDuration);
 
     if (success)
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -437,6 +502,11 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
 
         // Check if available at good price
         if (IsMaterialAvailableForPurchase(player, itemId, quantity, maxPricePerUnit))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         {
             uint32 totalCost = maxPricePerUnit * quantity;
             if (totalCost <= budgetRemaining)
@@ -480,6 +550,11 @@ std::vector<std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMateria
 }
 
 bool ProfessionAuctionBridge::IsMaterialAvailableForPurchase(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 {
     if (!player || !_auctionHouse)
         return false;
@@ -605,6 +680,11 @@ void ProfessionAuctionBridge::ResetStatistics(uint32 playerGuid)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+        return;
+    }
     if (it != _playerStatistics.end())
         it->second.Reset();
 }

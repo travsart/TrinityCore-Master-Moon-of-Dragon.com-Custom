@@ -186,6 +186,11 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
             Player* player = session->GetPlayer();
 
             TC_LOG_INFO("module.playerbot.session", "🔄 Updating session for account {}, player={}, inWorld={}",
+                                if (!player)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                                    return nullptr;
+                                }
                             if (!player)
                             {
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");

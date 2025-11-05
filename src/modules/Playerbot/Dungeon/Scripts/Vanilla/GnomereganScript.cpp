@@ -64,6 +64,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -181,6 +186,11 @@ public:
     }
 
     void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -197,6 +207,11 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return nullptr;
+                    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
@@ -253,6 +268,16 @@ public:
                                       spellInfo->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA)))
                     {
                         float distance = player->GetExactDist(dynObj);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return;
+    }
                         if (distance < 8.0f)
                         {
                             TC_LOG_DEBUG("module.playerbot", "GnomereganScript: Avoiding Grubbis's radiation cloud");
@@ -461,6 +486,11 @@ public:
                     // Stay at range to avoid fear
                     Position rangedPos = CalculateRangedPosition(player, boss);
                     float distance = player->GetExactDist(boss);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
 
                     if (distance < 20.0f)
                     {
@@ -474,9 +504,19 @@ public:
             case 7800: // Mekgineer Thermaplugg
             {
                 // Spread out for bomb explosions
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 HandleSpreadMechanic(player, boss);
                 return;
             }
+if (!groupMember)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+    return nullptr;
+}
 
             default:
                 break;
@@ -487,6 +527,11 @@ public:
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -500,6 +545,11 @@ public:
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
                     return nullptr;
+                }
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return;
                 }
                 if (!group)
                 {
@@ -593,12 +643,32 @@ public:
                 return;
             }
 
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             case 7800: // Mekgineer Thermaplugg
             {
                 // Bomb explosions - 10 yard spread
                 EncounterStrategy::HandleGenericSpread(player, boss, 10.0f);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                    return;
+                }
                 return;
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                return nullptr;
             }
+            }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+    return nullptr;
+}
 
             default:
                 break;

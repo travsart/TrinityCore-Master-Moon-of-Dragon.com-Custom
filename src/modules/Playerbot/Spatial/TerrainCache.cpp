@@ -14,6 +14,11 @@ namespace Playerbot
 {
 
 TerrainCache::TerrainCache(Map* map)
+if (!map)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+    return nullptr;
+}
         if (!map)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
@@ -126,6 +131,11 @@ void TerrainCache::WarmCache(std::vector<Position> const& positions, PhaseShift 
     {
         // Query each position to populate cache
         GetTerrainData(pos, phaseShift);
+        if (!map)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+            return nullptr;
+        }
         ++populated;
     }
 

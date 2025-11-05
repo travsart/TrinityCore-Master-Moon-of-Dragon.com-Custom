@@ -52,6 +52,11 @@ Position TankPositioning::CalculateTankPosition(Unit* target, Group* group, cons
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
                 return nullptr;
             }
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return nullptr;
+            }
             if (member->IsAlive() && !member->IsGameMaster())
                 groupMembers.push_back(member);
 
@@ -83,6 +88,21 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
     // Off-tank positions opposite of main tank for swap mechanics
     Position mainTankPos = mainTank->GetPosition();
     float angleToMainTank = target->GetRelativeAngle(&mainTankPos);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return;
+    }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
+}
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+    return;
+}
     float offTankAngle = Position::NormalizeOrientation(angleToMainTank + M_PI);
 
     // Calculate position at swap distance
@@ -94,6 +114,16 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
         return nullptr;
     }
     offTankPos.m_positionY = target->GetPositionY() + _config.swapDistance * sin(offTankAngle);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return nullptr;
+        }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
@@ -118,10 +148,20 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
                 offTankPos.m_positionX = target->GetPositionX() + _config.swapDistance * cos(testAngle);
                 if (!target)
                 {
+                    if (!tank)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
                     return nullptr;
                 }
                 offTankPos.m_positionY = target->GetPositionY() + _config.swapDistance * sin(testAngle);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return;
+                }
                 if (!target)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
@@ -147,6 +187,11 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
                      if (!tank)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+                         return 0;
+                     }
+                     if (!tank)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
                          return;
                      }
     {
@@ -163,12 +208,32 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
         return;
     }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     float desiredFacing = tank->GetRelativeAngle(target) + M_PI;
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionX");
+    return;
+}
 
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
+        return nullptr;
+    }
     if (ShouldRotateBoss(target, currentFacing, desiredFacing))
     {
         // Tank should reposition to rotate boss
         Position newPos = CalculateFrontalPosition(target, _config.optimalDistance);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return nullptr;
+        }
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
@@ -196,11 +261,46 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
         {
             // FALLBACK: Direct MotionMaster if arbiter not available
             tank->GetMotionMaster()->MovePoint(0, newPos);
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPosition");
+            return;
+        }
         }
     }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+    return;
+}
 }
 
 float TankPositioning::CalculateOptimalFacing(Unit* target, const std::vector<Player*>& groupMembers)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
+                        return nullptr;
+                    }
+                    return nullptr;
+                }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return nullptr;
+}
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return;
+    }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return nullptr;
+            }
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
@@ -243,7 +343,17 @@ float TankPositioning::CalculateOptimalFacing(Unit* target, const std::vector<Pl
     return Position::NormalizeOrientation(angleToGroup + M_PI);
 }
 
+if (!currentTank)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTank in method GetPosition");
+    return;
+}
 bool TankPositioning::ShouldRotateBoss(Unit* target, float currentFacing, float desiredFacing)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return;
+}
 {
     float angleDiff = std::abs(Position::NormalizeOrientation(currentFacing - desiredFacing));
 
@@ -252,6 +362,16 @@ bool TankPositioning::ShouldRotateBoss(Unit* target, float currentFacing, float 
 }
 
 void TankPositioning::ManageCleaveMechanics(Unit* target, const std::vector<Player*>& groupMembers)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
+}
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+    return nullptr;
+}
 {
     if (!_config.handleCleave || !target)
         return;
@@ -280,6 +400,21 @@ void TankPositioning::ManageCleaveMechanics(Unit* target, const std::vector<Play
                          }
         float targetFacing = target->GetOrientation();
         float angleDiff = std::abs(Position::NormalizeOrientation(angleToPos - targetFacing));
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return nullptr;
+}
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return nullptr;
+        }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+    return;
+}
 
         if (angleDiff < cleaveAngle / 2)
         {
@@ -351,12 +486,27 @@ Position TankPositioning::CalculateTankSwapPosition(Player* currentTank, Player*
     float swapAngle = target->GetRelativeAngle(&currentPos) + angleOffset;
 
     swapPos.m_positionX = target->GetPositionX() + _config.swapDistance * cos(swapAngle);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+            return nullptr;
+        }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
         return nullptr;
     }
     swapPos.m_positionY = target->GetPositionY() + _config.swapDistance * sin(swapAngle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return nullptr;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
@@ -371,7 +521,17 @@ Position TankPositioning::CalculateTankSwapPosition(Player* currentTank, Player*
 
     return swapPos;
 }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
+    return;
+}
 
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionX");
+    return;
+}
 bool TankPositioning::IsInSwapPosition(Player* tank, Player* otherTank, Unit* target)
 {
     if (!tank || !otherTank || !target)
@@ -446,6 +606,11 @@ std::vector<RolePositionScore> TankPositioning::EvaluateTankPositions(
     for (const Position& pos : candidates)
     {
         RolePositionScore score;
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         score.position = pos;
         score.isValid = ValidateTankPosition(pos, context.primaryTarget, context);
 
@@ -508,11 +673,31 @@ Position TankPositioning::CalculateFrontalPosition(Unit* target, float distance)
 
 float TankPositioning::CalculateThreatAngle(const Position& tankPos, const Position& targetPos,
                                             const std::vector<Player*>& group)
+if (!tank)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetOrientation");
+    return;
+}
 {
     if (group.empty())
         return 0.0f;
+if (!tank)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPositionX");
+    return nullptr;
+}
 
+    if (!tank)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPositionY");
+        return nullptr;
+    }
     // Calculate average angle to group members
+    if (!tank)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPositionZ");
+        return nullptr;
+    }
     float sumAngle = 0;
     for (const Player* member : group)
     {
@@ -673,6 +858,11 @@ Position HealerPositioning::CalculateTankHealerPosition(Player* tank, Unit* thre
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetOrientation");
         return;
+    if (!healer)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetName");
+        return;
+    }
     }
     float healerAngle = Position::NormalizeOrientation(tankFacing + 3 * M_PI / 4);
 
@@ -699,12 +889,32 @@ Position HealerPositioning::CalculateTankHealerPosition(Player* tank, Unit* thre
     if (threat && healerPos.GetExactDist(threat->GetPosition()) < _config.minSafeDistance)
     {
         healerPos = FindSafeHealingSpot(context.bot, threat, context);
+        if (!healer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetPosition");
+            return nullptr;
+        }
     }
 
     return healerPos;
 }
 
 bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const std::vector<Player*>& allies)
+    if (!healer)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetPositionX");
+        return nullptr;
+    }
+    if (!healer)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetPositionY");
+        return nullptr;
+    }
+if (!healer)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetPositionZ");
+    return nullptr;
+}
 {
     if (!healer || allies.empty())
         return false;
@@ -713,6 +923,11 @@ bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const std::vecto
     for (const Player* ally : allies)
     {
         float distSq = healer->GetExactDistSq(ally);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+            return;
+        }
         maxDistSq = std::max(maxDistSq, distSq);
     }
 
@@ -763,6 +978,11 @@ Position HealerPositioning::OptimizeHealingCoverage(Player* healer, const std::v
                 bestCoverage = coverage;
                 optimalPos = testPos;
             }
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         }
     }
 
@@ -858,6 +1078,11 @@ void HealerPositioning::MaintainLineOfSight(Player* healer, const std::vector<Pl
         if (!healer->IsWithinLOSInMap(ally))
         {
             TC_LOG_DEBUG("bot.playerbot", "Healer {} lost LOS to {}",
+                         if (!tank)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPosition");
+                             return;
+                         }
                          healer->GetName(), ally->GetName());
             // Trigger repositioning
         }
@@ -914,6 +1139,11 @@ Position HealerPositioning::FindBestLOSPosition(Player* healer, const std::vecto
         for (const Player* target : priorityTargets)
         {
             if (testPos.GetExactDist(target->GetPosition()) <= _config.optimalRange)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return;
+        }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
@@ -939,6 +1169,11 @@ std::vector<Position> HealerPositioning::CalculateMultiHealerPositions(
     if (healers.empty() || group.empty())
         return positions;
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     // Divide healing assignments
     int healersPerSection = std::max(1, (int)healers.size());
     int playersPerHealer = group.size() / healersPerSection;
@@ -950,6 +1185,11 @@ std::vector<Position> HealerPositioning::CalculateMultiHealerPositions(
         size_t startIdx = i * playersPerHealer;
         size_t endIdx = std::min(startIdx + playersPerHealer, group.size());
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
         for (size_t j = startIdx; j < endIdx; ++j)
             assignment.push_back(group[j]);
 
@@ -972,6 +1212,11 @@ void HealerPositioning::CoordinateHealerPositioning(const std::vector<Player*>& 
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
                 return nullptr;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                return nullptr;
+            }
             }
             if (member->IsAlive())
                 groupMembers.push_back(member);
@@ -1009,6 +1254,11 @@ std::vector<RolePositionScore> HealerPositioning::EvaluateHealerPositions(
     const std::vector<Position>& candidates, const CombatPositionContext& context)
 {
     std::vector<RolePositionScore> scores;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     scores.reserve(candidates.size());
 
     for (const Position& pos : candidates)
@@ -1050,6 +1300,11 @@ float HealerPositioning::CalculateHealerScore(const Position& pos, const CombatP
 
     // Safety score
     if (context.primaryTarget)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     {
         float distance = pos.GetExactDist(context.primaryTarget->GetPosition());
         float safetyBonus = std::min(50.0f, (distance / _config.minSafeDistance) * 25.0f);
@@ -1103,6 +1358,11 @@ Position HealerPositioning::CalculateCenterOfCare(const std::vector<Player*>& al
 
 float HealerPositioning::GetEffectiveHealingRange(Player* healer)
 {
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return nullptr;
+    }
     if (!healer)
         return _config.optimalRange;
 
@@ -1127,6 +1387,11 @@ Position DPSPositioning::CalculateMeleeDPSPosition(Unit* target, Player* tank,
     if (_config.preferBehind)
     {
         dpsPos = CalculateBackstabPosition(target, _config.backstabAngle);
+    if (!dps)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: dps in method GetName");
+        return nullptr;
+    }
     }
     else if (_config.allowFlanking)
     {
@@ -1142,6 +1407,11 @@ Position DPSPositioning::CalculateMeleeDPSPosition(Unit* target, Player* tank,
             return;
         }
         dpsPos = RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     }
 
     // Avoid cleave if tank is present
@@ -1167,6 +1437,11 @@ Position DPSPositioning::CalculateBackstabPosition(Unit* target, float requiredA
     }
     float backstabAngle = Position::NormalizeOrientation(targetFacing + M_PI);
 
+    if (!dps)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: dps in method GetName");
+        return nullptr;
+    }
     return RotateAroundTarget(target, backstabAngle, _config.meleeOptimalDistance);
 }
 
@@ -1176,6 +1451,11 @@ Position DPSPositioning::CalculateFlankPosition(Unit* target, bool leftFlank)
         return {};
 
     float targetFacing = target->GetOrientation();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return nullptr;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
@@ -1209,6 +1489,11 @@ void DPSPositioning::DistributeMeleePositions(const std::vector<Player*>& meleeD
                 return;
             }
         Position pos = RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(meleeDPS[i]->GetAI());
@@ -1234,6 +1519,11 @@ void DPSPositioning::DistributeMeleePositions(const std::vector<Player*>& meleeD
         }
     }
 }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+    return;
+}
 
 Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalRange,
                                                    const CombatPositionContext& context)
@@ -1251,6 +1541,11 @@ Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalR
         return;
     }
     rangedPos = RotateAroundTarget(target, baseAngle, optimalRange);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+            return nullptr;
+        }
 
     // Apply spread if required
     if (_config.maintainSpread && context.requiresSpread)
@@ -1277,6 +1572,11 @@ Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalR
 
 void DPSPositioning::SpreadRangedPositions(const std::vector<Player*>& rangedDPS,
                                           Unit* target, float spreadDistance)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+            return nullptr;
+        }
 {
     if (!target || rangedDPS.empty())
         return;
@@ -1291,6 +1591,16 @@ void DPSPositioning::SpreadRangedPositions(const std::vector<Player*>& rangedDPS
     {
         float angle = Position::NormalizeOrientation(
             target->GetOrientation() + arcStart + (i * angleStep));
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
@@ -1327,8 +1637,23 @@ Position DPSPositioning::CalculateCasterPosition(Player* caster, Unit* target, u
 {
     if (!caster || !target)
         return {};
+if (!target1)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target1 in method GetPositionX");
+    return nullptr;
+}
 
+    if (!target1)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target1 in method GetPositionY");
+        return nullptr;
+    }
     // Get spell info for range requirements
+    if (!target1)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target1 in method GetPositionZ");
+        return;
+    }
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return CalculateRangedDPSPosition(target, _config.rangedOptimalDistance, {});
@@ -1445,6 +1770,11 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
 
 bool DPSPositioning::IsInCleaveDanger(const Position& pos, Unit* target, float cleaveAngle)
 {
+    if (!dps)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: dps in method GetClass");
+        return nullptr;
+    }
     if (!target)
         return false;
 
@@ -1475,11 +1805,26 @@ void DPSPositioning::HandlePositionalRequirements(Player* dps, uint32 spellId)
 }
 
 bool DPSPositioning::MeetsPositionalRequirement(Player* dps, Unit* target, PositionalRequirement req)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return nullptr;
+    }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return nullptr;
+}
 {
     if (!dps || !target)
         return false;
 
     float angleToPlayer = target->GetRelativeAngle(dps);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
     float targetFacing = target->GetOrientation();
     if (!target)
     {
@@ -1564,6 +1909,11 @@ float DPSPositioning::CalculateDPSEfficiency(const Position& pos, Player* dps, U
 
     return std::max(0.0f, efficiency);
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 
 Position DPSPositioning::CalculateAOEPosition(Player* dps, const std::vector<Unit*>& targets)
 {
@@ -1572,6 +1922,11 @@ Position DPSPositioning::CalculateAOEPosition(Player* dps, const std::vector<Uni
 
     // Calculate center of targets for AOE
     float sumX = 0, sumY = 0, sumZ = 0;
+    if (!tank)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPosition");
+        return;
+    }
     for (const Unit* target : targets)
     {
         sumX += target->GetPositionX();
@@ -1592,6 +1947,11 @@ Position DPSPositioning::CalculateAOEPosition(Player* dps, const std::vector<Uni
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
             return;
         }
+    if (!dps)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: dps in method GetPosition");
+        return;
+    }
     }
 
     Position aoeCenter;
@@ -1644,7 +2004,17 @@ Position DPSPositioning::CalculateCleaveDPSPosition(Player* dps, const std::vect
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target1 in method GetPositionZ");
         return;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
     }
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 
     return cleavePos;
 }
@@ -1771,10 +2141,20 @@ float DPSPositioning::GetOptimalDPSRange(Player* dps, Unit* target)
         case CLASS_WARRIOR:
         case CLASS_ROGUE:
         case CLASS_DEATH_KNIGHT:
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         case CLASS_MONK:
         case CLASS_DEMON_HUNTER:
             return _config.meleeOptimalDistance;
         case CLASS_HUNTER:
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return nullptr;
+        }
         case CLASS_MAGE:
         case CLASS_WARLOCK:
         case CLASS_PRIEST:
@@ -1788,6 +2168,11 @@ float DPSPositioning::GetOptimalDPSRange(Player* dps, Unit* target)
             return _config.rangedOptimalDistance;
         default:
             return _config.rangedOptimalDistance;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     }
 }
 
@@ -1822,6 +2207,11 @@ Position DPSPositioning::RotateAroundTarget(Unit* target, float angle, float dis
 // RoleBasedCombatPositioning Implementation
 RoleBasedCombatPositioning::RoleBasedCombatPositioning()
     : _tankPositioning(std::make_unique<TankPositioning>()),
+      if (!bot)
+      {
+          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+          return nullptr;
+      }
       _healerPositioning(std::make_unique<HealerPositioning>()),
       _dpsPositioning(std::make_unique<DPSPositioning>()),
       _positionManager(nullptr),
@@ -1878,6 +2268,11 @@ MovementResult RoleBasedCombatPositioning::UpdateCombatPosition(Player* bot,
     moveContext.primaryThreat = context.currentThreat;
     moveContext.desiredType = PositionType::FORMATION;
     moveContext.botRole = context.role;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     moveContext.inCombat = context.inCombat;
     moveContext.emergencyMode = context.hasActiveAOE;
 
@@ -1996,6 +2391,11 @@ void RoleBasedCombatPositioning::UpdateStrategy(Player* bot, CombatPositionStrat
         return;
     }
     _lastStrategyUpdate[bot->GetGUID()] = getMSTime();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -2118,6 +2518,11 @@ std::unordered_map<ObjectGuid, Position> RoleBasedCombatPositioning::CalculateGr
         return formation;
 
     CombatPositionContext context = AnalyzeCombatContext(nullptr, group);
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+        return nullptr;
+    }
     context.primaryTarget = target;
     UpdateGroupRoles(group, context);
 

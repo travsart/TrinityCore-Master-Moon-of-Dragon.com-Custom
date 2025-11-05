@@ -32,6 +32,11 @@
      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
      return nullptr;
  }
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+     return nullptr;
+ }
  * @endcode
  *
  * @created 2025-10-27

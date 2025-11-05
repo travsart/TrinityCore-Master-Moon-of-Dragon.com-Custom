@@ -193,6 +193,11 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
             return;
         }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+            return;
+        }
 
         // Check cached paths first
         std::vector<uint32> cachedPath = GetCachedPath(entry, type);
@@ -211,6 +216,16 @@ namespace Playerbot
     }
 
     int32 GossipHandler::ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
     {
         if (!bot || !target)
             return -1;
@@ -225,6 +240,16 @@ namespace Playerbot
             return;
         }
         session.botGuid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -242,6 +267,11 @@ namespace Playerbot
     return nullptr;
 }
             if (!bot)
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+                return nullptr;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return;
@@ -265,6 +295,11 @@ namespace Playerbot
         if (bestOption >= 0)
         {
             // Cache successful navigation
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             if (Creature* creature = target->ToCreature())
             {
                 uint32 entry = creature->GetEntry();
@@ -403,6 +438,11 @@ namespace Playerbot
             return InteractionType::None;
 
         std::string lowerText = ToLowerCase(text);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+            return "";
+        }
         InteractionType bestMatch = InteractionType::None;
         int bestMatchCount = 0;
 
@@ -491,6 +531,11 @@ namespace Playerbot
                 }
             }
             m_lastCacheCleanup = now;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
         }
     }
 
@@ -510,12 +555,22 @@ namespace Playerbot
     }
 
     void GossipHandler::ClearCache()
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         m_gossipPathCache.clear();
         m_pathStatistics.clear();
         m_activeSessions.clear();
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
 
     GossipSelectType GossipHandler::GetIconType(uint8 icon) const
     {

@@ -121,6 +121,11 @@ struct ManaAstralPowerResource
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
                 return;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         astralPower = 0;
     }
@@ -282,6 +287,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaAstralPowerResource>(bot)
         
         , _eclipseTracker()
@@ -290,6 +300,11 @@ public:
         , _starfallEndTime(0)
         , _shootingStarsProc(false)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize mana/astral power resources
         this->_resource.Initialize(bot);
 
@@ -329,6 +344,11 @@ public:
         }
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();

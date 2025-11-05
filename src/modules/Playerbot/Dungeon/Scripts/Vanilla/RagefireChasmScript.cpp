@@ -59,6 +59,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -149,6 +154,11 @@ public:
     }
 
     void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -166,6 +176,11 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return nullptr;
+                    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
@@ -308,6 +323,11 @@ public:
                 break;
         }
 
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
         // Default spread distance
         DungeonScript::HandleSpreadMechanic(player, boss);
     }
@@ -316,6 +336,11 @@ public:
     {
         uint32 entry = boss->GetEntry();
 
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return nullptr;
+        }
         switch (entry)
         {
             case 11518: // Jergosh the Invoker

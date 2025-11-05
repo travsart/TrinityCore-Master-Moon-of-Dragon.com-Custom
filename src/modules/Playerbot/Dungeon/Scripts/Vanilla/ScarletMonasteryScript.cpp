@@ -77,6 +77,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -362,6 +367,16 @@ public:
                 if (boss->HasAura(13323) || boss->HasAura(9435))
                 {
                     float distance = player->GetExactDist(boss);
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                                return nullptr;
+                            }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                            return nullptr;
+                        }
 
                     // If within 20 yards of Doan during detonation, RUN AWAY
                     if (distance < 20.0f)
@@ -475,6 +490,26 @@ public:
     }
 
     void HandlePositioning(::Player* player, ::Creature* boss) override
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return;
+                    }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                    return;
+                }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                    return;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -533,6 +568,11 @@ public:
                     {
                         // Return to melee range after whirlwind ends
                         float distance = player->GetExactDist(boss);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                         if (distance > 5.0f)
                         {
                             MoveTo(player, boss->GetPosition());
@@ -543,9 +583,19 @@ public:
                 break;
             }
 
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
             case 6487: // Arcanist Doan
             {
                 // Stay spread for Arcane Explosion
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return nullptr;
+                }
                 HandleSpreadMechanic(player, boss);
                 return;
             }
@@ -563,6 +613,11 @@ public:
 
         // Fall back to generic
         DungeonScript::HandlePositioning(player, boss);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
@@ -570,6 +625,11 @@ public:
         uint32 entry = boss->GetEntry();
 
         switch (entry)
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return nullptr;
+        }
         {
             case 3983: // Interrogator Vishas
             {

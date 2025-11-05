@@ -515,6 +515,16 @@ bool BotWorldPositioner::TeleportToZone(Player* bot, ZonePlacement const* placem
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
         return;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+        return;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -538,6 +548,11 @@ bool BotWorldPositioner::TeleportToZone(Player* bot, ZonePlacement const* placem
 }
 
 bool BotWorldPositioner::PlaceBot(Player* bot, uint32 level, TeamId faction, uint8 race)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -570,6 +585,11 @@ bool BotWorldPositioner::ValidateTeleportCoordinates(ZonePlacement const* placem
 
     // Basic coordinate sanity checks
     if (std::abs(placement->x) > 20000.0f || std::abs(placement->y) > 20000.0f)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         return false;
 
     if (std::abs(placement->z) > 10000.0f)

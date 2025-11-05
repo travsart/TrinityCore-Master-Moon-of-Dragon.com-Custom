@@ -293,10 +293,20 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
     }
 
     // ========================================================================
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
     // CORE ROTATION - Vengeance specific logic
     // ========================================================================
 
@@ -338,6 +348,11 @@ public:
             this->CastSpell(bot, DemonHunterSpells::IMMOLATION_AURA);
             _immolationAuraActive = true;
         }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return 0;
+}
 
         // Emergency defensive cooldowns
         HandleEmergencyDefensives();

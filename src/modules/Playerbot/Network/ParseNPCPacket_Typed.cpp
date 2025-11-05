@@ -33,6 +33,16 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -48,6 +58,11 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         options.push_back(option.GossipOptionID);
 
     NPCEvent event = NPCEvent::GossipMenuReceived(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetGUID(),
         packet.GossipGUID,
         packet.GossipID,
@@ -58,6 +73,21 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_MESSAGE (typed): npc={}, menu={}, options={}",
+            if (!bot)
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -75,6 +105,11 @@ void ParseTypedGossipComplete(WorldSession* session, WorldPackets::NPC::GossipCo
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -94,6 +129,11 @@ void ParseTypedGossipComplete(WorldSession* session, WorldPackets::NPC::GossipCo
         return;
 
     // Note: GossipComplete doesn't include NPC GUID, use last known NPC
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     NPCEvent event = NPCEvent::GossipComplete(
         bot->GetGUID(),
         ObjectGuid::Empty  // No NPC GUID available in packet
@@ -103,6 +143,11 @@ void ParseTypedGossipComplete(WorldSession* session, WorldPackets::NPC::GossipCo
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_COMPLETE (typed)",
         bot->GetName());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 }
 
 /**
@@ -114,6 +159,16 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -134,6 +189,11 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
         items.push_back(vendorItem.Item.ItemID);
 
     NPCEvent event = NPCEvent::VendorListReceived(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetGUID(),
         packet.Vendor,
         0,  // Vendor entry not in packet
@@ -143,6 +203,21 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received VENDOR_INVENTORY (typed): vendor={}, items={}",
+            if (!bot)
+            {
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                    return nullptr;
+                }
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -160,6 +235,16 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -184,13 +269,28 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
         packet.TrainerGUID,
         packet.TrainerID,
         std::move(spells)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     );
 
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRAINER_LIST (typed): trainer={}, spells={}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
         if (!bot)
         {
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
@@ -206,6 +306,11 @@ void ParseTypedTrainerBuyFailed(WorldSession* session, WorldPackets::NPC::Traine
         return;
 
     Player* bot = session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");

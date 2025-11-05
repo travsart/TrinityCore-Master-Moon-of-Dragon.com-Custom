@@ -175,6 +175,16 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
             return;
         }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
+            return;
+        }
 
         // Sync with actual aura
         if (Aura* aura = target->GetAura(FESTERING_WOUND))
@@ -273,6 +283,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit UnholyDeathKnightRefactored(Player* bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -280,6 +295,11 @@ public:
         }
         : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)
         
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         , _woundTracker()
         , _petTracker()
         , _suddenDoomProc(false)
@@ -318,12 +338,22 @@ public:
         {
             ExecuteAoERotation(target, enemyCount);
         }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         else
         {
             ExecuteSingleTargetRotation(target);
         }
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return;
+    }
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
@@ -407,6 +437,11 @@ protected:
 
         // Priority 7: Death Coil (dump RP)
         if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
         {
             this->CastSpell(target, DEATH_COIL);
             ConsumeRunicPower(30);
@@ -451,6 +486,11 @@ protected:
 
         // Priority 2: Epidemic (spread disease)
         if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         {
             this->CastSpell(target, EPIDEMIC);
             ConsumeRunes(RuneType::UNHOLY, 1);

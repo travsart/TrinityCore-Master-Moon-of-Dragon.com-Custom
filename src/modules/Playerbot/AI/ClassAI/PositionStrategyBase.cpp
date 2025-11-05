@@ -52,6 +52,11 @@ PositionStrategyBase::PositionStrategyBase(Map* map)
 
 // Core position calculation with intelligent caching
 Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -82,6 +87,21 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     candidates.reserve(16);
 
     float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return nullptr;
+            }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return;
+        }
     for (int ring = 0; ring < 2; ++ring)
     {
         float range = preferredRange + (ring * 3.0f);
@@ -112,6 +132,11 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
 
             Position candidate(x, y, z, angle);
             if (ValidatePosition(candidate, bot))
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             {
                 candidates.push_back(candidate);
             }
@@ -203,6 +228,11 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
         for (auto* req : sortedRequests)
         {
             Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                return;
+            }
 
             // Check for collision with already assigned positions
             auto gridCoords = WorldToGrid(pos);
@@ -225,6 +255,11 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
 
 // Position validation with comprehensive checks
 bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
@@ -250,6 +285,11 @@ bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) co
     // Check danger zones
     if (_enableDangerAvoidance && !IsPositionSafe(pos))
         return false;
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return nullptr;
+}
 
     // Check collision with other bots
     if (_enableCollisionAvoidance && CheckCollisionWithOtherBots(pos, bot))
@@ -284,6 +324,11 @@ float PositionStrategyBase::EvaluatePositionScore(const Position& pos, Player* b
     // Terrain score (prefer flat, accessible terrain)
     score += CalculateTerrainScore(pos);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     // Group cohesion score (stay near allies but not too close)
     score += CalculateGroupCohesionScore(pos, bot);
 
@@ -307,6 +352,11 @@ std::pair<uint32, uint32> PositionStrategyBase::WorldToGrid(const Position& pos)
     float y = pos.GetPositionY() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
 
     uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
 
     // Clamp to grid bounds
@@ -563,6 +613,11 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
 
                 Position neighborPos = GridToWorld(nx, ny);
                 float z = neighborPos.GetPositionZ();
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return;
+                }
                 _map->GetHeight(nullptr, neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
                 neighborPos.Relocate(neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
 
@@ -571,8 +626,23 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
                     continue;
 
                 // Calculate costs
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                    return;
+                }
                 float moveCost = current->pos.GetExactDist(&neighborPos);
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
+}
 
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return;
+                }
                 // Add danger cost if avoiding danger
                 if (avoidDanger)
                 {
@@ -598,13 +668,33 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
     }
 
     // No path found, return direct path
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return nullptr;
+    }
     return {start, end};
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
 }
+}
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+    return;
+}
 
 // Formation calculations
 std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     std::vector<Player*> bots,
     Unit* target,
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return;
+    }
     float spacing)
 {
     std::vector<Position> positions;
@@ -617,6 +707,11 @@ std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        if (!excludeBot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: excludeBot in method GetGUID");
+            return nullptr;
+        }
         return;
     }
     float perpAngle = angle + M_PI / 2.0f;
@@ -666,6 +761,11 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
     float angleStep = 2.0f * M_PI / bots.size();
 
     for (size_t i = 0; i < bots.size(); ++i)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
     {
         float angle = i * angleStep;
         float x = target->GetPositionX() + cos(angle) * radius;
@@ -706,6 +806,11 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
     std::lock_guard<std::recursive_mutex> lock(_positionMutex);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
 
     uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
     if (!excludeBot)
@@ -725,6 +830,11 @@ bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Play
 
     return false;
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 
 // Score calculation helpers
 float PositionStrategyBase::CalculateDistanceScore(const Position& pos, Unit* target, float optimalRange) const
@@ -983,6 +1093,11 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
 
     return totalLength;
 }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+    return;
+}
 
 Position PositionStrategyBase::FindAlternativePosition(
     const Position& original,
@@ -999,8 +1114,23 @@ Position PositionStrategyBase::FindAlternativePosition(
                 if (std::abs(dx) != radius && std::abs(dy) != radius)
                     continue;  // Only check perimeter
 
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                    return;
+                }
                 float x = original.GetPositionX() + dx * GRID_CELL_SIZE;
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                    return;
+                }
                 float y = original.GetPositionY() + dy * GRID_CELL_SIZE;
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return;
+                }
                 float z = original.GetPositionZ();
 
                 _map->GetHeight(bot->GetPhaseShift(), x, y, z);
@@ -1030,13 +1160,33 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
     for (size_t i = 1; i < path.size() - 1; ++i)
     {
         float x = path[i].GetPositionX() * (1.0f - _pathSmoothingFactor) +
+                  if (!target)
+                  {
+                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                      return;
+                  }
                   (path[i - 1].GetPositionX() + path[i + 1].GetPositionX()) * 0.5f * _pathSmoothingFactor;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return;
+        }
         float y = path[i].GetPositionY() * (1.0f - _pathSmoothingFactor) +
+                  if (!target)
+                  {
+                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                      return;
+                  }
                   (path[i - 1].GetPositionY() + path[i + 1].GetPositionY()) * 0.5f * _pathSmoothingFactor;
         float z = path[i].GetPositionZ();
 
         _map->GetHeight(nullptr, x, y, z);
         smoothed.emplace_back(x, y, z, path[i].GetOrientation());
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return nullptr;
+    }
     }
 
     smoothed.push_back(path.back());
@@ -1077,6 +1227,16 @@ void PositionStrategyBase::UpdateFormationPositions(std::vector<Player*> bots, U
 
     // Apply positions to bots
     for (size_t i = 0; i < bots.size() && i < positions.size(); ++i)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return;
+}
     {
         RegisterPosition(bots[i], positions[i]);
     }
@@ -1094,6 +1254,26 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
         return positions;
 
     float baseAngle = target->GetOrientation();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                return nullptr;
+            }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return;
+    }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return;
+    }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return nullptr;
+        }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
@@ -1115,12 +1295,32 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
             float finalAngle = baseAngle + offset;
 
             float x = target->GetPositionX() + cos(finalAngle) * rowDistance;
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return nullptr;
+                }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
                 return 0;
             }
             float y = target->GetPositionY() + sin(finalAngle) * rowDistance;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return 0;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
@@ -1143,6 +1343,11 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
 
 std::vector<Position> PositionStrategyBase::CalculateSpreadFormation(
     std::vector<Player*> bots,
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return;
+}
     Unit* target,
     float minSpacing)
 {

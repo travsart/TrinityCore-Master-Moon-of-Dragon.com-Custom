@@ -79,6 +79,11 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return nullptr;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
         else
             _charges = 0;
     }
@@ -192,6 +197,11 @@ public:
 
         if (enemyCount >= 3)
             ExecuteAoERotation(target, enemyCount);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         else
             ExecuteSingleTargetRotation(target);
     }
@@ -265,6 +275,11 @@ private:
     }
 
     void UpdateArcaneState()
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return nullptr;
+    }
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -290,6 +305,11 @@ private:
         {
             _arcaneSurgeActive = true;
             if (Aura* aura = bot->GetAura(ARCANE_SURGE))
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 _arcaneSurgeEndTime = getMSTime() + aura->GetDuration();
                 if (!aura)
                 {

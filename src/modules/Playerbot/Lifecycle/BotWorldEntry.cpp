@@ -502,6 +502,16 @@ bool BotWorldEntry::InitializeAI()
                    if (!group)
                    {
                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                       return nullptr;
+                   }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return;
+    }
+                   if (!group)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
                        return;
                    }
     if (group)

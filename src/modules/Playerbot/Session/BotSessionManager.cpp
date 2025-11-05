@@ -51,6 +51,16 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
                 return;
             }
+            if (!session)
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+                return nullptr;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+                return;
+            }
             session->GetAccountId(), e.what());
     if (!session)
     {
@@ -60,6 +70,11 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
     }
     catch (...)
     {
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+            return;
+        }
         TC_LOG_ERROR("module.playerbot.session",
             "Unknown exception in BotSessionManager::UpdateBotSession for account {}",
             if (!session)
@@ -74,6 +89,11 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
     return;
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+    return;
+}
 }
 
 void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
@@ -99,7 +119,17 @@ void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
 }
 
 void BotSessionManager::UnregisterBotAI(WorldSession* session)
+if (!session)
 {
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return nullptr;
+}
+{
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+        return nullptr;
+    }
     if (!session)
         return;
 
@@ -119,6 +149,16 @@ void BotSessionManager::UnregisterBotAI(WorldSession* session)
 }
 
 BotSession* BotSessionManager::GetBotSession(WorldSession* session)
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+    return;
+}
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+    return;
+}
 if (!session)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");

@@ -35,6 +35,16 @@ TargetSelector::TargetSelector(Player* bot, BotThreatManager* threatManager)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -123,12 +133,22 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
 
         std::sort(evaluatedTargets.begin(), evaluatedTargets.end(), std::greater<TargetInfo>());
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         result.target = evaluatedTargets[0].unit;
         result.info = evaluatedTargets[0];
         result.success = true;
 
         for (size_t i = 1; i < std::min(evaluatedTargets.size(), size_t(5)); ++i)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             result.alternativeTargets.push_back(evaluatedTargets[i]);
         }
 
@@ -145,11 +165,21 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
         result.success = false;
         result.failureReason = std::string("Exception during target selection: ") + e.what();
         if (!bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
         TC_LOG_ERROR("playerbot.target", "Exception in SelectBestTarget for bot {}: {}", _bot->GetName(), e.what());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     }
 
     auto endTime = std::chrono::steady_clock::now();
@@ -166,6 +196,11 @@ SelectionResult TargetSelector::SelectAttackTarget(float maxRange)
     context.botRole = _threatManager ? _threatManager->GetBotRole() : ThreatRole::DPS;
     context.maxRange = maxRange > 0.0f ? maxRange : _defaultMaxRange;
     context.inCombat = _bot->IsInCombat();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -191,6 +226,11 @@ SelectionResult TargetSelector::SelectAttackTarget(float maxRange)
 
     context.groupTarget = _groupTarget;
     context.currentTarget = _bot->GetVictim();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 
     return SelectBestTarget(context);
 }
@@ -254,6 +294,11 @@ SelectionResult TargetSelector::SelectHealTarget(bool emergencyOnly)
     float bestScore = 0.0f;
 
     for (Unit* ally : candidates)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     {
         if (!ally || ally->GetHealthPct() >= 95.0f)
             continue;
@@ -295,6 +340,11 @@ SelectionResult TargetSelector::SelectInterruptTarget(float maxRange)
     context.bot = _bot;
     context.maxRange = maxRange > 0.0f ? maxRange : 30.0f;
     context.inCombat = _bot->IsInCombat();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -324,6 +374,11 @@ SelectionResult TargetSelector::SelectInterruptTarget(float maxRange)
         {
             bestScore = score;
             bestTarget = enemy;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         }
     }
 
@@ -340,6 +395,16 @@ SelectionResult TargetSelector::SelectInterruptTarget(float maxRange)
     else
     {
         result.failureReason = "No interruptible targets found";
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+            return nullptr;
+        }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsInCombat");
+        return;
+    }
     }
 
     return result;
@@ -389,6 +454,11 @@ bool TargetSelector::IsValidTarget(Unit* target, TargetValidation validation) co
         return false;
 
     if (HasFlag(validation & TargetValidation::IN_RANGE) && _bot->GetExactDistSq(target) > (_defaultMaxRange * _defaultMaxRange))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
@@ -478,6 +548,11 @@ bool TargetSelector::CanCast(Unit* target, uint32 spellId) const
 
     // Check basic casting requirements
     if (!_bot->HasSpell(spellId))
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return nullptr;
+        }
         return false;
 
     if (!_bot->IsWithinLOSInMap(target))
@@ -489,6 +564,11 @@ bool TargetSelector::CanCast(Unit* target, uint32 spellId) const
 float TargetSelector::CalculateTargetScore(Unit* target, const SelectionContext& context)
 {
     if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         return 0.0f;
 
     float totalScore = 0.0f;
@@ -503,10 +583,20 @@ float TargetSelector::CalculateTargetScore(Unit* target, const SelectionContext&
 
     return std::max(0.0f, totalScore);
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+    return;
+}
 
 TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const SelectionContext& context)
 {
     if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return TargetPriority::IGNORE;
 
     if (context.emergencyMode && target->GetHealthPct() < 25.0f)
@@ -635,6 +725,11 @@ float TargetSelector::CalculateThreatScore(Unit* target, const SelectionContext&
 {
     if (!_threatManager || !target)
         return 0.0f;
+if (!currentSpell)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
+    return nullptr;
+}
 
     float threat = _threatManager->GetThreat(target);
     float maxThreat = 100.0f;
@@ -667,6 +762,11 @@ float TargetSelector::CalculateDistanceScore(Unit* target, const SelectionContex
         return 0.0f;
 
     float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+        return nullptr;
+    }
     float maxRange = context.maxRange;
 
     if (distance > maxRange)
@@ -695,10 +795,25 @@ float TargetSelector::CalculateRoleScore(Unit* target, const SelectionContext& c
 }
 
 float TargetSelector::CalculateVulnerabilityScore(Unit* target, const SelectionContext& context)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+        return nullptr;
+    }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+            return nullptr;
+        }
 {
     if (!target)
         return 0.0f;
 
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+        return nullptr;
+    }
     float score = 0.0f;
 
     if (IsVulnerable(target))
@@ -710,6 +825,11 @@ float TargetSelector::CalculateVulnerabilityScore(Unit* target, const SelectionC
     if (target->HasUnitState(UNIT_STATE_ROOT))
         score += 15.0f;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     if (!target->CanFreeMove())
         score += 10.0f;
 
@@ -724,6 +844,11 @@ float TargetSelector::CalculateInterruptScore(Unit* target, const SelectionConte
     float score = 100.0f;
 
     if (Spell* currentSpell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+        return nullptr;
+    }
     {
         if (SpellInfo const* spellInfo = currentSpell->GetSpellInfo())
         if (!currentSpell)
@@ -771,6 +896,11 @@ bool TargetSelector::IsHealer(Unit* target) const
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+        if (!currentSpell)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
+            return nullptr;
+        }
         return nullptr;
     }
     {
@@ -831,6 +961,11 @@ bool TargetSelector::IsCaster(Unit* target) const
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
             return nullptr;
         }
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return;
+        }
         return (playerClass == CLASS_MAGE || playerClass == CLASS_WARLOCK ||
                 playerClass == CLASS_PRIEST || playerClass == CLASS_SHAMAN ||
                 playerClass == CLASS_EVOKER);
@@ -862,6 +997,11 @@ bool TargetSelector::IsTank(Unit* target) const
             case ChrSpecialization::DemonHunterVengeance:
                 return true;
             default:
+                if (!unit)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+                    return nullptr;
+                }
                 return false;
         }
     }
@@ -895,6 +1035,11 @@ bool TargetSelector::IsInterruptible(Unit* target) const
         return false;
 
     if (Spell* currentSpell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
     {
         if (SpellInfo const* spellInfo = currentSpell->GetSpellInfo())
         if (!currentSpell)

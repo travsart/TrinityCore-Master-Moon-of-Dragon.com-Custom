@@ -40,6 +40,16 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
         return;
     }
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+    if (!bot)
         return;
 
     // WoW 11.2: TargetGUID removed, extract from Target.Unit or HitTargets[0]
@@ -65,6 +75,11 @@ void ParseTypedSpellStart(WorldSession* session, WorldPackets::Spells::SpellStar
         bot->GetName(), packet.Cast.CasterGUID.ToString(), targetGuid.ToString(),
         packet.Cast.SpellID, packet.Cast.CastTime);
 }
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return nullptr;
+}
 
 /**
  * Spell Cast Go - Typed Handler
@@ -76,6 +91,16 @@ void ParseTypedSpellGo(WorldSession* session, WorldPackets::Spells::SpellGo cons
         return;
 
     Player* bot = session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+if (!session)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+    return;
+}
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -115,6 +140,16 @@ void ParseTypedSpellFailure(WorldSession* session, WorldPackets::Spells::SpellFa
         return;
 
     Player* bot = session->GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -139,6 +174,11 @@ void ParseTypedSpellFailure(WorldSession* session, WorldPackets::Spells::SpellFa
     CombatEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_FAILURE (typed): caster={}, spell={}, reason={}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -161,6 +201,11 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
@@ -176,6 +221,11 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
     event.flags = 0;
     event.timestamp = std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     CombatEventBus::instance()->PublishEvent(event);
 
@@ -189,6 +239,11 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
 }
 
 /**
+ if (!session)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+     return nullptr;
+ }
  * Spell Energize - Typed Handler
  */
 void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::CombatLog::SpellEnergizeLog const& packet)
@@ -197,6 +252,16 @@ void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::CombatLog::Spe
         return;
 
     Player* bot = session->GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -240,6 +305,16 @@ void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::CombatLog::Sp
         return;
 
     Player* bot = session->GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -263,6 +338,11 @@ void ParseTypedSpellInterrupt(WorldSession* session, WorldPackets::CombatLog::Sp
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Caster.ToString(), packet.Victim.ToString(),
         packet.InterruptedSpellID, packet.SpellID);
 }
@@ -276,6 +356,16 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::CombatLog::Spell
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");

@@ -44,6 +44,11 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     _actionQueue = std::make_unique<ActionPriorityQueue>();
     _cooldownManager = std::make_unique<CooldownManager>();
     _resourceManager = std::make_unique<ResourceManager>(bot);
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -112,6 +117,11 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 // ============================================================================
 
 void ClassAI::OnCombatStart(::Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return;
+    }
 {
     // Called by BotAI when entering combat
     _inCombat = true;
@@ -139,6 +149,11 @@ void ClassAI::OnCombatEnd()
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
+    if (!newTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+        return nullptr;
+    }
     // Let BotAI handle base combat end logic
     BotAI::OnCombatEnd();
 }
@@ -243,10 +258,19 @@ void ClassAI::UpdateTargeting()
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
+            // CRITICAL FIX: Actually assign the entity pointer!
+            // BUG: Previous code retrieved snapshot but never assigned entity variable
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
         }
         if (!entity)
             continue;
-        // Original filtering logic from searcher goes here
+
+        // Apply original filtering logic: check if valid attack target
+        if (!GetBot()->IsValidAttackTarget(entity))
+            continue;
+
+        // Add to targets list for distance sorting
+        targets.push_back(entity);
     }
     // End of spatial grid fix
 
@@ -260,6 +284,11 @@ void ClassAI::UpdateTargeting()
         {
             nearestDistanceSq = distanceSq;
             nearestEnemy = target;
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return;
+        }
         }
     }
 
@@ -426,6 +455,11 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 
     if (!HasLineOfSight(target))
         return false;
+if (!checkTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: checkTarget in method HasAura");
+    return nullptr;
+}
 
     // Cast the spell
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -436,6 +470,11 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     ConsumeResource(spellId);
     _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
 
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+        return;
+    }
     return true;
 }
 
@@ -448,6 +487,11 @@ bool ClassAI::CastSpell(uint32 spellId)
 // ============================================================================
 // AURA UTILITIES
 // ============================================================================
+if (!aura)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+    return;
+}
 
 bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 {
@@ -505,8 +549,28 @@ bool ClassAI::IsMoving() const
 {
     return GetBot() && GetBot()->IsMoving();
 }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+    return nullptr;
+}
 
 bool ClassAI::IsInMeleeRange(::Unit* target) const
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+    return;
+}
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return nullptr;
+    }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return nullptr;
+    }
 {
     if (!target || !GetBot())
         return false;

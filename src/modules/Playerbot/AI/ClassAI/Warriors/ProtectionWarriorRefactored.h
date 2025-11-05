@@ -71,6 +71,11 @@ public:
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
             return;
         }
     {
@@ -186,6 +191,11 @@ protected:
     // ========================================================================
 
     bool ShouldUseTaunt(::Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+        return 0;
+    }
     {
         if (!target)
             return false;
@@ -321,6 +331,11 @@ protected:
         // Update defensive cooldown tracking
         _lastStandActive = bot->HasAura(SPELL_LAST_STAND);
         _shieldWallActive = bot->HasAura(SPELL_SHIELD_WALL);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+    return;
+}
 
         // Check shield equipment periodically
         if (currentTime % 5000 == 0) // Every 5 seconds
@@ -374,6 +389,11 @@ protected:
         {
             ThreatTarget topPriority = _threatPriority.top();
             _threatPriority.pop();
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return;
+}
 
             if (ShouldUseTaunt(topPriority.target))
             {
@@ -390,6 +410,11 @@ protected:
 
         // Track sunder stacks (max 5)
         _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");

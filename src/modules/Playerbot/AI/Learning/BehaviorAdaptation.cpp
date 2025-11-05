@@ -440,6 +440,16 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
         return;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     features.push_back(pos.GetPositionX() / 10000.0f);  // Normalized
     features.push_back(pos.GetPositionY() / 10000.0f);
     features.push_back(pos.GetPositionZ() / 1000.0f);
@@ -450,6 +460,11 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
 
     // AI state features
     features.push_back(static_cast<float>(ai->GetAIState()) / 10.0f);
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method IsRaidGroup");
+    return;
+}
 
     // Group features
     if (Group* group = bot->GetGroup())
@@ -463,7 +478,17 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method IsRaidGroup");
             return;
         }
+    if (!target)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+        return nullptr;
+    }
+    {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsPlayer");
+            return;
+        }
         features.push_back(group->GetMembersCount() / 5.0f);
         features.push_back(group->IsRaidGroup() ? 1.0f : 0.0f);
     }
@@ -569,10 +594,20 @@ std::vector<float> BehaviorAdaptation::ExtractCombatFeatures(Player* bot, Unit* 
     }
     else
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         features.push_back(0.0f);
         features.push_back(0.0f);
         features.push_back(0.0f);
         features.push_back(0.0f);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         features.push_back(0.0f);
     }
 
@@ -595,6 +630,11 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
 
     // Group dynamics
     if (Group* group = bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuildId");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -604,6 +644,11 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
         features.push_back(1.0f);  // In group
         features.push_back(group->GetMembersCount() / 40.0f);  // Group size
         features.push_back(group->GetLeaderGuid() == bot->GetGUID() ? 1.0f : 0.0f);  // Is leader
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -623,9 +668,19 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
         }
         features.push_back(memberCount > 0 ? (avgHealth / memberCount / 100.0f) : 0.0f);
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetAreaId");
+        return nullptr;
+    }
     else
     {
         features.push_back(0.0f);  // Not in group
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         features.push_back(0.0f);
         features.push_back(0.0f);
         features.push_back(0.0f);
@@ -652,6 +707,11 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
 }
 
 std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsMoving");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
@@ -712,6 +772,11 @@ std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) c
     features.push_back(nearbyPlayers.size() / 20.0f);
     features.push_back(nearbyCreatures.size() / 30.0f);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     // Movement state
     if (!bot)
     {
@@ -721,6 +786,11 @@ std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) c
     features.push_back(bot->IsMoving() ? 1.0f : 0.0f);
     features.push_back(bot->IsFalling() ? 1.0f : 0.0f);
     features.push_back(bot->IsFlying() ? 1.0f : 0.0f);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 
     // Pad to fixed size
     while (features.size() < 15)

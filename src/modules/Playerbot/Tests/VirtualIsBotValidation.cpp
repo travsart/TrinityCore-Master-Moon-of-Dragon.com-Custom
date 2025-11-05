@@ -122,6 +122,11 @@ private:
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sessionPtr in method PlayerDisconnected");
                     return;
                 }
+                if (!sessionPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sessionPtr in method PlayerDisconnected");
+                    return;
+                }
                 TC_LOG_INFO("test.playerbot", "PlayerDisconnected() through pointer: {}", disconnected);
 
                 bool idle = sessionPtr->IsConnectionIdle();

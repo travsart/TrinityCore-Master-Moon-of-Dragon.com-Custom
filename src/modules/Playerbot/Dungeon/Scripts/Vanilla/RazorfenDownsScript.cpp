@@ -65,6 +65,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -212,6 +217,11 @@ public:
     }
 
     void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -228,6 +238,11 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return nullptr;
+                    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
@@ -466,6 +481,11 @@ public:
                     {
                         // Maintain 10-15 yard range
                         Position optimalPos = CalculateRangedPosition(player, boss);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
                         MoveTo(player, optimalPos);
                         return;
                     }
@@ -480,9 +500,19 @@ public:
 
         // Fall back to generic
         DungeonScript::HandlePositioning(player, boss);
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return;
+    }
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+        return;
+    }
     {
         uint32 entry = boss->GetEntry();
 
@@ -508,6 +538,21 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!group)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                        return;
+                    }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                            return;
+                        }
+                        if (!groupMember)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                            return nullptr;
+                        }
                     if (!groupMember)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
@@ -534,9 +579,19 @@ public:
                                 }
                             }
                         }
+                    if (!group)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                        return nullptr;
+                    }
                     }
                 }
                 break;
+            if (!groupMember)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                return nullptr;
+            }
             }
 
             case 7358: // Amnennar the Coldbringer
@@ -603,6 +658,11 @@ public:
                 }
                 break;
             }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
 
             default:
                 break;
@@ -610,6 +670,11 @@ public:
 
         // Fall back to generic
         DungeonScript::HandleDispelMechanic(player, boss);
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+        return;
+    }
     }
 
     void HandleSpreadMechanic(::Player* player, ::Creature* boss) override
@@ -620,6 +685,11 @@ public:
         {
             case 8567: // Glutton
             {
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetPosition");
+                    return nullptr;
+                }
                 // Disease cloud spread - 8 yards
                 EncounterStrategy::HandleGenericSpread(player, boss, 8.0f);
                 return;

@@ -31,6 +31,21 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -50,6 +65,21 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_COMMAND_RESULT (typed): auction={}, cmd={}, error={}",
         if (!bot)
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+        if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
@@ -66,6 +96,16 @@ void ParseTypedAuctionListBucketsResult(WorldSession* session, WorldPackets::Auc
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -85,6 +125,11 @@ void ParseTypedAuctionListBucketsResult(WorldSession* session, WorldPackets::Auc
         return;
 
     AuctionEvent event = AuctionEvent::ListReceived(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetGUID(),
         static_cast<uint32>(packet.Buckets.size())
     );
@@ -96,6 +141,11 @@ void ParseTypedAuctionListBucketsResult(WorldSession* session, WorldPackets::Auc
 }
 
 /**
+ if (!session)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+     return nullptr;
+ }
  * @brief SMSG_AUCTION_LIST_ITEMS_RESULT - Auction list received (items view)
  */
 void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::AuctionHouse::AuctionListItemsResult const& packet)
@@ -104,6 +154,16 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
         return;
 
     Player* bot = session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!session)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
@@ -124,11 +184,21 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
 
     AuctionEvent event = AuctionEvent::ListReceived(
         bot->GetGUID(),
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return;
+        }
         static_cast<uint32>(packet.Items.size())
     );
 
     AuctionEventBus::instance()->PublishEvent(event);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_LIST_ITEMS_RESULT (typed): {} items",
         bot->GetName(), packet.Items.size());
 }
@@ -137,6 +207,11 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
  * @brief SMSG_AUCTION_WON_NOTIFICATION - Bot won an auction
  */
 void ParseTypedAuctionWonNotification(WorldSession* session, WorldPackets::AuctionHouse::AuctionWonNotification const& packet)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     if (!session)
         return;

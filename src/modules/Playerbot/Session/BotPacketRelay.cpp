@@ -194,6 +194,11 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
         return nullptr;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     if (!group)
     {
         // Bot not in group - nothing to relay
@@ -276,6 +281,11 @@ void BotPacketRelay::RelayToPlayer(BotSession* botSession, WorldPacket const* pa
 }
 
 void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const* packet, bool ignoreBot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
 {
     // Validate inputs
     if (!botSession || !packet)
@@ -385,6 +395,11 @@ void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
     size_t removed = _relayOpcodes.erase(opcode);
     if (removed > 0 && _debugLogging.load())
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot", "BotPacketRelay: Removed opcode {} from relay whitelist", opcode);
     }
 }
@@ -411,6 +426,11 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
         return humanPlayers;
 
     Group* group = bot->GetGroup();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -446,6 +466,11 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
         humanPlayers.push_back(member);
     }
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return nullptr;
+    }
     return humanPlayers;
 }
 
@@ -457,6 +482,11 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
         return allPlayers;
 
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -479,6 +509,11 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
     {
         Player* member = ref.GetSource();
         if (member)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             allPlayers.push_back(member);
     }
 
@@ -497,6 +532,11 @@ if (!bot)
 
     // Check if player has a BotSession
     WorldSession* session = player->GetSession();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
@@ -615,6 +655,11 @@ void BotPacketRelay::SetDebugLogging(bool enabled)
 // ============================================================================
 // INTERNAL IMPLEMENTATION
 // ============================================================================
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
+    return;
+}
 
 void BotPacketRelay::InitializeOpcodeWhitelist()
 {
@@ -622,6 +667,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     _relayOpcodes.clear();
 
     // ========================================================================
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     // COMBAT LOG PACKETS - PHASE 3 COMPLETE IMPLEMENTATION
     // ========================================================================
     // These packets make bot damage/healing/actions appear in combat logs and meters
@@ -629,6 +679,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
 
     // Spell Damage (Non-Melee)
     _relayOpcodes.insert(SMSG_SPELL_NON_MELEE_DAMAGE_LOG);   // Spell damage (fireballs, nukes, etc.)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
     _relayOpcodes.insert(SMSG_SPELL_DAMAGE_SHIELD);          // Damage shields (Thorns, etc.)
     _relayOpcodes.insert(SMSG_ENVIRONMENTAL_DAMAGE_LOG);     // Environmental damage (falling, lava, etc.)
 
@@ -640,6 +695,11 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     _relayOpcodes.insert(SMSG_SPELL_PERIODIC_AURA_LOG);      // HoT/DoT ticks (Renew, Corruption, etc.)
 
     // Spell Effects & Execution
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     _relayOpcodes.insert(SMSG_SPELL_EXECUTE_LOG);            // Spell cast execution log
 
     // Resource Management

@@ -415,6 +415,16 @@ private:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
                 return;
             }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+                return nullptr;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                return;
+            }
                 Player* player = target->ToPlayer();
                 if (!target)
                 {

@@ -118,6 +118,16 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
 
     TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState systems ready",
                 _bot->GetName());
@@ -211,6 +221,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             _groupCoordinator->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ GroupCoordinator initialized - Dungeon/Raid coordination active");
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // CRITICAL: Initialize combat state manager for automatic combat state synchronization
         if (_combatStateManager)
@@ -232,6 +247,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     }
 
     // Initialize default strategies for basic functionality
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     InitializeDefaultStrategies();
 
     // Initialize default triggers
@@ -248,6 +268,21 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // - 40-person raid groups (1 player + 39 bots)
     // If all players are offline for > 1 hour, disband the group
     if (Group* group = _bot->GetGroup())
+        if (!bot)
+        {
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                return nullptr;
+            }
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -256,6 +291,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     {
         bool hasValidPlayer = false;
         ObjectGuid playerGuidToCheck = ObjectGuid::Empty;
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return nullptr;
+}
 
         // Check all group members for a real player character
         for (GroupReference const& itr : group->GetMembers())
@@ -287,11 +327,21 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                             }
                             _bot->GetName(), member->GetName());
                 break;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             }
             else
             {
                 // Player is offline - need to check logout time from database
                 playerGuidToCheck = member->GetGUID();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!member)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
@@ -301,6 +351,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                             if (!bot)
                             {
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return nullptr;
+                                }
                                 return;
                             }
                             _bot->GetName(), member->GetName());
@@ -308,6 +363,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             }
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // If we found an offline player, check their logout time via database query
         if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
         {
@@ -315,6 +375,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             QueryResult result = CharacterDatabase.PQuery(
                 "SELECT logout_time FROM characters WHERE guid = {}", playerGuidToCheck.GetCounter());
 
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             if (result)
             {
                 Field* fields = result->Fetch();
@@ -343,6 +408,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                                     return;
                                 }
                                 _bot->GetName(), timeSinceLogout);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 }
             }
         }
@@ -427,6 +497,11 @@ BotAI::~BotAI()
 
     // 2. Death recovery manager - may interact with combat
     if (_deathRecoveryManager)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying DeathRecoveryManager");
         _deathRecoveryManager.reset();
@@ -454,6 +529,11 @@ BotAI::~BotAI()
 
     if (_gatheringManager)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GatheringManager");
         _gatheringManager.reset();
     }
@@ -465,16 +545,46 @@ BotAI::~BotAI()
     }
 
     if (_groupCoordinator)
+    if (!bot)
     {
-        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GroupCoordinator");
-        _groupCoordinator.reset();
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
     }
+    {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying GroupCoordinator");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
+        _groupCoordinator.reset();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
 
     // 5. Support systems
     if (_targetScanner)
     {
         TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying TargetScanner");
         _targetScanner.reset();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+        return nullptr;
+    }
     }
 
     if (_groupInvitationHandler)
@@ -484,6 +594,11 @@ BotAI::~BotAI()
     }
 
     if (_priorityManager)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     {
         TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying BehaviorPriorityManager");
         _priorityManager.reset();
@@ -513,9 +628,19 @@ void BotAI::UpdateAI(uint32 diff)
 {
     // CRITICAL: This is the SINGLE entry point for ALL AI updates
     // No more confusion with DoUpdateAI/UpdateEnhanced
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 
     // ========================================================================
     // BOT-SPECIFIC LOGIN SPELL CLEANUP: Clear events on first update to prevent LOGINEFFECT crash
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     // ========================================================================
     // Issue: LOGINEFFECT (Spell 836) is cast during SendInitialPacketsAfterAddToMap() at Player.cpp:24742
     //        and queued in EventProcessor. It fires during first Player::Update() → EventProcessor::Update()
@@ -533,6 +658,11 @@ void BotAI::UpdateAI(uint32 diff)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _firstUpdateComplete = true;
         TC_LOG_DEBUG("module.playerbot", "🧹 Bot {} cleared login spell events on FIRST UPDATE to prevent m_spellModTakingSpell crash", _bot->GetName());
     }
@@ -545,6 +675,11 @@ void BotAI::UpdateAI(uint32 diff)
     if (!loggedFirstBot || (now - lastUpdateLog > 10000))
     {
         TC_LOG_INFO("module.playerbot", "✅ UpdateAI active: Bot {} (ID: {}), InWorld={}, InCombat={}, InGroup={}, Strategies={}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                                return nullptr;
+                            }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -570,8 +705,18 @@ void BotAI::UpdateAI(uint32 diff)
                     _bot->IsInWorld(),
                     _bot->IsInCombat(),
                     _bot->GetGroup() != nullptr,
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                     if (!bot)
                     {
+                        if (!group)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                            return nullptr;
+                        }
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
                         return;
                     }
@@ -678,6 +823,16 @@ void BotAI::UpdateAI(uint32 diff)
 
     // 2. Cache group data (from GetGroup - no ObjectAccessor needed)
     if (Group* group = _bot->GetGroup())
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -702,6 +857,11 @@ void BotAI::UpdateAI(uint32 diff)
                 if (!member->IsInWorld())
                     continue;
 
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 WorldSession* session = member->GetSession();
                 if (!session)
                     continue;
@@ -710,6 +870,11 @@ void BotAI::UpdateAI(uint32 diff)
                 if (session->PlayerLogout())
                     continue;
 
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 // Member is safe to cache
                 members.push_back(member);
                 if (member->GetGUID() == group->GetLeaderGUID())
@@ -719,35 +884,75 @@ void BotAI::UpdateAI(uint32 diff)
                     return;
                 }
                     leader = member;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
             }
             catch (...)
             {
                 // Catch any exceptions during member access (e.g., destroyed objects)
                 if (!bot)
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
                 TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _bot->GetName());
                 continue;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
             }
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         _objectCache.SetGroupLeader(leader);
         _objectCache.SetGroupMembers(members);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 
         // Follow target is usually the leader (only if leader is online)
         if (leader)
             _objectCache.SetFollowTarget(leader);
     }
     else
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         _objectCache.SetGroupLeader(nullptr);
         _objectCache.SetGroupMembers({});
         _objectCache.SetFollowTarget(nullptr);
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
 
     // ========================================================================
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // PHASE 1: CORE BEHAVIORS - Always run every frame
     // ========================================================================
 
@@ -787,11 +992,21 @@ void BotAI::UpdateAI(uint32 diff)
         // But NOT movement - that's already handled by strategies
         OnCombatUpdate(diff);
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // ========================================================================
     // PHASE 4: GROUP INVITATION PROCESSING - Critical for joining groups
     // ========================================================================
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Process pending group invitations
     // CRITICAL: Must run every frame to accept invitations promptly
     if (_groupInvitationHandler)
@@ -813,6 +1028,11 @@ void BotAI::UpdateAI(uint32 diff)
     // PHASE 5: MANAGER UPDATES - Throttled heavyweight operations
     // ========================================================================
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Managers run even during death recovery to prevent system freezing
     // Update all BehaviorManager-based managers
     // These handle quest, trade, gathering with their own throttling
@@ -840,6 +1060,11 @@ void BotAI::UpdateAI(uint32 diff)
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
                      }
                      _bot->GetName(),
@@ -847,6 +1072,11 @@ void BotAI::UpdateAI(uint32 diff)
                      IsFollowing(),
                      static_cast<uint32>(_aiState),
                      _bot->GetGroup() != nullptr);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -870,6 +1100,11 @@ void BotAI::UpdateAI(uint32 diff)
         if (soloCheckTime - lastSoloBehaviorLog < 100) // Only log once per 5-second window
         {
             TC_LOG_ERROR("module.playerbot", "⚠️ SKIPPING UpdateSoloBehaviors for bot {} - IsInCombat={}, IsFollowing={}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -885,6 +1120,21 @@ void BotAI::UpdateAI(uint32 diff)
 
     // Check if bot left group and trigger cleanup
     bool isInGroup = (_bot->GetGroup() != nullptr);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -911,6 +1161,11 @@ void BotAI::UpdateAI(uint32 diff)
             return nullptr;
         }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // FIX #1: Handle bot joining group on server reboot (was already in group before restart)
     if (!_wasInGroup && isInGroup)
     {
@@ -926,6 +1181,11 @@ void BotAI::UpdateAI(uint32 diff)
         }
 
         OnGroupJoined(_bot->GetGroup());
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return nullptr;
     }
     // FIX #2: Handle bot leaving group
     else if (_wasInGroup && !isInGroup)
@@ -946,6 +1206,11 @@ void BotAI::UpdateAI(uint32 diff)
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return nullptr;
             }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                return nullptr;
+            }
             Events::BotEvent evt(StateMachine::EventType::GROUP_LEFT, _bot->GetGUID());
             _eventDispatcher->Dispatch(std::move(evt));
             if (!bot)
@@ -954,6 +1219,11 @@ void BotAI::UpdateAI(uint32 diff)
                 return;
             }
             TC_LOG_INFO("playerbot", "📢 GROUP_LEFT event dispatched for bot {}", _bot->GetName());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
 
         OnGroupLeft();
@@ -965,6 +1235,11 @@ void BotAI::UpdateAI(uint32 diff)
     // ========================================================================
 
     auto endTime = std::chrono::high_resolution_clock::now();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     auto updateTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 
     // Update performance metrics
@@ -973,6 +1248,11 @@ void BotAI::UpdateAI(uint32 diff)
     else
         _performanceMetrics.averageUpdateTime = (_performanceMetrics.averageUpdateTime + updateTime) / 2;
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
     if (updateTime > _performanceMetrics.maxUpdateTime)
         _performanceMetrics.maxUpdateTime = updateTime;
 
@@ -984,6 +1264,11 @@ void BotAI::UpdateAI(uint32 diff)
 // ============================================================================
 
 void BotAI::UpdateStrategies(uint32 diff)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return;
+}
 {
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
@@ -993,6 +1278,16 @@ void BotAI::UpdateStrategies(uint32 diff)
     static std::unordered_map<std::string, uint32> strategyLogAccumulators;
 
     bool isTestBot = _bot && (testBots.find(_bot->GetName()) != testBots.end());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1110,6 +1405,11 @@ void BotAI::UpdateStrategies(uint32 diff)
             TC_LOG_ERROR("module.playerbot", "⚡ EXECUTING: Bot {} strategy '{}'",
                         if (!bot)
                         {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                            return;
+                        }
+                        if (!bot)
+                        {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                             return;
                         }
@@ -1128,10 +1428,20 @@ void BotAI::UpdateStrategies(uint32 diff)
                 TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+            return nullptr;
+        }
         else
         {
             // Other strategies can use their normal update
             if (shouldLogStrategy)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             {
                 TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",
                             if (!bot)
@@ -1155,6 +1465,11 @@ void BotAI::UpdateStrategies(uint32 diff)
         }
 
         _performanceMetrics.strategiesEvaluated = 1;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     }
     else
     {
@@ -1188,9 +1503,19 @@ void BotAI::UpdateMovement(uint32 diff)
         return;
     }
     if (!_bot || !_bot->IsAlive())
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         return;
 
     // Movement is primarily handled by strategies (follow, combat positioning, etc.)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // This is just for ensuring movement updates are processed
     if (_bot->GetMotionMaster())
     {
@@ -1201,12 +1526,27 @@ void BotAI::UpdateMovement(uint32 diff)
 
 // ============================================================================
 // COMBAT STATE MANAGEMENT
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 // ============================================================================
 
 void BotAI::UpdateCombatState(uint32 diff)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
 {
     bool wasInCombat = IsInCombat();
     bool isInCombat = _bot && _bot->IsInCombat();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -1219,6 +1559,11 @@ void BotAI::UpdateCombatState(uint32 diff)
     if (now - lastCombatStateLog > 2000)
     {
         TC_LOG_ERROR("module.playerbot", "🔍 UpdateCombatState: Bot {} - wasInCombat={}, isInCombat={}, AIState={}, HasVictim={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1246,6 +1591,11 @@ void BotAI::UpdateCombatState(uint32 diff)
         // Find initial target
         // FIX #19: Use ObjectCache instead of ObjectAccessor to avoid TrinityCore deadlock
         ::Unit* target = _objectCache.GetTarget();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
@@ -1259,6 +1609,11 @@ void BotAI::UpdateCombatState(uint32 diff)
         if (!target)
         {
             target = _bot->GetVictim();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
@@ -1283,19 +1638,39 @@ void BotAI::UpdateCombatState(uint32 diff)
             OnCombatStart(target);
         }
         else
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         {
             TC_LOG_ERROR("module.playerbot", "❌ COMBAT START FAILED: No valid target found!");
         }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     }
     else if (wasInCombat && !isInCombat)
     {
         // Leaving combat
         TC_LOG_ERROR("module.playerbot", "🏳️ LEAVING COMBAT: Bot {}", _bot->GetName());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         OnCombatEnd();
 
         // Determine new state
         if (!bot)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
             return nullptr;
         }
@@ -1324,11 +1699,21 @@ void BotAI::ProcessTriggers()
     {
         if (trigger && trigger->Check(this))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             auto result = trigger->Evaluate(this);
             if (result.triggered && result.suggestedAction)
             {
                 _triggeredActions.push(result);
                 _performanceMetrics.triggersProcessed++;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             }
         }
     }
@@ -1336,11 +1721,21 @@ void BotAI::ProcessTriggers()
 
 // ============================================================================
 // ACTION EXECUTION
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 // ============================================================================
 
 void BotAI::UpdateActions(uint32 diff)
 {
     // Execute current action if in progress
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (_currentAction)
     {
         // Check if action is still valid
@@ -1353,6 +1748,11 @@ void BotAI::UpdateActions(uint32 diff)
             // Action still in progress
             return;
         }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     // Process triggered actions first (higher priority)
@@ -1364,6 +1764,11 @@ void BotAI::UpdateActions(uint32 diff)
             auto execResult = ExecuteActionInternal(result.suggestedAction.get(), result.context);
             if (execResult == ActionResult::SUCCESS || execResult == ActionResult::IN_PROGRESS)
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _currentAction = result.suggestedAction;
                 _performanceMetrics.actionsExecuted++;
             }
@@ -1393,11 +1798,21 @@ void BotAI::UpdateActions(uint32 diff)
 
 // ============================================================================
 // SOLO BEHAVIORS - Autonomous play when not in group
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 // ============================================================================
 
 void BotAI::UpdateSoloBehaviors(uint32 diff)
 {
     // Only run solo behaviors when in solo play mode (not grouped/following)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (IsInCombat() || IsFollowing())
         return;
 
@@ -1422,6 +1837,11 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
 
             // Clean up blacklist
             _targetScanner->UpdateBlacklist(currentTime);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
             // ENTERPRISE-GRADE THREAD-SAFE TARGET RESOLUTION
             // Find best target to engage (returns GUID, thread-safe)
@@ -1460,6 +1880,11 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                             // 3. Check distance is within engage range (60.0f)
 
                             float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distance
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
                                     if (!bot)
                                     {
                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1484,10 +1909,20 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                                 // NO NEED for explicit Attack() or SetInCombatWith() calls from worker thread
                             }
                             break;
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                            return nullptr;
+                        }
                         }
                     }
                 }
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         }
     }
 
@@ -1652,6 +2087,21 @@ void BotAI::OnGroupJoined(Group* group)
 
     TC_LOG_INFO("module.playerbot.ai", "🚨 OnGroupJoined called for bot {}, provided group={}, bot's group={}",
                 _bot ? _bot->GetName() : "NULL", (void*)group, _bot ? (void*)_bot->GetGroup() : nullptr);
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return nullptr;
+                            }
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1701,6 +2151,11 @@ void BotAI::OnGroupJoined(Group* group)
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         // Check if follow strategy exists
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (_strategies.find("follow") == _strategies.end())
         {
             TC_LOG_ERROR("playerbot", "CRITICAL: Follow strategy not found for bot {} - creating emergency fallback",
@@ -1782,6 +2237,11 @@ void BotAI::OnGroupJoined(Group* group)
         {
             bool alreadyInList = std::find(_activeStrategies.begin(), _activeStrategies.end(), "group_combat") != _activeStrategies.end();
             auto it = _strategies.find("group_combat");
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+                return;
+            }
             if (it != _strategies.end())
             {
                 bool wasActive = it->second->IsActive(this);
@@ -1790,6 +2250,11 @@ void BotAI::OnGroupJoined(Group* group)
                     _activeStrategies.push_back("group_combat");
 
                 it->second->SetActive(true);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+    return;
+}
 
                 // CRITICAL FIX: Call OnActivate if newly added OR not properly initialized
                 if (!alreadyInList || !wasActive)
@@ -1813,6 +2278,11 @@ void BotAI::OnGroupJoined(Group* group)
         else
         {
             TC_LOG_ERROR("playerbot", "❌ Strategy activation FAILED for bot {} - follow={}, combat={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1871,6 +2341,11 @@ void BotAI::OnGroupLeft()
         // Deactivate group combat strategy
         auto combatIt = _strategies.find("group_combat");
         if (combatIt != _strategies.end())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             combatIt->second->SetActive(false);
             strategiesToDeactivate.push_back(combatIt->second.get());
@@ -1896,7 +2371,17 @@ void BotAI::OnGroupLeft()
     ActivateStrategy("loot");    // Priority: 60 - corpse looting
     ActivateStrategy("solo");    // Priority: 10 - fallback coordinator
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     TC_LOG_INFO("module.playerbot.ai", "🎯 SOLO BOT REACTIVATION: Bot {} reactivated solo strategies after leaving group",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1905,9 +2390,19 @@ void BotAI::OnGroupLeft()
                 _bot->GetName());
 
     // Set state to solo if not in combat
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+        return nullptr;
+    }
     if (!IsInCombat())
         SetAIState(BotAIState::SOLO);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     _wasInGroup = false;
 }
 
@@ -1915,6 +2410,11 @@ void BotAI::HandleGroupChange()
 {
     // Check current group status
     bool inGroup = (_bot && _bot->GetGroup() != nullptr);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -1935,6 +2435,11 @@ void BotAI::HandleGroupChange()
         OnGroupLeft();
     }
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
 // ============================================================================
 // STRATEGY MANAGEMENT
@@ -1952,6 +2457,11 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
 
     // Auto-register with priority manager based on strategy name
     if (_priorityManager)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         BehaviorPriority priority = BehaviorPriority::SOLO; // Default
         bool exclusive = false;
@@ -1965,15 +2475,35 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         else if (name == "follow")
         {
             priority = BehaviorPriority::FOLLOW;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
         else if (name.find("flee") != std::string::npos)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             priority = BehaviorPriority::FLEEING;
             exclusive = true;
         }
         else if (name.find("cast") != std::string::npos)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             priority = BehaviorPriority::CASTING;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
         }
         else if (name == "quest")
         {
@@ -1981,16 +2511,36 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
             // This allows quests to take priority over gathering/trading/social
             priority = BehaviorPriority::FOLLOW;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         else if (name == "loot")
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             // Loot strategy gets MOVEMENT priority (45) - slightly lower than quest
             priority = BehaviorPriority::MOVEMENT;
         }
         else if (name == "rest")
         {
             // Rest strategy gets FLEEING priority (90) - HIGHEST for survival
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             // Bots must rest when health/mana low before doing anything else
             priority = BehaviorPriority::FLEEING;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
         else if (name.find("gather") != std::string::npos)
         {
@@ -2028,6 +2578,11 @@ void BotAI::RemoveStrategy(std::string const& name)
     // Also remove from active strategies
     _activeStrategies.erase(
         std::remove(_activeStrategies.begin(), _activeStrategies.end(), name),
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _activeStrategies.end()
     );
 }

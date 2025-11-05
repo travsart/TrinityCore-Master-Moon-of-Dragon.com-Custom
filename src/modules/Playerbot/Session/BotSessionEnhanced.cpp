@@ -220,6 +220,11 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newPlayer in method GetName");
                        return;
                    }
+                   if (!newPlayer)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newPlayer in method GetName");
+                       return;
+                   }
                    newPlayer->GetName(),
                    loginMs);
 

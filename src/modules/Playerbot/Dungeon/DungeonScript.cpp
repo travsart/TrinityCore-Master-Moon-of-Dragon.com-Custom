@@ -34,6 +34,16 @@ DungeonScript::DungeonScript(char const* name, uint32 mapId)
 // ============================================================================
 
 void DungeonScript::OnDungeonEnter(::Player* player, ::InstanceScript* instance)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -58,6 +68,11 @@ void DungeonScript::OnDungeonExit(::Player* player)
 }
 
 void DungeonScript::OnUpdate(::Player* player, uint32 diff)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 {
     // Default: No action
 }
@@ -67,6 +82,16 @@ void DungeonScript::OnUpdate(::Player* player, uint32 diff)
 // ============================================================================
 
 void DungeonScript::OnBossEngage(::Player* player, ::Creature* boss)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -143,6 +168,11 @@ void DungeonScript::HandleMovementMechanic(::Player* player, ::Creature* boss)
 }
 
 void DungeonScript::HandleTankSwap(::Player* player, ::Creature* boss)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
 {
     // DEFAULT: No tank swap
     TC_LOG_DEBUG("playerbot", "DungeonScript: No tank swap implemented for boss {} in '{}'",
@@ -193,6 +223,11 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
                                           spec == TALENT_TREE_PRIEST_HOLY)) ||
         (playerClass == CLASS_PALADIN && spec == TALENT_TREE_PALADIN_HOLY) ||
         (playerClass == CLASS_SHAMAN && spec == TALENT_TREE_SHAMAN_RESTORATION) ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return nullptr;
+        }
         (playerClass == CLASS_DRUID && spec == TALENT_TREE_DRUID_RESTORATION) ||
         (playerClass == CLASS_MONK && spec == TALENT_TREE_MONK_MISTWEAVER) ||
         (playerClass == CLASS_EVOKER && spec == TALENT_TREE_EVOKER_PRESERVATION))
@@ -204,6 +239,11 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
         (playerClass == CLASS_SHAMAN && spec == TALENT_TREE_SHAMAN_ELEMENTAL) ||
         (playerClass == CLASS_DRUID && spec == TALENT_TREE_DRUID_BALANCE) ||
         playerClass == CLASS_EVOKER)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return nullptr;
+    }
         return DungeonRole::RANGED_DPS;
 
     // Melee DPS (default)
@@ -248,6 +288,11 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
     // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         player->GetPosition(), 50.0f);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return nullptr;
+}
 
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)
@@ -274,6 +319,11 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
 }
 
 ::Creature* DungeonScript::FindCreatureNearby(::Player* player, uint32 entry, float range) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
 {
     if (!player)
         return nullptr;
@@ -302,6 +352,11 @@ bool DungeonScript::HasInterruptAvailable(::Player* player) const
         case CLASS_PRIEST: interruptSpell = 15487; break;  // Silence
         case CLASS_DEATH_KNIGHT: interruptSpell = 47528; break; // Mind Freeze
         case CLASS_SHAMAN: interruptSpell = 57994; break;  // Wind Shear
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
         case CLASS_MAGE: interruptSpell = 2139; break;     // Counterspell
         case CLASS_WARLOCK: interruptSpell = 119910; break; // Spell Lock
         case CLASS_MONK: interruptSpell = 116705; break;   // Spear Hand Strike
@@ -318,6 +373,21 @@ bool DungeonScript::HasInterruptAvailable(::Player* player) const
 }
 
 bool DungeonScript::UseInterruptSpell(::Player* player, ::Creature* target) const
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+        return nullptr;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+            return nullptr;
+        }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
@@ -348,6 +418,11 @@ bool DungeonScript::UseInterruptSpell(::Player* player, ::Creature* target) cons
     }
 
     if (interruptSpell == 0 || player->HasSpellCooldown(interruptSpell))
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return nullptr;
+    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -378,6 +453,11 @@ bool DungeonScript::IsDangerousGroundEffect(::DynamicObject* obj) const
            spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA) ||
            spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE);
 }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return;
+}
 
 void DungeonScript::MoveAwayFromGroundEffect(::Player* player, ::DynamicObject* obj) const
 {
@@ -393,6 +473,11 @@ void DungeonScript::MoveAwayFromGroundEffect(::Player* player, ::DynamicObject* 
         return nullptr;
     }
     float y = player->GetPositionY() + 15.0f * sin(angle);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return nullptr;
+    }
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");

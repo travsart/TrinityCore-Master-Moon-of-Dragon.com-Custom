@@ -201,6 +201,11 @@ void InterruptRotationManager::RegisterCast(Unit* caster, uint32 spellId, uint32
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
         return nullptr;
     }
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return nullptr;
+    }
     if (IsTrackingCast(caster->GetGUID(), spellId))
         return;
 
@@ -217,6 +222,11 @@ void InterruptRotationManager::RegisterCast(Unit* caster, uint32 spellId, uint32
         if (spellInfo && spellInfo->CastTimeEntry)
         {
             castTime = spellInfo->CastTimeEntry->Base;
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+            return;
+        }
         }
     }
 
@@ -247,6 +257,11 @@ bool InterruptRotationManager::IsTrackingCast(ObjectGuid caster, uint32 spellId)
     for (const auto& cast : _activeCasts)
     {
         if (cast.casterGuid == caster)
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+    return;
+}
         {
             if (spellId == 0 || cast.spellId == spellId)
                 return true;
@@ -523,6 +538,11 @@ void InterruptRotationManager::UpdateInterrupterStatus(ObjectGuid bot, bool avai
             }
 
             break;
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+            return;
+        }
         }
     }
 }
@@ -598,6 +618,11 @@ InterruptRotationManager::FallbackMethod InterruptRotationManager::SelectFallbac
 }
 
 bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* caster)
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return nullptr;
+        }
 {
     if (!_bot || !caster)
         return false;
@@ -623,6 +648,11 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
                     options.logFailures = true;
 
                     auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, SPELL_SILENCE, caster, options);
+                        if (!caster)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+                            return nullptr;
+                        }
                                      if (!caster)
                                      {
                                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
@@ -690,6 +720,11 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
 }
 
 bool InterruptRotationManager::TryAlternativeInterrupt(Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
 {
     if (!_bot || !target)
         return false;
@@ -744,6 +779,11 @@ void InterruptRotationManager::ScheduleDelayedInterrupt(ObjectGuid bot, ObjectGu
     DelayedInterrupt delayed;
     delayed.interrupter = bot;
     delayed.target = target;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return;
+    }
     delayed.spellId = spellId;
     delayed.executeTime = getMSTime() + delayMs;
 
@@ -810,6 +850,11 @@ void InterruptRotationManager::ProcessDelayedInterrupts()
 }
 
 void InterruptRotationManager::CoordinateGroupInterrupts(const std::vector<Unit*>& casters)
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return nullptr;
+    }
 {
     if (casters.empty())
         return;

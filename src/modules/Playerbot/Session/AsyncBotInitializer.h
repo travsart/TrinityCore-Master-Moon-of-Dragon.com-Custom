@@ -87,6 +87,11 @@ class LazyManagerFactory;
      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
      return nullptr;
  }
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+     return nullptr;
+ }
  *     }
  * );
  * // Returns immediately - world update continues
@@ -130,6 +135,11 @@ public:
     /**
      * @brief Initialize a bot asynchronously in background thread
      * @param bot Bot player to initialize
+     if (!bot)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+         return nullptr;
+     }
      * @param callback Callback when initialization complete
      * @return true if queued successfully, false if queue full or shutting down
      *

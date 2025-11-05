@@ -111,6 +111,16 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
             return;
         }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
+            return;
+        }
         uint8 botClass = classId ? *classId : player->GetClass();
         if (!player)
         {
@@ -144,6 +154,11 @@ namespace Playerbot
     }
 
     bool PlayerbotCommandScript::HandleBotDeleteCommand(ChatHandler* handler, std::string name)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return;
+    }
     {
         Player* bot = FindBotByName(name);
         if (!bot)
@@ -212,10 +227,25 @@ namespace Playerbot
     // =====================================================================
     // BOT TELEPORTATION COMMANDS
     // =====================================================================
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+    return;
+}
 
     bool PlayerbotCommandScript::HandleBotTeleportCommand(ChatHandler* handler, std::string name)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+        return;
+    }
     {
         Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
+            return;
+        }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
@@ -225,6 +255,11 @@ namespace Playerbot
             return false;
 
         Player* bot = FindBotByName(name);
+                              if (!bot)
+                              {
+                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+                                  return nullptr;
+                              }
                           if (!bot)
                           {
                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
@@ -247,6 +282,16 @@ namespace Playerbot
     bool PlayerbotCommandScript::HandleBotSummonCommand(ChatHandler* handler, std::string name)
     {
         Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
+                return;
+            }
                        if (!player)
                        {
                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
@@ -258,6 +303,11 @@ namespace Playerbot
         Player* bot = FindBotByName(name);
             if (!bot)
             {
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method TeleportTo");
+                    return nullptr;
+                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
                 return;
             }
@@ -399,6 +449,11 @@ namespace Playerbot
         return true;
     }
 
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return;
+    }
     bool PlayerbotCommandScript::HandleBotFormationListCommand(ChatHandler* handler)
     {
         handler->SendSysMessage("Available Bot Formations:");

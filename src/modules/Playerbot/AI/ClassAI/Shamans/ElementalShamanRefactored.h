@@ -200,6 +200,11 @@ public:
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
                     return nullptr;
                 }
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
         else
         {
@@ -287,6 +292,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ElementalShamanRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -406,6 +416,11 @@ private:
         {
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
                 _ascendanceEndTime = getMSTime() + aura->GetDuration();
                 if (!aura)
                 {
@@ -440,6 +455,11 @@ private:
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 return nullptr;
             }
             if (bot->HasSpell(ELEM_ASCENDANCE))
@@ -453,12 +473,27 @@ private:
                     return;
                 }
             }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
         }
+        }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
         // Stormkeeper (instant Lightning Bolts)
         if ((getMSTime() - _lastStormkeeperTime) >= 60000) // 60 sec CD
         {
             if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             {
                 this->CastSpell(bot, ELEM_STORMKEEPER);
                 _stormkeeperTracker.ActivateProc(2);
@@ -478,6 +513,11 @@ private:
             if (bot->HasSpell(ELEM_PRIMORDIAL_WAVE))
             {
                 if (this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return nullptr;
+                }
                 {
                     this->CastSpell(target, ELEM_PRIMORDIAL_WAVE);
                     if (!target)
@@ -505,6 +545,11 @@ private:
                 return nullptr;
             }
             _flameShockTracker.NeedsFlameShockRefresh(target->GetGUID()))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(ELEM_FLAME_SHOCK, target))
             {
@@ -516,6 +561,11 @@ private:
                 }
                 _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                 _maelstromTracker.Generate(5);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return;
+                }
                 return;
             }
         }
@@ -541,6 +591,11 @@ private:
         if (_flameShockTracker.HasFlameShock(target->GetGUID()))
         {
             if (this->CanCastSpell(ELEM_LAVA_BURST, target))
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
             {
                 this->CastSpell(target, ELEM_LAVA_BURST);
                 _maelstromTracker.Generate(10);
@@ -583,6 +638,11 @@ private:
         // Icefury (talent - empowers Frost Shock)
         if (!bot)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
             return nullptr;
         }
@@ -597,6 +657,11 @@ private:
         }
 
         // Lightning Bolt with Stormkeeper proc (instant cast)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (_stormkeeperTracker.HasStack())
         {
             if (this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
@@ -621,11 +686,21 @@ private:
                 if (this->CanCastSpell(ELEM_ECHOING_SHOCK, bot))
                 {
                     this->CastSpell(bot, ELEM_ECHOING_SHOCK);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                        return nullptr;
+                    }
                     _lastEchoingShockTime = getMSTime();
                     return;
                 }
             }
         }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
         // Lightning Bolt (builder)
         if (this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))

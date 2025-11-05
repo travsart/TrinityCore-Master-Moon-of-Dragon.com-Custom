@@ -31,6 +31,16 @@ BotAIFactory* BotAIFactory::instance()
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -56,6 +66,16 @@ std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 {
     if (!bot)
     {
@@ -71,6 +91,16 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
         {
             case CLASS_WARRIOR:
                 botAI = std::make_unique<WarriorAI>(bot);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -80,6 +110,16 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 break;
             case CLASS_PALADIN:
                 botAI = std::make_unique<PaladinAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -94,6 +134,16 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created HunterAI for player {}", bot->GetName());
                 break;
             case CLASS_ROGUE:
@@ -103,10 +153,35 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created RogueAI for player {}", bot->GetName());
                 break;
             case CLASS_PRIEST:
                 botAI = std::make_unique<PriestAI>(bot);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -116,6 +191,11 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 break;
             case CLASS_SHAMAN:
                 botAI = std::make_unique<ShamanAI>(bot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -125,6 +205,21 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 break;
             case CLASS_MAGE:
                 botAI = std::make_unique<MageAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -143,6 +238,11 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 break;
             case CLASS_MONK:
                 botAI = std::make_unique<MonkAI>(bot);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                        return nullptr;
+                    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -154,6 +254,16 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 botAI = std::make_unique<DruidAI>(bot);
                 if (!bot)
                 {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return;
+                }
+                if (!bot)
+                {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }
@@ -161,6 +271,11 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
                 break;
             case CLASS_DEMON_HUNTER:
                 botAI = std::make_unique<DemonHunterAI>(bot);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                        return nullptr;
+                    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");

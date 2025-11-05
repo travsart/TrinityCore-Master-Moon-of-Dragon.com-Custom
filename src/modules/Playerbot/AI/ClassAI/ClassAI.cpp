@@ -62,6 +62,16 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -253,6 +263,11 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
 // ============================================================================
 // COMBAT STATE MANAGEMENT
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return;
+}
 // ============================================================================
 
 void ClassAI::OnCombatStart(::Unit* target)
@@ -261,6 +276,11 @@ void ClassAI::OnCombatStart(::Unit* target)
     _inCombat = true;
     _combatTime = 0;
     _currentCombatTarget = target;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return;
+    }
                  if (!target)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
@@ -312,6 +332,11 @@ void ClassAI::OnCombatEnd()
     _combatTime = 0;
     _currentCombatTarget = nullptr;
 
+    if (!newTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
     // Notify combat behavior system
@@ -327,6 +352,11 @@ void ClassAI::OnCombatEnd()
 }
 
 void ClassAI::OnTargetChanged(::Unit* newTarget)
+if (!newTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+    return;
+}
 {
     _currentCombatTarget = newTarget;
                  if (!newTarget)
@@ -359,6 +389,11 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
                 GetBot()->GetName(), newTarget->GetName());
         }
     }
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+    return;
+}
 }
 
 // ============================================================================
@@ -366,6 +401,11 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
 // ============================================================================
 
 void ClassAI::UpdateTargeting()
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return nullptr;
+}
 {
     // Select best combat target
     ::Unit* bestTarget = GetBestAttackTarget();
@@ -375,6 +415,11 @@ void ClassAI::UpdateTargeting()
         OnTargetChanged(bestTarget);
     }
 }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
+    return;
+}
 
 ::Unit* ClassAI::GetBestAttackTarget()
 {
@@ -383,6 +428,11 @@ void ClassAI::UpdateTargeting()
 
     // Priority 1: Current victim
     if (::Unit* victim = GetBot()->GetVictim())
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
+            return;
+        }
         return victim;
 
     // Priority 2: Group leader's target (FIX FOR ISSUE #2)
@@ -478,6 +528,11 @@ void ClassAI::UpdateTargeting()
             return nullptr;
     }
 
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+        return nullptr;
+    }
     // Query nearby creature GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
@@ -645,6 +700,11 @@ float ClassAI::GetSpellRange(uint32 spellId)
     return spellInfo->GetMaxRange();
 }
 
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return;
+}
 uint32 ClassAI::GetSpellCooldown(uint32 spellId)
 {
     if (!spellId || !GetBot())
@@ -767,10 +827,20 @@ bool ClassAI::CanExecutePendingSpell() const
     if (!GetBot())
     {
         TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO BOT");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
         return false;
     }
 
     // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // Unlike players who have packet-driven spell casting, bots queue spells
     // and then ExecutePendingSpell() calls Spell::prepare() which sets the state.
     // Checking for UNIT_STATE_CASTING creates a catch-22 where the bot waits
@@ -783,6 +853,11 @@ bool ClassAI::CanExecutePendingSpell() const
     // If no current spell and GCD is ready, execute the pending spell.
 
     // Check if bot is currently casting a different spell
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
@@ -810,6 +885,11 @@ bool ClassAI::CanExecutePendingSpell() const
         TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} GCD NOT READY ({} ms remaining) for spell {}",
                     GetBot()->GetName(), gcdRemaining.count(), _pendingSpellCastRequest->spellId);
         return false;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     TC_LOG_ERROR("module.playerbot.classai", "✅ CanExecutePendingSpell: Bot {} READY TO EXECUTE spell {}",
@@ -828,6 +908,11 @@ void ClassAI::ExecutePendingSpell()
 
     // Get spell info
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return;
+                        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -843,11 +928,21 @@ void ClassAI::ExecutePendingSpell()
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                             return;
                         }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return;
+    }
     if (!spellInfo)
     {
         TC_LOG_ERROR("module.playerbot.classai", "Bot {} ExecutePendingSpell: Invalid spell ID {}",
                     bot->GetName(), spellId);
         CancelPendingSpell();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return;
     }
 
@@ -926,6 +1021,11 @@ void ClassAI::ExecutePendingSpell()
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
                         return;
                     }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                        return;
+                    }
 
     uint32 queuedDuration = getMSTime() - _pendingSpellCastRequest->queuedAtTime;
 
@@ -970,6 +1070,11 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 {
     if (!target || !spellId || !GetBot())
         return false;
+if (!checkTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: checkTarget in method HasAura");
+    return nullptr;
+}
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
@@ -980,6 +1085,11 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))
     {
+        if (!aura)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+            return;
+        }
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} not usable for bot {}",
                      spellId, GetBot()->GetName());
@@ -992,6 +1102,11 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
                      "ClassAI spell {} target out of range for bot {}",
                      spellId, GetBot()->GetName());
         return false;
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return nullptr;
+    }
     }
 
     if (!HasLineOfSight(target))
@@ -1049,9 +1164,29 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
                      "ClassAI spell {} validation failed for bot {}: {} ({})",
                      spellId, GetBot()->GetName(),
                      static_cast<uint8>(result.result),
+                     if (!target)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                         return nullptr;
+                     }
                      result.failureReason);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return nullptr;
+        }
         return false;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return nullptr;
     }
+    }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+    return;
+}
 }
 
 bool ClassAI::CastSpell(uint32 spellId)
@@ -1081,6 +1216,11 @@ bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 uint32 ClassAI::GetAuraStacks(uint32 spellId, ::Unit* target)
 {
     ::Unit* checkTarget = target ? target : GetBot();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
     if (!checkTarget)
         return 0;
 
@@ -1130,6 +1270,11 @@ bool ClassAI::IsInMeleeRange(::Unit* target) const
 }
 
 bool ClassAI::ShouldMoveToTarget(::Unit* target) const
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
 {
     if (!target || !GetBot())
         return false;
@@ -1167,6 +1312,11 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);
     if (!target)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
+    if (!target)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
         return;
     }
@@ -1177,6 +1327,16 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
         return;
     }
     pos.m_positionZ = target->GetPositionZ();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return;
+}
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
@@ -1204,6 +1364,11 @@ void ClassAI::RecordPerformanceMetric(std::string const& metric, uint32 value)
 }
 
 // ============================================================================
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return;
+}
 // COMBAT BEHAVIOR INTEGRATION
 // ============================================================================
 
@@ -1241,6 +1406,11 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
                      GetBot()->GetName(), action.spellId);
 
         // For movement-related actions, we might want to move closer
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
         if (action.type == CombatActionType::MOVEMENT)
         {
             // Movement is handled by BotAI strategies, just log the need if position is valid
@@ -1257,6 +1427,11 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
     // Check line of sight
     if (!HasLineOfSight(action.target))
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
         TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - no line of sight",
                      GetBot()->GetName(), action.spellId);
         return false;

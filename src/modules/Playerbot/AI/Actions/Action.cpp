@@ -69,6 +69,16 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
         return false;
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return nullptr;
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
@@ -124,6 +134,16 @@ bool Action::DoCast(BotAI* ai, uint32 spellId, ::Unit* target)
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
@@ -199,6 +219,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         return false;
 
     Item* item = bot->GetItemByEntry(itemId);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!item)
         return false;
 
@@ -219,6 +244,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         return nullptr;
 
     Player* bot = ai->GetBot();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
     if (!bot)
         return nullptr;
 
@@ -227,6 +257,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -264,6 +299,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         }
         if (!unit || !unit->IsAlive())
             continue;
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+    return;
+}
 
         // Check if hostile
         if (!bot->IsHostileTo(unit))
@@ -294,6 +334,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
 
     // Check group members first
     if (Group* group = bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -304,6 +349,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         {
             if (Player* member = ref.GetSource())
             {
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                    return nullptr;
+                }
                 if (member == bot || !member->IsAlive())
                 if (!member)
                 {
@@ -355,6 +405,11 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
         {
             Player* player = iter->GetSource();
             if (!player || player == bot || !player->IsInWorld())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                    return nullptr;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");

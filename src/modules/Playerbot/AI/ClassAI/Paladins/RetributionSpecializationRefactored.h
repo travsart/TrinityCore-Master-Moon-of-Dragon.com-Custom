@@ -58,6 +58,11 @@ public:
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
             return;
         }
     {
@@ -206,6 +211,11 @@ protected:
     }
 
     /**
+     if (!target)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+         return nullptr;
+     }
      * Determine if we should use offensive cooldowns
      */
     bool ShouldUseCooldowns(::Unit* target) const

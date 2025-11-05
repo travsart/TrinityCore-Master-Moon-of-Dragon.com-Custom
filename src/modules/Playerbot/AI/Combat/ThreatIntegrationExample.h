@@ -134,9 +134,24 @@ public:
             for (const auto& targetGuid : status.activeTargets)
             {
                 Unit* target = GetUnitByGuid(targetGuid);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                        return;
+                    }
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                        return nullptr;
+                    }
                 if (!target)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                    return;
+                }
+                if (!victim)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
                     return;
                 }
                 if (target && target->GetVictim())
@@ -173,6 +188,16 @@ public:
 
     // === Example 5: Role-specific threat handling ===
     static void HandleBotThreatByRole(Player* bot, BotThreatManager* threatMgr)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
     {
         if (!bot || !threatMgr)
             return;
@@ -192,6 +217,26 @@ public:
                     {
                         // Use taunt ability
                         uint32 tauntSpell = GetTauntSpell(bot->getClass());
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                                    return nullptr;
+                                }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                                return;
+                            }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                                return nullptr;
+                            }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                                return;
+                            }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
@@ -217,9 +262,19 @@ public:
                 // DPS: Monitor threat and reduce if necessary
                 auto primaryTarget = threatMgr->GetPrimaryThreatTarget();
                 if (primaryTarget && primaryTarget->info.threatPercent > 85.0f)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return;
+                }
                 {
                     // Use threat reduction
                     if (bot->getClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                        return nullptr;
+                    }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");

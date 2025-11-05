@@ -208,6 +208,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : HealerSpecialization<ManaResource>(bot)
         , MonkSpecialization(bot)
         , _renewingMistTracker()
@@ -364,6 +369,11 @@ protected:
                 }
             }
 
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             // Empowered Renewing Mist (instant 2 charges)
             Unit* target = SelectHealingTarget(group);
                 if (!target)
@@ -453,6 +463,11 @@ protected:
     }
 
     bool HandleSoothingMist(const std::vector<Unit*>& group)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return nullptr;
+    }
     {
         // If not channeling, start on lowest target
         if (!_soothingMistTracker.IsChanneling())

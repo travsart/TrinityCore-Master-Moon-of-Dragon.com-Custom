@@ -30,6 +30,11 @@ DruidAI::DruidAI(Player* bot) : ClassAI(bot),
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return nullptr;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
@@ -195,6 +200,11 @@ bool DruidAI::HandleDefensives()
         return false;
 
     float healthPercent = bot->GetHealthPct();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return 0;
+}
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -215,6 +225,11 @@ bool DruidAI::HandleDefensives()
             return true;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Barkskin - moderate damage reduction
     if (healthPercent < 50.0f &&
@@ -230,6 +245,11 @@ bool DruidAI::HandleDefensives()
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                              return;
                          }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName(), healthPercent);
             return true;
         }
@@ -237,6 +257,11 @@ bool DruidAI::HandleDefensives()
 
     // Frenzied Regeneration - Guardian healing
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -257,6 +282,11 @@ bool DruidAI::HandleDefensives()
 
     // Ironbark - Restoration defensive for allies
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return nullptr;
+                                 }
                              if (!bot)
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -275,6 +305,11 @@ bool DruidAI::HandleDefensives()
             }
         }
     }
+if (!priorityTarget)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+    return nullptr;
+}
 
     // Cenarion Ward - preemptive defense
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&
@@ -923,9 +958,19 @@ bool DruidAI::CanUseAbility(uint32 spellId)
         return false;
 
     // Check form requirements
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (spellInfo)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         // Check if spell requires specific form
         if (spellInfo->Stances)
         {
@@ -1113,14 +1158,39 @@ bool DruidAI::ShiftToForm(DruidForm form)
             break;
         case DruidForm::TREE_OF_LIFE:
             spellId = TREE_OF_LIFE;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
             break;
         case DruidForm::TRAVEL:
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
             spellId = TRAVEL_FORM;
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
         case DruidForm::HUMANOID:
             // Cancel current form
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
                 _lastFormShift = currentTime;
                 _currentForm = DruidForm::HUMANOID;
@@ -1141,11 +1211,26 @@ bool DruidAI::ShiftToForm(DruidForm form)
         }
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
     return false;
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
 
 DruidAI::DruidForm DruidAI::GetCurrentForm() const
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
     return _currentForm;
 }
 

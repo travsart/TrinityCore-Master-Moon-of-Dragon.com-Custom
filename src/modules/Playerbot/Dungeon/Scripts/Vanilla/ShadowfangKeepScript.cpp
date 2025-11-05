@@ -230,6 +230,16 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
             return;
         }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
@@ -295,6 +305,11 @@ public:
     }
 
     void HandleAddPriority(::Player* player, ::Creature* boss) override
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
     {
         uint32 entry = boss->GetEntry();
 
@@ -308,8 +323,18 @@ public:
                 std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Prioritize adds that are attacking healers
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsPlayer");
+                    return;
+                }
                 Group* group = player->GetGroup();
                 if (!player)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+                    return nullptr;
+                }
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
                     return;
@@ -440,6 +465,11 @@ public:
 
                 float distance = player->GetExactDist(boss);
                 DungeonRole role = GetPlayerRole(player);
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                            return nullptr;
+                        }
 
                 // Reposition based on role after teleport
                 if (role == DungeonRole::TANK || role == DungeonRole::MELEE_DPS)
@@ -451,9 +481,19 @@ public:
                     }
                 }
                 break;
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
             }
 
             default:
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return nullptr;
+                }
                 break;
         }
 
@@ -462,6 +502,11 @@ public:
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
     {
         uint32 entry = boss->GetEntry();
 
@@ -477,6 +522,11 @@ public:
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
                     return nullptr;
+                }
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return;
                 }
                 if (!group)
                 {

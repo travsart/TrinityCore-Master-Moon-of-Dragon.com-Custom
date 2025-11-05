@@ -207,7 +207,22 @@ public:
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
         }
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
@@ -235,6 +250,11 @@ public:
 
         // Main rotation
         uint32 enemyCount = this->GetEnemiesInRange(10.0f);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return;
+        }
         if (enemyCount >= 3)
         {
             ExecuteAoERotation(target, enemyCount);
@@ -491,6 +511,11 @@ private:
 
     void ConsumeEnergy(uint32 amount)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return;
+        }
         this->_resource.energy = (this->_resource.energy > amount) ? this->_resource.energy - amount : 0;
     }
 

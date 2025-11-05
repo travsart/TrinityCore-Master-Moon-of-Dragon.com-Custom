@@ -253,6 +253,21 @@ public:
                 if (!group)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return;
+                }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return nullptr;
+                    }
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
                     return nullptr;
                 }
                 if (!group)
@@ -265,7 +280,17 @@ public:
                     if (!groupMember)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return nullptr;
+                    }
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
                         return;
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                        return;
+                    }
                     }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;

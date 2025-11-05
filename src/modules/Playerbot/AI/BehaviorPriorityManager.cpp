@@ -441,6 +441,21 @@ void BehaviorPriorityManager::UpdateContext()
         return;
 
     Player* bot = m_ai->GetBot();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
@@ -465,6 +480,11 @@ void BehaviorPriorityManager::UpdateContext()
             TC_LOG_DEBUG("module.playerbot.priority",
                 "Bot {} entering DEAD priority",
                 bot->GetName());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             m_activePriority = BehaviorPriority::DEAD;
         }
         return;
@@ -476,6 +496,11 @@ void BehaviorPriorityManager::UpdateContext()
         // Check fleeing conditions first
         if (bot->GetHealthPct() < 20.0f)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             if (m_activePriority != BehaviorPriority::FLEEING)
             {
                 TC_LOG_DEBUG("module.playerbot.priority",
@@ -488,14 +513,29 @@ void BehaviorPriorityManager::UpdateContext()
                     bot->GetName(),
                     bot->GetHealthPct());
                 m_activePriority = BehaviorPriority::FLEEING;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             }
         }
         else
         {
             if (m_activePriority != BehaviorPriority::COMBAT)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
             {
                 TC_LOG_DEBUG("module.playerbot.priority",
                     "Bot {} entering COMBAT priority",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -515,6 +555,11 @@ void BehaviorPriorityManager::UpdateContext()
                 "Bot {} entering CASTING priority",
                 if (!bot)
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }

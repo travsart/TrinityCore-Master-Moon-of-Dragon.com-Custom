@@ -112,6 +112,11 @@ namespace Events
      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
      return nullptr;
  }
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+     return nullptr;
+ }
  *   ↓
  * SoloCombatStrategy::IsActive() = true             [Combat AI Runs]
  * ```

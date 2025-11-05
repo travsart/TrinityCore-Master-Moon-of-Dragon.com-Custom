@@ -17,6 +17,11 @@ namespace Playerbot
 {
 
 QuestAcceptanceManager::QuestAcceptanceManager(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -36,6 +41,21 @@ QuestAcceptanceManager::QuestAcceptanceManager(Player* bot)
 // ========================================================================
 
 void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
+if (!questGiver)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method IsQuestGiver");
+    return;
+}
+    if (!questGiver)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetEntry");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        return nullptr;
+    }
     if (!questGiver)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method IsQuestGiver");
@@ -68,6 +88,11 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
 
     // Filter and score quests
     for (uint32 questId : objectQR)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         Quest const* questTemplate = sObjectMgr->GetQuestTemplate(questId);
         if (!questTemplate)
@@ -77,6 +102,11 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
         if (!IsQuestEligible(questTemplate))
             continue;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Calculate priority score
         float priority = CalculateQuestPriority(questTemplate);
         if (priority >= MIN_QUEST_PRIORITY)
@@ -92,6 +122,11 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             }
             _bot->GetName(), questGiver->GetName());
         return;
@@ -166,18 +201,38 @@ float QuestAcceptanceManager::CalculateQuestPriority(Quest const* quest) const
     priority += GetGoldPriority(quest);
 
     // Reputation value (important for unlocks)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     priority += GetReputationPriority(quest);
 
     // Item rewards (important for gear)
     priority += GetItemRewardPriority(quest);
 
     // Zone proximity (prefer nearby quests)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     priority += GetZonePriority(quest);
 
     // Quest chain value (prefer starting chains)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     priority += GetChainPriority(quest);
 
     TC_LOG_TRACE("module.playerbot.quest", "Quest {} priority: {:.1f} (XP={:.1f}, Gold={:.1f}, Rep={:.1f}, Zone={:.1f})",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
         quest->GetQuestId(), priority, GetXPPriority(quest), GetGoldPriority(quest),
         GetReputationPriority(quest), GetZonePriority(quest));
 
@@ -214,6 +269,11 @@ bool QuestAcceptanceManager::IsQuestEligible(Quest const* quest) const
     // Avoid group quests for solo bots
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
         return;
     }
@@ -224,6 +284,11 @@ bool QuestAcceptanceManager::IsQuestEligible(Quest const* quest) const
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
+                         return;
+                     }
                      }
                      quest->GetQuestId(), quest->GetLogTitle(), _bot->GetName());
         return false;
@@ -292,6 +357,11 @@ bool QuestAcceptanceManager::MeetsRaceRequirement(Quest const* quest) const
     return allowableRaces.HasRace(_bot->GetRace());
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 bool QuestAcceptanceManager::MeetsSkillRequirement(Quest const* quest) const
 {
     if (!quest || !_bot)
@@ -340,6 +410,11 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
     if (!quest || !_bot)
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     // CRITICAL DEBUG: Log prerequisite check for all quests
     TC_LOG_ERROR("module.playerbot.quest", "🔍 HasPrerequisites: Quest {} '{}' - GetPrevQuestId()={}, GetNextQuestInChain()={}",
                  quest->GetQuestId(), quest->GetLogTitle(), quest->GetPrevQuestId(), quest->GetNextQuestInChain());
@@ -376,6 +451,11 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
             if (_bot->GetQuestRewardStatus(-prevQuestId))
             {
                 TC_LOG_ERROR("module.playerbot.quest", "❌ HasPrerequisites: Quest {} REJECTED - must NOT have completed quest {}",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              quest->GetQuestId(), -prevQuestId);
                 return false; // Must NOT have completed this quest
             }
@@ -409,6 +489,11 @@ void QuestAcceptanceManager::AcceptQuest(Creature* questGiver, Quest const* ques
     _lastAcceptTime = getMSTime();
 
     TC_LOG_INFO("module.playerbot.quest",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
         "Bot {} AUTO-ACCEPTED quest {} '{}' (Priority: {:.1f}, Quests: {}/{})",
         if (!bot)
         {
@@ -490,6 +575,11 @@ float QuestAcceptanceManager::GetXPPriority(Quest const* quest) const
 
     // No XP at max level
     if (_bot->GetLevel() >= sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");

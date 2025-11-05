@@ -65,6 +65,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -243,6 +248,11 @@ public:
     }
 
     void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -259,6 +269,11 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return nullptr;
+                    }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
@@ -435,6 +450,11 @@ public:
             {
                 // Kelris uses Mind Blast and Sleep - spread to avoid chain CC
                 DungeonRole role = GetPlayerRole(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
 
                 if (role == DungeonRole::RANGED_DPS || role == DungeonRole::HEALER)
                 {
@@ -450,9 +470,19 @@ public:
 
         // Fall back to generic
         DungeonScript::HandlePositioning(player, boss);
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return;
+    }
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+        return;
+    }
     {
         uint32 entry = boss->GetEntry();
 
@@ -462,6 +492,16 @@ public:
             {
                 // Sarevess applies slow debuffs - dispel curse/magic
                 Group* group = player->GetGroup();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                        return nullptr;
+                    }
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
@@ -481,6 +521,11 @@ public:
                     if (!groupMember)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return nullptr;
+                    }
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
                         return;
                     }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
@@ -494,6 +539,11 @@ public:
                         return;
                     }
                 }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 break;
             }
 
@@ -501,6 +551,11 @@ public:
             {
                 // Kelris puts players to sleep - need wakeup/dispel
                 Group* group = player->GetGroup();
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return;
+                }
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
@@ -574,11 +629,21 @@ public:
                 break;
         }
 
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return nullptr;
+        }
         // Fall back to generic
         DungeonScript::HandleDispelMechanic(player, boss);
     }
 
     void HandleSpreadMechanic(::Player* player, ::Creature* boss) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
     {
         uint32 entry = boss->GetEntry();
 

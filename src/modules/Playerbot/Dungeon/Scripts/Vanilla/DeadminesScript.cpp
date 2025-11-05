@@ -99,6 +99,16 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
                 return;
             }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
     {
         // Call base class first (good practice)
         DungeonScript::OnDungeonEnter(player, instance);
@@ -117,6 +127,16 @@ public:
 
     /**
      * Called when player exits The Deadmines
+         if (!player)
+         {
+             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+             return nullptr;
+         }
+     if (!player)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+         return nullptr;
+     }
      *
      * USE CASE:
      * - Clean up dungeon-specific state
@@ -211,6 +231,11 @@ public:
             default:
                 TC_LOG_WARN("playerbot", "DeadminesScript: Unknown boss entry {}",
                     boss->GetEntry());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 break;
         }
     }
@@ -334,6 +359,11 @@ public:
 
     /**
      * Handle add kill priority
+     if (!shredder)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: shredder in method GetGUID");
+         return nullptr;
+     }
      *
      * USE CASE:
      * - Define which adds to kill first
@@ -344,6 +374,11 @@ public:
      *
      * IMPORTANT: Sneed emerges from shredder when it dies - MUST kill shredder first
      */
+    if (!sneed)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sneed in method GetGUID");
+        return nullptr;
+    }
     void HandleAddPriority(::Player* player, ::Creature* boss) override
     {
         if (!player || !boss)

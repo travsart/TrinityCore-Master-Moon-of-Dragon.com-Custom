@@ -49,6 +49,11 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
         if (!bot || !bot->IsInWorld())
             return;
 
@@ -68,6 +73,11 @@ namespace Playerbot
                 TradeEventData tradeData;
                 try
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     tradeData = std::any_cast<TradeEventData>(event.eventData);
                 }
                 catch (std::bad_any_cast const& e)
@@ -85,6 +95,11 @@ namespace Playerbot
                 TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} initiated trade with partner {}",
                     if (!bot)
                     {
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                         return;
                     }
@@ -92,6 +107,11 @@ namespace Playerbot
 
                 // Call manager method to handle trade window opened
                 // OnTradeStarted is called by TrinityCore hooks, so we just update state
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 ForceUpdate();
                 break;
             }
@@ -106,6 +126,11 @@ namespace Playerbot
                 // Extract trade acceptance data
                 if (event.eventData.has_value())
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     try
                     {
                         TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
@@ -123,10 +148,20 @@ namespace Playerbot
                         {
                             if (!bot)
                             {
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return nullptr;
+                                }
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                                 return nullptr;
                             }
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} trade may be unfair, considering cancellation",
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return;
+                                }
                                 if (!bot)
                                 {
                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -145,11 +180,21 @@ namespace Playerbot
                         // Trade accepted successfully - OnTradeAccepted() called by core
                     if (!bot)
                     {
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                         return nullptr;
                     }
                     }
                     catch (std::bad_any_cast const&)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     {
                         if (!bot)
                         if (!bot)
@@ -169,12 +214,22 @@ namespace Playerbot
                 break;
             }
 
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             case StateMachine::EventType::TRADE_CANCELLED:
             {
                 // Extract cancellation data
                 if (event.eventData.has_value())
                 {
                     try
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -196,6 +251,11 @@ namespace Playerbot
                             bot->GetName(), tradeData.partnerGuid.ToString());
                     }
                     catch (std::bad_any_cast const&)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     {
                         if (!bot)
                         {
@@ -207,6 +267,11 @@ namespace Playerbot
                 }
 
                 // OnTradeCancelled() called by core hooks
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 ForceUpdate();
                 break;
             if (!bot)
@@ -224,20 +289,40 @@ namespace Playerbot
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 }
                 {
                     try
                     {
                         TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                            return;
+                        }
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Item added to trade for bot {} (total items: {})",
                             if (!bot)
                             {
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return nullptr;
+                                }
                                 return;
                             }
                             bot->GetName(), tradeData.itemCount);
 
                         // Validate items in trade
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         if (!ValidateTradeItems())
                         {
                             if (!bot)
@@ -246,6 +331,16 @@ namespace Playerbot
                                 return nullptr;
                             }
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} trade items validation failed", bot->GetName());
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                                return nullptr;
+                            }
+                            return nullptr;
+                        }
                         if (!bot)
                         {
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -269,6 +364,11 @@ namespace Playerbot
                 }
                 // Extract gold addition data
                 if (event.eventData.has_value())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 {
                     try
                     {
@@ -277,6 +377,11 @@ namespace Playerbot
                             if (!bot)
                             {
                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return nullptr;
+                                }
                                 return;
                             }
                             bot->GetName(), tradeData.goldOffered, tradeData.goldReceived);
@@ -296,11 +401,21 @@ namespace Playerbot
                                     return;
                                 if (!bot)
                                 {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return;
+                                }
+                                if (!bot)
+                                {
                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
                                     return;
                                 }
                                 }
                                 bot->GetName(), tradeData.goldOffered);
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             CancelTrade("Insufficient gold");
                             return;
                         if (!bot)
@@ -318,12 +433,22 @@ namespace Playerbot
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 ForceUpdate();
                 break;
             }
 
             case StateMachine::EventType::GOLD_RECEIVED:
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 // Extract gold received data
                 if (event.eventData.has_value())
                 {
@@ -331,6 +456,11 @@ namespace Playerbot
                     {
                         if (!bot)
                         {
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return nullptr;
+                            }
                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
                             return nullptr;
                         }

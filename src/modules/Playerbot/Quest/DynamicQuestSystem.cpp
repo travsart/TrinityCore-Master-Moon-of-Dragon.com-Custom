@@ -58,6 +58,16 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
         return;
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     uint32 botGuid = bot->GetGUID().GetCounter();
     if (!bot)
     {
@@ -144,6 +154,11 @@ std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestS
 }
 
 bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
 {
     if (!bot)
         return false;
@@ -157,6 +172,11 @@ bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
         return false;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -178,6 +198,11 @@ bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
     {
         std::lock_guard<std::recursive_mutex> lock(_questMutex);
         _botQuestProgress[botGuid].push_back(progress);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     }
 
     // Update metrics
@@ -212,6 +237,11 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
         std::lock_guard<std::recursive_mutex> lock(_questMutex);
         auto it = _botQuestProgress.find(botGuid);
         if (it != _botQuestProgress.end())
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
             currentQuests = static_cast<uint32>(it->second.size());
     }
 
@@ -275,6 +305,11 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
 }
 
 std::vector<uint32> DynamicQuestSystem::SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 {
     std::vector<uint32> sortedQuests = questIds;
 
@@ -300,6 +335,11 @@ std::vector<uint32> DynamicQuestSystem::SortQuestsByPriority(const std::vector<u
 }
 
 bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
 {
     if (!bot)
         return false;
@@ -318,6 +358,11 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
     // Find quest progress
     std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     if (progressIt == _botQuestProgress.end())
         return false;
 
@@ -346,6 +391,11 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
         return;
     }
     uint32 questLevel = quest->GetMaxLevel() > 0 ? quest->GetMaxLevel() : botLevel;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (questLevel < botLevel - 7) // Too low level
         return true;
 
@@ -367,6 +417,16 @@ void DynamicQuestSystem::UpdateQuestProgress(Player* bot)
     std::lock_guard<std::recursive_mutex> lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         return;
 
     for (auto& progress : progressIt->second)
@@ -454,6 +514,11 @@ void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
 
     // Update metrics
     auto& metrics = _botMetrics[botGuid];
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
     metrics.questsCompleted++;
 
     // Check for quest chain progression
@@ -463,6 +528,11 @@ void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
         AssignQuestToBot(nextQuest, bot);
     }
 }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
+    return;
+}
 
 bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
 {
@@ -568,6 +638,11 @@ bool DynamicQuestSystem::CanShareQuest(uint32 questId, Player* from, Player* to)
 }
 
 Position DynamicQuestSystem::GetNextQuestLocation(Player* bot, uint32 questId)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 {
     Position location;
 
@@ -593,6 +668,11 @@ std::vector<Position> DynamicQuestSystem::GenerateQuestPath(Player* bot, uint32 
 
     // Generate optimal path for quest completion
     Position startPos = GetNextQuestLocation(bot, questId);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
     path.push_back(startPos);
 
     // Add waypoints based on quest objectives
@@ -608,6 +688,11 @@ void DynamicQuestSystem::HandleQuestNavigation(Player* bot, uint32 questId)
 
     // Handle navigation to quest objectives
     std::vector<Position> questPath = GenerateQuestPath(bot, questId);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
 
     if (!questPath.empty())
     {
@@ -677,6 +762,11 @@ void DynamicQuestSystem::HandleQuestStuckState(Player* bot, uint32 questId)
         questProgress->retryCount++;
 
         TC_LOG_WARN("playerbot.quest", "Bot {} is stuck on quest {}, retry count: {}",
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+                       return;
+                   }
                    bot->GetName(), questId, questProgress->retryCount);
     }
 }
@@ -717,6 +807,11 @@ void DynamicQuestSystem::OptimizeQuestOrder(Player* bot)
 }
 
 void DynamicQuestSystem::TrackQuestChains(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+    return;
+}
 {
     if (!bot)
         return;
@@ -979,8 +1074,23 @@ void DynamicQuestSystem::AnalyzeQuestDependencies()
     {
         Quest const* quest = questPair.second.get();
         if (!quest)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                return;
+            }
             continue;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return;
+}
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return;
+        }
         uint32 questId = quest->GetQuestId();
 
         // Check for prerequisite quests
@@ -1013,6 +1123,11 @@ void DynamicQuestSystem::BuildQuestChains()
             auto nextIt = _questFollowups.find(currentQuest);
             if (nextIt != _questFollowups.end() && !nextIt->second.empty())
                 currentQuest = nextIt->second[0];
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             else
                 break;
         }

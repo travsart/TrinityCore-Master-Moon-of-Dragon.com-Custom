@@ -35,11 +35,31 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
         return;
     }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
     // Get the unit whose health changed
     Unit* unit = ObjectAccessor::GetUnit(*bot, packet.Guid);
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+        return;
+    }
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     if (!unit)
         return;
 
@@ -51,6 +71,11 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
     event.powerType = Powers::POWER_MANA;  // Not used for health updates
     event.amount = static_cast<int32>(packet.Health);
     event.maxAmount = static_cast<int32>(unit->GetMaxHealth());
+if (!unit)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+    return;
+}
     if (!unit)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
@@ -74,6 +99,11 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                    return nullptr;
+                }
                 return nullptr;
             }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
@@ -110,6 +140,11 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
 
     // Get the unit whose power changed
     Unit* unit = ObjectAccessor::GetUnit(*bot, packet.Guid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (!unit)
         return;
 

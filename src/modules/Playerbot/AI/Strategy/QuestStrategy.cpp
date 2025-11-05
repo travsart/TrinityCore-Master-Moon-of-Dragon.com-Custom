@@ -88,6 +88,21 @@ bool QuestStrategy::IsActive(BotAI* ai) const
     }
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -112,6 +127,16 @@ bool QuestStrategy::IsActive(BotAI* ai) const
     TC_LOG_ERROR("module.playerbot.quest", "📋 QuestStrategy::IsActive: Bot {} - _active={}, returning {}",
                  if (!bot)
                  {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                     return;
+                 }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+                 if (!bot)
+                 {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                      return;
                  }
@@ -123,6 +148,16 @@ float QuestStrategy::GetRelevance(BotAI* ai) const
 {
     // CRITICAL DEBUG: Force ERROR level logging to see this!
     TC_LOG_ERROR("module.playerbot.quest", "🔍 QuestStrategy::GetRelevance ENTRY: ai={}, ai->GetBot()={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                  (void*)ai, ai ? (void*)ai->GetBot() : nullptr);
 
     if (!ai || !ai->GetBot())
@@ -132,6 +167,11 @@ float QuestStrategy::GetRelevance(BotAI* ai) const
     }
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -153,12 +193,32 @@ float QuestStrategy::GetRelevance(BotAI* ai) const
     bool isMaxLevel = (bot->GetLevel() >= sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL));
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return false;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
         return;
     }
     bool hasObjectives = HasActiveObjectives(ai);
 
     TC_LOG_ERROR("module.playerbot.quest", "📊 QuestStrategy::GetRelevance: Bot {} - Level={}, MaxLevel={}, hasObjectives={}",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                         return;
+                     }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -196,6 +256,26 @@ float QuestStrategy::GetRelevance(BotAI* ai) const
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "📍 QuestStrategy::GetRelevance: Bot {} (Level {}, MaxLevel={}) no objectives, returning {:.1f}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -214,6 +294,16 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     Player* bot = ai->GetBot();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -233,12 +323,22 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     TC_LOG_ERROR("module.playerbot.quest", "🚀 UpdateBehavior: Bot {} starting quest behavior update", bot->GetName());
 
     // Don't interrupt combat
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return 0;
+    }
     if (bot->IsInCombat())
     {
         TC_LOG_ERROR("module.playerbot.quest", "⚔️ UpdateBehavior: Bot {} in combat, skipping", bot->GetName());
         return;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return 0;
+    }
     // Update objective tracker periodically
     uint32 currentTime = getMSTime();
     if (currentTime - _lastObjectiveUpdate > 2000) // Every 2 seconds
@@ -280,6 +380,11 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
     if (!bot)
@@ -287,6 +392,11 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return nullptr;
     }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  bot->GetName(), hasActiveQuests);
 
     if (hasActiveQuests)
@@ -301,6 +411,11 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         // No active quests - search for quest givers to accept new quests
         SearchForQuestGivers(ai);
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ UpdateBehavior: Bot {} quest behavior update complete", bot->GetName());
 }
@@ -309,6 +424,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
 {
     if (!ai || !ai->GetBot())
         return;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     Player* bot = ai->GetBot();
     if (!bot)
@@ -345,6 +465,16 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
         {
             uint32 questId = bot->GetQuestSlotQuestId(slot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -365,6 +495,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             {
                 TC_LOG_ERROR("module.playerbot.quest", "⚠️ Quest {} has NO objectives - skipping registration (likely autocomplete/scripted quest)",
                             questId);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 continue;
             }
 
@@ -383,9 +518,24 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Try again after initialization
         priority = ObjectiveTracker::instance()->GetHighestPriorityObjective(bot);
         TC_LOG_ERROR("module.playerbot.quest", "🔄 ProcessQuestObjectives: Bot {} after initialization - priority.questId={}, priority.objectiveIndex={}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -409,6 +559,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
             {
                 uint32 questId = bot->GetQuestSlotQuestId(slot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 if (questId == 0)
                     continue;
 
@@ -433,27 +588,57 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
 
             // No completed quests - fall back to searching for new quests
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} has no completed quests, searching for new quests",
                          bot->GetName());
             SearchForQuestGivers(ai);
             return;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Get objective state
     ObjectiveTracker::ObjectiveState objective = ObjectiveTracker::instance()->GetObjectiveState(
         bot, priority.questId, priority.objectiveIndex);
 
     // Cache current objective info
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     _currentQuestId = objective.questId;
     _currentObjectiveIndex = objective.objectiveIndex;
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
     if (!quest)
         return;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     // Check if quest is complete - turn it in
     if (bot->GetQuestStatus(objective.questId) == QUEST_STATUS_COMPLETE)
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                     return nullptr;
+                 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -477,6 +662,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                  bot->GetName(), questObjective->Type, objective.questId);
 
     switch (questObjective->Type)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         case QUEST_OBJECTIVE_MONSTER:
         case QUEST_OBJECTIVE_PLAYERKILLS:
@@ -489,6 +679,16 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             if (quest->GetSrcItemId() != 0)
             {
                 TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - Quest {} is USE ITEM quest (StartItem={}), calling UseQuestItemOnTarget",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return nullptr;
+                                 }
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              if (!bot)
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -526,12 +726,22 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                              if (!bot)
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 if (!creature)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+                                     return nullptr;
+                                 }
                                  return;
                              }
                              bot->GetName(), questObjective->ObjectID, objective.questId);
 
                 // Route to EngageQuestTargets to kill the creature that drops this item
                 EngageQuestTargets(ai, objective);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             }
             else
             {
@@ -542,11 +752,21 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                                  return;
                              }
                              bot->GetName(), questObjective->ObjectID, objective.questId);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
                 // Route to CollectQuestItems for GameObject interaction
                 CollectQuestItems(ai, objective);
             }
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
 
         case QUEST_OBJECTIVE_GAMEOBJECT:
@@ -554,6 +774,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return nullptr;
+                             }
                              return;
                          }
                          bot->GetName(), objective.questId);
@@ -561,6 +786,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             break;
 
         case QUEST_OBJECTIVE_AREATRIGGER:
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         case QUEST_OBJECTIVE_AREA_TRIGGER_ENTER:
         case QUEST_OBJECTIVE_AREA_TRIGGER_EXIT:
             TC_LOG_ERROR("module.playerbot.quest", "🗺️ ProcessQuestObjectives: Bot {} - Calling ExploreQuestArea for quest {}",
@@ -568,6 +798,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                              return;
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          }
                          bot->GetName(), objective.questId);
             ExploreQuestArea(ai, objective);
@@ -581,6 +816,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                              return;
                          }
                          bot->GetName(), questObjective->Type, objective.questId);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             // Unknown objective type - try to navigate to objective location
             NavigateToObjective(ai, objective);
             break;
@@ -592,10 +832,30 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveSt
     if (!ai || !ai->GetBot())
     {
         TC_LOG_ERROR("module.playerbot.quest", "❌ NavigateToObjective: NULL ai or bot");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         return;
     }
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -619,17 +879,42 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveSt
     Position objectivePos = GetObjectivePosition(ai, objective);
 
     TC_LOG_ERROR("module.playerbot.quest", "📍 NavigateToObjective: Bot {} - Objective position: ({:.1f}, {:.1f}, {:.1f})",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  bot->GetName(),
                  objectivePos.GetPositionX(), objectivePos.GetPositionY(), objectivePos.GetPositionZ());
 
     if (objectivePos.GetExactDist2d(0.0f, 0.0f) < 0.1f)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("module.playerbot.quest", "❌ NavigateToObjective: Bot {} - NO VALID position for objective {} of quest {} (position is at origin)",
                      bot->GetName(), objective.objectiveIndex, objective.questId);
         return;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return nullptr;
+    }
     }
 
     float distance = bot->GetExactDist2d(objectivePos.GetPositionX(), objectivePos.GetPositionY());
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                         return nullptr;
+                     }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -653,6 +938,16 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveSt
     }
     float randomAngle = (botSeed % 360) * (M_PI / 180.0f); // Convert bot GUID to angle
     float randomDistance = 5.0f + ((botSeed % 1000) / 1000.0f) * 10.0f; // 5-15 yards
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return nullptr;
+}
 
     randomizedPos.Relocate(
         objectivePos.GetPositionX() + cos(randomAngle) * randomDistance,
@@ -661,7 +956,22 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveSt
     );
 
     TC_LOG_ERROR("module.playerbot.quest", "🎲 NavigateToObjective: Bot {} - Randomized position offset: angle={:.1f}°, distance={:.1f}yd → ({:.1f}, {:.1f}, {:.1f})",
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
                  bot->GetName(), randomAngle * (180.0f / M_PI), randomDistance,
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                     return;
+                 }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return nullptr;
+                 }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -689,6 +999,21 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
     }
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
                          if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -708,25 +1033,50 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
 
     if (!target)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Bot {} - NO hostile target found",
                      bot->GetName());
 
         // CRITICAL FIX: Check if this is a FRIENDLY NPC interaction quest (like Quest 28809)
         // FindQuestTarget returns nullptr for friendly NPCs to prevent attacking them
         // We need to check if there's a friendly NPC nearby that matches the objective
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return 0;
+        }
         Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
         if (quest && objective.objectiveIndex < quest->Objectives.size())
         {
             QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
             // Scan for friendly NPCs with this entry in range (300 yards to match hostile creature scan)
             std::list<Creature*> nearbyCreatures;
             bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 300.0f);
 
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             for (Creature* creature : nearbyCreatures)
                                      if (!creature)
                                      {
                                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+                                         if (!bot)
+                                         {
+                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                             return nullptr;
+                                         }
                                          return;
                                      }
             {
@@ -741,11 +1091,26 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                     if (!RequiresSpellClickInteraction(questObjective.ObjectID))
                     {
                         TC_LOG_ERROR("module.playerbot.quest", "⚠️ EngageQuestTargets: Mob {} (Entry: {}) is neutral but has NO spell click - should be ATTACKED, not interacted with!",
+                                     if (!bot)
+                                     {
+                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                         return;
+                                     }
                                      creature->GetName(), questObjective.ObjectID);
                         continue;  // Skip this creature - it should be attacked via FindQuestTarget(), not interacted with
                     }
 
                     float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                                  if (!bot)
                                  {
                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -757,6 +1122,21 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                     // CRITICAL: Check if objective is already complete BEFORE interacting
                     // GetQuestObjectiveData returns the current progress count for this objective
                     uint32 currentProgress = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+                                         if (!bot)
+                                         {
+                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                             return nullptr;
+                                         }
+                                     if (!bot)
+                                     {
+                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                         return;
+                                     }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                                      if (!bot)
                                      {
                                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -779,12 +1159,22 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                         TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} OBJECTIVE COMPLETE ({} / {}) - skipping interaction with {}",
                                      bot->GetName(), currentProgress, requiredAmount, creature->GetName());
                         return;  // Objective complete - stop interacting
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     }
 
                     TC_LOG_ERROR("module.playerbot.quest", "📊 EngageQuestTargets: Bot {} objective progress: {} / {} - interaction needed",
                                  bot->GetName(), currentProgress, requiredAmount);
 
                     // Check if in interaction range
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return 0;
+                    }
                     if (distance <= INTERACTION_DISTANCE)
                     {
                         // INTERACT with the friendly NPC using spell click (right-click interaction)
@@ -794,6 +1184,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                         // Right-click on the NPC triggers HandleSpellClick
                         // This is used for quest NPCs like "Injured Stormwind Infantry" that have npc_spellclick_spells
                         creature->HandleSpellClick(bot);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
                         TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} sent spell click interaction to {} - quest objective should progress",
                                      if (!bot)
@@ -802,11 +1197,21 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                                          return;
                                      }
                                      bot->GetName(), creature->GetName());
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return;
+                        }
                         return;
                     }
                     else
                     {
                         // Move closer to the friendly NPC
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         TC_LOG_ERROR("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} moving to friendly NPC {} (distance: {:.1f} > INTERACTION_DISTANCE)",
                                      if (!bot)
                                      {
@@ -830,6 +1235,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      }
                      bot->GetName());
 
@@ -850,6 +1260,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                              bot->GetName());
                 InitializeQuestAreaWandering(ai, objective);
             }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return 0;
+}
 
             // Wander through quest area to find respawns
             TC_LOG_ERROR("module.playerbot.quest", "🚶 EngageQuestTargets: Bot {} - Wandering in quest area to search for spawns",
@@ -897,6 +1312,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                      bot->GetName(), target->GetName());
         return;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     TC_LOG_ERROR("module.playerbot.quest", "⚔️ EngageQuestTargets: Bot {} setting combat target to {} (Entry: {})",
                  if (!bot)
@@ -907,6 +1327,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                  bot->GetName(), target->GetName(), target->GetEntry());
 
     // Set as combat target
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!target)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
@@ -1063,6 +1488,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
                      }
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              bot->GetName(), currentDistance, optimalRange);
             }
         }
@@ -1084,6 +1514,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
     TC_LOG_ERROR("module.playerbot.quest", "✅ EngageQuestTargets: Bot {} successfully engaged quest mob {} for quest {}",
                  if (!bot)
                  {
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                      return;
                  }
@@ -1099,6 +1534,16 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
     }
 
     Player* bot = ai->GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetHealth");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1125,6 +1570,11 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
         TC_LOG_ERROR("module.playerbot.quest", "❌ CollectQuestItems: Bot {} - Invalid quest {} or objective index {}",
                      bot->GetName(), objective.questId, objective.objectiveIndex);
         return;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     }
 
     QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
@@ -1134,6 +1584,16 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
 
     // Check item count
     uint32 itemCount = bot->GetItemCount(questObjective.ObjectID, false);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1180,6 +1640,21 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
     }
 
     float distance = std::sqrt(bot->GetExactDistSq(questObject)); // Calculate once from squared distance
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                         return;
+                     }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1202,11 +1677,21 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
                      bot->GetName(), questObject->GetEntry(), distance,
                      objPos.GetPositionX(), objPos.GetPositionY(), objPos.GetPositionZ());
         BotMovementUtil::MoveToPosition(bot, objPos);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         return;
     }
 
     // Interact with object
     TC_LOG_ERROR("module.playerbot.quest", "🎯 CollectQuestItems: Bot {} interacting with object {} (distance: {:.1f} <= INTERACTION_DISTANCE)",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1214,6 +1699,21 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
                  }
                  bot->GetName(), questObject->GetEntry(), distance);
     bot->PrepareGossipMenu(questObject, questObject->GetGOInfo()->type == GAMEOBJECT_TYPE_QUESTGIVER ? 0 : questObject->GetGOInfo()->entry);
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1236,6 +1736,11 @@ void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState
 
 void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!ai || !ai->GetBot())
     {
         TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: NULL ai or bot");
@@ -1277,6 +1782,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Bot {} does NOT have quest item {}!",
                      bot->GetName(), questItemId);
         return;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetEntry");
+        return;
+    }
     }
 
     // Get objective details
@@ -1325,6 +1835,16 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     Map* map = bot->GetMap();
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return;
     }
@@ -1367,6 +1887,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
 
         // Find nearest valid GameObject using snapshot position
         float distance = bot->GetExactDist(snapshot.position);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (distance < nearestDistance)
         {
             nearestDistance = distance;
@@ -1376,6 +1901,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
 
     // PHASE 5D: Thread-safe spatial grid validation
     auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, targetGuid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     GameObject* targetObject = nullptr;
 
     if (snapshot)
@@ -1399,6 +1929,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                  nearestDistance, validObjectsFound);
 
     // CRITICAL: Calculate SAFE distance from target based on GameObject type and damage radius
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     // We need to detect if the GameObject causes damage and how large the damage area is
 
     GameObjectTemplate const* goInfo = targetObject->GetGOInfo();
@@ -1417,6 +1952,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                 causesDamage = (goInfo->trap.spell != 0); // Has damage spell
 
                 TC_LOG_ERROR("module.playerbot.quest", "🔥 UseQuestItemOnTarget: GameObject is TRAP type - radius={:.1f}yd, spellId={}, causes damage={}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                              damageRadius, goInfo->trap.spell, causesDamage);
                 break;
             }
@@ -1449,8 +1989,18 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                              damageRadius, goInfo->auraGenerator.auraID1, goInfo->auraGenerator.auraID2, causesDamage);
                 break;
             }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             default:
             {
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                    return;
+                }
                 TC_LOG_ERROR("module.playerbot.quest", "ℹ️ UseQuestItemOnTarget: GameObject type {} - assuming safe, no damage detection",
                              goInfo->type);
                 break;
@@ -1461,12 +2011,22 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     // Calculate safe positioning
     float gameObjectScale = targetObject->GetObjectScale();
     float baseRadius = damageRadius > 0.0f ? damageRadius : (gameObjectScale * 2.0f);
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+    return;
+}
 
     // Safe distance calculation:
     // - If causes damage: damage radius + 3 yards safety buffer + item use margin
     // - If no damage: just use reasonable item casting distance
     float safeDistance;
     if (causesDamage && damageRadius > 0.0f)
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+        return nullptr;
+    }
     {
         // Stay OUTSIDE damage radius with safety buffer
         safeDistance = damageRadius + 3.0f; // 3 yard safety buffer outside damage zone
@@ -1491,6 +2051,21 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     float currentDistance = std::sqrt(bot->GetExactDistSq(targetObject)); // Calculate once from squared distance
 
     TC_LOG_ERROR("module.playerbot.quest", "📏 UseQuestItemOnTarget: Bot distance to target={:.1f}yd (safe range: {:.1f}-{:.1f}yd)",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1508,6 +2083,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         // Calculate position AWAY from target at safe distance
         // Get angle from target to bot
         float angleToBot = targetObject->GetRelativeAngle(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
                      if (!bot)
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1549,6 +2129,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     float healthPercent = (bot->GetHealth() * 100.0f) / bot->GetMaxHealth();
     if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetHealth");
         return;
     }
@@ -1566,6 +2151,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         // Move further away (increase safe distance by 5 yards)
         float retreatDistance = safeDistance + 5.0f;
         float angleToBot = targetObject->GetRelativeAngle(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1591,6 +2181,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     bot->StopMoving();
     bot->GetMotionMaster()->Clear();
     bot->GetMotionMaster()->MoveIdle();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     TC_LOG_ERROR("module.playerbot.quest", "🛑 UseQuestItemOnTarget: Bot {} stopped moving",
                  if (!bot)
@@ -1610,12 +2205,22 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                      return;
                  }
                  bot->GetName(), targetObject->GetEntry());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     // Get the spell ID from the quest item
     // Quest items trigger spells through their ItemEffect entries
     uint32 spellId = 0;
     for (ItemEffectEntry const* itemEffect : questItem->GetEffects())
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (itemEffect->TriggerType == ITEM_SPELLTRIGGER_ON_USE)
         {
             spellId = itemEffect->SpellID;
@@ -1625,10 +2230,20 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
 
     if (spellId == 0)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Quest item {} has no ON_USE spell!",
                      questItemId);
         return;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 UseQuestItemOnTarget: Quest item {} triggers spell {}",
                  questItemId, spellId);
@@ -1636,6 +2251,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         TC_LOG_ERROR("module.playerbot.quest", "❌ UseQuestItemOnTarget: Invalid spell ID {} for item {}",
                      spellId, questItemId);
@@ -1652,17 +2272,37 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+            return nullptr;
+        }
         return;
     }
     args.SetOriginalCaster(bot->GetGUID());
 
     if (!bot)
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+        return nullptr;
+    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
         return;
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsQuestGiver");
+        return nullptr;
+    }
     }
     bot->CastSpell(targetObject, spellId, args);
 
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+        return;
+    }
     TC_LOG_ERROR("module.playerbot.quest", "✅ UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GameObject {} - objective should progress",
                  if (!bot)
                  {
@@ -1671,6 +2311,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                  }
                  bot->GetName(), spellId, questItemId, targetObject->GetEntry());
 }
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+    return;
+}
 
 void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
 {
@@ -1680,6 +2325,16 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
     Player* bot = ai->GetBot();
         if (!bot)
         {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
@@ -1702,6 +2357,11 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
     // Step 1: Find quest ender location (multi-tier fallback)
     QuestEnderLocation location;
     if (!FindQuestEnderLocation(ai, questId, location))
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+        return nullptr;
+    }
     {
         TC_LOG_ERROR("module.playerbot.quest", "❌ TurnInQuest: Bot {} failed to find quest ender location for quest {}",
                      bot->GetName(), questId);
@@ -1709,6 +2369,21 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ TurnInQuest: Bot {} found quest ender NPC {} at ({:.1f}, {:.1f}, {:.1f}) - foundViaSpawn={}, foundViaPOI={}, requiresSearch={}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return nullptr;
+                         }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     if (!closestQuestGiver)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: closestQuestGiver in method GetName");
+                         return;
+                     }
+                     }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1729,6 +2404,11 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
                  location.foundViaSpawn, location.foundViaPOI, location.requiresSearch);
 
     // Step 2: Check if NPC is already in range
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (CheckForQuestEnderInRange(ai, location.npcEntry))
     {
         // NPC is in range - complete turn-in immediately
@@ -1751,10 +2431,20 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                      return;
                  }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  bot->GetName(), location.npcEntry,
                  location.position.GetPositionX(), location.position.GetPositionY(), location.position.GetPositionZ());
 
     // Navigation is in progress - next UpdateBehavior() cycle will check for NPC in range
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 }
 
 ObjectiveTracker::ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
@@ -1763,6 +2453,16 @@ ObjectiveTracker::ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai
         return ObjectiveTracker::ObjectivePriority(0, 0);
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     return ObjectiveTracker::instance()->GetHighestPriorityObjective(bot);
 }
 
@@ -1781,6 +2481,21 @@ bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveTrack
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // Check if target is quest target
     Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
@@ -1802,6 +2517,11 @@ bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveTrack
 
     // Check if already at max kills
     uint32 currentKills = bot->GetQuestObjectiveData(objective.questId, questObjective.StorageIndex);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     if (currentKills >= static_cast<uint32>(questObjective.Amount))
         return false;
 
@@ -1817,6 +2537,21 @@ bool QuestStrategy::MoveToObjectiveLocation(BotAI* ai, Position const& location)
 
     // Check if already at location
     float distance = bot->GetExactDist2d(location.GetPositionX(), location.GetPositionY());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
     if (distance < 10.0f) // Within 10 yards
         return true;
 
@@ -1840,6 +2575,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
         return Position();
 
     Player* bot = ai->GetBot();
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
@@ -1879,6 +2619,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                                       questObjective.ObjectID, questObjective.Amount);
 
             Position newPos = ObjectiveTracker::instance()->FindObjectiveTargetLocation(bot, objData);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+                    return;
+                }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1957,6 +2702,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                          snapshot.entry, snapshot.position.GetPositionX(),
                          snapshot.position.GetPositionY(), snapshot.position.GetPositionZ());
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+            return nullptr;
+        }
         }
     }
 
@@ -1967,6 +2717,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                      {
                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                          return;
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+                         return;
+                     }
                      }
                      bot->GetName(), questObjective.ObjectID);
 
@@ -2001,6 +2756,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     // The key distinction: Check npc_spellclick_spells, NOT hostility!
     if (!target)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
         return nullptr;
     }
@@ -2009,6 +2769,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
         Creature* creature = target->ToCreature();
         if (!target)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
             return nullptr;
         }
@@ -2021,12 +2786,22 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
                                  return;
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              }
         uint32 entry = questObjective.ObjectID;
 
         // If creature is not hostile, check if it requires spell click interaction
         if (!bot->IsHostileTo(creature))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             // Check if this NPC has spell click data
             if (RequiresSpellClickInteraction(entry))
             {
@@ -2040,6 +2815,11 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                              creature->GetName(), entry);
                 // Fall through - return this target for attack even though it's neutral
             }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return 0;
+        }
         }
     }
 
@@ -2047,11 +2827,21 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
 }
 
 GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 {
     if (!ai || !ai->GetBot())
         return nullptr;
 
     Player* bot = ai->GetBot();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
     if (!quest || objective.objectiveIndex >= quest->Objectives.size())
@@ -2069,14 +2859,29 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return;
     }
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+        return;
+    }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
         return;
     }
+                 if (!creature)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsQuestGiver");
+                     return;
+                 }
                  if (!bot)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     if (!creature)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+                         return nullptr;
+                     }
                      return;
                  }
     if (!map)
@@ -2084,6 +2889,11 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
+            return;
+        }
         return nullptr;
 
     // Query nearby GameObjects (lock-free!)
@@ -2096,17 +2906,32 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     // Find first matching GameObject by entry
     ObjectGuid objectGuid;
     for (auto const& snapshot : nearbyObjects)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         if (snapshot.entry == questObjective.ObjectID && snapshot.isSpawned)
         {
             objectGuid = snapshot.guid;
             TC_LOG_ERROR("module.playerbot.quest", "✅ FindQuestObject: Found GameObject entry {} at ({:.1f}, {:.1f}, {:.1f})",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          snapshot.entry, snapshot.position.GetPositionX(),
                          snapshot.position.GetPositionY(), snapshot.position.GetPositionZ());
             break;
         }
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (objectGuid.IsEmpty())
     {
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ FindQuestObject: Bot {} - NO GameObjects found in 200-yard scan for entry {}",
@@ -2118,6 +2943,11 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
                      bot->GetName(), questObjective.ObjectID);
         return nullptr;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
     // PHASE 5D: Thread-safe spatial grid validation
     auto snapshot = SpatialGridQueryHelpers::FindGameObjectByGuid(bot, objectGuid);
@@ -2154,6 +2984,16 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
         return nullptr;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(objective.questId);
     if (!quest || objective.objectiveIndex >= quest->Objectives.size())
@@ -2189,6 +3029,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     if (!_acceptanceManager)
     {
         _acceptanceManager = std::make_unique<QuestAcceptanceManager>(bot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -2239,6 +3084,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
                      bot->GetName(), backoffDelay - (currentTime - _lastQuestGiverSearchTime));
         // Still in cooldown - don't search yet (prevents log spam)
         return;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     }
 
     // Update last search time
@@ -2292,6 +3142,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         }
 
         TC_LOG_ERROR("module.playerbot.quest", "🔬 Checking creature: {} (Entry: {}), IsQuestGiver={}",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                              if (!creature)
                              {
                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
@@ -2317,6 +3172,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
             continue;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         questGiverCount++;
 
         // CRITICAL FIX: Check if this quest giver has any eligible quests for the bot
@@ -2346,6 +3206,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
                 hasEligibleQuests = true;
                 TC_LOG_ERROR("module.playerbot.quest", "✅ Quest giver {} (Entry: {}) has eligible quest {} ({})",
                              creature->GetName(), creature->GetEntry(), questId, questTemplate->GetLogTitle());
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+                    return;
+                }
                 break; // Found at least one eligible quest, this NPC is valid
             }
         }
@@ -2366,6 +3231,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
 
         // Find the closest quest giver WITH ELIGIBLE QUESTS
         float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+                return nullptr;
+            }
                  if (!creature)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetName");
@@ -2386,6 +3256,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
                  if (!closestQuestGiver)
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: closestQuestGiver in method GetName");
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
                      return;
                  }
         }
@@ -2402,8 +3277,18 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         _questGiverSearchFailures++;
 
         TC_LOG_ERROR("module.playerbot.quest",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             "❌ SearchForQuestGivers: Bot {} found no quest givers within 50 yards (failures: {}, next search in {}s)",
             if (!bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
@@ -2423,6 +3308,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
 
         // Get quest hubs appropriate for this bot's level and faction
         auto& hubDb = QuestHubDatabase::Instance();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         if (!hubDb.IsInitialized())
         {
             TC_LOG_ERROR("module.playerbot.quest",
@@ -2450,6 +3340,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
             return;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Get nearest quest hub
         QuestHub const* nearestHub = questHubs[0]; // Already sorted by suitability (includes distance)
 
@@ -2457,6 +3352,11 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
             "✅ SearchForQuestGivers: Bot {} found quest hub '{}' at distance {:.1f} yards (Level range: {}-{}, {} quests available)",
             bot->GetName(), nearestHub->name, nearestHub->GetDistanceFrom(bot),
             nearestHub->minLevel, nearestHub->maxLevel, nearestHub->questIds.size());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
         // Check if hub is already within range
         float hubDistance = nearestHub->GetDistanceFrom(bot);

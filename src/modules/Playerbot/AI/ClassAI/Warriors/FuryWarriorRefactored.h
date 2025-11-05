@@ -70,6 +70,11 @@ public:
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
             return;
         }
     {
@@ -255,6 +260,16 @@ protected:
 
         // Update Whirlwind buff tracking (affects next 2 abilities)
         _hasWhirlwindBuff = bot->HasAura(SPELL_WHIRLWIND_BUFF);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+        return nullptr;
+    }
 
         // Check execute phase
         _executePhaseActive = (target->GetHealthPct() <= 20.0f);

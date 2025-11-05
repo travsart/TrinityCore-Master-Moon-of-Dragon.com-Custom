@@ -196,6 +196,11 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return nullptr;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
         else
             _boneShieldStacks = 0;
     }
@@ -223,6 +228,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : TankSpecialization<RuneRunicPowerResource>(bot)
         
         , _boneShieldTracker()
@@ -231,6 +241,11 @@ public:
         , _crimsonScourgeProc(false)
         , _lastDeathStrikeTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
 

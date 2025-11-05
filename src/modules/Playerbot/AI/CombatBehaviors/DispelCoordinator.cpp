@@ -50,6 +50,11 @@ namespace {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
             return;
         }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
         switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
@@ -430,6 +435,11 @@ void DispelCoordinator::UpdateDispelAssignments()
 // ============================================================================
 
 float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+    return nullptr;
+}
 {
     if (!target)
         return static_cast<float>(basePriority);
@@ -459,6 +469,11 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
         {
             if (preventsCasting)
                 priority += 2.5f;  // Healer silenced is emergency
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+                return;
+            }
             if (preventsActions)
                 priority += 2.0f;  // Healer CC'd is critical
         }
@@ -583,7 +598,17 @@ float DispelCoordinator::CalculateDispellerScore(const DispellerCapability& disp
 // ============================================================================
 // Dispeller Capability Management
 // ============================================================================
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return;
+}
 
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+    return;
+}
 void DispelCoordinator::UpdateDispellerCapabilities()
 {
     if (!m_group)
@@ -779,6 +804,11 @@ bool DispelCoordinator::ExecuteDispel()
         return false;
 
     // Check if assignment is still valid
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
     if (m_currentAssignment.fulfilled)
         return false;
 
@@ -829,6 +859,11 @@ bool DispelCoordinator::ExecuteDispel()
     if (!m_bot->IsWithinLOSInMap(target) ||
         m_bot->GetExactDistSq(target) > maxRangeSq)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
         return false;
     }
 
@@ -907,6 +942,11 @@ bool DispelCoordinator::ExecutePurge()
     // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, bestTarget.enemyGuid);
     Unit* enemy = nullptr;
+    if (!enemy)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetName");
+        return nullptr;
+    }
 
     if (snapshot && snapshot->IsAlive())
     {
@@ -957,6 +997,11 @@ bool DispelCoordinator::ExecutePurge()
         return true;
     }
     else
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+        return;
+    }
     {
         TC_LOG_TRACE("playerbot.dispel.packets",
                      "Bot {} purge {} validation failed: {} ({})",
@@ -965,7 +1010,17 @@ bool DispelCoordinator::ExecutePurge()
     }
 
     ++m_statistics.failedPurges;
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+        return nullptr;
+    }
     return false;
+if (!aura)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+    return;
+}
 }
 
 // ============================================================================
@@ -1044,6 +1099,11 @@ if (!member)
 }
 
 std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
+    return;
+}
 {
     std::vector<PurgeTarget> targets;
 
@@ -1074,6 +1134,11 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
     {
         if (!snapshot)
             continue;
+if (!unit)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
+    return 0;
+}
 
         ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot->guid);
         if (!enemy || enemy->isDead())
@@ -1083,6 +1148,11 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
         if (!m_bot->IsHostileTo(enemy))
             continue;
 
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
+            return nullptr;
+        }
         // Check all auras
         Unit::AuraApplicationMap const& auras = enemy->GetAppliedAuras();
         for (auto const& [auraId, aurApp] : auras)
@@ -1102,6 +1172,11 @@ if (!enemy)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
     return nullptr;
+if (!center)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: center in method GetDistance");
+    return nullptr;
+}
 }
                 continue;
 

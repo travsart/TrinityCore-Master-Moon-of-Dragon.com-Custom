@@ -45,6 +45,11 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
             return;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         auto now = std::chrono::steady_clock::now();
 
         {
@@ -90,6 +95,11 @@ namespace Playerbot
                 case InteractionType::Vendor:
                     if (::Creature* vendor = target->ToCreature())
                         result = CheckVendorRequirements(bot, vendor);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                        return nullptr;
+                    }
                     break;
 
                 case InteractionType::Trainer:
@@ -143,6 +153,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CheckFaction(::Player* bot, ::Creature* creature) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
     {
         if (!bot || !creature)
             return false;
@@ -161,6 +176,11 @@ namespace Playerbot
             return false;
 
         uint32 level = bot->GetLevel();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+        return;
+    }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
@@ -198,6 +218,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CheckInventorySpace(::Player* bot, uint32 slotsNeeded) const
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return nullptr;
+            }
     {
         if (!bot)
             return false;
@@ -208,6 +233,16 @@ namespace Playerbot
         for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         {
             if (Bag* bag = bot->GetBagByPos(i))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return nullptr;
+        }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
@@ -249,6 +284,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CheckAliveState(::Player* bot, bool requireAlive) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         if (!bot)
             return false;
@@ -265,6 +305,11 @@ namespace Playerbot
     bool InteractionValidator::CheckQuestStatus(::Player* bot, uint32 questId) const
     {
         if (!bot || !questId)
+            if (!vendor)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+                return nullptr;
+            }
             return true;  // No quest requirement
 
         return bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE ||
@@ -301,6 +346,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ValidateVendor(::Player* bot, ::Creature* vendor) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+    return nullptr;
+}
         if (!vendor)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
@@ -362,6 +412,11 @@ namespace Playerbot
 
         // Class-specific consumables
         uint8 botClass = bot->GetClass();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return nullptr;
+            }
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
@@ -415,6 +470,11 @@ namespace Playerbot
                 {
                     // Simple item level check for equipment
                     ::Item* currentItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, itemTemplate->GetInventoryType());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
@@ -488,6 +548,11 @@ namespace Playerbot
         for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
         {
             ::Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
@@ -513,6 +578,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ValidateTrainer(::Player* bot, ::Creature* trainer) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     {
         if (!bot || !trainer)
             return false;
@@ -532,6 +602,11 @@ namespace Playerbot
             return false;
 
         // In TrinityCore 11.2, trainer spell validation is handled internally
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return;
+        }
         // We just check if trainer exists and is accessible
         // The actual spell learning validation happens in Trainer::SendSpells
         return true;
@@ -641,6 +716,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ShouldBankItem(::Player* bot, ::Item* item) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return nullptr;
+}
     {
         if (!bot || !item)
             return false;
@@ -664,6 +744,11 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CanUseMail(::Player* bot) const
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+    return;
+}
     {
         if (!bot)
             return false;
@@ -686,11 +771,21 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ValidateRequirements(::Player* bot, const InteractionRequirement& requirements) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     {
         return requirements.CheckRequirements(bot);
     }
 
     std::vector<std::string> InteractionValidator::GetMissingRequirements(::Player* bot, ::WorldObject* target,
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return;
+}
                                                                           InteractionType type) const
     {
         std::vector<std::string> missing;
@@ -733,6 +828,11 @@ namespace Playerbot
                     return nullptr;
                 }
                 if (bot->GetLevel() < 10)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                        return;
+                    }
                     missing.push_back("Must be level 10+");
                 break;
 
@@ -744,6 +844,11 @@ namespace Playerbot
     }
 
     int32 InteractionValidator::GetInteractionPriority(::Player* bot, InteractionType type) const
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                    return nullptr;
+                }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");

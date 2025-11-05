@@ -74,6 +74,16 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return nullptr;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return;
+            }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _ironfurEndTime = getMSTime() + aura->GetDuration();
             if (!aura)
             {
@@ -134,12 +144,22 @@ public:
         return 0;
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return false;
+    }
     [[nodiscard]] bool HasThrash(ObjectGuid guid) const
     {
         return GetStacks(guid) > 0;
     }
 
     void Update(Unit* target)
+    if (!aura)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+        return false;
+    }
     {
         if (!target)
             return;
@@ -248,6 +268,11 @@ public:
             return;
 
         float healthPct = bot->GetHealthPct();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
 
         // Survival Instincts (critical emergency - 50% damage reduction)
         if (healthPct < 30.0f && this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
@@ -286,6 +311,11 @@ public:
         // Regrowth (if out of combat and low health)
         if (!bot)
         {
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
             return nullptr;
         }
@@ -347,6 +377,11 @@ private:
     void MaintainBearForm()
     {
         Player* bot = this->GetBot();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         if (!bot->HasAura(GUARDIAN_BEAR_FORM))
         {
             if (this->CanCastSpell(GUARDIAN_BEAR_FORM, bot))
@@ -387,6 +422,11 @@ private:
     void ExecuteSingleTargetThreatRotation(::Unit* target)
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
         ObjectGuid targetGuid = target->GetGUID();
         if (!target)
         {
@@ -430,6 +470,11 @@ private:
             {
                 this->CastSpell(target, GUARDIAN_THRASH);
                 uint32 currentStacks = _thrashTracker.GetStacks(targetGuid);
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
                 _thrashTracker.ApplyThrash(targetGuid, 15000, 1); // 15 sec, add 1 stack
                 GenerateRage(5);
                 return;

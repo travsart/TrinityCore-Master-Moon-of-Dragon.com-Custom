@@ -182,6 +182,11 @@ public:
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
                 return;
             }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
         }
         else
         {
@@ -249,6 +254,11 @@ public:
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
         
         , _kmTracker()
@@ -258,6 +268,11 @@ public:
         , _breathOfSindragosaActive(false)
         , _lastRemorselessWinterTime(0)
     {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
         // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
 
