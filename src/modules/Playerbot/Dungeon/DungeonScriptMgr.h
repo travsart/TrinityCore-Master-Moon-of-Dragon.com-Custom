@@ -195,13 +195,13 @@ private:
     // DATA STRUCTURES
     // ============================================================================
 
-    // Map scripts (mapId -> script)
-    std::unordered_map<uint32, DungeonScript*> _mapScripts;
+    // Map scripts (mapId -> script) - OWNS the scripts via unique_ptr (primary storage)
+    std::unordered_map<uint32, std::unique_ptr<DungeonScript>> _mapScripts;
 
-    // Boss scripts (bossEntry -> script)
+    // Boss scripts (bossEntry -> script) - NON-OWNING raw pointers (lookup only)
     std::unordered_map<uint32, DungeonScript*> _bossScripts;
 
-    // Script name lookup (name -> script)
+    // Script name lookup (name -> script) - NON-OWNING raw pointers (lookup only)
     std::unordered_map<std::string, DungeonScript*> _namedScripts;
 
     // Statistics
