@@ -67,6 +67,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -195,6 +200,11 @@ protected:
         {
             this->CastSpell(target, SPELL_REND);
             _rendTracking[target->GetGUID()] = getMSTime() + 21000;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             return;
         }
 
@@ -351,6 +361,11 @@ protected:
 
         // Deep Wounds is applied by critical strikes
         _deepWoundsTracking[target->GetGUID()] = getMSTime() + 21000; // 21 second duration
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
     }
 
     void CleanupExpiredDeepWounds()
@@ -398,6 +413,11 @@ protected:
             return false;
 
         auto it = _rendTracking.find(target->GetGUID());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         return it != _rendTracking.end() && it->second > getMSTime();
     }
 

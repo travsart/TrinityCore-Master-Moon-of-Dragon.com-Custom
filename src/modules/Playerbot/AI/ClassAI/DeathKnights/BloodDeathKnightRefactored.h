@@ -191,6 +191,11 @@ public:
         // Sync with actual aura
         if (Aura* aura = bot->GetAura(BONE_SHIELD))
             _boneShieldStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
         else
             _boneShieldStacks = 0;
     }
@@ -213,6 +218,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit BloodDeathKnightRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : TankSpecialization<RuneRunicPowerResource>(bot)
         
         , _boneShieldTracker()
@@ -230,6 +240,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;

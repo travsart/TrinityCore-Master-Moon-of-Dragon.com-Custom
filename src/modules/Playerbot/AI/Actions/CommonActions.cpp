@@ -30,6 +30,11 @@ bool MoveToPositionAction::IsPossible(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     return bot && !bot->IsInCombat() && !bot->HasUnitState(UNIT_STATE_ROOT);
 }
 
@@ -72,6 +77,11 @@ bool FollowAction::IsPossible(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     return bot && !bot->IsInCombat();
 }
 
@@ -86,6 +96,11 @@ bool FollowAction::IsUseful(BotAI* ai) const
 
     // Check if we have a group to follow
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
         return false;
 
@@ -124,13 +139,28 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
         return nullptr;
 
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
         return nullptr;
 
     // Try to follow group leader first
     if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return nullptr;
+    }
     {
         if (leader != bot && leader->IsInWorld())
+        if (!leader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInWorld");
+            return nullptr;
+        }
             return leader;
     }
 
@@ -143,6 +173,11 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
         if (Player* member = ref.GetSource())
         {
             if (member == bot || !member->IsInWorld())
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                return nullptr;
+            }
                 continue;
 
             float distanceSq = bot->GetExactDistSq(member);
@@ -178,6 +213,11 @@ bool AttackAction::IsPossible(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return;
+    }
     return bot && bot->IsAlive() && !bot->IsNonMeleeSpellCast(false);
 }
 
@@ -187,6 +227,11 @@ bool AttackAction::IsUseful(BotAI* ai) const
         return false;
 
     ::Unit* target = GetAttackTarget(ai);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return;
+    }
     return target && target->IsAlive() && target->IsHostileTo(ai->GetBot());
 }
 
@@ -233,6 +278,11 @@ ActionResult AttackAction::Execute(BotAI* ai, ActionContext const& context)
 
     // Priority: Current target if valid
     if (::Unit* currentTarget = bot->GetSelectedUnit())
+        if (!currentTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTarget in method IsAlive");
+            return nullptr;
+        }
     {
         if (currentTarget->IsAlive() && bot->IsValidAttackTarget(currentTarget))
             return currentTarget;
@@ -337,6 +387,11 @@ bool BuffAction::IsUseful(BotAI* ai) const
 
     // Check if group members need the buff
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (group)
     {
         for (GroupReference const& ref : group->GetMembers())
@@ -344,6 +399,11 @@ bool BuffAction::IsUseful(BotAI* ai) const
             if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                    return nullptr;
+                }
                     bot->GetExactDistSq(member) <= (40.0f * 40.0f) && // 1600.0f
                     !member->HasAura(GetSpellId()))
                 {
@@ -400,6 +460,11 @@ ActionResult BuffAction::Execute(BotAI* ai, ActionContext const& context)
             if (Player* member = ref.GetSource())
             {
                 if (member != bot && member->IsInWorld() &&
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                    return nullptr;
+                }
                     bot->GetExactDistSq(member) <= (40.0f * 40.0f) && // 1600.0f
                     !member->HasAura(GetSpellId()))
                 {

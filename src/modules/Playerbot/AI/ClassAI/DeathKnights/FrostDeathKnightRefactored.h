@@ -177,6 +177,11 @@ public:
         {
             _kmActive = true;
             _kmStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
         }
         else
         {
@@ -239,6 +244,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit FrostDeathKnightRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
         
         , _kmTracker()
@@ -257,6 +267,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;

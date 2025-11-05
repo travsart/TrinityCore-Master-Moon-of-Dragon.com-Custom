@@ -40,6 +40,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     }
 
     Player* bot = _session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null player in SimulateQueuedMessagesEnd");
@@ -66,6 +71,11 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
 
     TC_LOG_INFO("module.playerbot.packet",
         "✅ Bot {} successfully simulated CMSG_QUEUED_MESSAGES_END - time sync initialized",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName());
 }
 
@@ -78,6 +88,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     }
 
     Player* bot = _session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null player in SimulateMoveInitActiveMoverComplete");
@@ -110,6 +125,11 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
 
     TC_LOG_INFO("module.playerbot.packet",
         "✅ Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName());
 }
 
@@ -119,6 +139,16 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
         return;
 
     Player* bot = _session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot || !bot->IsInWorld())
         return;
 
@@ -148,6 +178,11 @@ void BotPacketSimulator::EnablePeriodicTimeSync()
     _timeSyncCounter = 0;
 
     if (Player* bot = _session ? _session->GetPlayer() : nullptr)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot.packet",
             "Bot {} periodic time sync enabled (interval: {}ms)",
@@ -160,6 +195,11 @@ void BotPacketSimulator::DisablePeriodicTimeSync()
     _periodicTimeSyncEnabled = false;
 
     if (Player* bot = _session ? _session->GetPlayer() : nullptr)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot.packet",
             "Bot {} periodic time sync disabled",

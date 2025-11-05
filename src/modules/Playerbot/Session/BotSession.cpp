@@ -435,6 +435,11 @@ BotSession::~BotSession()
     // The SpellEvent destructor will fire and Spell::~Spell() checks m_spellModTakingSpell
     // We MUST clear this pointer before the base WorldSession destructor cleans up the player
     if (Player* player = GetPlayer()) {
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
         try {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);
@@ -704,6 +709,11 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         Player* player = GetPlayer();
                         if (!player)
                         {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                            return nullptr;
+                        }
+                        if (!player)
+                        {
                             TC_LOG_WARN("playerbot.packets",
                                 "Bot {} received STATUS_LOGGEDIN opcode {} but player is nullptr",
                                 GetPlayerName(), opHandle->Name);
@@ -746,6 +756,11 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     {
                         // Opcodes valid during map transfer
                         Player* player = GetPlayer();
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                            return;
+                        }
                         if (player && !player->IsInWorld())
                         {
                             opHandle->Call(this, *packet);
@@ -911,6 +926,11 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 try {
                     // Test minimal access first - GetGUID is usually safe
                     ObjectGuid playerGuid = player->GetGUID();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return;
+                    }
                     if (playerGuid.IsEmpty()) {
                         TC_LOG_ERROR("module.playerbot.session", "Player has invalid GUID for account {}", accountId);
                         playerIsValid = false;
@@ -927,6 +947,11 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 if (playerIsValid) {
                     try {
                         playerIsInWorld = player->IsInWorld();
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                            return nullptr;
+                        }
                     }
                     catch (...) {
                         TC_LOG_ERROR("module.playerbot.session", "Access violation in Player::IsInWorld() for account {}", accountId);
@@ -949,11 +974,21 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 static std::unordered_map<std::string, uint32> sessionLogAccumulators;
                 Player* botPlayer = GetPlayer();
                 bool isTestBot = botPlayer && (testBots.find(botPlayer->GetName()) != testBots.end());
+                if (!botPlayer)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPlayer in method GetName");
+                    return;
+                }
                 bool shouldLog = false;
 
                 if (isTestBot)
                 {
                     std::string botName = botPlayer->GetName();
+                    if (!botPlayer)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPlayer in method GetName");
+                        return nullptr;
+                    }
                     // Throttle by call count (every 1000 calls ~= 50s)
                     sessionLogAccumulators[botName]++;
                     if (sessionLogAccumulators[botName] >= 1000)
@@ -1186,6 +1221,11 @@ uint32 BotSession::ProcessDeferredPackets()
                 case STATUS_LOGGEDIN:
                 {
                     Player* player = GetPlayer();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                        return nullptr;
+                    }
                     if (!player)
                     {
                         TC_LOG_WARN("playerbot.packets.deferred",
@@ -1497,10 +1537,25 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                 // CRITICAL FIX: Check if bot is already in a group at login and activate strategies
                 // This fixes the "reboot breaks groups" issue where strategies aren't activated
                 if (Player* player = GetPlayer())
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 {
                     Group* group = player->GetGroup();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_ERROR("module.playerbot.session", "🔍 Bot {} login group check: player={}, group={}",
                                 player->GetName(), (void*)player, (void*)group);
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return nullptr;
+                    }
 
                     if (group)
                     {
@@ -1508,6 +1563,11 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                         if (BotAI* ai = GetAI())
                         {
                             TC_LOG_ERROR("module.playerbot.session", "📞 About to call OnGroupJoined with group={}", (void*)group);
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return nullptr;
+                    }
                             ai->OnGroupJoined(group);
                         }
                     }
@@ -1520,6 +1580,21 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                     if (player->isDead() || player->HasPlayerFlag(PLAYER_FLAGS_GHOST))
                     {
                         TC_LOG_INFO("module.playerbot.session", "💀 Bot {} is dead/ghost at login (isDead={}, isGhost={}, deathState={}, health={}/{}) - triggering death recovery",
+                                if (!player)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
+                                    return nullptr;
+                                }
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                return;
+                            }
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                return nullptr;
+                            }
                             player->GetName(),
                             player->isDead(),
                             player->HasPlayerFlag(PLAYER_FLAGS_GHOST),
@@ -1555,6 +1630,11 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // Root Cause: When KillAllEvents() destroys a delayed spell, handle_delayed() never runs to clear m_spellModTakingSpell
         // Solution: Clear m_spellModTakingSpell FIRST, then kill events to prevent Spell::~Spell assertion failure
         if (Player* player = GetPlayer())
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             // No longer need to manually clear - KillAllEvents() will properly clean up spell mods

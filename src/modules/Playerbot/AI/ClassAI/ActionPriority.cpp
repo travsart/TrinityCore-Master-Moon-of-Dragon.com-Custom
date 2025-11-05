@@ -324,6 +324,11 @@ float ActionPriorityHelper::CalculateDamageScore(::Unit* target, uint32 spellId)
 }
 
 float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
 {
     if (!target)
         return 0.0f;

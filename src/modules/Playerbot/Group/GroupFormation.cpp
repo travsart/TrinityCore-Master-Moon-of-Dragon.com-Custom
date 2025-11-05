@@ -216,6 +216,11 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
             if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(member.memberGuid)))
             {
                 float distance = member.assignedPosition.GetExactDist(player->GetPosition());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
                 return distance <= tolerance;
             }
         }
@@ -234,6 +239,11 @@ std::vector<uint32> GroupFormation::GetMembersOutOfPosition(float tolerance) con
         if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(member.memberGuid)))
         {
             float distance = member.assignedPosition.GetExactDist(player->GetPosition());
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             if (distance > tolerance)
                 outOfPosition.push_back(member.memberGuid);
         }
@@ -279,6 +289,11 @@ void GroupFormation::UpdateMetrics()
         if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(member.memberGuid)))
         {
             float deviation = member.assignedPosition.GetExactDist(player->GetPosition());
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             totalDeviation += deviation;
             validMembers++;
         }

@@ -231,6 +231,11 @@ namespace Playerbot
 
         // Check combat state
         if (bot->IsInCombat() && type != InteractionType::SpiritHealer)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
             return InteractionResult::InCombat;
 
         // Auto-detect type if not specified
@@ -241,6 +246,11 @@ namespace Playerbot
             else if (target->GetTypeId() == TYPEID_GAMEOBJECT)
             {
                 GameObject* go = target->ToGameObject();
+                if (!go)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
+                    return;
+                }
                 switch (go->GetGoType())
                 {
                     case GAMEOBJECT_TYPE_MAILBOX:
@@ -270,7 +280,17 @@ namespace Playerbot
         // Create interaction context
         auto context = std::make_unique<InteractionContext>();
         context->botGuid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         context->targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         context->type = type;
         context->state = InteractionState::Approaching;
         context->startTime = std::chrono::steady_clock::now();
@@ -289,10 +309,20 @@ namespace Playerbot
 
         // Store context
         m_activeInteractions[bot->GetGUID()] = std::move(context);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         // Record metrics
         ++m_totalInteractionsStarted;
         m_lastInteractionTime[bot->GetGUID()] = std::chrono::steady_clock::now();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         if (m_config.logInteractions)
             LogInteraction(bot, "Starting " + std::string(InteractionTypeToString(type)) + " interaction");
@@ -308,6 +338,11 @@ namespace Playerbot
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (it != m_activeInteractions.end())
         {
             // Verify this is the correct interaction to cancel
@@ -326,6 +361,11 @@ namespace Playerbot
 
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         return m_activeInteractions.find(bot->GetGUID()) != m_activeInteractions.end();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     }
 
     InteractionContext* InteractionManager::GetInteractionContext(Player* bot)
@@ -336,6 +376,11 @@ namespace Playerbot
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (it != m_activeInteractions.end())
             return it->second.get();
 
@@ -402,6 +447,16 @@ namespace Playerbot
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return; // Adjust return value as needed
 
@@ -540,6 +595,11 @@ namespace Playerbot
     }
 
     InteractionResult InteractionManager::LearnOptimalSpells(Player* bot, Creature* trainer)
+        if (!trainer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trainer in method IsTrainer");
+            return nullptr;
+        }
     {
         if (!bot || !trainer)
             return InteractionResult::InvalidTarget;
@@ -612,6 +672,11 @@ namespace Playerbot
             isValidBanker = (creature->GetNpcFlags() & UNIT_NPC_FLAG_BANKER) != 0;
         else if (GameObject* go = banker->ToGameObject())
             isValidBanker = go->GetGoType() == GAMEOBJECT_TYPE_CHEST; // Bank chest
+            if (!go)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
+                return nullptr;
+            }
 
         if (!isValidBanker)
             return InteractionResult::InvalidTarget;
@@ -634,6 +699,11 @@ namespace Playerbot
             return InteractionResult::InvalidTarget;
 
         if (mailbox->GetGoType() != GAMEOBJECT_TYPE_MAILBOX)
+        if (!mailbox)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
+            return nullptr;
+        }
             return InteractionResult::InvalidTarget;
 
         if (!HasActiveInteraction(bot))
@@ -951,6 +1021,11 @@ namespace Playerbot
     InteractionResult InteractionManager::ExecuteState(Player* bot, InteractionContext& context)
     {
         WorldObject* target = ObjectAccessor::GetWorldObject(*bot, context.targetGuid);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsMoving");
+                    return nullptr;
+                }
         if (!target)
             return InteractionResult::InvalidTarget;
 
@@ -1086,6 +1161,11 @@ namespace Playerbot
     }
 
     void InteractionManager::LogInteraction(Player* bot, const std::string& message) const
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
     {
         if (bot)
         {

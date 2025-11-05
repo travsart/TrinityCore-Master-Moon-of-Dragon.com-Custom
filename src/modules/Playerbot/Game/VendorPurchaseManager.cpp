@@ -300,6 +300,11 @@ namespace Playerbot
         // Get currently equipped item in that slot
         Player* mutablePlayer = const_cast<Player*>(player);
         Item* currentItem = mutablePlayer->GetItemByPos(INVENTORY_SLOT_BAG_0, equipSlot);
+        if (!mutablePlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mutablePlayer in method GetItemByPos");
+            return;
+        }
 
         // Calculate score for vendor item using class/spec stat priorities
         float vendorItemScore = equipMgr->CalculateItemTemplateScore(mutablePlayer, itemTemplate);

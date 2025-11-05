@@ -110,6 +110,11 @@ void UnifiedInterruptSystem::Update(Player* bot, uint32 diff)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     // Update cooldowns
     auto it = _registeredBots.find(botGuid);
@@ -150,6 +155,11 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     BotInterruptInfo info;
     info.botGuid = botGuid;
@@ -197,6 +207,11 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
 
     _registeredBots[botGuid] = info;
     _botAI[botGuid] = ai;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
 
     TC_LOG_DEBUG("playerbot.interrupt", "Registered bot {} with interrupt spell {} (range: {:.1f})",
         bot->GetName(), info.spellId, info.interruptRange);
@@ -228,6 +243,11 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid casterGuid = caster->GetGUID();
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
 
     CastingSpellInfo castInfo;
     castInfo.casterGuid = casterGuid;
@@ -341,6 +361,11 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
 
         // Get caster unit
         Unit* caster = ObjectAccessor::GetUnit(*bot, casterGuid);
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
+            return;
+        }
         if (!caster || !caster->IsAlive())
             continue;
 
@@ -381,6 +406,11 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     UnifiedInterruptPlan plan;
     plan.target = const_cast<UnifiedInterruptTarget*>(&target);
@@ -480,6 +510,11 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
 
     // Get caster
     Unit* caster = ObjectAccessor::GetUnit(*bot, plan.target->casterGuid);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
+        return;
+    }
     if (!caster || !caster->IsAlive())
     {
         _metrics.interruptFailures.fetch_add(1, std::memory_order_relaxed);
@@ -526,6 +561,11 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
 
         case InterruptMethod::DISPEL:
             success = ExecuteDispel(bot, caster);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
             break;
 
         default:
@@ -541,6 +581,16 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
         InterruptHistoryEntry entry;
         entry.timestamp = getMSTime();
         entry.botGuid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
         entry.targetGuid = plan.target->casterGuid;
         entry.spellId = plan.target->spellId;
         entry.interruptSpellId = plan.capability->spellId;
@@ -596,6 +646,11 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
         {
             Player* bot = ObjectAccessor::GetPlayer(*group->GetLeader(), botGuid);
             if (bot && bot->GetGroup() == group)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
                 availableBots.push_back(botGuid);
         }
     }
@@ -690,6 +745,11 @@ ObjectGuid UnifiedInterruptSystem::GetNextInRotation(Group* group)
         {
             Player* bot = ObjectAccessor::GetPlayer(*group->GetLeader(), botGuid);
             if (bot && bot->GetGroup() == group && botInfo.available)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
                 rotation.push_back(botGuid);
         }
 
@@ -734,6 +794,11 @@ void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellI
         return;
 
     Player* bot = aiIt->second->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
         return;
 
@@ -789,6 +854,11 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto it = _registeredBots.find(botGuid);
     if (it == _registeredBots.end())
         return FallbackMethod::NONE;
@@ -885,6 +955,11 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto aiIt = _botAI.find(botGuid);
     if (aiIt == _botAI.end())
         return false;
@@ -902,6 +977,11 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
 
     // Calculate ideal position (inside interrupt range)
     Position botPos = bot->GetPosition();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     Position targetPos = target->GetPosition();
     float angle = botPos.GetAngle(&targetPos);
 
@@ -1094,6 +1174,11 @@ bool UnifiedInterruptSystem::ExecuteStun(Player* bot, Unit* target)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto it = _registeredBots.find(botGuid);
     if (it == _registeredBots.end())
         return false;
@@ -1126,6 +1211,11 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto it = _registeredBots.find(botGuid);
     if (it == _registeredBots.end())
         return false;
@@ -1209,6 +1299,11 @@ bool UnifiedInterruptSystem::ExecuteLOSBreak(Player* bot, Unit* target)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto aiIt = _botAI.find(botGuid);
     if (aiIt == _botAI.end())
         return false;
@@ -1246,6 +1341,11 @@ bool UnifiedInterruptSystem::ExecuteRangeEscape(Player* bot, Unit* target)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto aiIt = _botAI.find(botGuid);
     if (aiIt == _botAI.end())
         return false;

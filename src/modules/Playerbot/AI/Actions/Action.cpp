@@ -70,6 +70,11 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
 
     Player* bot = ai->GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
         return false;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -82,6 +87,11 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
 
     // Check mana/energy requirements
     std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return nullptr;
+        }
     for (SpellPowerCost const& cost : costs)
     {
         if (bot->GetPower(cost.Power) < cost.Amount)
@@ -114,6 +124,16 @@ bool Action::DoCast(BotAI* ai, uint32 spellId, ::Unit* target)
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
     if (!bot)
         return false;
 
@@ -207,6 +227,16 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return nullptr;
 
@@ -227,6 +257,11 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     for (ObjectGuid guid : nearbyGuids)
     {
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*bot, guid);
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return;
+        }
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -259,12 +294,22 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
 
     // Check group members first
     if (Group* group = bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     {
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
             {
                 if (member == bot || !member->IsAlive())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return nullptr;
+                }
                     continue;
 
                 float rangeSq = range * range;
@@ -298,6 +343,11 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
 
     // Use Map API to find nearby players
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (map)
     {
         Map::PlayerList const& players = map->GetPlayers();
@@ -305,6 +355,11 @@ Player* Action::GetNearestPlayer(BotAI* ai, float range) const
         {
             Player* player = iter->GetSource();
             if (!player || player == bot || !player->IsInWorld())
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return;
+            }
                 continue;
 
             float distanceSq = bot->GetExactDistSq(player);
@@ -352,6 +407,11 @@ bool MovementAction::GeneratePath(BotAI* ai, float x, float y, float z)
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+        return;
+    }
     if (!bot)
         return false;
 

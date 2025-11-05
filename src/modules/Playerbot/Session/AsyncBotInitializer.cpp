@@ -89,6 +89,11 @@ void AsyncBotInitializer::Shutdown()
 // ============================================================================
 
 bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
 {
     if (!bot || !callback)
     {
@@ -123,6 +128,11 @@ bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
 
     TC_LOG_DEBUG("module.playerbot.async",
                  "Bot {} queued for async initialization (queue depth: {})",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  bot->GetName(), _pendingCount.load());
 
     return true;
@@ -160,6 +170,11 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
         {
             TC_LOG_ERROR("module.playerbot.async",
                          "Exception in initialization callback for {}: {}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          result.bot ? result.bot->GetName() : "Unknown",
                          e.what());
 
@@ -224,6 +239,11 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
 
     TC_LOG_DEBUG("module.playerbot.async",
                  "Worker processing initialization for {} (queued for {}ms)",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  task.bot->GetName(),
                  std::chrono::duration_cast<std::chrono::milliseconds>(
                      startTime - task.queueTime).count());
@@ -234,6 +254,11 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     try
     {
         ai = CreateBotAI(task.bot);
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
         success = (ai != nullptr);
     }
     catch (std::exception const& e)
@@ -283,6 +308,11 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     TC_LOG_INFO("module.playerbot.async",
                 "{} Bot {} initialization in {}ms",
                 success ? "✅" : "❌",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 task.bot->GetName(),
                 duration.count());
 

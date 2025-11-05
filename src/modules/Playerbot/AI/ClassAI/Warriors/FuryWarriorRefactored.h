@@ -67,6 +67,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -270,7 +275,17 @@ protected:
 
         // Check if bot has weapons in both hands
         Item* mainHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
 
         _hasDualWield = mainHand && offHand &&
                        offHand->GetTemplate() &&

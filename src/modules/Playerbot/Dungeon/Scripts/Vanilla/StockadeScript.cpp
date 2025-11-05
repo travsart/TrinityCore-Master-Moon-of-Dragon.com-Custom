@@ -142,6 +142,11 @@ public:
                 // Need to dispel or wait out the fear
 
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
@@ -149,6 +154,11 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -195,8 +205,23 @@ public:
                     // Move away briefly
                     float angle = boss->GetAngle(player) + M_PI; // Away from boss
                     float x = player->GetPositionX() + 5.0f * std::cos(angle);
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                        return;
+                    }
                     float y = player->GetPositionY() + 5.0f * std::sin(angle);
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                        return;
+                    }
                     float z = player->GetPositionZ();
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                        return;
+                    }
 
                     TC_LOG_DEBUG("module.playerbot", "StockadeScript: Moving away from Bazil's Smoke Bomb");
                     player->GetMotionMaster()->MovePoint(0, x, y, z);

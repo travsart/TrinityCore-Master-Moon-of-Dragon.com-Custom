@@ -510,6 +510,16 @@ bool BotWorldPositioner::TeleportToZone(Player* bot, ZonePlacement const* placem
 
     // Teleport using TrinityCore API
     bool success = bot->TeleportTo(placement->mapId, placement->x, placement->y, placement->z, placement->orientation);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 
     if (success)
     {
@@ -528,6 +538,11 @@ bool BotWorldPositioner::TeleportToZone(Player* bot, ZonePlacement const* placem
 }
 
 bool BotWorldPositioner::PlaceBot(Player* bot, uint32 level, TeamId faction, uint8 race)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 {
     if (!bot)
     {
@@ -568,6 +583,11 @@ bool BotWorldPositioner::ValidateTeleportCoordinates(ZonePlacement const* placem
 }
 
 void BotWorldPositioner::LogPlacement(Player* bot, ZonePlacement const* placement)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
 {
     TC_LOG_DEBUG("playerbot", "BotWorldPositioner::LogPlacement() - Placed bot {} (L{}) in {} (Zone {})",
         bot->GetName(), bot->GetLevel(), placement->zoneName, placement->zoneId);

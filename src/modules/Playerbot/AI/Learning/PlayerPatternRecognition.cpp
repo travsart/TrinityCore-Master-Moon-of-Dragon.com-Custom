@@ -667,6 +667,11 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
     std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     ObjectGuid guid = player->GetGUID();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     if (_profiles.find(guid) == _profiles.end())
     {
         auto profile = std::make_shared<PlayerProfile>(guid);
@@ -694,6 +699,11 @@ std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid g
 }
 
 void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 {
     if (!player || !_initialized)
         return;
@@ -701,10 +711,20 @@ void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, player->GetGUID().GetCounter(), "RecordBehavior");
 
     auto profile = GetProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
     {
         CreateProfile(player);
         profile = GetProfile(player->GetGUID());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
     }
 
     if (profile)
@@ -731,9 +751,19 @@ BehaviorSample PlayerPatternRecognition::CreateBehaviorSample(Player* player) co
     sample.resourcePct = player->GetPowerPct(player->GetPowerType());
     sample.isMoving = player->IsMoving();
     sample.isInCombat = player->IsInCombat();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+        return;
+    }
 
     if (player->GetVictim())
         sample.targetGuid = player->GetVictim()->GetGUID();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetVictim");
+            return nullptr;
+        }
 
     // Count auras
     sample.auraCount = player->GetAppliedAuras().size();
@@ -752,6 +782,11 @@ void PlayerPatternRecognition::RecordCombatAction(Player* player, uint32_t spell
         return;
 
     auto profile = GetProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return;
 
@@ -764,6 +799,11 @@ void PlayerPatternRecognition::RecordCombatAction(Player* player, uint32_t spell
 }
 
 void PlayerPatternRecognition::ApplyPlayerStyle(Player* bot, ObjectGuid templatePlayerGuid)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
 {
     if (!bot || !_initialized)
         return;
@@ -830,6 +870,11 @@ PlayerPatternRecognition::PredictionResult PlayerPatternRecognition::PredictPlay
         return result;
 
     auto profile = GetProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return result;
 
@@ -845,6 +890,11 @@ PlayerPatternRecognition::PredictionResult PlayerPatternRecognition::PredictPlay
     // Store prediction for validation
     PredictionValidation validation;
     validation.playerGuid = player->GetGUID();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     validation.prediction = result;
     validation.timestamp = std::chrono::steady_clock::now();
     validation.validated = false;
@@ -870,6 +920,11 @@ float PlayerPatternRecognition::GetAnomalyScore(Player* player) const
         return 0.0f;
 
     auto profile = GetProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return 0.0f;
 
@@ -979,6 +1034,11 @@ ScopedPatternRecording::~ScopedPatternRecording()
     if (_player && !_samples.empty())
     {
         auto profile = sPlayerPatternRecognition.GetProfile(_player->GetGUID());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
         if (profile)
         {
             for (const auto& sample : _samples)

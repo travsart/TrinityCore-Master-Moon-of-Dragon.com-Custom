@@ -117,6 +117,11 @@ struct ManaSoulShardResourceDemo
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
         available = mana > 0;
@@ -240,6 +245,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit DemonologyWarlockRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
         , WarlockSpecialization(bot)
         , _demonTracker()
@@ -255,6 +265,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -518,6 +533,11 @@ private:
         {
             if (Aura* aura = this->GetBot()->GetAura(DEMONIC_CORE))
                 _demonicCoreStacks = aura->GetStackAmount();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                    return nullptr;
+                }
             else
                 _demonicCoreStacks = 0;
         }

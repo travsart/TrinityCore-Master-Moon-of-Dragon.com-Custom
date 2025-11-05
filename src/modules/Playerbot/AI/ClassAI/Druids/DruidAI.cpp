@@ -25,6 +25,11 @@ namespace Playerbot
 {
 
 DruidAI::DruidAI(Player* bot) : ClassAI(bot),
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
@@ -190,6 +195,11 @@ bool DruidAI::HandleDefensives()
         return false;
 
     float healthPercent = bot->GetHealthPct();
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
     uint32 currentTime = getMSTime();
 
     // Survival Instincts - critical health
@@ -215,6 +225,11 @@ bool DruidAI::HandleDefensives()
         {
             _lastBarkskin = currentTime;
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Barkskin at {}% health",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName(), healthPercent);
             return true;
         }
@@ -222,6 +237,11 @@ bool DruidAI::HandleDefensives()
 
     // Frenzied Regeneration - Guardian healing
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
         healthPercent < 60.0f &&
         currentTime > _lastFrenziedRegen + 30000 &&
         CanUseAbility(FRENZIED_REGENERATION))
@@ -237,6 +257,11 @@ bool DruidAI::HandleDefensives()
 
     // Ironbark - Restoration defensive for allies
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
     {
         Unit* lowestAlly = GetLowestHealthAlly(40.0f);
         if (lowestAlly && lowestAlly->GetHealthPct() < 40.0f &&
@@ -253,6 +278,11 @@ bool DruidAI::HandleDefensives()
 
     // Cenarion Ward - preemptive defense
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
         healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
@@ -274,6 +304,11 @@ bool DruidAI::HandleTargetSwitching(::Unit*& target)
     {
         OnTargetChanged(priorityTarget);
         target = priorityTarget;
+                     if (!priorityTarget)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+                         return;
+                     }
         TC_LOG_DEBUG("module.playerbot.ai", "Druid {} switching target to {}",
                      GetBot()->GetName(), priorityTarget->GetName());
         return true;
@@ -918,6 +953,11 @@ bool DruidAI::CanUseAbility(uint32 spellId)
 }
 
 void DruidAI::OnCombatStart(::Unit* target)
+                 if (!target)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                     return;
+                 }
 {
     if (!target || !GetBot())
         return;
@@ -927,6 +967,11 @@ void DruidAI::OnCombatStart(::Unit* target)
 
     _inCombat = true;
     _currentTarget = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     _combatTime = 0;
 
     // Update resources
@@ -1108,6 +1153,31 @@ bool DruidAI::CanShiftToForm(DruidForm form) const
 {
     Player* bot = GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
+    if (!bot)
         return false;
 
     switch (form)
@@ -1142,11 +1212,26 @@ void DruidAI::UpdateResources()
     {
         case POWER_ENERGY:
             _energy = bot->GetPower(POWER_ENERGY);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             // Combo points are stored as a separate power type
             _comboPoints = bot->GetPower(POWER_COMBO_POINTS);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
         case POWER_RAGE:
             _rage = bot->GetPower(POWER_RAGE);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
         case POWER_MANA:
             // Mana is tracked via GetPower directly

@@ -65,6 +65,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot", "BlackfathomDeepsScript: Player {} entered Blackfathom Deeps",
             player->GetGUID().GetCounter());
@@ -254,6 +259,16 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return false;
 
@@ -447,12 +462,27 @@ public:
             {
                 // Sarevess applies slow debuffs - dispel curse/magic
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -471,12 +501,27 @@ public:
             {
                 // Kelris puts players to sleep - need wakeup/dispel
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -495,12 +540,22 @@ public:
             {
                 // Gelihast uses Net (immobilize) - dispel movement impairment
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -575,6 +630,16 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return false;
 

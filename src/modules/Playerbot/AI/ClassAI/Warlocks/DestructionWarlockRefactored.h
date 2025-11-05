@@ -115,6 +115,11 @@ struct ManaSoulShardResourceDestro
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
     }
@@ -237,6 +242,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit DestructionWarlockRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
         , WarlockSpecialization(bot)
         , _immolateTracker()
@@ -253,6 +263,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -292,6 +307,11 @@ public:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 
@@ -375,6 +395,16 @@ public:
     void ExecuteCleaveRotation(::Unit* target)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return;
+            }
         uint32 shards = this->_resource.soulShards;
 
         // Priority 1: Havoc on secondary target
@@ -463,6 +493,11 @@ public:
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
         {
             this->CastSpell(target, HAVOC);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return;
+            }
             _havocTracker.ApplyHavoc(target->GetGUID());
             return;
         }
@@ -549,6 +584,11 @@ private:
         {
             if (Aura* aura = this->GetBot()->GetAura(BACKDRAFT_BUFF))
                 _backdraftStacks = aura->GetStackAmount();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                    return nullptr;
+                }
             else
                 _backdraftStacks = 0;
         }

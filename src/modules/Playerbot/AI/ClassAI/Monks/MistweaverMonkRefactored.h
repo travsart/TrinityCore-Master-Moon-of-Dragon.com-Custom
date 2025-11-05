@@ -203,6 +203,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit MistweaverMonkRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : HealerSpecialization<ManaResource>(bot)
         , MonkSpecialization(bot)
         , _renewingMistTracker()
@@ -361,6 +366,11 @@ protected:
 
             // Empowered Renewing Mist (instant 2 charges)
             Unit* target = SelectHealingTarget(group);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
             if (target && this->CanCastSpell(RENEWING_MIST, target))
             {
                 this->CastSpell(target, RENEWING_MIST);
@@ -448,6 +458,11 @@ protected:
         if (!_soothingMistTracker.IsChanneling())
         {
             Unit* target = SelectHealingTarget(group);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                        return;
+                    }
             if (target && target->GetHealthPct() < 90.0f)
             {
                 if (this->CanCastSpell(SOOTHING_MIST, target))

@@ -141,25 +141,50 @@ public:
                 continue;
 
             ObjectGuid guid = member->GetGUID();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                return;
+            }
 
             // Sync with actual auras
             if (Aura* rejuv = member->GetAura(RESTO_REJUVENATION))
                 _rejuvenationTargets[guid] = getMSTime() + rejuv->GetDuration();
+                if (!rejuv)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rejuv in method GetDuration");
+                    return nullptr;
+                }
             else
                 _rejuvenationTargets.erase(guid);
 
             if (Aura* lifebloom = member->GetAura(RESTO_LIFEBLOOM))
                 _lifebloomTargets[guid] = getMSTime() + lifebloom->GetDuration();
+                if (!lifebloom)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: lifebloom in method GetDuration");
+                    return nullptr;
+                }
             else
                 _lifebloomTargets.erase(guid);
 
             if (Aura* wildGrowth = member->GetAura(RESTO_WILD_GROWTH))
                 _wildGrowthTargets[guid] = getMSTime() + wildGrowth->GetDuration();
+                if (!wildGrowth)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: wildGrowth in method GetDuration");
+                    return nullptr;
+                }
             else
                 _wildGrowthTargets.erase(guid);
 
             if (Aura* cenarionWard = member->GetAura(RESTO_CENARION_WARD))
                 _cenarionWardTargets[guid] = getMSTime() + cenarionWard->GetDuration();
+                if (!cenarionWard)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cenarionWard in method GetDuration");
+                    return nullptr;
+                }
             else
                 _cenarionWardTargets.erase(guid);
         }
@@ -202,6 +227,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit RestorationDruidRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : HealerSpecialization<ManaResource>(bot)
         
         , _hotTracker()
@@ -303,6 +333,11 @@ private:
             _treeFormActive = true;
             if (Aura* aura = bot->GetAura(RESTO_INCARNATION_TREE))
                 _treeFormEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -416,6 +451,16 @@ private:
     {
         // Maintain Lifebloom on primary tank
         Unit* tank = GetMainTank(group);
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return;
+                }
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return;
+                }
         if (tank && _hotTracker.NeedsLifebloomRefresh(tank->GetGUID()))
         {
             if (this->CanCastSpell(RESTO_LIFEBLOOM, tank))
@@ -437,6 +482,16 @@ private:
         if (activeRejuvs < 4)
         {
             for (Unit* member : group)
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                            return;
+                        }
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                            return;
+                        }
             {
                 if (member && member->GetHealthPct() < 95.0f && !_hotTracker.HasRejuvenation(member->GetGUID()))
                 {
@@ -458,6 +513,11 @@ private:
         // Count injured allies without Wild Growth
         uint32 needsHealing = 0;
         for (Unit* member : group)
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                return nullptr;
+            }
         {
             if (member && member->GetHealthPct() < 85.0f && !_hotTracker.HasWildGrowth(member->GetGUID()))
                 ++needsHealing;
@@ -472,6 +532,11 @@ private:
                 this->CastSpell(target, RESTO_WILD_GROWTH);
                 // Apply to all nearby allies (simplified)
                 for (Unit* member : group)
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                            return nullptr;
+                        }
                 {
                     if (member)
                         _hotTracker.ApplyWildGrowth(member->GetGUID(), 7000);
@@ -490,6 +555,11 @@ private:
 
         // Use Swiftmend on injured ally with a HoT
         for (Unit* member : group)
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
         {
             if (member && member->GetHealthPct() < 70.0f)
             {
@@ -511,11 +581,26 @@ private:
     bool HandleCenarionWard(const std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
         if (!bot || !bot->HasSpell(RESTO_CENARION_WARD))
             return false;
 
         // Apply Cenarion Ward to tank
         Unit* tank = GetMainTank(group);
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return;
+                }
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return;
+                }
         if (tank && !_hotTracker.HasCenarionWard(tank->GetGUID()))
         {
             if (this->CanCastSpell(RESTO_CENARION_WARD, tank))
@@ -577,6 +662,11 @@ private:
             return members;
 
         Group* group = bot->GetGroup();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         if (!group)
             return members;
 
@@ -585,6 +675,11 @@ private:
             if (Player* member = itr.GetSource())
             {
                 if (member->IsInWorld() && bot->GetDistance(member) <= 40.0f)
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
+                    return nullptr;
+                }
                     members.push_back(member);
             }
         }

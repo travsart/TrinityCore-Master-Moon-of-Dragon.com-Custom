@@ -71,6 +71,11 @@ void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std:
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return;
+                }
             {
                 IssueCommand(member->GetGUID().GetCounter(), command, targets);
             }
@@ -197,6 +202,11 @@ bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
     if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(memberGuid)))
     {
         float distance = assignedPos.GetExactDist(player->GetPosition());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
         return distance <= tolerance;
     }
 
@@ -225,6 +235,11 @@ void GroupCoordination::FollowLeader(uint32 leaderGuid, float distance)
     if (Player* leader = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(leaderGuid)))
     {
         Position leaderPos = leader->GetPosition();
+        if (!leader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
+            return;
+        }
         UpdateFormation(leaderPos);
     }
 }
@@ -400,6 +415,11 @@ void GroupCoordination::UpdateTargetAssessment()
         if (Unit* unit = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTarget), guid))
         {
             target.lastKnownPosition = unit->GetPosition();
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+                return nullptr;
+            }
             target.lastSeen = getMSTime();
         }
     }

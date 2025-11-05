@@ -146,7 +146,22 @@ public:
     {
         // Initialize energy/combo resources
         this->_resource.maxEnergy = bot->HasSpell(RogueAI::VIGOR) ? 120 : 100;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         this->_resource.maxComboPoints = bot->HasSpell(RogueAI::DEEPER_STRATAGEM) ? 6 : 5;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
@@ -156,6 +171,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -188,6 +208,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
 
         // Maintain poisons
         if (!bot->HasAura(RogueAI::DEADLY_POISON) && this->CanCastSpell(RogueAI::DEADLY_POISON, bot))

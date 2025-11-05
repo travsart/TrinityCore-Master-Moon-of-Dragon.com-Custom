@@ -287,6 +287,11 @@ private:
         if (!_bot || HasActivePet())
             return;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
         _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
     }
 
@@ -306,6 +311,11 @@ private:
             return;
 
         Pet* pet = _bot->GetPet();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
         if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET_SURV, false);
@@ -379,6 +389,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -412,6 +427,16 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
 
         // Ensure pet is summoned
         if (!_petManager.HasActivePet())
@@ -493,6 +518,11 @@ protected:
 
         // Priority 2: Maintain Serpent Sting
         if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return 0;
+        }
         {
             this->CastSpell(target, SPELL_SERPENT_STING);
             _lastSerpentSting = getMSTime();
@@ -662,6 +692,11 @@ private:
     }
 
     bool ShouldUseCoordinatedAssault(Unit* target) const
+               if (!target)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                   return nullptr;
+               }
     {
         if (!target)
             return false;
@@ -766,7 +801,22 @@ private:
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
         float x = target->GetPositionX() + 15.0f * std::cos(angle);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+            return;
+        }
         float y = target->GetPositionY() + 15.0f * std::sin(angle);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return nullptr;
+        }
         return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }

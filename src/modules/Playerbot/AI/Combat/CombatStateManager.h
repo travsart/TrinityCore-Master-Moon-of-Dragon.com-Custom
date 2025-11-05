@@ -107,6 +107,11 @@ namespace Events
  * CombatManager::SetInCombatWith(attacker)          [Trinity API]
  *   ↓
  * bot->IsInCombat() = true                          [Combat State Active]
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+     return nullptr;
+ }
  *   ↓
  * SoloCombatStrategy::IsActive() = true             [Combat AI Runs]
  * ```

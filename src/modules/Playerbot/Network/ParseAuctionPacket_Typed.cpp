@@ -26,6 +26,16 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -39,6 +49,11 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
     AuctionEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_COMMAND_RESULT (typed): auction={}, cmd={}, error={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.AuctionID, packet.Command, packet.ErrorCode);
 }
 
@@ -51,6 +66,21 @@ void ParseTypedAuctionListBucketsResult(WorldSession* session, WorldPackets::Auc
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
         return;
 
@@ -74,6 +104,21 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     if (!bot)
         return;
 
@@ -97,6 +142,16 @@ void ParseTypedAuctionWonNotification(WorldSession* session, WorldPackets::Aucti
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -113,6 +168,11 @@ void ParseTypedAuctionWonNotification(WorldSession* session, WorldPackets::Aucti
     AuctionEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AUCTION_WON_NOTIFICATION (typed): auction={}, item={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Info.AuctionID, itemId);
 }
 
@@ -125,6 +185,16 @@ void ParseTypedAuctionOutbidNotification(WorldSession* session, WorldPackets::Au
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -137,6 +207,11 @@ void ParseTypedAuctionOutbidNotification(WorldSession* session, WorldPackets::Au
     AuctionEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AUCTION_OUTBID_NOTIFICATION (typed): auction={}, newBid={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Info.AuctionID, packet.BidAmount);
 }
 

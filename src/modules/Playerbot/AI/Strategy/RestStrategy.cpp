@@ -69,6 +69,16 @@ bool RestStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
 
     // NOT active during combat (can't eat/drink in combat)
     if (bot->IsInCombat())
@@ -84,6 +94,11 @@ float RestStrategy::GetRelevance(BotAI* ai) const
         return 0.0f;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 
     // Can't rest in combat
     if (bot->IsInCombat())
@@ -103,6 +118,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         return;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 
     // Can't rest in combat
     if (bot->IsInCombat())
@@ -117,9 +137,24 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     float healthPct = bot->GetHealthPct();
     float manaPct = bot->GetMaxPower(POWER_MANA) > 0
         ? (bot->GetPower(POWER_MANA) * 100.0f / bot->GetMaxPower(POWER_MANA))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         : 100.0f;
 
     TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy::UpdateBehavior: Bot {} health={:.1f}%, mana={:.1f}%, needsFood={}, needsDrink={}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                  bot->GetName(), healthPct, manaPct, NeedsFood(ai), NeedsDrink(ai));
 
     uint32 currentTime = getMSTime();
@@ -140,6 +175,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (_isEating && healthPct >= _restCompleteHealth)
     {
         TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} finished eating ({:.1f}% health)",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      bot->GetName(), healthPct);
         _isEating = false;
     }
@@ -147,6 +187,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (_isDrinking && manaPct >= _restCompleteMana)
     {
         TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} finished drinking ({:.1f}% mana)",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      bot->GetName(), manaPct);
         _isDrinking = false;
     }
@@ -165,6 +210,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         if (food)
         {
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} found food item {}, attempting to eat",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName(), food->GetTemplate()->GetName(DEFAULT_LOCALE));
 
             if (EatFood(ai, food))
@@ -174,17 +224,32 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     _restStartTime = currentTime;
 
                 TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} started eating ({:.1f}% health)",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              bot->GetName(), healthPct);
             }
             else
             {
                 TC_LOG_WARN("module.playerbot.strategy", "RestStrategy: Bot {} failed to eat food {}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), food->GetTemplate()->GetName(DEFAULT_LOCALE));
             }
         }
         else
         {
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} needs food but none found in inventory",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName());
         }
     }
@@ -196,6 +261,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         if (drink)
         {
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} found drink item {}, attempting to drink",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName(), drink->GetTemplate()->GetName(DEFAULT_LOCALE));
 
             if (DrinkWater(ai, drink))
@@ -205,17 +275,32 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     _restStartTime = currentTime;
 
                 TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} started drinking ({:.1f}% mana)",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              bot->GetName(), manaPct);
             }
             else
             {
                 TC_LOG_WARN("module.playerbot.strategy", "RestStrategy: Bot {} failed to drink {}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), drink->GetTemplate()->GetName(DEFAULT_LOCALE));
             }
         }
         else
         {
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} needs drink but none found in inventory",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName());
         }
     }
@@ -227,6 +312,11 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         if (bandage && UseBandage(ai, bandage))
         {
             TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} used bandage ({:.1f}% health)",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          bot->GetName(), healthPct);
         }
     }
@@ -259,6 +349,11 @@ bool RestStrategy::NeedsDrink(BotAI* ai) const
         return false;
 
     float manaPct = (bot->GetPower(POWER_MANA) * 100.0f) / bot->GetMaxPower(POWER_MANA);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     return manaPct < _drinkManaThreshold;
 }
 
@@ -273,6 +368,11 @@ Item* RestStrategy::FindFood(BotAI* ai) const
     for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
     {
         Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (!item)
             continue;
 
@@ -350,6 +450,11 @@ Item* RestStrategy::FindDrink(BotAI* ai) const
     for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
     {
         Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (!item)
             continue;
 
@@ -427,6 +532,11 @@ Item* RestStrategy::FindBandage(BotAI* ai) const
     for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
     {
         Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (!item)
             continue;
 

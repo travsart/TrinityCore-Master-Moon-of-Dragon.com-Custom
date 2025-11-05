@@ -6,6 +6,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
     try
     {
         ObjectGuid characterGuid = bot ? bot->GetGUID() : ObjectGuid::Empty;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         // Ensure we have a valid player
         if (!bot)
@@ -78,8 +83,23 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
                 // if (Player* player = GetPlayer())
                 // {
                 //     Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 //     TC_LOG_ERROR("module.playerbot.session", "Bot {} login group check: player={}, group={}",
                 //                 player->GetName(), (void*)player, (void*)group);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
                 //
                 //     if (group)
                 //     {
@@ -118,6 +138,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
             TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
         }
 

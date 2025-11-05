@@ -260,6 +260,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotRegistration)
     // Verify bot was registered
     // Note: Need public getter for testing
     // auto info = sUnifiedInterruptSystem->GetBotInfo(bot->GetGUID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     // EXPECT_NE(info.spellId, 0);
     */
 }
@@ -279,6 +284,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUnregistration)
 
     sUnifiedInterruptSystem->RegisterBot(bot, ai);
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     sUnifiedInterruptSystem->UnregisterBot(botGuid);
 
@@ -299,6 +309,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUpdate)
     /*
     Player* bot = CreateMockBot(1);
     BotAI* ai = CreateMockBotAI(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     sUnifiedInterruptSystem->RegisterBot(bot, ai);
 
@@ -313,6 +328,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUpdate)
 
     // Verify cooldown decreased
     // auto info = sUnifiedInterruptSystem->GetBotInfo(bot->GetGUID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     // EXPECT_LT(info.cooldownRemaining, 1000);
     */
 }
@@ -361,6 +381,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastInterrupted)
 
     /*
     Unit* caster = CreateMockCaster(1);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     uint32 spellId = 12345;
     uint32 castTime = 2000;
 
@@ -382,6 +407,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CastComplete)
 
     /*
     Unit* caster = CreateMockCaster(1);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     uint32 spellId = 12345;
     uint32 castTime = 2000;
 
@@ -526,6 +556,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotAssignment)
 
     /*
     Player* bot = CreateMockBot(1);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     ObjectGuid targetGuid;
     uint32 spellId;
 
@@ -601,6 +636,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_CooldownTracking)
 
     /*
     Player* bot = CreateMockBot(1);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     uint32 interruptSpell = 1766; // Kick
 
     // Mark spell as used
@@ -741,6 +781,11 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotStatistics)
     /*
     Player* bot = CreateMockBot(1);
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     BotInterruptStats stats = sUnifiedInterruptSystem->GetBotStats(botGuid);
 

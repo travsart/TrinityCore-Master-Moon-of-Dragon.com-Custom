@@ -32,6 +32,11 @@ BotThreatManager::BotThreatManager(Player* bot)
     if (_bot)
     {
         uint8 classId = _bot->GetClass();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return nullptr;
+        }
         switch (classId)
         {
             case CLASS_WARRIOR:
@@ -49,6 +54,11 @@ BotThreatManager::BotThreatManager(Player* bot)
                 break;
             default:
                 _botRole = ThreatRole::DPS;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 break;
         }
     }
@@ -108,6 +118,11 @@ void BotThreatManager::ResetThreat()
     _analysisDirty = true;
 
     TC_LOG_DEBUG("playerbots", "ThreatManager: Reset threat for bot {}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _bot ? _bot->GetName() : "null");
 }
 
@@ -174,6 +189,11 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     uint32 now = getMSTime();
 
     // No lock needed - threat data is per-bot instance data
@@ -181,12 +201,22 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
     info.botGuid = _bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     info.threatValue = threat;
     info.threatPercent = CalculateThreatPercent(target);
     info.type = type;
     info.lastUpdate = now;
     info.isActive = true;
     info.isInCombat = target->IsInCombat();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsInCombat");
+        return;
+    }
     info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
     info.lastPosition = target->GetPosition();
 
@@ -215,6 +245,11 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     _analysisDirty = true;
 
     TC_LOG_TRACE("playerbots", "ThreatManager: Updated threat for bot {} on target {} - Threat: {:.2f}, Percent: {:.2f}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _bot->GetName(), target->GetName(), threat, info.threatPercent);
 }
 
@@ -224,6 +259,11 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -353,6 +393,11 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -365,6 +410,11 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
     _metrics.priorityUpdates++;
 
     TC_LOG_DEBUG("playerbots", "ThreatManager: Set priority {} for target {} by bot {}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 static_cast<uint32>(priority), target->GetName(), _bot->GetName());
 }
 
@@ -374,6 +424,11 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
         return ThreatPriority::IGNORE;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -452,6 +507,11 @@ void BotThreatManager::UpdateRoleBasedThreat()
                 // Get actual Unit* to check victim
                 Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
                 if (target && target->GetVictim() == _bot)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                    return;
+                }
                 {
                     info.priority = ThreatPriority::CRITICAL;
                 }
@@ -469,6 +529,11 @@ bool BotThreatManager::HasThreat(Unit* target) const
         return false;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -482,6 +547,11 @@ float BotThreatManager::GetThreat(Unit* target) const
         return 0.0f;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -498,6 +568,11 @@ float BotThreatManager::GetThreatPercent(Unit* target) const
         return 0.0f;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -514,6 +589,11 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
         return nullptr;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -542,6 +622,11 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 
         // Get actual Unit* for return vector (needed by callers)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         if (target && target->IsAlive())
             targets.push_back(target);
     }
@@ -567,6 +652,11 @@ std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority p
 
         // Get actual Unit* for return vector (needed by callers)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         if (target && target->IsAlive())
             targets.push_back(target);
     }
@@ -602,6 +692,11 @@ std::vector<Unit*> BotThreatManager::GetEmergencyTargets()
 void BotThreatManager::HandleThreatEmergency()
 {
     TC_LOG_WARN("playerbots", "ThreatManager: Bot {} is handling threat emergency",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _bot ? _bot->GetName() : "null");
 
     // Implementation would depend on bot role and available abilities
@@ -633,6 +728,11 @@ void BotThreatManager::OnSpellInterrupt(Unit* target)
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // No lock needed - threat data is per-bot instance data
 
@@ -727,6 +827,11 @@ float BotThreatManager::CalculateHealthModifier(Unit* target) const
 }
 
 float BotThreatManager::CalculateAbilityModifier(Unit* target) const
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+        return nullptr;
+    }
 {
     if (!target)
         return 1.0f;
@@ -741,10 +846,35 @@ float BotThreatManager::CalculateAbilityModifier(Unit* target) const
     if (target->GetVictim() && target->GetVictim()->IsPlayer())
     {
         Player* victim = target->GetVictim()->ToPlayer();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return nullptr;
+        }
         if (victim && (victim->GetClass() == CLASS_PRIEST ||
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
+            return;
+        }
                       victim->GetClass() == CLASS_PALADIN ||
+                      if (!victim)
+                      {
+                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
+                          return;
+                      }
                       victim->GetClass() == CLASS_SHAMAN ||
+                      if (!victim)
+                      {
+                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
+                          return;
+                      }
                       victim->GetClass() == CLASS_DRUID))
+                      if (!victim)
+                      {
+                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
+                          return;
+                      }
         {
             modifier *= 1.4f;
         }
@@ -761,6 +891,11 @@ void BotThreatManager::AnalyzeTargetThreat(Unit* target, ThreatTarget& threatTar
     threatTarget.aggregatedThreat = threatTarget.info.threatValue;
     threatTarget.averageThreatPercent = threatTarget.info.threatPercent;
     threatTarget.botsInCombat = target->IsInCombat() ? 1 : 0;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsInCombat");
+        return;
+    }
     threatTarget.requiresAttention =
         (threatTarget.info.priority == ThreatPriority::CRITICAL) ||
         (threatTarget.info.threatPercent > EMERGENCY_THREAT_THRESHOLD);
@@ -776,6 +911,11 @@ void BotThreatManager::ClassifyThreatPriority(ThreatTarget& threatTarget)
 
     // Classify based on creature type and abilities
     if (target->GetVictim() == _bot)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+        return nullptr;
+    }
         priority = ThreatPriority::HIGH;
 
     if (target->HasUnitState(UNIT_STATE_CASTING))
@@ -789,6 +929,11 @@ void BotThreatManager::ClassifyThreatPriority(ThreatTarget& threatTarget)
         priority = ThreatPriority::CRITICAL;
 
     if (_bot->GetHealthPct() < 30.0f && target->GetVictim() == _bot)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+        return nullptr;
+    }
         priority = ThreatPriority::CRITICAL;
 
     threatTarget.info.priority = priority;
@@ -800,6 +945,11 @@ void BotThreatManager::UpdateThreatHistory(Unit* target, float threat)
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     auto& history = _threatHistory[targetGuid];
 
     history.push_back(threat);
@@ -834,6 +984,11 @@ void BotThreatManager::UpdateThreatTable(uint32 diff)
         info.threatPercent = CalculateThreatPercent(target);
         info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
         info.isInCombat = target->IsInCombat();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsInCombat");
+            return;
+        }
         info.lastPosition = target->GetPosition();
         info.lastUpdate = now;
     }
@@ -958,6 +1113,11 @@ ThreatPriority ThreatCalculator::DetermineThreatPriority(Unit* target)
 
     // Base priority on creature type and abilities
     if (target->GetCreatureType() == CREATURE_TYPE_HUMANOID)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetCreatureType");
+        return nullptr;
+    }
     {
         if (target->HasUnitState(UNIT_STATE_CASTING))
             return ThreatPriority::HIGH;

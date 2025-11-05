@@ -88,6 +88,11 @@ public:
             _hotStreakActive = true;
             if (Aura* aura = bot->GetAura(48108))
                 _hotStreakEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
         else
         {
@@ -157,6 +162,11 @@ public:
     using Base::_resource;
 
     explicit FireMageRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : RangedDpsSpecialization<ManaResource>(bot)
         , _hotStreakTracker()
         , _fireBlastTracker()
@@ -264,6 +274,11 @@ private:
             _combustionActive = true;
             if (Aura* aura = bot->GetAura(FIRE_COMBUSTION))
                 _combustionEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -311,6 +326,16 @@ private:
 
         // Phoenix Flames (high damage, generates Heating Up)
         if (bot->HasSpell(FIRE_PHOENIX_FLAMES) && (getMSTime() - _lastPhoenixFlamesTime) >= 30000)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {

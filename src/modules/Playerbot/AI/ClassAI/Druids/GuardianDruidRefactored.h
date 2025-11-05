@@ -69,7 +69,17 @@ public:
         if (Aura* aura = bot->GetAura(GUARDIAN_IRONFUR))
         {
             _ironfurStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _ironfurEndTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -135,13 +145,28 @@ public:
             return;
 
         ObjectGuid guid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         // Sync with actual aura
         if (Aura* aura = target->GetAura(GUARDIAN_THRASH))
         {
             auto& thrash = _thrashTargets[guid];
             thrash.stacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
             thrash.endTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -169,6 +194,11 @@ public:
     using Base::GetEnemiesInRange;
     using Base::_resource;
     explicit GuardianDruidRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : TankSpecialization<RageResource>(bot)
         
         , _ironfurTracker()
@@ -254,6 +284,11 @@ public:
         }
 
         // Regrowth (if out of combat and low health)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(GUARDIAN_REGROWTH, bot))
         {
             this->CastSpell(bot, GUARDIAN_REGROWTH);
@@ -287,6 +322,11 @@ private:
             _frenziedRegenerationActive = true;
             if (Aura* aura = bot->GetAura(GUARDIAN_FRENZIED_REGENERATION))
                 _frenziedRegenerationEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
 
         // Berserk state
@@ -348,6 +388,11 @@ private:
     {
         Player* bot = this->GetBot();
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         // Berserk/Incarnation (major cooldown - increased damage and rage gen)
         if (this->_resource < 50 && CanUseMajorCooldown())
@@ -393,6 +438,11 @@ private:
 
         // Pulverize (consume Thrash stacks for damage buff - if talented)
         if (bot->HasSpell(GUARDIAN_PULVERIZE) && _thrashTracker.GetStacks(targetGuid) >= 2)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(GUARDIAN_PULVERIZE, target))
             {
@@ -436,6 +486,11 @@ private:
     {
         Player* bot = this->GetBot();
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         // Berserk for AoE threat burst
         if (this->_resource < 50 && CanUseMajorCooldown())

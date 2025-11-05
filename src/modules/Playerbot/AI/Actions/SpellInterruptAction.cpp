@@ -253,6 +253,11 @@ uint32 SpellInterruptAction::GetBestInterruptSpell(BotAI* ai, ::Unit* target) co
         return 0;
 
     Classes playerClass = static_cast<Classes>(bot->GetClass());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     float targetDistance = target ? std::sqrt(bot->GetExactDistSq(static_cast<const WorldObject*>(target))) : 0.0f; // Calculate once from squared distance
 
     // Return best available interrupt for this class
@@ -341,6 +346,11 @@ bool SpellInterruptAction::IsInterruptAvailable(BotAI* ai, uint32 interruptSpell
 
     Player* bot = ai->GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
         return false;
 
     // Check if bot knows the spell
@@ -357,6 +367,11 @@ bool SpellInterruptAction::IsInterruptAvailable(BotAI* ai, uint32 interruptSpell
     if (spellInfo)
     {
         std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
         for (const auto& cost : costs)
         {
             if (bot->GetPower(cost.Power) < cost.Amount)
@@ -457,12 +472,37 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
     // Calculate position to move to
     float moveDistance = currentDistance - requiredRange + 1.0f; // Move to 1 yard within range
     float deltaX = bot->GetPositionX() - target->GetPositionX();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
+        return;
+    }
     float deltaY = bot->GetPositionY() - target->GetPositionY();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+        return;
+    }
     float angle = atan2(deltaY, deltaX);
 
     float newX = target->GetPositionX() + cos(angle) * (requiredRange - 1.0f);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return 0;
+    }
     float newY = target->GetPositionY() + sin(angle) * (requiredRange - 1.0f);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return 0;
+    }
     float newZ = target->GetPositionZ();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
 
     // Move to position
     bot->GetMotionMaster()->MovePoint(0, newX, newY, newZ);
@@ -502,6 +542,11 @@ bool SpellInterruptAction::IsInInterruptRange(BotAI* ai, ::Unit* target, float r
 }
 
 bool SpellInterruptAction::IsValidInterruptTarget(::Unit* target) const
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
 {
     if (!target)
         return false;
@@ -529,6 +574,11 @@ bool SpellInterruptAction::IsTargetCastingInterruptible(::Unit* target) const
     if (Spell* currentSpell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         const SpellInfo* spellInfo = currentSpell->GetSpellInfo();
+        if (!currentSpell)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
+            return nullptr;
+        }
         if (spellInfo)
         {
             // Check if spell can be interrupted
@@ -540,6 +590,11 @@ bool SpellInterruptAction::IsTargetCastingInterruptible(::Unit* target) const
     if (Spell* channeledSpell = target->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
     {
         const SpellInfo* spellInfo = channeledSpell->GetSpellInfo();
+        if (!channeledSpell)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: channeledSpell in method GetSpellInfo");
+            return nullptr;
+        }
         if (spellInfo)
         {
             return spellInfo->CanBeInterrupted(nullptr, target);
@@ -576,6 +631,11 @@ ActionResult SpellInterruptAction::CastInterrupt(BotAI* ai, ::Unit* target, uint
 
     // Execute class-specific interrupt
     Classes playerClass = static_cast<Classes>(bot->GetClass());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     switch (playerClass)
     {
         case CLASS_WARRIOR:
@@ -635,8 +695,18 @@ bool SpellInterruptAction::ValidateInterruptCast(BotAI* ai, ::Unit* target, uint
 
 // Class-specific interrupt implementations
 ActionResult SpellInterruptAction::ExecuteWarriorInterrupt(BotAI* ai, ::Unit* target, uint32 spellId)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 {
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (!bot || !target)
         return ActionResult::FAILED;
 
@@ -655,8 +725,18 @@ ActionResult SpellInterruptAction::ExecuteRogueInterrupt(BotAI* ai, ::Unit* targ
 }
 
 ActionResult SpellInterruptAction::ExecuteMageInterrupt(BotAI* ai, ::Unit* target, uint32 spellId)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 {
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (!bot || !target)
         return ActionResult::FAILED;
 

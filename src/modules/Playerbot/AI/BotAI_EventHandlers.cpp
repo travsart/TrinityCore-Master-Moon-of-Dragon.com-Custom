@@ -311,6 +311,11 @@ void BotAI::EnterCombatWithTarget(::Unit* target)
 
     // Prevent duplicate combat entry
     if (_bot->IsInCombat() && _bot->GetVictim() == target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         return;
 
     TC_LOG_INFO("playerbot.combat", "Bot {} force-entering combat with {} (GUID: {})",
@@ -331,6 +336,11 @@ void BotAI::EnterCombatWithTarget(::Unit* target)
 
     // 4. Notify AI systems
     _currentTarget = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     SetAIState(BotAIState::COMBAT);
 
     // 5. Trigger combat start notification

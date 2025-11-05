@@ -70,6 +70,11 @@ CombatAIIntegrator::CombatAIIntegrator(Player* bot) :
     _interruptAwareness = std::make_unique<InterruptAwareness>(bot);
     _mechanicAwareness = std::make_unique<MechanicAwareness>(bot);
     _threatAbilities = std::make_unique<ThreatAbilities>(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     // Set default configuration
     _config = CombatAIConfig();
@@ -211,6 +216,11 @@ void CombatAIIntegrator::Reset()
 
     _metrics.Reset();
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.ai.combat", "CombatAIIntegrator reset for bot {}", _bot->GetName());
 }
 
@@ -237,6 +247,11 @@ void CombatAIIntegrator::OnCombatStart(Unit* target)
         _classAI->OnCombatStart(target);
 
     TC_LOG_DEBUG("bot.ai.combat", "Combat started for bot {} against {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _bot->GetName(), target->GetName());
 }
 
@@ -257,6 +272,11 @@ void CombatAIIntegrator::OnCombatEnd()
     if (_classAI)
         _classAI->OnCombatEnd();
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.ai.combat", "Combat ended for bot {}", _bot->GetName());
 }
 
@@ -265,12 +285,27 @@ void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     Unit* oldTarget = _currentTarget;
+    if (!oldTarget)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: oldTarget in method GetName");
+        return nullptr;
+    }
     _currentTarget = newTarget;
+        if (!newTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+            return;
+        }
 
     // Update components with new target
     if (newTarget)
     {
         _targetSelector->SetPrimaryTarget(newTarget);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _positioning->UpdateTarget(newTarget);
         _interruptCoordinator->UpdateTarget(newTarget);
         _threatCoordinator->OnTargetSwitch(oldTarget, newTarget);
@@ -298,6 +333,11 @@ void CombatAIIntegrator::SetGroup(Group* group)
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return nullptr;
+                }
                 members.push_back(member->GetGUID());
         }
         _formationManager->UpdateGroupMembers(members);
@@ -431,6 +471,11 @@ void CombatAIIntegrator::UpdatePositioning(uint32 diff)
             if (_pathfinding)
             {
                 auto path = _pathfinding->CalculatePath(
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return nullptr;
+                    }
                     _bot->GetPosition(),
                     optimalPos,
                     true // smooth path
@@ -654,6 +699,11 @@ void CombatAIIntegrator::UpdatePathfinding(uint32 diff)
             if (_pathfinding)
             {
                 auto path = _pathfinding->CalculatePath(
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return;
+                    }
                     _bot->GetPosition(),
                     losPos,
                     true
@@ -804,6 +854,16 @@ void CombatAIIntegrator::HandleDefensivePhase()
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return false;
+}
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                 PlayerBotMovementPriority::EMERGENCY_DEFENSIVE,  // Priority 240 - CRITICAL emergency flee
                 fleePos,
                 "Emergency flee - health below 10%",
@@ -829,6 +889,11 @@ void CombatAIIntegrator::HandleDefensivePhase()
             // FALLBACK: Direct MotionMaster call if arbiter not available
             TC_LOG_DEBUG("playerbot.movement.arbiter",
                 "CombatAIIntegrator: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _bot->GetName());
             _bot->GetMotionMaster()->MovePoint(0, fleePos);
         }
@@ -879,6 +944,11 @@ void CombatAIIntegrator::HandleRepositioningPhase()
     if (_pathfinding)
     {
         auto path = _pathfinding->CalculatePath(
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             _bot->GetPosition(),
             newPos,
             true

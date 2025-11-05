@@ -199,6 +199,16 @@ public:
         // Initialize energy/combo resources
         this->_resource.maxEnergy = 100;
         this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
@@ -208,6 +218,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -233,6 +248,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
 
         // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
@@ -489,6 +509,11 @@ private:
     }
 
     bool HasRupture(::Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return false;
+        }
     {
         // Simplified - check if target has Rupture aura
         return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());

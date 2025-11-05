@@ -66,8 +66,18 @@ struct EnergyComboResource
             return;
 
         energy = bot->GetPower(POWER_ENERGY);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         maxEnergy = bot->GetMaxPower(POWER_ENERGY);
         comboPoints = bot->GetPower(POWER_COMBO_POINTS);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         maxComboPoints = bot->GetMaxPower(POWER_COMBO_POINTS);
     }
 
@@ -77,7 +87,17 @@ struct EnergyComboResource
             return;
 
         energy = bot->GetPower(POWER_ENERGY);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         comboPoints = bot->GetPower(POWER_COMBO_POINTS);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
     }
 
     // ComplexResource interface requirements
@@ -195,25 +215,50 @@ public:
             return;
 
         ObjectGuid guid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         // Sync with actual auras
         if (Aura* rake = target->GetAura(FERAL_RAKE))
             _rakeTargets[guid] = getMSTime() + rake->GetDuration();
+            if (!rake)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rake in method GetDuration");
+                return nullptr;
+            }
         else
             _rakeTargets.erase(guid);
 
         if (Aura* rip = target->GetAura(FERAL_RIP))
             _ripTargets[guid] = getMSTime() + rip->GetDuration();
+            if (!rip)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rip in method GetDuration");
+                return nullptr;
+            }
         else
             _ripTargets.erase(guid);
 
         if (Aura* thrash = target->GetAura(FERAL_THRASH_CAT))
             _thrashTargets[guid] = getMSTime() + thrash->GetDuration();
+            if (!thrash)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: thrash in method GetDuration");
+                return nullptr;
+            }
         else
             _thrashTargets.erase(guid);
 
         if (Aura* moonfire = target->GetAura(FERAL_MOONFIRE_CAT))
             _moonfireTargets[guid] = getMSTime() + moonfire->GetDuration();
+            if (!moonfire)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: moonfire in method GetDuration");
+                return nullptr;
+            }
         else
             _moonfireTargets.erase(guid);
     }
@@ -296,7 +341,17 @@ public:
         {
             _bloodtalonsActive = true;
             _bloodtalonsStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
             _bloodtalonsEndTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -322,6 +377,11 @@ public:
     using Base::GetEnemiesInRange;
     using Base::_resource;
     explicit FeralDruidRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : MeleeDpsSpecialization<EnergyComboResource>(bot)
         
         , _bleedTracker()
@@ -423,6 +483,11 @@ private:
             _tigersFuryActive = true;
             if (Aura* aura = bot->GetAura(FERAL_TIGERS_FURY))
                 _tigersFuryEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
 
         // Berserk state
@@ -454,6 +519,11 @@ private:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy regeneration (use when low energy and not capped on combo points)
@@ -573,6 +643,11 @@ private:
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy

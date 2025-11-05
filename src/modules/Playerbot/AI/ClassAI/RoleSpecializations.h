@@ -103,6 +103,11 @@ protected:
             for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && IsTank(member) && member->GetHealthPct() < 60.0f)
                     {
@@ -122,6 +127,11 @@ protected:
             for (GroupReference* ref : *group)
             {
                 if (Player* member = ref->GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && member->GetHealthPct() < lowestPct)
                     {
@@ -173,6 +183,11 @@ protected:
                 if (Player* member = ref->GetSource())
                 {
                     if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                         count++;
                 }
             }
@@ -190,6 +205,11 @@ protected:
                 if (Player* member = ref->GetSource())
                 {
                     if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return false;
+                    }
                         return true;
                 }
             }
@@ -202,8 +222,23 @@ protected:
     {
         // Simple check - could be enhanced with role detection
         return player->GetClass() == CLASS_WARRIOR ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return false;
+        }
                player->GetClass() == CLASS_PALADIN ||
+               if (!player)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                   return false;
+               }
                player->GetClass() == CLASS_DEATH_KNIGHT;
+               if (!player)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                   return false;
+               }
     }
 
 protected:
@@ -383,6 +418,11 @@ protected:
     {
         uint32 missingCount = 0;
         auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         if (it == this->_activeDots.end())
         {
@@ -404,6 +444,11 @@ protected:
     void RefreshExpiringDoTs(Unit* target)
     {
         auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         if (it == this->_activeDots.end())
             return;
 
@@ -610,6 +655,11 @@ public:
         Snapshot snap;
         snap.spellId = spellId;
         snap.targetGuid = target->GetGUID().GetCounter();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
         snap.critChance = caster->GetUnitCriticalChanceAgainst(BASE_ATTACK, target);
         snap.haste = caster->GetRatingBonusValue(CR_HASTE_MELEE);
@@ -637,6 +687,11 @@ public:
 
 private:
     uint64 GetKey(uint32 spellId, Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return 0;
+        }
     {
         return (static_cast<uint64>(spellId) << 32) | target->GetGUID().GetCounter();
     }

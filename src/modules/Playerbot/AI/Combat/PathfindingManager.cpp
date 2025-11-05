@@ -26,6 +26,11 @@ namespace Playerbot
 {
 
 PathfindingManager::PathfindingManager(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     : _bot(bot), _defaultNodeSpacing(DEFAULT_NODE_SPACING), _maxNodes(DEFAULT_MAX_NODES),
       _pathfindingTimeout(DEFAULT_TIMEOUT), _cacheDuration(DEFAULT_CACHE_DURATION),
       _enableCaching(true), _enableDangerAvoidance(true), _lastDangerUpdate(0), _lastCacheCleanup(0)
@@ -101,6 +106,11 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
             result.waypoints = OptimizePath(result.waypoints);
             result.totalDistance = PathfindingUtils::CalculatePathLength(result.waypoints);
             result.estimatedTime = result.totalDistance / _bot->GetSpeed(MOVE_RUN);
+                       if (!bot)
+                       {
+                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                           return;
+                       }
             result.quality = AssessPathQuality(result.waypoints, request);
 
             if (_enableCaching && result.quality >= PathQuality::GOOD)
@@ -125,6 +135,11 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
         {
             _metrics.failedPaths++;
             TC_LOG_DEBUG("playerbot.pathfinding", "Path finding failed for bot {}: {}",
+                       if (!bot)
+                       {
+                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                           return;
+                       }
                        _bot->GetName(), result.failureReason);
         }
 
@@ -137,6 +152,11 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
     {
         result.success = false;
         result.failureReason = "Exception during pathfinding: " + std::string(e.what());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         TC_LOG_ERROR("playerbot.pathfinding", "Exception in FindPath for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -147,6 +167,11 @@ PathResult PathfindingManager::FindPath(const Position& goal, PathFlags flags)
 {
     PathRequest request;
     request.botGuid = _bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     request.startPos = _bot->GetPosition();
     request.goalPos = goal;
     request.pathType = PathType::GROUND_PATH;
@@ -172,6 +197,11 @@ PathResult PathfindingManager::FindPathToUnit(Unit* target, float range, PathFla
     if (range > 0.0f)
     {
         Position botPos = _bot->GetPosition();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
         float currentDistance = botPos.GetExactDist(&goalPos);
 
         if (currentDistance > range)
@@ -186,6 +216,11 @@ PathResult PathfindingManager::FindPathToUnit(Unit* target, float range, PathFla
 
     PathRequest request;
     request.botGuid = _bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     request.startPos = _bot->GetPosition();
     request.goalPos = goalPos;
     request.pathType = PathType::GROUND_PATH;
@@ -199,6 +234,11 @@ PathResult PathfindingManager::FindEscapePath(const std::vector<Unit*>& threats,
 {
     PathRequest request;
     request.botGuid = _bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     request.startPos = _bot->GetPosition();
     request.behavior = MovementBehavior::RETREAT;
     request.flags = PathFlags::FAST | PathFlags::AVOID_ENEMIES;
@@ -344,6 +384,11 @@ PathResult PathfindingManager::CalculateAStarPath(const Position& start, const P
         result.nodeCount = static_cast<uint32>(pathNodes.size());
 
         TC_LOG_DEBUG("playerbot.pathfinding", "A* path calculated for bot {} with {} nodes",
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                       return;
+                   }
                    _bot->GetName(), result.nodeCount);
     }
     else
@@ -496,6 +541,11 @@ bool PathfindingManager::IsNodeWalkable(const Position& pos, const PathRequest& 
         return false;
 
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return false;
 
@@ -574,6 +624,16 @@ std::vector<Position> PathfindingManager::GetNeighborNodes(const Position& cente
 float PathfindingManager::CalculateTerrainCost(const Position& pos)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
     if (!map)
         return 0.0f;
 
@@ -657,6 +717,11 @@ bool PathfindingManager::IsDirectPathPossible(const Position& start, const Posit
         return false;
 
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return false;
 
@@ -666,6 +731,11 @@ bool PathfindingManager::IsDirectPathPossible(const Position& start, const Posit
 bool PathfindingManager::IsWaterNode(const Position& pos)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return false;
 
@@ -752,6 +822,11 @@ void PathfindingManager::TrackPerformance(std::chrono::microseconds duration, bo
 bool PathfindingManager::IsPositionInWorld(const Position& pos)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return false;
 
@@ -763,6 +838,11 @@ bool PathfindingManager::IsPositionInWorld(const Position& pos)
 float PathfindingManager::GetTerrainSlope(const Position& pos)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return 0.0f;
 

@@ -118,6 +118,11 @@ struct ManaSoulShardResource
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         soulShards = 0;
         available = mana > 0;
@@ -246,6 +251,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit AfflictionWarlockRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaSoulShardResource>(bot)
         , WarlockSpecialization(bot)
         , _dotTracker()
@@ -261,6 +271,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -298,6 +313,11 @@ protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 

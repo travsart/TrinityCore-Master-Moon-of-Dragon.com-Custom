@@ -68,6 +68,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -187,6 +192,11 @@ protected:
 
         // Taunt if we don't have aggro
         return target->GetVictim() != this->GetBot();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return;
+        }
     }
 
     void ManageThreat(::Unit* target) override
@@ -334,6 +344,11 @@ protected:
         Player* bot = this->GetBot();
 
         Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         _hasShieldEquipped = offHand &&
                            offHand->GetTemplate() &&
                            offHand->GetTemplate()->GetClass() == ITEM_CLASS_ARMOR &&
@@ -375,6 +390,11 @@ protected:
 
         // Track sunder stacks (max 5)
         _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
     }
 
     // ========================================================================
@@ -394,6 +414,11 @@ protected:
             return false;
 
         auto it = _sunderStacks.find(target->GetGUID());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
         return it != _sunderStacks.end() && it->second >= 5;
     }
 

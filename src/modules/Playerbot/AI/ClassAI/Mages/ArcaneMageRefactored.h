@@ -74,6 +74,11 @@ public:
         // Sync with actual Arcane Charges buff
         if (Aura* aura = bot->GetAura(36032)) // Arcane Charges buff ID
             _charges = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
         else
             _charges = 0;
     }
@@ -121,7 +126,17 @@ public:
         {
             _clearcastingActive = true;
             _clearcastingStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
             _clearcastingEndTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -148,6 +163,11 @@ public:
     using Base::_resource;
 
     explicit ArcaneMageRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : RangedDpsSpecialization<ManaResource>(bot)
         , _chargeTracker()
         , _clearcastingTracker()
@@ -179,6 +199,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (!bot)
             return;
 
@@ -266,6 +291,11 @@ private:
             _arcaneSurgeActive = true;
             if (Aura* aura = bot->GetAura(ARCANE_SURGE))
                 _arcaneSurgeEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -293,6 +323,11 @@ private:
 
         // Touch of the Magi (apply damage amplification debuff at 4 charges)
         if (charges >= 4 && bot->HasSpell(TOUCH_OF_MAGE))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(TOUCH_OF_MAGE, target))
             {

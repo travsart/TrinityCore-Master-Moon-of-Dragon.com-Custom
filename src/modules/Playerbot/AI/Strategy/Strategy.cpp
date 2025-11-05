@@ -107,6 +107,11 @@ float CombatStrategy::GetRelevance(BotAI* ai) const
 
     // Combat strategies are more relevant when in combat or under threat
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     if (bot && bot->IsInCombat())
         relevance.combatRelevance += 100.0f;
 
@@ -147,6 +152,11 @@ bool CombatStrategy::ShouldFlee(BotAI* ai) const
 
     // Priority: Current target if valid
     if (::Unit* currentTarget = bot->GetSelectedUnit())
+        if (!currentTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTarget in method IsAlive");
+            return nullptr;
+        }
     {
         if (currentTarget->IsAlive() && bot->IsValidAttackTarget(currentTarget))
             return currentTarget;
@@ -216,6 +226,11 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
             for (Map::PlayerList::const_iterator iter = players.begin(); iter != players.end(); ++iter)
             {
                 Player* player = iter->GetSource();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                    return;
+                }
                 if (player && player != bot && player->IsInWorld())
                 {
                     // Check if player is within range
@@ -234,6 +249,11 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
 }
 
 bool SocialStrategy::ShouldGroupWith(Player* player) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return nullptr;
+    }
 {
     if (!player)
         return false;

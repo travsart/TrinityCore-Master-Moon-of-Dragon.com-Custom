@@ -113,6 +113,11 @@ struct ManaHolyPowerResource
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         holyPower = 0;
     }
@@ -153,6 +158,11 @@ public:
     void EnableBeaconOfFaith() { _hasBeaconOfFaith = true; }
 
     bool NeedsBeaconRefresh(Player* bot, Unit* target) const
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     {
         if (!target || !bot)
             return false;
@@ -181,6 +191,16 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit HolyPaladinRefactored(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : HealerSpecialization<ManaHolyPowerResource>(bot)
         , PaladinSpecialization(bot)
         , _beaconTracker()
@@ -237,6 +257,11 @@ protected:
     {
         Player* bot = this->GetBot();
         Group* group = bot->GetGroup();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
 
         // Update beacon targets
         UpdateBeacons(group);
@@ -314,6 +339,11 @@ protected:
             for (GroupReference const& ref : group->GetMembers())
             {
                 if (Player* member = ref.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && member->GetHealthPct() < 20.0f)
                     {
@@ -405,6 +435,11 @@ protected:
 
         // Assign beacon to main tank
         Player* tank = GetMainTank(group);
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+                    return;
+                }
         if (tank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), tank))
         {
             if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
@@ -418,6 +453,11 @@ protected:
         if (_beaconTracker.HasSecondaryBeacon())
         {
             Player* secondTank = GetOffTank(group);
+                    if (!secondTank)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: secondTank in method GetGUID");
+                        return;
+                    }
             if (secondTank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), secondTank))
             {
                 if (this->CanCastSpell(BEACON_OF_FAITH, secondTank))
@@ -441,6 +481,11 @@ protected:
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return nullptr;
+                }
             {
                 if (member->IsAlive() && member->GetHealthPct() < lowestPct)
                 {
@@ -502,6 +547,11 @@ private:
             if (Player* member = ref.GetSource())
             {
                 if (member->IsAlive() && member->GetHealthPct() < (threshold * 100.0f))
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return nullptr;
+                }
                     count++;
             }
         }
@@ -551,6 +601,11 @@ private:
         // A more robust implementation would check spec, but talent API is deprecated
         if (Unit* victim = player->GetVictim())
             return victim->GetVictim() == player;
+            if (!victim)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
+                return nullptr;
+            }
 
         return false;
     }

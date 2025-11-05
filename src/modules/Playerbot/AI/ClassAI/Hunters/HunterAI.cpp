@@ -58,6 +58,11 @@ HunterAI::HunterAI(Player* bot) :
 {
     // Initialize combat behavior integration
     _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     // Reset combat metrics
     _combatMetrics.Reset();
@@ -102,8 +107,18 @@ void HunterAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback to basic ranged attack
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
             _bot->CastSpell(target, ARCANE_SHOT, false);
         }
         return;
@@ -175,6 +190,11 @@ bool HunterAI::HandleInterrupts(::Unit* target)
             uint32 now = getMSTime();
 
             // Try Counter Shot first
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
                 now - _lastCounterShot > 24000) // 24 second cooldown
             {
@@ -189,6 +209,11 @@ bool HunterAI::HandleInterrupts(::Unit* target)
             }
 
             // Try Silencing Shot if available (MM spec)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(SILENCING_SHOT) && CanUseAbility(SILENCING_SHOT))
             {
                 if (CastSpell(interruptTarget, SILENCING_SHOT))
@@ -217,6 +242,11 @@ bool HunterAI::HandleDefensives(::Unit* target)
         // Feign Death - emergency escape
         if (healthPct < FEIGN_DEATH_THRESHOLD && ShouldFeignDeath())
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(FEIGN_DEATH) && CanUseAbility(FEIGN_DEATH) &&
                 now - _lastFeignDeath > 30000) // 30 second cooldown
             {
@@ -233,6 +263,11 @@ bool HunterAI::HandleDefensives(::Unit* target)
         // Deterrence - damage reduction
         if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(DETERRENCE) && CanUseAbility(DETERRENCE) &&
                 now - _lastDeterrence > 120000) // 2 minute cooldown
             {
@@ -249,6 +284,11 @@ bool HunterAI::HandleDefensives(::Unit* target)
         // Aspect of the Turtle - modern defensive
         if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(ASPECT_OF_THE_TURTLE) && CanUseAbility(ASPECT_OF_THE_TURTLE))
             {
                 if (CastSpell(ASPECT_OF_THE_TURTLE))
@@ -261,6 +301,11 @@ bool HunterAI::HandleDefensives(::Unit* target)
         }
 
         // Exhilaration - self heal
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (healthPct < 50.0f && _bot->HasSpell(EXHILARATION) && CanUseAbility(EXHILARATION))
         {
             if (CastSpell(EXHILARATION))
@@ -274,6 +319,11 @@ bool HunterAI::HandleDefensives(::Unit* target)
         // Disengage for creating distance
         if (target && GetDistanceToTarget(target) < DEAD_ZONE_MAX)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE) &&
                 now - _lastDisengage > 20000) // 20 second cooldown
             {
@@ -308,6 +358,11 @@ bool HunterAI::HandlePositioning(::Unit* target)
             if (distance < DEAD_ZONE_MAX)
             {
                 // Too close - use disengage or move back
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE))
                 {
                     uint32 now = getMSTime();
@@ -324,6 +379,11 @@ bool HunterAI::HandlePositioning(::Unit* target)
                 }
 
                 // Use melee abilities while in dead zone
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(WING_CLIP) && CanUseAbility(WING_CLIP))
                 {
                     CastSpell(target, WING_CLIP);
@@ -344,6 +404,11 @@ bool HunterAI::HandlePositioning(::Unit* target)
         if (NeedsToKite(target))
         {
             // Apply slowing effects
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return 0;
+            }
             if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
             {
                 if (CastSpell(target, CONCUSSIVE_SHOT))
@@ -355,6 +420,11 @@ bool HunterAI::HandlePositioning(::Unit* target)
             }
 
             // Switch to Aspect of the Cheetah if needed
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                return nullptr;
+            }
             if (!_bot->IsInCombat() && distance > 40.0f)
             {
                 SwitchToMovementAspect();
@@ -420,6 +490,11 @@ bool HunterAI::HandlePetManagement(::Unit* target)
     // Use Kill Command if available (BM spec)
     if (target && GetCurrentSpecialization() == HunterSpec::BEAST_MASTERY)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (_bot->HasSpell(KILL_COMMAND) && CanUseAbility(KILL_COMMAND))
         {
             if (CastSpell(target, KILL_COMMAND))
@@ -434,6 +509,11 @@ bool HunterAI::HandlePetManagement(::Unit* target)
     // Master's Call for freedom effects
     if (_bot->HasUnitState(UNIT_STATE_ROOT) || _bot->HasUnitState(UNIT_STATE_STUNNED))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (_bot->HasSpell(MASTER_S_CALL) && CanUseAbility(MASTER_S_CALL))
         {
             if (CastSpell(MASTER_S_CALL))
@@ -457,6 +537,21 @@ bool HunterAI::HandleTargetSwitching(::Unit* target)
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
+                                     if (!priorityTarget)
+                                     {
+                                         if (!bot)
+                                         {
+                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                                             return nullptr;
+                                         }
+                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method HasAura");
+                                         return nullptr;
+                                     }
+                                     if (!priorityTarget)
+                                     {
+                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+                                         return;
+                                     }
         {
             // Apply Hunter's Mark to new target
             if (_bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
@@ -480,6 +575,16 @@ bool HunterAI::HandleTargetSwitching(::Unit* target)
 
             // Update current target
             _currentTarget = priorityTarget->GetGUID();
+            if (!priorityTarget)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetGUID");
+                return;
+            }
+                         if (!priorityTarget)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+                             return;
+                         }
 
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} switching to priority target {}",
                          GetBot()->GetName(), priorityTarget->GetName());
@@ -498,6 +603,21 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
     {
         ::Unit* ccTarget = GetBestCrowdControlTarget();
         if (ccTarget && ccTarget != target)
+                                     if (!ccTarget)
+                                     {
+                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: ccTarget in method GetPosition");
+                                         return nullptr;
+                                     }
+            if (!ccTarget)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: ccTarget in method GetGUID");
+                return nullptr;
+            }
+                                 if (!ccTarget)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: ccTarget in method GetName");
+                                     return;
+                                 }
         {
             uint32 now = getMSTime();
 
@@ -517,22 +637,42 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
             }
 
             // Scatter Shot for instant CC
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
             {
                 if (CastSpell(ccTarget, SCATTER_SHOT))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Scatter Shot on {}",
+                                 if (!ccTarget)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: ccTarget in method GetName");
+                                     return;
+                                 }
                                  GetBot()->GetName(), ccTarget->GetName());
                     return true;
                 }
             }
 
             // Concussive Shot for slowing
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
             {
                 if (CastSpell(ccTarget, CONCUSSIVE_SHOT))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} slowed {} with Concussive Shot",
+                                 if (!ccTarget)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: ccTarget in method GetName");
+                                     return;
+                                 }
                                  GetBot()->GetName(), ccTarget->GetName());
                     return false; // Continue rotation
                 }
@@ -554,6 +694,11 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
         // Multi-Shot for 3+ targets
         if (nearbyEnemies >= 3)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(MULTI_SHOT) && CanUseAbility(MULTI_SHOT))
             {
                 if (CastSpell(target, MULTI_SHOT))
@@ -567,6 +712,16 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
 
         // Volley for ground-targeted AoE
         if (nearbyEnemies >= 4 && _bot->HasSpell(VOLLEY) && CanUseAbility(VOLLEY))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
         {
             // Volley needs special handling for ground targeting
             Position aoeCenter = _combatBehaviors->GetOptimalPosition();
@@ -591,6 +746,11 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
 
         // Barrage for modern AoE
         if (nearbyEnemies >= 3 && _bot->HasSpell(BARRAGE) && CanUseAbility(BARRAGE))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (CastSpell(target, BARRAGE))
             {
@@ -606,6 +766,11 @@ bool HunterAI::HandleAoEDecisions(::Unit* target)
             uint32 now = getMSTime();
             if (now - _lastTrapPlacement > 30000)
             {
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+                    return nullptr;
+                }
                 PlaceTrap(13813, target->GetPosition()); // Explosive Trap spell ID
                 _lastTrapPlacement = now;
                 _combatMetrics.trapsTriggered++;
@@ -631,6 +796,11 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
         {
             case HunterSpec::BEAST_MASTERY:
                 // Bestial Wrath - pet damage boost
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(BESTIAL_WRATH) && CanUseAbility(BESTIAL_WRATH))
                 {
                     if (HasActivePet() && IsPetInCombat())
@@ -645,6 +815,11 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
                 }
 
                 // Aspect of the Wild - BM cooldown
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(ASPECT_OF_THE_WILD) && CanUseAbility(ASPECT_OF_THE_WILD))
                 {
                     if (CastSpell(ASPECT_OF_THE_WILD))
@@ -658,6 +833,11 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
 
             case HunterSpec::MARKSMANSHIP:
                 // Trueshot - MM burst
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(TRUESHOT) && CanUseAbility(TRUESHOT))
                 {
                     if (CastSpell(TRUESHOT))
@@ -669,6 +849,11 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
                 }
 
                 // Rapid Fire for attack speed
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
                 {
                     if (CastSpell(RAPID_FIRE))
@@ -683,6 +868,11 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
             case HunterSpec::SURVIVAL:
                 // Coordinated Assault or similar survival cooldowns
                 // Survival uses different cooldowns depending on version
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
                 if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
                 {
                     if (CastSpell(RAPID_FIRE))
@@ -709,18 +899,33 @@ void HunterAI::ExecuteNormalRotation(::Unit* target)
     ManageAspects();
 
     // Apply Hunter's Mark if not present
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (!target->HasAura(HUNTER_S_MARK) && _bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
     {
         CastSpell(target, HUNTER_S_MARK);
     }
 
     // Apply Serpent Sting if not present
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (!target->HasAura(SERPENT_STING) && _bot->HasSpell(SERPENT_STING) && CanUseAbility(SERPENT_STING))
     {
         CastSpell(target, SERPENT_STING);
     }
 
     // Kill Shot if target is low health
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
     {
         if (CastSpell(target, KILL_SHOT))
@@ -731,10 +936,20 @@ void HunterAI::ExecuteNormalRotation(::Unit* target)
     }
 
     // Fallback basic rotation (specialization rotations handled by refactored system)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
     {
         CastSpell(target, STEADY_SHOT);
         RecordShotResult(true, false);
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
     }
     else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
     {
@@ -789,6 +1004,16 @@ void HunterAI::OnCombatStart(::Unit* target)
 {
     _inCombat = true;
     _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
+                 if (!target)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                     return;
+                 }
     _combatTime = 0;
 
     // Reset combat metrics
@@ -843,6 +1068,11 @@ bool HunterAI::HasEnoughResource(uint32 spellId)
 
     // Get spell info
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!spellInfo)
         return false;
 
@@ -867,6 +1097,11 @@ void HunterAI::ConsumeResource(uint32 spellId)
 
     // Get spell info
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!spellInfo)
         return;
 
@@ -887,6 +1122,11 @@ void HunterAI::ConsumeResource(uint32 spellId)
 Position HunterAI::GetOptimalPosition(::Unit* target)
 {
     if (!target || !_bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot ? _bot->GetPosition() : Position();
 
     // Use combat behavior integration for positioning
@@ -899,8 +1139,28 @@ Position HunterAI::GetOptimalPosition(::Unit* target)
 
     Position pos;
     pos.m_positionX = target->GetPositionX() - distance * cos(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return nullptr;
+    }
     pos.m_positionY = target->GetPositionY() - distance * sin(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return nullptr;
+    }
     pos.m_positionZ = target->GetPositionZ();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     pos.SetOrientation(target->GetOrientation());
 
     return pos;
@@ -1038,29 +1298,59 @@ float HunterAI::GetPetHealthPercent() const
 
 void HunterAI::HealPet()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!_bot->HasSpell(MEND_PET) || !CanUseAbility(MEND_PET))
         return;
 
     Pet* pet = GetPet();
     if (pet && pet->IsAlive())
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
         _bot->CastSpell(pet, MEND_PET, false);
     }
 }
 
 void HunterAI::RevivePet()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!_bot->HasSpell(REVIVE_PET) || !CanUseAbility(REVIVE_PET))
         return;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
     _bot->CastSpell(_bot, REVIVE_PET, false);
 }
 
 void HunterAI::CallPet()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
         return;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
     _bot->CastSpell(_bot, CALL_PET, false);
 }
 
@@ -1100,10 +1390,20 @@ bool HunterAI::ShouldPlaceSnakeTrap() const
 
 void HunterAI::PlaceTrap(uint32 trapSpell, const Position& pos)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!_bot->HasSpell(trapSpell) || !CanUseAbility(trapSpell))
         return;
 
     // Note: Ground-targeted spells need special handling
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return;
+    }
     _bot->CastSpell(_bot, trapSpell, false);
     _lastTrapPosition = pos;
     _activeTrapType = trapSpell;
@@ -1141,6 +1441,16 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         Trinity::UnitLastSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, target, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return false;
 
@@ -1256,6 +1566,11 @@ void HunterAI::ManageAspects()
         uint32 now = getMSTime();
         if (now - _lastAspectSwitch > 1000) // 1 second GCD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (_bot->HasSpell(optimalAspect) && CanUseAbility(optimalAspect))
             {
                 CastSpell(optimalAspect);
@@ -1294,6 +1609,16 @@ uint32 HunterAI::GetCurrentAspect()
 void HunterAI::SwitchToCombatAspect()
 {
     uint32 combatAspect = _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
 
     if (!HasAura(combatAspect) && _bot->HasSpell(combatAspect))
     {
@@ -1305,6 +1630,21 @@ void HunterAI::SwitchToCombatAspect()
 void HunterAI::SwitchToMovementAspect()
 {
     uint32 moveAspect = _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return 0;
+    }
 
     if (!HasAura(moveAspect) && _bot->HasSpell(moveAspect))
     {
@@ -1324,15 +1664,30 @@ uint32 HunterAI::GetOptimalAspect() const
     if (_bot->IsInCombat())
     {
         // Low on focus? Use Viper
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return 0;
+        }
         if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
             return ASPECT_OF_THE_VIPER;
 
         // Normal combat aspect
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
         return _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
     }
     else
     {
         // Out of combat movement
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
         return _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
     }
 }
@@ -1364,6 +1719,16 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return nullptr;
 
@@ -1421,6 +1786,16 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return 0;
 
@@ -1458,6 +1833,16 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
 bool HunterAI::HasFocus(uint32 amount) const
 {
     return _bot && _bot->GetPower(POWER_FOCUS) >= amount;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
 }
 
 uint32 HunterAI::GetFocus() const
@@ -1502,10 +1887,20 @@ void HunterAI::LogCombatMetrics()
 
 Player* HunterAI::GetMainTank()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     if (!_bot->GetGroup())
         return nullptr;
 
     Group* group = _bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     Player* tank = nullptr;
 
     // Find tank by looking for warriors/paladins/death knights with tank specs
@@ -1536,6 +1931,11 @@ bool HunterAI::IsTargetDangerous(::Unit* target) const
 
     // Check if target is elite or boss
     if (target->GetCreatureType() == CREATURE_TYPE_BEAST && target->GetLevel() > _bot->GetLevel() + 2)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
         return true;
 
     // Check if target has high damage output

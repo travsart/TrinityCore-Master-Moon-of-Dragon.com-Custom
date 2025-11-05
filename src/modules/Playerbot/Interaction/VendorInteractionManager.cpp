@@ -51,6 +51,11 @@ VendorInteractionManager::VendorInteractionManager(Player* bot)
 // ============================================================================
 
 bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uint32 quantity)
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     if (!m_bot || !vendor || !vendor->IsVendor())
         return false;
@@ -64,6 +69,11 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!vendorItem)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Item %u not found in vendor %u inventory",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), itemId, vendor->GetEntry());
         m_stats.purchaseFailures++;
         return false;
@@ -98,6 +108,11 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!CanAfford(goldCost, vendorItem->ExtendedCost))
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Cannot afford item %u (cost: %llu, available: %llu)",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), itemId, goldCost, m_bot->GetMoney());
         m_stats.insufficientGold++;
         RecordPurchase(itemId, goldCost, false);
@@ -108,6 +123,11 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!HasBagSpace(itemId, quantity))
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: No bag space for item %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), itemId);
         m_stats.noBagSpace++;
         RecordPurchase(itemId, goldCost, false);
@@ -120,6 +140,11 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (success)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully purchased %u x %u for %llu copper",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), quantity, itemId, goldCost);
     }
 
@@ -192,6 +217,11 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
         if (!FitsWithinBudget(eval.goldCost, eval.priority, budget))
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Item %u doesn't fit budget (priority: %u, cost: %llu)",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), eval.itemId, static_cast<uint8>(eval.priority), eval.goldCost);
             continue;
         }
@@ -223,6 +253,11 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
 }
 
 uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     if (!m_bot || !vendor || !vendor->IsVendor())
         return 0;
@@ -274,6 +309,11 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
 // ============================================================================
 
 std::vector<VendorItem const*> VendorInteractionManager::GetVendorItems(Creature* vendor) const
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     std::vector<VendorItem const*> items;
 
@@ -404,6 +444,11 @@ bool VendorInteractionManager::CanAfford(uint64 goldCost, uint32 extendedCostId)
         return false;
 
     // Check gold cost
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+        return nullptr;
+    }
     if (m_bot->GetMoney() < goldCost)
         return false;
 
@@ -412,6 +457,11 @@ bool VendorInteractionManager::CanAfford(uint64 goldCost, uint32 extendedCostId)
     if (extendedCostId != 0)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Extended cost %u not yet supported",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), extendedCostId);
         return false;
     }
@@ -449,6 +499,11 @@ VendorInteractionManager::BudgetAllocation VendorInteractionManager::CalculateBu
         return budget;
 
     budget.totalAvailable = m_bot->GetMoney();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+        return;
+    }
 
     // Reserve gold for repairs
     budget.reservedForRepairs = CalculateRepairCostEstimate();
@@ -477,6 +532,11 @@ uint64 VendorInteractionManager::CalculateRepairCostEstimate() const
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (!item)
             continue;
 
@@ -525,6 +585,11 @@ std::vector<uint32> VendorInteractionManager::GetRequiredReagents() const
         return reagents;
 
     uint32 classId = m_bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
 
     // Class-specific reagents (WoW 11.2 item IDs)
     // Note: These are examples - actual item IDs should be verified in game DB
@@ -593,6 +658,11 @@ std::vector<uint32> VendorInteractionManager::GetRequiredConsumables() const
         return consumables;
 
     uint32 botLevel = m_bot->GetLevel();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
 
     // Level-appropriate food and water
     // Note: Item IDs should be verified in game database
@@ -637,14 +707,29 @@ bool VendorInteractionManager::NeedsAmmunition() const
 
     // Only hunters use ammunition
     return m_bot->GetClass() == CLASS_HUNTER;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
 }
 
 uint32 VendorInteractionManager::GetAppropriateAmmunition() const
 {
     if (!m_bot || m_bot->GetClass() != CLASS_HUNTER)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return 0;
+    }
         return 0;
 
     uint32 botLevel = m_bot->GetLevel();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
 
     // Level-appropriate ammunition
     // Note: Item IDs should be verified in game database
@@ -676,6 +761,11 @@ bool VendorInteractionManager::HasBagSpace(uint32 itemId, uint32 quantity) const
     // Use TrinityCore API to check bag space
     ItemPosCountVec dest;
     InventoryResult result = m_bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, quantity);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return nullptr;
+        }
 
     return result == EQUIP_ERR_OK;
 }
@@ -710,6 +800,11 @@ uint32 VendorInteractionManager::GetFreeBagSlots() const
 // ============================================================================
 
 VendorItem const* VendorInteractionManager::FindVendorItem(Creature* vendor, uint32 itemId) const
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     if (!vendor || !vendor->IsVendor())
         return nullptr;
@@ -737,6 +832,16 @@ bool VendorInteractionManager::ExecutePurchase(Creature* vendor, uint32 vendorSl
     // This handles all the complex logic: gold deduction, bag management,
     // reputation discounts, extended costs, etc.
     bool success = m_bot->BuyItemFromVendorSlot(vendor->GetGUID(), vendorSlot, itemId, quantity, bag, slot);
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method GetGUID");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
 
     if (!success)
     {
@@ -779,6 +884,11 @@ bool VendorInteractionManager::IsEquipmentUpgrade(ItemTemplate const* item) cons
         return false;
 
     // Check level requirement
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
     if (item->GetBaseRequiredLevel() > m_bot->GetLevel())
         return false;
 
@@ -819,6 +929,11 @@ bool VendorInteractionManager::IsEquipmentUpgrade(ItemTemplate const* item) cons
         if (eslot != NULL_SLOT)
         {
             Item* currentItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, eslot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return nullptr;
+            }
             if (currentItem)
             {
                 ItemTemplate const* currentTemplate = currentItem->GetTemplate();

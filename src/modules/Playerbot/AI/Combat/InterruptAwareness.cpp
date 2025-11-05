@@ -26,6 +26,11 @@ namespace Playerbot
 {
 
 InterruptAwareness::InterruptAwareness(Player* observer)
+                 if (!observer)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method GetName");
+                     return nullptr;
+                 }
     : _observer(observer)
     , _lastUpdate(std::chrono::steady_clock::now())
 {
@@ -108,6 +113,11 @@ void InterruptAwareness::SetObserver(Player* observer)
 {
     std::lock_guard<std::recursive_mutex> lock(_observerMutex);
     _observer = observer;
+                 if (!observer)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method GetName");
+                     return nullptr;
+                 }
 
     TC_LOG_DEBUG("playerbot", "InterruptAwareness: Observer set to %s",
                  observer ? observer->GetName().c_str() : "nullptr");
@@ -365,6 +375,11 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
         return;
 
     ObjectGuid unitGuid = unit->GetGUID();
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetGUID");
+        return;
+    }
 
     // Check for current spell casting
     if (unit->HasUnitState(UNIT_STATE_CASTING))
@@ -480,9 +495,19 @@ DetectedSpellCast InterruptAwareness::AnalyzeSpellCast(Unit* caster, Spell const
         return cast;
 
     cast.casterGuid = caster->GetGUID();
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     cast.spellId = spellInfo->Id;
     cast.detectionTime = std::chrono::steady_clock::now();
     cast.casterPosition = Position(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ());
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPositionX");
+        return nullptr;
+    }
     cast.isChanneled = spellInfo->IsChanneled();
     cast.isInterruptible = IsSpellInterruptible(spell);
     cast.isHostile = IsSpellHostile(caster, spell);
@@ -550,6 +575,11 @@ bool InterruptAwareness::ShouldDetectSpell(Unit* caster, Spell const* spell) con
     // Check friendly vs hostile
     if (!_config.detectFriendlySpells && _observer)
     {
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsFriendlyTo");
+            return nullptr;
+        }
         if (caster->IsFriendlyTo(_observer))
             return false;
     }
@@ -577,6 +607,11 @@ bool InterruptAwareness::IsSpellInterruptible(Spell const* spell) const
 }
 
 bool InterruptAwareness::IsSpellHostile(Unit* caster, Spell const* spell) const
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsHostileTo");
+        return nullptr;
+    }
 {
     if (!caster || !spell || !_observer)
         return false;
@@ -709,6 +744,16 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _observer->GetMap();
+    if (!observer)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method GetMap");
+        return;
+    }
+        if (!observer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return units;
 
@@ -731,6 +776,16 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     {
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_observer, guid);
         if (!unit || unit == _observer)
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsInCombat");
+                return nullptr;
+            }
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return nullptr;
+        }
             continue;
 
         // Filter for casting or combat units to reduce processing load
@@ -764,12 +819,22 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
 }
 
 bool InterruptAwareness::ShouldScanUnit(Unit* unit) const
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+        return nullptr;
+    }
 {
     if (!unit || !unit->IsAlive())
         return false;
 
     // Don't scan the observer
     if (unit == _observer)
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsInCombat");
+        return nullptr;
+    }
         return false;
 
     // Check if unit is in casting state or might cast soon
@@ -849,6 +914,11 @@ void InterruptAwareness::OptimizeForPerformance()
 bool InterruptAwareness::ShouldSkipScan() const
 {
     // Skip scan if we're not in combat and have no active casts
+    if (!observer)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method IsInCombat");
+        return false;
+    }
     if (!_observer || !_observer->IsInCombat())
     {
         if (GetActiveCastCount() == 0)

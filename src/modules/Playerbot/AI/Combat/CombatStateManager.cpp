@@ -42,6 +42,11 @@ CombatStateManager::CombatStateManager(Player* bot, BotAI* ai)
     , m_config()
 {
     Player* botPtr = GetBot();
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetGUID");
+            return;
+        }
     if (!botPtr)
     {
         TC_LOG_FATAL("module.playerbot.combat",
@@ -65,6 +70,11 @@ CombatStateManager::~CombatStateManager()
     }
 
     Player* botPtr = GetBot();
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
     if (botPtr)
     {
         TC_LOG_DEBUG("module.playerbot.combat",
@@ -82,6 +92,11 @@ bool CombatStateManager::OnInitialize()
     BehaviorManager::OnInitialize();
 
     Player* botPtr = GetBot();
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
     if (!botPtr)
     {
         TC_LOG_ERROR("module.playerbot.combat",
@@ -104,6 +119,11 @@ bool CombatStateManager::OnInitialize()
     {
         TC_LOG_ERROR("module.playerbot.combat",
             "CombatStateManager::OnInitialize: No EventDispatcher available for bot '{}'!",
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
             botPtr->GetName());
         return false;
     }
@@ -112,6 +132,11 @@ bool CombatStateManager::OnInitialize()
 
     TC_LOG_INFO("module.playerbot.combat",
         "CombatStateManager: ✅ Initialized for bot '{}' - subscribed to DAMAGE_TAKEN events",
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
         botPtr->GetName());
 
     // Log configuration
@@ -133,6 +158,11 @@ void CombatStateManager::OnShutdown()
         return;
 
     Player* botPtr = GetBot();
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return nullptr;
+            }
     if (botPtr)
     {
         TC_LOG_DEBUG("module.playerbot.combat",
@@ -159,6 +189,11 @@ void CombatStateManager::OnShutdown()
 
     TC_LOG_INFO("module.playerbot.combat",
         "CombatStateManager: ✅ Shutdown complete for bot '{}'",
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
         botPtr ? botPtr->GetName() : "Unknown");
 }
 
@@ -180,6 +215,11 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
 
     // Validate bot state
     Player* botPtr = GetBot();
+                if (!botPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                    return;
+                }
     if (!botPtr)
     {
         TC_LOG_ERROR("module.playerbot.combat",
@@ -224,6 +264,16 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
 
     // Find attacker unit
     Unit* attacker = ObjectAccessor::GetUnit(*botPtr, attackerGuid);
+if (!botPtr)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+    return;
+}
+    if (!attacker)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method IsAlive");
+        return nullptr;
+    }
     if (!attacker)
     {
         m_statistics.attackerNotFoundSkipped.fetch_add(1, std::memory_order_relaxed);
@@ -245,6 +295,11 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
         {
             TC_LOG_DEBUG("module.playerbot.combat",
                 "CombatStateManager: Bot '{}' attacker '{}' is dead - skipping",
+                if (!botPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                    return;
+                }
                 botPtr->GetName(), attacker->GetName());
         }
         return;
@@ -257,6 +312,11 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
 
         TC_LOG_DEBUG("module.playerbot.combat",
             "CombatStateManager: Bot '{}' took damage from friendly unit '{}' ({} damage) - ignoring",
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
             botPtr->GetName(), attacker->GetName(), damage);
         return;
     }
@@ -314,6 +374,11 @@ void CombatStateManager::ResetStatistics()
     m_statistics.Reset();
 
     Player* botPtr = GetBot();
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
     TC_LOG_INFO("module.playerbot.combat",
         "CombatStateManager: Statistics reset for bot '{}'",
         botPtr ? botPtr->GetName() : "Unknown");
@@ -322,6 +387,11 @@ void CombatStateManager::ResetStatistics()
 void CombatStateManager::DumpStatistics() const
 {
     Player* botPtr = GetBot();
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
     if (!botPtr)
         return;
 
@@ -341,6 +411,11 @@ void CombatStateManager::SetConfiguration(Configuration const& config)
     m_config = config;
 
     Player* botPtr = GetBot();
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
     TC_LOG_INFO("module.playerbot.combat",
         "CombatStateManager: Configuration updated for bot '{}': "
         "enableThreat={}, filterFriendly={}, filterEnvironmental={}, verboseLog={}, minDamage={}",
@@ -359,6 +434,11 @@ void CombatStateManager::SetConfiguration(Configuration const& config)
 bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid, uint32 damage) const
 {
     Player* botPtr = GetBot();
+                    if (!botPtr)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                        return;
+                    }
     if (!botPtr)
         return false;
 
@@ -382,6 +462,16 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
 
     // Filter 2: Self-damage (attacker == bot)
     if (attackerGuid == botPtr->GetGUID())
+    if (!botPtr)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetGUID");
+        return nullptr;
+    }
+                    if (!botPtr)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                        return;
+                    }
     {
         if (m_config.filterEnvironmental)  // Use same config flag for self-damage
         {
@@ -405,6 +495,11 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
         {
             TC_LOG_DEBUG("module.playerbot.combat",
                 "CombatStateManager: Bot '{}' damage {} < threshold {} - filtering",
+                if (!botPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                    return;
+                }
                 botPtr->GetName(), damage, m_config.minDamageThreshold);
         }
         return false;
@@ -420,6 +515,11 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
         {
             TC_LOG_DEBUG("module.playerbot.combat",
                 "CombatStateManager: Bot '{}' already in combat with {} - skipping",
+                if (!botPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                    return;
+                }
                 botPtr->GetName(), attackerGuid.ToString());
         }
         return false;
@@ -436,6 +536,21 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
         TC_LOG_ERROR("module.playerbot.combat",
             "CombatStateManager::EnterCombatWith: Null pointer (bot={}, attacker={})",
             botPtr != nullptr, attacker != nullptr);
+        if (!botPtr)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+            return;
+        }
+    if (!attacker)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetName");
+        return;
+    }
+        if (!attacker)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetLevel");
+            return;
+        }
         return;
     }
 
@@ -445,10 +560,20 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
         attacker->GetName(),
         attacker->GetLevel(),
         attacker->GetTypeId() == TYPEID_PLAYER ? "Player" : "Creature");
+        if (!attacker)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetTypeId");
+            return;
+        }
 
     // CRITICAL: Use Trinity's thread-safe CombatManager API
     // This is the SAME API that Unit::DealDamage() uses internally
     bool combatSet = botPtr->GetCombatManager().SetInCombatWith(attacker);
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
 
     if (!combatSet)
     {
@@ -469,17 +594,32 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
 
             TC_LOG_DEBUG("module.playerbot.combat",
                 "CombatStateManager: Added threat for bot '{}' vs '{}'",
+                if (!botPtr)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                    return;
+                }
                 botPtr->GetName(), attacker->GetName());
         }
     }
 
     // Verify combat state was successfully set
+    if (!botPtr)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method IsInCombat");
+        return nullptr;
+    }
     if (botPtr->IsInCombat())
     {
         m_statistics.combatStateTriggered.fetch_add(1, std::memory_order_relaxed);
 
         TC_LOG_DEBUG("module.playerbot.combat",
             "✅ CombatStateManager: Combat state ACTIVE for bot '{}' (attacker: '{}')",
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
             botPtr->GetName(), attacker->GetName());
     }
     else
@@ -489,12 +629,22 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
         TC_LOG_ERROR("module.playerbot.combat",
             "❌ CombatStateManager: FAILURE - SetInCombatWith() called but IsInCombat() still FALSE for bot '{}'! "
             "This indicates a Trinity API issue or incompatible unit state.",
+            if (!botPtr)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: botPtr in method GetName");
+                return;
+            }
             botPtr->GetName());
 
         // Additional diagnostics
         TC_LOG_ERROR("module.playerbot.combat",
             "   Diagnostic info: bot->HasUnitState(UNIT_STATE_EVADE)={}, "
             "bot->IsInEvadeMode()={}, attacker->IsInEvadeMode()={}",
+            if (!attacker)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method ToCreature");
+                return nullptr;
+            }
             botPtr->HasUnitState(UNIT_STATE_EVADE),
             false, // Players don't have IsInEvadeMode()
             attacker->ToCreature() ? attacker->ToCreature()->IsInEvadeMode() : false);

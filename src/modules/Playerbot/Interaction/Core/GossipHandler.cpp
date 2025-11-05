@@ -188,6 +188,11 @@ namespace Playerbot
             return {};
 
         uint32 entry = creature->GetEntry();
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+            return;
+        }
 
         // Check cached paths first
         std::vector<uint32> cachedPath = GetCachedPath(entry, type);
@@ -214,13 +219,33 @@ namespace Playerbot
 
         // Get or create session
         GossipSession& session = m_activeSessions[bot->GetGUID()];
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         session.botGuid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         session.npcGuid = target->GetGUID();
         session.menuId = menuId;
         session.targetService = desiredType;
 
         // Parse menu options
         session.options = ParseGossipMenu(bot, menuId);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
 
         if (session.options.empty())
             return -1;
@@ -243,6 +268,11 @@ namespace Playerbot
             if (Creature* creature = target->ToCreature())
             {
                 uint32 entry = creature->GetEntry();
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+                    return nullptr;
+                }
                 std::vector<uint32> currentPath;
                 currentPath.push_back(static_cast<uint32>(bestOption));
                 CacheGossipPath(entry, desiredType, currentPath);
@@ -266,6 +296,11 @@ namespace Playerbot
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto it = m_activeSessions.find(bot->GetGUID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (it != m_activeSessions.end())
         {
             // Update session with new menu data
@@ -404,6 +439,11 @@ namespace Playerbot
             {
                 // Send coded response
                 if (WorldSession* session = bot->GetSession())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+                    return nullptr;
+                }
                 {
                     // This would send the code through gossip
                     // session->HandleGossipSelectOptionOpcode with code
@@ -492,9 +532,19 @@ namespace Playerbot
             return false;
 
         return bot->GetMoney() >= option.boxMoney;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
     }
 
     std::string GossipHandler::GenerateResponse(::Player* bot, const std::string& boxText) const
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
     {
         if (!bot || boxText.empty())
             return "";
@@ -516,6 +566,11 @@ namespace Playerbot
             return bot->GetGuildName();
 
         if (lowerText.find("level") != std::string::npos)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+                return nullptr;
+            }
             return std::to_string(bot->GetLevel());
 
         // No suitable response

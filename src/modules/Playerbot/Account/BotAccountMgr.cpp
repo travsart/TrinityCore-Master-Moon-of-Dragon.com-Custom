@@ -343,13 +343,10 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
             // SEQUENTIAL CREATION WITH VALIDATION
             if (uint32 accountId = CreateBotAccount())
             {
-                // VALIDATION: Verify account exists in database before adding to list
-                std::string queryStr = fmt::format(
-                    "SELECT ba.id FROM battlenet_accounts ba "
-                    "LEFT JOIN account a ON a.battlenet_account = ba.id "
-                    "WHERE ba.id = {} LIMIT 1", accountId);
-
-                QueryResult result = LoginDatabase.Query(queryStr.c_str());
+                // VALIDATION: Verify account exists in database before adding to list (prepared statement)
+                LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EXISTS);
+                stmt->SetData(0, accountId);
+                PreparedQueryResult result = LoginDatabase.Query(stmt);
 
                 if (result)
                 {
@@ -739,14 +736,10 @@ void BotAccountMgr::LoadAccountMetadata()
 
     try
     {
-        // Query BattleNet account table for existing bot accounts
+        // Query BattleNet account table for existing bot accounts (prepared statement)
         // Look for emails with pattern like "#@playerbot.local" or "bot%@playerbot.local"
-        QueryResult result = LoginDatabase.Query(
-            "SELECT ba.id, ba.email, a.id as legacy_account_id "
-            "FROM battlenet_accounts ba "
-            "LEFT JOIN account a ON a.battlenet_account = ba.id "
-            "WHERE ba.email LIKE '%#%' OR ba.email LIKE '%@playerbot.local' "
-            "ORDER BY ba.email");
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BOT_ACCOUNTS_ALL);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
 
         if (result)
         {

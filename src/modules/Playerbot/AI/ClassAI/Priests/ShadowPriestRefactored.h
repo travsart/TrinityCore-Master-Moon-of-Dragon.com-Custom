@@ -253,6 +253,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ShadowPriestRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : RangedDpsSpecialization<ManaResource>(bot)
         , PriestSpecialization(bot)
         , _insanityTracker()
@@ -312,6 +317,11 @@ public:
         // Vampiric Embrace (healing for group)
         if ((getMSTime() - _lastVampiricEmbraceTime) >= 120000) // 2 min CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return nullptr;
+            }
             if (bot->GetHealthPct() < 70.0f || (bot->GetGroup() && bot->GetGroup()->GetMembersCount() > 1))
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_EMBRACE, bot))
@@ -391,6 +401,11 @@ private:
             _darkAscensionActive = true;
             if (Aura* aura = bot->GetAura(SHADOW_DARK_ASCENSION))
                 _darkAscensionEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -407,6 +422,11 @@ private:
         {
             // Dark Ascension (alternative to Void Eruption)
             if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (getMSTime() - _lastDarkAscensionTime) >= 60000)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                 {
@@ -430,24 +450,54 @@ private:
         }
 
         // Maintain DoTs
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return 0;
+        }
         if (!_dotTracker.HasVampiricTouch(target->GetGUID()) ||
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return 0;
+            }
             _dotTracker.NeedsVampiricTouchRefresh(target->GetGUID()))
         {
             if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
             {
                 this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                 _insanityTracker.GenerateInsanity(5);
                 return;
             }
         }
 
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         if (!_dotTracker.HasShadowWordPain(target->GetGUID()) ||
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             _dotTracker.NeedsShadowWordPainRefresh(target->GetGUID()))
         {
             if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
             {
                 this->CastSpell(target, SHADOW_SHADOW_WORD_PAIN);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 _insanityTracker.GenerateInsanity(4);
                 return;
@@ -463,7 +513,17 @@ private:
                 this->CastSpell(target, SHADOW_VOID_BOLT);
                 _voidformTracker.IncrementStack();
                 // Void Bolt refreshes DoTs
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 return;
             }
@@ -482,6 +542,11 @@ private:
 
         // Mindgames (cooldown ability)
         if (bot->HasSpell(SHADOW_MINDGAMES) && (getMSTime() - _lastMindgamesTime) >= 45000)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(SHADOW_MINDGAMES, target))
             {
@@ -513,6 +578,11 @@ private:
 
         // Void Torrent (channeled damage)
         if (bot->HasSpell(SHADOW_VOID_TORRENT) && (getMSTime() - _lastVoidTorrentTime) >= 30000)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(SHADOW_VOID_TORRENT, target))
             {
@@ -580,11 +650,21 @@ private:
         if (enemyCount <= 5)
         {
             // Multi-dot if 5 or fewer enemies
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             if (!_dotTracker.HasVampiricTouch(target->GetGUID()))
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
                 {
                     this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                        return;
+                    }
                     _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                     _insanityTracker.GenerateInsanity(5);
                     return;

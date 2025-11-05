@@ -22,6 +22,11 @@ void SpatialGridManager::CreateGrid(Map* map)
     uint32 mapId = map->GetId();
 
     if (_grids.find(mapId) != _grids.end())
+            if (!map)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+                return;
+            }
     {
         TC_LOG_WARN("playerbot.spatial",
             "Spatial grid already exists for map {} ({})",
@@ -33,6 +38,11 @@ void SpatialGridManager::CreateGrid(Map* map)
     grid->Start(); // Initialize (no background thread, synchronous mode)
 
     _grids[mapId] = std::move(grid);
+        if (!map)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+            return;
+        }
 
     TC_LOG_INFO("playerbot.spatial",
         "Created spatial grid for map {} ({}) in synchronous mode",

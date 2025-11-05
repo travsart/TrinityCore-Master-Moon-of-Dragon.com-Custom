@@ -229,6 +229,11 @@ ShamanAI::ShamanAI(Player* bot) : ClassAI(bot),
     _chainHealBounceCount(3)
 {
     TC_LOG_DEBUG("module.playerbot.ai", "ShamanAI created for player {}",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  bot ? bot->GetName() : "null");
 }
 
@@ -240,6 +245,11 @@ void ShamanAI::UpdateRotation(::Unit* target)
         return;
 
     Player* bot = GetBot();
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
 
     // Check if bot should use baseline rotation (levels 1-9 or no spec)
     if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
@@ -623,12 +633,27 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
 
     Unit* priorityTarget = behaviors->GetPriorityTarget();
     if (!priorityTarget || priorityTarget == target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return nullptr;
+        }
+                if (!priorityTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetGUID");
+                    return nullptr;
+                }
         return false;
 
     // Hex the current target if it's not the priority
     if (CanUseAbility(SPELL_HEX))
     {
         if (!target->HasAura(SPELL_HEX) && target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
         {
             if (CastSpell(target, SPELL_HEX))
             {
@@ -649,6 +674,11 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
         {
             if (HandleFlameShock(priorityTarget))
             {
+                if (!priorityTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetGUID");
+                    return nullptr;
+                }
                 SetTarget(priorityTarget->GetGUID());
                 return true;
             }
@@ -659,6 +689,11 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
 }
 
 bool ShamanAI::HandlePurgeDispel(::Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
+        return nullptr;
+    }
 {
     if (!target)
         return false;
@@ -671,6 +706,11 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
             // Check if target has purgeable buffs
             bool hasPurgeableBuff = false;
             Unit::AuraApplicationMap const& auras = target->GetAppliedAuras();
+                                 if (!target)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                                     return;
+                                 }
             for (auto const& [auraId, aurApp] : auras)
             {
                 if (aurApp->IsPositive() && aurApp->GetBase()->GetSpellInfo()->Dispel == DISPEL_MAGIC)
@@ -701,6 +741,11 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
             for (GroupReference const& itr : group->GetMembers())
             {
                 if (Player* member = itr.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (!member->IsAlive() || member->GetDistance(GetBot()) > 40.0f)
                         continue;
@@ -708,6 +753,11 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
                     // Check for dispellable debuffs
                     bool hasDispellableDebuff = false;
                     Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
+                                         if (!member)
+                                         {
+                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
+                                             return;
+                                         }
                     for (auto const& [auraId, aurApp] : auras)
                     {
                         if (!aurApp->IsPositive())
@@ -1291,6 +1341,16 @@ bool ShamanAI::HandleFlameShock(::Unit* target)
         if (CastSpell(target, SPELL_FLAME_SHOCK))
         {
             _flameshockTarget = target->GetGUID().GetCounter();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                             return;
+                         }
             _flameshockExpiry = getMSTime() + FLAME_SHOCK_DURATION;
             _hasFlameShockUp = true;
             _elementalMaelstrom += 20;
@@ -1414,6 +1474,11 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target)
 }
 
 bool ShamanAI::HandleStormstrike(::Unit* target)
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                             return;
+                         }
 {
     if (!target || !CanUseAbility(SPELL_STORMSTRIKE))
         return false;
@@ -1432,6 +1497,11 @@ bool ShamanAI::HandleStormstrike(::Unit* target)
 }
 
 bool ShamanAI::HandleLavaLash(::Unit* target)
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                             return;
+                         }
 {
     if (!target || !CanUseAbility(SPELL_LAVA_LASH))
         return false;
@@ -1533,6 +1603,11 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target)
         return true;
 
     // Damage if no healing needed
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
+        return nullptr;
+    }
     if (target && target->IsHostileTo(GetBot()))
     {
         // Lightning Bolt for damage
@@ -1551,6 +1626,16 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target)
 }
 
 bool ShamanAI::HandleRiptide(Player* target)
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                             return nullptr;
+                         }
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                             return;
+                         }
 {
     if (!target || !CanUseAbility(SPELL_RIPTIDE))
         return false;
@@ -1574,6 +1659,11 @@ bool ShamanAI::HandleChainHeal()
         return false;
 
     Player* target = GetLowestHealthGroupMember();
+                         if (!target)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                             return;
+                         }
     if (target)
     {
         if (CastSpell(target, SPELL_CHAIN_HEAL))
@@ -1652,6 +1742,11 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
         {
             // Stoneskin Totem for physical mitigation
             if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->IsDungeonBoss())
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+                return nullptr;
+            }
                 return SPELL_STONESKIN_TOTEM;
 
             // Strength of Earth for melee
@@ -1749,6 +1844,11 @@ bool ShamanAI::IsInMeleeRange(::Unit* target) const
 }
 
 bool ShamanAI::HasFlameShockOnTarget(::Unit* target) const
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
 {
     if (!target)
         return false;
@@ -1798,6 +1898,11 @@ bool ShamanAI::ShouldUseAscendance() const
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
         Unit* target = nullptr;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+            return nullptr;
+        }
         if (snapshot_target)
         {
 
@@ -1880,6 +1985,11 @@ Player* ShamanAI::GetLowestHealthGroupMember() const
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return nullptr;
+                }
             {
                 if (!member->IsAlive() || member->GetDistance(GetBot()) > 40.0f)
                     continue;
@@ -1910,6 +2020,11 @@ uint32 ShamanAI::CountInjuredGroupMembers(float healthThreshold) const
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return nullptr;
+                }
             {
                 if (member->IsAlive() && member->GetHealthPct() < healthThreshold &&
                     member->GetDistance(GetBot()) <= 40.0f)
@@ -2102,6 +2217,11 @@ bool ShamanAI::HandleElementalBlast(::Unit* target)
 }
 
 bool ShamanAI::HandleHealingWave(Player* target)
+                     if (!target)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                         return;
+                     }
 {
     if (!target || !CanUseAbility(SPELL_HEALING_WAVE))
         return false;
@@ -2251,6 +2371,11 @@ bool ShamanAI::CanUseAbility(uint32 spellId)
 }
 
 void ShamanAI::OnCombatStart(::Unit* target)
+                 if (!target)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                     return;
+                 }
 {
     if (!GetBot() || !target)
         return;
@@ -2276,6 +2401,11 @@ void ShamanAI::OnCombatStart(::Unit* target)
     // Initialize combat tracking
     _combatTime = 0;
     _inCombat = true;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     SetTarget(target->GetGUID());
 }
 
@@ -2381,8 +2511,23 @@ Position ShamanAI::GetOptimalPosition(::Unit* target)
     float optimalRange = GetOptimalRange(target);
     float angle = GetBot()->GetAbsoluteAngle(target);
     float x = target->GetPositionX() - optimalRange * std::cos(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return;
+    }
     float y = target->GetPositionY() - optimalRange * std::sin(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return;
+    }
     float z = target->GetPositionZ();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
 
     return Position(x, y, z);
 }
@@ -2434,6 +2579,11 @@ void ShamanAI::UpdateShamanBuffs()
         if (Group* group = GetBot()->GetGroup())
         {
             Player* tank = FindGroupTank(group);
+                                 if (!tank)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+                                     return;
+                                 }
             if (tank && !HasAura(SPELL_EARTH_SHIELD, tank))
             {
                 if (CastSpell(tank, SPELL_EARTH_SHIELD))
@@ -2651,6 +2801,11 @@ bool ShamanAI::ShouldUseBloodlust() const
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
         Unit* target = nullptr;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+            return nullptr;
+        }
         if (snapshot_target)
         {
 
@@ -2692,8 +2847,23 @@ Player* ShamanAI::FindGroupTank(Group* group) const
         {
             // Simple tank detection - highest health or warrior/paladin/death knight
             if (member->GetClass() == CLASS_WARRIOR ||
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return nullptr;
+            }
                 member->GetClass() == CLASS_PALADIN ||
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                    return nullptr;
+                }
                 member->GetClass() == CLASS_DEATH_KNIGHT)
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                    return nullptr;
+                }
             {
                 if (member->GetMaxHealth() > highestHealth)
                 {

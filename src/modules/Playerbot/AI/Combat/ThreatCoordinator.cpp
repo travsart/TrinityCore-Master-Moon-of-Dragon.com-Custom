@@ -85,6 +85,11 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
     std::lock_guard<std::recursive_mutex> lock(_coordinatorMutex);
 
     ObjectGuid botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     // Create threat manager for the bot
     _botThreatManagers[botGuid] = std::make_unique<BotThreatManager>(bot);
@@ -101,6 +106,16 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
     // Load available threat abilities for this bot
     auto& db = ThreatAbilitiesDB::Instance();
     auto abilities = db.GetClassAbilities(static_cast<Classes>(bot->GetClass()));
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
     for (const auto& ability : abilities)
     {
         if (bot->HasSpell(ability.spellId))
@@ -129,6 +144,11 @@ void ThreatCoordinator::RegisterBot(Player* bot, BotAI* ai)
     }
 
     TC_LOG_DEBUG("playerbots", "ThreatCoordinator: Registered bot {} with role {}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 bot->GetName(), static_cast<uint32>(assignment.assignedRole));
 }
 
@@ -307,6 +327,16 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
         auto result = SpellPacketBuilder::BuildCastSpellPacket(
 
             dynamic_cast<Player*>(tank), tauntSpell, target, options);
+if (!tank)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+    return nullptr;
+}
+                    if (!tank)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+                        return;
+                    }
 
 
         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
@@ -344,6 +374,16 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reducti
     // Find appropriate threat reduction ability
     auto& db = ThreatAbilitiesDB::Instance();
     auto abilities = db.GetClassAbilities(static_cast<Classes>(bot->GetClass()));
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
 
     for (const auto& ability : abilities)
     {
@@ -372,6 +412,16 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reducti
                 auto result = SpellPacketBuilder::BuildCastSpellPacket(
 
                     dynamic_cast<Player*>(bot), ability.spellId, bot, options);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
 
 
                 if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
@@ -411,6 +461,16 @@ bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toB
     // Check for threat transfer abilities (Misdirection, Tricks of the Trade)
     auto& db = ThreatAbilitiesDB::Instance();
     auto abilities = db.GetClassAbilities(static_cast<Classes>(from->GetClass()));
+    if (!from)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetClass");
+        return;
+    }
+            if (!from)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method HasSpell");
+                return nullptr;
+            }
 
     for (const auto& ability : abilities)
     {
@@ -438,6 +498,16 @@ bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toB
                 auto result = SpellPacketBuilder::BuildCastSpellPacket(
 
                     dynamic_cast<Player*>(from), ability.spellId, to, options);
+if (!from)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetName");
+    return nullptr;
+}
+                            if (!from)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetName");
+                                return;
+                            }
 
 
                 if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
@@ -586,10 +656,20 @@ void ThreatCoordinator::UpdateGroupThreatStatus()
 
         auto targets = threatMgr->GetAllThreatTargets();
         for (Unit* target : targets)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return nullptr;
+            }
         {
             if (target && target->IsAlive() && target->IsInCombat())
             {
                 ObjectGuid targetGuid = target->GetGUID();
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return nullptr;
+                }
                 allTargets.insert(targetGuid);
 
                 // Track highest threat holder for this target
@@ -614,11 +694,31 @@ void ThreatCoordinator::UpdateGroupThreatStatus()
             continue;
 
         Unit* victim = target->GetVictim();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return;
+        }
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method IsPlayer");
+            return;
+        }
         if (!victim || !victim->IsPlayer())
             continue;
 
         Player* victimPlayer = victim->ToPlayer();
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method ToPlayer");
+            return;
+        }
         ObjectGuid victimGuid = victimPlayer->GetGUID();
+        if (!victimPlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victimPlayer in method GetGUID");
+            return;
+        }
 
         // Check if target is on appropriate tank
         bool onTank = (victimGuid == _primaryTank || victimGuid == _offTank);
@@ -712,6 +812,11 @@ void ThreatCoordinator::GenerateThreatResponses()
             {
                 /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), assignment.targetGuid);
                 if (target && target->GetVictim() != ObjectAccessor::FindPlayer(botGuid))
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                    return;
+                }
                 {
                     ThreatResponseAction action;
                     action.executorBot = botGuid;
@@ -825,10 +930,25 @@ void ThreatCoordinator::InitiateEmergencyProtocol()
             continue;
 
         Unit* victim = target->GetVictim();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return;
+        }
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method IsPlayer");
+            return;
+        }
         if (!victim || !victim->IsPlayer())
             continue;
 
         ObjectGuid victimGuid = victim->ToPlayer()->GetGUID();
+        if (!victim)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method ToPlayer");
+            return;
+        }
 
         // If not on tank, execute emergency taunt
         if (victimGuid != _primaryTank && victimGuid != _offTank)
@@ -853,6 +973,11 @@ void ThreatCoordinator::ExecuteEmergencyTaunt(Unit* target)
     {
         Player* tank = ObjectAccessor::FindPlayer(_primaryTank);
         if (tank && tank->IsAlive() && tank->GetDistance2d(target) <= 30.0f)
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method IsAlive");
+            return;
+        }
         {
             ExecuteTaunt(_primaryTank, target);
             return;
@@ -864,6 +989,11 @@ void ThreatCoordinator::ExecuteEmergencyTaunt(Unit* target)
     {
         Player* tank = ObjectAccessor::FindPlayer(_offTank);
         if (tank && tank->IsAlive() && tank->GetDistance2d(target) <= 30.0f)
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method IsAlive");
+            return;
+        }
         {
             ExecuteTaunt(_offTank, target);
             return;
@@ -875,6 +1005,11 @@ void ThreatCoordinator::ExecuteEmergencyTaunt(Unit* target)
     {
         Player* tank = ObjectAccessor::FindPlayer(backupGuid);
         if (tank && tank->IsAlive() && tank->GetDistance2d(target) <= 30.0f)
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method IsAlive");
+            return;
+        }
         {
             ExecuteTaunt(backupGuid, target);
             return;
@@ -1005,6 +1140,11 @@ ThreatRole ThreatCoordinator::DetermineRole(Player* bot) const
         return ThreatRole::UNDEFINED;
 
     uint8 classId = bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
 
     // Check specialization for hybrid classes
     // This is simplified - in production, check actual spec
@@ -1043,6 +1183,11 @@ uint32 ThreatCoordinator::GetTauntSpellForBot(ObjectGuid botGuid) const
         return 0;
 
     Player* bot = ObjectAccessor::FindPlayer(botGuid);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     if (!bot)
         return 0;
 

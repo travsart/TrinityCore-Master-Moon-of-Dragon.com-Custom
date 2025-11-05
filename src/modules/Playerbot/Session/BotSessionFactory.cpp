@@ -168,6 +168,16 @@ bool BotSessionFactory::ConfigureSession(std::shared_ptr<BotSession> session, Sp
 
         // Apply specific configurations based on character data
         if (Player* player = session->GetPlayer())
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+                return;
+            }
         {
             ApplyClassSpecificConfiguration(session, player->GetClass());
             ApplyLevelConfiguration(session, player->GetLevel());

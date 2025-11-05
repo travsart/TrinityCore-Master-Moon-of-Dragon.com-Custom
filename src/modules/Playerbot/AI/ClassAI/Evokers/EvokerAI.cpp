@@ -132,6 +132,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
             if (CastSpell(interruptTarget, SPELL_QUELL))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} interrupted {} with Quell",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName(), interruptTarget->GetName());
                 return;
             }
@@ -142,6 +147,16 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->NeedsDefensive())
     {
         float healthPct = _bot->GetHealthPct();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
 
         if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
         {
@@ -171,6 +186,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
             if (healTarget && CastSpell(healTarget, VERDANT_EMBRACE))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Verdant Embrace to escape",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName());
                 return;
             }
@@ -182,6 +202,16 @@ void EvokerAI::UpdateRotation(::Unit* target)
     {
         Position optimalPos = behaviors->GetOptimalPosition();
         float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
 
         // Too close - use Hover to gain distance
         if (distance < 15.0f && CanUseAbility(HOVER))
@@ -215,6 +245,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
             TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} switching to priority target {}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName(), priorityTarget->GetName());
         }
     }
@@ -230,6 +265,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 if (CastSpell(ccTarget, SLEEP_WALK))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} Sleep Walking secondary target",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     return;
                 }
@@ -249,6 +289,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 if (CastSpell(target, PYRE))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Pyre for AoE",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     return;
                 }
@@ -259,6 +304,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 StartEmpoweredSpell(ETERNITYS_SURGE, EmpowermentLevel::RANK_3, target);
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Eternity's Surge (Rank 3) for AoE",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName());
                 return;
             }
@@ -270,6 +320,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 StartEmpoweredSpell(DREAM_BREATH, EmpowermentLevel::RANK_3, target);
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Dream Breath (Rank 3) for AoE healing",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName());
                 return;
             }
@@ -280,6 +335,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 if (CastSpell(_bot, EMERALD_BLOSSOM))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Emerald Blossom for AoE healing",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     return;
                 }
@@ -299,6 +359,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 if (CastSpell(_bot, SPELL_DRAGONRAGE))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Dragonrage",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     _dragonrageStacks = 40; // Starts at 40 stacks
                     return;
@@ -313,6 +378,11 @@ void EvokerAI::UpdateRotation(::Unit* target)
                 if (CastSpell(_bot, EMERALD_COMMUNION))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Emerald Communion",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     return;
                 }
@@ -548,6 +618,11 @@ void EvokerAI::ConsumeResource(uint32 spellId)
 Position EvokerAI::GetOptimalPosition(::Unit* target)
 {
     if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot->GetPosition();
 
     Position pos = _bot->GetPosition();
@@ -557,8 +632,23 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
     if (distance > optimalRange || distance < optimalRange * 0.8f)
     {
         pos = target->GetPosition();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+            return nullptr;
+        }
         pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
         pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return nullptr;
+        }
     }
 
     return pos;
@@ -759,6 +849,11 @@ void EvokerAI::ReleaseEmpoweredSpell()
 
     if (target && CanUseAbility(spellId))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         _bot->CastSpell(target, spellId, false);
         ConsumeResource(spellId);
         _empoweredSpellsCast++;
@@ -812,6 +907,11 @@ void EvokerAI::ProcessEchoHealing()
         if (echo.ShouldHeal() && echo.target)
         {
             // Perform echo healing
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
             _bot->CastSpell(echo.target, ECHO, false);
             echo.ProcessHeal();
             _echoHealsPerformed++;
@@ -860,6 +960,11 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
 
     if (CanUseAbility(aspectSpellId))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         _bot->CastSpell(_bot, aspectSpellId, false);
         _currentAspect = aspect;
         _lastAspectShift = _aspectCooldown;
@@ -902,6 +1007,16 @@ bool EvokerAI::CanShiftAspect()
 
     // Check group members
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return;
+        }
     {
         float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
@@ -924,6 +1039,16 @@ bool EvokerAI::CanShiftAspect()
 {
     // Find ally DPS for augmentation buffs
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return;
+        }
     {
         float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
@@ -951,6 +1076,16 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return {};
 

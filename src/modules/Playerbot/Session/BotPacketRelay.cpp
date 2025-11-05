@@ -184,6 +184,11 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
 
     // Early exit: Check if bot is in a group (O(1))
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     if (!group)
     {
         // Bot not in group - nothing to relay
@@ -293,6 +298,11 @@ void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const*
 
     // Get group
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
     {
         return;
@@ -386,6 +396,11 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
         return humanPlayers;
 
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
         return humanPlayers;
 
@@ -422,6 +437,11 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
         return allPlayers;
 
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
         return allPlayers;
 
@@ -447,6 +467,11 @@ bool BotPacketRelay::IsBot(Player const* player)
 
     // Check if player has a BotSession
     WorldSession* session = player->GetSession();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return;
+    }
     if (!session)
         return false;
 
@@ -457,6 +482,11 @@ bool BotPacketRelay::IsBot(Player const* player)
 }
 
 Group* BotPacketRelay::GetBotGroup(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
 {
     if (!bot)
         return nullptr;
@@ -469,6 +499,11 @@ Group* BotPacketRelay::GetBotGroup(Player* bot)
 // ============================================================================
 
 void BotPacketRelay::InitializeForGroup(Player* bot, Group* group)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 {
     if (!bot || !group)
     {
@@ -487,6 +522,11 @@ void BotPacketRelay::InitializeForGroup(Player* bot, Group* group)
 }
 
 void BotPacketRelay::CleanupForGroup(Player* bot, Group* group)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 {
     if (!bot || !group)
     {
@@ -604,6 +644,16 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
 }
 
 bool BotPacketRelay::SendPacketToPlayer(Player* player, WorldPacket const* packet)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
+    return nullptr;
+}
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
 {
     if (!player || !packet)
     {
@@ -629,12 +679,22 @@ bool BotPacketRelay::SendPacketToPlayer(Player* player, WorldPacket const* packe
     {
         _statistics.totalRelayErrors++;
         TC_LOG_ERROR("playerbot", "BotPacketRelay::SendPacketToPlayer() - Unknown exception sending packet to player {}",
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
             player->GetName());
         return false;
     }
 }
 
 void BotPacketRelay::LogRelayEvent(Player* bot, WorldPacket const* packet, size_t recipients)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
 {
     if (!bot || !packet)
         return;

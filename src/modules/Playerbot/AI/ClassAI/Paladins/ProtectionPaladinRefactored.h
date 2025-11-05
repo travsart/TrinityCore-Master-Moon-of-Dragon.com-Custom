@@ -113,8 +113,18 @@ struct ManaHolyPowerResource
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             maxHolyPower = bot->GetMaxPower(POWER_HOLY_POWER);
             holyPower = bot->GetPower(POWER_HOLY_POWER);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
     }
 };
@@ -187,6 +197,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ProtectionPaladinRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : TankSpecialization<ManaHolyPowerResource>(bot)
         , PaladinSpecialization(bot)
         , _shieldTracker()
@@ -205,6 +220,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -242,6 +262,11 @@ public:
 
     // OnTauntRequired - calls base class virtual taunt method
     void TauntTarget(::Unit* target) override
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                return;
+            }
     {
         if (this->CanCastSpell(HAND_OF_RECKONING, target))
         {

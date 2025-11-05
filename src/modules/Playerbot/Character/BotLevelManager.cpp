@@ -128,8 +128,23 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
     auto task = std::make_shared<BotCreationTask>();
     task->taskId = _nextTaskId.fetch_add(1, std::memory_order_relaxed);
     task->botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     task->accountId = bot->GetSession()->GetAccountId();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return;
+    }
     task->botName = bot->GetName();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
 
     // TODO: Submit to ThreadPool for data preparation (Phase 1)
     // For now, execute synchronously until ThreadPool integration is complete
@@ -414,6 +429,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
 {
     // Get bot player object
     Player* bot = ObjectAccessor::FindPlayer(task->botGuid);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
     if (!bot)
     {
         TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} not found",
@@ -435,6 +455,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     if (!ApplyTalents(bot, task))
     {
         TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Talent application failed for {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             bot->GetName());
         success = false;
     }
@@ -445,6 +470,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
         if (!ApplyGear(bot, task))
         {
             TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Gear application failed for {}",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 bot->GetName());
             success = false;
         }
@@ -454,6 +484,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     if (!ApplyZone(bot, task))
     {
         TC_LOG_ERROR("playerbot", "BotLevelManager::ApplyBot_MainThread() - Zone placement failed for {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             bot->GetName());
         success = false;
     }
@@ -466,6 +501,11 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
         if (_verboseLogging.load(std::memory_order_acquire))
         {
             TC_LOG_INFO("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} fully created (L{}, Spec {}, Zone {})",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 bot->GetName(), task->targetLevel, task->primarySpec, task->zonePlacement->zoneName);
         }
     }
@@ -480,6 +520,16 @@ bool BotLevelManager::ApplyLevel(Player* bot, BotCreationTask* task)
 
     // Get current level
     uint32 currentLevel = bot->GetLevel();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 
     // Skip if already at target level
     if (currentLevel >= task->targetLevel)

@@ -714,7 +714,17 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
     // No lock needed - equipment data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     EquipmentAutomationProfile profile = GetAutomationProfile(playerGuid);
+                 if (!player)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                     return;
+                 }
 
     if (!profile.autoEquipEnabled)
         return;
@@ -747,6 +757,11 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
 
                             // Compare items
                             ItemComparisonResult result = CompareItems(player, currentItem, item);
+                                           if (!player)
+                                           {
+                                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                               return;
+                                           }
 
                             if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                             {
@@ -774,6 +789,11 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
         if (::Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+            return nullptr;
+        }
         {
             if (IsItemUpgrade(player, item))
             {
@@ -786,6 +806,11 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
                 {
                     ::Item* currentItem = GetEquippedItemInSlot(player, equipSlot);
                     ItemComparisonResult result = CompareItems(player, currentItem, item);
+                                   if (!player)
+                                   {
+                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                       return;
+                                   }
 
                     if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                     {
@@ -805,6 +830,11 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
     if (upgradesFound > 0)
     {
         TC_LOG_INFO("playerbot.equipment", "✅ AutoEquip Complete: Player {} equipped {} upgrades",
+                   if (!player)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                       return;
+                   }
                    player->GetName(), upgradesFound);
     }
 }
@@ -836,6 +866,11 @@ ItemComparisonResult EquipmentManager::CompareItems(::Player* player, ::Item* cu
     result.scoreDifference = result.newItemScore - result.currentItemScore;
 
     EquipmentAutomationProfile profile = GetAutomationProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     // Item level preference
     if (profile.preferHigherItemLevel && result.newItemLevel > result.currentItemLevel + 5)
@@ -881,6 +916,11 @@ float EquipmentManager::CalculateItemScore(::Player* player, ::Item* item)
 
     // Add item level as base score
     totalScore += static_cast<float>(item->GetItemLevel(player)) * priority.GetStatWeight(StatType::ITEM_LEVEL);
+                 if (!player)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                     return;
+                 }
 
     TC_LOG_TRACE("playerbot.equipment", "Item {} score for player {}: {:.2f}",
                  proto->GetName(DEFAULT_LOCALE), player->GetName(), totalScore);
@@ -917,6 +957,11 @@ float EquipmentManager::CalculateItemTemplateScore(::Player* player, ItemTemplat
         return 0.0f;
 
     StatPriority const& priority = GetStatPriority(player);
+                 if (!player)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                     return;
+                 }
 
     // Calculate weighted stat total using the same algorithm as CalculateItemScore()
     float totalScore = 0.0f;
@@ -951,6 +996,11 @@ std::vector<ObjectGuid> EquipmentManager::IdentifyJunkItems(::Player* player)
         return junkItems;
 
     EquipmentAutomationProfile profile = GetAutomationProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     if (!profile.autoSellJunkEnabled)
         return junkItems;
@@ -979,6 +1029,16 @@ std::vector<ObjectGuid> EquipmentManager::IdentifyJunkItems(::Player* player)
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
         if (::Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+            return nullptr;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
         {
             if (IsJunkItem(player, item) && !IsProtectedItem(player, item))
             {
@@ -1008,6 +1068,16 @@ bool EquipmentManager::IsJunkItem(::Player* player, ::Item* item)
 
     // Check item level threshold
     EquipmentAutomationProfile profile = GetAutomationProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
     if (item->GetItemLevel(player) < profile.minItemLevelToKeep && player->GetLevel() > 20)
         return true;
 
@@ -1039,10 +1109,20 @@ bool EquipmentManager::IsProtectedItem(::Player* player, ::Item* item)
 
     // Never sell soulbound items with high item level
     if (item->IsSoulBound() && item->GetItemLevel(player) >= player->GetLevel())
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return nullptr;
+    }
         return true;
 
     // Never sell set items (if profile says so)
     EquipmentAutomationProfile profile = GetAutomationProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (profile.considerSetBonuses && IsSetItem(item))
         return true;
 
@@ -1098,6 +1178,11 @@ std::unordered_map<uint32, uint32> EquipmentManager::GetConsumableNeeds(::Player
         return needs;
 
     std::vector<uint32> classConsumables = GetClassConsumables(player->GetClass());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return 0;
+    }
 
     for (uint32 itemId : classConsumables)
     {
@@ -1187,6 +1272,11 @@ StatPriority const& EquipmentManager::GetStatPriority(::Player* player)
     }
 
     uint8 classId = player->GetClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
     uint8 specId = static_cast<uint8>(player->GetPrimarySpecialization());
 
     uint16 key = MakeStatPriorityKey(classId, specId);
@@ -1224,6 +1314,11 @@ StatPriority const& EquipmentManager::GetStatPriorityByClassSpec(uint8 classId, 
 }
 
 void EquipmentManager::UpdatePlayerStatPriority(::Player* player)
+                     if (!player)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                         return;
+                     }
 {
     // Called when player changes spec - priority automatically updated via GetStatPriority()
     if (player)
@@ -1279,6 +1374,21 @@ ItemCategory EquipmentManager::GetItemCategory(::Item* item)
 }
 
 bool EquipmentManager::CanPlayerEquipItem(::Player* player, ItemTemplate const* itemTemplate)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
+        return nullptr;
+    }
 {
     if (!player || !itemTemplate)
         return false;
@@ -1357,6 +1467,11 @@ uint32 EquipmentManager::GetEquippedSetPieceCount(::Player* player, uint32 setId
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         if (::Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+            return nullptr;
+        }
         {
             ItemTemplate const* proto = item->GetTemplate();
             if (proto && proto->GetItemSet() == setId)
@@ -1469,6 +1584,11 @@ bool EquipmentManager::IsOutdatedGear(::Player* player, ::Item* item)
     // Item is outdated if it's 10+ levels below player level
     uint32 itemLevel = item->GetItemLevel(player);
     uint32 playerLevel = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
 
     return (playerLevel > itemLevel + 10);
 }
@@ -1485,6 +1605,11 @@ bool EquipmentManager::HasWrongPrimaryStats(::Player* player, ::Item* item)
     // Get player's primary stat
     StatType primaryStat;
     uint8 classId = player->GetClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
 
     switch (classId)
     {
@@ -1524,6 +1649,11 @@ bool EquipmentManager::HasWrongPrimaryStats(::Player* player, ::Item* item)
 ::Item* EquipmentManager::GetEquippedItemInSlot(::Player* player, uint8 slot)
 {
     if (!player || slot >= EQUIPMENT_SLOT_END)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+        return;
+    }
         return nullptr;
 
     return player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
@@ -1554,6 +1684,16 @@ void EquipmentManager::EquipItemInSlot(::Player* player, ::Item* item, uint8 slo
     // Use TrinityCore's EquipItem method
     uint16 dest;
     InventoryResult result = player->CanEquipItem(slot, dest, item, false);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
+                     if (!player)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                         return;
+                     }
 
     if (result == EQUIP_ERR_OK)
     {
@@ -1578,6 +1718,11 @@ uint32 EquipmentManager::GetRecommendedFoodLevel(::Player* player)
     // Return appropriate food item ID based on player level
     // This would need actual WoW item IDs
     uint32 level = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
 
     if (level >= 60) return 35953; // Example: Dragonfruit Pie
     if (level >= 50) return 33254; // Example: Stormchops
@@ -1594,6 +1739,11 @@ uint32 EquipmentManager::GetRecommendedPotionLevel(::Player* player)
 
     // Return appropriate water/mana potion item ID
     uint32 level = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
 
     if (level >= 60) return 33445; // Example: Honeymint Tea
     if (level >= 50) return 28399; // Example: Filtered Draenic Water

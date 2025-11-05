@@ -190,6 +190,16 @@ void WarlockAI::UpdateRotation(::Unit* target)
     }
 
     float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
     TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
                  bot->GetName(), bot->GetLevel(), target->GetName(), distance);
 
@@ -239,6 +249,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->NeedsDefensive())
     {
         if (HandleDefensives())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} using defensive abilities", bot->GetName());
             return;
@@ -260,6 +275,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
 
     // Priority 4: Pet Management - Summon, heal, command
     if (HandlePetManagement())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         TC_LOG_DEBUG("playerbot.warlock", "Warlock {} managing pet", bot->GetName());
         return;
@@ -280,6 +300,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
             // Switch to priority target
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} switching to priority target {}",
                          bot->GetName(), priorityTarget->GetName());
         }
@@ -291,6 +316,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
         Unit* ccTarget = behaviors->GetCrowdControlTarget();
         if (ccTarget && ccTarget != target && HandleCrowdControl(ccTarget))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} crowd controlling {}",
                          bot->GetName(), ccTarget->GetName());
             return;
@@ -301,6 +331,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldAOE())
     {
         if (HandleAoERotation(target))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} executing AoE rotation", bot->GetName());
             return;
@@ -311,6 +346,11 @@ void WarlockAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
         if (HandleOffensiveCooldowns(target))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} using offensive cooldowns", bot->GetName());
         }
@@ -336,6 +376,11 @@ bool WarlockAI::HandleInterrupt(Unit* target)
 
     // Spell Lock - Felhunter ability
     Pet* pet = bot->GetPet();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (pet && pet->IsAlive())
     {
         // Check if pet is a Felhunter (entry 417)
@@ -355,6 +400,11 @@ bool WarlockAI::HandleInterrupt(Unit* target)
     if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))
     {
         float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (distance <= 30.0f)
         {
             bot->CastSpell(target, SHADOWFURY, false);
@@ -372,6 +422,26 @@ bool WarlockAI::HandleDefensives()
         return false;
 
     float healthPct = bot->GetHealthPct();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
 
     // Critical health - use strongest defensives
     if (healthPct < 20.0f)
@@ -398,33 +468,73 @@ bool WarlockAI::HandleDefensives()
     // Low health - use moderate defensives
     if (healthPct < 40.0f)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         // Shadow Ward/Nether Ward
         if (bot->HasSpell(NETHER_WARD) && !bot->GetSpellHistory()->HasCooldown(NETHER_WARD))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         {
             bot->CastSpell(bot, NETHER_WARD, false);
             return true;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         }
         else if (bot->HasSpell(SHADOW_WARD) && !bot->GetSpellHistory()->HasCooldown(SHADOW_WARD))
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         {
             bot->CastSpell(bot, SHADOW_WARD, false);
             return true;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         // Death Coil for heal + fear
         if (bot->HasSpell(DEATH_COIL) && !bot->GetSpellHistory()->HasCooldown(DEATH_COIL))
         {
             Unit* nearestEnemy = GetNearestEnemy(8.0f);
             if (nearestEnemy)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
             {
                 bot->CastSpell(nearestEnemy, DEATH_COIL, false);
                 return true;
             }
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         // Howl of Terror for AoE fear
         if (bot->HasSpell(HOWL_OF_TERROR) && !bot->GetSpellHistory()->HasCooldown(HOWL_OF_TERROR))
         {
             if (GetNearbyEnemyCount(10.0f) >= 2)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
             {
                 bot->CastSpell(bot, HOWL_OF_TERROR, false);
                 return true;
@@ -433,6 +543,16 @@ bool WarlockAI::HandleDefensives()
 
         // Drain Life for healing
         Unit* target = bot->GetVictim();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (target && bot->HasSpell(DRAIN_LIFE) && !bot->IsNonMeleeSpellCast(false))
         {
             bot->CastSpell(target, DRAIN_LIFE, false);
@@ -450,6 +570,16 @@ bool WarlockAI::HandlePetManagement()
         return false;
 
     Pet* pet = bot->GetPet();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
 
     // Check if we need to summon a pet
     if (!pet || !pet->IsAlive())
@@ -484,6 +614,16 @@ bool WarlockAI::HandlePetManagement()
 
     // Demonic Empowerment for Demonology (spec ID 266)
     if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -505,6 +645,11 @@ bool WarlockAI::HandlePetManagement()
 bool WarlockAI::SummonPet()
 {
     Player* bot = GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     if (!bot || bot->IsNonMeleeSpellCast(false))
         return false;
 
@@ -514,6 +659,11 @@ bool WarlockAI::SummonPet()
 
     uint32 summonSpell = 0;
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
 
     // Choose pet based on spec and situation
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
@@ -536,10 +686,25 @@ bool WarlockAI::SummonPet()
         summonSpell = SUMMON_IMP;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     // Fallback to basic pets if specialized ones aren't available
     if (!bot->HasSpell(summonSpell))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         if (bot->HasSpell(SUMMON_IMP))
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             summonSpell = SUMMON_IMP;
         else if (bot->HasSpell(SUMMON_VOIDWALKER))
             summonSpell = SUMMON_VOIDWALKER;
@@ -549,6 +714,11 @@ bool WarlockAI::SummonPet()
     {
         // Check soul shard requirement
         uint32 soulShards = bot->GetItemCount(6265);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (soulShards > 0)
         {
             bot->CastSpell(bot, summonSpell, false);
@@ -563,11 +733,21 @@ bool WarlockAI::SummonPet()
 }
 
 bool WarlockAI::HandleCrowdControl(Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return;
+    }
 {
     if (!target)
         return false;
 
     Player* bot = GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!bot)
         return false;
 
@@ -577,6 +757,31 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
     if (bot->HasSpell(FEAR) && (now - _lastFear > 5000))
     {
         float distanceSq = bot->GetExactDistSq(target);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetCreatureType");
+                return nullptr;
+            }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetCreatureType");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (!target->HasAura(FEAR) && distanceSq <= (20.0f * 20.0f)) // 400.0f
         {
             bot->CastSpell(target, FEAR, false);
@@ -596,8 +801,18 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
             return true;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return nullptr;
+}
 
     // Curse of Exhaustion - slow for kiting
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (bot->HasSpell(CURSE_OF_EXHAUSTION) && !target->HasAura(CURSE_OF_EXHAUSTION))
     {
         bot->CastSpell(target, CURSE_OF_EXHAUSTION, false);
@@ -621,6 +836,31 @@ bool WarlockAI::HandleAoERotation(Unit* target)
         return false;
 
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return nullptr;
+}
 
     // Seed of Corruption for Affliction (265) or when many enemies
     if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)
@@ -641,6 +881,11 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     }
 
     // Cataclysm (if available)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (bot->HasSpell(CATACLYSM) && !bot->GetSpellHistory()->HasCooldown(CATACLYSM))
     {
         bot->CastSpell(target, CATACLYSM, false);
@@ -648,16 +893,36 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     }
 
     // Fire and Brimstone for Destruction (267)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (static_cast<uint32>(spec) == 267)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(FIRE_AND_BRIMSTONE) && !bot->HasAura(FIRE_AND_BRIMSTONE))
         {
             bot->CastSpell(bot, FIRE_AND_BRIMSTONE, false);
             return true;
         }
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return nullptr;
+}
 
     // Mannoroth's Fury
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (bot->HasSpell(MANNOROTH_FURY) && !bot->GetSpellHistory()->HasCooldown(MANNOROTH_FURY))
     {
         bot->CastSpell(bot, MANNOROTH_FURY, false);
@@ -682,6 +947,31 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
     bool usedCooldown = false;
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
 
     // Dark Soul variants based on spec
     // Spec IDs: 265 = Affliction, 266 = Demonology, 267 = Destruction
@@ -702,14 +992,29 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
             usedCooldown = true;
         }
         // Dark Soul: Knowledge
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(DARK_SOUL_KNOWLEDGE) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_KNOWLEDGE))
         {
             bot->CastSpell(bot, DARK_SOUL_KNOWLEDGE, false);
             usedCooldown = true;
         }
     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     else if (static_cast<uint32>(spec) == 267) // Destruction
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
         {
             bot->CastSpell(bot, DARK_SOUL_INSTABILITY, false);
@@ -719,6 +1024,11 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
     // Summon Infernal/Doomguard
     if (GetNearbyEnemyCount(30.0f) >= 3 || target->GetHealthPct() > 80.0f)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         // Infernal for AoE
         if (GetNearbyEnemyCount(10.0f) >= 3 && bot->HasSpell(SUMMON_INFERNAL))
@@ -726,6 +1036,16 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
             if (!bot->GetSpellHistory()->HasCooldown(SUMMON_INFERNAL))
             {
                 uint32 soulShards = bot->GetItemCount(6265);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
                 if (soulShards > 0)
                 {
                     bot->CastSpell(target, SUMMON_INFERNAL, false);
@@ -739,6 +1059,11 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
             if (!bot->GetSpellHistory()->HasCooldown(SUMMON_DOOMGUARD))
             {
                 uint32 soulShards = bot->GetItemCount(6265);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                    return;
+                }
                 if (soulShards > 0)
                 {
                     bot->CastSpell(target, SUMMON_DOOMGUARD, false);
@@ -759,6 +1084,16 @@ void WarlockAI::HandleSoulShardManagement()
 
     // Update soul shard count
     _currentSoulShards = bot->GetItemCount(6265);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
 
     // Track soul shard history for optimization
     _soulShardHistory.push(_currentSoulShards);
@@ -784,8 +1119,18 @@ void WarlockAI::HandleSoulShardManagement()
     }
 
     // Create soulstone if needed
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (!HasSoulstone() && _currentSoulShards > 3)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(CREATE_SOULSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_SOULSTONE))
         {
             bot->CastSpell(bot, CREATE_SOULSTONE, false);
@@ -799,6 +1144,16 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
         return false;
 
     Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (!bot)
         return false;
 
@@ -815,6 +1170,26 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
 
     // Conflagrate for Destruction (267)
     if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 267)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
     {
         if (bot->HasSpell(CONFLAGRATE) && target->HasAura(IMMOLATE))
         {
@@ -840,11 +1215,26 @@ bool WarlockAI::HandleInstantCasts(Unit* target)
 }
 
 bool WarlockAI::ApplyDoTToTarget(Unit* target)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
 {
     if (!target)
         return false;
 
     Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     if (!bot)
         return false;
 
@@ -862,6 +1252,26 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
 
     // Spec-specific DoTs
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
 
     if (static_cast<uint32>(spec) == 265) // Affliction
     {
@@ -881,8 +1291,18 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
         }
     }
     else if (static_cast<uint32>(spec) == 267) // Destruction
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         // Immolate
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
         {
             bot->CastSpell(target, IMMOLATE, false);
@@ -891,8 +1311,18 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
         }
     }
     else if (static_cast<uint32>(spec) == 266) // Demonology
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         // Corruption is usually enough, Hand of Gul'dan for AoE
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
         {
             bot->CastSpell(target, HAND_OF_GULDAN, false);
@@ -904,6 +1334,16 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target)
 }
 
 bool WarlockAI::ApplyCurse(Unit* target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return nullptr;
+        }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return;
+    }
 {
     if (!target)
         return false;
@@ -926,6 +1366,16 @@ bool WarlockAI::ApplyCurse(Unit* target)
         curseSpell = CURSE_OF_TONGUES;
     }
     else if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265) // Affliction
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     {
         // Curse of Agony for Affliction
         curseSpell = CURSE_OF_AGONY;
@@ -950,6 +1400,11 @@ Unit* WarlockAI::GetNearestEnemy(float range)
 {
     Player* bot = GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
+    if (!bot)
         return nullptr;
 
     std::list<Unit*> enemies;
@@ -957,6 +1412,11 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!map)
         return nullptr;
 
@@ -1012,6 +1472,11 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
 {
     Player* bot = GetBot();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
+    if (!bot)
         return 0;
 
     std::list<Unit*> enemies;
@@ -1019,6 +1484,11 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!map)
         return 0;
 
@@ -1089,6 +1559,11 @@ bool WarlockAI::UseHealthstone()
     for (uint32 itemId : healthstones)
     {
         if (Item* item = bot->GetItemByEntry(itemId))
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
         {
             // Use modern TrinityCore CastItemUseSpell API
             SpellCastTargets targets;
@@ -1145,6 +1620,26 @@ void WarlockAI::UpdateCombatMetrics()
     if (bot && bot->GetVictim())
     {
         Unit* target = bot->GetVictim();
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                    return nullptr;
+                }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                    return nullptr;
+                }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return;
+        }
         int dotCount = 0;
         int totalDots = 3; // Typical number of DoTs
 
@@ -1185,6 +1680,16 @@ void WarlockAI::UpdateCooldowns(uint32 diff)
 bool WarlockAI::CanUseAbility(uint32 spellId)
 {
     Player* bot = GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     if (!bot)
         return false;
 
@@ -1269,6 +1774,11 @@ void WarlockAI::OnCombatEnd()
 bool WarlockAI::HasEnoughResource(uint32 spellId)
 {
     Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
     if (!bot)
         return false;
 
@@ -1278,6 +1788,11 @@ bool WarlockAI::HasEnoughResource(uint32 spellId)
 
     // Check mana
     auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return nullptr;
+        }
     uint32 manaCost = 0;
     for (auto const& cost : powerCosts)
         if (cost.Power == POWER_MANA)
@@ -1304,6 +1819,11 @@ bool WarlockAI::HasEnoughResource(uint32 spellId)
 void WarlockAI::ConsumeResource(uint32 spellId)
 {
     Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
     if (!bot)
         return;
 
@@ -1354,6 +1874,26 @@ float WarlockAI::GetOptimalRange(::Unit* target)
 void WarlockAI::UpdateWarlockBuffs()
 {
     Player* bot = GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
     if (!bot)
         return;
 
@@ -1368,6 +1908,26 @@ void WarlockAI::UpdateWarlockBuffs()
 
     // Soul Link for Demonology (266)
     if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
     {
         if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive)
         {
@@ -1428,6 +1988,11 @@ void WarlockAI::OptimizeManaManagement()
         return;
 
     float manaPct = bot->GetPowerPct(POWER_MANA);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
 
     // Adjust mana threshold based on combat situation
     if (bot->IsInCombat())
@@ -1457,6 +2022,16 @@ void WarlockAI::ManageLifeTapTiming()
 
     float healthPct = bot->GetHealthPct();
     float manaPct = bot->GetPowerPct(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
 
     // Only Life Tap if health is good and mana is low
     if (healthPct > LIFE_TAP_THRESHOLD * 100 && manaPct < _optimalManaThreshold * 100)
@@ -1482,6 +2057,11 @@ void WarlockAI::OptimizePetPositioning()
         return;
 
     Unit* target = bot->GetVictim();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!target)
         return;
 
@@ -1587,6 +2167,11 @@ void WarlockAI::HandlePetSpecialAbilities()
 }
 
 void WarlockAI::ManageWarlockCooldowns()
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return nullptr;
+}
 {
     // Manage major warlock cooldowns
     Player* bot = GetBot();
@@ -1594,6 +2179,31 @@ void WarlockAI::ManageWarlockCooldowns()
         return;
 
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetVictim");
+        return nullptr;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
 
     // Demonic Empowerment for Demonology (266)
     if (static_cast<uint32>(spec) == 266 && _petActive)
@@ -1633,9 +2243,19 @@ void WarlockAI::OptimizeSoulShardUsage()
     }
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
 void WarlockAI::HandleAoESituations()
 {
     Player* bot = GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (!bot || !bot->IsInCombat())
         return;
 
@@ -1644,9 +2264,24 @@ void WarlockAI::HandleAoESituations()
     if (nearbyEnemies >= 3)
     {
         // Seed of Corruption for Affliction (265)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+            return nullptr;
+        }
         if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 265 && bot->HasSpell(SEED_OF_CORRUPTION))
         {
             Unit* target = bot->GetVictim();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
             if (target && !target->HasAura(SEED_OF_CORRUPTION) && !bot->GetSpellHistory()->HasCooldown(SEED_OF_CORRUPTION))
             {
                 bot->CastSpell(target, SEED_OF_CORRUPTION, false);
@@ -1657,6 +2292,16 @@ void WarlockAI::HandleAoESituations()
         if (bot->HasSpell(RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(RAIN_OF_FIRE))
         {
             Unit* target = bot->GetVictim();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
             if (target)
             {
                 bot->CastSpell(target, RAIN_OF_FIRE, false);
@@ -1672,6 +2317,11 @@ void WarlockAI::ManageCurseApplication()
         return;
 
     Unit* target = bot->GetVictim();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+    return;
+}
     if (!target)
         return;
 
@@ -1689,6 +2339,11 @@ void WarlockAI::OptimizeDoTRotation()
         return;
 
     Unit* target = bot->GetVictim();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
     if (!target)
         return;
 
@@ -1700,6 +2355,11 @@ bool WarlockAI::HasEnoughMana(uint32 amount)
 {
     Player* bot = GetBot();
     return bot && bot->GetPower(POWER_MANA) >= int32(amount);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+    return;
+}
 }
 
 uint32 WarlockAI::GetMana()

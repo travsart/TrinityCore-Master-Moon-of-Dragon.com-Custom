@@ -14,6 +14,11 @@ namespace Playerbot
 {
 
 MageAI::MageAI(Player* bot) : ClassAI(bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 {
     TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {}", bot->GetName());
 }
@@ -121,6 +126,11 @@ bool MageAI::CanUseAbility(uint32 spellId)
     if (!_bot)
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     if (!_bot->HasSpell(spellId))
         return false;
 
@@ -159,6 +169,16 @@ bool MageAI::HasEnoughResource(uint32 spellId)
         }
     }
     return _bot->GetPower(POWER_MANA) >= manaCost;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
 }
 
 void MageAI::ConsumeResource(uint32 spellId)
@@ -176,6 +196,11 @@ Position MageAI::GetOptimalPosition(::Unit* target)
     float optimalRange = 35.0f;
 
     if (!target || target == _bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot->GetPosition();
 
     // Get direction from bot to target (absolute angle)

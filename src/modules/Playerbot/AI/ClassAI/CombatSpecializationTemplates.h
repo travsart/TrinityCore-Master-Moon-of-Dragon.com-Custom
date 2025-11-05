@@ -255,6 +255,11 @@ protected:
 
         _combatStartTime = getMSTime();
         _currentTarget = target;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                return;
+            }
         _consecutiveFailedCasts = 0;
 
         // Reset performance metrics for this combat
@@ -444,6 +449,11 @@ private:
         Player* bot = GetBot();
         std::erase_if(_activeDots, [bot](const auto& pair) {
             Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return;
+            }
             return !target || !target->IsAlive();
         });
     }
@@ -454,6 +464,11 @@ protected:
      * This bridges the gap between old CanCastSpell() calls and new architecture
      */
     bool CanCastSpell(uint32 spellId, ::Unit* target = nullptr)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return nullptr;
+            }
     {
         // Use CanUseAbility for basic checks
         if (!CanUseAbility(spellId))
@@ -496,6 +511,11 @@ protected:
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
         Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (map)
         {
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
@@ -597,12 +617,32 @@ protected:
         if (target)
         {
             float angle = target->GetOrientation() + M_PI; // Behind target
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                return nullptr;
+            }
             float distance = 3.0f; // Close but not too close
 
             Position pos;
             pos.m_positionX = target->GetPositionX() + cos(angle) * distance;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
+            }
             pos.m_positionY = target->GetPositionY() + sin(angle) * distance;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return nullptr;
+            }
             pos.m_positionZ = target->GetPositionZ();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             pos.SetOrientation(target->GetAbsoluteAngle(&pos));
 
             return pos;
@@ -720,6 +760,16 @@ protected:
     {
         return target &&
                target->GetVictim() == this->GetBot() &&
+               if (!target)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                   return nullptr;
+               }
+               if (!target)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetDistance");
+                   return nullptr;
+               }
                target->GetDistance(this->GetBot()) < _minimumRange;
     }
 
@@ -761,8 +811,23 @@ protected:
 
             Position pos;
             pos.m_positionX = target->GetPositionX() + cos(optimalAngle) * 3.0f;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
+            }
             pos.m_positionY = target->GetPositionY() + sin(optimalAngle) * 3.0f;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return nullptr;
+            }
             pos.m_positionZ = target->GetPositionZ();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             pos.SetOrientation(target->GetAbsoluteAngle(&pos));
 
             return pos;
@@ -780,6 +845,11 @@ protected:
 
         // Check if we have aggro
         if (target->GetVictim() != this->GetBot())
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return nullptr;
+        }
         {
             uint32 currentTime = getMSTime();
             if (currentTime - _lastTauntTime > 8000) // 8 second taunt cooldown
@@ -824,10 +894,30 @@ protected:
                 if (Player* member = itr.GetSource())
                 {
                     if (member != this->GetBot() && member->IsAlive())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                     {
                         center.m_positionX += member->GetPositionX();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionX");
+                            return nullptr;
+                        }
                         center.m_positionY += member->GetPositionY();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
+                            return;
+                        }
                         center.m_positionZ += member->GetPositionZ();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionZ");
+                            return;
+                        }
                         count++;
                     }
                 }
@@ -928,6 +1018,11 @@ protected:
             for (GroupReference& itr : group->GetMembers())
             {
                 if (Player* member = itr.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && member->GetHealthPct() < lowestHealthPct)
                     {
@@ -954,6 +1049,11 @@ protected:
             for (GroupReference& itr : group->GetMembers())
             {
                 if (Player* member = itr.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && member->GetHealthPct() < 80.0f)
                     {
@@ -981,12 +1081,32 @@ protected:
             for (GroupReference& itr : group->GetMembers())
             {
                 if (Player* member = itr.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive())
                     {
                         center.m_positionX += member->GetPositionX();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionX");
+                            return nullptr;
+                        }
                         center.m_positionY += member->GetPositionY();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
+                            return;
+                        }
                         center.m_positionZ += member->GetPositionZ();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionZ");
+                            return;
+                        }
                         count++;
                     }
                 }

@@ -498,6 +498,11 @@ void AdaptiveDifficulty::CreatePlayerProfile(Player* player)
         return;
 
     ObjectGuid guid = player->GetGUID();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
 
     if (_playerProfiles.find(guid) == _playerProfiles.end())
@@ -526,6 +531,11 @@ void AdaptiveDifficulty::AssessPlayerSkill(Player* player)
         return;
 
     auto profile = GetOrCreateProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return;
 
@@ -548,6 +558,11 @@ SkillIndicators AdaptiveDifficulty::CalculateSkillIndicators(Player* player) con
 
     // Calculate survival rate
     indicators.survivalRate = player->IsAlive() ? 0.8f : 0.2f;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
+        return;
+    }
 
     // Calculate damage efficiency
     indicators.damageEfficiency = 0.6f;  // Placeholder
@@ -572,6 +587,16 @@ void AdaptiveDifficulty::AdjustBotDifficulty(BotAI* bot, Player* opponent)
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, bot->GetBot()->GetGUID().GetCounter(), "DifficultyAdjustment");
 
     auto profile = GetOrCreateProfile(opponent->GetGUID());
+    if (!opponent)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: opponent in method GetGUID");
+        return nullptr;
+    }
+        if (!opponent)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: opponent in method GetName");
+            return nullptr;
+        }
     if (!profile)
         return;
 
@@ -636,12 +661,22 @@ void AdaptiveDifficulty::RecordCombatOutcome(Player* player, BotAI* bot, bool pl
         return;
 
     auto profile = GetOrCreateProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (profile)
     {
         profile->RecordEngagement(playerWon, duration);
 
         // Update difficulty curve
         float playerSkill = profile->GetSkillLevel();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return nullptr;
+            }
         float currentDifficulty = GetBotDifficulty(bot);
 
         // Optimal difficulty is where player had good engagement
@@ -658,6 +693,11 @@ void AdaptiveDifficulty::OptimizeForFlow(BotAI* bot, Player* player)
         return;
 
     auto profile = GetOrCreateProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return;
 
@@ -693,6 +733,11 @@ bool AdaptiveDifficulty::IsInFlowState(Player* player) const
         return false;
 
     auto profile = GetPlayerProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return false;
 
@@ -720,6 +765,11 @@ float AdaptiveDifficulty::GetFlowStateScore(Player* player) const
         return 0.0f;
 
     auto profile = GetPlayerProfile(player->GetGUID());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     if (!profile)
         return 0.0f;
 

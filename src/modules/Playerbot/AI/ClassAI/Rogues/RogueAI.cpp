@@ -175,6 +175,11 @@ private:
 Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpec spec)
 {
     if (!target || !_bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot->GetPosition();
 
     // Calculate position based on specialization requirements
@@ -185,10 +190,30 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
             // Assassination and Subtlety prefer behind target for Backstab/Ambush
             {
                 float angle = target->GetOrientation() + M_PI; // 180 degrees behind
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return nullptr;
+                }
                 float distance = 3.0f; // Close melee range
                 float x = target->GetPositionX() + distance * std::cos(angle);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                    return;
+                }
                 float y = target->GetPositionY() + distance * std::sin(angle);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                    return;
+                }
                 float z = target->GetPositionZ();
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return;
+                }
                 return Position(x, y, z, angle);
             }
 
@@ -196,10 +221,35 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
             // Combat can attack from any angle, prefer frontal positioning
             {
                 float angle = target->GetOrientation(); // Face to face
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return;
+                }
                 float distance = 4.0f; // Slightly further for Blade Flurry AoE
                 float x = target->GetPositionX() + distance * std::cos(angle);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                    return;
+                }
                 float y = target->GetPositionY() + distance * std::sin(angle);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                    return;
+                }
                 float z = target->GetPositionZ();
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                    return;
+                }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return nullptr;
+                }
                 return Position(x, y, z, target->GetOrientation());
             }
 
@@ -245,6 +295,11 @@ RogueAI::RogueAI(Player* bot) :
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
     _positioning = new RogueCombatPositioning(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
 }
@@ -299,6 +354,11 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+                             if (!interruptTarget)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+                                 return;
+                             }
         if (interruptTarget && CanUseAbility(KICK))
         {
             // Cast Kick on the interrupt target
@@ -330,6 +390,11 @@ void RogueAI::UpdateRotation(Unit* target)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+                         if (!priorityTarget)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+                             return;
+                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -517,6 +582,11 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
 
     // Apply Rupture for bleed damage
     if (comboPoints >= 3 && !target->HasAura(RUPTURE, GetBot()->GetGUID()))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
     {
         if (CanUseAbility(RUPTURE))
         {
@@ -531,6 +601,11 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
 
     // Use Expose Armor if no sunder armor debuff present
     if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
     {
         if (CanUseAbility(EXPOSE_ARMOR))
         {
@@ -545,6 +620,11 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
 
     // Kidney Shot for control
     if (comboPoints >= 4 && target->GetTypeId() == TYPEID_PLAYER)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+        return nullptr;
+    }
     {
         if (CanUseAbility(KIDNEY_SHOT))
         {
@@ -602,6 +682,11 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
 }
 
 void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success)
+                     if (!target)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                         return;
+                     }
 {
     if (success)
     {
@@ -900,6 +985,11 @@ bool RogueAI::ExecuteFinisher(Unit* target)
 
     // Kidney Shot for control
     if (target->GetTypeId() == TYPEID_PLAYER && CanUseAbility(KIDNEY_SHOT))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+        return nullptr;
+    }
     {
         CastSpell(target, KIDNEY_SHOT);
         _combatMetrics->RecordAbilityUsage(KIDNEY_SHOT, true, 25);
@@ -1204,6 +1294,16 @@ void RogueAI::OnCombatStart(Unit* target)
 
     // Use offensive cooldowns for boss fights
     if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+        return nullptr;
+    }
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+        return nullptr;
+    }
     {
         ActivateBurstCooldowns(target);
     }

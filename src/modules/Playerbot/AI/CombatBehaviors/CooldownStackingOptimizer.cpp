@@ -479,8 +479,28 @@ bool CooldownStackingOptimizer::ShouldUseMajorCooldown(Unit* target) const
 
     // Check target importance
     if (target->GetTypeId() == TYPEID_UNIT)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+        return nullptr;
+    }
     {
         Creature* creature = target->ToCreature();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+            return nullptr;
+        }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+            return;
+        }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+            return nullptr;
+        }
         if (creature && (creature->IsDungeonBoss() || creature->isWorldBoss()))
             return true;
 

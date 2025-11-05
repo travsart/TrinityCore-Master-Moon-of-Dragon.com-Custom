@@ -256,6 +256,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -285,6 +290,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return 0;
+            }
 
         // Maintain Lone Wolf (dismiss pet if we have one)
         if (_loneWolfActive && !bot->GetPetGUID().IsEmpty())
@@ -306,6 +316,11 @@ public:
 
         // Apply Hunter's Mark to current target
         if (Unit* target = bot->GetVictim())
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
         {
             if (!target->HasAura(SPELL_HUNTERS_MARK_MM) && this->CanUseAbility(SPELL_HUNTERS_MARK_MM))
             {

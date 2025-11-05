@@ -23,6 +23,11 @@ void DiseaseManager::UpdateDiseases(Unit* target)
 
     uint32 currentTime = getMSTime();
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
 
     // Clean up expired diseases
     CleanupExpiredDiseases();
@@ -47,6 +52,11 @@ bool DiseaseManager::HasDisease(Unit* target, DiseaseType type)
         return false;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     auto it = _activeDiseases.find(targetGuid);
     if (it == _activeDiseases.end())
         return false;
@@ -75,6 +85,11 @@ void DiseaseManager::ApplyDisease(Unit* target, DiseaseType type, uint32 spellId
         return;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     DiseaseInfo disease(type, spellId, DISEASE_DURATION);
 
     _activeDiseases[targetGuid].push_back(disease);
@@ -86,6 +101,11 @@ uint32 DiseaseManager::GetDiseaseTimeRemaining(Unit* target, DiseaseType type)
         return 0;
 
     ObjectGuid targetGuid = target->GetGUID();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     auto it = _activeDiseases.find(targetGuid);
     if (it == _activeDiseases.end())
         return 0;

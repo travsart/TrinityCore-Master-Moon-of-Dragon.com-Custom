@@ -37,6 +37,11 @@ static constexpr uint32 INTERRUPT_COOLDOWN = 15000;
 static constexpr uint32 DEFENSIVE_COOLDOWN = 60000;
 
 DemonHunterAI::DemonHunterAI(Player* bot) : ClassAI(bot),
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
     _lastInterruptTime(0),
     _lastDefensiveTime(0),
     _lastMobilityTime(0),
@@ -70,8 +75,18 @@ void DemonHunterAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback to basic melee attack if nothing else worked
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
             _bot->CastSpell(target, DEMONS_BITE, false);
         }
         return;
@@ -174,6 +189,11 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
             RecordInterruptAttempt(interruptTarget, DISRUPT, true);
             _lastInterruptTime = currentTime;
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} interrupted {} with Disrupt",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName(), interruptTarget->GetName());
             return;
         }
@@ -186,6 +206,11 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
         {
             RecordInterruptAttempt(interruptTarget, SIGIL_OF_SILENCE, true);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} used Sigil of Silence on {}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName(), interruptTarget->GetName());
             return;
         }
@@ -198,6 +223,11 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
         {
             RecordInterruptAttempt(interruptTarget, CHAOS_NOVA, true);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} stunned {} with Chaos Nova",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName(), interruptTarget->GetName());
             return;
         }
@@ -210,6 +240,11 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
         {
             RecordInterruptAttempt(interruptTarget, IMPRISON, true);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} imprisoned {}",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName(), interruptTarget->GetName());
         }
     }
@@ -221,6 +256,11 @@ void DemonHunterAI::HandleDefensives()
         return;
 
     float healthPct = _bot->GetHealthPct();
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
     uint32 currentTime = getMSTime();
 
     // Netherwalk - Emergency immunity
@@ -246,6 +286,11 @@ void DemonHunterAI::HandleDefensives()
             _dhMetrics.defensivesUsed++;
             _lastDefensiveTime = currentTime;
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Blur",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName());
             return;
         }
@@ -259,6 +304,11 @@ void DemonHunterAI::HandleDefensives()
             RecordAbilityUsage(DARKNESS);
             _dhMetrics.defensivesUsed++;
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Darkness",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName());
             return;
         }
@@ -266,6 +316,11 @@ void DemonHunterAI::HandleDefensives()
 
     // Vengeance-specific defensives
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterVengeance)
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
     {
         // Demon Spikes - Active mitigation
         if (healthPct < 70.0f && CanUseAbility(DEMON_SPIKES))
@@ -282,6 +337,11 @@ void DemonHunterAI::HandleDefensives()
 
         // Fiery Brand - Damage reduction on target
         Unit* target = _bot->GetSelectedUnit();
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
         if (target && healthPct < 60.0f && CanUseAbility(FIERY_BRAND))
         {
             if (CastSpell(target, FIERY_BRAND))
@@ -302,6 +362,11 @@ void DemonHunterAI::HandleDefensives()
                 RecordAbilityUsage(SOUL_BARRIER);
                 _dhMetrics.defensivesUsed++;
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Soul Barrier",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName());
                 return;
             }
@@ -334,6 +399,11 @@ void DemonHunterAI::HandleTargetSwitching(::Unit*& target)
         OnTargetChanged(priorityTarget);
         target = priorityTarget;
         TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} switching target to {}",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      _bot->GetName(), priorityTarget->GetName());
     }
 }
@@ -347,6 +417,11 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
 
     // Eye Beam - Primary AoE ability for Havoc
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc && enemyCount >= 2 && CanUseAbility(EYE_BEAM))
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
     {
         if (CastSpell(target, EYE_BEAM))
         {
@@ -368,6 +443,16 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
                 RecordAbilityUsage(bladeDanceSpell);
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} using {} for AoE",
                              _bot->GetName(), bladeDanceSpell == DEATH_SWEEP ? "Death Sweep" : "Blade Dance");
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                 return;
             }
         }
@@ -392,6 +477,11 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
         {
             RecordAbilityUsage(IMMOLATION_AURA);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Immolation Aura",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName());
             return;
         }
@@ -404,6 +494,11 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
         {
             RecordAbilityUsage(SIGIL_OF_FLAME);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} placed Sigil of Flame",
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
                          _bot->GetName());
             return;
         }
@@ -411,6 +506,11 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
 
     // Vengeance-specific AoE
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterVengeance)
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
     {
         // Spirit Bomb - Requires soul fragments
         if (enemyCount >= 3 && CanUseAbility(SPIRIT_BOMB))
@@ -435,6 +535,11 @@ void DemonHunterAI::HandleCooldowns(::Unit* target)
     if (ShouldUseMetamorphosis())
     {
         uint32 metaSpell = _bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc ?
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                           METAMORPHOSIS_HAVOC : METAMORPHOSIS_VENGEANCE;
 
         if (CanUseAbility(metaSpell))
@@ -450,6 +555,16 @@ void DemonHunterAI::HandleCooldowns(::Unit* target)
 
     // Nemesis - Single target damage increase (Havoc)
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc && CanUseAbility(NEMESIS))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+                         if (!bot)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                             return;
+                         }
     {
         if (CastSpell(target, NEMESIS))
         {
@@ -493,6 +608,11 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
                     RecordAbilityUsage(chaosStrike);
                     TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} dumping fury with {}",
                                  _bot->GetName(), chaosStrike == ANNIHILATION ? "Annihilation" : "Chaos Strike");
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                     return;
                 }
             }
@@ -522,6 +642,11 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
                 {
                     RecordAbilityUsage(SOUL_CLEAVE);
                     TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} spending pain with Soul Cleave",
+                                 if (!bot)
+                                 {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                     return;
+                                 }
                                  _bot->GetName());
                     return;
                 }
@@ -554,6 +679,11 @@ void DemonHunterAI::HandleMobility(::Unit* target)
     {
         Position optimalPos = behaviors->GetOptimalPosition();
         float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
 
         // Fel Rush to close gap or reposition
         if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
@@ -577,6 +707,11 @@ void DemonHunterAI::HandleMobility(::Unit* target)
                 RecordAbilityUsage(VENGEFUL_RETREAT);
                 _dhMetrics.mobilityAbilitiesUsed++;
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} used Vengeful Retreat",
+                             if (!bot)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                 return;
+                             }
                              _bot->GetName());
                 return;
             }
@@ -717,6 +852,11 @@ void DemonHunterAI::OnCombatStart(::Unit* target)
     _dhMetrics.combatStartTime = std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat started for player {}",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  _bot->GetName());
 }
 
@@ -725,6 +865,11 @@ void DemonHunterAI::OnCombatEnd()
     AnalyzeCombatEffectiveness();
 
     TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat ended for player {}",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
                  _bot->GetName());
 }
 
@@ -809,6 +954,11 @@ bool DemonHunterAI::ShouldUseMetamorphosis()
 
     // Use for burst damage on high-health targets
     Unit* target = _bot->GetSelectedUnit();
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
     if (target && target->GetHealthPct() > 80.0f)
         return true;
 
@@ -837,6 +987,11 @@ void DemonHunterAI::CastMetamorphosisVengeance()
         CastSpell(METAMORPHOSIS_VENGEANCE);
         RecordAbilityUsage(METAMORPHOSIS_VENGEANCE);
         TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} transformed with Vengeance Metamorphosis",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      _bot->GetName());
     }
 }
@@ -847,6 +1002,11 @@ void DemonHunterAI::SpendPain(uint32 amount)
         return;
 
     int32 currentPain = _bot->GetPower(POWER_PAIN);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     _bot->SetPower(POWER_PAIN, std::max(0, currentPain - static_cast<int32>(amount)));
 }
 
@@ -856,6 +1016,11 @@ void DemonHunterAI::GeneratePain(uint32 amount)
         return;
 
     int32 currentPain = _bot->GetPower(POWER_PAIN);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     int32 maxPain = _bot->GetMaxPower(POWER_PAIN);
     _bot->SetPower(POWER_PAIN, std::min(maxPain, currentPain + static_cast<int32>(amount)));
 }
@@ -863,6 +1028,11 @@ void DemonHunterAI::GeneratePain(uint32 amount)
 bool DemonHunterAI::HasPain(uint32 amount)
 {
     return _bot && _bot->GetPower(POWER_PAIN) >= amount;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
 }
 
 void DemonHunterAI::SpendFury(uint32 amount)
@@ -871,6 +1041,11 @@ void DemonHunterAI::SpendFury(uint32 amount)
         return;
 
     int32 currentFury = _bot->GetPower(POWER_FURY);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     _bot->SetPower(POWER_FURY, std::max(0, currentFury - static_cast<int32>(amount)));
 }
 
@@ -880,6 +1055,11 @@ void DemonHunterAI::GenerateFury(uint32 amount)
         return;
 
     int32 currentFury = _bot->GetPower(POWER_FURY);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     int32 maxFury = _bot->GetMaxPower(POWER_FURY);
     _bot->SetPower(POWER_FURY, std::min(maxFury, currentFury + static_cast<int32>(amount)));
 }
@@ -887,6 +1067,16 @@ void DemonHunterAI::GenerateFury(uint32 amount)
 bool DemonHunterAI::HasFury(uint32 amount)
 {
     return _bot && _bot->GetPower(POWER_FURY) >= amount;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
 }
 
 void DemonHunterAI::UpdatePainManagement(uint32 diff)
@@ -912,6 +1102,11 @@ void DemonHunterAI::DecayPain(uint32 diff)
 
 uint32 DemonHunterAI::GetFury() const
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     return _bot ? _bot->GetPower(POWER_FURY) : 0;
 }
 
@@ -922,6 +1117,11 @@ uint32 DemonHunterAI::GetMaxFury() const
 
 uint32 DemonHunterAI::GetPain() const
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
     return _bot ? _bot->GetPower(POWER_PAIN) : 0;
 }
 
@@ -1083,6 +1283,16 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targetList, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return targets;
 
@@ -1135,6 +1345,16 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return 0;
 
@@ -1217,6 +1437,11 @@ void DemonHunterAI::RecordInterruptAttempt(::Unit* target, uint32 spellId, bool 
         _successfulInterrupts++;
         _dhMetrics.interruptsSucceeded++;
         TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} successfully interrupted with spell {}",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      _bot->GetName(), spellId);
     }
 }
@@ -1232,6 +1457,11 @@ void DemonHunterAI::OnTargetChanged(::Unit* newTarget)
     if (newTarget)
     {
         TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} changed target to {}",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      _bot->GetName(), newTarget->GetName());
     }
 }
@@ -1254,6 +1484,11 @@ void DemonHunterAI::AnalyzeCombatEffectiveness()
 
         TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} combat analysis: {} abilities in {}s ({:.2f}/sec), "
                      "{} interrupts ({:.1f}% success), {} defensives, {} mobility uses",
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
                      _bot->GetName(), _dhMetrics.totalAbilitiesUsed, duration, abilitiesPerSecond,
                      _dhMetrics.interruptsSucceeded, interruptRate,
                      _dhMetrics.defensivesUsed, _dhMetrics.mobilityAbilitiesUsed);

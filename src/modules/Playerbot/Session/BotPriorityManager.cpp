@@ -107,6 +107,11 @@ void BotPriorityManager::UpdatePriorityForBot(Player* bot, uint32 currentTime)
         return;
 
     BotPriority newPriority = DeterminePriority(bot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     SetPriority(bot->GetGUID(), newPriority);
 }
 
@@ -116,6 +121,11 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
         return;
 
     ObjectGuid guid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     BotPriority currentPriority = GetPriority(guid);
     BotPriority newPriority = DeterminePriority(bot);
 
@@ -140,6 +150,11 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
         {
             // No lock needed - priority metrics are per-bot instance data
             auto& metrics = _botMetrics[guid];
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
             uint32 timeInCurrent = currentTime - metrics.priorityChangeTime;
 
             if (timeInCurrent < MIN_PRIORITY_DURATION_MS)
@@ -165,7 +180,17 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
     // No lock needed - priority metrics are per-bot instance data
     auto& metrics = _botMetrics[guid];
     metrics.wasInCombat = bot->IsInCombat();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     metrics.wasInGroup = bot->GetGroup() != nullptr;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     metrics.wasMoving = bot->isMoving();
 
     // Track idle time
@@ -181,6 +206,11 @@ void BotPriorityManager::AutoAdjustPriority(Player* bot, uint32 currentTime)
 }
 
 BotPriority BotPriorityManager::DeterminePriority(Player* bot) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return nullptr;
+    }
 {
     if (!bot)
         return BotPriority::LOW;
@@ -222,6 +252,11 @@ bool BotPriorityManager::IsInCriticalState(Player* bot) const
 }
 
 bool BotPriorityManager::IsInHighPriorityActivity(Player* bot) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 {
     if (!bot)
         return false;
@@ -232,6 +267,16 @@ bool BotPriorityManager::IsInHighPriorityActivity(Player* bot) const
 
     // In a group (party or raid coordination)
     if (Group* group = bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     {
         // Higher priority if in instance (dungeons and raids require immediate response)
         if (bot->GetMap()->IsDungeon() || bot->GetMap()->IsRaid())
@@ -242,6 +287,11 @@ bool BotPriorityManager::IsInHighPriorityActivity(Player* bot) const
         for (GroupReference const& ref : group->GetMembers())
         {
             if (Player* member = ref.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+                    return nullptr;
+                }
             {
                 if (member->IsInCombat())
                     return true; // Any group member in combat = high priority

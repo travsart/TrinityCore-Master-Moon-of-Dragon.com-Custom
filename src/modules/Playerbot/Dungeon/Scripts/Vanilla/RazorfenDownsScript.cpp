@@ -65,6 +65,11 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Player {} entered Razorfen Downs",
             player->GetGUID().GetCounter());
@@ -223,6 +228,16 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return false;
 
@@ -477,12 +492,27 @@ public:
             {
                 // Glutton applies disease debuffs - CRITICAL to dispel
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -514,12 +544,32 @@ public:
                 // Frost Tomb - player gets frozen in ice block
                 // Need to free them (damage the ice block or dispel)
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -537,6 +587,11 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -604,12 +659,22 @@ public:
                 // Frost Tomb - free trapped allies
 
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (group)
                 {
                     // Check for trapped allies
                     for (auto const& member : group->GetMemberSlots())
                     {
                         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                        if (!groupMember)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                            return;
+                        }
                         if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                             continue;
 
@@ -617,6 +682,11 @@ public:
                         if (groupMember->HasAura(15532))
                         {
                             float distance = player->GetExactDist(groupMember);
+                                if (!groupMember)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetPosition");
+                                    return;
+                                }
                             if (distance > 5.0f)
                             {
                                 TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Moving to help break Frost Tomb");

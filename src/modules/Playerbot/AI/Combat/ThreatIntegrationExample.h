@@ -134,9 +134,24 @@ public:
             for (const auto& targetGuid : status.activeTargets)
             {
                 Unit* target = GetUnitByGuid(targetGuid);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                    return;
+                }
                 if (target && target->GetVictim())
                 {
                     Player* victim = target->GetVictim()->ToPlayer();
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+                        return;
+                    }
+                        if (!victim)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
+                            return nullptr;
+                        }
                     if (victim && IsHealer(victim))
                     {
                         threatCoord->ProtectHealer(victim->GetGUID(), target);
@@ -177,6 +192,16 @@ public:
                     {
                         // Use taunt ability
                         uint32 tauntSpell = GetTauntSpell(bot->getClass());
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                            return 0;
+                        }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                                return;
+                            }
                         if (tauntSpell && bot->IsSpellReady(tauntSpell))
                         {
                             bot->CastSpell(target, tauntSpell, false);
@@ -195,11 +220,31 @@ public:
                 {
                     // Use threat reduction
                     if (bot->getClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                        return nullptr;
+                    }
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                            return nullptr;
+                        }
                     {
                         bot->CastSpell(bot, ThreatSpells::FEINT, false);
                         threatMgr->ModifyThreat(primaryTarget->target, 0.5f);
                     }
                     else if (bot->getClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                        return nullptr;
+                    }
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                            return nullptr;
+                        }
                     {
                         bot->CastSpell(bot, ThreatSpells::FEIGN_DEATH, false);
                         threatMgr->ClearAllThreat();
@@ -218,6 +263,16 @@ public:
                     {
                         // Emergency threat drop
                         if (bot->getClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                            return nullptr;
+                        }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                                return nullptr;
+                            }
                         {
                             bot->CastSpell(bot, ThreatSpells::FADE, false);
                             threatMgr->ModifyThreat(threat, 0.1f);

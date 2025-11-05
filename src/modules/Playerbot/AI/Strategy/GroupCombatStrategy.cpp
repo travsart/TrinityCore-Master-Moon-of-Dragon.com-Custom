@@ -55,6 +55,11 @@ bool GroupCombatStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 
     // Active if bot is in combat OR group is in combat
     return bot->IsInCombat() || IsGroupInCombat(ai);
@@ -78,6 +83,16 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     {
         TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - inCombat={}, hasGroup={}",
                     bot->GetName(), bot->IsInCombat(), bot->GetGroup() != nullptr);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
         lastDiagLog = currentTime;
     }
 
@@ -90,6 +105,11 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (shouldLog)
     {
         TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - groupInCombat={}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName(), groupInCombat);
     }
 
@@ -98,6 +118,16 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // Group is in combat but bot isn't - ASSIST!
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
     if (!group)
         return;
 
@@ -107,9 +137,24 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     {
         Player* member = ObjectAccessor::FindPlayer(slot.guid);
         if (!member || member == bot || !member->IsInCombat())
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+            return;
+        }
             continue;
 
         Unit* target = member->GetSelectedUnit();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
 
         // If group member has an alive target they're attacking, bot should assist
         // Don't use IsValidAttackTarget() - it fails for neutral mobs
@@ -127,6 +172,31 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
             // bot->Attack() makes the target hostile but needs to process
             if (!bot->GetVictim() || bot->GetVictim() != target)
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                            return nullptr;
+                        }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                        return nullptr;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                        return nullptr;
+                    }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                    return nullptr;
+                }
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                    return nullptr;
+                }
             {
                 // CRITICAL FIX: DO NOT call SetAIState() here!
                 // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
@@ -137,6 +207,11 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 // The correct flow is:
                 // 1. bot->Attack() + bot->SetInCombatWith() → bot->IsInCombat() becomes true
                 // 2. UpdateCombatState() detects bot->IsInCombat() == true
+                                    if (!bot)
+                                    {
+                                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                        return;
+                                    }
                 // 3. UpdateCombatState() calls SetAIState(BotAIState::COMBAT)
                 // 4. OnCombatUpdate() is called with spell queue ready
 
@@ -157,6 +232,11 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     {
                         ai->AttackStart(bot);
                         TC_LOG_ERROR("module.playerbot.strategy", "⚔️ CREATURE ENGAGED: {} AttackStart() called on bot {}",
+                                    if (!bot)
+                                    {
+                                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                        return;
+                                    }
                                     targetCreature->GetName(), bot->GetName());
                     }
                 }
@@ -170,6 +250,21 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
                 TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
                             bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                    return nullptr;
+                }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return nullptr;
+            }
 
                 // Don't return - allow ClassAI combat updates to proceed
                 // Note: OnCombatUpdate() is called from BotAI::UpdateAI() when IsInCombat() returns true
@@ -190,6 +285,16 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 // CRITICAL FIX: Only issue MoveChase if NOT already chasing
                 // Re-issuing every frame causes speed-up and blinking issues
                 MotionMaster* mm = bot->GetMotionMaster();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                 if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
                 {
                     mm->MoveChase(target, optimalRange);
@@ -213,6 +318,11 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
         return 0.0f;
 
     Player* bot = ai->GetBot();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
 
     // If bot already in combat, let ClassAI handle it
     if (bot->IsInCombat())
@@ -223,13 +333,43 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
     {
         // Engage group member's target
         Group* group = bot->GetGroup();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
         if (group)
         {
             for (auto const& slot : group->GetMemberSlots())
             {
                 Player* member = ObjectAccessor::FindPlayer(slot.guid);
                 if (!member || member == bot || !member->IsInCombat())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+                    return;
+                }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                            return nullptr;
+                        }
+                        return nullptr;
+                    }
                     continue;
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
                 Unit* target = member->GetSelectedUnit();
                 if (target && target->IsAlive())
@@ -242,6 +382,11 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
                     if (!bot->IsInCombat() && !bot->GetVictim())
                     {
                         float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+                                    if (!bot)
+                                    {
+                                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                        return;
+                                    }
 
                         TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
                                     bot->GetName(), target->GetName(), distance, member->GetName());
@@ -264,6 +409,16 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 
     Player* bot = ai->GetBot();
     Group* group = bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 
     if (!group)
         return false;

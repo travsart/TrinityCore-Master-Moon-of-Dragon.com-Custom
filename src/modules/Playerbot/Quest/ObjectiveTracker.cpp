@@ -47,6 +47,11 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     ObjectiveState state(objective.questId, objective.objectiveIndex);
     state.status = ObjectiveStatus::IN_PROGRESS;
@@ -55,6 +60,11 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     // CRITICAL FIX: Set objective position to actual quest target location, NOT bot's current position!
     // Get the spawn location of the quest target (creature/object/etc)
     Position targetPosition = FindObjectiveTargetLocation(bot, objective);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
 
     // If we found a valid target location, use it. Otherwise, use bot's position as fallback.
     if (targetPosition.GetExactDist2d(0.0f, 0.0f) > 0.1f)
@@ -68,6 +78,11 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     else
     {
         state.lastKnownPosition = bot->GetPosition();
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                        return;
+                    }
         TC_LOG_ERROR("module.playerbot.quest", "⚠️ StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
                     bot->GetName(),
                     bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
@@ -87,6 +102,11 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
         std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
         _botObjectiveStates[botGuid].push_back(state);
         objectiveCount = _botObjectiveStates[botGuid].size();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "✅ StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
@@ -102,10 +122,20 @@ void ObjectiveTracker::StopTrackingObjective(Player* bot, uint32 questId, uint32
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
         return;
 
     auto& states = statesIt->second;
@@ -127,6 +157,11 @@ void ObjectiveTracker::UpdateObjectiveTracking(Player* bot, uint32 diff)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
@@ -160,6 +195,11 @@ void ObjectiveTracker::RefreshObjectiveStates(Player* bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
@@ -179,6 +219,11 @@ void ObjectiveTracker::MonitorObjectiveProgress(Player* bot, uint32 questId, uin
         return;
 
     ObjectiveState state = GetObjectiveState(bot, questId, objectiveIndex);
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                       return;
+                   }
     if (state.questId == 0)
         return;
 
@@ -199,6 +244,11 @@ void ObjectiveTracker::UpdateProgressMetrics(Player* bot, const QuestObjectiveDa
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     // Update bot-specific analytics
     auto& analytics = _botAnalytics[botGuid];
@@ -320,6 +370,21 @@ std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 it
 }
 
 std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 objectId, float radius)
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return nullptr;
+                     }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+            return nullptr;
+        }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+                     return;
+                 }
 {
     std::vector<uint32> targets;
 
@@ -392,6 +457,11 @@ ObjectiveTracker::ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot
         return ObjectiveState(0, 0);
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
@@ -413,6 +483,11 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
@@ -438,6 +513,11 @@ std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjecti
         return activeObjectives;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::lock_guard<std::recursive_mutex> lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
@@ -455,6 +535,11 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
         return priorities;
 
     std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
 
     TC_LOG_ERROR("module.playerbot.quest", "🔢 CalculateObjectivePriorities: Bot {} has {} active objectives",
                 bot->GetName(), activeObjectives.size());
@@ -517,6 +602,11 @@ void ObjectiveTracker::OptimizeObjectiveSequence(Player* bot, std::vector<Object
 }
 
 void ObjectiveTracker::TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
 {
     if (!bot)
         return;
@@ -645,6 +735,16 @@ void ObjectiveTracker::HandleTargetCompetition(Player* bot, uint32 targetId)
 
     // Find alternative locations for this target
     std::vector<Position> alternatives = FindAlternativeTargetLocations(targetId, bot->GetPosition());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
 
     if (!alternatives.empty())
     {
@@ -688,9 +788,19 @@ void ObjectiveTracker::CoordinateGroupObjectives(Group* group, uint32 questId)
     {
         Player* member = itr.GetSource();
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
+            return;
+        }
         {
             // Assign different objectives to different group members for efficiency
             uint32 assignedObjective = AssignObjectiveToGroupMember(group, member, questId);
+                           if (!member)
+                           {
+                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
+                               return;
+                           }
             if (assignedObjective != 0)
             {
                 TC_LOG_DEBUG("playerbot.objectives", "Assigned objective {} to group member {}",
@@ -712,6 +822,11 @@ void ObjectiveTracker::DistributeObjectiveTargets(Group* group, uint32 questId, 
     {
         Player* member = itr.GetSource();
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
+            return;
+        }
         {
             botMembers.push_back(member);
         }
@@ -744,6 +859,11 @@ void ObjectiveTracker::SynchronizeObjectiveProgress(Group* group, uint32 questId
     {
         Player* member = itr.GetSource();
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
+            return;
+        }
         {
             RefreshObjectiveStates(member);
         }
@@ -782,6 +902,11 @@ void ObjectiveTracker::EnablePredictiveTracking(Player* bot, bool enable)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     TC_LOG_DEBUG("playerbot.objectives", "Predictive tracking for bot {} set to {}", botGuid, enable);
 }
 
@@ -806,6 +931,11 @@ void ObjectiveTracker::PredictObjectiveCompletion(Player* bot, uint32 questId, u
 }
 
 void ObjectiveTracker::AdaptTrackingStrategy(Player* bot, const ObjectiveState& state)
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                       return;
+                   }
 {
     if (!bot)
         return;
@@ -827,6 +957,16 @@ void ObjectiveTracker::OptimizeTrackingPerformance(Player* bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     // Optimize tracking performance for this bot
     // Reduce scan frequency for low-priority objectives
@@ -852,6 +992,11 @@ void ObjectiveTracker::DetectTrackingErrors(Player* bot)
 }
 
 void ObjectiveTracker::HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error)
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
 {
     if (!bot)
         return;
@@ -861,6 +1006,11 @@ void ObjectiveTracker::HandleTrackingFailure(Player* bot, uint32 questId, uint32
 
     // Update failure metrics
     uint32 botGuid = bot->GetGUID().GetCounter();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     UpdateTrackingAnalytics(botGuid, GetObjectiveState(bot, questId, objectiveIndex), false);
 
     // Attempt recovery
@@ -868,6 +1018,11 @@ void ObjectiveTracker::HandleTrackingFailure(Player* bot, uint32 questId, uint32
 }
 
 void ObjectiveTracker::RecoverTrackingState(Player* bot, uint32 questId)
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
 {
     if (!bot)
         return;
@@ -885,6 +1040,11 @@ void ObjectiveTracker::ValidateObjectiveConsistency(Player* bot)
         return;
 
     std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
+                       if (!bot)
+                       {
+                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                           return;
+                       }
 
     for (const auto& state : activeObjectives)
     {
@@ -1006,6 +1166,11 @@ float ObjectiveTracker::CalculateUrgencyFactor(Player* bot, const ObjectiveState
 
     // Higher urgency for higher level quests
     int32 botLevel = static_cast<int32>(bot->GetLevel());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     int32 questMinLevel = bot->GetQuestMinLevel(quest);
     if (questMinLevel >= botLevel)
         urgency += 0.3f;
@@ -1128,6 +1293,11 @@ uint32 ObjectiveTracker::GetCurrentObjectiveProgress(Player* bot, const Quest* q
 }
 
 void ObjectiveTracker::HandleStuckObjective(Player* bot, ObjectiveState& state)
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
 {
     if (!bot)
         return;
@@ -1153,6 +1323,11 @@ void ObjectiveTracker::HandleStuckObjective(Player* bot, ObjectiveState& state)
     {
         // Consider abandoning this objective
         TC_LOG_ERROR("playerbot.objectives", "Objective repeatedly failing for bot {}, may need intervention",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName());
     }
 }
@@ -1176,6 +1351,11 @@ uint32 ObjectiveTracker::AssignObjectiveToGroupMember(Group* group, Player* memb
 }
 
 void ObjectiveTracker::AssignSpecificTargetToBot(Player* bot, uint32 questId, uint32 objectiveIndex, uint32 targetIndex)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
 {
     if (!bot)
         return;

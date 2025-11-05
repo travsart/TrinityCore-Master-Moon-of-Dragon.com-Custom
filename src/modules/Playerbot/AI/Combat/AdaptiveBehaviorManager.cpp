@@ -71,6 +71,11 @@ void AdaptiveBehaviorManager::CreateEmergencyTankProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Emergency tank activation logic
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating emergency tank mode", bot->GetName());
         ActivateStrategy(flags);
@@ -96,6 +101,11 @@ void AdaptiveBehaviorManager::CreateAOEProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating AOE mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -121,6 +131,11 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -144,6 +159,11 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating burst phase", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -167,6 +187,11 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating resource conservation", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -319,6 +344,11 @@ void AdaptiveBehaviorManager::ApplyProfile(BehaviorProfile& profile)
     profile.lastActivated = getMSTime();
     profile.activeTime = 0;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.playerbot", "Bot {} activated behavior profile: {}", _bot->GetName(), profile.name);
 }
 
@@ -328,6 +358,11 @@ void AdaptiveBehaviorManager::RemoveProfile(BehaviorProfile& profile)
     profile.isActive = false;
     profile.activeTime = 0;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.playerbot", "Bot {} deactivated behavior profile: {}", _bot->GetName(), profile.name);
 }
 
@@ -379,6 +414,11 @@ void AdaptiveBehaviorManager::AssignRoles()
     _roleAssignment.isTemporary = false;
 
     TC_LOG_DEBUG("bot.playerbot", "Bot {} assigned roles - Primary: {}, Secondary: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         _bot->GetName(), GetRoleName(primary), GetRoleName(secondary));
 }
 
@@ -496,6 +536,11 @@ bool AdaptiveBehaviorManager::CanPerformRole(BotRole role) const
         case BotRole::CROWD_CONTROL:
             return botClass == CLASS_MAGE || botClass == CLASS_ROGUE ||
                    botClass == CLASS_HUNTER || botClass == CLASS_WARLOCK;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 
         default:
             return true;
@@ -522,10 +567,20 @@ void AdaptiveBehaviorManager::UpdateGroupComposition()
     _groupComposition.Reset();
 
     Group* group = _bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
     {
         _groupComposition.totalMembers = 1;
         _groupComposition.alive = _bot->IsAlive() ? 1 : 0;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return;
+        }
         return;
     }
 
@@ -1011,6 +1066,11 @@ void AdaptiveBehaviorManager::ApplyResourceStrategies(const CombatMetrics& metri
 
 Classes AdaptiveBehaviorManager::GetBotClass() const
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     return static_cast<Classes>(_bot->GetClass());
 }
 

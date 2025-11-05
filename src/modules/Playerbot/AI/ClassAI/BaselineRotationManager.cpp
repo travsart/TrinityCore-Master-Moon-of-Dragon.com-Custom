@@ -50,6 +50,11 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
 
     // Use baseline rotation for levels 1-9
     uint8 level = bot->GetLevel();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return;
+    }
     if (level < 10)
         return true;
 
@@ -77,6 +82,11 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     // Initiate auto-attack if not already attacking this target
     // This is critical for low-level bots and serves as a fallback if no spells work
     if (bot->GetVictim() != target)
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
     {
         bot->Attack(target, true);
         TC_LOG_DEBUG("module.playerbot.baseline",
@@ -86,6 +96,11 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
 
     // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
     auto abilities = GetBaselineAbilities(bot->GetClass());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     if (!abilities || abilities->empty())
     {
         // No spells available - rely on auto-attack (already initiated above)
@@ -116,6 +131,11 @@ void BaselineRotationManager::ApplyBaselineBuffs(Player* bot)
 
     // FIX: use GetClass() not getClass()
     uint8 classId = bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 
     // Delegate to class-specific buff application
     switch (classId)
@@ -163,6 +183,11 @@ void BaselineRotationManager::ApplyBaselineBuffs(Player* bot)
 }
 
 bool BaselineRotationManager::HandleAutoSpecialization(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
 {
     if (!bot)
         return false;
@@ -199,6 +224,11 @@ float BaselineRotationManager::GetBaselineOptimalRange(Player* bot)
 
     // FIX: use GetClass() not getClass()
     uint8 classId = bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 
     // Melee classes
     if (classId == CLASS_WARRIOR || classId == CLASS_ROGUE ||
@@ -227,8 +257,18 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+        return nullptr;
+    }
         return false; // On cooldown
 
     // MIGRATION COMPLETE (2025-10-30):
@@ -238,6 +278,16 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
     // Get spell info for validation
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
     if (!spellInfo)
     {
         TC_LOG_TRACE("playerbot.baseline.packets",
@@ -259,6 +309,16 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // LOS check covered by skipRangeCheck
 
     auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+                     if (!castTarget)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: castTarget in method GetName");
+                         return;
+                     }
 
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
@@ -266,6 +326,11 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
         // Optimistic cooldown recording (packet will be processed)
         botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                         return;
+                     }
 
         TC_LOG_DEBUG("playerbot.baseline.packets",
                      "Bot {} queued CMSG_CAST_SPELL for baseline spell {} (target: {})",
@@ -286,6 +351,11 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 }
 
 bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
 {
     if (!bot || !target)
         return false;
@@ -303,6 +373,11 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
     else
     {
         if (bot->GetExactDistSq(target) > (30.0f * 30.0f) || !bot->IsWithinLOSInMap(target)) // 900.0f
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
             return false;
     }
 
@@ -314,19 +389,44 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
         case CLASS_WARRIOR:
         case CLASS_DRUID: // In some forms
             currentResource = bot->GetPower(POWER_RAGE);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
             break;
         case CLASS_ROGUE:
         case CLASS_MONK:
             currentResource = bot->GetPower(POWER_ENERGY);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
         case CLASS_HUNTER:
             currentResource = bot->GetPower(POWER_FOCUS);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
         case CLASS_DEATH_KNIGHT:
             currentResource = bot->GetPower(POWER_RUNIC_POWER);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
         default:
             currentResource = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
     }
 
@@ -349,6 +449,11 @@ uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const
 
     // FIX: use GetClass() not getClass()
     uint8 classId = bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     switch (classId)
     {
         case CLASS_WARRIOR:
@@ -412,6 +517,16 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 {
     // Charge if not in melee range (using squared distance for comparison)
     float distSq = bot->GetExactDistSq(target);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
     if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
     {
         // FIX: Use HasSpell check correctly
@@ -424,8 +539,33 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 
     // Execute if target below 20% health
     if (target->GetHealthPct() <= 20.0f && bot->HasSpell(EXECUTE))
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return nullptr;
+    }
     {
         if (bot->GetPower(POWER_RAGE) >= 15)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
         {
             bot->CastSpell(target, EXECUTE, false);
             return true;
@@ -441,6 +581,16 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 
     // Slam as rage dump
     if (bot->HasSpell(SLAM) && bot->GetPower(POWER_RAGE) >= 20)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
     {
         bot->CastSpell(target, SLAM, false);
         return true;
@@ -448,6 +598,16 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 
     // Hamstring to prevent fleeing
     if (bot->HasSpell(HAMSTRING) && bot->GetPower(POWER_RAGE) >= 10)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return nullptr;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
     {
         if (target->GetHealthPct() < 30.0f)
         {
@@ -460,6 +620,16 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
 }
 
 void WarriorBaselineRotation::ApplyBuffs(Player* bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return nullptr;
+        }
 {
     // Battle Shout
     if (bot->HasSpell(BATTLE_SHOUT) && !bot->HasAura(BATTLE_SHOUT))

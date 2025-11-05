@@ -55,6 +55,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
+            return;
+        }
     {
         if (!target || !target->IsHostileTo(this->GetBot()))
             return;
@@ -207,6 +212,11 @@ protected:
     {
         // Use on bosses or when multiple enemies
         return (target->GetMaxHealth() > this->GetBot()->GetMaxHealth() * 10) ||
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+            return nullptr;
+        }
                this->GetEnemiesInRange(10.0f) >= 3;
     }
 

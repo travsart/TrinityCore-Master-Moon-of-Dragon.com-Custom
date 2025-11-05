@@ -45,6 +45,11 @@ namespace {
     BotRole GetPlayerRole(Player const* player) {
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
         switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
@@ -431,6 +436,11 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
 
     float priority = static_cast<float>(basePriority);
     Player* player = target->ToPlayer();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+        return;
+    }
 
     // Role-based adjustments
     if (player)
@@ -460,6 +470,11 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
     {
         priority += 1.5f;  // Low HP with DOT
         if (damagePerTick > target->GetMaxHealth() * 0.05f)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
+            return;
+        }
             priority += 1.0f;  // Heavy DOT at low health
     }
 
@@ -584,7 +599,17 @@ void DispelCoordinator::UpdateDispellerCapabilities()
 
         DispellerCapability cap;
         cap.botGuid = member->GetGUID();
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+            return;
+        }
         cap.botClass = static_cast<Classes>(member->GetClass());
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+            return;
+        }
         cap.canDispel = GetClassDispelTypes(cap.botClass);
 
         if (cap.canDispel.empty())
@@ -766,6 +791,11 @@ bool DispelCoordinator::ExecuteDispel()
     // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, m_currentAssignment.target);
     Unit* target = nullptr;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return nullptr;
+    }
 
     if (snapshot && snapshot->IsAlive())
     {
@@ -816,6 +846,11 @@ bool DispelCoordinator::ExecuteDispel()
     options.logFailures = true;
 
     auto result = SpellPacketBuilder::BuildCastSpellPacket(m_bot, dispelSpell, target, options);
+                     if (!target)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                         return nullptr;
+                     }
 
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
@@ -904,6 +939,11 @@ bool DispelCoordinator::ExecutePurge()
     options.logFailures = true;
 
     auto result = SpellPacketBuilder::BuildCastSpellPacket(m_bot, purgeSpell, enemy, options);
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetName");
+            return nullptr;
+        }
 
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
@@ -947,6 +987,11 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
 
         // Check all auras
         Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+    return;
+}
         for (auto const& [auraId, aurApp] : auras)
         {
             Aura* aura = aurApp->GetBase();
@@ -961,6 +1006,16 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
             DebuffTarget target;
             target.targetGuid = member->GetGUID();
             target.auraId = auraId;
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return;
+            }
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return;
+            }
             target.dispelType = debuffData->dispelType;
             target.priority = debuffData->basePriority;
             target.adjustedPriority = debuffData->GetAdjustedPriority(member);
@@ -1043,6 +1098,11 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
 
             // Skip if not worth purging
             if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
+    return nullptr;
+}
                 continue;
 
             PurgeTarget target;
@@ -1075,6 +1135,11 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
 // ============================================================================
 
 bool DispelCoordinator::IsTank(Unit* unit) const
+if (!unit)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
+    return;
+}
 {
     Player* player = unit->ToPlayer();
     if (!player)
@@ -1084,6 +1149,11 @@ bool DispelCoordinator::IsTank(Unit* unit) const
 }
 
 bool DispelCoordinator::IsHealer(Unit* unit) const
+if (!unit)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
+    return;
+}
 {
     Player* player = unit->ToPlayer();
     if (!player)
@@ -1102,6 +1172,11 @@ uint32 DispelCoordinator::GetNearbyAlliesCount(Unit* center, float radius) const
     {
         Player* member = itr.GetSource();
         if (!member || member == center || member->isDead())
+            if (!center)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: center in method GetDistance");
+                return;
+            }
             continue;
 
         float radiusSq = radius * radius;

@@ -55,6 +55,11 @@ enum PriestTalents
 // ============================================================================
 
 PriestAI::PriestAI(Player* bot) : ClassAI(bot),
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
     _manaSpent(0),
     _healingDone(0),
     _damageDealt(0),
@@ -164,6 +169,11 @@ bool PriestAI::CanUseAbility(uint32 spellId)
 }
 
 void PriestAI::OnCombatStart(::Unit* target)
+                 if (!target)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                     return;
+                 }
 {
     if (!GetBot() || !target)
         return;
@@ -265,8 +275,23 @@ Position PriestAI::GetOptimalPosition(::Unit* target)
     angle += M_PI / 4; // 45 degrees offset
 
     float x = target->GetPositionX() - optimalRange * std::cos(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+        return;
+    }
     float y = target->GetPositionY() - optimalRange * std::sin(angle);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+        return;
+    }
     float z = target->GetPositionZ();
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+        return;
+    }
 
     return Position(x, y, z);
 }
@@ -512,6 +537,11 @@ bool PriestAI::HandleTargetSwitchPriority(::Unit*& target)
     if (priorityTarget && priorityTarget != target)
     {
         target = priorityTarget;
+                     if (!target)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                         return;
+                     }
         TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
                      GetBot()->GetName(), target->GetName());
         return true;
@@ -802,6 +832,11 @@ void PriestAI::CastDesperatePrayer()
         for (GroupReference const& ref : group->GetMembers())
         {
             Player* player = ref.GetSource();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
+                return;
+            }
             if (!player || !player->IsAlive())
                 continue;
 
@@ -899,6 +934,11 @@ void PriestAI::CastDesperatePrayer()
         for (GroupReference const& ref : group->GetMembers())
         {
             Player* player = ref.GetSource();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
+                return;
+            }
             if (!player || !player->IsAlive())
                 continue;
 
@@ -941,8 +981,18 @@ bool PriestAI::IsTank(::Unit* unit)
         return false;
 
     if (Player* player = unit->ToPlayer())
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
+        return nullptr;
+    }
     {
         uint8 playerClass = player->GetClass();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN || playerClass == CLASS_DEATH_KNIGHT);
     }
 
@@ -957,6 +1007,11 @@ bool PriestAI::IsHealer(::Unit* unit)
     if (Player* player = unit->ToPlayer())
     {
         uint8 playerClass = player->GetClass();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         return (playerClass == CLASS_PRIEST || playerClass == CLASS_DRUID ||
                 playerClass == CLASS_SHAMAN || playerClass == CLASS_PALADIN);
     }

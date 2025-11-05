@@ -109,6 +109,11 @@ struct EnergyChiResourceWindwalker
         if (bot) {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
             energy = bot->GetPower(POWER_ENERGY);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         chi = 0;
     }
@@ -218,6 +223,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit WindwalkerMonkRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
         , MonkSpecialization(bot)
         , _hitComboTracker()
@@ -234,6 +244,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;

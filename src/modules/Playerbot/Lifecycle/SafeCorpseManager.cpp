@@ -20,6 +20,11 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
 
     ObjectGuid corpseGuid = corpse->GetGUID();
     ObjectGuid ownerGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 
     std::unique_lock<std::shared_mutex> lock(_mutex);
 
@@ -39,6 +44,11 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
     _ownerToCorpse[ownerGuid] = corpseGuid;
 
     TC_LOG_DEBUG("playerbot.corpse", "Registered corpse {} for bot {} at ({:.2f}, {:.2f}, {:.2f})",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         corpseGuid.ToString(), bot->GetName(), tracker->x, tracker->y, tracker->z);
 }
 

@@ -69,6 +69,11 @@ namespace Playerbot
         {
             TC_LOG_DEBUG("playerbot.pathfinding",
                 "QuestPathfinder: No quest hubs available for player {} (level {}, team {})",
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 player->GetName(), player->GetLevel(), player->GetTeamId());
             state.result = QuestPathfindingResult::NO_QUEST_HUBS_AVAILABLE;
             return state.result;
@@ -76,6 +81,11 @@ namespace Playerbot
 
         // Select best quest hub based on strategy
         QuestHub const* selectedHub = SelectBestQuestHub(player, hubs, options.selectionStrategy);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
         if (!selectedHub)
         {
             TC_LOG_ERROR("playerbot.pathfinding",
@@ -107,8 +117,23 @@ namespace Playerbot
         else
         {
             state.targetCreatureGuid = questGiver->GetGUID();
+            if (!questGiver)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetGUID");
+                return;
+            }
             state.targetCreatureEntry = questGiver->GetEntry();
+            if (!questGiver)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetEntry");
+                return;
+            }
             state.destination = *questGiver;
+                if (!questGiver)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetName");
+                    return;
+                }
 
             TC_LOG_DEBUG("playerbot.pathfinding",
                 "QuestPathfinder: Found quest giver {} (entry {}) at distance {:.1f} yards",
@@ -121,6 +146,11 @@ namespace Playerbot
         {
             TC_LOG_DEBUG("playerbot.pathfinding",
                 "QuestPathfinder: Player {} already at destination (within 5 yards)",
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 player->GetName());
             state.result = QuestPathfindingResult::ALREADY_AT_DESTINATION;
             return state.result;
@@ -150,6 +180,11 @@ namespace Playerbot
 
         // Estimate travel time
         state.estimatedTravelTime = EstimateTravelTime(state.pathLength, player);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
 
         TC_LOG_DEBUG("playerbot.pathfinding",
             "QuestPathfinder: Generated path for player {} - {:.1f} yards, {:.1f}s estimated travel time",
@@ -209,6 +244,11 @@ namespace Playerbot
         {
             TC_LOG_WARN("playerbot.pathfinding",
                 "QuestPathfinder: Quest hub {} is not appropriate for player {} (level {}, team {})",
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 hubId, player->GetName(), player->GetLevel(), player->GetTeamId());
             state.result = QuestPathfindingResult::NO_QUEST_HUBS_AVAILABLE;
             return state.result;
@@ -225,7 +265,17 @@ namespace Playerbot
         else
         {
             state.targetCreatureGuid = questGiver->GetGUID();
+            if (!questGiver)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetGUID");
+                return;
+            }
             state.targetCreatureEntry = questGiver->GetEntry();
+            if (!questGiver)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetEntry");
+                return;
+            }
             state.destination = *questGiver;
         }
 

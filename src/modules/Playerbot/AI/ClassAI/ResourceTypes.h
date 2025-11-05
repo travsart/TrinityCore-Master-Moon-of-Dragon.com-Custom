@@ -417,6 +417,11 @@ public:
     void Regenerate(uint32 diff)
     {
         // Very slow regeneration out of combat
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return;
+        }
         if (!_bot || !_bot->IsInCombat())
         {
             float regenRate = 0.1f; // 0.1 shards per second out of combat

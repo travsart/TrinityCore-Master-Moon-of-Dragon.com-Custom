@@ -225,6 +225,16 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return false;
 
@@ -299,6 +309,11 @@ public:
 
                 // Prioritize adds that are attacking healers
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (group)
                 {
                     for (::Creature* add : adds)
@@ -308,9 +323,19 @@ public:
 
                         // Check if add is targeting healer
                         Unit* target = add->GetVictim();
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsPlayer");
+                            return;
+                        }
                         if (target && target->IsPlayer())
                         {
                             Player* targetPlayer = target->ToPlayer();
+                            if (!target)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+                                return;
+                            }
                             if (GetPlayerRole(targetPlayer) == DungeonRole::HEALER)
                             {
                                 TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Add attacking healer - priority target");
@@ -448,12 +473,27 @@ public:
                 // Should be dispelled if possible
 
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -472,12 +512,22 @@ public:
             {
                 // Word of Shame causes fear - dispel or wait out
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

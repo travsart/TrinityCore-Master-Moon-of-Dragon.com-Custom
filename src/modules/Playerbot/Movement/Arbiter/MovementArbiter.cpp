@@ -86,6 +86,16 @@ std::string MovementArbiterStatistics::ToString() const
 // ============================================================================
 
 MovementArbiter::MovementArbiter(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
     : _bot(bot)
     , _lastUpdateTime(getMSTime())
 {
@@ -179,6 +189,11 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
         {
             TC_LOG_WARN("playerbot.movement.arbiter",
                 "MovementArbiter: Large queue size ({}) for bot {} - possible performance issue",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 queueSize, _bot->GetName());
         }
     }
@@ -366,6 +381,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
                     params.targetPos.GetPositionX(),
                     params.targetPos.GetPositionY(),
                     params.targetPos.GetPositionZ(),
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     _bot->GetName(),
                     MovementPriorityMapper::GetPriorityName(request.GetPriority()),
                     tcPriority.ToString());
@@ -385,6 +405,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             {
                 // Validated via spatial grid - safe to call ObjectAccessor on World Thread
                 target = ObjectAccessor::GetUnit(*_bot, params.targetGuid);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
             }
 
             if (!target)
@@ -404,7 +429,17 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             {
                 TC_LOG_DEBUG("playerbot.movement.arbiter",
                     "MovementArbiter: Executing CHASE movement (target: {}) for bot {} - Priority: {} ({})",
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                        return;
+                    }
                     target->GetName(),
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     _bot->GetName(),
                     MovementPriorityMapper::GetPriorityName(request.GetPriority()),
                     tcPriority.ToString());
@@ -424,6 +459,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             {
                 // Validated via spatial grid - safe to call ObjectAccessor on World Thread
                 target = ObjectAccessor::GetUnit(*_bot, params.targetGuid);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
             }
 
             if (!target)
@@ -448,6 +488,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
                     "MovementArbiter: Executing FOLLOW movement (target: {}, distance: {:.2f}) for bot {} - Priority: {} ({})",
                     target->GetName(),
                     params.distance,
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     _bot->GetName(),
                     MovementPriorityMapper::GetPriorityName(request.GetPriority()),
                     tcPriority.ToString());
@@ -463,6 +508,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             {
                 TC_LOG_DEBUG("playerbot.movement.arbiter",
                     "MovementArbiter: Executing IDLE movement for bot {}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     _bot->GetName());
             }
             break;
@@ -485,6 +535,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
                     params.targetPos.GetPositionX(),
                     params.targetPos.GetPositionY(),
                     params.targetPos.GetPositionZ(),
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     _bot->GetName());
             }
             break;
@@ -494,6 +549,11 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             TC_LOG_ERROR("playerbot.movement.arbiter",
                 "MovementArbiter: Unknown movement type {} for bot {}",
                 static_cast<int>(request.GetType()),
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 _bot->GetName());
             break;
     }
@@ -552,6 +612,11 @@ void MovementArbiter::ClearPendingRequests()
     {
         TC_LOG_DEBUG("playerbot.movement.arbiter",
             "MovementArbiter: Cleared pending requests for bot {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             _bot->GetName());
     }
 }
@@ -572,6 +637,11 @@ void MovementArbiter::StopMovement()
     {
         TC_LOG_DEBUG("playerbot.movement.arbiter",
             "MovementArbiter: Stopped all movement for bot {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             _bot->GetName());
     }
 }
@@ -588,6 +658,11 @@ void MovementArbiter::ResetStatistics()
     {
         TC_LOG_DEBUG("playerbot.movement.arbiter",
             "MovementArbiter: Reset statistics for bot {}",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             _bot->GetName());
     }
 }
@@ -596,6 +671,11 @@ std::string MovementArbiter::GetDiagnosticString() const
 {
     std::ostringstream oss;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     oss << "MovementArbiter Diagnostics for " << _bot->GetName() << ":\n";
     oss << "  Pending Requests: " << GetPendingRequestCount() << "\n";
 
@@ -641,6 +721,11 @@ void MovementArbiter::SetConfig(MovementArbiterConfig const& config)
 
     TC_LOG_DEBUG("playerbot.movement.arbiter",
         "MovementArbiter: Updated configuration for bot {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _bot->GetName());
 }
 

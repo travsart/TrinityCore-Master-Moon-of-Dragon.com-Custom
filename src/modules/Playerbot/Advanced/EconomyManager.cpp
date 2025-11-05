@@ -68,6 +68,16 @@ namespace Playerbot
             return;
 
         m_sessionStartGold = m_bot->GetMoney();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         m_lastKnownGold = m_sessionStartGold;
 
         // Initialize profession skills
@@ -161,6 +171,16 @@ namespace Playerbot
         // See AuctionHouseHandler.cpp:819-965 for complete pattern
 
         TC_LOG_DEBUG("playerbot", "Bot %s auction post request: item=%u, stack=%u, buyout=%u (not yet implemented)",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return 0;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
             m_bot->GetName().c_str(), itemId, stackSize, buyoutPrice);
 
         return false; // Not yet implemented
@@ -176,6 +196,11 @@ namespace Playerbot
 
         // TODO: Implement auction bidding with proper WorldSession integration
         TC_LOG_DEBUG("playerbot", "Bot %s auction bid request: id=%u, amount=%u (not yet implemented)",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return 0;
+            }
             m_bot->GetName().c_str(), auctionId, bidAmount);
 
         return false; // Not yet implemented
@@ -188,6 +213,11 @@ namespace Playerbot
 
         // TODO: Implement auction buyout with proper WorldSession integration
         TC_LOG_DEBUG("playerbot", "Bot %s auction buyout request: id=%u (not yet implemented)",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return 0;
+            }
             m_bot->GetName().c_str(), auctionId);
 
         return false; // Not yet implemented
@@ -200,6 +230,11 @@ namespace Playerbot
 
         // TODO: Implement auction cancellation with proper WorldSession integration
         TC_LOG_DEBUG("playerbot", "Bot %s auction cancel request: id=%u (not yet implemented)",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return 0;
+            }
             m_bot->GetName().c_str(), auctionId);
 
         return false; // Not yet implemented
@@ -320,6 +355,11 @@ namespace Playerbot
         if (!spellInfo)
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
+            return;
+        }
         m_bot->LearnSpell(recipeId, false);
 
         Recipe recipe;
@@ -328,6 +368,11 @@ namespace Playerbot
         m_knownRecipes.push_back(recipe);
 
         TC_LOG_DEBUG("playerbot", "Bot %s learned recipe %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), recipeId);
 
         return true;
@@ -336,6 +381,11 @@ namespace Playerbot
     bool EconomyManager::CraftItem(uint32 recipeId, uint32 quantity)
     {
         if (!m_bot || !m_enabled || quantity == 0)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
             return false;
 
         if (!CanCraft(recipeId))
@@ -361,6 +411,11 @@ namespace Playerbot
         m_stats.itemsCrafted += quantity;
 
         TC_LOG_DEBUG("playerbot", "Bot %s crafted %u x item %u using recipe %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), quantity, recipe.productId, recipeId);
 
         return true;
@@ -437,6 +492,11 @@ namespace Playerbot
         m_professionSkills[profession] = 1;
 
         TC_LOG_DEBUG("playerbot", "Bot %s learned profession %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), static_cast<uint32>(profession));
 
         return true;
@@ -470,6 +530,11 @@ namespace Playerbot
         {
             it->second++;
             TC_LOG_DEBUG("playerbot", "Bot %s leveled profession %u to skill %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 m_bot->GetName().c_str(), static_cast<uint32>(profession), it->second);
         }
     }
@@ -483,6 +548,16 @@ namespace Playerbot
             return nodes;
 
         Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
         if (!map)
             return nodes;
 
@@ -510,6 +585,11 @@ namespace Playerbot
                 continue;
 
             uint32 goEntry = go->GetEntry();
+            if (!go)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetEntry");
+                return;
+            }
             GameObjectTemplate const* goInfo = go->GetGOInfo();
             if (!goInfo)
                 continue;
@@ -527,6 +607,11 @@ namespace Playerbot
             {
                 GatheringNode node;
                 node.guid = go->GetGUID();
+                if (!go)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
+                    return;
+                }
                 node.entry = goEntry;
                 node.posX = go->GetPositionX();
                 node.posY = go->GetPositionY();
@@ -549,6 +634,16 @@ namespace Playerbot
             return false;
 
         GameObject* go = m_bot->GetMap()->GetGameObject(node.guid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!go || !go->isSpawned())
             return false;
 
@@ -580,8 +675,23 @@ namespace Playerbot
         std::vector<bool> visited(nodes.size(), false);
 
         float currentX = m_bot->GetPositionX();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
+            return;
+        }
         float currentY = m_bot->GetPositionY();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+            return;
+        }
         float currentZ = m_bot->GetPositionZ();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+            return;
+        }
 
         for (size_t i = 0; i < nodes.size(); ++i)
         {
@@ -618,6 +728,11 @@ namespace Playerbot
     {
         if (!m_bot)
             return 0;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
         return m_bot->GetMoney();
     }
 
@@ -628,12 +743,22 @@ namespace Playerbot
 
     bool EconomyManager::DepositGold(uint64 amount)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return false;
+        }
         if (!m_bot || m_bot->GetMoney() < amount)
             return false;
 
         m_bot->ModifyMoney(-static_cast<int64>(amount));
 
         TC_LOG_DEBUG("playerbot", "Bot %s deposited %llu gold to bank",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), amount);
 
         return true;
@@ -647,6 +772,11 @@ namespace Playerbot
         m_bot->ModifyMoney(static_cast<int64>(amount));
 
         TC_LOG_DEBUG("playerbot", "Bot %s withdrew %llu gold from bank",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), amount);
 
         return true;
@@ -668,6 +798,11 @@ namespace Playerbot
     bool EconomyManager::AccessBank()
     {
         return m_bot != nullptr;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
     }
 
     bool EconomyManager::DepositItem(Item* item)
@@ -687,6 +822,11 @@ namespace Playerbot
             return false;
 
         TC_LOG_DEBUG("playerbot", "Bot %s withdrew item %u (quantity: %u) from bank",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), itemId, quantity);
 
         return true;
@@ -704,6 +844,16 @@ namespace Playerbot
 
     // Trading Implementation
     bool EconomyManager::InitiateTrade(Player* target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return nullptr;
+    }
     {
         if (!m_bot || !target)
             return false;
@@ -723,6 +873,11 @@ namespace Playerbot
 
         // Check faction (same faction or not hostile)
         if (m_bot->GetTeam() != target->GetTeam() && m_bot->IsPvP() && target->IsPvP())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             return false; // Cannot trade with hostile players
 
         // Use the public InitiateTrade method added to Player class for PlayerBot integration
@@ -740,6 +895,11 @@ namespace Playerbot
             return false;
 
         TradeData* trade = m_bot->GetTradeData();
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
         if (!trade)
             return false; // No active trade
 
@@ -762,10 +922,20 @@ namespace Playerbot
 
     bool EconomyManager::SetTradeGold(uint64 amount)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return false;
+        }
         if (!m_bot || m_bot->GetMoney() < amount)
             return false;
 
         TradeData* trade = m_bot->GetTradeData();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
         if (!trade)
             return false; // No active trade
 
@@ -783,6 +953,11 @@ namespace Playerbot
             return false;
 
         TradeData* trade = m_bot->GetTradeData();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!trade)
             return false; // No active trade
 
@@ -798,6 +973,11 @@ namespace Playerbot
             return false;
 
         TradeData* trade = m_bot->GetTradeData();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (!trade)
             return false; // No active trade
 
@@ -855,11 +1035,21 @@ namespace Playerbot
         if (!m_bot)
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
         if (m_bot->GetMoney() < opportunity.vendorBuyPrice)
             return false;
 
         TC_LOG_DEBUG("playerbot", "Bot %s executed arbitrage for item %u (profit margin: %.2f%%)",
             m_bot->GetName().c_str(), opportunity.itemId, opportunity.profitMargin * 100.0f);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
 
         return true;
     }
@@ -923,6 +1113,11 @@ namespace Playerbot
             return;
 
         TC_LOG_DEBUG("playerbot", "Bot %s queued crafting job: recipe %u x %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), recipeId, quantity);
     }
 

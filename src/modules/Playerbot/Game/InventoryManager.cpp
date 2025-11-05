@@ -112,6 +112,11 @@ void InventoryManager::Update(uint32 diff)
     }
 
     // Auto-loot nearby corpses and objects
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     if (_autoLootEnabled && !_bot->IsInCombat())
     {
         uint32 lootedCount = AutoLoot();
@@ -151,6 +156,11 @@ void InventoryManager::Update(uint32 diff)
 
 uint32 InventoryManager::AutoLoot(float maxRange)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+        return 0;
+    }
     if (!_bot || !_bot->IsAlive() || IsBagsFull())
         return 0;
 
@@ -242,6 +252,16 @@ bool InventoryManager::LootCorpse(Creature* creature)
 }
 
 bool InventoryManager::LootGameObject(GameObject* go)
+    if (!go)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method IsWithinDistInMap");
+        return nullptr;
+    }
+    if (!go)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetEntry");
+        return;
+    }
 {
     if (!go || !go->IsWithinDistInMap(_bot, INTERACTION_DISTANCE))
         return false;
@@ -252,6 +272,11 @@ bool InventoryManager::LootGameObject(GameObject* go)
         return false;
 
     Loot* loot = go->m_loot.get();
+        if (!go)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method SetLootState");
+            return nullptr;
+        }
     if (!loot || loot->isLooted())
         return false;
 
@@ -351,6 +376,11 @@ bool InventoryManager::ShouldLootItem(uint32 itemId) const
         return false;
 
     // Check if usable by race
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
+        return nullptr;
+    }
     if (!proto->GetAllowableRace().IsEmpty() && !proto->GetAllowableRace().HasRace(_bot->GetRace()))
         return false;
 
@@ -363,6 +393,11 @@ bool InventoryManager::ShouldLootItem(uint32 itemId) const
 
 uint32 InventoryManager::OptimizeEquipment()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return 0;
+    }
     if (!_bot || _bot->IsInCombat())
         return 0;
 
@@ -540,6 +575,11 @@ bool InventoryManager::UnequipItem(uint8 slot)
         return false;
 
     Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+        return;
+    }
     if (!item)
         return false;
 
@@ -593,6 +633,11 @@ uint32 InventoryManager::GetBagSpace() const
     // Check main backpack
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return nullptr;
+        }
         if (!_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
             freeSlots++;
     }
@@ -902,6 +947,11 @@ uint32 InventoryManager::DestroyItemsForSpace(uint32 slots)
 // ============================================================================
 
 uint32 InventoryManager::SellVendorTrash(Creature* vendor)
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     if (!_bot)
         return 0;
@@ -984,6 +1034,11 @@ uint32 InventoryManager::RepairEquipment(Creature* vendor)
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (item)
         {
             totalCost += item->CalculateDurabilityRepairCost(1.0f);
@@ -1003,6 +1058,11 @@ uint32 InventoryManager::RepairEquipment(Creature* vendor)
 }
 
 bool InventoryManager::BuyFromVendor(Creature* vendor, uint32 itemId, uint32 count)
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
+        return nullptr;
+    }
 {
     if (!_bot || !vendor || !vendor->IsVendor())
         return false;
@@ -1021,6 +1081,11 @@ bool InventoryManager::BuyFromVendor(Creature* vendor, uint32 itemId, uint32 cou
     uint32 price = itemProto ? itemProto->GetBuyPrice() : 0;
 
     if (_bot->GetMoney() < price * count)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+        return nullptr;
+    }
         return false;
 
     // Check if bot has space
@@ -1030,6 +1095,11 @@ bool InventoryManager::BuyFromVendor(Creature* vendor, uint32 itemId, uint32 cou
         return false;
 
     // Buy the item
+    if (!vendor)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method GetGUID");
+        return;
+    }
     _bot->BuyItemFromVendorSlot(vendor->GetGUID(), 0, itemId, count, NULL_BAG, NULL_SLOT);
 
     UpdateInventoryCache();
@@ -1070,6 +1140,11 @@ bool InventoryManager::NeedsFood() const
         return false;
 
     // Check if health is below 50%
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     return _bot->GetHealthPct() < 50.0f && !_bot->IsInCombat();
 }
 
@@ -1080,6 +1155,11 @@ bool InventoryManager::NeedsDrink() const
 
     // Check if mana user and mana is below 50%
     if (_bot->GetPowerType() != POWER_MANA)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
         return false;
 
     return _bot->GetPowerPct(POWER_MANA) < 50.0f && !_bot->IsInCombat();
@@ -1207,6 +1287,11 @@ Item* InventoryManager::GetEquippedItem(uint8 slot) const
     if (it != _equippedItems.end())
         return it->second;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+        return;
+    }
     return _bot ? _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot) : nullptr;
 }
 
@@ -1239,6 +1324,11 @@ void InventoryManager::InitializeStatWeights()
     _statWeights.clear();
 
     // Set weights based on class
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
@@ -1303,6 +1393,11 @@ void InventoryManager::UpdateEquipmentCache()
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (item)
             _equippedItems[slot] = item;
     }
@@ -1322,6 +1417,11 @@ void InventoryManager::UpdateInventoryCache()
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
         Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+            return;
+        }
         if (item)
         {
             _inventoryItems.push_back(item);
@@ -1369,6 +1469,16 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return {};
 
@@ -1395,6 +1505,16 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
         {
             // Get Creature* for lootability check (validated via snapshot first)
             creature = ObjectAccessor::GetCreature(*_bot, guid);
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         }
 
         if (creature && creature->GetHealth() == 0 && creature->HasDynamicFlag(UNIT_DYNFLAG_LOOTABLE))
@@ -1411,6 +1531,16 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     {
         GameObject* go = map->GetGameObject(guid);
         if (go && go->GetGoType() == GAMEOBJECT_TYPE_CHEST)
+        if (!go)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
+            return;
+        }
+            if (!go)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
+                return;
+            }
         {
             lootables.push_back(go->GetGUID());
         }
@@ -1451,6 +1581,11 @@ bool InventoryManager::CanUseItem(ItemTemplate const* proto) const
         return false;
 
     // Check level requirement
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+        return nullptr;
+    }
     if (proto->GetBaseRequiredLevel() > static_cast<int32>(_bot->GetLevel()))
         return false;
 
@@ -1460,6 +1595,11 @@ bool InventoryManager::CanUseItem(ItemTemplate const* proto) const
         return false;
 
     // Check race requirement
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
+        return nullptr;
+    }
     if (!proto->GetAllowableRace().IsEmpty() && !proto->GetAllowableRace().HasRace(_bot->GetRace()))
         return false;
 

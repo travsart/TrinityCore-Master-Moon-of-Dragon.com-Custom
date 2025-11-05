@@ -26,6 +26,11 @@ namespace Playerbot
 {
 
 WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
 {
     _lastStanceChange = 0;
     _lastBattleShout = 0;
@@ -71,6 +76,11 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+                             if (!interruptTarget)
+                             {
+                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
+                                 return;
+                             }
         if (interruptTarget && CanUseAbility(PUMMEL))
         {
             // Cast Pummel on the interrupt target
@@ -101,6 +111,11 @@ void WarriorAI::UpdateRotation(::Unit* target)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+                         if (!priorityTarget)
+                         {
+                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
+                             return;
+                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -428,6 +443,11 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
 
     // Apply Rend for bleed damage
     if (CanUseAbility(REND))
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+        return 0;
+    }
     {
         if (!target->HasAura(REND, GetBot()->GetGUID()))
         {
@@ -628,6 +648,11 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
 }
 
 bool WarriorAI::IsValidTarget(::Unit* target)
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+    return nullptr;
+}
 {
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }

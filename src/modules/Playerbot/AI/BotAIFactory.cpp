@@ -31,6 +31,16 @@ BotAIFactory* BotAIFactory::instance()
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 {
     if (!bot)
     {
@@ -61,60 +71,150 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
         {
             case CLASS_WARRIOR:
                 botAI = std::make_unique<WarriorAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created WarriorAI for player {}", bot->GetName());
                 break;
             case CLASS_PALADIN:
                 botAI = std::make_unique<PaladinAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created PaladinAI for player {}", bot->GetName());
                 break;
             case CLASS_HUNTER:
                 botAI = std::make_unique<HunterAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created HunterAI for player {}", bot->GetName());
                 break;
             case CLASS_ROGUE:
                 botAI = std::make_unique<RogueAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created RogueAI for player {}", bot->GetName());
                 break;
             case CLASS_PRIEST:
                 botAI = std::make_unique<PriestAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created PriestAI for player {}", bot->GetName());
                 break;
             case CLASS_SHAMAN:
                 botAI = std::make_unique<ShamanAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created ShamanAI for player {}", bot->GetName());
                 break;
             case CLASS_MAGE:
                 botAI = std::make_unique<MageAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created MageAI for player {}", bot->GetName());
                 break;
             case CLASS_WARLOCK:
                 botAI = std::make_unique<WarlockAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created WarlockAI for player {}", bot->GetName());
                 break;
             case CLASS_MONK:
                 botAI = std::make_unique<MonkAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created MonkAI for player {}", bot->GetName());
                 break;
             case CLASS_DRUID:
                 botAI = std::make_unique<DruidAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created DruidAI for player {}", bot->GetName());
                 break;
             case CLASS_DEMON_HUNTER:
                 botAI = std::make_unique<DemonHunterAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created DemonHunterAI for player {}", bot->GetName());
                 break;
             case CLASS_DEATH_KNIGHT:
                 botAI = std::make_unique<DeathKnightAI>(bot);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot.ai", "Created DeathKnightAI for player {}", bot->GetName());
                 break;
             case CLASS_EVOKER:
                 botAI = std::make_unique<EvokerAI>(bot);
+                           if (!bot)
+                           {
+                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                               return;
+                           }
+                           if (!bot)
+                           {
+                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                               return;
+                           }
                 TC_LOG_INFO("module.playerbot.ai", "Created EvokerAI for player {}", bot->GetName());
                 break;
             default:
                 TC_LOG_WARN("module.playerbot.ai", "Unknown class {} for player {}, creating DefaultBotAI",
                            classId, bot->GetName());
                 botAI = std::make_unique<DefaultBotAI>(bot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
                 break;
         }
 
@@ -143,24 +243,44 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, u
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, std::string const& type)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 {
     // Implement specialized AI types as needed
     return CreateClassAI(bot, bot->GetClass());
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 {
     // For now, use class-specific AI with PvP strategies
     return CreateClassAI(bot, bot->GetClass());
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 {
     // For now, use class-specific AI with PvE strategies
     return CreateClassAI(bot, bot->GetClass());
 }
 
 std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
 {
     // For now, use class-specific AI with raid strategies
     return CreateClassAI(bot, bot->GetClass());

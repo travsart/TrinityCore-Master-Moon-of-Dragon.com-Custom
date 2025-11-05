@@ -82,6 +82,11 @@ class LazyManagerFactory;
  *         bot->SetBotAI(ai);
  *         _loginState = LoginState::LOGIN_COMPLETE;
  *         TC_LOG_INFO("Bot {} initialized async", bot->GetName());
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+     return nullptr;
+ }
  *     }
  * );
  * // Returns immediately - world update continues
@@ -142,6 +147,11 @@ public:
      *     [bot](BotAI* ai) {
      *         bot->SetBotAI(ai);
      *         TC_LOG_INFO("Bot {} ready", bot->GetName());
+     if (!bot)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+         return nullptr;
+     }
      *     }
      * );
      * @endcode

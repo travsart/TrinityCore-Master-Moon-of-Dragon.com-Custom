@@ -288,6 +288,11 @@ public:
         // Setup Vengeance-specific cooldown tracking
         InitializeCooldowns();
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
     }
 
@@ -296,6 +301,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -334,6 +344,11 @@ public:
     }
 
     void OnTauntRequired(::Unit* target)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+                return;
+            }
     {
         if (this->CanCastSpell(TORMENT, target))
         {

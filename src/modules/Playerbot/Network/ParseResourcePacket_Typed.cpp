@@ -30,6 +30,11 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
@@ -46,6 +51,11 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
     event.powerType = Powers::POWER_MANA;  // Not used for health updates
     event.amount = static_cast<int32>(packet.Health);
     event.maxAmount = static_cast<int32>(unit->GetMaxHealth());
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+        return;
+    }
     event.isRegen = false;
     event.timestamp = std::chrono::steady_clock::now();
     event.expiryTime = event.timestamp + std::chrono::seconds(5);
@@ -54,6 +64,21 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
 
     // Calculate health percent for logging
     float healthPercent = unit->GetMaxHealth() > 0 ? (static_cast<float>(packet.Health) / unit->GetMaxHealth() * 100.0f) : 0.0f;
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+        return;
+    }
+        if (!unit)
+        {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
+            return;
+        }
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received HEALTH_UPDATE (typed): Unit {} health={}/{} ({:.1f}%)",
         bot->GetName(),
@@ -75,6 +100,11 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
@@ -121,6 +151,11 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         float powerPercent = maxPower > 0 ? (static_cast<float>(powerInfo.Power) / maxPower * 100.0f) : 0.0f;
 
         TC_LOG_TRACE("playerbot.packets", "Bot {} received POWER_UPDATE (typed): Unit {} powerType={} power={}/{} ({:.1f}%)",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             bot->GetName(),
             packet.Guid.ToString(),
             uint32(powerInfo.PowerType),

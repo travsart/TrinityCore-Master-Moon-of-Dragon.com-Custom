@@ -74,6 +74,11 @@ namespace Playerbot
         {
             m_vendorManager = std::make_unique<VendorInteractionManager>(m_bot);
             m_flightMasterManager = std::make_unique<FlightMasterManager>(m_bot);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         }
     }
 
@@ -147,6 +152,11 @@ namespace Playerbot
     }
 
     bool NPCInteractionManager::AcceptAvailableQuests(Creature* questGiver)
+        if (!questGiver)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetEntry");
+            return nullptr;
+        }
     {
         if (!questGiver)
             return false;
@@ -163,6 +173,11 @@ namespace Playerbot
                 acceptedAny = true;
 
                 TC_LOG_DEBUG("bot.playerbot", "Bot %s accepted quest %u from NPC %u",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     m_bot->GetName().c_str(), questId, questGiver->GetEntry());
             }
         }
@@ -228,6 +243,11 @@ namespace Playerbot
                     turnedInAny = true;
 
                     TC_LOG_DEBUG("bot.playerbot", "Bot %s turned in quest %u to NPC %u",
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         m_bot->GetName().c_str(), questId, questGiver->GetEntry());
                 }
             }
@@ -274,6 +294,11 @@ namespace Playerbot
         if (purchasedCount > 0)
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully purchased %u items from vendor %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), purchasedCount, vendor->GetEntry());
 
             // Update statistics
@@ -313,6 +338,11 @@ namespace Playerbot
             soldAny = true;
 
             TC_LOG_DEBUG("bot.playerbot", "Bot %s sold item %u for %u copper",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), item->GetEntry(), sellPrice);
         }
 
@@ -331,6 +361,11 @@ namespace Playerbot
         if (repairCost == 0 || repairCost > m_maxRepairCost)
             return false;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
         if (m_bot->GetMoney() < repairCost)
             return false;
 
@@ -341,6 +376,11 @@ namespace Playerbot
         RecordRepair(repairCost);
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s repaired equipment for %u copper",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), repairCost);
 
         return true;
@@ -358,6 +398,11 @@ namespace Playerbot
         if (purchasedCount > 0)
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Restocked reagents/consumables (%u items purchased)",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), purchasedCount);
             return true;
         }
@@ -399,10 +444,20 @@ namespace Playerbot
             if (!spellInfo.canLearn)
                 continue;
 
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                return nullptr;
+            }
             if (m_bot->GetMoney() < spellInfo.cost)
                 break;
 
             // Learn the spell
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
+                return;
+            }
             m_bot->LearnSpell(spellInfo.spellId, false);
             m_bot->ModifyMoney(-static_cast<int32>(spellInfo.cost));
 
@@ -410,6 +465,11 @@ namespace Playerbot
             learnedAny = true;
 
             TC_LOG_DEBUG("bot.playerbot", "Bot %s learned spell %u for %u copper",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), spellInfo.spellId, spellInfo.cost);
         }
 
@@ -419,6 +479,11 @@ namespace Playerbot
     bool NPCInteractionManager::CanAffordTraining() const
     {
         return m_bot->GetMoney() >= m_maxTrainingCost;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return;
+        }
     }
 
     std::vector<uint32> NPCInteractionManager::GetAffordableSpells(Creature* trainer) const
@@ -429,6 +494,11 @@ namespace Playerbot
         for (auto const& spellInfo : spells)
         {
             if (spellInfo.canLearn && m_bot->GetMoney() >= spellInfo.cost)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+                return nullptr;
+            }
                 affordable.push_back(spellInfo.spellId);
         }
 
@@ -456,6 +526,11 @@ namespace Playerbot
         m_bot->SetHomebind(loc, innkeeper->GetAreaId());
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s set hearthstone at innkeeper %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), innkeeper->GetEntry());
 
         return true;
@@ -475,6 +550,11 @@ namespace Playerbot
         if (m_flightMasterManager->LearnFlightPath(flightMaster))
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Learned new flight path at flight master %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), flightMaster->GetEntry());
             success = true;
         }
@@ -483,6 +563,11 @@ namespace Playerbot
         if (m_flightMasterManager->SmartFlight(flightMaster))
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully initiated smart flight from flight master %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), flightMaster->GetEntry());
 
             // Update statistics
@@ -508,6 +593,11 @@ namespace Playerbot
         if (success)
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully initiated flight to node %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), destinationNode);
 
             // Update statistics
@@ -520,6 +610,11 @@ namespace Playerbot
         else
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Failed to initiate flight to node %u",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 m_bot->GetName().c_str(), destinationNode);
         }
 
@@ -535,6 +630,11 @@ namespace Playerbot
             return false;
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s interacted with auctioneer %u",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             m_bot->GetName().c_str(), auctioneer->GetEntry());
 
         EndInteraction();
@@ -805,6 +905,11 @@ namespace Playerbot
 
         // Check interaction cooldown
         auto it = m_lastInteractionTime.find(npc->GetGUID());
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method GetGUID");
+            return;
+        }
         if (it != m_lastInteractionTime.end())
         {
             if (getMSTime() - it->second < m_interactionCooldown)
@@ -823,6 +928,11 @@ namespace Playerbot
         for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
         {
             Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return;
+            }
             if (!item)
                 continue;
 
@@ -862,6 +972,11 @@ namespace Playerbot
         for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
         {
             Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return;
+            }
             if (!item)
                 continue;
 
@@ -885,6 +1000,11 @@ namespace Playerbot
     {
         // Check if we're at a level where new spells are available
         uint32 botLevel = m_bot->GetLevel();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return;
+        }
 
         // Every 2 levels, check for training
         return (botLevel % 2 == 0);
@@ -1027,16 +1147,31 @@ namespace Playerbot
     }
 
     bool NPCInteractionManager::IsQuestGiver(Creature* npc) const
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method IsQuestGiver");
+            return;
+        }
     {
         return npc && npc->IsQuestGiver();
     }
 
     bool NPCInteractionManager::IsVendor(Creature* npc) const
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method IsVendor");
+            return;
+        }
     {
         return npc && npc->IsVendor();
     }
 
     bool NPCInteractionManager::IsTrainer(Creature* npc) const
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method IsTrainer");
+            return;
+        }
     {
         return npc && npc->IsTrainer();
     }
@@ -1047,11 +1182,21 @@ namespace Playerbot
     }
 
     bool NPCInteractionManager::IsInnkeeper(Creature* npc) const
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method IsInnkeeper");
+            return;
+        }
     {
         return npc && npc->IsInnkeeper();
     }
 
     bool NPCInteractionManager::IsFlightMaster(Creature* npc) const
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method IsTaxi");
+            return;
+        }
     {
         return npc && npc->IsTaxi();
     }
@@ -1083,6 +1228,11 @@ namespace Playerbot
         for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
         {
             Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+                return;
+            }
             if (item && IsJunkItem(item))
                 junkItems.push_back(item);
         }
@@ -1146,6 +1296,11 @@ namespace Playerbot
             return false;
 
         // Check if we can afford it
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+            return nullptr;
+        }
         if (m_bot->GetMoney() < itemTemplate->GetBuyPrice())
             return false;
 
@@ -1199,6 +1354,11 @@ namespace Playerbot
     bool NPCInteractionManager::ShouldLearnSpell(uint32 spellId) const
     {
         // Check if we already know the spell
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return false;
+        }
         if (m_bot->HasSpell(spellId))
             return false;
 
@@ -1225,10 +1385,20 @@ namespace Playerbot
         }
 
         m_currentInteraction.npc = npc->GetGUID();
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method GetGUID");
+            return;
+        }
         m_currentInteraction.type = DetermineNPCType(npc);
         m_currentInteraction.startTime = getMSTime();
 
         m_lastInteractionTime[npc->GetGUID()] = getMSTime();
+        if (!npc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method GetGUID");
+            return nullptr;
+        }
 
         return true;
     }
@@ -1264,6 +1434,16 @@ namespace Playerbot
         Trinity::CreatureListSearcher searcher(m_bot, creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = m_bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return; // Adjust return value as needed
 

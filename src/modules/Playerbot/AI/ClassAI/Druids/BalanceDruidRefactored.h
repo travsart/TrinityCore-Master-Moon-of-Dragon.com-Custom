@@ -116,6 +116,11 @@ struct ManaAstralPowerResource
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
         }
         astralPower = 0;
     }
@@ -272,6 +277,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit BalanceDruidRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : RangedDpsSpecialization<ManaAstralPowerResource>(bot)
         
         , _eclipseTracker()
@@ -289,6 +299,11 @@ public:
     }
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -330,6 +345,11 @@ protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         ObjectGuid targetGuid = target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         uint32 ap = this->_resource.astralPower;
 
         // Priority 1: Use Shooting Stars proc (free Starsurge)

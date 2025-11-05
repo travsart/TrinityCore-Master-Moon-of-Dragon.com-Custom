@@ -240,8 +240,18 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
             continue;
 
         if (unit->GetTypeId() == TYPEID_UNIT)
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = unit->ToCreature();
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToCreature");
+                return nullptr;
+            }
             if (creature && (creature->IsCritter() || creature->IsTotem()))
                 continue;
         }
@@ -678,6 +688,16 @@ void AoEDecisionManager::UpdateTargetCache()
         info.healthPercent = (snapshot->maxHealth > 0) ?
             (float(snapshot->health) / float(snapshot->maxHealth)) * 100.0f : 0.0f;
         info.isElite = unit->GetTypeId() == TYPEID_UNIT &&
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetTypeId");
+            return;
+        }
+                       if (!unit)
+                       {
+                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToCreature");
+                           return;
+                       }
                        unit->ToCreature()->IsElite();
         info.hasDot = false;  // Would check for specific DoTs here
         info.threatLevel = unit->GetThreatManager().GetThreatListSize();
@@ -729,6 +749,11 @@ float AoEDecisionManager::ScoreAoEPosition(Position const& pos, float radius) co
 }
 
 bool AoEDecisionManager::IsValidAoETarget(Unit* unit) const
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+        return nullptr;
+    }
 {
     if (!unit || !_bot)
         return false;
@@ -741,8 +766,18 @@ bool AoEDecisionManager::IsValidAoETarget(Unit* unit) const
 
     // Skip critters and totems
     if (unit->GetTypeId() == TYPEID_UNIT)
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetTypeId");
+        return nullptr;
+    }
     {
         Creature* creature = unit->ToCreature();
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToCreature");
+            return nullptr;
+        }
         if (creature && (creature->IsCritter() || creature->IsTotem()))
             return false;
     }

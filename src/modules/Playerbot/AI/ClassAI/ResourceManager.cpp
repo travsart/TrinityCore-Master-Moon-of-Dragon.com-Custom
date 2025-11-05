@@ -19,6 +19,11 @@ namespace Playerbot
 {
 
 ResourceManager::ResourceManager(Player* bot) : _bot(bot), _runicPower(0)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 {
     // Initialize runes to available state
     for (uint32 i = 0; i < MAX_RUNES; ++i)
@@ -46,6 +51,11 @@ void ResourceManager::Update(uint32 diff)
 
     // Update runes for Death Knights
     if (_bot && _bot->GetClass() == CLASS_DEATH_KNIGHT)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     {
         UpdateRunes(diff);
     }
@@ -69,6 +79,11 @@ void ResourceManager::Initialize()
     SyncWithPlayer();
 
     TC_LOG_DEBUG("playerbot.resource", "ResourceManager initialized for class {}",
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                     return;
+                 }
                  static_cast<uint32>(_bot->GetClass()));
 }
 
@@ -111,6 +126,16 @@ bool ResourceManager::HasEnoughResource(ResourceType type, uint32 amount)
     // Fallback to player power if not tracked
     Powers powerType = GetPowerTypeForResource(type);
     return _bot && _bot->GetPower(powerType) >= amount;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
 }
 
 uint32 ResourceManager::GetResource(ResourceType type)
@@ -152,6 +177,11 @@ float ResourceManager::GetResourcePercent(ResourceType type)
     if (_bot)
     {
         uint32 max = _bot->GetMaxPower(powerType);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         return max > 0 ? static_cast<float>(_bot->GetPower(powerType)) / max : 0.0f;
     }
 
@@ -367,6 +397,11 @@ void ResourceManager::RecordResourceUsage(ResourceType type, uint32 amount, uint
     // Report to monitor
     if (_bot)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         ResourceMonitor::Instance().RecordResourceUsage(_bot->GetGUID().GetCounter(), type, amount);
     }
 }
@@ -477,6 +512,11 @@ std::vector<uint32> ResourceManager::GetResourceEmergencySpells()
         return emergencySpells;
 
     // Class-specific emergency resource spells
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
@@ -520,6 +560,11 @@ void ResourceManager::DumpResourceState()
         return;
 
     TC_LOG_DEBUG("playerbot.resource", "=== Resource Manager Dump for {} ===", _bot->GetName());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     for (const auto& pair : _resources)
     {
@@ -530,6 +575,11 @@ void ResourceManager::DumpResourceState()
     }
 
     if (_bot->GetClass() == CLASS_DEATH_KNIGHT)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     {
         TC_LOG_DEBUG("playerbot.resource", "Runic Power: {}", _runicPower);
         for (uint32 i = 0; i < MAX_RUNES; ++i)
@@ -600,7 +650,22 @@ void ResourceManager::SyncWithPlayer()
     if (it != _resources.end())
     {
         it->second.current = _bot->GetPower(primaryPower);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
         it->second.maximum = _bot->GetMaxPower(primaryPower);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     }
     else
     {
@@ -617,6 +682,16 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_DRUID: // In cat form
             // Combo points
             if (_bot->GetPower(POWER_COMBO_POINTS) != GetComboPoints())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                    return nullptr;
+                }
             {
                 SetResource(ResourceType::COMBO_POINTS, _bot->GetPower(POWER_COMBO_POINTS));
             }
@@ -625,6 +700,16 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_PALADIN:
             // Holy Power
             if (_bot->GetPower(POWER_HOLY_POWER) != GetHolyPower())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                    return nullptr;
+                }
             {
                 SetResource(ResourceType::HOLY_POWER, _bot->GetPower(POWER_HOLY_POWER));
             }
@@ -633,6 +718,16 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_MONK:
             // Chi
             if (_bot->GetPower(POWER_CHI) != GetChi())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return nullptr;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                    return nullptr;
+                }
             {
                 SetResource(ResourceType::CHI, _bot->GetPower(POWER_CHI));
             }
@@ -641,6 +736,11 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_DEATH_KNIGHT:
             // Runic Power
             _runicPower = _bot->GetPower(POWER_RUNIC_POWER);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+                return;
+            }
             break;
     }
 }
@@ -665,6 +765,16 @@ void ResourceManager::InitializeClassResources()
             break;
         case ResourceType::RAGE:
             regenRate = -ResourceCalculator::CalculateRageDecay(_bot); // Decay is negative regen
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
             break;
     }
 
@@ -706,6 +816,11 @@ ResourceType ResourceManager::GetPrimaryResourceType()
     if (!_bot)
         return ResourceType::MANA;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:

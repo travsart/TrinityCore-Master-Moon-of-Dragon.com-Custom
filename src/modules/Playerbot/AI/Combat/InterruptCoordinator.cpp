@@ -38,6 +38,11 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 
     BotInterruptInfo info;
     info.botGuid = bot->GetGUID();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     info.available = true;
 
     // Find interrupt spells
@@ -45,6 +50,11 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
     for (auto const& [spellId, _] : spells)
     {
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (!spellInfo)
             continue;
 
@@ -71,6 +81,11 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
         std::lock_guard<std::recursive_mutex> lock(_stateMutex);
         _state.botInfo[info.botGuid] = info;
         _state.botAI[info.botGuid] = ai;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
     }
 
     TC_LOG_DEBUG("module.playerbot.interrupt",
@@ -116,11 +131,21 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
         return;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return;
+    }
     if (!spellInfo)
         return;
 
     CastingSpellInfo castInfo;
     castInfo.casterGuid = caster->GetGUID();
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
     castInfo.spellId = spellId;
     castInfo.castStartTime = getMSTime();
     castInfo.castEndTime = castInfo.castStartTime + castTime;
@@ -136,6 +161,16 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
     {
         std::lock_guard<std::recursive_mutex> lock(_stateMutex);
         _state.activeCasts[caster->GetGUID()] = castInfo;
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+            return;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
     }
 
     // Update metrics atomically (lock-free)

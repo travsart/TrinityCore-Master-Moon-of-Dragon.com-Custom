@@ -272,6 +272,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -360,12 +365,32 @@ public:
 
             // Normal positioning - behind target
             float angle = target->GetOrientation() + M_PI;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                return;
+            }
             float distance = 3.0f;
 
             Position pos;
             pos.m_positionX = target->GetPositionX() + cos(angle) * distance;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+                return nullptr;
+            }
             pos.m_positionY = target->GetPositionY() + sin(angle) * distance;
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+                return nullptr;
+            }
             pos.m_positionZ = target->GetPositionZ();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+                return;
+            }
             pos.SetOrientation(target->GetRelativeAngle(&pos));
 
             return pos;
@@ -577,6 +602,11 @@ private:
     bool ShouldUseMetamorphosis()
     {
         ::Unit* target = this->GetBot()->GetVictim();
+               if (!target)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                   return nullptr;
+               }
         if (!target)
             return false;
 
@@ -637,8 +667,23 @@ private:
         // Position at optimal angle
         Position pos;
         pos.m_positionX = target->GetPositionX() - cos(bestAngle) * 5.0f;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
+            return nullptr;
+        }
         pos.m_positionY = target->GetPositionY() - sin(bestAngle) * 5.0f;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
+            return nullptr;
+        }
         pos.m_positionZ = target->GetPositionZ();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
+            return;
+        }
         pos.SetOrientation(bestAngle);
 
         return pos;
@@ -685,6 +730,11 @@ private:
             for (GroupReference& itr : group->GetMembers())
             {
                 if (Player* member = itr.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && member->GetHealthPct() < 50.0f)
                         injuredCount++;

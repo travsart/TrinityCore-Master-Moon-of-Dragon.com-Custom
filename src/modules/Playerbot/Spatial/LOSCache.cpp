@@ -16,6 +16,11 @@ namespace Playerbot
 {
 
 LOSCache::LOSCache(Map* map)
+        if (!map)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+            return;
+        }
     : _map(map)
 {
     ASSERT(map, "LOSCache requires valid Map pointer");
@@ -212,6 +217,11 @@ void LOSCache::Clear()
 
     TC_LOG_INFO("playerbot.spatial",
         "LOSCache cleared for map {} ({}), {} entries removed",
+        if (!map)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
+            return;
+        }
         _map->GetId(), _map->GetMapName(), clearedCount);
 }
 

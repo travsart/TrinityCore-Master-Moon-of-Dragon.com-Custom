@@ -28,6 +28,11 @@
 namespace Playerbot
 {
     TargetScanner::TargetScanner(Player* bot) :
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return nullptr;
+        }
         m_bot(bot),
         m_scanMode(ScanMode::AGGRESSIVE),
         m_lastScanTime(0),
@@ -115,6 +120,11 @@ namespace Playerbot
         }
 
         // Adjust for low level (more cautious)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
         if (m_bot->GetLevel() < 20)
         {
             m_baseRange *= 0.75f;
@@ -135,6 +145,11 @@ namespace Playerbot
 
         // Get spatial grid for distance calculations
         Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (!map)
             return ObjectGuid::Empty;
 
@@ -157,6 +172,11 @@ namespace Playerbot
         float nearestDist = range + 1.0f;
 
         std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         for (ObjectGuid const& guid : hostileGuids)
@@ -170,6 +190,11 @@ namespace Playerbot
 
             // Calculate distance using snapshot data
             float dist = it->position.GetExactDist(m_bot->GetPosition());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             if (dist < nearestDist)
             {
                 nearestDist = dist;
@@ -190,6 +215,11 @@ namespace Playerbot
 
         // Get spatial grid for priority/distance calculations
         Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (!map)
             return ObjectGuid::Empty;
 
@@ -220,6 +250,11 @@ namespace Playerbot
 
         std::vector<PriorityTarget> priorityTargets;
         std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         for (ObjectGuid const& guid : hostileGuids)
@@ -236,6 +271,11 @@ namespace Playerbot
 
             // Prioritize creatures attacking bot or group members
             if (it->victim == m_bot->GetGUID())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
                 priority = PRIORITY_CRITICAL;
             else if (it->isInCombat)
                 priority = PRIORITY_NORMAL;
@@ -251,6 +291,11 @@ namespace Playerbot
             PriorityTarget pt;
             pt.guid = guid;
             pt.distance = it->position.GetExactDist(m_bot->GetPosition());
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return;
+            }
             pt.priority = priority;
             priorityTargets.push_back(pt);
         }
@@ -288,6 +333,16 @@ namespace Playerbot
         // - Scales to 10,000+ bots with 1-5μs query latency
 
         Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
         if (!map)
         {
             TC_LOG_ERROR("playerbot.scanner",
@@ -330,10 +385,20 @@ namespace Playerbot
 
         // Query nearby creature SNAPSHOTS (lock-free, thread-safe!)
         std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         TC_LOG_TRACE("playerbot.scanner",
             "Bot {} spatial query found {} candidate creatures within {}yd",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             m_bot->GetName(), nearbyCreatures.size(), range);
 
         // Process snapshots - validation done WITHOUT ObjectAccessor/Map calls!
@@ -351,6 +416,11 @@ namespace Playerbot
 
         TC_LOG_TRACE("playerbot.scanner",
             "Bot {} found {} valid hostile candidate GUIDs after snapshot filtering",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             m_bot->GetName(), hostileGuids.size());
 
         return hostileGuids;
@@ -379,6 +449,21 @@ namespace Playerbot
         // Don't attack creatures already in combat with someone else (unless we're in a group)
         // This prevents bots from "stealing" kills
         if (creature.isInCombat && creature.victim != m_bot->GetGUID() &&
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
             !m_bot->GetGroup())
             return false;
 
@@ -399,6 +484,16 @@ namespace Playerbot
     // This is the original validation method - still used for non-snapshot code paths
     // ===========================================================================
     bool TargetScanner::IsValidTarget(Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
     {
         if (!target || !target->IsAlive())
             return false;
@@ -421,9 +516,24 @@ namespace Playerbot
 
         // Don't attack critters unless they're hostile
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             if (creature->GetCreatureTemplate()->type == CREATURE_TYPE_CRITTER &&
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                return;
+            }
                 !creature->IsHostileTo(m_bot))
                 return false;
         }
@@ -461,11 +571,26 @@ namespace Playerbot
             return false;
 
         // Be more cautious at low health
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+            return nullptr;
+        }
         if (healthPct < 50.0f && target->GetLevel() > m_bot->GetLevel())
             return false;
 
         // Level difference check
         int32 levelDiff = int32(target->GetLevel()) - int32(m_bot->GetLevel());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+            return 0;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
 
         // Don't attack targets too high level
         if (levelDiff > 3)
@@ -481,17 +606,42 @@ namespace Playerbot
 
         // Elite checks
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             bool isElite = creature->IsElite() || creature->IsDungeonBoss();
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
 
             if (isElite)
             {
                 // Don't solo elites if configured to avoid them
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                    return nullptr;
+                }
                 if (m_avoidElites && !m_bot->GetGroup())
                     return false;
 
                 // Don't solo elites more than 1 level higher
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                    return nullptr;
+                }
                 if (levelDiff > 1 && !m_bot->GetGroup())
                     return false;
 
@@ -564,8 +714,23 @@ namespace Playerbot
 
         // Check creature rank
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return nullptr;
+            }
 
             // Elite mobs
             if (creature->IsElite() || creature->IsDungeonBoss())
@@ -573,6 +738,11 @@ namespace Playerbot
 
             // Check level difference
             int32 levelDiff = int32(target->GetLevel()) - int32(m_bot->GetLevel());
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                return 0;
+            }
 
             // Grey mobs (trivial)
             if (levelDiff < -7)
@@ -595,12 +765,37 @@ namespace Playerbot
 
         // Base threat from level difference
         int32 levelDiff = int32(target->GetLevel()) - int32(m_bot->GetLevel());
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+            return 0;
+        }
         threat = 100.0f + (levelDiff * 10.0f);
 
         // Increase threat for elites
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+                return;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
             if (creature->IsElite())
                 threat *= 2.0f;
             if (creature->IsDungeonBoss())
@@ -613,6 +808,16 @@ namespace Playerbot
 
         // Increase threat if target is attacking us
         if (target->GetVictim() == m_bot)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return 0;
+        }
             threat *= 3.0f;
 
         // Increase threat if attacking group member
@@ -648,6 +853,11 @@ namespace Playerbot
         uint32 interval = m_scanInterval;
 
         // Scan more frequently in combat
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         if (m_bot->IsInCombat())
             interval = SCAN_INTERVAL_COMBAT;
         // Scan less frequently when idle
@@ -663,14 +873,34 @@ namespace Playerbot
     }
 
     bool TargetScanner::IsAttackingGroup(Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return nullptr;
+        }
     {
         if (!target || !target->GetVictim())
             return false;
 
         Unit* victim = target->GetVictim();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return;
+        }
 
         // Attacking bot
         if (victim == m_bot)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                    return nullptr;
+                }
+            if (!victim)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
+                return nullptr;
+            }
             return true;
 
         // Attacking group member
@@ -694,11 +924,36 @@ namespace Playerbot
 
         // Check creature type
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             if (creature->GetCreatureTemplate()->unit_class == 2 || // Paladin
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                return;
+            }
                 creature->GetCreatureTemplate()->unit_class == 5 || // Priest
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                    return;
+                }
                 creature->GetCreatureTemplate()->unit_class == 8)   // Mage
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                    return;
+                }
                 return true;
         }
 
@@ -712,10 +967,30 @@ namespace Playerbot
 
         // Simple check - priests and paladins are often healers
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
             if (creature->GetCreatureTemplate()->unit_class == 5 || // Priest
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                return;
+            }
                 creature->GetCreatureTemplate()->unit_class == 2)   // Paladin
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
+                    return;
+                }
             {
                 // More sophisticated check would look at spell list
                 return true;
@@ -732,8 +1007,28 @@ namespace Playerbot
 
         // Elite or higher
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+            return;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+            return nullptr;
+        }
             if (creature->IsElite() || creature->IsDungeonBoss())
                 return true;
         }
@@ -807,8 +1102,23 @@ namespace Playerbot
 
         // Adjust for target type
         if (target->GetTypeId() == TYPEID_UNIT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = target->ToCreature();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
+                return nullptr;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+                return nullptr;
+            }
 
             // Stay further from elites
             if (creature->IsElite())
@@ -828,12 +1138,22 @@ namespace Playerbot
     }
 
     bool TargetScanner::IsTargetInCombatWithOthers(Unit* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsInCombat");
+            return nullptr;
+        }
     {
         if (!target || !target->IsInCombat())
             return false;
 
         // Check if fighting other players (not in our group)
         Unit* victim = target->GetVictim();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
+            return nullptr;
+        }
         if (!victim)
             return false;
 
@@ -841,6 +1161,11 @@ namespace Playerbot
         {
             // Not us
             if (victim != m_bot)
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                    return nullptr;
+                }
             {
                 // Not in our group
                 if (!m_bot->GetGroup() || !m_bot->GetGroup()->IsMember(victim->GetGUID()))

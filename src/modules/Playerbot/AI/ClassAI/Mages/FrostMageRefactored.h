@@ -80,7 +80,17 @@ public:
         if (Aura* aura = bot->GetAura(44544)) // Fingers of Frost buff ID
         {
             _fofStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _fofEndTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -125,6 +135,11 @@ public:
             _brainFreezeActive = true;
             if (Aura* aura = bot->GetAura(190446))
                 _brainFreezeEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
         else
         {
@@ -180,6 +195,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit FrostMageRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : RangedDpsSpecialization<ManaResource>(bot)
         , _fofTracker()
         , _brainFreezeTracker()
@@ -293,6 +313,11 @@ private:
             _icyVeinsActive = true;
             if (Aura* aura = bot->GetAura(FROST_ICY_VEINS))
                 _icyVeinsEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -325,6 +350,11 @@ private:
         }
 
         // Glacial Spike with 5 icicles (if talented)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(FROST_GLACIAL_SPIKE) && _icicleTracker.IsMaxIcicles())
         {
             if (this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
@@ -336,6 +366,11 @@ private:
         }
 
         // Ray of Frost with Icy Veins (if talented - channeled damage)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
         {
             if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
@@ -373,6 +408,11 @@ private:
         }
 
         // Comet Storm (if talented - burst damage)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(FROST_COMET_STORM))
         {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
@@ -426,6 +466,11 @@ private:
 
         // Comet Storm for AoE damage
         if (bot->HasSpell(FROST_COMET_STORM) && enemyCount >= 3)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
             {

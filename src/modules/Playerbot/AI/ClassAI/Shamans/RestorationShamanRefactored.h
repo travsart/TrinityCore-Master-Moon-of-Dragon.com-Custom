@@ -191,6 +191,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit RestorationShamanRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : HealerSpecialization<ManaResource>(bot)
         , ShamanSpecialization(bot)
         , _riptideTracker()
@@ -219,11 +224,21 @@ public:
 
         // Restoration is a healer - check group health first
         if (Group* group = bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         {
             std::vector<Unit*> groupMembers;
             for (GroupReference const& ref : group->GetMembers())
             {
                 if (Player* member = ref.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && bot->IsInMap(member))
                         groupMembers.push_back(member);
@@ -328,6 +343,11 @@ private:
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(REST_ASCENDANCE))
                 _ascendanceEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -355,6 +375,11 @@ private:
     bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
         if (!bot)
             return false;
 
@@ -424,6 +449,11 @@ private:
         // Earthen Wall Totem (shield wall)
         if (lowHealthCount >= 3 && (getMSTime() - _lastEarthenWallTotemTime) >= 60000) // 60 sec CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
             {
                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
@@ -453,6 +483,16 @@ private:
             if (member && IsTankRole(member))
             {
                 tankTarget = member;
+                if (!tankTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tankTarget in method GetGUID");
+                    return;
+                }
+                if (!tankTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tankTarget in method GetGUID");
+                    return;
+                }
                 break;
             }
         }
@@ -471,6 +511,16 @@ private:
         if (activeRiptides < group.size())
         {
             for (Unit* member : group)
+                                if (!member)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                    return nullptr;
+                                }
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return;
+                            }
             {
                 if (member && member->GetHealthPct() < 90.0f)
                 {
@@ -532,6 +582,11 @@ private:
         // Wellspring (instant AoE heal)
         if (stackedAlliesCount >= 4 && stackedTarget)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(REST_WELLSPRING))
             {
                 if (this->CanCastSpell(REST_WELLSPRING, stackedTarget))
@@ -568,6 +623,11 @@ private:
         // Cloudburst Totem (store healing and release)
         if (injuredCount >= 3 && (getMSTime() - _lastCloudburstTotemTime) >= 30000) // 30 sec CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(REST_CLOUDBURST_TOTEM))
             {
                 if (this->CanCastSpell(REST_CLOUDBURST_TOTEM, bot))
@@ -669,6 +729,11 @@ private:
             // Check if player has tank role based on class
             // Protection Paladin, Protection Warrior, Blood DK, Guardian Druid, Brewmaster Monk, Vengeance DH
             uint8 playerClass = player->GetClass();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return nullptr;
+            }
             return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
                     playerClass == CLASS_DEATH_KNIGHT || playerClass == CLASS_DRUID ||
                     playerClass == CLASS_MONK || playerClass == CLASS_DEMON_HUNTER);

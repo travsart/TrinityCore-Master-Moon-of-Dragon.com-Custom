@@ -192,6 +192,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit HolyPriestRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : HealerSpecialization<ManaResource>(bot)
         , PriestSpecialization(bot)
         , _renewTracker()
@@ -218,11 +223,21 @@ public:
 
         // Holy is a healer - check group health first
         if (Group* group = bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         {
             std::vector<Unit*> groupMembers;
             for (GroupReference const& ref : group->GetMembers())
             {
                 if (Player* member = ref.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                 {
                     if (member->IsAlive() && bot->IsInMap(member))
                         groupMembers.push_back(member);
@@ -336,6 +351,11 @@ private:
             _apotheosisActive = true;
             if (Aura* aura = bot->GetAura(HOLY_APOTHEOSIS))
                 _apotheosisEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -376,6 +396,11 @@ private:
 
         if (criticalHealthCount >= 3 && (getMSTime() - _lastSalvationTime) >= 720000) // 12 min CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
             {
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SALVATION, bot))
@@ -408,6 +433,11 @@ private:
         // Apotheosis (healing burst mode)
         if (lowHealthCount >= 3 && (getMSTime() - _lastApotheosisTime) >= 120000) // 2 min CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(HOLY_APOTHEOSIS))
             {
                 if (this->CanCastSpell(HOLY_APOTHEOSIS, bot))
@@ -444,6 +474,16 @@ private:
             return false;
 
         uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
         if (manaPercent < 20 && (getMSTime() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
         {
             if (bot->HasSpell(HOLY_SYMBOL_OF_HOPE))
@@ -468,6 +508,11 @@ private:
         if (!_pomTracker.HasActivePomOnAnyTarget())
         {
             for (Unit* member : group)
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                            return;
+                        }
             {
                 if (member && member->GetHealthPct() < 95.0f)
                 {
@@ -485,6 +530,16 @@ private:
         if (activeRenews < group.size())
         {
             for (Unit* member : group)
+                                if (!member)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                    return nullptr;
+                                }
+                            if (!member)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                                return;
+                            }
             {
                 if (member && member->GetHealthPct() < 90.0f)
                 {
@@ -567,6 +622,11 @@ private:
 
         if (injuredCount >= 3)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(HOLY_CIRCLE_OF_HEALING))
             {
                 for (Unit* member : group)
@@ -602,6 +662,11 @@ private:
         // Divine Star (damage + healing)
         if (injuredCount >= 2)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(HOLY_DIVINE_STAR))
             {
                 if (this->CanCastSpell(HOLY_DIVINE_STAR, bot))
@@ -615,6 +680,11 @@ private:
         // Halo (large AoE damage + healing)
         if (injuredCount >= 4)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(HOLY_HALO))
             {
                 if (this->CanCastSpell(HOLY_HALO, bot))
@@ -727,6 +797,11 @@ private:
             // A more robust implementation would check spec, but talent API is deprecated
             if (Unit* victim = player->GetVictim())
                 return victim->GetVictim() == player;
+                if (!victim)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
+                    return nullptr;
+                }
 
             return false;
         }

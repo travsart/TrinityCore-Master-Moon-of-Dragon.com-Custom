@@ -195,6 +195,11 @@ public:
             _lavaSurgeActive = true;
             if (Aura* aura = bot->GetAura(77762))
                 _lavaSurgeEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
         else
         {
@@ -245,7 +250,17 @@ public:
         if (Aura* aura = bot->GetAura(ELEM_STORMKEEPER))
         {
             _stormkeeperStacks = aura->GetStackAmount();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
+                return nullptr;
+            }
             _stormkeeperEndTime = getMSTime() + aura->GetDuration();
+            if (!aura)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                return nullptr;
+            }
         }
         else
         {
@@ -272,6 +287,11 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ElementalShamanRefactored(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         : RangedDpsSpecialization<ManaResource>(bot)
         , ShamanSpecialization(bot)
         , _maelstromTracker()
@@ -387,6 +407,11 @@ private:
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))
                 _ascendanceEndTime = getMSTime() + aura->GetDuration();
+                if (!aura)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
+                    return nullptr;
+                }
         }
     }
 
@@ -412,6 +437,11 @@ private:
         // Ascendance (burst mode)
         if (maelstrom >= 60 && (getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(ELEM_ASCENDANCE))
             {
                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
@@ -440,11 +470,21 @@ private:
         // Primordial Wave (buff + Flame Shock application)
         if ((getMSTime() - _lastPrimordialWaveTime) >= 45000) // 45 sec CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(ELEM_PRIMORDIAL_WAVE))
             {
                 if (this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
                 {
                     this->CastSpell(target, ELEM_PRIMORDIAL_WAVE);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                        return;
+                    }
                     _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                     _lastPrimordialWaveTime = getMSTime();
                     return;
@@ -453,12 +493,27 @@ private:
         }
 
         // Flame Shock (maintain DoT)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         if (!_flameShockTracker.HasFlameShock(target->GetGUID()) ||
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             _flameShockTracker.NeedsFlameShockRefresh(target->GetGUID()))
         {
             if (this->CanCastSpell(ELEM_FLAME_SHOCK, target))
             {
                 this->CastSpell(target, ELEM_FLAME_SHOCK);
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                 _maelstromTracker.Generate(5);
                 return;
@@ -478,6 +533,11 @@ private:
         }
 
         // Lava Burst (normal cast on Flame Shock target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         if (_flameShockTracker.HasFlameShock(target->GetGUID()))
         {
             if (this->CanCastSpell(ELEM_LAVA_BURST, target))
@@ -505,6 +565,11 @@ private:
         }
 
         // Elemental Blast (talent - generates Maelstrom + random buff)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(ELEM_ELEMENTAL_BLAST))
         {
             if (this->CanCastSpell(ELEM_ELEMENTAL_BLAST, target))
@@ -516,6 +581,11 @@ private:
         }
 
         // Icefury (talent - empowers Frost Shock)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         if (bot->HasSpell(ELEM_ICEFURY))
         {
             if (this->CanCastSpell(ELEM_ICEFURY, target))
@@ -541,6 +611,11 @@ private:
         // Echoing Shock (duplicates next spell)
         if ((getMSTime() - _lastEchoingShockTime) >= 30000) // 30 sec CD
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(ELEM_ECHOING_SHOCK))
             {
                 if (this->CanCastSpell(ELEM_ECHOING_SHOCK, bot))
@@ -583,6 +658,11 @@ private:
         // Ascendance for AoE burst
         if (maelstrom >= 60 && (getMSTime() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+                return nullptr;
+            }
             if (bot->HasSpell(ELEM_ASCENDANCE))
             {
                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
@@ -598,6 +678,11 @@ private:
 
         // Liquid Magma Totem (AoE DoT)
         if (bot->HasSpell(ELEM_LIQUID_MAGMA_TOTEM) && enemyCount >= 3)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         {
             if (this->CanCastSpell(ELEM_LIQUID_MAGMA_TOTEM, bot))
             {
@@ -621,11 +706,21 @@ private:
         // Flame Shock on multiple targets (up to 3)
         if (enemyCount <= 3 && _flameShockTracker.GetActiveFlameShockCount() < 3)
         {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             if (!_flameShockTracker.HasFlameShock(target->GetGUID()))
             {
                 if (this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                 {
                     this->CastSpell(target, ELEM_FLAME_SHOCK);
+                    if (!target)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                        return;
+                    }
                     _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                     _maelstromTracker.Generate(5);
                     return;

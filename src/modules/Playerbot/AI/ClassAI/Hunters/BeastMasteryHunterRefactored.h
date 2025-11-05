@@ -73,6 +73,11 @@ class BeastMasteryPetManager
 {
 public:
     explicit BeastMasteryPetManager(Player* bot)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return nullptr;
+            }
         : _bot(bot)
         , _lastMendPet(0)
         , _lastPetCommand(0)
@@ -165,6 +170,11 @@ public:
             return;
 
         Pet* pet = _bot->GetPet();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+                return;
+            }
         if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET, false);
@@ -194,6 +204,11 @@ public:
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
 
     void EnsurePetActive(Unit* target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
     {
         if (!HasActivePet())
         {
@@ -262,6 +277,11 @@ public:
     // ========================================================================
 
     void UpdateRotation(::Unit* target) override
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
     {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
@@ -287,6 +307,11 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return 0;
+        }
 
         // Ensure pet is summoned
         if (!_petManager.HasActivePet())
@@ -309,6 +334,11 @@ public:
 
         // Apply Hunter's Mark to current target
         if (Unit* target = bot->GetVictim())
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
+                return nullptr;
+            }
         {
             if (!target->HasAura(SPELL_HUNTERS_MARK) && this->CanUseAbility(SPELL_HUNTERS_MARK))
             {
@@ -505,6 +535,11 @@ private:
     }
 
     bool ShouldUseBestialWrath(Unit* target) const
+               if (!target)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
+                   return nullptr;
+               }
     {
         if (!target)
             return false;
