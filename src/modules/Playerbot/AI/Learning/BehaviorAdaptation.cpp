@@ -578,7 +578,7 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
         // Average group health
         float avgHealth = 0.0f;
         uint32_t memberCount = 0;
-        for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+        for (GroupReference* itr : *group)
         {
             if (Player* member = itr->GetSource())
             {

@@ -1187,7 +1187,7 @@ std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
     if (!group)
         return teammates;
 
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference* ref : *group)
     {
         ::Player* member = ref->GetSource();
         if (member && member != player && member->IsInWorld() && !member->IsDead())

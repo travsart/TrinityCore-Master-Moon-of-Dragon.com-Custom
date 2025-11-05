@@ -732,7 +732,7 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
     ::Unit* allyNeedingPeel = nullptr;
     uint32 lowestHealth = 100;
 
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference* ref : *group)
     {
         ::Player* member = ref->GetSource();
         if (!member || member == player || !member->IsInWorld())
