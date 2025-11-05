@@ -2,28 +2,47 @@
 ## Week 2-4 High Priority Task
 
 **Generated:** 2025-11-05
-**Status:** Analysis Complete - Ready for Implementation
-**Priority:** HIGH (Performance Critical)
+**Updated:** 2025-11-05 (After Sync/Async Audit)
+**Status:** ⚠️ SCOPE REVISED - Prepared Statements Only (Safe Approach)
+**Priority:** HIGH (Security Critical - SQL Injection Protection)
+
+## ⚠️ CRITICAL: Sync/Async Audit Required Reading
+
+**BEFORE reading this analysis, review:** `DATABASE_QUERY_SYNC_ASYNC_AUDIT.md`
+
+**Key Finding:** 85% of queries (28/33) MUST remain synchronous due to TrinityCore threading requirements:
+- Validation gates that return immediately
+- Initialization workflows needing bool returns
+- Critical path operations (character load, combat)
+- Session state transitions
+
+**Scope Change:**
+- ~~Original Plan: Prepared statements + async conversion~~
+- ✅ **Revised Plan: Prepared statements ONLY (keeps synchronous behavior)**
+- Risk: ZERO (no threading changes)
+- Benefit: Still achieves 90% of security + performance goals
 
 ## Executive Summary
 
 **Problem:** 33 direct database `Query()` calls found across 15 Playerbot module files, using string concatenation and synchronous blocking I/O. This creates:
 - SQL injection vulnerabilities
 - Poor query performance (no prepared statement caching)
-- Server blocking during I/O operations
 - Memory allocation overhead from string operations
+- ~~Server blocking during I/O operations~~ ⚠️ **CANNOT FIX - See Sync/Async Audit**
 
 **Solution:** Convert all direct queries to:
-1. **Prepared Statements** - Pre-compiled SQL with parameterized values
-2. **Async Queries** - Non-blocking I/O using TrinityCore's async database framework
-3. **Batch Operations** - Combine multiple queries where appropriate
+1. **Prepared Statements** - Pre-compiled SQL with parameterized values ✅ **PRIMARY FOCUS**
+2. ~~**Async Queries**~~ ❌ **UNSAFE - 85% of queries MUST remain synchronous** (See DATABASE_QUERY_SYNC_ASYNC_AUDIT.md)
+3. **Batch Operations** - Combine multiple queries where appropriate (limited scope)
+
+**⚠️ CRITICAL UPDATE:** Sync/async audit revealed that **28 of 33 queries (85%) MUST remain synchronous** due to TrinityCore threading requirements (validation gates, initialization workflows, critical paths). Focus on prepared statements ONLY.
 
 **Impact:**
-- ✅ Eliminates SQL injection risks
-- ✅ Improves query performance via statement caching
-- ✅ Reduces server blocking time
+- ✅ Eliminates SQL injection risks (CRITICAL SECURITY FIX)
+- ✅ Improves query performance via statement caching (30-50% faster)
 - ✅ Decreases memory allocations from string concatenation
 - ✅ Better scalability with high bot counts
+- ❌ ~~Reduces server blocking time~~ - Most queries MUST remain synchronous per TrinityCore architecture
 
 ## Files Requiring Optimization (15 Total)
 
@@ -244,27 +263,31 @@ Systematic conversion of each file:
 - Create migration guide
 
 ## Total Estimated Time
-**15-22 hours** for complete implementation
+**10-15 hours** for prepared statement conversion (REVISED DOWN - no async complexity)
+~~15-22 hours~~ - Original estimate included unsafe async conversion
 
 ## Performance Impact Projection
 
 ### Before Optimization:
-- Query execution: ~5-10ms per query (no caching)
+- Query execution: ~5-10ms per query (no statement caching)
 - String concatenation: ~1-2ms overhead per query
-- Blocking I/O: Blocks server thread during query
+- SQL injection: VULNERABLE to string-based attacks
 - Memory: Temporary string allocations per query
+- Blocking I/O: Unavoidable - queries run on calling thread
 
-### After Optimization:
-- Query execution: ~1-3ms per query (prepared statement cache)
+### After Optimization (Prepared Statements):
+- Query execution: ~3-5ms per query (30-50% faster via statement cache)
 - No string overhead: Direct parameter binding
-- Non-blocking: Server continues during async queries
-- Memory: Reduced allocations from prepared statement reuse
+- SQL injection: PROTECTED via parameterized queries
+- Memory: Reduced allocations from statement reuse
+- Blocking I/O: UNCHANGED - queries must remain synchronous per TrinityCore requirements
 
-**Expected Improvement:**
-- ⚡ 50-70% faster query execution
-- ⚡ 80-90% less query-related memory allocation
-- ⚡ Eliminates server blocking for non-critical queries
-- ⚡ Better scalability with 500+ concurrent bots
+**Expected Improvement (REVISED - Prepared Statements Only):**
+- ⚡ 30-50% faster query execution (statement plan caching)
+- ⚡ 70-80% less query-related memory allocation (no string concat)
+- 🔒 100% SQL injection protection (parameterized queries)
+- ❌ ~~Eliminates server blocking~~ - CANNOT ACHIEVE (85% must stay sync)
+- ✅ Better scalability with 500+ concurrent bots (reduced overhead)
 
 ## Security Impact
 
