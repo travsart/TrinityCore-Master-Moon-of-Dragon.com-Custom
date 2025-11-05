@@ -276,7 +276,7 @@ namespace Playerbot
             std::vector<BossMechanic> activeMechanics;
         };
 
-        ActiveBossFight* m_currentBossFight;
+        std::unique_ptr<ActiveBossFight> m_currentBossFight;
         void StartBossFight(Creature* boss);
         void EndBossFight(bool victory);
         void UpdateBossFight(uint32 diff);

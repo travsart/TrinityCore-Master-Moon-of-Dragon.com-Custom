@@ -48,7 +48,7 @@ AdvancedBehaviorManager::AdvancedBehaviorManager(Player* bot, BotAI* ai)
     , m_dungeonRole(DungeonRole::UNDEFINED)
     , m_currentBattleground(BattlegroundType::NONE)
     , m_activeEvent(WorldEventType::NONE)
-    , m_currentBossFight(nullptr)
+    , m_currentBossFight(nullptr)  // unique_ptr default constructs to nullptr
     , m_dungeonUpdateInterval(1000)
     , m_pvpUpdateInterval(500)
     , m_eventUpdateInterval(5000)
@@ -160,11 +160,8 @@ void AdvancedBehaviorManager::Update(uint32 diff)
 
 void AdvancedBehaviorManager::Reset()
 {
-    if (m_currentBossFight)
-    {
-        delete m_currentBossFight;
-        m_currentBossFight = nullptr;
-    }
+    // unique_ptr automatically deletes on reset
+    m_currentBossFight.reset();
 
     m_dungeonStrategies.clear();
     m_bgStrategies.clear();
@@ -180,11 +177,8 @@ void AdvancedBehaviorManager::Reset()
 
 void AdvancedBehaviorManager::Shutdown()
 {
-    if (m_currentBossFight)
-    {
-        delete m_currentBossFight;
-        m_currentBossFight = nullptr;
-    }
+    // unique_ptr automatically deletes on reset
+    m_currentBossFight.reset();
 }
 
 // ============================================================================
@@ -1331,10 +1325,14 @@ void AdvancedBehaviorManager::AssignDungeonRole()
 
 void AdvancedBehaviorManager::StartBossFight(Creature* boss)
 {
-    if (!boss || m_currentBossFight)
+    if (!boss)
         return;
 
-    m_currentBossFight = new ActiveBossFight();
+    // Reset any existing boss fight before starting new one (prevents memory leak)
+    if (m_currentBossFight)
+        m_currentBossFight.reset();
+
+    m_currentBossFight = std::make_unique<ActiveBossFight>();
     m_currentBossFight->boss = boss;
     m_currentBossFight->bossEntry = boss->GetEntry();
     m_currentBossFight->startTime = getMSTime();
@@ -1349,8 +1347,8 @@ void AdvancedBehaviorManager::EndBossFight(bool victory)
     if (victory)
         RecordBossKill(m_currentBossFight->boss);
 
-    delete m_currentBossFight;
-    m_currentBossFight = nullptr;
+    // unique_ptr automatically deletes on reset
+    m_currentBossFight.reset();
 }
 
 void AdvancedBehaviorManager::UpdateBossFight(uint32 diff)
