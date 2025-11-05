@@ -905,10 +905,10 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 {
     TC_LOG_DEBUG("module.playerbot.session", "?? Synchronizing character cache for {}", playerGuid.ToString());
 
-    // CRITICAL FIX: Use synchronous query instead of CHAR_SEL_CHARACTER (which is CONNECTION_ASYNC only)
-    // Create a simple synchronous query for just name and account
-    std::string query = "SELECT guid, name, account FROM characters WHERE guid = " + std::to_string(playerGuid.GetCounter());
-    QueryResult result = CharacterDatabase.Query(query.c_str());
+    // CRITICAL FIX: Use synchronous prepared statement for character lookup
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_DATA_FOR_GUILD);
+    stmt->SetData(0, playerGuid.GetCounter());
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
     if (!result)
     {
@@ -917,8 +917,8 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
     }
 
     Field* fields = result->Fetch();
-    std::string dbName = fields[1].GetString();
-    uint32 dbAccountId = fields[2].GetUInt32();
+    std::string dbName = fields[0].GetString();       // name is first field
+    uint32 dbAccountId = fields[6].GetUInt32();      // account is 7th field (0-indexed: field 6)
 
     // Get current cache data
     std::string cacheName = "<unknown>";
