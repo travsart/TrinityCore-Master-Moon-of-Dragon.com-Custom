@@ -375,13 +375,8 @@ namespace Playerbot
         _tempQuestGivers.clear();
 
         // Query creature spawns that are quest givers (ALL MAPS - including expansions)
-        QueryResult result = WorldDatabase.Query(
-            "SELECT c.guid, c.id, c.position_x, c.position_y, c.position_z, "
-            "c.map, ct.faction, COALESCE(c.zoneId, 0) as zoneId "
-            "FROM creature c "
-            "INNER JOIN creature_template ct ON c.id = ct.entry "
-            "WHERE ct.npcflag & 2 != 0" // UNIT_NPC_FLAG_QUESTGIVER
-        );
+        WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_QUEST_GIVER_SPAWNS);
+        QueryResult result = WorldDatabase.Query(stmt);
 
         if (!result)
         {
