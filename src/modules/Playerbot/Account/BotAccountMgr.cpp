@@ -345,8 +345,8 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
             {
                 // VALIDATION: Verify account exists in database before adding to list
                 LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EXISTS);
-                stmt->SetData(0, accountId);
-                QueryResult result = LoginDatabase.Query(stmt);
+                stmt->SetArguments(accountId);
+                PreparedQueryResult result = LoginDatabase.Query(stmt);
 
                 if (result)
                 {
@@ -739,7 +739,7 @@ void BotAccountMgr::LoadAccountMetadata()
         // Query BattleNet account table for existing bot accounts
         // Look for emails with pattern like "#@playerbot.local" or "bot%@playerbot.local"
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BOT_ACCOUNTS_ALL);
-        QueryResult result = LoginDatabase.Query(stmt);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
 
         if (result)
         {
