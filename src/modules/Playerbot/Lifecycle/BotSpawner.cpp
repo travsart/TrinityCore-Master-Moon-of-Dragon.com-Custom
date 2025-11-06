@@ -1505,7 +1505,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
     {
         // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character (prepared statement)
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
-        stmt->SetData(0, accountId);
+        stmt->setUInt32(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
         if (!accountCheck)
@@ -1518,7 +1518,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         // Check current character count for this account (enforce 10 character limit) (prepared statement)
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
-        charStmt->SetData(0, accountId);
+        charStmt->setUInt32(0, accountId);
         PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
         if (charCountResult)
@@ -1639,14 +1639,14 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         // Update character count for account - with safe statement access to prevent memory corruption
         TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
-        LoginDatabasePreparedStatement* stmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
-        if (!stmt) {
+        LoginDatabasePreparedStatement* charCountStmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
+        if (!charCountStmt) {
             return ObjectGuid::Empty;
         }
-        stmt->setUInt32(0, 1); // Increment by 1
-        stmt->setUInt32(1, accountId);
-        stmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
-        loginTransaction->Append(stmt);
+        charCountStmt->setUInt32(0, 1); // Increment by 1
+        charCountStmt->setUInt32(1, accountId);
+        charCountStmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
+        loginTransaction->Append(charCountStmt);
 
         // Commit transactions with proper error handling
         TC_LOG_TRACE("module.playerbot.spawner", "Committing database transactions");
