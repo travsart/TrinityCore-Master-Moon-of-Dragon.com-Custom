@@ -1002,17 +1002,7 @@ bool DispelCoordinator::ExecutePurge()
     }
 
     ++m_statistics.failedPurges;
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-        return nullptr;
-    }
     return false;
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-    return;
-}
 }
 
 // ============================================================================
@@ -1034,11 +1024,6 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
 
         // Check all auras
         Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
         for (auto const& [auraId, aurApp] : auras)
         {
             Aura* aura = aurApp->GetBase();
@@ -1053,16 +1038,6 @@ if (!member)
             DebuffTarget target;
             target.targetGuid = member->GetGUID();
             target.auraId = auraId;
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return;
-            }
             target.dispelType = debuffData->dispelType;
             target.priority = debuffData->basePriority;
             target.adjustedPriority = debuffData->GetAdjustedPriority(member);
@@ -1091,11 +1066,6 @@ if (!member)
 }
 
 std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
-    return;
-}
 {
     std::vector<PurgeTarget> targets;
 
@@ -1126,11 +1096,6 @@ if (!enemy)
     {
         if (!snapshot)
             continue;
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return 0;
-}
 
         ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot->guid);
         if (!enemy || enemy->isDead())
@@ -1140,11 +1105,6 @@ if (!unit)
         if (!m_bot->IsHostileTo(enemy))
             continue;
 
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-            return nullptr;
-        }
         // Check all auras
         Unit::AuraApplicationMap const& auras = enemy->GetAppliedAuras();
         for (auto const& [auraId, aurApp] : auras)
@@ -1160,16 +1120,6 @@ if (!unit)
 
             // Skip if not worth purging
             if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
-    return nullptr;
-if (!center)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: center in method GetDistance");
-    return nullptr;
-}
-}
                 continue;
 
             PurgeTarget target;
