@@ -1202,12 +1202,13 @@ if (!center)
 // ============================================================================
 
 bool DispelCoordinator::IsTank(Unit* unit) const
-if (!unit)
 {
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return;
-}
-{
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsTank");
+        return false;
+    }
+
     Player* player = unit->ToPlayer();
     if (!player)
         return false;
@@ -1216,12 +1217,13 @@ if (!unit)
 }
 
 bool DispelCoordinator::IsHealer(Unit* unit) const
-if (!unit)
 {
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return;
-}
-{
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsHealer");
+        return false;
+    }
+
     Player* player = unit->ToPlayer();
     if (!player)
         return false;
@@ -1239,11 +1241,6 @@ uint32 DispelCoordinator::GetNearbyAlliesCount(Unit* center, float radius) const
     {
         Player* member = itr.GetSource();
         if (!member || member == center || member->isDead())
-            if (!center)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: center in method GetDistance");
-                return;
-            }
             continue;
 
         float radiusSq = radius * radius;
