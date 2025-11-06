@@ -376,7 +376,7 @@ namespace Playerbot
 
         // Query creature spawns that are quest givers (ALL MAPS - including expansions)
         WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_QUEST_GIVER_SPAWNS);
-        QueryResult result = WorldDatabase.Query(stmt);
+        PreparedQueryResult result = WorldDatabase.Query(stmt);
 
         if (!result)
         {

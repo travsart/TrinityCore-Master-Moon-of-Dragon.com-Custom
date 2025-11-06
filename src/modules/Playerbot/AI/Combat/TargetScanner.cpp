@@ -532,6 +532,8 @@ namespace Playerbot
         if (!m_bot->IsWithinLOSInMap(target))
             return false;
 
+        float dist = m_bot->GetExactDist(target);
+
         // For ranged classes, check if we're in range
         if (m_preferRanged)
         {
