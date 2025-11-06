@@ -152,9 +152,6 @@ set(PLAYERBOT_SOURCES
     # Phase 4.1: Script System Integration - Non-Invasive Event Hooks
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotEventScripts.cpp
 
-    # Bot Resurrection Script - TrinityCore ScriptMgr Integration for Auto-Resurrection
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.h
 
     # AI Trigger System
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Triggers/Trigger.cpp
@@ -1059,8 +1056,6 @@ source_group("Adapters" FILES
 source_group("Scripts" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripting/BotResurrectionScript.h
 )
 
 source_group("Social" FILES
