@@ -94,6 +94,7 @@ struct GearFactoryStats
 {
     std::atomic<uint64> setsGenerated{0};
     std::atomic<uint64> itemsSelected{0};
+    std::atomic<uint64> itemsApplied{0};     // Items successfully equipped to players
     std::atomic<uint64> cacheLookups{0};
     std::atomic<uint64> qualityRolls{0};
     std::atomic<uint32> cacheSize{0};
@@ -102,6 +103,7 @@ struct GearFactoryStats
     {
         setsGenerated.store(0, std::memory_order_relaxed);
         itemsSelected.store(0, std::memory_order_relaxed);
+        itemsApplied.store(0, std::memory_order_relaxed);
         cacheLookups.store(0, std::memory_order_relaxed);
         qualityRolls.store(0, std::memory_order_relaxed);
     }
