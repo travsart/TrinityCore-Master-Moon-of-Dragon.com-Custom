@@ -40,6 +40,8 @@
 #include "Interfaces/IBotScheduler.h"
 #include "Interfaces/IBotCharacterDistribution.h"
 #include "Interfaces/IBotLevelDistribution.h"
+#include "Interfaces/IGroupEventBus.h"
+#include "Interfaces/ILFGGroupCoordinator.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -62,6 +64,8 @@
 #include "Lifecycle/BotScheduler.h"
 #include "Character/BotCharacterDistribution.h"
 #include "Character/BotLevelDistribution.h"
+#include "Group/GroupEventBus.h"
+#include "LFG/LFGGroupCoordinator.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -291,6 +295,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotLevelDistribution");
+
+        // Register GroupEventBus (Phase 12)
+        container.RegisterInstance<IGroupEventBus>(
+            std::shared_ptr<IGroupEventBus>(
+                Playerbot::GroupEventBus::instance(),
+                [](IGroupEventBus*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IGroupEventBus");
+
+        // Register LFGGroupCoordinator (Phase 12)
+        container.RegisterInstance<ILFGGroupCoordinator>(
+            std::shared_ptr<ILFGGroupCoordinator>(
+                Playerbot::LFGGroupCoordinator::instance(),
+                [](ILFGGroupCoordinator*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ILFGGroupCoordinator");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
