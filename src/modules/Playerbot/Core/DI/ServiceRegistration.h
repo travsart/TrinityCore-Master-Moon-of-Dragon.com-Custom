@@ -96,6 +96,7 @@
 #include "Interfaces/IBattlePetManager.h"
 #include "Interfaces/IArenaAI.h"
 #include "Interfaces/IPvPCombatAI.h"
+#include "Interfaces/IPerformanceBenchmark.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -174,6 +175,7 @@
 #include "Companion/BattlePetManager.h"
 #include "PvP/ArenaAI.h"
 #include "PvP/PvPCombatAI.h"
+#include "Tests/PerformanceBenchmark.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
@@ -909,6 +911,15 @@ inline void RegisterPlayerbotServices()
                 Playerbot::PvPCombatAI::instance(),
                 [](Playerbot::IPvPCombatAI*) {} // No-op deleter (singleton)
             )
+
+        // Register PerformanceBenchmark (Phase 65)
+        container.RegisterInstance<Playerbot::IPerformanceBenchmark>(
+            std::shared_ptr<Playerbot::IPerformanceBenchmark>(
+                Playerbot::PerformanceBenchmark::instance(),
+                [](Playerbot::IPerformanceBenchmark*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPerformanceBenchmark");
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IPvPCombatAI");
         );
