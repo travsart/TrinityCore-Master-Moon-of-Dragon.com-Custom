@@ -61,6 +61,7 @@
 #include "Interfaces/IQuestPickup.h"
 #include "Interfaces/IGuildEventCoordinator.h"
 #include "Interfaces/IProfessionManager.h"
+#include "Interfaces/IQuestCompletion.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -104,6 +105,7 @@
 #include "Quest/QuestPickup.h"
 #include "Social/GuildEventCoordinator.h"
 #include "Professions/ProfessionManager.h"
+#include "Quest/QuestCompletion.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -522,6 +524,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IProfessionManager");
+
+        // Register QuestCompletion (Phase 29)
+        container.RegisterInstance<IQuestCompletion>(
+            std::shared_ptr<IQuestCompletion>(
+                Playerbot::QuestCompletion::instance(),
+                [](IQuestCompletion*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IQuestCompletion");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
