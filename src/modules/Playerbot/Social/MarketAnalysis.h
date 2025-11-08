@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "AuctionHouse.h"
 #include "Player.h"
+#include "../Core/DI/Interfaces/IMarketAnalysis.h"
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -69,21 +70,21 @@ struct MarketSnapshot
  * This system provides deep market insights, trend analysis, and predictive
  * pricing models to help playerbots make informed auction house decisions.
  */
-class TC_GAME_API MarketAnalysis
+class TC_GAME_API MarketAnalysis final : public IMarketAnalysis
 {
 public:
     static MarketAnalysis* instance();
 
     // Core market analysis
-    MarketSnapshot GetMarketSnapshot(uint32 itemId);
-    MarketTrend GetMarketTrend(uint32 itemId, uint32 daysBack = 7);
-    float GetPricePrediction(uint32 itemId, uint32 hoursAhead = 24);
-    std::vector<uint32> GetTrendingItems(MarketSegment segment = MarketSegment::EQUIPMENT);
+    MarketSnapshot GetMarketSnapshot(uint32 itemId) override;
+    MarketTrend GetMarketTrend(uint32 itemId, uint32 daysBack = 7) override;
+    float GetPricePrediction(uint32 itemId, uint32 hoursAhead = 24) override;
+    std::vector<uint32> GetTrendingItems(MarketSegment segment = MarketSegment::EQUIPMENT) override;
 
     // Market intelligence
-    void AnalyzeMarketConditions();
-    void UpdateMarketData(uint32 itemId, uint32 price, uint32 quantity, uint32 timestamp = 0);
-    void RecordSale(uint32 itemId, uint32 price, uint32 quantity, uint32 sellTime);
+    void AnalyzeMarketConditions() override;
+    void UpdateMarketData(uint32 itemId, uint32 price, uint32 quantity, uint32 timestamp = 0) override;
+    void RecordSale(uint32 itemId, uint32 price, uint32 quantity, uint32 sellTime) override;
     void TrackMarketMovement();
 
     // Advanced market metrics
@@ -102,8 +103,8 @@ public:
             , lastAnalysisTime(getMSTime()) {}
     };
 
-    MarketMetrics GetMarketMetrics(uint32 itemId);
-    MarketMetrics GetSegmentMetrics(MarketSegment segment);
+    MarketMetrics GetMarketMetrics(uint32 itemId) override;
+    MarketMetrics GetSegmentMetrics(MarketSegment segment) override;
 
     // Price analysis and forecasting
     struct PriceAnalysis
@@ -120,10 +121,10 @@ public:
             , volatility(0.0f), momentum(0.0f), confidence(0.5f) {}
     };
 
-    PriceAnalysis AnalyzePrice(uint32 itemId);
-    float CalculateFairValue(uint32 itemId);
+    PriceAnalysis AnalyzePrice(uint32 itemId) override;
+    float CalculateFairValue(uint32 itemId) override;
     std::pair<float, float> GetPriceRange(uint32 itemId, float confidence = 0.95f);
-    bool IsPriceAnomaly(uint32 itemId, uint32 price);
+    bool IsPriceAnomaly(uint32 itemId, uint32 price) override;
 
     // Market opportunity identification
     struct MarketOpportunity
@@ -144,11 +145,11 @@ public:
             , riskLevel(0.5f), timeToTarget(0), confidence(0.5f) {}
     };
 
-    std::vector<MarketOpportunity> IdentifyOpportunities(Player* player, uint32 budgetLimit = 0);
+    std::vector<MarketOpportunity> IdentifyOpportunities(Player* player, uint32 budgetLimit = 0) override;
     std::vector<MarketOpportunity> FindArbitrageOpportunities();
     std::vector<MarketOpportunity> FindFlipOpportunities(uint32 maxInvestment);
-    bool IsGoodBuyingOpportunity(uint32 itemId, uint32 price);
-    bool IsGoodSellingOpportunity(uint32 itemId, uint32 price);
+    bool IsGoodBuyingOpportunity(uint32 itemId, uint32 price) override;
+    bool IsGoodSellingOpportunity(uint32 itemId, uint32 price) override;
 
     // Competitive analysis
     struct CompetitorAnalysis
@@ -164,8 +165,8 @@ public:
             , averageUndercutAmount(0.05f) {}
     };
 
-    CompetitorAnalysis AnalyzeCompetition(uint32 itemId);
-    std::vector<uint32> GetTopSellers(uint32 itemId, uint32 count = 5);
+    CompetitorAnalysis AnalyzeCompetition(uint32 itemId) override;
+    std::vector<uint32> GetTopSellers(uint32 itemId, uint32 count = 5) override;
     float GetSellerReputationScore(uint32 sellerGuid);
     bool IsMarketDominated(uint32 itemId, float threshold = 0.6f);
 
@@ -177,10 +178,10 @@ public:
     float GetSeasonalityFactor(uint32 itemId, uint32 timestamp = 0);
 
     // Market segment analysis
-    void AnalyzeMarketSegment(MarketSegment segment);
+    void AnalyzeMarketSegment(MarketSegment segment) override;
     std::vector<uint32> GetTopItemsInSegment(MarketSegment segment, uint32 count = 10);
     float GetSegmentGrowthRate(MarketSegment segment);
-    MarketTrend GetSegmentTrend(MarketSegment segment);
+    MarketTrend GetSegmentTrend(MarketSegment segment) override;
 
     // Performance and accuracy tracking
     struct AnalysisMetrics
@@ -208,18 +209,18 @@ public:
         }
     };
 
-    AnalysisMetrics const& GetAnalysisMetrics() const { return _metrics; }
+    AnalysisMetrics const& GetAnalysisMetrics() const override { return _metrics; }
 
     // Configuration and learning
-    void SetAnalysisDepth(float depth); // 0.0 = fast, 1.0 = thorough
+    void SetAnalysisDepth(float depth) override; // 0.0 = fast, 1.0 = thorough
     void EnableLearning(bool enable) { _learningEnabled = enable; }
-    void UpdatePredictionAccuracy(uint32 itemId, float predictedPrice, float actualPrice);
+    void UpdatePredictionAccuracy(uint32 itemId, float predictedPrice, float actualPrice) override;
     void LearnFromMarketEvents();
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateTrendAnalysis();
-    void CleanupOldData();
+    void Update(uint32 diff) override;
+    void UpdateTrendAnalysis() override;
+    void CleanupOldData() override;
     void RecalibrateModels();
 
 private:

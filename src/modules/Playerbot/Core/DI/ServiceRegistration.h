@@ -56,6 +56,7 @@
 #include "Interfaces/IGuildBankManager.h"
 #include "Interfaces/ILootCoordination.h"
 #include "Interfaces/ILootDistribution.h"
+#include "Interfaces/IMarketAnalysis.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -94,6 +95,7 @@
 #include "Social/GuildBankManager.h"
 #include "Social/LootCoordination.h"
 #include "Social/LootDistribution.h"
+#include "Social/MarketAnalysis.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -467,6 +469,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ILootDistribution");
+
+        // Register MarketAnalysis (Phase 24)
+        container.RegisterInstance<IMarketAnalysis>(
+            std::shared_ptr<IMarketAnalysis>(
+                Playerbot::MarketAnalysis::instance(),
+                [](IMarketAnalysis*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IMarketAnalysis");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
