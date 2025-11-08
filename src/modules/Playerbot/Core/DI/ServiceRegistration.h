@@ -86,6 +86,7 @@
 #include "Interfaces/IBotPerformanceMonitor.h"
 #include "Interfaces/IPlayerbotDatabaseManager.h"
 #include "Interfaces/IDeadlockDetector.h"
+#include "Interfaces/IPlayerbotMigrationMgr.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -155,6 +156,7 @@
 #include "Session/BotPerformanceMonitor.h"
 #include "Database/PlayerbotDatabase.h"
 #include "Diagnostics/DeadlockDetector.h"
+#include "Database/PlayerbotMigrationMgr.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -808,6 +810,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDeadlockDetector");
+
+        // Register PlayerbotMigrationMgr (Phase 55)
+        container.RegisterInstance<IPlayerbotMigrationMgr>(
+            std::shared_ptr<IPlayerbotMigrationMgr>(
+                PlayerbotMigrationMgr::instance(),
+                [](IPlayerbotMigrationMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotMigrationMgr");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

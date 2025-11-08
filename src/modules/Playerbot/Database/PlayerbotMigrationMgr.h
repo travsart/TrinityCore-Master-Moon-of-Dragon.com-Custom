@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Core/DI/Interfaces/IPlayerbotMigrationMgr.h"
 #include <string>
 #include <vector>
 #include <functional>
@@ -27,40 +28,40 @@ struct MigrationInfo
     std::string checksum;
 };
 
-class TC_GAME_API PlayerbotMigrationMgr
+class TC_GAME_API PlayerbotMigrationMgr final : public IPlayerbotMigrationMgr
 {
 public:
     static PlayerbotMigrationMgr* instance();
 
     // Core migration operations
-    bool Initialize();
-    bool ApplyMigrations();
-    bool ApplyMigration(std::string const& version);
-    bool RollbackMigration(std::string const& version);
+    bool Initialize() override;
+    bool ApplyMigrations() override;
+    bool ApplyMigration(std::string const& version) override;
+    bool RollbackMigration(std::string const& version) override;
 
     // Migration information
-    std::vector<std::string> GetPendingMigrations();
-    std::vector<std::string> GetAppliedMigrations();
-    std::string GetCurrentVersion();
-    bool IsMigrationApplied(std::string const& version);
+    std::vector<std::string> GetPendingMigrations() override;
+    std::vector<std::string> GetAppliedMigrations() override;
+    std::string GetCurrentVersion() override;
+    bool IsMigrationApplied(std::string const& version) override;
 
     // Database schema validation
-    bool ValidateSchema();
-    bool ValidateVersion(std::string const& expectedVersion);
-    bool CreateMigrationTable();
+    bool ValidateSchema() override;
+    bool ValidateVersion(std::string const& expectedVersion) override;
+    bool CreateMigrationTable() override;
 
     // Migration registration
-    void RegisterMigration(MigrationInfo const& migration);
+    void RegisterMigration(MigrationInfo const& migration) override;
 
     // Utility functions
-    std::string CalculateFileChecksum(std::string const& filepath);
-    bool ExecuteSQLFile(std::string const& filepath);
-    bool ExecuteSQLStatement(std::string const& sql);
+    std::string CalculateFileChecksum(std::string const& filepath) override;
+    bool ExecuteSQLFile(std::string const& filepath) override;
+    bool ExecuteSQLStatement(std::string const& sql) override;
 
     // Safety and rollback
-    bool BackupDatabase(std::string const& backupPath = "");
-    bool RestoreDatabase(std::string const& backupPath);
-    bool CanRollback(std::string const& version);
+    bool BackupDatabase(std::string const& backupPath = "") override;
+    bool RestoreDatabase(std::string const& backupPath) override;
+    bool CanRollback(std::string const& version) override;
 
     // Migration status and reporting
     struct MigrationStatus
@@ -74,8 +75,8 @@ public:
         bool isValid;
     };
 
-    MigrationStatus GetMigrationStatus();
-    void PrintMigrationStatus();
+    MigrationStatus GetMigrationStatus() override;
+    void PrintMigrationStatus() override;
 
 private:
     PlayerbotMigrationMgr();
