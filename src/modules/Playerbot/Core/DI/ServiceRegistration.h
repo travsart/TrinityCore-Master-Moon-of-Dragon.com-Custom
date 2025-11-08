@@ -72,6 +72,7 @@
 #include "Interfaces/ILFGRoleDetector.h"
 #include "Interfaces/IVendorInteraction.h"
 #include "Interfaces/ILFGBotSelector.h"
+#include "Interfaces/IGuildIntegration.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -126,6 +127,7 @@
 #include "LFG/LFGRoleDetector.h"
 #include "Social/VendorInteraction.h"
 #include "LFG/LFGBotSelector.h"
+#include "Social/GuildIntegration.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -643,6 +645,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ILFGBotSelector");
+
+        // Register GuildIntegration (Phase 40)
+        container.RegisterInstance<IGuildIntegration>(
+            std::shared_ptr<IGuildIntegration>(
+                Playerbot::GuildIntegration::instance(),
+                [](IGuildIntegration*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IGuildIntegration");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
