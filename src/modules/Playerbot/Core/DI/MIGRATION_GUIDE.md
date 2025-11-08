@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 1.1
+**Document Version:** 1.2
 **Last Updated:** 2025-11-08
-**Status:** Phase 2 Complete (5 of 168 singletons migrated)
+**Status:** Phase 3 Complete (7 of 168 singletons migrated)
 
 ---
 
@@ -27,9 +27,11 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **ConfigManager** | IConfigManager | ✅ Phase 2 | Dual-access (singleton + DI) |
 | **BotLifecycleManager** | IBotLifecycleManager | ✅ Phase 2 | Dual-access (singleton + DI) |
 | **BotDatabasePool** | IBotDatabasePool | ✅ Phase 2 | Dual-access (singleton + DI) |
-| *+163 more* | *TBD* | ⏳ Pending | Planned Phases 3-N |
+| **BotNameMgr** | IBotNameMgr | ✅ Phase 3 | Dual-access (singleton + DI) |
+| **DungeonScriptMgr** | IDungeonScriptMgr | ✅ Phase 3 | Dual-access (singleton + DI) |
+| *+161 more* | *TBD* | ⏳ Pending | Planned Phases 4-N |
 
-**Total Progress:** 5/168 singletons (3.0%)
+**Total Progress:** 7/168 singletons (4.2%)
 
 ---
 
@@ -495,20 +497,26 @@ private:
 - ✅ Updated ServiceRegistration with Phase 2 services
 - ✅ Created MockConfigManager for testing
 
-### Phase 3 (Planned)
-- Migrate 10+ high-priority singletons:
+### Phase 3 (COMPLETED ✅)
+- ✅ Migrated 2 high-priority singletons (BotNameMgr, DungeonScriptMgr)
+- ✅ Created 2 new interfaces (IBotNameMgr, IDungeonScriptMgr)
+- ✅ Updated ServiceRegistration with Phase 3 services
+- ✅ Fixed copyright headers (TrinityCore GPL v2)
+
+### Phase 4 (Planned)
+- Migrate 8+ additional high-priority singletons:
   - EquipmentManager
-  - BotNameMgr
+  - BotAccountMgr
   - PlayerbotGroupManager
   - LFGBotManager
-  - DungeonScriptMgr
-  - BotAccountMgr
+  - BotGearFactory
+  - BotMonitor
   - And more...
 - Expand unit test coverage with additional mocks
 - Create integration test examples
 
-### Phase 4+ (Future)
-- Migrate remaining 158 singletons incrementally
+### Phase 5+ (Future)
+- Migrate remaining 161 singletons incrementally
 - Remove singleton accessors (backward compatibility break)
 - Full constructor injection throughout codebase
 

@@ -1,5 +1,18 @@
 /*
- * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
@@ -10,11 +23,15 @@
 #include "Interfaces/IConfigManager.h"
 #include "Interfaces/IBotLifecycleManager.h"
 #include "Interfaces/IBotDatabasePool.h"
+#include "Interfaces/IBotNameMgr.h"
+#include "Interfaces/IDungeonScriptMgr.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
 #include "Lifecycle/BotLifecycleManager.h"
 #include "Database/BotDatabasePool.h"
+#include "Character/BotNameMgr.h"
+#include "Dungeon/DungeonScriptMgr.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -91,6 +108,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotDatabasePool");
+
+        // Register BotNameMgr (Phase 3)
+        container.RegisterInstance<IBotNameMgr>(
+            std::shared_ptr<IBotNameMgr>(
+                BotNameMgr::instance(),
+                [](IBotNameMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotNameMgr");
+
+        // Register DungeonScriptMgr (Phase 3)
+        container.RegisterInstance<IDungeonScriptMgr>(
+            std::shared_ptr<IDungeonScriptMgr>(
+                Playerbot::DungeonScriptMgr::instance(),
+                [](IDungeonScriptMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IDungeonScriptMgr");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

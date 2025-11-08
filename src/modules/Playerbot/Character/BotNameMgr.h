@@ -12,42 +12,50 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/IBotNameMgr.h"
 #include <string>
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
 
-class TC_GAME_API BotNameMgr
+/**
+ * @brief Bot Name Manager
+ *
+ * Implements IBotNameMgr for dependency injection compatibility.
+ * Manages allocation and tracking of bot character names.
+ */
+class TC_GAME_API BotNameMgr final : public IBotNameMgr
 {
 public:
     BotNameMgr(BotNameMgr const&) = delete;
     BotNameMgr& operator=(BotNameMgr const&) = delete;
-    
+
     static BotNameMgr* instance();
-    
-    bool Initialize();
-    void Shutdown();
-    
+
+    // IBotNameMgr interface implementation
+    bool Initialize() override;
+    void Shutdown() override;
+
     // Name allocation - returns empty string if no name available
-    std::string AllocateName(uint8 gender, uint32 characterGuid);
-    
+    std::string AllocateName(uint8 gender, uint32 characterGuid) override;
+
     // Name release when character is deleted
-    void ReleaseName(uint32 characterGuid);
-    void ReleaseName(std::string const& name);
-    
+    void ReleaseName(uint32 characterGuid) override;
+    void ReleaseName(std::string const& name) override;
+
     // Check if name is available
-    bool IsNameAvailable(std::string const& name) const;
-    
+    bool IsNameAvailable(std::string const& name) const override;
+
     // Get name for existing character
-    std::string GetCharacterName(uint32 characterGuid) const;
-    
+    std::string GetCharacterName(uint32 characterGuid) const override;
+
     // Statistics
-    uint32 GetAvailableNameCount(uint8 gender) const;
-    uint32 GetTotalNameCount() const;
-    uint32 GetUsedNameCount() const;
-    
+    uint32 GetAvailableNameCount(uint8 gender) const override;
+    uint32 GetTotalNameCount() const override;
+    uint32 GetUsedNameCount() const override;
+
     // Reload names from database
-    void ReloadNames();
+    void ReloadNames() override;
     
 private:
     BotNameMgr() = default;

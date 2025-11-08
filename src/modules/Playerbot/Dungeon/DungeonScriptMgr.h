@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/IDungeonScriptMgr.h"
 #include "DungeonScript.h"
 #include <unordered_map>
 #include <mutex>
@@ -22,6 +23,7 @@ namespace Playerbot
 /**
  * @brief Dungeon Script Manager - Registry for dungeon scripts
  *
+ * Implements IDungeonScriptMgr for dependency injection compatibility.
  * This class manages all dungeon scripts using a plugin-style architecture
  * similar to TrinityCore's ScriptMgr. Scripts are registered at server startup
  * and looked up at runtime.
@@ -56,25 +58,25 @@ namespace Playerbot
  * else
  *     EncounterStrategy::HandleGenericInterrupts(player, boss);
  */
-class TC_GAME_API DungeonScriptMgr
+class TC_GAME_API DungeonScriptMgr final : public IDungeonScriptMgr
 {
 public:
     static DungeonScriptMgr* instance();
 
     // ============================================================================
-    // INITIALIZATION
+    // IDungeonScriptMgr interface implementation
     // ============================================================================
 
     /**
      * Initialize script manager (called once at startup)
      */
-    void Initialize();
+    void Initialize() override;
 
     /**
      * Load all dungeon scripts
      * Called by Initialize() to register scripts
      */
-    void LoadScripts();
+    void LoadScripts() override;
 
     // ============================================================================
     // SCRIPT REGISTRATION
@@ -84,14 +86,14 @@ public:
      * Register a dungeon script
      * @param script Script to register (manager takes ownership)
      */
-    void RegisterScript(DungeonScript* script);
+    void RegisterScript(DungeonScript* script) override;
 
     /**
      * Register boss entry to script mapping
      * @param bossEntry Creature entry ID for boss
      * @param script Script handling this boss
      */
-    void RegisterBossScript(uint32 bossEntry, DungeonScript* script);
+    void RegisterBossScript(uint32 bossEntry, DungeonScript* script) override;
 
     // ============================================================================
     // SCRIPT LOOKUP
@@ -102,24 +104,24 @@ public:
      * @param mapId Map ID to look up
      * @return Script pointer or nullptr if not found
      */
-    DungeonScript* GetScriptForMap(uint32 mapId) const;
+    DungeonScript* GetScriptForMap(uint32 mapId) const override;
 
     /**
      * Get script for boss entry
      * @param bossEntry Creature entry ID
      * @return Script pointer or nullptr if not found
      */
-    DungeonScript* GetScriptForBoss(uint32 bossEntry) const;
+    DungeonScript* GetScriptForBoss(uint32 bossEntry) const override;
 
     /**
      * Check if script exists for map
      */
-    bool HasScriptForMap(uint32 mapId) const;
+    bool HasScriptForMap(uint32 mapId) const override;
 
     /**
      * Check if script exists for boss
      */
-    bool HasScriptForBoss(uint32 bossEntry) const;
+    bool HasScriptForBoss(uint32 bossEntry) const override;
 
     // ============================================================================
     // MECHANIC EXECUTION (with fallback)
@@ -137,7 +139,7 @@ public:
      * @param boss Boss being fought
      * @param mechanic Mechanic type to execute
      */
-    void ExecuteBossMechanic(::Player* player, ::Creature* boss, MechanicType mechanic);
+    void ExecuteBossMechanic(::Player* player, ::Creature* boss, MechanicType mechanic) override;
 
     // ============================================================================
     // STATISTICS
@@ -146,29 +148,19 @@ public:
     /**
      * Get number of registered scripts
      */
-    uint32 GetScriptCount() const { return _scriptCount.load(); }
+    uint32 GetScriptCount() const override { return _scriptCount.load(); }
 
     /**
      * Get number of registered boss mappings
      */
-    uint32 GetBossMappingCount() const { return _bossMappingCount.load(); }
+    uint32 GetBossMappingCount() const override { return _bossMappingCount.load(); }
 
     /**
      * Get statistics on script usage
      */
-    struct ScriptStats
-    {
-        uint32 scriptsRegistered;
-        uint32 bossMappings;
-        uint32 scriptHits;          // Times script was found
-        uint32 scriptMisses;        // Times fell back to generic
-        uint32 mechanicExecutions;  // Total mechanic calls
+    using ScriptStats = IDungeonScriptMgr::ScriptStats;
 
-        ScriptStats() : scriptsRegistered(0), bossMappings(0),
-            scriptHits(0), scriptMisses(0), mechanicExecutions(0) {}
-    };
-
-    ScriptStats GetStats() const;
+    ScriptStats GetStats() const override;
 
     // ============================================================================
     // DEBUGGING
@@ -177,12 +169,12 @@ public:
     /**
      * List all registered scripts (for debugging)
      */
-    void ListAllScripts() const;
+    void ListAllScripts() const override;
 
     /**
      * Get script info by name
      */
-    DungeonScript* GetScriptByName(std::string const& name) const;
+    DungeonScript* GetScriptByName(std::string const& name) const override;
 
 private:
     DungeonScriptMgr();
