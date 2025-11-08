@@ -99,6 +99,8 @@
 #include "Interfaces/IPerformanceBenchmark.h"
 #include "Interfaces/ISystemValidation.h"
 #include "Interfaces/IObjectiveTracker.h"
+#include "Interfaces/IBattlegroundAI.h"
+#include "Interfaces/IBotAIFactory.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -180,6 +182,8 @@
 #include "Tests/SystemValidation.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "Quest/ObjectiveTracker.h"
+#include "PvP/BattlegroundAI.h"
+#include "AI/BotAI.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -885,6 +889,7 @@ inline void RegisterPlayerbotServices()
                 [](Playerbot::IMountManager*) {} // No-op deleter (singleton)
             )
         );
+        TC_LOG_INFO("playerbot.di", "  - Registered IMountManager");
 
         // Register PlayerbotCharacterDBInterface (Phase 61)
         container.RegisterInstance<Playerbot::IPlayerbotCharacterDBInterface>(
@@ -892,6 +897,8 @@ inline void RegisterPlayerbotServices()
                 Playerbot::PlayerbotCharacterDBInterface::instance(),
                 [](Playerbot::IPlayerbotCharacterDBInterface*) {} // No-op deleter (singleton)
             )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotCharacterDBInterface");
 
         // Register BattlePetManager (Phase 62)
         container.RegisterInstance<Playerbot::IBattlePetManager>(
@@ -899,6 +906,8 @@ inline void RegisterPlayerbotServices()
                 Playerbot::BattlePetManager::instance(),
                 [](Playerbot::IBattlePetManager*) {} // No-op deleter (singleton)
             )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBattlePetManager");
 
         // Register ArenaAI (Phase 63)
         container.RegisterInstance<Playerbot::IArenaAI>(
@@ -906,6 +915,8 @@ inline void RegisterPlayerbotServices()
                 Playerbot::ArenaAI::instance(),
                 [](Playerbot::IArenaAI*) {} // No-op deleter (singleton)
             )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IArenaAI");
 
         // Register PvPCombatAI (Phase 64)
         container.RegisterInstance<Playerbot::IPvPCombatAI>(
@@ -913,6 +924,8 @@ inline void RegisterPlayerbotServices()
                 Playerbot::PvPCombatAI::instance(),
                 [](Playerbot::IPvPCombatAI*) {} // No-op deleter (singleton)
             )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPvPCombatAI");
 
         // Register PerformanceBenchmark (Phase 65)
         container.RegisterInstance<Playerbot::IPerformanceBenchmark>(
@@ -920,6 +933,8 @@ inline void RegisterPlayerbotServices()
                 Playerbot::PerformanceBenchmark::instance(),
                 [](Playerbot::IPerformanceBenchmark*) {} // No-op deleter (singleton)
             )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPerformanceBenchmark");
 
         // Register SystemValidation (Phase 66)
         container.RegisterInstance<Playerbot::ISystemValidation>(
@@ -929,18 +944,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ISystemValidation");
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IPerformanceBenchmark");
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IPvPCombatAI");
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IArenaAI");
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IBattlePetManager");
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotCharacterDBInterface");
-        TC_LOG_INFO("playerbot.di", "  - Registered IMountManager");
 
+        // Register BattlegroundAI (Phase 67)
+        container.RegisterInstance<Playerbot::IBattlegroundAI>(
+            std::shared_ptr<Playerbot::IBattlegroundAI>(
+                Playerbot::BattlegroundAI::instance(),
+                [](Playerbot::IBattlegroundAI*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBattlegroundAI");
+
+        // Register BotAIFactory (Phase 68)
+        container.RegisterInstance<Playerbot::IBotAIFactory>(
+            std::shared_ptr<Playerbot::IBotAIFactory>(
+                Playerbot::BotAIFactory::instance(),
+                [](Playerbot::IBotAIFactory*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotAIFactory");
 
 
 

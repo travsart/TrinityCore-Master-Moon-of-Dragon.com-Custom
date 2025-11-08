@@ -19,6 +19,7 @@
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Strategy/Strategy.h"
+#include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
 #include <memory>
 #include <vector>
@@ -709,7 +710,7 @@ public:
 // AI FACTORY - Creates appropriate AI for each class
 // ========================================================================
 
-class TC_GAME_API BotAIFactory
+class TC_GAME_API BotAIFactory final : public IBotAIFactory
 {
     BotAIFactory() = default;
     ~BotAIFactory() = default;
@@ -720,23 +721,23 @@ public:
     static BotAIFactory* instance();
 
     // AI creation
-    std::unique_ptr<BotAI> CreateAI(Player* bot);
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId);
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec);
+    std::unique_ptr<BotAI> CreateAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) override;
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) override;
 
     // Specialized AI creation
-    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type);
-    std::unique_ptr<BotAI> CreatePvPAI(Player* bot);
-    std::unique_ptr<BotAI> CreatePvEAI(Player* bot);
-    std::unique_ptr<BotAI> CreateRaidAI(Player* bot);
+    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type) override;
+    std::unique_ptr<BotAI> CreatePvPAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreatePvEAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreateRaidAI(Player* bot) override;
 
     // AI registration
     void RegisterAICreator(std::string const& type,
-                          std::function<std::unique_ptr<BotAI>(Player*)> creator);
+                          std::function<std::unique_ptr<BotAI>(Player*)> creator) override;
 
     // Initialization
-    void InitializeDefaultTriggers(BotAI* ai);
-    void InitializeDefaultValues(BotAI* ai);
+    void InitializeDefaultTriggers(BotAI* ai) override;
+    void InitializeDefaultValues(BotAI* ai) override;
 
 private:
     void InitializeDefaultStrategies(BotAI* ai);
