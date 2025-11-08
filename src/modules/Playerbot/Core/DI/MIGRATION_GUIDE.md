@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 1.4
+**Document Version:** 1.5
 **Last Updated:** 2025-11-08
-**Status:** Phase 5 Complete (11 of 168 singletons migrated)
+**Status:** Phase 6 Complete (13 of 168 singletons migrated)
 
 ---
 
@@ -33,9 +33,11 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **BotAccountMgr** | IBotAccountMgr | ✅ Phase 4 | Dual-access (singleton + DI) |
 | **LFGBotManager** | ILFGBotManager | ✅ Phase 5 | Dual-access (singleton + DI) |
 | **BotGearFactory** | IBotGearFactory | ✅ Phase 5 | Dual-access (singleton + DI) |
-| *+157 more* | *TBD* | ⏳ Pending | Planned Phases 6-N |
+| **BotMonitor** | IBotMonitor | ✅ Phase 6 | Dual-access (singleton + DI) |
+| **BotLevelManager** | IBotLevelManager | ✅ Phase 6 | Dual-access (singleton + DI) |
+| *+155 more* | *TBD* | ⏳ Pending | Planned Phases 7-N |
 
-**Total Progress:** 11/168 singletons (6.5%)
+**Total Progress:** 13/168 singletons (7.7%)
 
 ---
 
@@ -519,16 +521,21 @@ private:
 - ✅ Updated ServiceRegistration with Phase 5 services
 - ✅ Total progress: 11/168 singletons (6.5%)
 
-### Phase 6 (Planned)
+### Phase 6 (COMPLETED ✅)
+- ✅ Migrated 2 additional high-priority singletons (BotMonitor, BotLevelManager)
+- ✅ Created 2 new interfaces (IBotMonitor, IBotLevelManager)
+- ✅ Updated ServiceRegistration with Phase 6 services
+- ✅ Total progress: 13/168 singletons (7.7%)
+
+### Phase 7 (Planned)
 - Migrate 8+ additional high-priority singletons:
   - PlayerbotGroupManager
-  - BotMonitor
   - And more...
 - Expand unit test coverage with additional mocks
 - Create integration test examples
 
-### Phase 7+ (Future)
-- Migrate remaining 157 singletons incrementally
+### Phase 8+ (Future)
+- Migrate remaining 155 singletons incrementally
 - Remove singleton accessors (backward compatibility break)
 - Full constructor injection throughout codebase
 
