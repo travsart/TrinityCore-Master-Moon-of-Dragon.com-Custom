@@ -31,6 +31,8 @@
 #include "Interfaces/IBotGearFactory.h"
 #include "Interfaces/IBotMonitor.h"
 #include "Interfaces/IBotLevelManager.h"
+#include "Interfaces/IPlayerbotGroupManager.h"
+#include "Interfaces/IBotTalentManager.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -44,6 +46,8 @@
 #include "Equipment/BotGearFactory.h"
 #include "Monitoring/BotMonitor.h"
 #include "Character/BotLevelManager.h"
+#include "Group/PlayerbotGroupManager.h"
+#include "Talents/BotTalentManager.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -192,6 +196,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotLevelManager");
+
+        // Register PlayerbotGroupManager (Phase 7)
+        container.RegisterInstance<IPlayerbotGroupManager>(
+            std::shared_ptr<IPlayerbotGroupManager>(
+                Playerbot::PlayerbotGroupManager::instance(),
+                [](IPlayerbotGroupManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotGroupManager");
+
+        // Register BotTalentManager (Phase 7)
+        container.RegisterInstance<IBotTalentManager>(
+            std::shared_ptr<IBotTalentManager>(
+                Playerbot::BotTalentManager::instance(),
+                [](IBotTalentManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotTalentManager");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

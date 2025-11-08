@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "Group.h"
 #include "Player.h"
+#include "Core/DI/Interfaces/IPlayerbotGroupManager.h"
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -129,86 +130,70 @@ struct GroupObjective
         , timeLimit(0), priority(100), isCompleted(false), assignedTime(getMSTime()) {}
 };
 
-class TC_GAME_API PlayerbotGroupManager
+class TC_GAME_API PlayerbotGroupManager final : public IPlayerbotGroupManager
 {
 public:
     static PlayerbotGroupManager* instance();
 
+    // IPlayerbotGroupManager interface implementation
+
     // Core group management
-    bool CreateGroup(Player* leader, GroupFormationType type = GroupFormationType::MANUAL);
-    bool AddMemberToGroup(uint32 groupId, Player* member, GroupRole preferredRole = GroupRole::DPS);
-    bool RemoveMemberFromGroup(uint32 groupId, uint32 memberGuid);
-    bool DisbandGroup(uint32 groupId);
+    bool CreateGroup(Player* leader, GroupFormationType type = GroupFormationType::MANUAL) override;
+    bool AddMemberToGroup(uint32 groupId, Player* member, GroupRole preferredRole = GroupRole::DPS) override;
+    bool RemoveMemberFromGroup(uint32 groupId, uint32 memberGuid) override;
+    bool DisbandGroup(uint32 groupId) override;
 
     // Group finder and matching
-    uint32 FindSuitableGroup(Player* player, GroupRole role);
-    std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel);
-    bool CanJoinGroup(Player* player, uint32 groupId, GroupRole role);
+    uint32 FindSuitableGroup(Player* player, GroupRole role) override;
+    std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel) override;
+    bool CanJoinGroup(Player* player, uint32 groupId, GroupRole role) override;
 
     // Group coordination
-    void UpdateGroupCoordination(uint32 groupId);
-    void SetGroupObjective(uint32 groupId, const GroupObjective& objective);
-    void UpdateGroupFormation(uint32 groupId, const GroupFormationData& formation);
-    Position GetOptimalPositionForMember(uint32 groupId, uint32 memberGuid);
+    void UpdateGroupCoordination(uint32 groupId) override;
+    void SetGroupObjective(uint32 groupId, GroupObjective const& objective) override;
+    void UpdateGroupFormation(uint32 groupId, GroupFormationData const& formation) override;
+    Position GetOptimalPositionForMember(uint32 groupId, uint32 memberGuid) override;
 
     // Leadership and decision making
-    void AssignGroupLeader(uint32 groupId, uint32 newLeaderGuid);
-    void HandleLeaderDisconnect(uint32 groupId);
-    void MakeGroupDecision(uint32 groupId, const std::string& decision);
+    void AssignGroupLeader(uint32 groupId, uint32 newLeaderGuid) override;
+    void HandleLeaderDisconnect(uint32 groupId) override;
+    void MakeGroupDecision(uint32 groupId, std::string const& decision) override;
 
     // Combat coordination
-    void OnCombatStart(uint32 groupId, Unit* target);
-    void OnCombatEnd(uint32 groupId);
-    void CoordinateGroupAttack(uint32 groupId, Unit* target);
-    void HandleGroupThreat(uint32 groupId);
+    void OnCombatStart(uint32 groupId, Unit* target) override;
+    void OnCombatEnd(uint32 groupId) override;
+    void CoordinateGroupAttack(uint32 groupId, Unit* target) override;
+    void HandleGroupThreat(uint32 groupId) override;
 
     // Movement and positioning
-    void UpdateGroupMovement(uint32 groupId);
-    void MoveGroupToLocation(uint32 groupId, const Position& destination);
-    void FormationMove(uint32 groupId, const Position& destination);
+    void UpdateGroupMovement(uint32 groupId) override;
+    void MoveGroupToLocation(uint32 groupId, Position const& destination) override;
+    void FormationMove(uint32 groupId, Position const& destination) override;
 
     // Communication and chat
-    void BroadcastToGroup(uint32 groupId, const std::string& message, ChatMsg type = CHAT_MSG_PARTY);
-    void HandleGroupChat(uint32 groupId, Player* sender, const std::string& message);
+    void BroadcastToGroup(uint32 groupId, std::string const& message, ChatMsg type = CHAT_MSG_PARTY) override;
+    void HandleGroupChat(uint32 groupId, Player* sender, std::string const& message) override;
 
     // Statistics and monitoring
-    struct GroupStatistics
-    {
-        std::atomic<uint32> totalDamageDealt{0};
-        std::atomic<uint32> totalHealingDone{0};
-        std::atomic<uint32> totalDamageTaken{0};
-        std::atomic<uint32> encountersCompleted{0};
-        std::atomic<uint32> wipes{0};
-        std::atomic<float> avgEncounterTime{0.0f};
-        std::atomic<float> groupEfficiency{1.0f};
-        std::chrono::steady_clock::time_point formationTime;
-        std::chrono::steady_clock::time_point lastCombat;
+    using GroupStatistics = Playerbot::GroupStatistics;
 
-        void Reset() {
-            totalDamageDealt = 0; totalHealingDone = 0; totalDamageTaken = 0;
-            encountersCompleted = 0; wipes = 0; avgEncounterTime = 0.0f;
-            groupEfficiency = 1.0f;
-            formationTime = std::chrono::steady_clock::now();
-        }
-    };
-
-    GroupStatistics GetGroupStatistics(uint32 groupId);
-    void UpdateGroupStatistics(uint32 groupId, const GroupStatistics& stats);
+    GroupStatistics GetGroupStatistics(uint32 groupId) override;
+    void UpdateGroupStatistics(uint32 groupId, GroupStatistics const& stats) override;
 
     // Automated group management
-    void ProcessGroupQueue();
-    void AutoFormGroups();
-    void AutoDisbandInactiveGroups();
-    void RebalanceGroups();
+    void ProcessGroupQueue() override;
+    void AutoFormGroups() override;
+    void AutoDisbandInactiveGroups() override;
+    void RebalanceGroups() override;
 
     // Configuration and settings
-    void SetGroupCoordinationMode(uint32 groupId, GroupCoordinationMode mode);
-    void EnableAutoGrouping(bool enable) { _autoGroupingEnabled = enable; }
-    void SetMaxGroupsPerMap(uint32 mapId, uint32 maxGroups);
+    void SetGroupCoordinationMode(uint32 groupId, GroupCoordinationMode mode) override;
+    void EnableAutoGrouping(bool enable) override { _autoGroupingEnabled = enable; }
+    void SetMaxGroupsPerMap(uint32 mapId, uint32 maxGroups) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void CleanupInactiveGroups();
+    void Update(uint32 diff) override;
+    void CleanupInactiveGroups() override;
 
 private:
     PlayerbotGroupManager();
