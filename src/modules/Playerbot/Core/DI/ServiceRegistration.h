@@ -37,6 +37,7 @@
 #include "Interfaces/IBotSpawner.h"
 #include "Interfaces/IBotWorldPositioner.h"
 #include "Interfaces/IBotHealthCheck.h"
+#include "Interfaces/IBotScheduler.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -56,6 +57,7 @@
 #include "Lifecycle/BotSpawner.h"
 #include "Movement/BotWorldPositioner.h"
 #include "Session/BotHealthCheck.h"
+#include "Lifecycle/BotScheduler.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -258,6 +260,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotHealthCheck");
+
+        // Register BotScheduler (Phase 10)
+        container.RegisterInstance<IBotScheduler>(
+            std::shared_ptr<IBotScheduler>(
+                Playerbot::BotScheduler::instance(),
+                [](IBotScheduler*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotScheduler");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

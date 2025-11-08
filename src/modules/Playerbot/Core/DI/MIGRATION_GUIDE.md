@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 1.8
+**Document Version:** 1.9
 **Last Updated:** 2025-11-08
-**Status:** Phase 9 Complete (19 of 168 singletons migrated)
+**Status:** Phase 10 Complete (20 of 168 singletons migrated)
 
 ---
 
@@ -41,9 +41,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **BotSpawner** | IBotSpawner | ✅ Phase 8 | Dual-access (singleton + DI) |
 | **BotWorldPositioner** | IBotWorldPositioner | ✅ Phase 9 | Dual-access (singleton + DI) |
 | **BotHealthCheck** | IBotHealthCheck | ✅ Phase 9 | Dual-access (singleton + DI) |
-| *+149 more* | *TBD* | ⏳ Pending | Planned Phases 10-N |
+| **BotScheduler** | IBotScheduler | ✅ Phase 10 | Dual-access (singleton + DI) |
+| *+148 more* | *TBD* | ⏳ Pending | Planned Phases 11-N |
 
-**Total Progress:** 19/168 singletons (11.3%)
+**Total Progress:** 20/168 singletons (11.9%)
 
 ---
 
@@ -551,13 +552,19 @@ private:
 - ✅ Updated ServiceRegistration with Phase 9 services
 - ✅ Total progress: 19/168 singletons (11.3%)
 
-### Phase 10 (Planned)
+### Phase 10 (COMPLETED ✅)
+- ✅ Migrated 1 additional high-priority singleton (BotScheduler)
+- ✅ Created 1 new interface (IBotScheduler)
+- ✅ Updated ServiceRegistration with Phase 10 service
+- ✅ Total progress: 20/168 singletons (11.9%)
+
+### Phase 11 (Planned)
 - Migrate 2+ additional high-priority singletons
 - Expand unit test coverage with additional mocks
 - Create integration test examples
 
-### Phase 11+ (Future)
-- Migrate remaining 149 singletons incrementally
+### Phase 12+ (Future)
+- Migrate remaining 148 singletons incrementally
 - Remove singleton accessors (backward compatibility break)
 - Full constructor injection throughout codebase
 
