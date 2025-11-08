@@ -15,6 +15,7 @@
 #include "LootAnalysis.h"
 #include "Player.h"
 #include "Group.h"
+#include "../Core/DI/Interfaces/ILootCoordination.h"
 #include <unordered_map>
 #include <vector>
 #include <queue>
@@ -31,28 +32,28 @@ namespace Playerbot
  * This system orchestrates the entire loot distribution process, from item
  * discovery to final distribution, ensuring fair and intelligent loot handling.
  */
-class TC_GAME_API LootCoordination
+class TC_GAME_API LootCoordination final : public ILootCoordination
 {
 public:
     static LootCoordination* instance();
 
     // Core loot coordination workflow
-    void InitiateLootSession(Group* group, Loot* loot);
-    void ProcessLootSession(Group* group, uint32 lootSessionId);
-    void CompleteLootSession(uint32 lootSessionId);
-    void HandleLootSessionTimeout(uint32 lootSessionId);
+    void InitiateLootSession(Group* group, Loot* loot) override;
+    void ProcessLootSession(Group* group, uint32 lootSessionId) override;
+    void CompleteLootSession(uint32 lootSessionId) override;
+    void HandleLootSessionTimeout(uint32 lootSessionId) override;
 
     // Intelligent loot distribution orchestration
-    void OrchestrateLootDistribution(Group* group, const std::vector<LootItem>& items);
-    void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items);
-    void OptimizeLootSequence(Group* group, std::vector<LootItem>& items);
-    void HandleSimultaneousLooting(Group* group, const std::vector<LootItem>& items);
+    void OrchestrateLootDistribution(Group* group, const std::vector<LootItem>& items) override;
+    void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items) override;
+    void OptimizeLootSequence(Group* group, std::vector<LootItem>& items) override;
+    void HandleSimultaneousLooting(Group* group, const std::vector<LootItem>& items) override;
 
     // Group consensus and communication
-    void FacilitateGroupLootDiscussion(Group* group, const LootItem& item);
-    void HandleLootConflictResolution(Group* group, const LootItem& item);
-    void BroadcastLootRecommendations(Group* group, const LootItem& item);
-    void CoordinateGroupLootDecisions(Group* group, uint32 rollId);
+    void FacilitateGroupLootDiscussion(Group* group, const LootItem& item) override;
+    void HandleLootConflictResolution(Group* group, const LootItem& item) override;
+    void BroadcastLootRecommendations(Group* group, const LootItem& item) override;
+    void CoordinateGroupLootDecisions(Group* group, uint32 rollId) override;
 
     // Advanced loot coordination features
     struct LootSession
@@ -86,16 +87,16 @@ public:
     void OptimizeLootSettingsForContent(Group* group, uint32 contentType);
 
     // Loot efficiency and optimization
-    void OptimizeLootEfficiency(Group* group);
-    void MinimizeLootTime(Group* group, uint32 sessionId);
-    void MaximizeLootFairness(Group* group, uint32 sessionId);
-    void BalanceLootSpeedAndFairness(Group* group, uint32 sessionId);
+    void OptimizeLootEfficiency(Group* group) override;
+    void MinimizeLootTime(Group* group, uint32 sessionId) override;
+    void MaximizeLootFairness(Group* group, uint32 sessionId) override;
+    void BalanceLootSpeedAndFairness(Group* group, uint32 sessionId) override;
 
     // Conflict resolution and mediation
-    void MediateLootDispute(Group* group, const LootItem& item, const std::vector<uint32>& disputingPlayers);
-    void HandleLootGrievances(Group* group, uint32 complainingPlayer, const std::string& grievance);
-    void ResolveRollTies(Group* group, uint32 rollId);
-    void HandleLootNinja(Group* group, uint32 suspectedPlayer);
+    void MediateLootDispute(Group* group, const LootItem& item, const std::vector<uint32>& disputingPlayers) override;
+    void HandleLootGrievances(Group* group, uint32 complainingPlayer, const std::string& grievance) override;
+    void ResolveRollTies(Group* group, uint32 rollId) override;
+    void HandleLootNinja(Group* group, uint32 suspectedPlayer) override;
 
     // Performance monitoring and analytics
     struct LootCoordinationMetrics
@@ -139,22 +140,22 @@ public:
     void ManageRaidLootCoordination(Group* raid, const std::vector<LootItem>& raidLoot);
 
     // Configuration and customization
-    void SetCoordinationStyle(uint32 groupId, const std::string& style); // "democratic", "efficient", "fair"
-    void SetConflictResolutionMethod(uint32 groupId, const std::string& method);
-    void EnableAdvancedCoordination(uint32 groupId, bool enable);
-    void SetLootCoordinationTimeout(uint32 groupId, uint32 timeoutMs);
+    void SetCoordinationStyle(uint32 groupId, const std::string& style) override; // "democratic", "efficient", "fair"
+    void SetConflictResolutionMethod(uint32 groupId, const std::string& method) override;
+    void EnableAdvancedCoordination(uint32 groupId, bool enable) override;
+    void SetLootCoordinationTimeout(uint32 groupId, uint32 timeoutMs) override;
 
     // Error handling and recovery
-    void HandleCoordinationError(uint32 sessionId, const std::string& error);
-    void RecoverFromCoordinationFailure(uint32 sessionId);
-    void HandleCorruptedLootState(uint32 sessionId);
-    void EmergencyLootDistribution(Group* group, const LootItem& item);
+    void HandleCoordinationError(uint32 sessionId, const std::string& error) override;
+    void RecoverFromCoordinationFailure(uint32 sessionId) override;
+    void HandleCorruptedLootState(uint32 sessionId) override;
+    void EmergencyLootDistribution(Group* group, const LootItem& item) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateLootSessions();
-    void CleanupExpiredSessions();
-    void ValidateCoordinationStates();
+    void Update(uint32 diff) override;
+    void UpdateLootSessions() override;
+    void CleanupExpiredSessions() override;
+    void ValidateCoordinationStates() override;
 
 private:
     LootCoordination();
