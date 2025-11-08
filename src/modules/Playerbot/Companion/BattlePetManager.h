@@ -22,6 +22,9 @@
 
 namespace Playerbot
 {
+    // Interface
+    #include "Core/DI/Interfaces/IBattlePetManager.h"
+
 
 /**
  * @brief Pet quality levels (WoW battle pet system)
@@ -120,7 +123,7 @@ struct PetBattleAutomationProfile
  * - Automatic pet healing
  * - Optimal ability usage
  */
-class TC_GAME_API BattlePetManager
+class TC_GAME_API BattlePetManager final : public IBattlePetManager
 {
 public:
     static BattlePetManager* instance();
@@ -132,37 +135,37 @@ public:
     /**
      * Initialize battle pet system on server startup
      */
-    void Initialize();
+    void Initialize() override;
 
     /**
      * Update pet automation for player (called periodically)
      */
-    void Update(::Player* player, uint32 diff);
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Get all pets player owns
      */
-    std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const;
+    std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const override;
 
     /**
      * Check if player owns pet
      */
-    bool OwnsPet(::Player* player, uint32 speciesId) const;
+    bool OwnsPet(::Player* player, uint32 speciesId) const override;
 
     /**
      * Capture pet (after battle)
      */
-    bool CapturePet(::Player* player, uint32 speciesId, PetQuality quality);
+    bool CapturePet(::Player* player, uint32 speciesId, PetQuality quality) override;
 
     /**
      * Release pet from collection
      */
-    bool ReleasePet(::Player* player, uint32 speciesId);
+    bool ReleasePet(::Player* player, uint32 speciesId) override;
 
     /**
      * Get pet count for player
      */
-    uint32 GetPetCount(::Player* player) const;
+    uint32 GetPetCount(::Player* player) const override;
 
     // ============================================================================
     // PET BATTLE AI
@@ -171,37 +174,37 @@ public:
     /**
      * Start pet battle
      */
-    bool StartPetBattle(::Player* player, uint32 targetNpcId);
+    bool StartPetBattle(::Player* player, uint32 targetNpcId) override;
 
     /**
      * Execute pet battle turn
      */
-    bool ExecuteBattleTurn(::Player* player);
+    bool ExecuteBattleTurn(::Player* player) override;
 
     /**
      * Select best ability for current turn
      */
-    uint32 SelectBestAbility(::Player* player) const;
+    uint32 SelectBestAbility(::Player* player) const override;
 
     /**
      * Switch active pet during battle
      */
-    bool SwitchActivePet(::Player* player, uint32 petIndex);
+    bool SwitchActivePet(::Player* player, uint32 petIndex) override;
 
     /**
      * Use ability in battle
      */
-    bool UseAbility(::Player* player, uint32 abilityId);
+    bool UseAbility(::Player* player, uint32 abilityId) override;
 
     /**
      * Check if should capture opponent pet
      */
-    bool ShouldCapturePet(::Player* player) const;
+    bool ShouldCapturePet(::Player* player) const override;
 
     /**
      * Forfeit battle
      */
-    bool ForfeitBattle(::Player* player);
+    bool ForfeitBattle(::Player* player) override;
 
     // ============================================================================
     // PET LEVELING
@@ -210,27 +213,27 @@ public:
     /**
      * Auto-level pets to max level
      */
-    void AutoLevelPets(::Player* player);
+    void AutoLevelPets(::Player* player) override;
 
     /**
      * Get pets that need leveling
      */
-    std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const;
+    std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const override;
 
     /**
      * Calculate XP required for next level
      */
-    uint32 GetXPRequiredForLevel(uint32 currentLevel) const;
+    uint32 GetXPRequiredForLevel(uint32 currentLevel) const override;
 
     /**
      * Award XP to pet after battle
      */
-    void AwardPetXP(::Player* player, uint32 speciesId, uint32 xp);
+    void AwardPetXP(::Player* player, uint32 speciesId, uint32 xp) override;
 
     /**
      * Level up pet
      */
-    bool LevelUpPet(::Player* player, uint32 speciesId);
+    bool LevelUpPet(::Player* player, uint32 speciesId) override;
 
     // ============================================================================
     // TEAM COMPOSITION
@@ -239,27 +242,27 @@ public:
     /**
      * Create pet team
      */
-    bool CreatePetTeam(::Player* player, std::string const& teamName, std::vector<uint32> const& petSpeciesIds);
+    bool CreatePetTeam(::Player* player, std::string const& teamName, std::vector<uint32> const& petSpeciesIds) override;
 
     /**
      * Get all pet teams
      */
-    std::vector<PetTeam> GetPlayerTeams(::Player* player) const;
+    std::vector<PetTeam> GetPlayerTeams(::Player* player) const override;
 
     /**
      * Set active team
      */
-    bool SetActiveTeam(::Player* player, std::string const& teamName);
+    bool SetActiveTeam(::Player* player, std::string const& teamName) override;
 
     /**
      * Get active team
      */
-    PetTeam GetActiveTeam(::Player* player) const;
+    PetTeam GetActiveTeam(::Player* player) const override;
 
     /**
      * Optimize team composition based on opponent
      */
-    std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const;
+    std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const override;
 
     // ============================================================================
     // PET HEALING
@@ -268,22 +271,22 @@ public:
     /**
      * Heal all pets
      */
-    bool HealAllPets(::Player* player);
+    bool HealAllPets(::Player* player) override;
 
     /**
      * Heal specific pet
      */
-    bool HealPet(::Player* player, uint32 speciesId);
+    bool HealPet(::Player* player, uint32 speciesId) override;
 
     /**
      * Check if pet needs healing
      */
-    bool NeedsHealing(::Player* player, uint32 speciesId) const;
+    bool NeedsHealing(::Player* player, uint32 speciesId) const override;
 
     /**
      * Get nearest pet healer NPC
      */
-    uint32 FindNearestPetHealer(::Player* player) const;
+    uint32 FindNearestPetHealer(::Player* player) const override;
 
     // ============================================================================
     // RARE PET TRACKING
@@ -292,29 +295,29 @@ public:
     /**
      * Track rare pet spawns
      */
-    void TrackRarePetSpawns(::Player* player);
+    void TrackRarePetSpawns(::Player* player) override;
 
     /**
      * Check if pet is rare
      */
-    bool IsRarePet(uint32 speciesId) const;
+    bool IsRarePet(uint32 speciesId) const override;
 
     /**
      * Get rare pets in current zone
      */
-    std::vector<uint32> GetRarePetsInZone(::Player* player) const;
+    std::vector<uint32> GetRarePetsInZone(::Player* player) const override;
 
     /**
      * Navigate to rare pet spawn
      */
-    bool NavigateToRarePet(::Player* player, uint32 speciesId);
+    bool NavigateToRarePet(::Player* player, uint32 speciesId) override;
 
     // ============================================================================
     // AUTOMATION PROFILES
     // ============================================================================
 
-    void SetAutomationProfile(uint32 playerGuid, PetBattleAutomationProfile const& profile);
-    PetBattleAutomationProfile GetAutomationProfile(uint32 playerGuid) const;
+    void SetAutomationProfile(uint32 playerGuid, PetBattleAutomationProfile const& profile) override;
+    PetBattleAutomationProfile GetAutomationProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // METRICS
@@ -346,8 +349,8 @@ public:
         }
     };
 
-    PetMetrics const& GetPlayerMetrics(uint32 playerGuid) const;
-    PetMetrics const& GetGlobalMetrics() const;
+    PetMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
+    PetMetrics const& GetGlobalMetrics() const override;
 
 private:
     BattlePetManager();
