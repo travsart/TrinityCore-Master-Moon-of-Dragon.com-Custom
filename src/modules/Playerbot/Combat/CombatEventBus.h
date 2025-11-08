@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/ICombatEventBus.h"
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -167,23 +168,23 @@ struct CombatEvent
  * - Event processing: <500 microseconds per event
  * - Batch processing: 100 events in <5ms
  */
-class TC_GAME_API CombatEventBus
+class TC_GAME_API CombatEventBus final : public ICombatEventBus
 {
 public:
     static CombatEventBus* instance();
 
     // Event publishing
-    bool PublishEvent(CombatEvent const& event);
+    bool PublishEvent(CombatEvent const& event) override;
 
     // Subscription
-    bool Subscribe(BotAI* subscriber, std::vector<CombatEventType> const& types);
-    bool SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    bool Subscribe(BotAI* subscriber, std::vector<CombatEventType> const& types) override;
+    bool SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
     // Event processing
-    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 100);
-    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff);
-    void ClearUnitEvents(ObjectGuid unitGuid);
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 100) override;
+    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff) override;
+    void ClearUnitEvents(ObjectGuid unitGuid) override;
 
     // Statistics
     struct Statistics
@@ -204,18 +205,18 @@ public:
     void ResetStatistics() { _stats.Reset(); }
 
     // Configuration
-    void SetMaxQueueSize(uint32 size) { _maxQueueSize = size; }
-    void SetEventTTL(uint32 ttlMs) { _eventTTLMs = ttlMs; }
-    void SetBatchSize(uint32 size) { _batchSize = size; }
+    void SetMaxQueueSize(uint32 size) override { _maxQueueSize = size; }
+    void SetEventTTL(uint32 ttlMs) override { _eventTTLMs = ttlMs; }
+    void SetBatchSize(uint32 size) override { _batchSize = size; }
 
-    uint32 GetMaxQueueSize() const { return _maxQueueSize; }
-    uint32 GetEventTTL() const { return _eventTTLMs; }
-    uint32 GetBatchSize() const { return _batchSize; }
+    uint32 GetMaxQueueSize() const override { return _maxQueueSize; }
+    uint32 GetEventTTL() const override { return _eventTTLMs; }
+    uint32 GetBatchSize() const override { return _batchSize; }
 
     // Debugging
-    void DumpSubscribers() const;
-    void DumpEventQueue() const;
-    std::vector<CombatEvent> GetQueueSnapshot() const;
+    void DumpSubscribers() const override;
+    void DumpEventQueue() const override;
+    std::vector<CombatEvent> GetQueueSnapshot() const override;
 
 private:
     CombatEventBus();
