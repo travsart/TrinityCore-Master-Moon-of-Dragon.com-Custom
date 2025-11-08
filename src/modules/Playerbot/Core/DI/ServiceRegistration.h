@@ -58,6 +58,7 @@
 #include "Interfaces/ILootDistribution.h"
 #include "Interfaces/IMarketAnalysis.h"
 #include "Interfaces/ITradeSystem.h"
+#include "Interfaces/IQuestPickup.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -98,6 +99,7 @@
 #include "Social/LootDistribution.h"
 #include "Social/MarketAnalysis.h"
 #include "Social/TradeSystem.h"
+#include "Quest/QuestPickup.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -489,6 +491,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ITradeSystem");
+
+        // Register QuestPickup (Phase 26)
+        container.RegisterInstance<IQuestPickup>(
+            std::shared_ptr<IQuestPickup>(
+                Playerbot::QuestPickup::instance(),
+                [](IQuestPickup*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IQuestPickup");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
