@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IQuestEventBus.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -90,32 +91,32 @@ struct QuestEvent
     }
 };
 
-class TC_GAME_API QuestEventBus
+class TC_GAME_API QuestEventBus final : public IQuestEventBus
 {
 public:
     static QuestEventBus* instance();
 
     // Event publishing
-    bool PublishEvent(QuestEvent const& event);
+    bool PublishEvent(QuestEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<QuestEventType> const& types);
-    bool SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    bool Subscribe(BotAI* subscriber, std::vector<QuestEventType> const& types) override;
+    bool SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
     // Event processing
-    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0);
-    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff);
-    void ClearUnitEvents(ObjectGuid unitGuid);
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0) override;
+    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff) override;
+    void ClearUnitEvents(ObjectGuid unitGuid) override;
 
     // Status queries
-    uint32 GetPendingEventCount() const;
-    uint32 GetSubscriberCount() const;
+    uint32 GetPendingEventCount() const override;
+    uint32 GetSubscriberCount() const override;
 
     // Diagnostics
-    void DumpSubscribers() const;
-    void DumpEventQueue() const;
-    std::vector<QuestEvent> GetQueueSnapshot() const;
+    void DumpSubscribers() const override;
+    void DumpEventQueue() const override;
+    std::vector<QuestEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
