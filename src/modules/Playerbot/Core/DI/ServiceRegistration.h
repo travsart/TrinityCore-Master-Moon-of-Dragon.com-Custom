@@ -38,6 +38,8 @@
 #include "Interfaces/IBotWorldPositioner.h"
 #include "Interfaces/IBotHealthCheck.h"
 #include "Interfaces/IBotScheduler.h"
+#include "Interfaces/IBotCharacterDistribution.h"
+#include "Interfaces/IBotLevelDistribution.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -58,6 +60,8 @@
 #include "Movement/BotWorldPositioner.h"
 #include "Session/BotHealthCheck.h"
 #include "Lifecycle/BotScheduler.h"
+#include "Character/BotCharacterDistribution.h"
+#include "Character/BotLevelDistribution.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -269,6 +273,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotScheduler");
+
+        // Register BotCharacterDistribution (Phase 11)
+        container.RegisterInstance<IBotCharacterDistribution>(
+            std::shared_ptr<IBotCharacterDistribution>(
+                Playerbot::BotCharacterDistribution::instance(),
+                [](IBotCharacterDistribution*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotCharacterDistribution");
+
+        // Register BotLevelDistribution (Phase 11)
+        container.RegisterInstance<IBotLevelDistribution>(
+            std::shared_ptr<IBotLevelDistribution>(
+                Playerbot::BotLevelDistribution::instance(),
+                [](IBotLevelDistribution*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotLevelDistribution");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
