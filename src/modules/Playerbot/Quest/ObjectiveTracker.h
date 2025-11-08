@@ -12,6 +12,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "QuestCompletion.h"
+#include "../Core/DI/Interfaces/IObjectiveTracker.h"
 #include "Player.h"
 #include "QuestDef.h"
 #include "Unit.h"
@@ -31,7 +32,7 @@ namespace Playerbot
  * This system provides real-time tracking of quest objectives, progress monitoring,
  * and intelligent adaptation to changing quest states for optimal completion efficiency.
  */
-class TC_GAME_API ObjectiveTracker
+class TC_GAME_API ObjectiveTracker final : public IObjectiveTracker
 {
 public:
     // Forward declarations
@@ -41,23 +42,23 @@ public:
     static ObjectiveTracker* instance();
 
     // Core objective tracking
-    void StartTrackingObjective(Player* bot, const QuestObjectiveData& objective);
-    void StopTrackingObjective(Player* bot, uint32 questId, uint32 objectiveIndex);
-    void UpdateObjectiveTracking(Player* bot, uint32 diff);
-    void RefreshObjectiveStates(Player* bot);
-    void RefreshObjectiveState(Player* bot, ObjectiveState& state);
+    void StartTrackingObjective(Player* bot, const QuestObjectiveData& objective) override;
+    void StopTrackingObjective(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    void UpdateObjectiveTracking(Player* bot, uint32 diff) override;
+    void RefreshObjectiveStates(Player* bot) override;
+    void RefreshObjectiveState(Player* bot, ObjectiveState& state) override;
 
     // Progress monitoring
-    void MonitorObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex);
-    void UpdateProgressMetrics(Player* bot, const QuestObjectiveData& objective);
-    bool HasProgressStalled(Player* bot, uint32 questId, uint32 objectiveIndex);
-    float CalculateObjectiveVelocity(Player* bot, uint32 questId, uint32 objectiveIndex);
+    void MonitorObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    void UpdateProgressMetrics(Player* bot, const QuestObjectiveData& objective) override;
+    bool HasProgressStalled(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    float CalculateObjectiveVelocity(Player* bot, uint32 questId, uint32 objectiveIndex) override;
 
     // Target detection and analysis
-    std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective);
-    std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f);
-    std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f);
-    std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f);
+    std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective) override;
+    std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f) override;
+    std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) override;
+    std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) override;
 
     // Objective state management
     struct ObjectiveState
@@ -85,9 +86,9 @@ public:
             , isStuck(false), stuckTime(0) {}
     };
 
-    ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex);
-    void UpdateObjectiveState(Player* bot, const ObjectiveState& state);
-    std::vector<ObjectiveState> GetActiveObjectives(Player* bot);
+    ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    void UpdateObjectiveState(Player* bot, const ObjectiveState& state) override;
+    std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
 
     // Intelligent objective prioritization
     struct ObjectivePriority
@@ -106,27 +107,27 @@ public:
             , efficiencyFactor(1.0f), proximityFactor(1.0f) {}
     };
 
-    std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot);
-    ObjectivePriority GetHighestPriorityObjective(Player* bot);
-    void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities);
+    std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
+    ObjectivePriority GetHighestPriorityObjective(Player* bot) override;
+    void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities) override;
 
     // Target availability and spawn tracking
-    void TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId);
-    bool IsTargetAvailable(uint32 targetId, const Position& location, float radius = 100.0f);
-    uint32 GetTargetRespawnTime(uint32 targetId);
-    Position GetOptimalTargetLocation(uint32 targetId, const Position& playerPosition);
+    void TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId) override;
+    bool IsTargetAvailable(uint32 targetId, const Position& location, float radius = 100.0f) override;
+    uint32 GetTargetRespawnTime(uint32 targetId) override;
+    Position GetOptimalTargetLocation(uint32 targetId, const Position& playerPosition) override;
 
     // Competition and interference management
-    void MonitorTargetCompetition(Player* bot, uint32 targetId);
-    bool IsTargetContested(uint32 targetId, float radius = 50.0f);
-    void HandleTargetCompetition(Player* bot, uint32 targetId);
-    std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation);
+    void MonitorTargetCompetition(Player* bot, uint32 targetId) override;
+    bool IsTargetContested(uint32 targetId, float radius = 50.0f) override;
+    void HandleTargetCompetition(Player* bot, uint32 targetId) override;
+    std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation) override;
 
     // Group objective coordination
-    void CoordinateGroupObjectives(Group* group, uint32 questId);
-    void DistributeObjectiveTargets(Group* group, uint32 questId, uint32 objectiveIndex);
-    void SynchronizeObjectiveProgress(Group* group, uint32 questId);
-    void HandleObjectiveConflicts(Group* group, uint32 questId, uint32 objectiveIndex);
+    void CoordinateGroupObjectives(Group* group, uint32 questId) override;
+    void DistributeObjectiveTargets(Group* group, uint32 questId, uint32 objectiveIndex) override;
+    void SynchronizeObjectiveProgress(Group* group, uint32 questId) override;
+    void HandleObjectiveConflicts(Group* group, uint32 questId, uint32 objectiveIndex) override;
 
     // Performance analytics
     struct ObjectiveAnalytics
@@ -149,37 +150,37 @@ public:
         }
     };
 
-    const ObjectiveAnalytics& GetBotObjectiveAnalytics(uint32 botGuid);
-    const ObjectiveAnalytics& GetGlobalObjectiveAnalytics();
+    const ObjectiveAnalytics& GetBotObjectiveAnalytics(uint32 botGuid) override;
+    const ObjectiveAnalytics& GetGlobalObjectiveAnalytics() override;
 
     // Advanced tracking features
-    void EnablePredictiveTracking(Player* bot, bool enable);
-    void PredictObjectiveCompletion(Player* bot, uint32 questId, uint32 objectiveIndex);
-    void AdaptTrackingStrategy(Player* bot, const ObjectiveState& state);
-    void OptimizeTrackingPerformance(Player* bot);
+    void EnablePredictiveTracking(Player* bot, bool enable) override;
+    void PredictObjectiveCompletion(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    void AdaptTrackingStrategy(Player* bot, const ObjectiveState& state) override;
+    void OptimizeTrackingPerformance(Player* bot) override;
 
     // Error detection and recovery
-    void DetectTrackingErrors(Player* bot);
-    void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error);
-    void HandleStuckObjective(Player* bot, ObjectiveState& state);
-    void RecoverTrackingState(Player* bot, uint32 questId);
-    void ValidateObjectiveConsistency(Player* bot);
+    void DetectTrackingErrors(Player* bot) override;
+    void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error) override;
+    void HandleStuckObjective(Player* bot, ObjectiveState& state) override;
+    void RecoverTrackingState(Player* bot, uint32 questId) override;
+    void ValidateObjectiveConsistency(Player* bot) override;
 
     // Data conversion utilities
-    QuestObjectiveData ConvertToQuestObjectiveData(const ObjectiveState& state);
+    QuestObjectiveData ConvertToQuestObjectiveData(const ObjectiveState& state) override;
 
     // Configuration and settings
-    void SetTrackingPrecision(uint32 botGuid, float precision); // 0.0 = low, 1.0 = high
-    void SetUpdateFrequency(uint32 botGuid, uint32 frequencyMs);
-    void EnableAdvancedFeatures(uint32 botGuid, bool enable);
+    void SetTrackingPrecision(uint32 botGuid, float precision) override; // 0.0 = low, 1.0 = high
+    void SetUpdateFrequency(uint32 botGuid, uint32 frequencyMs) override;
+    void EnableAdvancedFeatures(uint32 botGuid, bool enable) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateBotTracking(Player* bot, uint32 diff);
-    void CleanupInactiveTracking();
+    void Update(uint32 diff) override;
+    void UpdateBotTracking(Player* bot, uint32 diff) override;
+    void CleanupInactiveTracking() override;
 
     // Position finding (PUBLIC - used by QuestStrategy for dynamic position refresh)
-    Position FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective);
+    Position FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective) override;
 
 private:
     ObjectiveTracker();

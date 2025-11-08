@@ -76,6 +76,7 @@
 #include "Interfaces/IDungeonBehavior.h"
 #include "Interfaces/IInstanceCoordination.h"
 #include "Interfaces/IEncounterStrategy.h"
+#include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -134,6 +135,7 @@
 #include "Dungeon/DungeonBehavior.h"
 #include "Dungeon/InstanceCoordination.h"
 #include "Dungeon/EncounterStrategy.h"
+#include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -687,6 +689,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IEncounterStrategy");
+
+        // Register ObjectiveTracker (Phase 44)
+        container.RegisterInstance<IObjectiveTracker>(
+            std::shared_ptr<IObjectiveTracker>(
+                Playerbot::ObjectiveTracker::instance(),
+                [](IObjectiveTracker*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IObjectiveTracker");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
