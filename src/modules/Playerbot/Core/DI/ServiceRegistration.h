@@ -65,6 +65,7 @@
 #include "Interfaces/IQuestValidation.h"
 #include "Interfaces/IQuestTurnIn.h"
 #include "Interfaces/IRoleAssignment.h"
+#include "Interfaces/IDynamicQuestSystem.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -112,6 +113,7 @@
 #include "Quest/QuestValidation.h"
 #include "Quest/QuestTurnIn.h"
 #include "Group/RoleAssignment.h"
+#include "Quest/DynamicQuestSystem.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -566,6 +568,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IRoleAssignment");
+
+        // Register DynamicQuestSystem (Phase 33)
+        container.RegisterInstance<IDynamicQuestSystem>(
+            std::shared_ptr<IDynamicQuestSystem>(
+                Playerbot::DynamicQuestSystem::instance(),
+                [](IDynamicQuestSystem*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IDynamicQuestSystem");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
