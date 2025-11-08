@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 6.8
+**Document Version:** 6.9
 **Last Updated:** 2025-11-08
-**Status:** Phase 59 Complete (74 of 168 singletons migrated)
+**Status:** Phase 60 Complete (75 of 168 singletons migrated)
 
 ---
 
@@ -96,9 +96,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **BotNpcLocationService** | IBotNpcLocationService | ✅ Phase 57 | Dual-access (singleton + DI) |
 | **BotLifecycleMgr** | IBotLifecycleMgr | ✅ Phase 58 | Dual-access (singleton + DI) |
 | **BotWorldEntryQueue** | IBotWorldEntryQueue | ✅ Phase 59 | Dual-access (singleton + DI) |
-| *+94 more* | *TBD* | ⏳ Pending | Planned Phases 55-N |
+| **MountManager** | IMountManager | ✅ Phase 60 | Dual-access (singleton + DI) |
+| *+93 more* | *TBD* | ⏳ Pending | Planned Phases 55-N |
 
-**Total Progress:** 74/168 singletons (44.0%)
+**Total Progress:** 75/168 singletons (44.6%)
 
 ---
 
