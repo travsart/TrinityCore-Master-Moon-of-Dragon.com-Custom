@@ -53,6 +53,7 @@
 #include "Interfaces/ICombatEventBus.h"
 #include "Interfaces/IResourceEventBus.h"
 #include "Interfaces/ILootAnalysis.h"
+#include "Interfaces/IGuildBankManager.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -88,6 +89,7 @@
 #include "Combat/CombatEventBus.h"
 #include "Resource/ResourceEventBus.h"
 #include "Social/LootAnalysis.h"
+#include "Social/GuildBankManager.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -434,6 +436,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ILootAnalysis");
+
+        // Register GuildBankManager (Phase 21)
+        container.RegisterInstance<IGuildBankManager>(
+            std::shared_ptr<IGuildBankManager>(
+                Playerbot::GuildBankManager::instance(),
+                [](IGuildBankManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IGuildBankManager");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

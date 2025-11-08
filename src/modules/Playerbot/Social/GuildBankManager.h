@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "Guild.h"
 #include "Item.h"
+#include "Core/DI/Interfaces/IGuildBankManager.h"
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -67,34 +68,34 @@ struct GuildBankItem
  * This system provides intelligent guild bank interactions, item organization,
  * and automated deposit/withdrawal management for playerbots.
  */
-class TC_GAME_API GuildBankManager
+class TC_GAME_API GuildBankManager final : public IGuildBankManager
 {
 public:
     static GuildBankManager* instance();
 
     // Core guild bank operations using TrinityCore's Guild system
-    bool DepositItem(Player* player, uint32 itemGuid, uint32 tabId, uint32 stackCount);
-    bool WithdrawItem(Player* player, uint32 tabId, uint32 slotId, uint32 stackCount);
-    bool MoveItem(Player* player, uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot);
-    bool CanAccessGuildBank(Player* player, uint32 tabId);
+    bool DepositItem(Player* player, uint32 itemGuid, uint32 tabId, uint32 stackCount) override;
+    bool WithdrawItem(Player* player, uint32 tabId, uint32 slotId, uint32 stackCount) override;
+    bool MoveItem(Player* player, uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot) override;
+    bool CanAccessGuildBank(Player* player, uint32 tabId) override;
 
     // Intelligent bank management
-    void AutoOrganizeGuildBank(Player* player);
-    void OptimizeItemPlacement(Player* player);
-    void AnalyzeGuildBankContents(Player* player);
+    void AutoOrganizeGuildBank(Player* player) override;
+    void OptimizeItemPlacement(Player* player) override;
+    void AnalyzeGuildBankContents(Player* player) override;
     void PlanBankReorganization(Player* player);
 
     // Automated deposit strategies
-    void AutoDepositItems(Player* player);
-    void DepositExcessConsumables(Player* player);
-    void DepositCraftingMaterials(Player* player);
+    void AutoDepositItems(Player* player) override;
+    void DepositExcessConsumables(Player* player) override;
+    void DepositCraftingMaterials(Player* player) override;
     void DepositValuableItems(Player* player);
     void DepositDuplicateEquipment(Player* player);
 
     // Automated withdrawal strategies
-    void AutoWithdrawNeededItems(Player* player);
-    void WithdrawConsumables(Player* player);
-    void WithdrawCraftingMaterials(Player* player);
+    void AutoWithdrawNeededItems(Player* player) override;
+    void WithdrawConsumables(Player* player) override;
+    void WithdrawCraftingMaterials(Player* player) override;
     void WithdrawRepairItems(Player* player);
     void WithdrawRequestedItems(Player* player);
 

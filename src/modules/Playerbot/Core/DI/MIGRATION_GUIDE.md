@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 2.9
+**Document Version:** 3.0
 **Last Updated:** 2025-11-08
-**Status:** Phase 20 Complete (35 of 168 singletons migrated)
+**Status:** Phase 21 Complete (36 of 168 singletons migrated)
 
 ---
 
@@ -57,9 +57,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **CombatEventBus** | ICombatEventBus | ✅ Phase 18 | Dual-access (singleton + DI) |
 | **ResourceEventBus** | IResourceEventBus | ✅ Phase 19 | Dual-access (singleton + DI) |
 | **LootAnalysis** | ILootAnalysis | ✅ Phase 20 | Dual-access (singleton + DI) |
-| *+133 more* | *TBD* | ⏳ Pending | Planned Phases 21-N |
+| **GuildBankManager** | IGuildBankManager | ✅ Phase 21 | Dual-access (singleton + DI) |
+| *+132 more* | *TBD* | ⏳ Pending | Planned Phases 22-N |
 
-**Total Progress:** 35/168 singletons (20.8%)
+**Total Progress:** 36/168 singletons (21.4%)
 
 ---
 
