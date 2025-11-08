@@ -89,6 +89,7 @@
 #include "Interfaces/IPlayerbotMigrationMgr.h"
 #include "Interfaces/IBotSpawnEventBus.h"
 #include "Interfaces/IBotNpcLocationService.h"
+#include "Interfaces/IBotLifecycleMgr.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -161,6 +162,7 @@
 #include "Database/PlayerbotMigrationMgr.h"
 #include "Lifecycle/BotSpawnEventBus.h"
 #include "Core/Services/BotNpcLocationService.h"
+#include "Lifecycle/BotLifecycleMgr.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -841,6 +843,16 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotNpcLocationService");
+
+        // Register BotLifecycleMgr (Phase 58)
+        container.RegisterInstance<IBotLifecycleMgr>(
+            std::shared_ptr<IBotLifecycleMgr>(
+                BotLifecycleMgr::instance(),
+                [](IBotLifecycleMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotLifecycleMgr");
+
 
 
 

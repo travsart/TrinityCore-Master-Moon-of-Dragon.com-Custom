@@ -15,6 +15,7 @@
 // Forward declaration - BotSpawner.h included in .cpp
 #include "DatabaseEnv.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBotLifecycleMgr.h"
 #include <shared_mutex>
 #include <queue>
 #include <mutex>
@@ -52,32 +53,32 @@ struct LifecycleEventInfo
     std::string correlationId;
 };
 
-class TC_GAME_API BotLifecycleMgr
+class TC_GAME_API BotLifecycleMgr final : public IBotLifecycleMgr
 {
 public:
     static BotLifecycleMgr* instance();
 
     // Core lifecycle management
-    bool Initialize();
-    void Shutdown();
-    void Update(uint32 diff);
+    bool Initialize() override;
+    void Shutdown() override;
+    void Update(uint32 diff) override;
 
     // Event-driven coordination
-    void ProcessSchedulerEvents();
-    void ProcessSpawnerEvents();
-    void ProcessMaintenanceEvents();
+    void ProcessSchedulerEvents() override;
+    void ProcessSpawnerEvents() override;
+    void ProcessMaintenanceEvents() override;
 
     // Lifecycle coordination
-    void OnBotLoginRequested(ObjectGuid guid, std::string const& pattern);
-    void OnBotLogoutRequested(ObjectGuid guid, std::string const& reason);
-    void OnBotSpawnSuccess(ObjectGuid guid, uint32 accountId);
-    void OnBotSpawnFailure(ObjectGuid guid, std::string const& reason);
-    void OnPopulationTargetChanged(uint32 zoneId, uint32 targetPopulation);
+    void OnBotLoginRequested(ObjectGuid guid, std::string const& pattern) override;
+    void OnBotLogoutRequested(ObjectGuid guid, std::string const& reason) override;
+    void OnBotSpawnSuccess(ObjectGuid guid, uint32 accountId) override;
+    void OnBotSpawnFailure(ObjectGuid guid, std::string const& reason) override;
+    void OnPopulationTargetChanged(uint32 zoneId, uint32 targetPopulation) override;
 
     // Population management
-    void UpdateZonePopulations();
-    void BalancePopulation();
-    void HandlePopulationPressure();
+    void UpdateZonePopulations() override;
+    void BalancePopulation() override;
+    void HandlePopulationPressure() override;
 
     // Performance monitoring
     struct PerformanceMetrics
@@ -96,23 +97,23 @@ public:
         uint32 totalProcessingTimeThisSecond = 0;
     };
 
-    PerformanceMetrics const& GetPerformanceMetrics() const { return _metrics; }
-    void LogPerformanceReport();
+    PerformanceMetrics const& GetPerformanceMetrics() const override { return _metrics; }
+    void LogPerformanceReport() override;
 
     // Configuration and control
-    void SetEnabled(bool enabled) { _enabled = enabled; }
-    bool IsEnabled() const { return _enabled; }
+    void SetEnabled(bool enabled) override { _enabled = enabled; }
+    bool IsEnabled() const override { return _enabled; }
 
-    void SetMaxConcurrentOperations(uint32 maxOps) { _maxConcurrentOperations = maxOps; }
-    uint32 GetMaxConcurrentOperations() const { return _maxConcurrentOperations; }
+    void SetMaxConcurrentOperations(uint32 maxOps) override { _maxConcurrentOperations = maxOps; }
+    uint32 GetMaxConcurrentOperations() const override { return _maxConcurrentOperations; }
 
-    void SetUpdateIntervalMs(uint32 intervalMs) { _updateIntervalMs = intervalMs; }
-    uint32 GetUpdateIntervalMs() const { return _updateIntervalMs; }
+    void SetUpdateIntervalMs(uint32 intervalMs) override { _updateIntervalMs = intervalMs; }
+    uint32 GetUpdateIntervalMs() const override { return _updateIntervalMs; }
 
     // Maintenance and health
-    bool IsHealthy() const;
-    void RunMaintenance();
-    void EmergencyShutdown();
+    bool IsHealthy() const override;
+    void RunMaintenance() override;
+    void EmergencyShutdown() override;
 
     // Statistics and reporting
     struct LifecycleStatistics
@@ -129,13 +130,13 @@ public:
         std::chrono::system_clock::time_point lastUpdate;
     };
 
-    LifecycleStatistics GetStatistics() const { return _statistics; }
-    void ResetStatistics();
+    LifecycleStatistics GetStatistics() const override { return _statistics; }
+    void ResetStatistics() override;
 
     // Event subscription system
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;
-    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler);
-    void UnregisterEventHandler(uint32 handlerId);
+    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler) override;
+    void UnregisterEventHandler(uint32 handlerId) override;
 
 private:
     BotLifecycleMgr() = default;
