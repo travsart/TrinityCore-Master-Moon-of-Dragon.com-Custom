@@ -552,6 +552,9 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+    # Manager Consolidation Phase 1: UnifiedLootManager (consolidates LootAnalysis, LootCoordination, LootDistribution)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.h
 
     # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
