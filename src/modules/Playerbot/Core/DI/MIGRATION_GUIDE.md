@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 2.3
+**Document Version:** 2.4
 **Last Updated:** 2025-11-08
-**Status:** Phase 14 Complete (28 of 168 singletons migrated)
+**Status:** Phase 15 Complete (30 of 168 singletons migrated)
 
 ---
 
@@ -50,9 +50,11 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **QuestEventBus** | IQuestEventBus | ✅ Phase 13 | Dual-access (singleton + DI) |
 | **AuctionEventBus** | IAuctionEventBus | ✅ Phase 14 | Dual-access (singleton + DI) |
 | **NPCEventBus** | INPCEventBus | ✅ Phase 14 | Dual-access (singleton + DI) |
-| *+140 more* | *TBD* | ⏳ Pending | Planned Phases 15-N |
+| **CooldownEventBus** | ICooldownEventBus | ✅ Phase 15 | Dual-access (singleton + DI) |
+| **AuraEventBus** | IAuraEventBus | ✅ Phase 15 | Dual-access (singleton + DI) |
+| *+138 more* | *TBD* | ⏳ Pending | Planned Phases 16-N |
 
-**Total Progress:** 28/168 singletons (16.7%)
+**Total Progress:** 30/168 singletons (17.9%)
 
 ---
 
