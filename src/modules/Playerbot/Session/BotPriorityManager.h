@@ -6,6 +6,7 @@
 #define BOT_PRIORITY_MANAGER_H
 
 #include "Define.h"
+#include "../../Core/DI/Interfaces/IBotPriorityManager.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
@@ -82,7 +83,7 @@ struct BotUpdateMetrics
  * - Collect and aggregate performance metrics
  * - Detect and handle anomalies (stalls, errors)
  */
-class TC_GAME_API BotPriorityManager final
+class TC_GAME_API BotPriorityManager final : public IBotPriorityManager
 {
 public:
     static BotPriorityManager* instance()
@@ -92,55 +93,55 @@ public:
     }
 
     // Initialization
-    bool Initialize();
-    void Shutdown();
+    bool Initialize() override;
+    void Shutdown() override;
 
     // Priority management
-    void SetPriority(ObjectGuid botGuid, BotPriority priority);
+    void SetPriority(ObjectGuid botGuid, BotPriority priority) override;
     BotPriority GetPriority(ObjectGuid botGuid) const;
-    void UpdatePriorityForBot(Player* bot, uint32 currentTime);
+    void UpdatePriorityForBot(Player* bot, uint32 currentTime) override;
 
     // Automatic priority adjustment based on bot state
-    void AutoAdjustPriority(Player* bot, uint32 currentTime);
+    void AutoAdjustPriority(Player* bot, uint32 currentTime) override;
 
     // Priority scheduling - determines if bot should update this tick
-    bool ShouldUpdateThisTick(ObjectGuid botGuid, uint32 currentTick) const;
-    uint32 GetUpdateInterval(BotPriority priority) const;
+    bool ShouldUpdateThisTick(ObjectGuid botGuid, uint32 currentTick) const override;
+    uint32 GetUpdateInterval(BotPriority priority) const override;
 
     // Metrics tracking
-    void RecordUpdateStart(ObjectGuid botGuid, uint32 currentTime);
-    void RecordUpdateEnd(ObjectGuid botGuid, uint32 durationMicros);
-    void RecordUpdateSkipped(ObjectGuid botGuid);
-    void RecordUpdateError(ObjectGuid botGuid, uint32 currentTime);
+    void RecordUpdateStart(ObjectGuid botGuid, uint32 currentTime) override;
+    void RecordUpdateEnd(ObjectGuid botGuid, uint32 durationMicros) override;
+    void RecordUpdateSkipped(ObjectGuid botGuid) override;
+    void RecordUpdateError(ObjectGuid botGuid, uint32 currentTime) override;
 
     // Metrics retrieval
     BotUpdateMetrics const* GetMetrics(ObjectGuid botGuid) const;
-    uint32 GetBotCountByPriority(BotPriority priority) const;
-    uint32 GetEstimatedBotsThisTick(uint32 currentTick) const;
+    uint32 GetBotCountByPriority(BotPriority priority) const override;
+    uint32 GetEstimatedBotsThisTick(uint32 currentTick) const override;
 
     // Priority distribution for load balancing
-    void GetPriorityDistribution(uint32& emergency, uint32& high, uint32& medium, uint32& low, uint32& suspended) const;
+    void GetPriorityDistribution(uint32& emergency, uint32& high, uint32& medium, uint32& low, uint32& suspended) const override;
 
     // Load shedding - suspend low-priority bots under heavy load
-    void SuspendLowPriorityBots(uint32 targetCount);
-    void ResumeSuspendedBots(uint32 targetCount);
+    void SuspendLowPriorityBots(uint32 targetCount) override;
+    void ResumeSuspendedBots(uint32 targetCount) override;
 
     // Health monitoring
-    void DetectStalledBots(uint32 currentTime, uint32 stallThresholdMs);
-    std::vector<ObjectGuid> GetStalledBots() const;
+    void DetectStalledBots(uint32 currentTime, uint32 stallThresholdMs) override;
+    std::vector<ObjectGuid> GetStalledBots() const override;
 
     // Administrative
-    void RemoveBot(ObjectGuid botGuid);
-    void Clear();
+    void RemoveBot(ObjectGuid botGuid) override;
+    void Clear() override;
 
     // Configuration
-    void SetMaxBotsPerPriority(BotPriority priority, uint32 maxBots);
-    void SetUpdateInterval(BotPriority priority, uint32 intervalTicks);
-    uint32 GetMaxBotsPerPriority(BotPriority priority) const;
+    void SetMaxBotsPerPriority(BotPriority priority, uint32 maxBots) override;
+    void SetUpdateInterval(BotPriority priority, uint32 intervalTicks) override;
+    uint32 GetMaxBotsPerPriority(BotPriority priority) const override;
 
     // Statistics and logging
-    void LogPriorityDistribution() const;
-    void LogPerformanceStatistics() const;
+    void LogPriorityDistribution() const override;
+    void LogPerformanceStatistics() const override;
 
 private:
     BotPriorityManager() = default;
