@@ -35,6 +35,8 @@
 #include "Interfaces/IBotTalentManager.h"
 #include "Interfaces/IPlayerbotConfig.h"
 #include "Interfaces/IBotSpawner.h"
+#include "Interfaces/IBotWorldPositioner.h"
+#include "Interfaces/IBotHealthCheck.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -52,6 +54,8 @@
 #include "Talents/BotTalentManager.h"
 #include "Config/PlayerbotConfig.h"
 #include "Lifecycle/BotSpawner.h"
+#include "Movement/BotWorldPositioner.h"
+#include "Session/BotHealthCheck.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -236,6 +240,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotSpawner");
+
+        // Register BotWorldPositioner (Phase 9)
+        container.RegisterInstance<IBotWorldPositioner>(
+            std::shared_ptr<IBotWorldPositioner>(
+                Playerbot::BotWorldPositioner::instance(),
+                [](IBotWorldPositioner*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotWorldPositioner");
+
+        // Register BotHealthCheck (Phase 9)
+        container.RegisterInstance<IBotHealthCheck>(
+            std::shared_ptr<IBotHealthCheck>(
+                Playerbot::BotHealthCheck::instance(),
+                [](IBotHealthCheck*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotHealthCheck");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
