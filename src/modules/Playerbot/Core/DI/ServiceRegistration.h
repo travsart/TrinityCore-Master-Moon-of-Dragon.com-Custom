@@ -92,6 +92,7 @@
 #include "Interfaces/IBotLifecycleMgr.h"
 #include "Interfaces/IBotWorldEntryQueue.h"
 #include "Interfaces/IMountManager.h"
+#include "Interfaces/IPlayerbotCharacterDBInterface.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -167,6 +168,7 @@
 #include "Lifecycle/BotLifecycleMgr.h"
 #include "Lifecycle/BotWorldEntry.h"
 #include "Companion/MountManager.h"
+#include "Database/PlayerbotCharacterDBInterface.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -873,6 +875,15 @@ inline void RegisterPlayerbotServices()
                 [](Playerbot::IMountManager*) {} // No-op deleter (singleton)
             )
         );
+
+        // Register PlayerbotCharacterDBInterface (Phase 61)
+        container.RegisterInstance<Playerbot::IPlayerbotCharacterDBInterface>(
+            std::shared_ptr<Playerbot::IPlayerbotCharacterDBInterface>(
+                Playerbot::PlayerbotCharacterDBInterface::instance(),
+                [](Playerbot::IPlayerbotCharacterDBInterface*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotCharacterDBInterface");
         TC_LOG_INFO("playerbot.di", "  - Registered IMountManager");
 
 
