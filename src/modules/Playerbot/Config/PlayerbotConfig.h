@@ -25,6 +25,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Logging/ModuleLogManager.h"
+#include "Core/DI/Interfaces/IPlayerbotConfig.h"
 #include <map>
 #include <string>
 #include <mutex>
@@ -45,7 +46,7 @@
  * - Configuration validation
  * - Zero impact on core TrinityCore configuration
  */
-class TC_GAME_API PlayerbotConfig
+class TC_GAME_API PlayerbotConfig final : public IPlayerbotConfig
 {
 public:
     /**
@@ -58,19 +59,19 @@ public:
      * @brief Initialize the configuration system
      * @return true if successful, false otherwise
      */
-    bool Initialize();
+    bool Initialize() override;
 
     /**
      * @brief Reload configuration from file
      * @return true if successful, false otherwise
      */
-    bool Reload();
+    bool Reload() override;
 
     /**
      * @brief Check if configuration is loaded and valid
      * @return true if valid, false otherwise
      */
-    bool IsValid() const { return _loaded; }
+    bool IsValid() const override { return _loaded; }
 
     // Configuration value getters with type safety and defaults
 
@@ -80,7 +81,7 @@ public:
      * @param defaultValue Default value if key not found
      * @return Configuration value or default
      */
-    bool GetBool(std::string const& key, bool defaultValue) const;
+    bool GetBool(std::string const& key, bool defaultValue) const override;
 
     /**
      * @brief Get integer configuration value
@@ -88,7 +89,7 @@ public:
      * @param defaultValue Default value if key not found
      * @return Configuration value or default
      */
-    int32 GetInt(std::string const& key, int32 defaultValue) const;
+    int32 GetInt(std::string const& key, int32 defaultValue) const override;
 
     /**
      * @brief Get unsigned integer configuration value
@@ -96,7 +97,7 @@ public:
      * @param defaultValue Default value if key not found
      * @return Configuration value or default
      */
-    uint32 GetUInt(std::string const& key, uint32 defaultValue) const;
+    uint32 GetUInt(std::string const& key, uint32 defaultValue) const override;
 
     /**
      * @brief Get float configuration value
@@ -104,7 +105,7 @@ public:
      * @param defaultValue Default value if key not found
      * @return Configuration value or default
      */
-    float GetFloat(std::string const& key, float defaultValue) const;
+    float GetFloat(std::string const& key, float defaultValue) const override;
 
     /**
      * @brief Get string configuration value
@@ -112,19 +113,19 @@ public:
      * @param defaultValue Default value if key not found
      * @return Configuration value or default
      */
-    std::string GetString(std::string const& key, std::string const& defaultValue) const;
+    std::string GetString(std::string const& key, std::string const& defaultValue) const override;
 
     /**
      * @brief Get configuration file path
      * @return Path to playerbots.conf file
      */
-    std::string GetConfigPath() const { return _configPath; }
+    std::string GetConfigPath() const override { return _configPath; }
 
     /**
      * @brief Get last error message
      * @return Error description or empty string
      */
-    std::string GetLastError() const { return _lastError; }
+    std::string GetLastError() const override { return _lastError; }
 
     /**
      * @brief Initialize the playerbot logging system
@@ -134,7 +135,7 @@ public:
      * - Configurable log levels from playerbots.conf
      * - Specialized logging categories for different subsystems
      */
-    void InitializeLogging();
+    void InitializeLogging() override;
 
     /**
      * @brief Get cached configuration value for performance-critical access
@@ -148,19 +149,16 @@ public:
     /**
      * @brief Refresh configuration cache for frequently accessed values
      */
-    void RefreshCache();
+    void RefreshCache() override;
+
+    // IPlayerbotConfig interface implementation
+    using PerformanceMetrics = ::PerformanceMetrics;
 
     /**
      * @brief Get performance metrics for monitoring
      * @return Performance statistics
      */
-    struct PerformanceMetrics {
-        uint64 configLookups = 0;
-        uint64 cacheHits = 0;
-        uint64 cacheMisses = 0;
-        uint32 cacheHitRate() const { return configLookups > 0 ? (cacheHits * 100) / configLookups : 0; }
-    };
-    PerformanceMetrics GetPerformanceMetrics() const;
+    PerformanceMetrics GetPerformanceMetrics() const override;
 
 
 private:
