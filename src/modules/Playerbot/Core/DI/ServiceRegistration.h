@@ -88,6 +88,7 @@
 #include "Interfaces/IDeadlockDetector.h"
 #include "Interfaces/IPlayerbotMigrationMgr.h"
 #include "Interfaces/IBotSpawnEventBus.h"
+#include "Interfaces/IBotNpcLocationService.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -159,6 +160,7 @@
 #include "Diagnostics/DeadlockDetector.h"
 #include "Database/PlayerbotMigrationMgr.h"
 #include "Lifecycle/BotSpawnEventBus.h"
+#include "Core/Services/BotNpcLocationService.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -830,6 +832,16 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotSpawnEventBus");
+
+        // Register BotNpcLocationService (Phase 57)
+        container.RegisterInstance<Playerbot::IBotNpcLocationService>(
+            std::shared_ptr<Playerbot::IBotNpcLocationService>(
+                Playerbot::BotNpcLocationService::instance(),
+                [](Playerbot::IBotNpcLocationService*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotNpcLocationService");
+
 
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
