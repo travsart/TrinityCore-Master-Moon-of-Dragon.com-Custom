@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/INPCEventBus.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -66,23 +67,23 @@ struct NPCEvent
     std::string ToString() const;
 };
 
-class TC_GAME_API NPCEventBus
+class TC_GAME_API NPCEventBus final : public INPCEventBus
 {
 public:
     static NPCEventBus* instance();
-    bool PublishEvent(NPCEvent const& event);
+    bool PublishEvent(NPCEvent const& event) override;
 
     using EventHandler = std::function<void(NPCEvent const&)>;
 
-    void Subscribe(BotAI* subscriber, std::vector<NPCEventType> const& types);
-    void SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    void Subscribe(BotAI* subscriber, std::vector<NPCEventType> const& types) override;
+    void SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
-    uint32 SubscribeCallback(EventHandler handler, std::vector<NPCEventType> const& types);
-    void UnsubscribeCallback(uint32 subscriptionId);
+    uint32 SubscribeCallback(EventHandler handler, std::vector<NPCEventType> const& types) override;
+    void UnsubscribeCallback(uint32 subscriptionId) override;
 
-    uint64 GetTotalEventsPublished() const { return _totalEventsPublished; }
-    uint64 GetEventCount(NPCEventType type) const;
+    uint64 GetTotalEventsPublished() const override { return _totalEventsPublished; }
+    uint64 GetEventCount(NPCEventType type) const override;
 
 private:
     NPCEventBus() = default;

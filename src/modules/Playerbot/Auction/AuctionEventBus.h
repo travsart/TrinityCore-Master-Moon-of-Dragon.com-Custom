@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IAuctionEventBus.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -60,23 +61,23 @@ struct AuctionEvent
     std::string ToString() const;
 };
 
-class TC_GAME_API AuctionEventBus
+class TC_GAME_API AuctionEventBus final : public IAuctionEventBus
 {
 public:
     static AuctionEventBus* instance();
-    bool PublishEvent(AuctionEvent const& event);
+    bool PublishEvent(AuctionEvent const& event) override;
 
     using EventHandler = std::function<void(AuctionEvent const&)>;
 
-    void Subscribe(BotAI* subscriber, std::vector<AuctionEventType> const& types);
-    void SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    void Subscribe(BotAI* subscriber, std::vector<AuctionEventType> const& types) override;
+    void SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
-    uint32 SubscribeCallback(EventHandler handler, std::vector<AuctionEventType> const& types);
-    void UnsubscribeCallback(uint32 subscriptionId);
+    uint32 SubscribeCallback(EventHandler handler, std::vector<AuctionEventType> const& types) override;
+    void UnsubscribeCallback(uint32 subscriptionId) override;
 
-    uint64 GetTotalEventsPublished() const { return _totalEventsPublished; }
-    uint64 GetEventCount(AuctionEventType type) const;
+    uint64 GetTotalEventsPublished() const override { return _totalEventsPublished; }
+    uint64 GetEventCount(AuctionEventType type) const override;
 
 private:
     AuctionEventBus() = default;

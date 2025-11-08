@@ -44,6 +44,8 @@
 #include "Interfaces/ILFGGroupCoordinator.h"
 #include "Interfaces/ILootEventBus.h"
 #include "Interfaces/IQuestEventBus.h"
+#include "Interfaces/IAuctionEventBus.h"
+#include "Interfaces/INPCEventBus.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -70,6 +72,8 @@
 #include "LFG/LFGGroupCoordinator.h"
 #include "Loot/LootEventBus.h"
 #include "Quest/QuestEventBus.h"
+#include "Auction/AuctionEventBus.h"
+#include "NPC/NPCEventBus.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -335,6 +339,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IQuestEventBus");
+
+        // Register AuctionEventBus (Phase 14)
+        container.RegisterInstance<IAuctionEventBus>(
+            std::shared_ptr<IAuctionEventBus>(
+                Playerbot::AuctionEventBus::instance(),
+                [](IAuctionEventBus*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IAuctionEventBus");
+
+        // Register NPCEventBus (Phase 14)
+        container.RegisterInstance<INPCEventBus>(
+            std::shared_ptr<INPCEventBus>(
+                Playerbot::NPCEventBus::instance(),
+                [](INPCEventBus*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered INPCEventBus");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
