@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "QuestPickup.h"
+#include "../Core/DI/Interfaces/IQuestValidation.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -33,66 +34,66 @@ namespace Playerbot
  * before allowing bots to accept quests, ensuring proper quest progression
  * and preventing invalid quest states.
  */
-class TC_GAME_API QuestValidation
+class TC_GAME_API QuestValidation final : public IQuestValidation
 {
 public:
     static QuestValidation* instance();
 
     // Core validation methods
-    bool ValidateQuestAcceptance(uint32 questId, Player* bot);
-    QuestEligibility GetDetailedEligibility(uint32 questId, Player* bot);
-    std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot);
-    bool CanQuestBeStarted(uint32 questId, Player* bot);
+    bool ValidateQuestAcceptance(uint32 questId, Player* bot) override;
+    QuestEligibility GetDetailedEligibility(uint32 questId, Player* bot) override;
+    std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot) override;
+    bool CanQuestBeStarted(uint32 questId, Player* bot) override;
 
     // Requirement validation
-    bool ValidateLevelRequirements(uint32 questId, Player* bot);
-    bool ValidateClassRequirements(uint32 questId, Player* bot);
-    bool ValidateRaceRequirements(uint32 questId, Player* bot);
-    bool ValidateFactionRequirements(uint32 questId, Player* bot);
-    bool ValidateSkillRequirements(uint32 questId, Player* bot);
+    bool ValidateLevelRequirements(uint32 questId, Player* bot) override;
+    bool ValidateClassRequirements(uint32 questId, Player* bot) override;
+    bool ValidateRaceRequirements(uint32 questId, Player* bot) override;
+    bool ValidateFactionRequirements(uint32 questId, Player* bot) override;
+    bool ValidateSkillRequirements(uint32 questId, Player* bot) override;
 
     // Prerequisite validation
-    bool ValidateQuestPrerequisites(uint32 questId, Player* bot);
-    bool ValidateQuestChainPosition(uint32 questId, Player* bot);
-    std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot);
-    bool HasCompletedPrerequisiteQuests(uint32 questId, Player* bot);
+    bool ValidateQuestPrerequisites(uint32 questId, Player* bot) override;
+    bool ValidateQuestChainPosition(uint32 questId, Player* bot) override;
+    std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) override;
+    bool HasCompletedPrerequisiteQuests(uint32 questId, Player* bot) override;
 
     // Item and inventory validation
-    bool ValidateRequiredItems(uint32 questId, Player* bot);
-    bool ValidateInventorySpace(uint32 questId, Player* bot);
-    bool ValidateQuestItemRequirements(uint32 questId, Player* bot);
-    std::vector<std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot); // itemId, count
+    bool ValidateRequiredItems(uint32 questId, Player* bot) override;
+    bool ValidateInventorySpace(uint32 questId, Player* bot) override;
+    bool ValidateQuestItemRequirements(uint32 questId, Player* bot) override;
+    std::vector<std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot) override; // itemId, count
 
     // Status and state validation
-    bool ValidateQuestStatus(uint32 questId, Player* bot);
-    bool IsQuestAlreadyCompleted(uint32 questId, Player* bot);
-    bool IsQuestInProgress(uint32 questId, Player* bot);
-    bool IsQuestLogFull(Player* bot);
-    bool IsQuestRepeatable(uint32 questId, Player* bot);
+    bool ValidateQuestStatus(uint32 questId, Player* bot) override;
+    bool IsQuestAlreadyCompleted(uint32 questId, Player* bot) override;
+    bool IsQuestInProgress(uint32 questId, Player* bot) override;
+    bool IsQuestLogFull(Player* bot) override;
+    bool IsQuestRepeatable(uint32 questId, Player* bot) override;
 
     // Reputation and standing validation
-    bool ValidateReputationRequirements(uint32 questId, Player* bot);
-    bool ValidateMinimumReputation(uint32 questId, Player* bot);
-    bool ValidateMaximumReputation(uint32 questId, Player* bot);
-    std::vector<std::pair<uint32, int32>> GetReputationRequirements(uint32 questId); // factionId, standing
+    bool ValidateReputationRequirements(uint32 questId, Player* bot) override;
+    bool ValidateMinimumReputation(uint32 questId, Player* bot) override;
+    bool ValidateMaximumReputation(uint32 questId, Player* bot) override;
+    std::vector<std::pair<uint32, int32>> GetReputationRequirements(uint32 questId) override; // factionId, standing
 
     // Time and availability validation
-    bool ValidateQuestAvailability(uint32 questId, Player* bot);
-    bool ValidateSeasonalAvailability(uint32 questId);
-    bool ValidateDailyQuestLimits(uint32 questId, Player* bot);
-    bool ValidateQuestTimer(uint32 questId, Player* bot);
+    bool ValidateQuestAvailability(uint32 questId, Player* bot) override;
+    bool ValidateSeasonalAvailability(uint32 questId) override;
+    bool ValidateDailyQuestLimits(uint32 questId, Player* bot) override;
+    bool ValidateQuestTimer(uint32 questId, Player* bot) override;
 
     // Zone and location validation
-    bool ValidateZoneRequirements(uint32 questId, Player* bot);
-    bool ValidateAreaRequirements(uint32 questId, Player* bot);
-    bool IsInCorrectZone(uint32 questId, Player* bot);
-    bool CanQuestBeStartedAtLocation(uint32 questId, const Position& location);
+    bool ValidateZoneRequirements(uint32 questId, Player* bot) override;
+    bool ValidateAreaRequirements(uint32 questId, Player* bot) override;
+    bool IsInCorrectZone(uint32 questId, Player* bot) override;
+    bool CanQuestBeStartedAtLocation(uint32 questId, const Position& location) override;
 
     // Group and party validation
-    bool ValidateGroupRequirements(uint32 questId, Player* bot);
-    bool ValidatePartyQuestRequirements(uint32 questId, Player* bot);
-    bool ValidateRaidQuestRequirements(uint32 questId, Player* bot);
-    bool CanGroupMemberShareQuest(uint32 questId, Player* sharer, Player* receiver);
+    bool ValidateGroupRequirements(uint32 questId, Player* bot) override;
+    bool ValidatePartyQuestRequirements(uint32 questId, Player* bot) override;
+    bool ValidateRaidQuestRequirements(uint32 questId, Player* bot) override;
+    bool CanGroupMemberShareQuest(uint32 questId, Player* sharer, Player* receiver) override;
 
     // Advanced validation
     struct ValidationContext
@@ -112,10 +113,10 @@ public:
             , checkOptionalRequirements(true), validateFutureRequirements(false) {}
     };
 
-    bool ValidateWithContext(ValidationContext& context);
-    bool ValidateQuestObjectives(uint32 questId, Player* bot);
-    bool ValidateQuestRewards(uint32 questId, Player* bot);
-    bool ValidateQuestDifficulty(uint32 questId, Player* bot);
+    bool ValidateWithContext(ValidationContext& context) override;
+    bool ValidateQuestObjectives(uint32 questId, Player* bot) override;
+    bool ValidateQuestRewards(uint32 questId, Player* bot) override;
+    bool ValidateQuestDifficulty(uint32 questId, Player* bot) override;
 
     // Validation caching and optimization
     struct ValidationResult
@@ -131,21 +132,21 @@ public:
             , validationTime(getMSTime()), cacheExpiry(getMSTime() + 60000) {} // 1 minute cache
     };
 
-    ValidationResult GetCachedValidation(uint32 questId, uint32 botGuid);
-    void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result);
-    void InvalidateValidationCache(uint32 botGuid);
-    void CleanupExpiredCache();
+    ValidationResult GetCachedValidation(uint32 questId, uint32 botGuid) override;
+    void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result) override;
+    void InvalidateValidationCache(uint32 botGuid) override;
+    void CleanupExpiredCache() override;
 
     // Batch validation for efficiency
     std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-        const std::vector<uint32>& questIds, Player* bot);
-    std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot);
-    std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates);
+        const std::vector<uint32>& questIds, Player* bot) override;
+    std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot) override;
+    std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates) override;
 
     // Error reporting and diagnostics
-    std::string GetDetailedValidationReport(uint32 questId, Player* bot);
-    void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason);
-    std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot);
+    std::string GetDetailedValidationReport(uint32 questId, Player* bot) override;
+    void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason) override;
+    std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) override;
 
     // Configuration and settings
     void SetStrictValidation(bool strict) { _strictValidation = strict; }
@@ -202,10 +203,10 @@ public:
         }
     };
 
-    ValidationMetrics GetValidationMetrics() const { return _metrics; }
+    ValidationMetrics GetValidationMetrics() const override { return _metrics; }
 
     // Update and maintenance
-    void Update(uint32 diff);
+    void Update(uint32 diff) override;
 
 private:
     QuestValidation();
