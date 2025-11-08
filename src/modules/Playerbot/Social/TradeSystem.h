@@ -16,6 +16,7 @@
 #include "Creature.h"
 #include "NPCHandler.h"
 #include "Position.h"
+#include "../Core/DI/Interfaces/ITradeSystem.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -135,57 +136,57 @@ struct TradeConfiguration
         , requireItemAnalysis(true), enableTradeHistory(true) {}
 };
 
-class TC_GAME_API TradeSystem
+class TC_GAME_API TradeSystem final : public ITradeSystem
 {
 public:
     static TradeSystem* instance();
 
     // Core trade functionality
-    bool InitiateTrade(Player* initiator, Player* target);
-    void ProcessTradeRequest(Player* player, uint32 sessionId, TradeDecision decision);
-    void UpdateTradeSession(uint32 sessionId);
-    void CompleteTradeSession(uint32 sessionId);
-    void CancelTradeSession(uint32 sessionId);
+    bool InitiateTrade(Player* initiator, Player* target) override;
+    void ProcessTradeRequest(Player* player, uint32 sessionId, TradeDecision decision) override;
+    void UpdateTradeSession(uint32 sessionId) override;
+    void CompleteTradeSession(uint32 sessionId) override;
+    void CancelTradeSession(uint32 sessionId) override;
 
     // Player-to-player trading
-    bool CanInitiateTrade(Player* initiator, Player* target);
-    TradeDecision EvaluateTradeRequest(Player* player, uint32 sessionId);
+    bool CanInitiateTrade(Player* initiator, Player* target) override;
+    TradeDecision EvaluateTradeRequest(Player* player, uint32 sessionId) override;
     void AddItemToTrade(uint32 sessionId, uint32 playerGuid, uint32 itemGuid, uint32 count);
     void SetTradeGold(uint32 sessionId, uint32 playerGuid, uint32 goldAmount);
 
     // Vendor interactions using TrinityCore data
-    void LoadVendorDatabase();
-    std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f);
+    void LoadVendorDatabase() override;
+    std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f) override;
     VendorInfo GetVendorInfo(uint32 creatureGuid);
-    bool InteractWithVendor(Player* player, uint32 vendorGuid);
+    bool InteractWithVendor(Player* player, uint32 vendorGuid) override;
 
     // Vendor purchasing and selling
-    void ProcessVendorBuy(Player* player, uint32 vendorGuid, uint32 itemId, uint32 count);
-    void ProcessVendorSell(Player* player, uint32 vendorGuid, uint32 itemGuid, uint32 count);
-    bool CanBuyFromVendor(Player* player, uint32 vendorGuid, uint32 itemId);
+    void ProcessVendorBuy(Player* player, uint32 vendorGuid, uint32 itemId, uint32 count) override;
+    void ProcessVendorSell(Player* player, uint32 vendorGuid, uint32 itemGuid, uint32 count) override;
+    bool CanBuyFromVendor(Player* player, uint32 vendorGuid, uint32 itemId) override;
     bool ShouldSellToVendor(Player* player, uint32 itemGuid);
 
     // Equipment repair using TrinityCore repair vendors
-    void AutoRepairEquipment(Player* player);
-    std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f);
+    void AutoRepairEquipment(Player* player) override;
+    std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f) override;
     uint32 CalculateRepairCost(Player* player);
-    void ProcessEquipmentRepair(Player* player, uint32 vendorGuid);
+    void ProcessEquipmentRepair(Player* player, uint32 vendorGuid) override;
 
     // Innkeeper services using TrinityCore innkeeper data
-    void InteractWithInnkeeper(Player* player, uint32 innkeeperGuid);
+    void InteractWithInnkeeper(Player* player, uint32 innkeeperGuid) override;
     void SetHearthstone(Player* player, uint32 innkeeperGuid);
-    std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f);
+    std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f) override;
     bool CanUseInnkeeperServices(Player* player, uint32 innkeeperGuid);
 
     // Intelligent trade decision making
-    float AnalyzeTradeValue(Player* player, const TradeSession& session);
-    bool IsTradeWorthwhile(Player* player, const TradeSession& session);
+    float AnalyzeTradeValue(Player* player, const TradeSession& session) override;
+    bool IsTradeWorthwhile(Player* player, const TradeSession& session) override;
     void GenerateTradeRecommendation(Player* player, uint32 sessionId);
     TradeDecision MakeAutomatedTradeDecision(Player* player, uint32 sessionId);
 
     // Trade safety and validation
-    bool ValidateTradeSession(const TradeSession& session);
-    bool DetectSuspiciousTradeActivity(Player* player, const TradeSession& session);
+    bool ValidateTradeSession(const TradeSession& session) override;
+    bool DetectSuspiciousTradeActivity(Player* player, const TradeSession& session) override;
     void LogTradeTransaction(const TradeSession& session);
     void HandleTradeScamAttempt(Player* victim, Player* scammer);
 
@@ -217,12 +218,12 @@ public:
         }
     };
 
-    TradeMetrics GetPlayerTradeMetrics(uint32 playerGuid);
-    TradeMetrics GetGlobalTradeMetrics();
+    TradeMetrics GetPlayerTradeMetrics(uint32 playerGuid) override;
+    TradeMetrics GetGlobalTradeMetrics() override;
 
     // Automated vendor management
-    void AutoSellJunkItems(Player* player);
-    void AutoBuyConsumables(Player* player);
+    void AutoSellJunkItems(Player* player) override;
+    void AutoBuyConsumables(Player* player) override;
     void AutoRepairWhenNeeded(Player* player);
     void ManageInventorySpace(Player* player);
 
@@ -239,8 +240,8 @@ public:
     bool CanAccessGuildBank(Player* player);
 
     // Configuration and settings
-    void SetTradeConfiguration(uint32 playerGuid, const TradeConfiguration& config);
-    TradeConfiguration GetTradeConfiguration(uint32 playerGuid);
+    void SetTradeConfiguration(uint32 playerGuid, const TradeConfiguration& config) override;
+    TradeConfiguration GetTradeConfiguration(uint32 playerGuid) override;
     void UpdatePlayerTrustLevel(uint32 playerGuid, uint32 targetGuid, float trustDelta);
     float GetPlayerTrustLevel(uint32 playerGuid, uint32 targetGuid);
 
@@ -251,9 +252,9 @@ public:
     void ValidateTradeStates();
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void ProcessActiveTrades();
-    void CleanupExpiredTradeSessions();
+    void Update(uint32 diff) override;
+    void ProcessActiveTrades() override;
+    void CleanupExpiredTradeSessions() override;
     void RefreshVendorData();
 
 private:

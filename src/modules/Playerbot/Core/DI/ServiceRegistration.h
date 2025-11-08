@@ -57,6 +57,7 @@
 #include "Interfaces/ILootCoordination.h"
 #include "Interfaces/ILootDistribution.h"
 #include "Interfaces/IMarketAnalysis.h"
+#include "Interfaces/ITradeSystem.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -96,6 +97,7 @@
 #include "Social/LootCoordination.h"
 #include "Social/LootDistribution.h"
 #include "Social/MarketAnalysis.h"
+#include "Social/TradeSystem.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -478,6 +480,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IMarketAnalysis");
+
+        // Register TradeSystem (Phase 25)
+        container.RegisterInstance<ITradeSystem>(
+            std::shared_ptr<ITradeSystem>(
+                Playerbot::TradeSystem::instance(),
+                [](ITradeSystem*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ITradeSystem");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
