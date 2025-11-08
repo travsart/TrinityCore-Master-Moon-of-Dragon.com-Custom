@@ -78,6 +78,7 @@
 #include "Interfaces/IEncounterStrategy.h"
 #include "Interfaces/IUnifiedInterruptSystem.h"
 #include "Interfaces/ITriggerFactory.h"
+#include "Interfaces/IActionFactory.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -139,6 +140,7 @@
 #include "Dungeon/EncounterStrategy.h"
 #include "AI/Combat/UnifiedInterruptSystem.h"
 #include "AI/Triggers/Trigger.h"
+#include "AI/Actions/Action.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -720,6 +722,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ITriggerFactory");
+
+        // Register ActionFactory (Phase 47)
+        container.RegisterInstance<IActionFactory>(
+            std::shared_ptr<IActionFactory>(
+                Playerbot::ActionFactory::instance(),
+                [](IActionFactory*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IActionFactory");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
