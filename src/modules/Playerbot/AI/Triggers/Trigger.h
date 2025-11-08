@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "Action.h"  // For ActionContext definition
+#include "../../Core/DI/Interfaces/ITriggerFactory.h"
 #include <memory>
 #include <string>
 #include <functional>
@@ -186,7 +187,7 @@ public:
 };
 
 // Trigger factory
-class TC_GAME_API TriggerFactory
+class TC_GAME_API TriggerFactory final : public ITriggerFactory
 {
     TriggerFactory() = default;
     ~TriggerFactory() = default;
@@ -198,17 +199,17 @@ public:
 
     // Trigger registration
     void RegisterTrigger(std::string const& name,
-                        std::function<std::shared_ptr<Trigger>()> creator);
+                        std::function<std::shared_ptr<Trigger>()> creator) override;
 
     // Trigger creation
-    std::shared_ptr<Trigger> CreateTrigger(std::string const& name);
-    std::vector<std::shared_ptr<Trigger>> CreateDefaultTriggers();
-    std::vector<std::shared_ptr<Trigger>> CreateCombatTriggers();
-    std::vector<std::shared_ptr<Trigger>> CreateQuestTriggers();
+    std::shared_ptr<Trigger> CreateTrigger(std::string const& name) override;
+    std::vector<std::shared_ptr<Trigger>> CreateDefaultTriggers() override;
+    std::vector<std::shared_ptr<Trigger>> CreateCombatTriggers() override;
+    std::vector<std::shared_ptr<Trigger>> CreateQuestTriggers() override;
 
     // Available triggers
-    std::vector<std::string> GetAvailableTriggers() const;
-    bool HasTrigger(std::string const& name) const;
+    std::vector<std::string> GetAvailableTriggers() const override;
+    bool HasTrigger(std::string const& name) const override;
 
 private:
     std::unordered_map<std::string, std::function<std::shared_ptr<Trigger>()>> _creators;
