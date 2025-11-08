@@ -60,6 +60,7 @@
 #include "Interfaces/ITradeSystem.h"
 #include "Interfaces/IQuestPickup.h"
 #include "Interfaces/IGuildEventCoordinator.h"
+#include "Interfaces/IProfessionManager.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -102,6 +103,7 @@
 #include "Social/TradeSystem.h"
 #include "Quest/QuestPickup.h"
 #include "Social/GuildEventCoordinator.h"
+#include "Professions/ProfessionManager.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -511,6 +513,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IGuildEventCoordinator");
+
+        // Register ProfessionManager (Phase 28)
+        container.RegisterInstance<IProfessionManager>(
+            std::shared_ptr<IProfessionManager>(
+                Playerbot::ProfessionManager::instance(),
+                [](IProfessionManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IProfessionManager");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
