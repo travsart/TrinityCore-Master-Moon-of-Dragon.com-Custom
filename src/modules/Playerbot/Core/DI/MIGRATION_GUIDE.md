@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 4.7
+**Document Version:** 4.8
 **Last Updated:** 2025-11-08
-**Status:** Phase 38 Complete (53 of 168 singletons migrated)
+**Status:** Phase 39 Complete (54 of 168 singletons migrated)
 
 ---
 
@@ -75,9 +75,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **ProfessionAuctionBridge** | IProfessionAuctionBridge | ✅ Phase 36 | Dual-access (singleton + DI) |
 | **LFGRoleDetector** | ILFGRoleDetector | ✅ Phase 37 | Dual-access (singleton + DI) |
 | **VendorInteraction** | IVendorInteraction | ✅ Phase 38 | Dual-access (singleton + DI) |
-| *+115 more* | *TBD* | ⏳ Pending | Planned Phases 39-N |
+| **LFGBotSelector** | ILFGBotSelector | ✅ Phase 39 | Dual-access (singleton + DI) |
+| *+114 more* | *TBD* | ⏳ Pending | Planned Phases 40-N |
 
-**Total Progress:** 53/168 singletons (31.5%)
+**Total Progress:** 54/168 singletons (32.1%)
 
 ---
 

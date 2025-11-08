@@ -71,6 +71,7 @@
 #include "Interfaces/IProfessionAuctionBridge.h"
 #include "Interfaces/ILFGRoleDetector.h"
 #include "Interfaces/IVendorInteraction.h"
+#include "Interfaces/ILFGBotSelector.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -124,6 +125,7 @@
 #include "Professions/ProfessionAuctionBridge.h"
 #include "LFG/LFGRoleDetector.h"
 #include "Social/VendorInteraction.h"
+#include "LFG/LFGBotSelector.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -632,6 +634,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IVendorInteraction");
+
+        // Register LFGBotSelector (Phase 39)
+        container.RegisterInstance<ILFGBotSelector>(
+            std::shared_ptr<ILFGBotSelector>(
+                LFGBotSelector::instance(),
+                [](ILFGBotSelector*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ILFGBotSelector");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
