@@ -8,6 +8,7 @@
 #include "Define.h"
 #include "BotSession.h"
 #include "ObjectGuid.h"
+#include "Threading/LockHierarchy.h"
 #include <unordered_map>
 #include <memory>
 #include <vector>
@@ -61,8 +62,8 @@ private:
     std::unordered_map<uint32, std::unique_ptr<BotSession>> _sessions;
     std::vector<BotSession*> _activeSessions;
 
-    // Simple thread safety
-    mutable std::recursive_mutex _sessionsMutex;
+    // Simple thread safety with deadlock prevention
+    mutable OrderedRecursiveMutex<LockOrder::SESSION_MANAGER> _sessionsMutex;
 
     // State
     std::atomic<bool> _enabled{false};

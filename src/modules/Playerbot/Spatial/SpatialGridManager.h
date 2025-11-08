@@ -7,6 +7,7 @@
 
 #include "Define.h"
 #include "DoubleBufferedSpatialGrid.h"
+#include "Threading/LockHierarchy.h"
 #include <unordered_map>
 #include <memory>
 #include <shared_mutex>
@@ -54,7 +55,7 @@ private:
     ~SpatialGridManager() { DestroyAllGrids(); }
 
     std::unordered_map<uint32, std::unique_ptr<DoubleBufferedSpatialGrid>> _grids;
-    mutable std::shared_mutex _mutex;  // Allow concurrent reads
+    mutable OrderedSharedMutex<LockOrder::SPATIAL_GRID> _mutex;  // Allow concurrent reads with deadlock prevention
 
     // Non-copyable
     SpatialGridManager(SpatialGridManager const&) = delete;

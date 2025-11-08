@@ -73,6 +73,12 @@ jobs:
             python .claude\scripts\master_review.py --mode quick
           }
 
+      - name: Lock Ordering Check
+        run: |
+          Write-Host "Checking lock ordering to prevent deadlocks..."
+          python scripts/analyze_lock_order.py --verbose
+        continue-on-error: false
+
       - name: Cache validation results
         uses: actions/cache@v4
         with:
