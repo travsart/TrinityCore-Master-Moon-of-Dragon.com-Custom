@@ -52,6 +52,7 @@
 #include "Interfaces/ISocialEventBus.h"
 #include "Interfaces/ICombatEventBus.h"
 #include "Interfaces/IResourceEventBus.h"
+#include "Interfaces/ILootAnalysis.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -86,6 +87,7 @@
 #include "Social/SocialEventBus.h"
 #include "Combat/CombatEventBus.h"
 #include "Resource/ResourceEventBus.h"
+#include "Social/LootAnalysis.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -423,6 +425,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IResourceEventBus");
+
+        // Register LootAnalysis (Phase 20)
+        container.RegisterInstance<ILootAnalysis>(
+            std::shared_ptr<ILootAnalysis>(
+                Playerbot::LootAnalysis::instance(),
+                [](ILootAnalysis*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ILootAnalysis");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
