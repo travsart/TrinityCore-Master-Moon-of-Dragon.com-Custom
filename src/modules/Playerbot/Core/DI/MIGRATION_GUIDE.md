@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 5.0
+**Document Version:** 5.2
 **Last Updated:** 2025-11-08
-**Status:** Phase 41 Complete (57 of 168 singletons migrated)
+**Status:** Phase 43 Complete (58 of 168 singletons migrated)
 
 ---
 
@@ -78,9 +78,11 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **LFGBotSelector** | ILFGBotSelector | ✅ Phase 39 | Dual-access (singleton + DI) |
 | **GuildIntegration** | IGuildIntegration | ✅ Phase 40 | Dual-access (singleton + DI) |
 | **DungeonBehavior** | IDungeonBehavior | ✅ Phase 41 | Dual-access (singleton + DI) |
-| *+112 more* | *TBD* | ⏳ Pending | Planned Phases 42-N |
+| **InstanceCoordination** | IInstanceCoordination | ✅ Phase 42 | Dual-access (singleton + DI) |
+| **EncounterStrategy** | IEncounterStrategy | ✅ Phase 43 | Dual-access (singleton + DI) |
+| *+110 more* | *TBD* | ⏳ Pending | Planned Phases 44-N |
 
-**Total Progress:** 56/168 singletons (33.9%)
+**Total Progress:** 58/168 singletons (34.5%)
 
 ---
 
