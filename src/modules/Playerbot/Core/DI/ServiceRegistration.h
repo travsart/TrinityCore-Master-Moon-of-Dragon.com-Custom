@@ -48,6 +48,7 @@
 #include "Interfaces/INPCEventBus.h"
 #include "Interfaces/ICooldownEventBus.h"
 #include "Interfaces/IAuraEventBus.h"
+#include "Interfaces/IInstanceEventBus.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -78,6 +79,7 @@
 #include "NPC/NPCEventBus.h"
 #include "Cooldown/CooldownEventBus.h"
 #include "Aura/AuraEventBus.h"
+#include "Instance/InstanceEventBus.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -379,6 +381,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IAuraEventBus");
+
+        // Register InstanceEventBus (Phase 16)
+        container.RegisterInstance<IInstanceEventBus>(
+            std::shared_ptr<IInstanceEventBus>(
+                Playerbot::InstanceEventBus::instance(),
+                [](IInstanceEventBus*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IInstanceEventBus");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
