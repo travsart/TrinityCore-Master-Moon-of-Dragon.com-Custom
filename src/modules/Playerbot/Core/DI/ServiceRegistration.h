@@ -55,6 +55,7 @@
 #include "Interfaces/ILootAnalysis.h"
 #include "Interfaces/IGuildBankManager.h"
 #include "Interfaces/ILootCoordination.h"
+#include "Interfaces/ILootDistribution.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -92,6 +93,7 @@
 #include "Social/LootAnalysis.h"
 #include "Social/GuildBankManager.h"
 #include "Social/LootCoordination.h"
+#include "Social/LootDistribution.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -456,6 +458,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ILootCoordination");
+
+        // Register LootDistribution (Phase 23)
+        container.RegisterInstance<ILootDistribution>(
+            std::shared_ptr<ILootDistribution>(
+                Playerbot::LootDistribution::instance(),
+                [](ILootDistribution*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ILootDistribution");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

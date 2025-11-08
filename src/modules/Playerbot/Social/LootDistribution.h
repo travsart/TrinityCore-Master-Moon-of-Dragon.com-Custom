@@ -15,6 +15,7 @@
 #include "Group.h"
 #include "Item.h"
 #include "Loot.h"
+#include "../Core/DI/Interfaces/ILootDistribution.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -171,34 +172,34 @@ struct PlayerLootProfile
     PlayerLootProfile& operator=(PlayerLootProfile&& other) = default;
 };
 
-class TC_GAME_API LootDistribution
+class TC_GAME_API LootDistribution final : public ILootDistribution
 {
 public:
     static LootDistribution* instance();
 
     // Core loot distribution functionality
-    void HandleGroupLoot(Group* group, Loot* loot);
-    void InitiateLootRoll(Group* group, const LootItem& item);
-    void ProcessPlayerLootDecision(Player* player, uint32 rollId, LootRollType rollType);
-    void CompleteLootRoll(uint32 rollId);
+    void HandleGroupLoot(Group* group, Loot* loot) override;
+    void InitiateLootRoll(Group* group, const LootItem& item) override;
+    void ProcessPlayerLootDecision(Player* player, uint32 rollId, LootRollType rollType) override;
+    void CompleteLootRoll(uint32 rollId) override;
 
     // Loot analysis and decision making
-    LootRollType DetermineLootDecision(Player* player, const LootItem& item);
-    LootPriority AnalyzeItemPriority(Player* player, const LootItem& item);
-    bool IsItemUpgrade(Player* player, const LootItem& item);
-    bool IsClassAppropriate(Player* player, const LootItem& item);
+    LootRollType DetermineLootDecision(Player* player, const LootItem& item) override;
+    LootPriority AnalyzeItemPriority(Player* player, const LootItem& item) override;
+    bool IsItemUpgrade(Player* player, const LootItem& item) override;
+    bool IsClassAppropriate(Player* player, const LootItem& item) override;
 
     // Need/Greed/Pass logic implementation
-    bool CanPlayerNeedItem(Player* player, const LootItem& item);
-    bool ShouldPlayerGreedItem(Player* player, const LootItem& item);
+    bool CanPlayerNeedItem(Player* player, const LootItem& item) override;
+    bool ShouldPlayerGreedItem(Player* player, const LootItem& item) override;
     bool ShouldPlayerPassItem(Player* player, const LootItem& item);
     bool CanPlayerDisenchantItem(Player* player, const LootItem& item);
 
     // Roll processing and winner determination
-    void ProcessLootRolls(uint32 rollId);
-    uint32 DetermineRollWinner(const LootRoll& roll);
-    void DistributeLootToWinner(uint32 rollId, uint32 winnerGuid);
-    void HandleLootRollTimeout(uint32 rollId);
+    void ProcessLootRolls(uint32 rollId) override;
+    uint32 DetermineRollWinner(const LootRoll& roll) override;
+    void DistributeLootToWinner(uint32 rollId, uint32 winnerGuid) override;
+    void HandleLootRollTimeout(uint32 rollId) override;
 
     // Loot distribution strategies
     void ExecuteNeedBeforeGreedStrategy(Player* player, const LootItem& item, LootRollType& decision);
@@ -208,8 +209,8 @@ public:
     void ExecuteMainSpecPriorityStrategy(Player* player, const LootItem& item, LootRollType& decision);
 
     // Group loot settings and policies
-    void SetGroupLootMethod(Group* group, LootMethod method);
-    void SetGroupLootThreshold(Group* group, ItemQualities threshold);
+    void SetGroupLootMethod(Group* group, LootMethod method) override;
+    void SetGroupLootThreshold(Group* group, ItemQualities threshold) override;
     void SetMasterLooter(Group* group, Player* masterLooter);
     void HandleMasterLootDistribution(Group* group, const LootItem& item, Player* recipient);
 
@@ -227,7 +228,7 @@ public:
         LootFairnessTracker() : totalItemsDistributed(0), totalValueDistributed(0), fairnessScore(1.0f) {}
     };
 
-    LootFairnessTracker GetGroupLootFairness(uint32 groupId);
+    LootFairnessTracker GetGroupLootFairness(uint32 groupId) override;
     void UpdateLootFairness(uint32 groupId, uint32 winnerGuid, const LootItem& item);
     float CalculateFairnessScore(const LootFairnessTracker& tracker);
 
@@ -283,9 +284,9 @@ public:
         }
     };
 
-    LootMetrics GetPlayerLootMetrics(uint32 playerGuid);
-    LootMetrics GetGroupLootMetrics(uint32 groupId);
-    LootMetrics GetGlobalLootMetrics();
+    LootMetrics GetPlayerLootMetrics(uint32 playerGuid) override;
+    LootMetrics GetGroupLootMetrics(uint32 groupId) override;
+    LootMetrics GetGlobalLootMetrics() override;
 
     // Advanced loot features
     void HandleReservedItems(Group* group, const std::vector<uint32>& reservedItems, Player* reserver);
@@ -300,21 +301,21 @@ public:
     void AnalyzeGroupLootComposition(Group* group);
 
     // Player preferences and configuration
-    void SetPlayerLootStrategy(uint32 playerGuid, LootDecisionStrategy strategy);
-    LootDecisionStrategy GetPlayerLootStrategy(uint32 playerGuid);
+    void SetPlayerLootStrategy(uint32 playerGuid, LootDecisionStrategy strategy) override;
+    LootDecisionStrategy GetPlayerLootStrategy(uint32 playerGuid) override;
     void SetPlayerLootPreferences(uint32 playerGuid, const PlayerLootProfile& profile);
     PlayerLootProfile GetPlayerLootProfile(uint32 playerGuid);
 
     // Error handling and edge cases
-    void HandleLootConflicts(uint32 rollId);
+    void HandleLootConflicts(uint32 rollId) override;
     void HandleInvalidLootRoll(uint32 rollId, uint32 playerGuid);
     void HandlePlayerDisconnectDuringRoll(uint32 rollId, uint32 playerGuid);
     void RecoverFromLootSystemError(uint32 rollId);
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void ProcessActiveLootRolls();
-    void CleanupExpiredRolls();
+    void Update(uint32 diff) override;
+    void ProcessActiveLootRolls() override;
+    void CleanupExpiredRolls() override;
     void ValidateLootStates();
 
 private:
