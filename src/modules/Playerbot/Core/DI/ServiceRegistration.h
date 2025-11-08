@@ -97,6 +97,7 @@
 #include "Interfaces/IArenaAI.h"
 #include "Interfaces/IPvPCombatAI.h"
 #include "Interfaces/IPerformanceBenchmark.h"
+#include "Interfaces/ISystemValidation.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -176,6 +177,7 @@
 #include "PvP/ArenaAI.h"
 #include "PvP/PvPCombatAI.h"
 #include "Tests/PerformanceBenchmark.h"
+#include "Tests/SystemValidation.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
@@ -918,6 +920,15 @@ inline void RegisterPlayerbotServices()
                 Playerbot::PerformanceBenchmark::instance(),
                 [](Playerbot::IPerformanceBenchmark*) {} // No-op deleter (singleton)
             )
+
+        // Register SystemValidation (Phase 66)
+        container.RegisterInstance<Playerbot::ISystemValidation>(
+            std::shared_ptr<Playerbot::ISystemValidation>(
+                Playerbot::SystemValidation::instance(),
+                [](Playerbot::ISystemValidation*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered ISystemValidation");
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IPerformanceBenchmark");
         );
