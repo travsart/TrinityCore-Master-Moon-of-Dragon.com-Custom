@@ -80,6 +80,7 @@
 #include "Interfaces/ITriggerFactory.h"
 #include "Interfaces/IActionFactory.h"
 #include "Interfaces/IStrategyFactory.h"
+#include "Interfaces/IBotWorldSessionMgr.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -143,6 +144,7 @@
 #include "AI/Triggers/Trigger.h"
 #include "AI/Actions/Action.h"
 #include "AI/Strategy/Strategy.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -742,6 +744,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IStrategyFactory");
+
+        // Register BotWorldSessionMgr (Phase 49)
+        container.RegisterInstance<IBotWorldSessionMgr>(
+            std::shared_ptr<IBotWorldSessionMgr>(
+                Playerbot::BotWorldSessionMgr::instance(),
+                [](IBotWorldSessionMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotWorldSessionMgr");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

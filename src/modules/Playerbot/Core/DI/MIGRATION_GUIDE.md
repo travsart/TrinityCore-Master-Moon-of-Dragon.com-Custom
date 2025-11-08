@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 5.7
+**Document Version:** 5.8
 **Last Updated:** 2025-11-08
-**Status:** Phase 48 Complete (63 of 168 singletons migrated)
+**Status:** Phase 49 Complete (64 of 168 singletons migrated)
 
 ---
 
@@ -85,9 +85,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **TriggerFactory** | ITriggerFactory | ✅ Phase 46 | Dual-access (singleton + DI) |
 | **ActionFactory** | IActionFactory | ✅ Phase 47 | Dual-access (singleton + DI) |
 | **StrategyFactory** | IStrategyFactory | ✅ Phase 48 | Dual-access (singleton + DI) |
-| *+105 more* | *TBD* | ⏳ Pending | Planned Phases 49-N |
+| **BotWorldSessionMgr** | IBotWorldSessionMgr | ✅ Phase 49 | Dual-access (singleton + DI) |
+| *+104 more* | *TBD* | ⏳ Pending | Planned Phases 50-N |
 
-**Total Progress:** 63/168 singletons (37.5%)
+**Total Progress:** 64/168 singletons (38.1%)
 
 ---
 
