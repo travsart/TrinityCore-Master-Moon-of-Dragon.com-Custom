@@ -83,6 +83,7 @@
 #include "Interfaces/IBotWorldSessionMgr.h"
 #include "Interfaces/IBotPriorityManager.h"
 #include "Interfaces/IBotResourcePool.h"
+#include "Interfaces/IBotPerformanceMonitor.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -149,6 +150,7 @@
 #include "Session/BotWorldSessionMgr.h"
 #include "Session/BotPriorityManager.h"
 #include "Lifecycle/BotResourcePool.h"
+#include "Session/BotPerformanceMonitor.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -775,6 +777,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotResourcePool");
+
+        // Register BotPerformanceMonitor (Phase 52)
+        container.RegisterInstance<IBotPerformanceMonitor>(
+            std::shared_ptr<IBotPerformanceMonitor>(
+                Playerbot::BotPerformanceMonitor::instance(),
+                [](IBotPerformanceMonitor*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotPerformanceMonitor");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

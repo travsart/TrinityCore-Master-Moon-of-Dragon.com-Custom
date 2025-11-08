@@ -8,6 +8,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "BotPriorityManager.h"
+#include "Core/DI/Interfaces/IBotPerformanceMonitor.h"
 #include <array>
 #include <vector>
 #include <mutex>
@@ -104,7 +105,7 @@ private:
  * - Log performance warnings and alerts
  * - Provide performance statistics
  */
-class TC_GAME_API BotPerformanceMonitor final
+class TC_GAME_API BotPerformanceMonitor final : public IBotPerformanceMonitor
 {
 public:
     static BotPerformanceMonitor* instance()
@@ -114,44 +115,44 @@ public:
     }
 
     // Initialization
-    bool Initialize();
-    void Shutdown();
+    bool Initialize() override;
+    void Shutdown() override;
 
     // Tick monitoring
-    void BeginTick(uint32 currentTime);
-    void EndTick(uint32 currentTime, uint32 botsUpdated, uint32 botsSkipped);
+    void BeginTick(uint32 currentTime) override;
+    void EndTick(uint32 currentTime, uint32 botsUpdated, uint32 botsSkipped) override;
 
     // Performance metrics
-    void RecordBotUpdateTime(uint32 microseconds);
-    SystemPerformanceMetrics const& GetMetrics() const { return _metrics; }
+    void RecordBotUpdateTime(uint32 microseconds) override;
+    SystemPerformanceMetrics const& GetMetrics() const override { return _metrics; }
 
     // Auto-scaling
-    void CheckPerformanceThresholds();
-    void TriggerLoadShedding(uint32 targetReduction);
-    void TriggerLoadRecovery(uint32 targetIncrease);
+    void CheckPerformanceThresholds() override;
+    void TriggerLoadShedding(uint32 targetReduction) override;
+    void TriggerLoadRecovery(uint32 targetIncrease) override;
 
     // Degradation detection
-    bool IsPerformanceDegraded() const;
-    bool IsSystemOverloaded() const { return _metrics.isOverloaded; }
-    float GetCurrentLoad() const { return _metrics.cpuLoadPercent; }
+    bool IsPerformanceDegraded() const override;
+    bool IsSystemOverloaded() const override { return _metrics.isOverloaded; }
+    float GetCurrentLoad() const override { return _metrics.cpuLoadPercent; }
 
     // Configuration
-    void SetTargetTickTime(uint32 microseconds) { _targetTickTimeMicros = microseconds; }
-    void SetMaxTickTime(uint32 microseconds) { _maxTickTimeMicros = microseconds; }
-    void SetLoadShedThreshold(uint32 microseconds) { _loadShedThresholdMicros = microseconds; }
-    void SetAutoScalingEnabled(bool enabled) { _autoScalingEnabled.store(enabled); }
+    void SetTargetTickTime(uint32 microseconds) override { _targetTickTimeMicros = microseconds; }
+    void SetMaxTickTime(uint32 microseconds) override { _maxTickTimeMicros = microseconds; }
+    void SetLoadShedThreshold(uint32 microseconds) override { _loadShedThresholdMicros = microseconds; }
+    void SetAutoScalingEnabled(bool enabled) override { _autoScalingEnabled.store(enabled); }
 
-    uint32 GetTargetTickTime() const { return _targetTickTimeMicros; }
-    uint32 GetMaxTickTime() const { return _maxTickTimeMicros; }
-    bool IsAutoScalingEnabled() const { return _autoScalingEnabled.load(); }
+    uint32 GetTargetTickTime() const override { return _targetTickTimeMicros; }
+    uint32 GetMaxTickTime() const override { return _maxTickTimeMicros; }
+    bool IsAutoScalingEnabled() const override { return _autoScalingEnabled.load(); }
 
     // Histogram access
-    UpdateTimeHistogram const& GetHistogram() const { return _histogram; }
+    UpdateTimeHistogram const& GetHistogram() const override { return _histogram; }
 
     // Statistics and logging
-    void LogPerformanceReport() const;
-    void LogDetailedStatistics() const;
-    void ResetStatistics();
+    void LogPerformanceReport() const override;
+    void LogDetailedStatistics() const override;
+    void ResetStatistics() override;
 
 private:
     BotPerformanceMonitor() = default;
