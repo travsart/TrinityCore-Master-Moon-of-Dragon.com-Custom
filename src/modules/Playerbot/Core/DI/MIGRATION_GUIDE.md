@@ -2,7 +2,7 @@
 
 **Document Version:** 5.0
 **Last Updated:** 2025-11-08
-**Status:** Phase 41 Complete (56 of 168 singletons migrated)
+**Status:** Phase 41 Complete (57 of 168 singletons migrated)
 
 ---
 
@@ -80,7 +80,7 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **DungeonBehavior** | IDungeonBehavior | ✅ Phase 41 | Dual-access (singleton + DI) |
 | *+112 more* | *TBD* | ⏳ Pending | Planned Phases 42-N |
 
-**Total Progress:** 56/168 singletons (33.3%)
+**Total Progress:** 56/168 singletons (33.9%)
 
 ---
 

@@ -74,6 +74,7 @@
 #include "Interfaces/ILFGBotSelector.h"
 #include "Interfaces/IGuildIntegration.h"
 #include "Interfaces/IDungeonBehavior.h"
+#include "Interfaces/IInstanceCoordination.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -130,6 +131,7 @@
 #include "LFG/LFGBotSelector.h"
 #include "Social/GuildIntegration.h"
 #include "Dungeon/DungeonBehavior.h"
+#include "Dungeon/InstanceCoordination.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -665,6 +667,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDungeonBehavior");
+
+        // Register InstanceCoordination (Phase 42)
+        container.RegisterInstance<IInstanceCoordination>(
+            std::shared_ptr<IInstanceCoordination>(
+                Playerbot::InstanceCoordination::instance(),
+                [](IInstanceCoordination*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IInstanceCoordination");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
