@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
 #include "Lifecycle/BotPopulationManager.h"
@@ -187,16 +188,16 @@ private:
 
     // LOCK-FREE DATA STRUCTURES for 5000 bot scalability
     // Zone population tracking - lock-free atomic operations
-    mutable std::recursive_mutex _zoneMutex; // TODO: Replace with lock-free hash map
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _zoneMutex; // TODO: Replace with lock-free hash map
     std::unordered_map<uint32, ZonePopulation> _zonePopulations; // zoneId -> population data
 
     // Bot tracking - lock-free concurrent structures
-    mutable std::recursive_mutex _botMutex; // TODO: Replace with concurrent hash map
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _botMutex; // TODO: Replace with concurrent hash map
     std::unordered_map<ObjectGuid, uint32> _activeBots; // guid -> zoneId
     std::unordered_map<uint32, std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
     // LOCK-FREE async spawning queue for high throughput
-    mutable std::recursive_mutex _spawnQueueMutex; // TODO: Replace with lock-free queue
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _spawnQueueMutex; // TODO: Replace with lock-free queue
     std::queue<SpawnRequest> _spawnQueue;
     std::atomic<bool> _processingQueue{false};
 

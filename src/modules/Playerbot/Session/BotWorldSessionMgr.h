@@ -6,6 +6,7 @@
 #define BOT_WORLD_SESSION_MGR_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "QueryHolder.h"
 #include "DatabaseEnvFwd.h"
@@ -92,7 +93,7 @@ private:
     uint32 _maxSpawnsPerTick{10};  // From Playerbot.LevelManager.MaxBotsPerUpdate config
 
     // Thread safety
-    mutable std::recursive_mutex _sessionsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _sessionsMutex;
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _enabled{false};
 

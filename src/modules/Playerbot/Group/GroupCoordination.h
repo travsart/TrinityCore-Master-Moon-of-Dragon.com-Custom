@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "Unit.h"
 #include <vector>
@@ -199,18 +200,18 @@ private:
     // Target management
     std::unordered_map<ObjectGuid, CoordinationTarget> _targets;
     ObjectGuid _primaryTarget;
-    mutable std::recursive_mutex _targetMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _targetMutex;
 
     // Formation data
     std::vector<FormationSlot> _formation;
     Position _formationCenter;
-    mutable std::recursive_mutex _formationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _formationMutex;
 
     // Movement data
     std::queue<MovementWaypoint> _movementPath;
     Position _currentDestination;
     bool _maintainFormationDuringMove;
-    mutable std::recursive_mutex _movementMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _movementMutex;
 
     // Combat state
     std::atomic<bool> _inCombat{false};
@@ -232,7 +233,7 @@ private:
     };
 
     std::priority_queue<CoordinationCommandData> _commandQueue;
-    mutable std::recursive_mutex _commandMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _commandMutex;
 
     // Cooldown coordination
     struct CooldownCoordination
@@ -240,7 +241,7 @@ private:
         std::unordered_map<uint32, uint32> spellCooldowns; // spellId -> expiry time
         std::unordered_set<uint32> reservedCooldowns;
         std::queue<uint32> cooldownQueue;
-        mutable std::recursive_mutex cooldownMutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> cooldownMutex;
 
         bool IsSpellOnCooldown(uint32 spellId) const {
             std::lock_guard<std::recursive_mutex> lock(cooldownMutex);

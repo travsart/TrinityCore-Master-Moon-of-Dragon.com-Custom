@@ -42,6 +42,7 @@
 #define PLAYERBOT_BOT_PACKET_RELAY_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <unordered_set>
 #include <unordered_map>
@@ -358,7 +359,7 @@ private:
 
     // Relay opcode whitelist (thread-safe for reads after initialization)
     static inline std::unordered_set<uint32> _relayOpcodes;
-    static inline std::recursive_mutex _opcodesMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _opcodesMutex;
 
     // Statistics
     static inline RelayStatistics _statistics;
@@ -375,7 +376,7 @@ private:
         uint32 timestamp; // getMSTime() when queued
     };
     static inline std::queue<DeferredPacket> _deferredPackets;
-    static inline std::recursive_mutex _deferredMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredMutex;
 
     /**
      * @brief Process deferred packets that were queued before initialization

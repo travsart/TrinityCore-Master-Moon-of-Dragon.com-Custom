@@ -19,6 +19,7 @@
 #define _LFGBOTMANAGER_H
 
 #include "Common.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "LFG.h"
 #include <unordered_map>
@@ -292,7 +293,7 @@ private:
     // Member variables
 
     /// Mutex for thread-safe access to all data structures
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _mutex;
 
     /// Map of bot GUID -> queue information
     std::unordered_map<ObjectGuid, BotQueueInfo> _queuedBots;

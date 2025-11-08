@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include <unordered_map>
 #include <vector>
@@ -127,12 +128,12 @@ private:
     // Thread-safe cooldown storage
     // DEADLOCK FIX: Changed to recursive_mutex to prevent "resource deadlock would occur"
     // Allows same thread to lock multiple times during nested cooldown checks
-    mutable std::recursive_mutex _cooldownMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cooldownMutex;
     std::unordered_map<uint32, CooldownInfo> _cooldowns;
 
     // Category cooldowns (spell schools, etc.)
     // DEADLOCK FIX: Changed to recursive_mutex
-    mutable std::recursive_mutex _categoryMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _categoryMutex;
     std::unordered_map<uint32, uint32> _spellCategories;     // spellId -> categoryId
     std::unordered_map<uint32, uint32> _categoryCooldowns;   // categoryId -> remainingMs
 

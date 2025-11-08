@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "BotThreatManager.h"
 #include "ThreatAbilities.h"
@@ -328,7 +329,7 @@ private:
     std::chrono::steady_clock::time_point _lastEmergencyCheck;
 
     // Thread safety
-    mutable std::recursive_mutex _coordinatorMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _coordinatorMutex;
 
     // Constants
     static constexpr float THREAT_STABILITY_THRESHOLD = 0.8f;   // 80% stability = stable

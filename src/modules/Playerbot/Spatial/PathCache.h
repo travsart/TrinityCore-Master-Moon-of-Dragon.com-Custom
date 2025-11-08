@@ -11,6 +11,7 @@
 #define PLAYERBOT_PATH_CACHE_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "Map.h"
 #include "PathGenerator.h"
@@ -267,7 +268,7 @@ private:
     Map* _map;  // Map pointer (not owned, must remain valid)
     std::unordered_map<uint64_t, PathResult> _cache;  // Path cache (hash key → result)
     std::deque<uint64_t> _lruQueue;  // LRU access order (front = oldest, back = newest)
-    mutable std::shared_mutex _mutex;  // Allows concurrent reads, exclusive writes
+    mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::SPATIAL_GRID> _mutex;  // Allows concurrent reads, exclusive writes
     mutable Statistics _stats;  // Performance counters
 };
 

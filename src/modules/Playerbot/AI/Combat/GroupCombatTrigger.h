@@ -11,6 +11,7 @@
 #define PLAYERBOT_GROUP_COMBAT_TRIGGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Triggers/Trigger.h"
 #include "ObjectGuid.h"
 #include <chrono>
@@ -278,7 +279,7 @@ private:
 
     // Member variables
     mutable std::unordered_map<ObjectGuid, GroupCombatInfo> _combatCache; // Group combat state cache
-    mutable std::recursive_mutex _cacheMutex;                                       // Thread safety for cache
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cacheMutex;                                       // Thread safety for cache
 
     // Configuration
     uint32 _updateIntervalMs = 500;                    // Cache update interval (500ms default)

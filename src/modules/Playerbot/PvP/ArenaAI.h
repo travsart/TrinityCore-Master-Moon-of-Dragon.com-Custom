@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "Position.h"
@@ -461,7 +462,7 @@ private:
     std::unordered_map<uint32, ArenaMetrics> _playerMetrics;
     ArenaMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 ARENA_UPDATE_INTERVAL = 100;  // 100ms

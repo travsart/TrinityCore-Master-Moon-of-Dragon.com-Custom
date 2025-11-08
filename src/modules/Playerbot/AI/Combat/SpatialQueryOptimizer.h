@@ -8,6 +8,7 @@
 #define TRINITYCORE_SPATIAL_QUERY_OPTIMIZER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <atomic>
 #include <chrono>
 #include <array>
@@ -122,7 +123,7 @@ private:
     static constexpr float RANGE_EPSILON = 2.0f;     // Ranges within 2 yards are considered same
 
     std::vector<BatchedQuery> _pendingBatches;
-    std::mutex _batchMutex;
+    Playerbot::OrderedMutex<Playerbot::LockOrder::SPATIAL_GRID> _batchMutex;
 
     BatchedQuery* FindSimilarQuery(float x, float y, float z, float range, uint32 zoneId);
 };

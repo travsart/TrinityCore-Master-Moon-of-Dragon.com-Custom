@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Unit.h"
 #include "ObjectGuid.h"
@@ -256,7 +257,7 @@ private:
     CombatMetrics _metrics;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Performance optimization
     static constexpr uint32 MIN_UPDATE_INTERVAL = 50;  // 50ms minimum between updates

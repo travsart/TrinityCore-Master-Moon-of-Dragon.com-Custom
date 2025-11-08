@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
 #include "Guild.h"
@@ -203,7 +204,7 @@ private:
     std::unordered_map<SystemComponent, ValidationResult> _lastResults;
     std::unordered_map<std::string, std::function<bool()>> _validationTriggers;
     std::unordered_map<std::string, std::function<bool(SystemComponent)>> _customRules;
-    mutable std::recursive_mutex _validationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _validationMutex;
 
     // Continuous validation
     std::atomic<bool> _continuousValidationEnabled{false};

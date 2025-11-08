@@ -19,6 +19,7 @@
 #define PLAYERBOT_EVENTDISPATCHER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "BotEventTypes.h"
 #include "Core/Managers/IManagerBase.h"
 #include <unordered_map>
@@ -308,7 +309,7 @@ private:
      *
      * Used by Subscribe/Unsubscribe operations to ensure thread safety.
      */
-    mutable std::recursive_mutex _subscriptionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriptionMutex;
 
     /**
      * @brief Thread-safe event queue using std::deque
@@ -317,7 +318,7 @@ private:
      * Sufficient for single-threaded world updates.
      */
     std::deque<BotEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     /**
      * @brief Enable/disable flag

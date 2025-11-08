@@ -9,6 +9,7 @@
 #define MODULE_PLAYERBOT_INTERRUPT_COORDINATOR_FIXED_H
 
 #include "Common.h"
+#include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include <memory>
@@ -199,7 +200,7 @@ private:
     std::atomic<bool> _active{true};
 
     // SINGLE MUTEX DESIGN - No deadlock possible
-    mutable std::recursive_mutex _stateMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _stateMutex;
     CoordinatorState _state;
 
     // Lock-free structures for hot paths

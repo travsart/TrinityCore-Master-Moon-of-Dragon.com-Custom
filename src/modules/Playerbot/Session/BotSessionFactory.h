@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
 #include <memory>
@@ -118,7 +119,7 @@ private:
         uint32 usageCount = 0;
     };
 
-    mutable std::recursive_mutex _templateMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _templateMutex;
     std::unordered_map<std::string, SessionTemplate> _sessionTemplates;
 
     void LoadDefaultTemplates();
@@ -133,7 +134,7 @@ private:
         bool isValid = false;
     };
 
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _cacheMutex;
     mutable ConfigurationCache _configCache;
 
     void UpdateConfigurationCache();

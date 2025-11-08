@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "QuestDef.h"
 #include "QuestPickup.h"
@@ -212,7 +213,7 @@ private:
 
     // Validation cache
     std::unordered_map<uint64, ValidationResult> _validationCache; // (questId << 32 | botGuid) -> result
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _cacheMutex;
 
     // Configuration
     std::atomic<bool> _strictValidation{true};

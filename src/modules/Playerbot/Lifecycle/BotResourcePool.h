@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <queue>
@@ -106,7 +107,7 @@ private:
     bool IsSessionReusable(std::shared_ptr<BotSession> const& session);
 
     // Pool data
-    mutable std::recursive_mutex _poolMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _poolMutex;
     std::queue<std::shared_ptr<BotSession>> _sessionPool;
     std::unordered_set<std::shared_ptr<BotSession>> _activeSessions;
 
@@ -124,7 +125,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotResourcePool> _instance;
-    inline static std::recursive_mutex _instanceMutex;
+    inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable
     BotResourcePool(BotResourcePool const&) = delete;

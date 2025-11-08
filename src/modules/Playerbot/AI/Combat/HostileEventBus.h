@@ -9,6 +9,7 @@
 #define TRINITYCORE_HOSTILE_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <atomic>
 #include <functional>
@@ -93,7 +94,7 @@ private:
     folly::MPMCQueue<HostileEvent> _eventQueue;
 
     // Zone subscriptions (read-heavy, write-rare)
-    mutable std::shared_mutex _subscriberMutex;
+    mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BOT_AI_STATE> _subscriberMutex;
     std::unordered_map<uint32, std::vector<EventHandler>> _subscribers;
 
     // Statistics

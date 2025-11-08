@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "SharedDefines.h"
@@ -470,7 +471,7 @@ private:
     //   - Thread 2: UpdateInterruptSystem() -> ProcessInterruptOpportunities() (HOLDS LOCK)
     // This creates DATA RACE when std::shared_mutex throws "resource deadlock would occur"
     // Solution: Use std::recursive_mutex to allow same thread to acquire lock multiple times
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants for WoW 11.2
     static constexpr uint32 DEFAULT_REACTION_TIME = 250;        // 250ms reaction time

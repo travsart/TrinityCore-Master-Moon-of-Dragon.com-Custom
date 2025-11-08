@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "AuctionHouse.h"
 #include "Player.h"
 #include <unordered_map>
@@ -229,7 +230,7 @@ private:
     std::unordered_map<uint32, std::vector<MarketSnapshot>> _priceHistory; // itemId -> snapshots
     std::unordered_map<uint32, MarketMetrics> _itemMetrics; // itemId -> metrics
     std::unordered_map<MarketSegment, std::vector<uint32>> _segmentItems; // segment -> itemIds
-    mutable std::recursive_mutex _marketMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _marketMutex;
 
     // Analysis models and algorithms
     struct PredictionModel

@@ -30,6 +30,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
@@ -367,7 +368,7 @@ private:
     std::unordered_map<uint32, FarmingStatistics> _playerStatistics;
     FarmingStatistics _globalStatistics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
 
     // Session ID generator
     std::atomic<uint32> _nextSessionId{1};

@@ -19,6 +19,7 @@
 #define _PLAYERBOT_MONITOR_H
 
 #include "PerformanceMetrics.h"
+#include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include "ObjectGuid.h"
 #include <map>
@@ -291,7 +292,7 @@ namespace Playerbot
         double CalculateNetworkThroughput() const;
 
         // Thread safety
-        mutable std::recursive_mutex _mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
         // Initialization state
         bool _initialized;

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Unit.h"
 #include <queue>
 #include <mutex>
@@ -105,7 +106,7 @@ public:
 
 private:
     mutable std::priority_queue<PrioritizedAction> _queue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _queueMutex;
     mutable std::atomic<size_t> _size{0};
 
     // Internal helper to validate action
@@ -163,7 +164,7 @@ private:
     ~ActionPool() = default;
 
     std::vector<std::unique_ptr<PrioritizedAction>> _pool;
-    std::recursive_mutex _poolMutex;
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _poolMutex;
     static constexpr size_t MAX_POOL_SIZE = 1000;
 };
 

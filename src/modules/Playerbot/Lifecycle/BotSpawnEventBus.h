@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
 #include <functional>
@@ -203,7 +204,7 @@ private:
     };
 
     std::queue<QueuedEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _queueMutex;
 
     // Event handlers
     struct EventSubscription
@@ -215,7 +216,7 @@ private:
     };
 
     std::vector<EventSubscription> _subscriptions;
-    mutable std::recursive_mutex _subscriptionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _subscriptionMutex;
     std::atomic<HandlerId> _nextHandlerId{1};
 
     // Event processing
@@ -244,7 +245,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotSpawnEventBus> _instance;
-    inline static std::recursive_mutex _instanceMutex;
+    inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable
     BotSpawnEventBus(BotSpawnEventBus const&) = delete;

@@ -6,6 +6,7 @@
 #define BOT_LIFECYCLE_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <unordered_map>
@@ -231,11 +232,11 @@ private:
     // Activity tracking
     BotActivity _currentActivity;
     std::queue<BotActivity> _activityQueue;
-    mutable std::recursive_mutex _activityMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _activityMutex;
 
     // Performance metrics
     BotPerformanceMetrics _metrics;
-    mutable std::recursive_mutex _metricsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _metricsMutex;
 
     // Idle management
     uint32 _idleTimer;
@@ -350,20 +351,20 @@ private:
 
     // Bot storage
     std::unordered_map<ObjectGuid, std::shared_ptr<BotLifecycle>> _botLifecycles;
-    mutable std::recursive_mutex _lifecycleMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _lifecycleMutex;
 
     // Configuration
     uint32 _maxConcurrentLogins = 10;
     uint32 _updateInterval = 100; // milliseconds
 
     // Statistics tracking
-    mutable std::recursive_mutex _statsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _statsMutex;
     std::chrono::steady_clock::time_point _lastStatsUpdate;
     static constexpr auto STATS_UPDATE_INTERVAL = std::chrono::seconds(1);
 
     // Event handlers
     std::vector<LifecycleEventHandler> _eventHandlers;
-    std::recursive_mutex _eventMutex;
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _eventMutex;
 
     // Broadcast state change event
     void BroadcastStateChange(ObjectGuid botGuid, BotLifecycleState oldState, BotLifecycleState newState);

@@ -11,6 +11,7 @@
 #define PLAYERBOT_COMBAT_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -231,11 +232,11 @@ private:
 
 private:
     std::priority_queue<CombatEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TARGET_SELECTOR> _queueMutex;
 
     std::unordered_map<CombatEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers;
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TARGET_SELECTOR> _subscriberMutex;
 
     std::atomic<uint32_t> _maxQueueSize{10000};
     std::atomic<uint32_t> _eventTTLMs{5000};  // Combat events expire faster (5s vs 30s)

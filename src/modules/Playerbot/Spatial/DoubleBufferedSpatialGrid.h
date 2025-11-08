@@ -11,6 +11,7 @@
 #define PLAYERBOT_DOUBLE_BUFFERED_SPATIAL_GRID_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <array>
@@ -577,7 +578,7 @@ private:
     mutable std::atomic<uint32> _readBufferIndex{0};
 
     mutable std::chrono::steady_clock::time_point _lastUpdate;
-    mutable std::mutex _updateMutex;  // Protects Update() to ensure only one thread updates at a time
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SPATIAL_GRID> _updateMutex;  // Protects Update() to ensure only one thread updates at a time
 
     // Statistics (atomic for thread-safe access)
     mutable std::atomic<uint64_t> _totalQueries{0};

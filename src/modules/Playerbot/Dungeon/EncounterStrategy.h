@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "DungeonBehavior.h"
 #include "Player.h"
 #include "Group.h"
@@ -233,7 +234,7 @@ private:
     std::unordered_map<uint32, HealerStrategy> _healerStrategies;
     std::unordered_map<uint32, DpsStrategy> _dpsStrategies;
     std::unordered_map<uint32, StrategyMetrics> _encounterMetrics;
-    mutable std::recursive_mutex _strategyMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _strategyMutex;
 
     // Encounter mechanics database
     struct EncounterMechanic

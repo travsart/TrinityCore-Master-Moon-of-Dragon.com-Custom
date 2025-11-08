@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <chrono>
 #include <atomic>
 #include <unordered_map>
@@ -168,16 +169,16 @@ private:
         std::string context;
     };
 
-    mutable std::recursive_mutex _operationsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _operationsMutex;
     std::unordered_map<uint32_t, std::unordered_map<MLOperationType, ActiveOperation>> _activeOperations;
 
     // Performance samples
-    mutable std::recursive_mutex _samplesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _samplesMutex;
     std::deque<MLPerformanceSample> _recentSamples;
     static constexpr size_t MAX_SAMPLES = 10000;
 
     // Model statistics per bot
-    mutable std::recursive_mutex _statsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _statsMutex;
     std::unordered_map<uint32_t, ModelStatistics> _botStatistics;
 
     // Operation metrics
@@ -194,7 +195,7 @@ private:
     std::unordered_map<MLOperationType, OperationMetrics> _operationMetrics;
 
     // Memory tracking
-    mutable std::recursive_mutex _memoryMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _memoryMutex;
     std::unordered_map<uint32_t, std::unordered_map<MLOperationType, uint64_t>> _memoryUsage;
     std::atomic<uint64_t> _totalMLMemory{0};
 

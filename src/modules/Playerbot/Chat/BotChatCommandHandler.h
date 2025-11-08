@@ -32,6 +32,7 @@
 #define PLAYERBOT_BOT_CHAT_COMMAND_HANDLER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <string>
 #include <string_view>
@@ -461,9 +462,9 @@ private:
     static inline std::atomic<uint32> _maxConcurrentCommands{5};
     static inline std::atomic<bool> _debugLogging{false};
     static inline Statistics _statistics;
-    static inline std::recursive_mutex _commandsMutex;
-    static inline std::recursive_mutex _cooldownsMutex;
-    static inline std::recursive_mutex _llmMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _commandsMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _cooldownsMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _llmMutex;
 };
 
 } // namespace Playerbot

@@ -6,6 +6,7 @@
 #define BOT_SESSION_H
 
 #include "WorldSession.h"
+#include "Threading/LockHierarchy.h"
 #include "WorldSocket.h"
 #include "Define.h"
 #include "DatabaseEnv.h"
@@ -171,7 +172,7 @@ private:
     // Deferred packet queue (main thread processing)
     // Packets that require serialization with Map::Update() to prevent race conditions
     std::queue<std::unique_ptr<WorldPacket>> _deferredPackets;
-    mutable std::mutex _deferredPacketMutex; // Simple mutex (no recursion needed)
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredPacketMutex; // Simple mutex (no recursion needed)
 
     // Bot state
     std::atomic<bool> _active{true};

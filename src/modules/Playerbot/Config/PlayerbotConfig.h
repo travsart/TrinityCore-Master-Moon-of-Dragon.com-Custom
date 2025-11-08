@@ -23,6 +23,7 @@
 #endif
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Logging/ModuleLogManager.h"
 #include <map>
 #include <string>
@@ -218,7 +219,7 @@ private:
     std::string _configPath;
     std::string _lastError;
     bool _loaded = false;
-    mutable std::recursive_mutex _configMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::CONFIG_MANAGER> _configMutex;
 
     // Performance: Configuration caching for frequently accessed values
     struct ConfigCache {

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -300,7 +301,7 @@ private:
     float _epsilonMin;
 
     // Model storage
-    mutable std::recursive_mutex _modelsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _modelsMutex;
     std::unordered_map<uint32_t, std::unique_ptr<BotLearningModel>> _botModels;
 
     // Action registry

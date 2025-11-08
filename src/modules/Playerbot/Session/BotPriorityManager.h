@@ -6,6 +6,7 @@
 #define BOT_PRIORITY_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include <chrono>
@@ -154,7 +155,7 @@ private:
     bool IsInMediumPriorityActivity(Player* bot) const;
 
     // Metrics storage
-    mutable std::recursive_mutex _metricsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _metricsMutex;
     std::unordered_map<ObjectGuid, BotUpdateMetrics> _botMetrics;
 
     // Configuration (loaded from playerbots.conf)

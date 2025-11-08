@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "DungeonBehavior.h"
 #include "Player.h"
 #include "Group.h"
@@ -175,7 +176,7 @@ private:
     std::unordered_map<uint32, InstanceProgress> _instanceProgress; // groupId -> progress
     std::unordered_map<uint32, CoordinationMetrics> _groupMetrics;
     std::unordered_map<uint32, std::vector<Position>> _groupRoutes; // groupId -> waypoints
-    mutable std::recursive_mutex _coordinationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _coordinationMutex;
 
     // Formation and movement data
     struct FormationData
@@ -193,7 +194,7 @@ private:
     };
 
     std::unordered_map<uint32, FormationData> _groupFormations; // groupId -> formation
-    mutable std::recursive_mutex _formationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _formationMutex;
 
     // Communication and decision tracking
     struct CoordinationState

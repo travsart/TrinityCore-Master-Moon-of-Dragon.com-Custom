@@ -6,6 +6,7 @@
 #define BOT_PERFORMANCE_MONITOR_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "BotPriorityManager.h"
 #include <array>
 #include <vector>
@@ -89,7 +90,7 @@ private:
 
     std::array<uint32, BUCKET_COUNT> _buckets;
     uint32 _totalCount{0};
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _mutex;
 };
 
 /**
@@ -174,7 +175,7 @@ private:
 
     // Current metrics
     SystemPerformanceMetrics _metrics;
-    mutable std::recursive_mutex _metricsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _metricsMutex;
 
     // Histogram
     UpdateTimeHistogram _histogram;

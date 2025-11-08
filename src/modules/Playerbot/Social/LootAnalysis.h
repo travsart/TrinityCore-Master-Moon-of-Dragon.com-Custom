@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "LootDistribution.h"
 #include "Player.h"
 #include "Item.h"
@@ -171,7 +172,7 @@ private:
     // Analysis cache
     std::unordered_map<uint64, ItemAnalysisResult> _analysisCache; // (playerGuid << 32 | itemId) -> result
     std::unordered_map<uint32, std::unordered_map<uint32, float>> _statWeightCache; // playerGuid -> statType -> weight
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _cacheMutex;
 
     // Stat weights database
     std::unordered_map<uint8, std::unordered_map<uint8, StatWeights>> _classSpecStatWeights; // class -> spec -> weights

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Guild.h"
 #include "Group.h"
@@ -265,7 +266,7 @@ private:
     std::unordered_map<uint32, EventCoordinationProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, EventParticipation> _playerParticipation; // playerGuid -> participation
     std::atomic<uint32> _nextEventId{1};
-    mutable std::recursive_mutex _eventMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _eventMutex;
 
     // Guild event tracking
     std::unordered_map<uint32, std::vector<uint32>> _guildActiveEvents; // guildId -> eventIds

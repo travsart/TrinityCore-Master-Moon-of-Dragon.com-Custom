@@ -19,6 +19,7 @@
 #define _PLAYERBOT_CONFIG_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <map>
 #include <string>
 #include <mutex>
@@ -243,7 +244,7 @@ namespace Playerbot
         std::map<std::string, ValidationRule> _validationRules;
 
         // Thread safety
-        mutable std::recursive_mutex _mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::CONFIG_MANAGER> _mutex;
 
         // State
         std::string _lastError;

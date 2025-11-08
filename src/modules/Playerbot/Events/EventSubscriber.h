@@ -11,6 +11,7 @@
 #define PLAYERBOT_EVENT_SUBSCRIBER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <functional>
 #include <vector>
 #include <memory>
@@ -151,7 +152,7 @@ private:
 
     std::vector<Subscriber> _subscribers;
     uint32 _nextSubscriptionId = 0;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 };
 
 } // namespace Playerbot

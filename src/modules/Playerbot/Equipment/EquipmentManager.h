@@ -23,6 +23,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Item.h"
 #include "ItemTemplate.h"
@@ -352,7 +353,7 @@ private:
     // AutoEquipBestGear() calls GetAutomationProfile() while holding lock
     // std::recursive_mutex does NOT support recursive locking → "resource deadlock would occur"
     // std::recursive_mutex allows same thread to acquire lock multiple times
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // ============================================================================
     // STAT PRIORITY INITIALIZATION (ALL 13 CLASSES)

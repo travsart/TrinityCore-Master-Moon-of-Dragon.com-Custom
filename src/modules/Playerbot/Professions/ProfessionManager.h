@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
@@ -430,7 +431,7 @@ private:
     std::unordered_map<uint32, ProfessionMetrics> _playerMetrics;
     ProfessionMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 PROFESSION_UPDATE_INTERVAL = 5000;  // 5 seconds

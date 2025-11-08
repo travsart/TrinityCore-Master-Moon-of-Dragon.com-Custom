@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <memory>
 #include <vector>
 #include <queue>
@@ -210,7 +211,7 @@ private:
 
     // Pre-created account pool for instant availability
     std::queue<uint32> _accountPool;
-    mutable std::recursive_mutex _poolMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _poolMutex;
 
     // Email generation
     std::atomic<uint32> _emailCounter{1};
@@ -232,7 +233,7 @@ private:
     std::atomic<uint32> _targetPoolSize{50};        // Pool size target
 
     // Thread safety
-    mutable std::recursive_mutex _accountsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _accountsMutex;
 
     // Callback processing for thread-safe operations
     struct PendingCallback
@@ -241,7 +242,7 @@ private:
         std::chrono::steady_clock::time_point submitTime;
     };
     std::queue<PendingCallback> _pendingCallbacks;
-    mutable std::recursive_mutex _callbackMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _callbackMutex;
 };
 
 } // namespace Playerbot

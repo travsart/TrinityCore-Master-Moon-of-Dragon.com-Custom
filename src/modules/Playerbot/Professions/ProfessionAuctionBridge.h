@@ -30,6 +30,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
@@ -392,7 +393,7 @@ private:
     // Reference to existing auction house (set in Initialize)
     AuctionHouse* _auctionHouse;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 AUCTION_CHECK_INTERVAL = 600000;        // 10 minutes

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "QuestDef.h"
 #include "Creature.h"
@@ -264,12 +265,12 @@ private:
     std::unordered_map<uint32, TurnInStrategy> _botTurnInStrategies;
     std::unordered_map<uint32, RewardSelectionStrategy> _botRewardStrategies;
     std::unordered_map<uint32, TurnInMetrics> _botMetrics;
-    mutable std::recursive_mutex _turnInMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _turnInMutex;
 
     // Batch processing
     std::unordered_map<uint32, TurnInBatch> _scheduledBatches; // botGuid -> batch
     std::queue<std::pair<uint32, uint32>> _scheduledTurnIns; // <botGuid, questId>
-    mutable std::recursive_mutex _batchMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _batchMutex;
 
     // Quest giver database
     std::unordered_map<uint32, uint32> _questToTurnInNpc; // questId -> npcGuid
@@ -278,7 +279,7 @@ private:
 
     // Reward analysis cache
     std::unordered_map<uint32, std::vector<QuestRewardItem>> _questRewardCache; // questId -> rewards
-    mutable std::recursive_mutex _rewardMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _rewardMutex;
 
     // Performance tracking
     TurnInMetrics _globalMetrics;

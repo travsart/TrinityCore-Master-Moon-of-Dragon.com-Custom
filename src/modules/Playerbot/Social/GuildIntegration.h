@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Guild.h"
 #include "GuildMgr.h"
@@ -312,13 +313,13 @@ private:
     std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
     std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
     std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
-    mutable std::recursive_mutex _guildMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _guildMutex;
 
     // Chat intelligence system
     std::unordered_map<uint32, ChatIntelligence> _chatIntelligence; // playerGuid -> intelligence
     std::unordered_map<std::string, std::vector<std::string>> _globalResponseTemplates;
     std::vector<std::string> _conversationTopics;
-    mutable std::recursive_mutex _chatMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _chatMutex;
 
     // Guild activity tracking
     struct GuildActivityTracker

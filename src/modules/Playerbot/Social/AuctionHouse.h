@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "AuctionHouseMgr.h"
 #include "Item.h"
@@ -273,7 +274,7 @@ private:
     std::unordered_map<uint32, AuctionSession> _activeSessions; // sessionId -> session
     std::unordered_map<uint32, AuctionMetrics> _playerMetrics; // playerGuid -> metrics
     std::atomic<uint32> _nextSessionId{1};
-    mutable std::recursive_mutex _auctionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _auctionMutex;
 
     // Market data and analysis
     struct MarketData
@@ -294,7 +295,7 @@ private:
 
     std::unordered_map<uint32, MarketData> _marketData; // itemId -> market data
     std::unordered_map<uint32, std::vector<AuctionItem>> _auctionCache; // itemId -> cached auctions
-    mutable std::recursive_mutex _marketMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _marketMutex;
 
     // Competition tracking
     struct CompetitorProfile

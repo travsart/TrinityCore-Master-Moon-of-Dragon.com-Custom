@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 // Forward declaration - BotScheduler.h included in .cpp
 // Forward declaration - BotSpawner.h included in .cpp
 #include "DatabaseEnv.h"
@@ -146,7 +147,7 @@ private:
 
     // Event processing (TBB removed - using std:: equivalents)
     std::queue<LifecycleEventInfo> _eventQueue;
-    mutable std::recursive_mutex _eventQueueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _eventQueueMutex;
 
     // Thread management
     std::unique_ptr<std::thread> _workerThread;
@@ -171,7 +172,7 @@ private:
 
     std::vector<EventSubscription> _eventHandlers;
     std::atomic<uint32> _nextHandlerId{1};
-    mutable std::recursive_mutex _handlersMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _handlersMutex;
 
     // Internal processing
     void WorkerThreadProc();
@@ -210,7 +211,7 @@ private:
     // Correlation tracking
     std::string GenerateCorrelationId();
     std::unordered_map<std::string, std::vector<LifecycleEventInfo>> _correlatedEvents;
-    mutable std::recursive_mutex _correlationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _correlationMutex;
 };
 
 // Lifecycle event logging macros

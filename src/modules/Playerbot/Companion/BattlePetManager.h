@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
@@ -411,7 +412,7 @@ private:
     std::unordered_map<uint32, PetMetrics> _playerMetrics;
     PetMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds

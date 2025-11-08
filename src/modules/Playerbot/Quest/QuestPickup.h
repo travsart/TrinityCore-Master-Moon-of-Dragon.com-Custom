@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "Player.h"
 #include "QuestDef.h"
@@ -330,13 +331,13 @@ private:
     std::unordered_map<uint32, QuestAcceptanceStrategy> _botStrategies;
     std::unordered_map<uint32, QuestPickupFilter> _botFilters;
     std::unordered_map<uint32, QuestPickupMetrics> _botMetrics;
-    mutable std::recursive_mutex _pickupMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _pickupMutex;
 
     // Quest giver database
     std::unordered_map<uint32, QuestGiverInfo> _questGivers; // giverGuid -> info
     std::unordered_map<uint32, std::vector<uint32>> _questToGivers; // questId -> giverGuids
     std::unordered_map<uint32, std::vector<uint32>> _zoneQuestGivers; // zoneId -> giverGuids
-    mutable std::recursive_mutex _giverMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _giverMutex;
 
     // Quest chain data
     std::unordered_map<uint32, std::vector<uint32>> _questChains; // chainId -> questIds

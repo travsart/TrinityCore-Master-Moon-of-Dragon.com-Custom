@@ -15,6 +15,7 @@
 #include <mutex>
 #include <atomic>
 #include "Log.h"
+#include "Threading/LockHierarchy.h"
 
 namespace Playerbot
 {
@@ -219,7 +220,7 @@ private:
         _chunks.push_back(std::move(chunk));
     }
 
-    std::recursive_mutex _poolMutex;                              // Pool access synchronization
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _poolMutex;                              // Pool access synchronization
     std::vector<T*> _pool;                              // Available objects
     std::vector<std::unique_ptr<std::vector<T>>> _chunks; // Allocated memory chunks
 

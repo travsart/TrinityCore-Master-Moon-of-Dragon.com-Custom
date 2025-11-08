@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "LootDistribution.h"
 #include "LootAnalysis.h"
 #include "Player.h"
@@ -163,7 +164,7 @@ private:
     std::unordered_map<uint32, LootSession> _activeSessions; // sessionId -> session
     std::unordered_map<uint32, LootCoordinationMetrics> _groupMetrics; // groupId -> metrics
     std::atomic<uint32> _nextSessionId{1};
-    mutable std::recursive_mutex _coordinationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _coordinationMutex;
 
     // Group coordination state
     struct GroupCoordinationState

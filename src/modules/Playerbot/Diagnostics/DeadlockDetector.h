@@ -15,6 +15,7 @@
 #define DEADLOCK_DETECTOR_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <string>
 #include <vector>
@@ -144,12 +145,12 @@ private:
     std::string _dumpDirectory{"./deadlock_dumps"};
 
     // Thread tracking
-    mutable std::mutex _threadsMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _threadsMutex;
     std::unordered_map<std::thread::id, std::string> _threadNames;
 
     // Statistics
     std::atomic<uint32> _totalDeadlocks{0};
-    mutable std::mutex _reportsMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _reportsMutex;
     std::vector<DeadlockReport> _recentReports;
     constexpr static size_t MAX_RECENT_REPORTS = 50;
 };

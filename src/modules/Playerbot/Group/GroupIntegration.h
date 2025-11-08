@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Group.h"
+#include "Threading/LockHierarchy.h"
 #include "PlayerbotGroupManager.h"
 #include "Player.h"
 
@@ -87,7 +88,7 @@ private:
     // Integration data
     static std::unordered_map<uint32, uint32> _groupToPlayerbotGroup; // core group id -> playerbot group id
     static std::unordered_map<uint32, RegularGroupScenario> _groupScenarios;
-    static std::recursive_mutex _integrationMutex;
+    static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _integrationMutex;
 
     // Helper functions
     static uint32 CreatePlayerbotGroupForCoreGroup(Group* coreGroup);
@@ -166,7 +167,7 @@ private:
     };
 
     static std::unordered_map<uint32, QuestGroupData> _activeQuestGroups; // questId -> data
-    static std::recursive_mutex _questGroupMutex;
+    static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _questGroupMutex;
 };
 
 } // namespace Playerbot

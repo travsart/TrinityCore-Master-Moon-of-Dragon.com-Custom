@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "LFG.h"
 #include <unordered_map>
@@ -311,8 +312,8 @@ private:
     std::unordered_map<ObjectGuid, TeleportInfo> _pendingTeleports;        ///< Pending teleportations
     std::unordered_map<ObjectGuid, GroupFormationInfo> _groupFormations;   ///< Active group formations
 
-    mutable std::recursive_mutex _teleportMutex;                      ///< Protects teleport data
-    mutable std::recursive_mutex _groupMutex;                         ///< Protects group formation data
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _teleportMutex;                      ///< Protects teleport data
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupMutex;                         ///< Protects group formation data
 };
 
 } // namespace Playerbot

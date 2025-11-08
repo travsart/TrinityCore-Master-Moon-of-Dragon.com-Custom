@@ -48,6 +48,7 @@
 #define PLAYERBOT_MOVEMENT_ARBITER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "MovementRequest.h"
 #include "MovementPriorityMapper.h"
 #include <memory>
@@ -463,24 +464,24 @@ private:
     Player* _bot;                                   // Owning bot (never null)
 
     // Request queue (protected by mutex)
-    mutable std::mutex _queueMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _queueMutex;
     std::deque<MovementRequest> _pendingRequests;
 
     // Current active request (protected by mutex)
-    mutable std::mutex _currentRequestMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _currentRequestMutex;
     Optional<MovementRequest> _currentRequest;
 
     // Deduplication cache
     // Key: Spatial-temporal hash
     // Value: Timestamp of last request with this hash
-    mutable std::mutex _deduplicationMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _deduplicationMutex;
     std::unordered_map<uint64, uint32> _recentRequests;
 
     // Statistics (atomic for thread-safe reads)
     MovementArbiterStatistics _statistics;
 
     // Configuration (protected by mutex)
-    mutable std::mutex _configMutex;
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _configMutex;
     MovementArbiterConfig _config;
 
     // Performance tracking

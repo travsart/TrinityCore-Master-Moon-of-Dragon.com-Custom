@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
 #include <unordered_map>
@@ -249,11 +250,11 @@ private:
     std::unordered_map<uint32, PlayerRoleProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, GroupComposition> _groupCompositions; // groupId -> composition
     std::unordered_map<uint32, RoleAssignmentStrategy> _groupStrategies; // groupId -> strategy
-    mutable std::recursive_mutex _assignmentMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _assignmentMutex;
 
     // Role performance tracking
     std::unordered_map<uint32, std::unordered_map<GroupRole, RolePerformance>> _rolePerformance; // playerGuid -> role -> performance
-    mutable std::recursive_mutex _performanceMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _performanceMutex;
 
     // Content-specific requirements
     std::unordered_map<uint32, std::unordered_map<GroupRole, uint32>> _contentRequirements; // contentId -> role requirements

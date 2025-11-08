@@ -11,6 +11,7 @@
 #define PLAYERBOT_QUEST_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <chrono>
 #include <string>
@@ -146,12 +147,12 @@ private:
 
     // Event queue
     std::priority_queue<QuestEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _queueMutex;
 
     // Subscriber management
     std::unordered_map<QuestEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers;
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _subscriberMutex;
 
     // Configuration
     static constexpr uint32 MAX_QUEUE_SIZE = 10000;

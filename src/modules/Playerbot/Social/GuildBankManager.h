@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Guild.h"
 #include "Item.h"
@@ -229,7 +230,7 @@ private:
     std::unordered_map<uint32, BankAnalysis> _guildBankAnalysis; // guildId -> analysis
     std::unordered_map<uint32, MemberBankProfile> _memberProfiles; // playerGuid -> profile
     std::unordered_map<uint32, BankMetrics> _guildMetrics; // guildId -> metrics
-    mutable std::recursive_mutex _bankMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _bankMutex;
 
     // Item categorization system
     std::unordered_map<uint32, GuildBankItemType> _itemCategories; // itemId -> category

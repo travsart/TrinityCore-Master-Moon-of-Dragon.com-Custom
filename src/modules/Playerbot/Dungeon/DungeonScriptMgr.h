@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "DungeonScript.h"
 #include <unordered_map>
 #include <mutex>
@@ -211,7 +212,7 @@ private:
     std::atomic<uint32> _scriptMisses{0};
     std::atomic<uint32> _mechanicExecutions{0};
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
     bool _initialized;
 };
 

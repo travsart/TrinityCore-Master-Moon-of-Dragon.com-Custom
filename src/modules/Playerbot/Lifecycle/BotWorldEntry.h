@@ -6,6 +6,7 @@
 #define BOT_WORLD_ENTRY_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <functional>
@@ -211,7 +212,7 @@ private:
 
     // Callback management
     EntryCallback _callback;
-    mutable std::recursive_mutex _callbackMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _callbackMutex;
 
     // Error handling
     uint32 _retryCount;
@@ -222,7 +223,7 @@ private:
     static constexpr auto PHASE_TIMEOUT = std::chrono::seconds(10);
 
     // Thread safety
-    mutable std::recursive_mutex _stateMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _stateMutex;
 };
 
 /**
@@ -274,7 +275,7 @@ private:
     // Queue management
     std::queue<std::shared_ptr<BotWorldEntry>> _pendingQueue;
     std::vector<std::shared_ptr<BotWorldEntry>> _activeEntries;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _queueMutex;
 
     // Statistics
     std::atomic<uint32> _totalCompleted{0};

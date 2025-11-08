@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "../Equipment/BotGearFactory.h"  // Need full definition for std::unique_ptr<GearSet>
@@ -400,7 +401,7 @@ private:
     // ====================================================================
 
     std::queue<std::shared_ptr<BotCreationTask>> _mainThreadQueue;
-    std::mutex _queueMutex;
+    Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     // ====================================================================
     // STATISTICS

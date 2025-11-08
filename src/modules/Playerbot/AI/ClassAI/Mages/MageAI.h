@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "../../Combat/BotThreatManager.h"
 #include "../../Combat/TargetSelector.h"
@@ -386,7 +387,7 @@ private:
     static inline std::unordered_map<uint32, uint32> _castTimeCache;
     // DEADLOCK FIX: Changed to recursive_mutex to allow same thread to lock multiple times
     // Prevents "resource deadlock would occur" error during UpdateRotation
-    static inline std::recursive_mutex _cacheMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cacheMutex;
 
     static void CacheSpellData(uint32 spellId);
 };

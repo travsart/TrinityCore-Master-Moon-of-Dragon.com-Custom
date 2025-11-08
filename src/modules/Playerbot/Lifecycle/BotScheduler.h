@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -261,16 +262,16 @@ private:
     SchedulerStats _stats;
 
     // Thread-safe activity pattern storage
-    mutable std::recursive_mutex _patternMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _patternMutex;
     std::unordered_map<std::string, ActivityPattern> _activityPatterns;
 
     // Thread-safe bot schedule state storage (TBB removed)
-    mutable std::recursive_mutex _scheduleMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleMutex;
     std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
     // Priority queue for scheduled actions (TBB removed)
     std::priority_queue<ScheduleEntry> _scheduleQueue;
-    mutable std::recursive_mutex _scheduleQueueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleQueueMutex;
 
     // Runtime state
     std::atomic<bool> _enabled{true};

@@ -6,6 +6,7 @@
 #define BOT_HEALTH_CHECK_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <vector>
 #include <unordered_set>
@@ -130,7 +131,7 @@ private:
     BotHealthCheck& operator=(const BotHealthCheck&) = delete;
 
     // Stall tracking
-    mutable std::recursive_mutex _stalledBotsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _stalledBotsMutex;
     std::unordered_set<ObjectGuid> _stalledBots;
     uint32 _stallThresholdMs{5000}; // 5 seconds
 
@@ -138,7 +139,7 @@ private:
     std::atomic<bool> _systemDeadlocked{false};
     uint32 _lastHeartbeatTime{0};
     uint32 _deadlockThresholdMs{10000}; // 10 seconds
-    mutable std::recursive_mutex _heartbeatMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _heartbeatMutex;
 
     // Error tracking
     struct ErrorRecord
@@ -147,13 +148,13 @@ private:
         std::string errorType;
         uint32 timestamp;
     };
-    mutable std::recursive_mutex _errorsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _errorsMutex;
     std::vector<ErrorRecord> _recentErrors;
     static constexpr uint32 ERROR_HISTORY_DURATION_MS = 60000; // 1 minute
     float _errorRateThreshold{10.0f}; // 10 errors per second
 
     // Health issues history
-    mutable std::recursive_mutex _healthIssuesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _healthIssuesMutex;
     std::vector<HealthCheckResult> _healthIssues;
     static constexpr uint32 HEALTH_ISSUE_HISTORY_SIZE = 100;
 

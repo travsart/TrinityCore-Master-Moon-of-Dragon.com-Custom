@@ -19,6 +19,7 @@
 #define _PLAYERBOT_QUEST_HUB_DATABASE_H
 
 #include "Common.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "SharedDefines.h"
@@ -379,7 +380,7 @@ namespace Playerbot
         std::unordered_map<uint32, std::vector<size_t>> _zoneIndex;
 
         /// Reader-writer lock for thread-safe access
-        mutable std::shared_mutex _mutex;
+        mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::QUEST_MANAGER> _mutex;
 
         /// Initialization flag
         bool _initialized = false;

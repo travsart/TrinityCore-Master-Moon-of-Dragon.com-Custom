@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include <memory>
 #include <string>
@@ -192,7 +193,7 @@ namespace Playerbot
 
         // Action queue and recommendations
         std::vector<RecommendedAction> _actionQueue;
-        mutable std::mutex _actionQueueMutex;  // Protects _actionQueue from concurrent access
+        mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE> _actionQueueMutex;  // Protects _actionQueue from concurrent access
         RecommendedAction _currentAction;
         uint32 _lastActionTime;
 

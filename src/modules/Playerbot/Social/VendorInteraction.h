@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "TradeSystem.h"
 #include "Player.h"
 #include "Creature.h"
@@ -179,7 +180,7 @@ private:
     std::unordered_map<uint32, std::vector<uint32>> _zoneVendorCache; // zoneId -> vendorGuids
     std::unordered_map<VendorType, std::vector<uint32>> _typeVendorCache; // type -> vendorGuids
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _vendorInventoryCache; // vendorGuid -> itemId -> stock
-    mutable std::recursive_mutex _vendorCacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> _vendorCacheMutex;
 
     // Player strategies
     std::unordered_map<uint32, BuyingStrategy> _playerBuyingStrategies; // playerGuid -> strategy

@@ -11,6 +11,7 @@
 #define PLAYERBOT_AUCTION_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <chrono>
 #include <string>
@@ -96,7 +97,7 @@ private:
     std::unordered_map<AuctionEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _subscriberMutex;
 };
 
 } // namespace Playerbot

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Player.h"
 #include "Actions/Action.h"
@@ -681,7 +682,7 @@ protected:
     //
     // Performance impact: Negligible - lock contention was already minimal, and
     // recursive_mutex overhead is only a few nanoseconds per acquisition.
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Phase 7.3: Legacy observers removed (dead code)
     // Events now handled by EventDispatcher → Managers architecture

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <unordered_map>
@@ -71,7 +72,7 @@ private:
     SafeCorpseManager(SafeCorpseManager const&) = delete;
     SafeCorpseManager& operator=(SafeCorpseManager const&) = delete;
 
-    mutable std::shared_mutex _mutex;
+    mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BOT_SPAWNER> _mutex;
     std::unordered_map<ObjectGuid, std::unique_ptr<CorpseTracker>> _trackedCorpses;
     std::unordered_map<ObjectGuid, ObjectGuid> _ownerToCorpse; // owner -> corpse mapping
 

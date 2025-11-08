@@ -20,6 +20,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "Player.h"
 #include <unordered_map>
@@ -259,7 +260,7 @@ private:
     std::vector<CachedItem> _rawItems;  // Temporary storage for items before organizing into cache
     std::atomic<bool> _cacheReady{false};
     mutable GearFactoryStats _stats;
-    std::mutex _initMutex;
+    Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _initMutex;
 
     // Configuration
     uint32 _minItemLevel{5};

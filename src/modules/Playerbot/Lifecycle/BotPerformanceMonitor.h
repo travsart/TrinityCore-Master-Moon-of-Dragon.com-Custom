@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -162,7 +163,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotPerformanceMonitor> _instance;
-    inline static std::recursive_mutex _instanceMutex;
+    inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable
     BotPerformanceMonitor(BotPerformanceMonitor const&) = delete;

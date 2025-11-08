@@ -19,6 +19,7 @@
 #define _PLAYERBOT_UNIFIED_INTERRUPT_SYSTEM_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "InterruptDatabase.h"
@@ -559,7 +560,7 @@ private:
     // THREAD SAFETY (Single mutex pattern from InterruptCoordinator)
     // =====================================================================
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // =====================================================================
     // INITIALIZATION STATE

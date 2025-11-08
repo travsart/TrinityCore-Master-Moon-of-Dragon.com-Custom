@@ -11,6 +11,7 @@
 #define BOT_NAME_MGR_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <string>
 #include <mutex>
 #include <unordered_set>
@@ -64,7 +65,7 @@ private:
         uint32 usedByGuid;
     };
     
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
     
     // All names indexed by ID
     std::unordered_map<uint32, NameEntry> _names;

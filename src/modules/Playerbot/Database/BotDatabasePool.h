@@ -6,6 +6,7 @@
 #define BOT_DATABASE_POOL_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "DatabaseEnvFwd.h"
 #include "PreparedStatement.h"
 #include "QueryResult.h"
@@ -174,7 +175,7 @@ private:
     // Connection pool
     std::vector<std::unique_ptr<ConnectionInfo>> _connections;
     boost::lockfree::queue<size_t> _availableConnections{16};
-    mutable std::recursive_mutex _connectionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::DATABASE_POOL> _connectionMutex;
 
     // Connection configuration
     std::string _connectionString;

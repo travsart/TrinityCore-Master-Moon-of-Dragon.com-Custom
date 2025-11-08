@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "QuestCompletion.h"
 #include "Player.h"
 #include "QuestDef.h"
@@ -188,7 +189,7 @@ private:
     std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives
     std::unordered_map<uint32, std::vector<ObjectivePriority>> _botObjectivePriorities; // botGuid -> priorities
     std::unordered_map<uint32, ObjectiveAnalytics> _botAnalytics;
-    mutable std::recursive_mutex _trackingMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _trackingMutex;
 
     // Target tracking and caching
     struct TargetTrackingData
@@ -210,7 +211,7 @@ private:
     };
 
     std::unordered_map<uint32, TargetTrackingData> _targetTracking; // targetId -> data
-    mutable std::recursive_mutex _targetMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _targetMutex;
 
     // Group coordination data
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _groupObjectiveAssignments; // groupId -> memberGuid -> objectiveIndex

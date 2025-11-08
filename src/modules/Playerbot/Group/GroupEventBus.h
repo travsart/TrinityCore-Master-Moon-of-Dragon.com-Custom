@@ -11,6 +11,7 @@
 #define PLAYERBOT_GROUP_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -333,13 +334,13 @@ private:
 private:
     // Event queue (priority queue for automatic priority sorting)
     std::priority_queue<GroupEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _queueMutex;
 
     // Subscriber management
     // Map: EventType → Vector of subscribers for that type
     std::unordered_map<GroupEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers; // Subscribed to all events
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _subscriberMutex;
 
     // Configuration
     std::atomic<uint32_t> _maxQueueSize{10000};     // Maximum events in queue

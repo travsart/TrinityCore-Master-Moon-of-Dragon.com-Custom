@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "Creature.h"
@@ -255,11 +256,16 @@ protected:
 
         _combatStartTime = getMSTime();
         _currentTarget = target;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-    return;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+
+    return;
+
+}
             if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
@@ -449,11 +455,16 @@ private:
     void CleanupExpiredDots()
     {
         std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-    return nullptr;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+
+    return nullptr;
+
+}
 
         // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
@@ -572,7 +583,7 @@ protected:
     uint32 _lastResourceUpdate;
 
     // Cooldown tracking (thread-safe)
-    mutable std::recursive_mutex _cooldownMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cooldownMutex;
     std::unordered_map<uint32, uint32> _cooldowns;
     std::unordered_map<uint32, uint32> _cooldownDurations; // Registered cooldown durations
     std::atomic<uint32> _globalCooldownEnd;
@@ -582,7 +593,7 @@ protected:
     std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint32>> _activeDots; // targetGuid -> (spellId -> duration)
 
     // Resource management (thread-safe)
-    mutable std::recursive_mutex _resourceMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _resourceMutex;
 
     // Combat state
     ::Unit* _currentTarget = nullptr;
@@ -1095,11 +1106,16 @@ protected:
                 return nullptr;
             }
             float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
-    return nullptr;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionY");
+
+    return nullptr;
+
+}
 
             if (!member)
             {

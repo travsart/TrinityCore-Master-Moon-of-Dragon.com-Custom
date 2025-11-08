@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
 #include <unordered_map>
@@ -234,7 +235,7 @@ private:
     std::unordered_map<BenchmarkType, std::vector<BenchmarkResult>> _benchmarkHistory;
     std::unordered_map<BenchmarkType, BenchmarkResult> _performanceBaseline;
     std::queue<PerformanceSnapshot> _performanceHistory;
-    mutable std::recursive_mutex _benchmarkMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _benchmarkMutex;
 
     // Performance targets
     struct PerformanceTargets
