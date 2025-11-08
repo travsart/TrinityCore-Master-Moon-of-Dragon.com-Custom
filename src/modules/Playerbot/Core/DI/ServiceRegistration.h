@@ -51,6 +51,7 @@
 #include "Interfaces/IInstanceEventBus.h"
 #include "Interfaces/ISocialEventBus.h"
 #include "Interfaces/ICombatEventBus.h"
+#include "Interfaces/IResourceEventBus.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -84,6 +85,7 @@
 #include "Instance/InstanceEventBus.h"
 #include "Social/SocialEventBus.h"
 #include "Combat/CombatEventBus.h"
+#include "Resource/ResourceEventBus.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -412,6 +414,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ICombatEventBus");
+
+        // Register ResourceEventBus (Phase 19)
+        container.RegisterInstance<IResourceEventBus>(
+            std::shared_ptr<IResourceEventBus>(
+                Playerbot::ResourceEventBus::instance(),
+                [](IResourceEventBus*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IResourceEventBus");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
