@@ -20,6 +20,7 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/IConfigManager.h"
 #include <map>
 #include <string>
 #include <mutex>
@@ -34,6 +35,7 @@ namespace Playerbot
      * @class ConfigManager
      * @brief Runtime configuration manager for playerbots
      *
+     * Implements IConfigManager for dependency injection compatibility.
      * Provides runtime modification of playerbot configuration values
      * with validation, persistence, and hot-reload capabilities.
      *
@@ -64,7 +66,7 @@ namespace Playerbot
      * });
      * @endcode
      */
-    class TC_GAME_API ConfigManager
+    class TC_GAME_API ConfigManager final : public IConfigManager
     {
     public:
         /**
@@ -104,11 +106,12 @@ namespace Playerbot
          */
         static ConfigManager* instance();
 
+        // IConfigManager interface implementation
         /**
          * @brief Initialize configuration manager
          * @return true if successful, false otherwise
          */
-        bool Initialize();
+        bool Initialize() override;
 
         /**
          * @brief Set configuration value (runtime modification)
@@ -116,7 +119,7 @@ namespace Playerbot
          * @param value New value
          * @return true if successful, false if validation failed
          */
-        bool SetValue(std::string const& key, ConfigValue const& value);
+        bool SetValue(std::string const& key, ConfigValue const& value) override;
 
         /**
          * @brief Get boolean configuration value
@@ -124,7 +127,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        bool GetBool(std::string const& key, bool defaultValue) const;
+        bool GetBool(std::string const& key, bool defaultValue) const override;
 
         /**
          * @brief Get signed integer configuration value
@@ -132,7 +135,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        int32 GetInt(std::string const& key, int32 defaultValue) const;
+        int32 GetInt(std::string const& key, int32 defaultValue) const override;
 
         /**
          * @brief Get unsigned integer configuration value
@@ -140,7 +143,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        uint32 GetUInt(std::string const& key, uint32 defaultValue) const;
+        uint32 GetUInt(std::string const& key, uint32 defaultValue) const override;
 
         /**
          * @brief Get float configuration value
@@ -148,7 +151,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        float GetFloat(std::string const& key, float defaultValue) const;
+        float GetFloat(std::string const& key, float defaultValue) const override;
 
         /**
          * @brief Get string configuration value
@@ -156,59 +159,59 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        std::string GetString(std::string const& key, std::string const& defaultValue) const;
+        std::string GetString(std::string const& key, std::string const& defaultValue) const override;
 
         /**
          * @brief Register configuration change callback
          * @param key Configuration key to monitor
          * @param callback Function to call when value changes
          */
-        void RegisterCallback(std::string const& key, ChangeCallback callback);
+        void RegisterCallback(std::string const& key, ChangeCallback callback) override;
 
         /**
          * @brief Get all configuration entries
          * @return Map of all configuration entries
          */
-        std::map<std::string, ConfigEntry> GetAllEntries() const;
+        std::map<std::string, ConfigEntry> GetAllEntries() const override;
 
         /**
          * @brief Reset configuration to defaults
          */
-        void ResetToDefaults();
+        void ResetToDefaults() override;
 
         /**
          * @brief Save configuration to file
          * @param filePath Path to configuration file (optional, uses default if empty)
          * @return true if successful, false otherwise
          */
-        bool SaveToFile(std::string const& filePath = "") const;
+        bool SaveToFile(std::string const& filePath = "") const override;
 
         /**
          * @brief Load configuration from file
          * @param filePath Path to configuration file
          * @return true if successful, false otherwise
          */
-        bool LoadFromFile(std::string const& filePath);
+        bool LoadFromFile(std::string const& filePath) override;
 
         /**
          * @brief Get last error message
          * @return Error description
          */
-        std::string GetLastError() const { return _lastError; }
+        std::string GetLastError() const override { return _lastError; }
 
         /**
          * @brief Check if configuration key exists
          * @param key Configuration key
          * @return true if exists, false otherwise
          */
-        bool HasKey(std::string const& key) const;
+        bool HasKey(std::string const& key) const override;
 
         /**
          * @brief Get configuration entry (with metadata)
          * @param key Configuration key
          * @return Configuration entry or nullopt if not found
          */
-        std::optional<ConfigEntry> GetEntry(std::string const& key) const;
+        std::optional<ConfigEntry> GetEntry(std::string const& key) const override;
 
     private:
         ConfigManager() = default;

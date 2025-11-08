@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Last Updated:** 2025-11-08
-**Status:** Phase 1 Complete (2 of 168 singletons migrated)
+**Status:** Phase 2 Complete (5 of 168 singletons migrated)
 
 ---
 
@@ -22,14 +22,14 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 
 | Service | Interface | Status | Migration Method |
 |---------|-----------|--------|------------------|
-| **SpatialGridManager** | ISpatialGridManager | ✅ Complete | Dual-access (singleton + DI) |
-| **BotSessionMgr** | IBotSessionMgr | ✅ Complete | Dual-access (singleton + DI) |
-| BehaviorManager | IBehaviorManager | ⏳ Pending | Planned Phase 2 |
-| GroupCoordinator | IGroupCoordinator | ⏳ Pending | Planned Phase 2 |
-| DatabasePool | IDatabasePool | ⏳ Pending | Planned Phase 2 |
+| **SpatialGridManager** | ISpatialGridManager | ✅ Phase 1 | Dual-access (singleton + DI) |
+| **BotSessionMgr** | IBotSessionMgr | ✅ Phase 1 | Dual-access (singleton + DI) |
+| **ConfigManager** | IConfigManager | ✅ Phase 2 | Dual-access (singleton + DI) |
+| **BotLifecycleManager** | IBotLifecycleManager | ✅ Phase 2 | Dual-access (singleton + DI) |
+| **BotDatabasePool** | IBotDatabasePool | ✅ Phase 2 | Dual-access (singleton + DI) |
 | *+163 more* | *TBD* | ⏳ Pending | Planned Phases 3-N |
 
-**Total Progress:** 2/168 singletons (1.2%)
+**Total Progress:** 5/168 singletons (3.0%)
 
 ---
 
@@ -489,12 +489,25 @@ private:
 
 ## Next Steps
 
-### Phase 2 (Planned)
-- Migrate remaining 3 core interfaces (BehaviorManager, GroupCoordinator, DatabasePool)
-- Convert 10 high-priority singletons to DI
-- Expand unit test coverage with mocks
+### Phase 2 (COMPLETED ✅)
+- ✅ Migrated 3 additional core services (ConfigManager, BotLifecycleManager, BotDatabasePool)
+- ✅ Created 3 new interfaces (IConfigManager, IBotLifecycleManager, IBotDatabasePool)
+- ✅ Updated ServiceRegistration with Phase 2 services
+- ✅ Created MockConfigManager for testing
 
-### Phase 3+ (Future)
+### Phase 3 (Planned)
+- Migrate 10+ high-priority singletons:
+  - EquipmentManager
+  - BotNameMgr
+  - PlayerbotGroupManager
+  - LFGBotManager
+  - DungeonScriptMgr
+  - BotAccountMgr
+  - And more...
+- Expand unit test coverage with additional mocks
+- Create integration test examples
+
+### Phase 4+ (Future)
 - Migrate remaining 158 singletons incrementally
 - Remove singleton accessors (backward compatibility break)
 - Full constructor injection throughout codebase

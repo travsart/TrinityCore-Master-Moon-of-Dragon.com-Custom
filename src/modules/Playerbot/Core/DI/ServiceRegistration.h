@@ -7,8 +7,14 @@
 #include "ServiceContainer.h"
 #include "Interfaces/ISpatialGridManager.h"
 #include "Interfaces/IBotSessionMgr.h"
+#include "Interfaces/IConfigManager.h"
+#include "Interfaces/IBotLifecycleManager.h"
+#include "Interfaces/IBotDatabasePool.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
+#include "Config/ConfigManager.h"
+#include "Lifecycle/BotLifecycleManager.h"
+#include "Database/BotDatabasePool.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -58,6 +64,33 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotSessionMgr");
+
+        // Register ConfigManager (Phase 2)
+        container.RegisterInstance<IConfigManager>(
+            std::shared_ptr<IConfigManager>(
+                ConfigManager::instance(),
+                [](IConfigManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IConfigManager");
+
+        // Register BotLifecycleManager (Phase 2)
+        container.RegisterInstance<IBotLifecycleManager>(
+            std::shared_ptr<IBotLifecycleManager>(
+                BotLifecycleManager::instance(),
+                [](IBotLifecycleManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotLifecycleManager");
+
+        // Register BotDatabasePool (Phase 2)
+        container.RegisterInstance<IBotDatabasePool>(
+            std::shared_ptr<IBotDatabasePool>(
+                BotDatabasePool::instance(),
+                [](IBotDatabasePool*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotDatabasePool");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
