@@ -8,6 +8,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBotWorldEntryQueue.h"
 #include <memory>
 #include <functional>
 #include <chrono>
@@ -231,7 +232,7 @@ private:
  *
  * Manages concurrent bot world entries to prevent server overload
  */
-class TC_GAME_API BotWorldEntryQueue
+class TC_GAME_API BotWorldEntryQueue final : public IBotWorldEntryQueue
 {
 public:
     static BotWorldEntryQueue* instance();
@@ -241,13 +242,13 @@ public:
      * @param entry The bot world entry to queue
      * @return Position in queue (0 = immediate processing)
      */
-    uint32 QueueEntry(std::shared_ptr<BotWorldEntry> entry);
+    uint32 QueueEntry(std::shared_ptr<BotWorldEntry> entry) override;
 
     /**
      * Process queued entries
      * @param maxConcurrent Maximum concurrent entries to process
      */
-    void ProcessQueue(uint32 maxConcurrent = 10);
+    void ProcessQueue(uint32 maxConcurrent = 10) override;
 
     /**
      * Get current queue statistics
@@ -261,12 +262,12 @@ public:
         float averageEntryTime; // in seconds
     };
 
-    QueueStats GetStats() const;
+    QueueStats GetStats() const override;
 
     /**
      * Clear all queued entries (emergency use only)
      */
-    void ClearQueue();
+    void ClearQueue() override;
 
 private:
     BotWorldEntryQueue() = default;

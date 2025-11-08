@@ -90,6 +90,7 @@
 #include "Interfaces/IBotSpawnEventBus.h"
 #include "Interfaces/IBotNpcLocationService.h"
 #include "Interfaces/IBotLifecycleMgr.h"
+#include "Interfaces/IBotWorldEntryQueue.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -163,6 +164,7 @@
 #include "Lifecycle/BotSpawnEventBus.h"
 #include "Core/Services/BotNpcLocationService.h"
 #include "Lifecycle/BotLifecycleMgr.h"
+#include "Lifecycle/BotWorldEntry.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
 
@@ -852,6 +854,16 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotLifecycleMgr");
+
+        // Register BotWorldEntryQueue (Phase 59)
+        container.RegisterInstance<Playerbot::IBotWorldEntryQueue>(
+            std::shared_ptr<Playerbot::IBotWorldEntryQueue>(
+                Playerbot::BotWorldEntryQueue::instance(),
+                [](Playerbot::IBotWorldEntryQueue*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotWorldEntryQueue");
+
 
 
 
