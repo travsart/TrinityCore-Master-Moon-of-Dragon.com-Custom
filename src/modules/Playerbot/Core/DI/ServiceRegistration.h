@@ -66,6 +66,7 @@
 #include "Interfaces/IQuestTurnIn.h"
 #include "Interfaces/IRoleAssignment.h"
 #include "Interfaces/IDynamicQuestSystem.h"
+#include "Interfaces/IFarmingCoordinator.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -114,6 +115,7 @@
 #include "Quest/QuestTurnIn.h"
 #include "Group/RoleAssignment.h"
 #include "Quest/DynamicQuestSystem.h"
+#include "Professions/FarmingCoordinator.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -577,6 +579,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDynamicQuestSystem");
+
+        // Register FarmingCoordinator (Phase 34)
+        container.RegisterInstance<IFarmingCoordinator>(
+            std::shared_ptr<IFarmingCoordinator>(
+                Playerbot::FarmingCoordinator::instance(),
+                [](IFarmingCoordinator*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IFarmingCoordinator");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

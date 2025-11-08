@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 4.2
+**Document Version:** 4.3
 **Last Updated:** 2025-11-08
-**Status:** Phase 33 Complete (48 of 168 singletons migrated)
+**Status:** Phase 34 Complete (49 of 168 singletons migrated)
 
 ---
 
@@ -70,9 +70,10 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **QuestTurnIn** | IQuestTurnIn | ✅ Phase 31 | Dual-access (singleton + DI) |
 | **RoleAssignment** | IRoleAssignment | ✅ Phase 32 | Dual-access (singleton + DI) |
 | **DynamicQuestSystem** | IDynamicQuestSystem | ✅ Phase 33 | Dual-access (singleton + DI) |
-| *+120 more* | *TBD* | ⏳ Pending | Planned Phases 34-N |
+| **FarmingCoordinator** | IFarmingCoordinator | ✅ Phase 34 | Dual-access (singleton + DI) |
+| *+119 more* | *TBD* | ⏳ Pending | Planned Phases 35-N |
 
-**Total Progress:** 48/168 singletons (28.6%)
+**Total Progress:** 49/168 singletons (29.2%)
 
 ---
 
