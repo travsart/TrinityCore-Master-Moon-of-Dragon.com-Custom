@@ -59,6 +59,7 @@
 #include "Interfaces/IMarketAnalysis.h"
 #include "Interfaces/ITradeSystem.h"
 #include "Interfaces/IQuestPickup.h"
+#include "Interfaces/IGuildEventCoordinator.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -100,6 +101,7 @@
 #include "Social/MarketAnalysis.h"
 #include "Social/TradeSystem.h"
 #include "Quest/QuestPickup.h"
+#include "Social/GuildEventCoordinator.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -500,6 +502,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IQuestPickup");
+
+        // Register GuildEventCoordinator (Phase 27)
+        container.RegisterInstance<IGuildEventCoordinator>(
+            std::shared_ptr<IGuildEventCoordinator>(
+                Playerbot::GuildEventCoordinator::instance(),
+                [](IGuildEventCoordinator*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IGuildEventCoordinator");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
