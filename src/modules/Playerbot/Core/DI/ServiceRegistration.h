@@ -25,6 +25,8 @@
 #include "Interfaces/IBotDatabasePool.h"
 #include "Interfaces/IBotNameMgr.h"
 #include "Interfaces/IDungeonScriptMgr.h"
+#include "Interfaces/IEquipmentManager.h"
+#include "Interfaces/IBotAccountMgr.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -32,6 +34,8 @@
 #include "Database/BotDatabasePool.h"
 #include "Character/BotNameMgr.h"
 #include "Dungeon/DungeonScriptMgr.h"
+#include "Equipment/EquipmentManager.h"
+#include "Account/BotAccountMgr.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -126,6 +130,24 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDungeonScriptMgr");
+
+        // Register EquipmentManager (Phase 4)
+        container.RegisterInstance<IEquipmentManager>(
+            std::shared_ptr<IEquipmentManager>(
+                Playerbot::EquipmentManager::instance(),
+                [](IEquipmentManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IEquipmentManager");
+
+        // Register BotAccountMgr (Phase 4)
+        container.RegisterInstance<IBotAccountMgr>(
+            std::shared_ptr<IBotAccountMgr>(
+                Playerbot::BotAccountMgr::instance(),
+                [](IBotAccountMgr*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IBotAccountMgr");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());

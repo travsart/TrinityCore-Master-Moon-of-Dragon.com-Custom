@@ -24,6 +24,7 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/IEquipmentManager.h"
 #include "Player.h"
 #include "Item.h"
 #include "ItemTemplate.h"
@@ -125,37 +126,43 @@ struct ItemComparisonResult
 
 /**
  * @brief Complete equipment manager for all bot equipment operations
+ *
+ * Implements IEquipmentManager for dependency injection compatibility.
  */
-class TC_GAME_API EquipmentManager
+class TC_GAME_API EquipmentManager final : public IEquipmentManager
 {
 public:
     static EquipmentManager* instance();
 
+    // Use interface types
+    using ItemComparisonResult = IEquipmentManager::ItemComparisonResult;
+    using EquipmentMetrics = IEquipmentManager::EquipmentMetrics;
+
     // ============================================================================
-    // CORE EQUIPMENT EVALUATION
+    // IEquipmentManager interface implementation
     // ============================================================================
 
     /**
      * Scan all inventory items and auto-equip better gear
      * This is the main entry point called by TradeAutomation
      */
-    void AutoEquipBestGear(::Player* player);
+    void AutoEquipBestGear(::Player* player) override;
 
     /**
      * Compare two items for the same equipment slot
      * Returns true if newItem is better than currentItem for this player
      */
-    ItemComparisonResult CompareItems(::Player* player, ::Item* currentItem, ::Item* newItem);
+    ItemComparisonResult CompareItems(::Player* player, ::Item* currentItem, ::Item* newItem) override;
 
     /**
      * Calculate item score based on class/spec stat priorities
      */
-    float CalculateItemScore(::Player* player, ::Item* item);
+    float CalculateItemScore(::Player* player, ::Item* item) override;
 
     /**
      * Determine if item is an upgrade for any equipment slot
      */
-    bool IsItemUpgrade(::Player* player, ::Item* item);
+    bool IsItemUpgrade(::Player* player, ::Item* item) override;
 
     /**
      * Calculate item score for an ItemTemplate (quest rewards, vendor items, etc.)
@@ -164,7 +171,7 @@ public:
      * @param itemTemplate Item template to evaluate
      * @return Weighted score based on stat priorities
      */
-    float CalculateItemTemplateScore(::Player* player, ItemTemplate const* itemTemplate);
+    float CalculateItemTemplateScore(::Player* player, ItemTemplate const* itemTemplate) override;
 
     // ============================================================================
     // JUNK IDENTIFICATION
@@ -174,22 +181,22 @@ public:
      * Identify all junk items in player's inventory
      * Returns item GUIDs that should be sold to vendor
      */
-    std::vector<ObjectGuid> IdentifyJunkItems(::Player* player);
+    std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) override;
 
     /**
      * Check if specific item is junk (grey quality, low ilvl, wrong stats)
      */
-    bool IsJunkItem(::Player* player, ::Item* item);
+    bool IsJunkItem(::Player* player, ::Item* item) override;
 
     /**
      * Check if item should NEVER be sold (quest items, valuables, set items)
      */
-    bool IsProtectedItem(::Player* player, ::Item* item);
+    bool IsProtectedItem(::Player* player, ::Item* item) override;
 
     /**
      * Evaluate if BoE item is valuable enough for AH vs vendor selling
      */
-    bool IsValuableBoE(::Item* item);
+    bool IsValuableBoE(::Item* item) override;
 
     // ============================================================================
     // CONSUMABLE MANAGEMENT
@@ -199,12 +206,12 @@ public:
      * Get list of consumables this player needs to restock
      * Returns itemId -> quantity needed
      */
-    std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player);
+    std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) override;
 
     /**
      * Check if player has sufficient consumables for their class
      */
-    bool NeedsConsumableRestocking(::Player* player);
+    bool NeedsConsumableRestocking(::Player* player) override;
 
     /**
      * Get class-specific consumable requirements (food, potions, reagents)
@@ -332,8 +339,8 @@ public:
         }
     };
 
-    EquipmentMetrics const& GetPlayerMetrics(uint32 playerGuid);
-    EquipmentMetrics const& GetGlobalMetrics();
+    EquipmentMetrics const& GetPlayerMetrics(uint32 playerGuid) override;
+    EquipmentMetrics const& GetGlobalMetrics() override;
 
 private:
     EquipmentManager();
