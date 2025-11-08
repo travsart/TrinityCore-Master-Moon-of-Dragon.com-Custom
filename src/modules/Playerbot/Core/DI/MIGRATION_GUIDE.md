@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 1.3
+**Document Version:** 1.4
 **Last Updated:** 2025-11-08
-**Status:** Phase 4 Complete (9 of 168 singletons migrated)
+**Status:** Phase 5 Complete (11 of 168 singletons migrated)
 
 ---
 
@@ -31,9 +31,11 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **DungeonScriptMgr** | IDungeonScriptMgr | ✅ Phase 3 | Dual-access (singleton + DI) |
 | **EquipmentManager** | IEquipmentManager | ✅ Phase 4 | Dual-access (singleton + DI) |
 | **BotAccountMgr** | IBotAccountMgr | ✅ Phase 4 | Dual-access (singleton + DI) |
-| *+159 more* | *TBD* | ⏳ Pending | Planned Phases 5-N |
+| **LFGBotManager** | ILFGBotManager | ✅ Phase 5 | Dual-access (singleton + DI) |
+| **BotGearFactory** | IBotGearFactory | ✅ Phase 5 | Dual-access (singleton + DI) |
+| *+157 more* | *TBD* | ⏳ Pending | Planned Phases 6-N |
 
-**Total Progress:** 9/168 singletons (5.4%)
+**Total Progress:** 11/168 singletons (6.5%)
 
 ---
 
@@ -511,18 +513,22 @@ private:
 - ✅ Updated ServiceRegistration with Phase 4 services
 - ✅ Total progress: 9/168 singletons (5.4%)
 
-### Phase 5 (Planned)
+### Phase 5 (COMPLETED ✅)
+- ✅ Migrated 2 additional high-priority singletons (LFGBotManager, BotGearFactory)
+- ✅ Created 2 new interfaces (ILFGBotManager, IBotGearFactory)
+- ✅ Updated ServiceRegistration with Phase 5 services
+- ✅ Total progress: 11/168 singletons (6.5%)
+
+### Phase 6 (Planned)
 - Migrate 8+ additional high-priority singletons:
   - PlayerbotGroupManager
-  - LFGBotManager
-  - BotGearFactory
   - BotMonitor
   - And more...
 - Expand unit test coverage with additional mocks
 - Create integration test examples
 
-### Phase 6+ (Future)
-- Migrate remaining 159 singletons incrementally
+### Phase 7+ (Future)
+- Migrate remaining 157 singletons incrementally
 - Remove singleton accessors (backward compatibility break)
 - Full constructor injection throughout codebase
 
