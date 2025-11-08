@@ -1,8 +1,8 @@
 # Dependency Injection Migration Guide
 
-**Document Version:** 7.2
+**Document Version:** 7.3
 **Last Updated:** 2025-11-08
-**Status:** Phase 63 Complete (78 of 168 singletons migrated)
+**Status:** Phase 64 Complete (79 of 168 singletons migrated)
 
 ---
 
@@ -100,7 +100,8 @@ The Playerbot module is transitioning from Meyer's Singleton pattern to Dependen
 | **PlayerbotCharacterDBInterface** | IPlayerbotCharacterDBInterface | ✅ Phase 61 | Dual-access (singleton + DI) |
 | **BattlePetManager** | IBattlePetManager | ✅ Phase 62 | Dual-access (singleton + DI) |
 | **ArenaAI** | IArenaAI | ✅ Phase 63 | Dual-access (singleton + DI) |
-| *+90 more* | *TBD* | ⏳ Pending | Planned Phases 55-N |
+| **PvPCombatAI** | IPvPCombatAI | ✅ Phase 64 | Dual-access (singleton + DI) |
+| *+89 more* | *TBD* | ⏳ Pending | Planned Phases 55-N |
 
 **Total Progress:** 75/168 singletons (44.6%)
 
