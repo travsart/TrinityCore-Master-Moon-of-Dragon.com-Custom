@@ -68,6 +68,7 @@
 #include "Interfaces/IDynamicQuestSystem.h"
 #include "Interfaces/IFarmingCoordinator.h"
 #include "Interfaces/IAuctionHouse.h"
+#include "Interfaces/IProfessionAuctionBridge.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
 #include "Config/ConfigManager.h"
@@ -118,6 +119,7 @@
 #include "Quest/DynamicQuestSystem.h"
 #include "Professions/FarmingCoordinator.h"
 #include "Social/AuctionHouse.h"
+#include "Professions/ProfessionAuctionBridge.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -599,6 +601,15 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IAuctionHouse");
+
+        // Register ProfessionAuctionBridge (Phase 36)
+        container.RegisterInstance<IProfessionAuctionBridge>(
+            std::shared_ptr<IProfessionAuctionBridge>(
+                Playerbot::ProfessionAuctionBridge::instance(),
+                [](IProfessionAuctionBridge*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IProfessionAuctionBridge");
 
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
