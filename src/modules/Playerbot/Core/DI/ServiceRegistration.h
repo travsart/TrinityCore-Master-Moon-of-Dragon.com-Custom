@@ -94,6 +94,7 @@
 #include "Interfaces/IMountManager.h"
 #include "Interfaces/IPlayerbotCharacterDBInterface.h"
 #include "Interfaces/IBattlePetManager.h"
+#include "Interfaces/IArenaAI.h"
 #include "Interfaces/IObjectiveTracker.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Session/BotSessionMgr.h"
@@ -170,6 +171,7 @@
 #include "Lifecycle/BotWorldEntry.h"
 #include "Companion/MountManager.h"
 #include "Companion/BattlePetManager.h"
+#include "PvP/ArenaAI.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Log.h"
@@ -891,6 +893,15 @@ inline void RegisterPlayerbotServices()
                 Playerbot::BattlePetManager::instance(),
                 [](Playerbot::IBattlePetManager*) {} // No-op deleter (singleton)
             )
+
+        // Register ArenaAI (Phase 63)
+        container.RegisterInstance<Playerbot::IArenaAI>(
+            std::shared_ptr<Playerbot::IArenaAI>(
+                Playerbot::ArenaAI::instance(),
+                [](Playerbot::IArenaAI*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IArenaAI");
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBattlePetManager");
         );
