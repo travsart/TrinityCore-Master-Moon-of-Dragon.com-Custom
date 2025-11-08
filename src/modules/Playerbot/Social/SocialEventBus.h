@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/ISocialEventBus.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -106,32 +107,32 @@ struct SocialEvent
     }
 };
 
-class TC_GAME_API SocialEventBus
+class TC_GAME_API SocialEventBus final : public ISocialEventBus
 {
 public:
     static SocialEventBus* instance();
 
     // Event publishing
-    bool PublishEvent(SocialEvent const& event);
+    bool PublishEvent(SocialEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<SocialEventType> const& types);
-    bool SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    bool Subscribe(BotAI* subscriber, std::vector<SocialEventType> const& types) override;
+    bool SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
     // Event processing
-    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0);
-    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff);
-    void ClearUnitEvents(ObjectGuid unitGuid);
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 0) override;
+    uint32 ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff) override;
+    void ClearUnitEvents(ObjectGuid unitGuid) override;
 
     // Status queries
-    uint32 GetPendingEventCount() const;
-    uint32 GetSubscriberCount() const;
+    uint32 GetPendingEventCount() const override;
+    uint32 GetSubscriberCount() const override;
 
     // Diagnostics
-    void DumpSubscribers() const;
-    void DumpEventQueue() const;
-    std::vector<SocialEvent> GetQueueSnapshot() const;
+    void DumpSubscribers() const override;
+    void DumpEventQueue() const override;
+    std::vector<SocialEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
