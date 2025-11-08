@@ -8,6 +8,7 @@
 #include "Define.h"
 #include "DoubleBufferedSpatialGrid.h"
 #include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/ISpatialGridManager.h"
 #include <unordered_map>
 #include <memory>
 #include <shared_mutex>
@@ -19,9 +20,15 @@ namespace Playerbot
 
 /**
  * @brief Global manager for all spatial grids across all maps
- * Singleton pattern for easy access from TargetScanner
+ *
+ * Implements ISpatialGridManager for dependency injection compatibility.
+ * Uses singleton pattern for backward compatibility (transitional).
+ *
+ * **Migration Path:**
+ * - Old code: sSpatialGridManager.GetGrid(mapId)
+ * - New code: Services::Container().Resolve<ISpatialGridManager>()->GetGrid(mapId)
  */
-class TC_GAME_API SpatialGridManager
+class TC_GAME_API SpatialGridManager final : public ISpatialGridManager
 {
 public:
     static SpatialGridManager& Instance()
@@ -30,25 +37,15 @@ public:
         return instance;
     }
 
-    // Create spatial grid for a map
-    void CreateGrid(Map* map);
-
-    // Destroy spatial grid for a map
-    void DestroyGrid(uint32 mapId);
-
-    // Get spatial grid for a map (returns nullptr if not found)
-    DoubleBufferedSpatialGrid* GetGrid(uint32 mapId);
-    DoubleBufferedSpatialGrid* GetGrid(Map* map);
-
-    // Destroy all grids
-    void DestroyAllGrids();
-
-    // Update a specific grid (call from Map::Update)
-    void UpdateGrid(uint32 mapId);
-    void UpdateGrid(Map* map);
-
-    // Statistics
-    size_t GetGridCount() const;
+    // ISpatialGridManager interface implementation
+    void CreateGrid(Map* map) override;
+    void DestroyGrid(uint32 mapId) override;
+    DoubleBufferedSpatialGrid* GetGrid(uint32 mapId) override;
+    DoubleBufferedSpatialGrid* GetGrid(Map* map) override;
+    void DestroyAllGrids() override;
+    void UpdateGrid(uint32 mapId) override;
+    void UpdateGrid(Map* map) override;
+    size_t GetGridCount() const override;
 
 private:
     SpatialGridManager() = default;
