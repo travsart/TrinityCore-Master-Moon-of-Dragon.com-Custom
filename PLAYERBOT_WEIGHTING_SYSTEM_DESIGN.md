@@ -498,7 +498,8 @@ float CalculateStrategicValue()
 
 | Context | Survival Weight | Group Protection | Damage | Resource | Positioning | Strategic |
 |---------|----------------|------------------|--------|----------|-------------|-----------|
-| **Solo Questing** | 1.3× | 0.5× | 1.2× | 0.9× | 1.0× | 0.8× |
+| **Solo** | 1.3× | 0.5× | 1.2× | 0.9× | 1.0× | 0.8× |
+| **Group** | 1.1× | 1.3× | 1.2× | 1.0× | 1.1× | 1.0× |
 | **Dungeon (Trash)** | 1.0× | 1.2× | 1.3× | 1.0× | 1.1× | 0.9× |
 | **Dungeon (Boss)** | 1.1× | 1.5× | 1.2× | 1.1× | 1.4× | 1.3× |
 | **Raid (Normal)** | 1.0× | 1.8× | 1.0× | 1.2× | 1.5× | 1.5× |
@@ -575,13 +576,14 @@ enum class ScoringCategory : uint8
 
 enum class CombatContext : uint8
 {
-    SOLO_QUESTING,
-    DUNGEON_TRASH,
-    DUNGEON_BOSS,
-    RAID_NORMAL,
-    RAID_HEROIC,
-    PVP_ARENA,
-    PVP_BG
+    SOLO,           // All solo activities (questing, gathering, farming, professions, trading)
+    GROUP,          // Open-world group content (group quests, elite quests, world bosses, dailies)
+    DUNGEON_TRASH,  // 5-man instance trash
+    DUNGEON_BOSS,   // 5-man instance bosses
+    RAID_NORMAL,    // Raid instance (normal/LFR)
+    RAID_HEROIC,    // Raid instance (heroic/mythic)
+    PVP_ARENA,      // Arena battlegrounds
+    PVP_BG          // Standard battlegrounds
 };
 
 enum class BotRole : uint8
@@ -1151,18 +1153,36 @@ Playerbot.AI.Weighting.DPS.StrategicMultiplier = 1.0
 ###################################################################################################
 # AI WEIGHTING - CONTEXT MODIFIERS
 #
-# These modifiers adjust weights based on combat context (solo, dungeon, raid, PvP).
+# These modifiers adjust weights based on combat context.
 # Applied after role multipliers: FinalScore = BaseWeight × RoleMultiplier × ContextModifier
+#
+# Context Detection Logic:
+# - Solo:          Not in group (questing, gathering, farming, professions, trading, etc.)
+# - Group:         In group, open-world content (group quests, elite quests, dailies, farming)
+# - DungeonTrash:  In 5-man instance, not fighting boss
+# - DungeonBoss:   In 5-man instance, boss encounter active
+# - RaidNormal:    In raid instance (10-40 players), normal/LFR difficulty
+# - RaidHeroic:    In raid instance, heroic/mythic difficulty
+# - PvPArena:      Battleground type = arena
+# - PvPBG:         Battleground type = battleground
 #
 ###################################################################################################
 
-# Solo Questing Context
+# Solo Context (All Solo Activities)
 Playerbot.AI.Weighting.Context.Solo.SurvivalModifier = 1.3
 Playerbot.AI.Weighting.Context.Solo.GroupProtectionModifier = 0.5
 Playerbot.AI.Weighting.Context.Solo.DamageModifier = 1.2
 Playerbot.AI.Weighting.Context.Solo.ResourceModifier = 0.9
 Playerbot.AI.Weighting.Context.Solo.PositioningModifier = 1.0
 Playerbot.AI.Weighting.Context.Solo.StrategicModifier = 0.8
+
+# Group Context (Non-Instanced Group Content)
+Playerbot.AI.Weighting.Context.Group.SurvivalModifier = 1.1
+Playerbot.AI.Weighting.Context.Group.GroupProtectionModifier = 1.3
+Playerbot.AI.Weighting.Context.Group.DamageModifier = 1.2
+Playerbot.AI.Weighting.Context.Group.ResourceModifier = 1.0
+Playerbot.AI.Weighting.Context.Group.PositioningModifier = 1.1
+Playerbot.AI.Weighting.Context.Group.StrategicModifier = 1.0
 
 # Dungeon Trash Context
 Playerbot.AI.Weighting.Context.DungeonTrash.SurvivalModifier = 1.0

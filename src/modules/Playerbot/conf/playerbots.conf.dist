@@ -1916,24 +1916,32 @@ Playerbot.AI.Weighting.DPS.StrategicMultiplier = 1.0
 # FinalScore = BaseWeight × RoleMultiplier × ContextModifier × CategoryValue
 #
 # Context Detection:
-# - Solo:          Player not in group
-# - DungeonTrash:  In 5-man group, not fighting boss
-# - DungeonBoss:   In 5-man group, boss encounter active
-# - RaidNormal:    In raid group (10-40 players), normal/LFR difficulty
-# - RaidHeroic:    In raid group, heroic/mythic difficulty
+# - Solo:          Not in group (all solo activities: questing, gathering, farming,
+#                  professions, trading, exploration, etc.)
+# - Group:         In group, open-world content (group quests, elite quests, dailies,
+#                  world bosses, group farming, etc.)
+# - DungeonTrash:  In 5-man instance, not fighting boss
+# - DungeonBoss:   In 5-man instance, boss encounter active
+# - RaidNormal:    In raid instance (10-40 players), normal/LFR difficulty
+# - RaidHeroic:    In raid instance, heroic/mythic difficulty
 # - PvPArena:      Battleground type = arena
 # - PvPBG:         Battleground type = battleground
 #
 ###################################################################################################
 
 ###################################################################################################
-# CONTEXT: SOLO QUESTING
+# CONTEXT: SOLO (All Solo Activities)
+#
+# Applies to: Questing, gathering (herbs/ores/skins), farming (mobs/materials),
+#             professions, trading, exploration, daily quests, world quests
 #
 # Characteristics:
 # - No healer support (must self-sustain)
-# - No threat management needed
-# - Emphasis on kill speed and survival
-# - Resource efficiency less critical (can rest between fights)
+# - No threat management needed (no tank)
+# - Emphasis on kill speed and personal survival
+# - Resource efficiency less critical (can rest/eat/drink between fights)
+# - No group coordination needed
+# - Independence prioritized
 #
 ###################################################################################################
 
@@ -1943,6 +1951,29 @@ Playerbot.AI.Weighting.Context.Solo.DamageModifier = 1.2
 Playerbot.AI.Weighting.Context.Solo.ResourceModifier = 0.9
 Playerbot.AI.Weighting.Context.Solo.PositioningModifier = 1.0
 Playerbot.AI.Weighting.Context.Solo.StrategicModifier = 0.8
+
+###################################################################################################
+# CONTEXT: GROUP (Non-Instanced Group Content)
+#
+# Applies to: Group quests, elite quests, group dailies, world bosses, rare elites,
+#             group farming, open-world group events, group exploration
+#
+# Characteristics:
+# - Group coordination important (tank/healer/DPS roles active)
+# - Higher group protection emphasis (help allies survive)
+# - Moderate survival (healer support available)
+# - Resource management moderate (longer fights than solo)
+# - Positioning matters (don't pull extra mobs, stay with group)
+# - Open-world flexibility (can leave/join anytime)
+#
+###################################################################################################
+
+Playerbot.AI.Weighting.Context.Group.SurvivalModifier = 1.1
+Playerbot.AI.Weighting.Context.Group.GroupProtectionModifier = 1.3
+Playerbot.AI.Weighting.Context.Group.DamageModifier = 1.2
+Playerbot.AI.Weighting.Context.Group.ResourceModifier = 1.0
+Playerbot.AI.Weighting.Context.Group.PositioningModifier = 1.1
+Playerbot.AI.Weighting.Context.Group.StrategicModifier = 1.0
 
 ###################################################################################################
 # CONTEXT: DUNGEON TRASH
