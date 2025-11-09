@@ -20,6 +20,7 @@
 #include "ObjectAccessor.h"
 #include "GridNotifiers.h"
 #include "CellImpl.h"
+#include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
 #include <ranges>
 #include <span>
 
@@ -90,46 +91,9 @@ protected:
 
     Unit* SelectHealingTarget()
     {
-        Unit* lowestHealth = nullptr;
-        float lowestPct = 100.0f;
-
-        // Priority: Self > Tank > Other healers > DPS
-        if (this->GetBot()->GetHealthPct() < 50.0f)
-            return this->GetBot();
-
-        if (Group* group = this->GetBot()->GetGroup())
-        {
-            // First pass: Find tanks under 60%
-            for (GroupReference* ref : *group)
-            {
-                if (Player* member = ref->GetSource())                {
-                    if (member->IsAlive() && IsTank(member) && member->GetHealthPct() < 60.0f)
-                    {
-                        if (member->GetHealthPct() < lowestPct)
-                        {
-                            lowestPct = member->GetHealthPct();
-                            lowestHealth = member;                        }
-                    }
-                }
-            }
-
-            if (lowestHealth)
-                return lowestHealth;
-
-            // Second pass: Anyone critically injured
-            for (GroupReference* ref : *group)
-            {
-                if (Player* member = ref->GetSource())                {
-                    if (member->IsAlive() && member->GetHealthPct() < lowestPct)
-                    {
-                        lowestPct = member->GetHealthPct();
-                        lowestHealth = member;
-                    }
-                }
-            }
-        }
-
-        return lowestHealth;
+        // Use unified HealingTargetSelector service (Phase 5B integration)
+        // Eliminates 40+ lines of duplicated healing target logic
+        return bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
     }
 
     Unit* SelectDamageTarget()

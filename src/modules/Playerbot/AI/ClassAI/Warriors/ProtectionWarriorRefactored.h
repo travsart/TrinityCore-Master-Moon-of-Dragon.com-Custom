@@ -21,6 +21,7 @@
 #include "../ResourceTypes.h"
 #include "Item.h"
 #include "ItemDefines.h"
+#include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
 #include <unordered_map>
 #include <queue>
 
@@ -184,21 +185,21 @@ protected:
     // ========================================================================
 
     bool ShouldUseTaunt(::Unit* target)    {
-        if (!target)
-            return false;
-
-        // Taunt if we don't have aggro
-        return target->GetVictim() != this->GetBot();    }
+        // Use unified ThreatAssistant service (Phase 5C integration)
+        // Eliminates duplicated taunt logic
+        return !bot::ai::ThreatAssistant::IsTargetOnTank(this->GetBot(), target);
+    }
 
     void ManageThreat(::Unit* target) override
     {
         if (!target)
             return;
 
-        // Taunt if we don't have aggro on target
-        if (ShouldUseTaunt(target) && this->CanUseAbility(SPELL_TAUNT))
+        // Use unified ThreatAssistant service (Phase 5C integration)
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
-            this->CastSpell(target, SPELL_TAUNT);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
             _lastTaunt = getMSTime();
         }
     }
@@ -352,15 +353,12 @@ protected:
             // For now, rely on rotation priority for multi-target scenarios
         }
 
-        // Handle highest priority threat target
-        if (!_threatPriority.empty())
+        // Handle highest priority threat target using ThreatAssistant (Phase 5C)
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
-            ThreatTarget topPriority = _threatPriority.top();
-            _threatPriority.pop();            if (ShouldUseTaunt(topPriority.target))
-            {
-                this->CastSpell(topPriority.target, SPELL_TAUNT);
-                _lastTaunt = getMSTime();
-            }
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
+            _lastTaunt = getMSTime();
         }
     }
 

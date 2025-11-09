@@ -20,6 +20,7 @@
 #include "SpellAuraEffects.h"
 #include "Group.h"
 #include "Log.h"
+#include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
 
 namespace Playerbot
 {
@@ -440,24 +441,10 @@ protected:
 
     Unit* SelectHealingTarget(Group* group)
     {
-        if (!group)
-            return GetBot();
-
-        Unit* lowestHealth = nullptr;
-        float lowestPct = 100.0f;
-
-        // Priority: Self > Tank > Healers > DPS
-        for (GroupReference const& ref : group->GetMembers())
-        {
-            if (Player* member = ref.GetSource())            {
-                if (member->IsAlive() && member->GetHealthPct() < lowestPct)
-                {
-                    lowestPct = member->GetHealthPct();
-                    lowestHealth = member;                }
-            }
-        }
-
-        return lowestHealth ? lowestHealth : this->GetBot();
+        // Use unified HealingTargetSelector service (Phase 5B integration)
+        // Eliminates 20+ lines of duplicated healing target logic
+        Unit* target = bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
+        return target ? target : this->GetBot();
     }
 
 private:

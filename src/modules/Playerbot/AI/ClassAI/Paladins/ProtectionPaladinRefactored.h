@@ -19,6 +19,7 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
 
 namespace Playerbot
 {
@@ -236,12 +237,14 @@ public:
         HandleEmergencyDefensives();
     }
 
-    // OnTauntRequired - calls base class virtual taunt method
+    // OnTauntRequired - uses unified ThreatAssistant service (Phase 5C integration)
     void TauntTarget(::Unit* target) override    {
-        if (this->CanCastSpell(HAND_OF_RECKONING, target))
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(HAND_OF_RECKONING, tauntTarget))
         {
-            this->CastSpell(target, HAND_OF_RECKONING);
-            TC_LOG_DEBUG("playerbot", "Protection: Taunt cast on {}", target->GetName());
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, HAND_OF_RECKONING);
+            TC_LOG_DEBUG("playerbot", "Protection: Taunt cast on {} via ThreatAssistant", tauntTarget->GetName());
         }
     }
 
