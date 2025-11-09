@@ -264,8 +264,16 @@ public:
         , _lastVoidTorrentTime(0)
         , _lastMindgamesTime(0)
         , _lastVampiricEmbraceTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {SHADOW_VOID_ERUPTION, 90000, 1},
+            {SHADOW_POWER_INFUSION, 120000, 1},
+            {SHADOW_SHADOW_CRASH, 30000, 1},
+            {SHADOW_VOID_TORRENT, 45000, 1},
+            {SHADOW_SHADOWFIEND, 180000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "ShadowPriestRefactored initialized for {}", bot->GetName());
     }
 

@@ -203,10 +203,17 @@ public:
         , _lastCloudburstTotemTime(0)
         , _lastEarthenWallTotemTime(0)
         , _lastAncestralProtectionTotemTime(0)
+        , _cooldowns()
     {
-        // Resource initialization handled by base class CombatSpecializationTemplate
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "RestorationShamanRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {RESTO_SHAMAN_HEALING_TIDE_TOTEM, 180000, 1},
+            {RESTO_SHAMAN_SPIRIT_LINK_TOTEM, 180000, 1},
+            {RESTO_SHAMAN_ASCENDANCE, 180000, 1},
+            {RESTO_SHAMAN_CLOUDBURST_TOTEM, 30000, 1}
+        });
+
+        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "RestorationShamanRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override

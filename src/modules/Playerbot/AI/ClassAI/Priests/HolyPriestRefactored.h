@@ -199,12 +199,20 @@ public:
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
-        , _lastDivineHymnTime(0)
-        , _lastGuardianSpiritTime(0)
+        
+        
         , _lastSalvationTime(0)
         , _lastSymbolOfHopeTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {HOLY_DIVINE_HYMN, 180000, 1},
+            {HOLY_HOLY_WORD_SALVATION, 720000, 1},
+            {HOLY_APOTHEOSIS, 120000, 1},
+            {HOLY_GUARDIAN_SPIRIT, 180000, 1},
+            {HOLY_SYMBOL_OF_HOPE, 300000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "HolyPriestRefactored initialized for {}", bot->GetName());
     }
 
@@ -708,10 +716,7 @@ private:
     bool _apotheosisActive;
     uint32 _apotheosisEndTime;
 
-    uint32 _lastApotheosisTime;
-    uint32 _lastDivineHymnTime;
-    uint32 _lastGuardianSpiritTime;
-    uint32 _lastSalvationTime;
+    uint32 _lastApotheosisTime;    uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
 };
 

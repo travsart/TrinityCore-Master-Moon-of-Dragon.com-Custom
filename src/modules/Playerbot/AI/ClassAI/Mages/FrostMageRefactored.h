@@ -181,10 +181,20 @@ public:
         , _icicleTracker()
         , _icyVeinsActive(false)
         , _icyVeinsEndTime(0)
-        , _lastIcyVeinsTime(0)
-        , _lastFrozenOrbTime(0)
+        
+        
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {FROST_ICY_VEINS, 180000, 1},
+            {FROST_FROZEN_ORB, 60000, 1},
+            {FROST_COMET_STORM, 30000, 1},
+            {FROST_RAY_OF_FROST, 75000, 1},
+            {FROST_SHIFTING_POWER, 60000, 1},
+            {FROST_ICE_BLOCK, 240000, 1},
+            {FROST_MIRROR_IMAGE, 120000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "FrostMageRefactored initialized for {}", bot->GetName());
     }
 
@@ -427,7 +437,7 @@ private:
         }
 
         // Cone of Cold (close-range AoE)
-        if (GetNearbyEnemies(12.0f) >= 3)
+        if (this->GetEnemiesInRange(12.0f) >= 3)
         {
             if (this->CanCastSpell(FROST_CONE_OF_COLD, target))
             {
@@ -483,22 +493,13 @@ private:
         return std::min(count, 10u);
     }
 
-    [[nodiscard]] uint32 GetNearbyEnemies(float range) const
-    {
-        return GetEnemiesInRange(range);
-    }
-
     // Member variables
     FingersOfFrostTracker _fofTracker;
     BrainFreezeTracker _brainFreezeTracker;
     IcicleTracker _icicleTracker;
 
     bool _icyVeinsActive;
-    uint32 _icyVeinsEndTime;
-
-    uint32 _lastIcyVeinsTime;
-    uint32 _lastFrozenOrbTime;
-};
+    uint32 _icyVeinsEndTime;};
 
 } // namespace Playerbot
 

@@ -350,12 +350,19 @@ public:
         , _tigersFuryEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        , _lastTigersFuryTime(0)
-        , _lastBerserkTime(0)
+        
+        , _cooldowns()
     {
-        this->_resource.Initialize(bot);
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {FERAL_BERSERK, 180000, 1},
+            {FERAL_INCARNATION, 180000, 1},
+            {FERAL_CONVOKE, 120000, 1},
+            {FERAL_TIGERS_FURY, 30000, 1},
+            {FERAL_BRUTAL_SLASH, 8000, 3}
+        });
+
+        this->_resource.Initialize(bot);        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override
@@ -701,9 +708,7 @@ private:
     bool _berserkActive;
     uint32 _berserkEndTime;
 
-    uint32 _lastTigersFuryTime;
-    uint32 _lastBerserkTime;
-};
+    uint32 _lastTigersFuryTime;};
 
 } // namespace Playerbot
 

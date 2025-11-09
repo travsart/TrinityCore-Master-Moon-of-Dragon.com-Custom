@@ -241,12 +241,20 @@ public:
         , _swiftmendTracker()
         , _treeFormActive(false)
         , _treeFormEndTime(0)
-        , _lastTranquilityTime(0)
+        
         , _lastInnervateTime(0)
+        , _cooldowns()
     {
-        // _resource is uint32, no Initialize method - managed by base class
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "RestorationDruidRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {RESTO_DRUID_TRANQUILITY, 180000, 1},
+            {RESTO_DRUID_INCARNATION, 180000, 1},
+            {RESTO_DRUID_CONVOKE, 120000, 1},
+            {RESTO_DRUID_FLOURISH, 90000, 1},
+            {RESTO_DRUID_IRONBARK, 90000, 1}
+        });
+
+        // _resource is uint32, no Initialize method - managed by base class        TC_LOG_DEBUG("playerbot", "RestorationDruidRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override
@@ -704,10 +712,7 @@ private:
     RestorationSwiftmendTracker _swiftmendTracker;
 
     bool _treeFormActive;
-    uint32 _treeFormEndTime;
-
-    uint32 _lastTranquilityTime;
-    uint32 _lastInnervateTime;
+    uint32 _treeFormEndTime;    uint32 _lastInnervateTime;
 };
 
 } // namespace Playerbot

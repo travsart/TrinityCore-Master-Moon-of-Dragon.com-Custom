@@ -228,7 +228,7 @@ protected:
         }
 
         // Priority 7: Poisoned Knife if can't melee
-        if (GetDistanceToTarget(target) > 10.0f && energy >= 40)
+        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(RogueAI::POISONED_KNIFE, target))
             {
@@ -339,11 +339,6 @@ private:
     void GenerateComboPoints(uint32 amount)
     {
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
-    }
-
-    float GetDistanceToTarget(::Unit* target) const
-    {
-        return PositionUtils::GetDistance(this->GetBot(), target);
     }
 
 private:

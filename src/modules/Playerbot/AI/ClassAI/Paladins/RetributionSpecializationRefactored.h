@@ -49,7 +49,16 @@ public:
         , _hasArtOfWar(false)
         , _hasDivinePurpose(false)
         , _sealTwistWindow(0)
+        , _cooldowns()
     {
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {RET_AVENGING_WRATH, 120000, 1},
+            {RET_CRUSADE, 120000, 1},
+            {RET_EXECUTION_SENTENCE, 60000, 1},
+            {RET_FINAL_RECKONING, 60000, 1}
+        });
+
         // Initialize Holy Power system
         _holyPower.Initialize(bot);
     }

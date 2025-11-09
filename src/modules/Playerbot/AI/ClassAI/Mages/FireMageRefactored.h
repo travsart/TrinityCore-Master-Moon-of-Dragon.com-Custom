@@ -98,7 +98,6 @@ public:
     }
 
 private:
-    CooldownManager _cooldowns;
     bool _hotStreakActive;
     bool _heatingUpActive;
     uint32 _hotStreakEndTime;
@@ -161,10 +160,19 @@ public:
         , _fireBlastTracker()
         , _combustionActive(false)
         , _combustionEndTime(0)
-        , _lastCombustionTime(0)
-        , _lastPhoenixFlamesTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {FIRE_COMBUSTION, 120000, 1},  // 2 min major DPS cooldown
+            {FIRE_PHOENIX_FLAMES, 25000, 3},  // 25 sec, 3 charges
+            {FIRE_DRAGON_BREATH, 20000, 1},  // 20 sec cone AoE
+            {FIRE_METEOR, 45000, 1},  // 45 sec AoE (if talented)
+            {FIRE_SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
+            {FIRE_ICE_BLOCK, 240000, 1},  // 4 min immunity
+            {FIRE_MIRROR_IMAGE, 120000, 1}  // 2 min defensive decoy
+        });
+
         TC_LOG_DEBUG("playerbot", "FireMageRefactored initialized for {}", bot->GetName());
     }
 
@@ -274,7 +282,6 @@ private:
                 this->CastSpell(bot, FIRE_COMBUSTION);
                 _combustionActive = true;
                 _combustionEndTime = getMSTime() + 10000; // 10 sec
-                _lastCombustionTime = getMSTime();
                 return;
             }
         }
@@ -301,11 +308,11 @@ private:
             }        }
 
         // Phoenix Flames (high damage, generates Heating Up)
-        if (bot->HasSpell(FIRE_PHOENIX_FLAMES) && (getMSTime() - _lastPhoenixFlamesTime) >= 30000)        {
+        if (bot->HasSpell(FIRE_PHOENIX_FLAMES))
+        {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {
                 this->CastSpell(target, FIRE_PHOENIX_FLAMES);
-                _lastPhoenixFlamesTime = getMSTime();
                 _hotStreakTracker.ActivateHeatingUp();
                 return;
             }
@@ -363,7 +370,6 @@ private:
                 this->CastSpell(bot, FIRE_COMBUSTION);
                 _combustionActive = true;
                 _combustionEndTime = getMSTime() + 10000;
-                _lastCombustionTime = getMSTime();
                 return;
             }
         }
@@ -379,7 +385,7 @@ private:
         }
 
         // Dragon's Breath (cone AoE)
-        if (enemyCount >= 3 && GetNearbyEnemies(12.0f) >= 3)
+        if (enemyCount >= 3 && this->GetEnemiesInRange(12.0f) >= 3)
         {
             if (this->CanCastSpell(FIRE_DRAGON_BREATH, target))
             {
@@ -412,12 +418,11 @@ private:
         }
 
         // Phoenix Flames for AoE damage
-        if (bot->HasSpell(FIRE_PHOENIX_FLAMES) && (getMSTime() - _lastPhoenixFlamesTime) >= 30000)
+        if (bot->HasSpell(FIRE_PHOENIX_FLAMES))
         {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {
                 this->CastSpell(target, FIRE_PHOENIX_FLAMES);
-                _lastPhoenixFlamesTime = getMSTime();
                 _hotStreakTracker.ActivateHeatingUp();
                 return;
             }
@@ -461,11 +466,6 @@ private:
         }
     }
 
-    [[nodiscard]] uint32 GetNearbyEnemies(float range) const
-    {
-        return this->GetEnemiesInRange(range);
-    }
-
     // Member variables
     HotStreakTracker _hotStreakTracker;
     FireBlastChargeTracker _fireBlastTracker;
@@ -473,8 +473,7 @@ private:
     bool _combustionActive;
     uint32 _combustionEndTime;
 
-    uint32 _lastCombustionTime;
-    uint32 _lastPhoenixFlamesTime;
+    CooldownManager _cooldowns;
 };
 
 } // namespace Playerbot

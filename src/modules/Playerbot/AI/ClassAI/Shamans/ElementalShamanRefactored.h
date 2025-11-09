@@ -278,14 +278,22 @@ public:
         , _ascendanceActive(false)
         , _ascendanceEndTime(0)
         , _lastAscendanceTime(0)
-        , _lastFireElementalTime(0)
-        , _lastStormkeeperTime(0)
+        
+        
         , _lastEchoingShockTime(0)
         , _lastPrimordialWaveTime(0)
+        , _cooldowns()
     {
-        // Resource initialization handled by base class CombatSpecializationTemplate
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {ELEMENTAL_FIRE_ELEMENTAL, 150000, 1},
+            {ELEMENTAL_STORM_ELEMENTAL, 150000, 1},
+            {ELEMENTAL_STORMKEEPER, 60000, 1},
+            {ELEMENTAL_LIQUID_MAGMA_TOTEM, 60000, 1},
+            {ELEMENTAL_ASCENDANCE, 180000, 1}
+        });
+
+        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override
@@ -662,10 +670,7 @@ private:
     bool _ascendanceActive;
     uint32 _ascendanceEndTime;
 
-    uint32 _lastAscendanceTime;
-    uint32 _lastFireElementalTime;
-    uint32 _lastStormkeeperTime;
-    uint32 _lastEchoingShockTime;
+    uint32 _lastAscendanceTime;    uint32 _lastEchoingShockTime;
     uint32 _lastPrimordialWaveTime;
 };
 

@@ -369,7 +369,7 @@ protected:
         }
 
         // Priority 8: Pistol Shot if can't melee
-        if (GetDistanceToTarget(target) > 10.0f && energy >= 40)
+        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(PISTOL_SHOT, target))
             {

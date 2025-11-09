@@ -168,10 +168,18 @@ public:
         , _frenziedRegenerationEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        , _lastBerserkTime(0)
+        
         , _lastFrenziedRegenerationTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {GUARDIAN_INCARNATION, 180000, 1},
+            {GUARDIAN_BERSERK, 180000, 1},
+            {GUARDIAN_BARKSKIN, 60000, 1},
+            {GUARDIAN_SURVIVAL_INSTINCTS, 180000, 1},
+            {GUARDIAN_FRENZIED_REGEN, 36000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for {}", bot->GetName());
     }
 
@@ -501,10 +509,7 @@ private:
     bool _frenziedRegenerationActive;
     uint32 _frenziedRegenerationEndTime;
     bool _berserkActive;
-    uint32 _berserkEndTime;
-
-    uint32 _lastBerserkTime;
-    uint32 _lastFrenziedRegenerationTime;
+    uint32 _berserkEndTime;    uint32 _lastFrenziedRegenerationTime;
 };
 
 } // namespace Playerbot

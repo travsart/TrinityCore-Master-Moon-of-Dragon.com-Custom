@@ -162,13 +162,19 @@ public:
         , _stormbringerTracker()
         , _ascendanceActive(false)
         , _ascendanceEndTime(0)
-        , _lastAscendanceTime(0)
-        , _lastFeralSpiritTime(0)
+        
         , _lastSunderingTime(0)
+        , _cooldowns()
     {
-        // Resource initialization handled by base class CombatSpecializationTemplate
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {ENHANCEMENT_FERAL_SPIRIT, 120000, 1},
+            {ENHANCEMENT_DOOM_WINDS, 60000, 1},
+            {ENHANCEMENT_ASCENDANCE, 180000, 1},
+            {ENHANCEMENT_STORMSTRIKE, 9000, 2}
+        });
+
+        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override
@@ -531,9 +537,7 @@ private:
     bool _ascendanceActive;
     uint32 _ascendanceEndTime;
 
-    uint32 _lastAscendanceTime;
-    uint32 _lastFeralSpiritTime;
-    uint32 _lastSunderingTime;
+    uint32 _lastAscendanceTime;    uint32 _lastSunderingTime;
 };
 
 } // namespace Playerbot

@@ -186,12 +186,20 @@ public:
         , _shieldTracker()
         , _raptureActive(false)
         , _raptureEndTime(0)
-        , _lastRaptureTime(0)
+        
         , _lastEvangelismTime(0)
-        , _lastBarrierTime(0)
+        
         , _lastPainSuppressionTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {DISC_POWER_WORD_BARRIER, 180000, 1},
+            {DISC_RAPTURE, 90000, 1},
+            {DISC_PAIN_SUPPRESSION, 180000, 1},
+            {DISC_EVANGELISM, 90000, 1},
+            {DISC_SHADOW_FIEND, 180000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "DisciplinePriestRefactored initialized for {}", this->GetBot()->GetName());
     }
 
@@ -650,12 +658,7 @@ private:
     PowerWordShieldTracker _shieldTracker;
 
     bool _raptureActive;
-    uint32 _raptureEndTime;
-
-    uint32 _lastRaptureTime;
-    uint32 _lastEvangelismTime;
-    uint32 _lastBarrierTime;
-    uint32 _lastPainSuppressionTime;
+    uint32 _raptureEndTime;    uint32 _lastEvangelismTime;    uint32 _lastPainSuppressionTime;
 };
 
 } // namespace Playerbot

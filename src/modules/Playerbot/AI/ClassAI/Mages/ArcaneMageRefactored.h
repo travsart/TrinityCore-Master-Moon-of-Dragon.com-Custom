@@ -78,7 +78,6 @@ public:
     }
 
 private:
-    CooldownManager _cooldowns;
     uint32 _charges;
     uint32 _maxCharges;
 };
@@ -150,11 +149,20 @@ public:
         , _clearcastingTracker()
         , _arcaneSurgeActive(false)
         , _arcaneSurgeEndTime(0)
-        , _lastArcaneSurgeTime(0)
-        , _lastEvocationTime(0)
-        , _lastPresenceOfMindTime(0)
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {ARCANE_SURGE, 120000, 1},  // 2 min major DPS cooldown
+            {EVOCATION, 90000, 1},  // 90 sec mana recovery
+            {PRESENCE_OF_MIND, 60000, 1},  // 1 min instant cast
+            {ARCANE_ORB, 60000, 1},  // 1 min AoE builder
+            {SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
+            {ICE_BLOCK, 240000, 1},  // 4 min immunity
+            {MIRROR_IMAGE, 120000, 1},  // 2 min defensive decoy
+            {TIME_WARP, 600000, 1}  // 10 min Heroism/Bloodlust
+        });
+
         TC_LOG_DEBUG("playerbot", "ArcaneMageRefactored initialized for {}", bot->GetName());
     }
 
@@ -273,7 +281,6 @@ private:
                 this->CastSpell(bot, ARCANE_SURGE);
                 _arcaneSurgeActive = true;
                 _arcaneSurgeEndTime = getMSTime() + 15000; // 15 sec
-                _lastArcaneSurgeTime = getMSTime();
                 return;
             }
         }
@@ -313,7 +320,6 @@ private:
         if (charges < 4 && this->CanCastSpell(PRESENCE_OF_MIND, bot))
         {
             this->CastSpell(bot, PRESENCE_OF_MIND);
-            _lastPresenceOfMindTime = getMSTime();
             // Follow up with instant Arcane Blast
             if (this->CanCastSpell(ARCANE_BLAST, target))
             {
@@ -340,12 +346,11 @@ private:
         }
 
         // Evocation (emergency mana regen)
-        if (manaPercent < 20 && (getMSTime() - _lastEvocationTime) >= 90000) // 90 sec CD
+        if (manaPercent < 20)
         {
             if (this->CanCastSpell(EVOCATION, bot))
             {
                 this->CastSpell(bot, EVOCATION);
-                _lastEvocationTime = getMSTime();
                 return;
             }
         }
@@ -368,7 +373,6 @@ private:
                 this->CastSpell(bot, ARCANE_SURGE);
                 _arcaneSurgeActive = true;
                 _arcaneSurgeEndTime = getMSTime() + 15000;
-                _lastArcaneSurgeTime = getMSTime();
                 return;
             }
         }
@@ -417,7 +421,7 @@ private:
         }
 
         // Arcane Explosion (close-range AoE if enemies nearby)
-        if (enemyCount >= 3 && GetNearbyEnemies(10.0f) >= 3)
+        if (enemyCount >= 3 && this->GetEnemiesInRange(10.0f) >= 3)
         {
             if (this->CanCastSpell(ARCANE_EXPLOSION, bot))
             {
@@ -443,21 +447,14 @@ private:
         }
 
         // Evocation for mana regen
-        if (manaPercent < 20 && (getMSTime() - _lastEvocationTime) >= 90000)
+        if (manaPercent < 20)
         {
             if (this->CanCastSpell(EVOCATION, bot))
             {
                 this->CastSpell(bot, EVOCATION);
-                _lastEvocationTime = getMSTime();
                 return;
             }
         }
-    }
-
-    [[nodiscard]] uint32 GetNearbyEnemies(float range) const
-    {
-        // Get enemies within melee/close range for Arcane Explosion
-        return this->GetEnemiesInRange(range);
     }
 
     // Member variables
@@ -467,9 +464,7 @@ private:
     bool _arcaneSurgeActive;
     uint32 _arcaneSurgeEndTime;
 
-    uint32 _lastArcaneSurgeTime;
-    uint32 _lastEvocationTime;
-    uint32 _lastPresenceOfMindTime;
+    CooldownManager _cooldowns;
 };
 
 } // namespace Playerbot
