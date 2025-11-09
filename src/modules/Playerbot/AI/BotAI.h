@@ -265,28 +265,24 @@ public:
     // ========================================================================
 
     /**
-     * @brief Initialize utility-based decision system
+     * @brief Initialize Hybrid AI Decision System (Phase 2 Week 3)
+     * Creates HybridAIController with Utility AI + Behavior Trees
      * Called during BotAI constructor
      */
-    void InitializeUtilityAI();
+    void InitializeHybridAI();
 
     /**
-     * @brief Update utility AI decision (throttled to 500ms)
-     * Selects highest-scoring behavior based on current context
+     * @brief Update Hybrid AI (Phase 2 Week 3)
+     * Selects best behavior via Utility AI, executes via Behavior Tree
      * @param diff Time since last UpdateAI() call
      */
-    void UpdateUtilityDecision(uint32 diff);
+    void UpdateHybridAI(uint32 diff);
 
     /**
-     * @brief Get currently active utility behavior
-     * @return Pointer to active behavior, or nullptr if none selected
+     * @brief Get Hybrid AI Controller (Phase 2 Week 3)
+     * @return Pointer to controller, or nullptr if not initialized
      */
-    class UtilityBehavior* GetActiveUtilityBehavior() const { return _activeUtilityBehavior; }
-
-    /**
-     * @brief Get last utility context (for debugging)
-     */
-    struct UtilityContext const& GetLastUtilityContext() const { return _lastUtilityContext; }
+    class HybridAIController* GetHybridAI() const { return _hybridAI.get(); }
 
     // ========================================================================
     // DEATH RECOVERY - Resurrection management
@@ -635,11 +631,8 @@ protected:
     std::vector<std::string> _activeStrategies;
     std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
-    // Hybrid AI Decision System: Utility AI Layer (Phase 1 Week 2)
-    std::unique_ptr<class UtilityAI> _utilityAI;
-    struct UtilityContext _lastUtilityContext;
-    class UtilityBehavior* _activeUtilityBehavior = nullptr;
-    uint32 _lastUtilityUpdate = 0;
+    // Hybrid AI Decision System: Utility AI + Behavior Trees (Phase 2 Week 3)
+    std::unique_ptr<class HybridAIController> _hybridAI;
 
     // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;

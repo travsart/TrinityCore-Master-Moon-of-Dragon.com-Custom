@@ -85,7 +85,7 @@ set(PLAYERBOT_SOURCES
     # AI system (AI Framework implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_UtilityAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_HybridAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
     # Phase 2.1: BehaviorManager Base Class - Manager Pattern Foundation
@@ -110,6 +110,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/MovementNodes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.h
+
+    # Hybrid AI Decision System: Controller Integration (Phase 2 Week 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/HybridAIController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/HybridAIController.h
 
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp

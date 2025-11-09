@@ -109,10 +109,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize combat state manager for automatic combat state synchronization
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
 
-    // Phase 1 Week 2: Initialize Utility AI decision system
-    InitializeUtilityAI();
+    // Phase 2 Week 3: Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
+    InitializeHybridAI();
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState, UtilityAI systems ready",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState, HybridAI systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -942,8 +942,8 @@ void BotAI::UpdateAI(uint32 diff)
     // Update internal values and caches
     UpdateValues(diff);
 
-    // Phase 1 Week 2: Update Utility AI decision (throttled to 500ms)
-    UpdateUtilityDecision(diff);
+    // Phase 2 Week 3: Update Hybrid AI (Utility AI + Behavior Trees, throttled to 500ms)
+    UpdateHybridAI(diff);
 
     // Update all active strategies (including follow, idle, social)
     // CRITICAL: Must run every frame for smooth following
