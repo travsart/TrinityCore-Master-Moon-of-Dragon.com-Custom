@@ -246,6 +246,146 @@ public:
 };
 
 /**
+ * @brief Scored Selector node - evaluates children by score, executes highest scoring child
+ * This enables utility-based AI decision making with multi-criteria action scoring
+ *
+ * Usage Example:
+ * @code
+ * auto selector = std::make_shared<BTScoredSelector>("SmartHeal");
+ *
+ * // Add heal tank child with scoring function
+ * selector->AddChild(healTankAction, [](BotAI* ai, BTBlackboard& bb) -> float {
+ *     float healthUrgency = (100.0f - GetTankHealthPct()) / 100.0f;
+ *     float rolePriority = 2.0f; // Tanks are 2x priority
+ *     return healthUrgency * rolePriority * 100.0f;
+ * });
+ *
+ * // Add heal DPS child with scoring function
+ * selector->AddChild(healDPSAction, [](BotAI* ai, BTBlackboard& bb) -> float {
+ *     float healthUrgency = (100.0f - GetDPSHealthPct()) / 100.0f;
+ *     return healthUrgency * 100.0f;
+ * });
+ * @endcode
+ */
+class TC_GAME_API BTScoredSelector : public BTComposite
+{
+public:
+    using ScoringFunction = std::function<float(BotAI*, BTBlackboard&)>;
+
+    /**
+     * @brief Construct scored selector node
+     * @param name Node name for debugging
+     */
+    BTScoredSelector(std::string const& name)
+        : BTComposite(name)
+        , _debugLogging(false)
+    {
+    }
+
+    /**
+     * @brief Add child node with scoring function
+     * @param child Child node to execute if highest scoring
+     * @param scoringFunc Function that returns action score (0.0 = lowest, higher = better)
+     */
+    void AddChild(std::shared_ptr<BTNode> child, ScoringFunction scoringFunc)
+    {
+        BTComposite::AddChild(child);
+        _scoringFunctions.push_back(scoringFunc);
+    }
+
+    /**
+     * @brief Execute highest scoring child
+     * @param ai Bot AI instance
+     * @param blackboard Shared data blackboard
+     * @return BTStatus::SUCCESS if highest scoring child succeeds, BTStatus::FAILURE if all fail
+     */
+    BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
+    {
+        if (_children.empty())
+        {
+            _status = BTStatus::FAILURE;
+            return _status;
+        }
+
+        // Score all children
+        std::vector<std::pair<size_t, float>> scores;
+        scores.reserve(_children.size());
+
+        for (size_t i = 0; i < _children.size(); ++i)
+        {
+            float score = _scoringFunctions[i](ai, blackboard);
+            scores.emplace_back(i, score);
+
+            if (_debugLogging)
+            {
+                TC_LOG_DEBUG("playerbot.bt", "BTScoredSelector [{}]: Child '{}' scored {:.2f}",
+                    _name, _children[i]->GetName(), score);
+            }
+        }
+
+        // Sort by score (highest first)
+        std::sort(scores.begin(), scores.end(),
+            [](const auto& a, const auto& b) { return a.second > b.second; });
+
+        // Try highest scoring children first
+        for (const auto& [index, score] : scores)
+        {
+            if (score <= 0.0f)
+                continue;  // Skip non-viable actions
+
+            BTStatus status = _children[index]->Tick(ai, blackboard);
+
+            if (status == BTStatus::SUCCESS)
+            {
+                if (_debugLogging)
+                {
+                    TC_LOG_DEBUG("playerbot.bt", "BTScoredSelector [{}]: Executed '{}' (score {:.2f})",
+                        _name, _children[index]->GetName(), score);
+                }
+                _status = BTStatus::SUCCESS;
+                Reset();
+                return _status;
+            }
+
+            if (status == BTStatus::RUNNING)
+            {
+                _status = BTStatus::RUNNING;
+                return _status;
+            }
+
+            // FAILURE - try next highest scoring child
+        }
+
+        // All viable children failed
+        _status = BTStatus::FAILURE;
+        Reset();
+        return _status;
+    }
+
+    /**
+     * @brief Enable/disable debug logging for score visualization
+     * @param enable True to enable debug logging
+     */
+    void SetDebugLogging(bool enable)
+    {
+        _debugLogging = enable;
+    }
+
+    /**
+     * @brief Check if debug logging is enabled
+     * @return True if debug logging enabled
+     */
+    bool IsDebugLoggingEnabled() const
+    {
+        return _debugLogging;
+    }
+
+private:
+    std::vector<ScoringFunction> _scoringFunctions;
+    bool _debugLogging;
+};
+
+/**
  * @brief Decorator node - has single child and modifies its behavior
  */
 class TC_GAME_API BTDecorator : public BTNode
