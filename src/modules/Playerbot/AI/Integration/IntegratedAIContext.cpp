@@ -65,8 +65,10 @@ SharedBlackboard* IntegratedAIContext::GetZoneBlackboard() const
 
 Coordination::GroupCoordinator* IntegratedAIContext::GetGroupCoordinator() const
 {
-    // Would retrieve from group coordination manager
-    // Placeholder implementation
+    if (!_cachedGroupCoordinator && _bot)
+    {
+        _cachedGroupCoordinator = _bot->GetTacticalCoordinator();
+    }
     return _cachedGroupCoordinator;
 }
 

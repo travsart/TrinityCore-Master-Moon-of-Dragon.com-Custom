@@ -32,6 +32,7 @@
 #include "Equipment/EquipmentManager.h"
 #include "Professions/ProfessionManager.h"
 #include "Advanced/GroupCoordinator.h"
+#include "Coordination/GroupCoordinator.h"
 #include "Spatial/SpatialGridManager.h"
 #include "Spatial/DoubleBufferedSpatialGrid.h"
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
@@ -1035,6 +1036,12 @@ void BotAI::UpdateAI(uint32 diff)
     // These handle quest, trade, gathering with their own throttling
     // NOTE: Managers continue to update even during death recovery to prevent system freezing
     UpdateManagers(diff);
+
+    // Phase 3: Update Tactical Group Coordinator (throttled to 500ms intervals)
+    if (_tacticalCoordinator && _bot->GetGroup())
+    {
+        _tacticalCoordinator->Update(diff);
+    }
 
     // ========================================================================
     // PHASE 7.3: EVENT SYSTEM - Events processed via EventDispatcher
@@ -2299,6 +2306,14 @@ void BotAI::OnGroupJoined(Group* group)
     // Deactivate solo strategy when joining a group
     DeactivateStrategy("solo");
 
+    // Phase 3: Initialize Tactical Group Coordinator for combat coordination
+    if (group && !_tacticalCoordinator)
+    {
+        _tacticalCoordinator = std::make_unique<Coordination::GroupCoordinator>(group);
+        TC_LOG_INFO("playerbot.coordination", "🎯 Tactical Coordinator initialized for bot {} in group {}",
+            _bot->GetName(), group->GetGUID().ToString());
+    }
+
     // Set state to following if not in combat (no lock needed - atomic operation)
     if (!IsInCombat())
         SetAIState(BotAIState::FOLLOWING);
@@ -2359,6 +2374,14 @@ void BotAI::OnGroupLeft()
     {
         if (strategy)
             strategy->OnDeactivate(this);
+    }
+
+    // Phase 3: Cleanup Tactical Group Coordinator
+    if (_tacticalCoordinator)
+    {
+        TC_LOG_INFO("playerbot.coordination", "🔴 Tactical Coordinator destroyed for bot {}",
+            _bot->GetName());
+        _tacticalCoordinator.reset();
     }
 
     // Activate all solo strategies when leaving a group
