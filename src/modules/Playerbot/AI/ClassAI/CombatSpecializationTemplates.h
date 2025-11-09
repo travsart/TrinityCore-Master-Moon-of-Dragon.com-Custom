@@ -31,6 +31,10 @@
 #include "GridNotifiers.h"
 #include "Log.h"
 #include "Group.h"
+#include "../Combat/MovementIntegration.h"
+#include "../Combat/TargetManager.h"
+#include "../Combat/CrowdControlManager.h"
+#include "../Combat/DefensiveManager.h"
 #include <unordered_map>
 #include <concepts>
 #include <type_traits>
@@ -42,6 +46,9 @@
 
 namespace Playerbot
 {
+
+// Phase 5D: Forward declarations for combat managers
+struct CombatMetrics;
 
 // ============================================================================
 // RESOURCE TYPE CONCEPTS - C++20 Concepts for type safety
@@ -722,6 +729,7 @@ public:
         : CombatSpecializationTemplate<ResourceType>(bot)
         , _lastTauntTime(0)
         , _defensiveCooldownActive(false)
+        , _defensiveManager(bot)  // Phase 5D: DefensiveManager integration
     {
     }
 
@@ -832,9 +840,80 @@ protected:
      */
     virtual void UseDefensiveCooldown() {}
 
+    /**
+     * Phase 5D: Update defensive cooldowns using DefensiveManager
+     *
+     * Call this from your spec's UpdateRotation() method to integrate
+     * intelligent defensive cooldown rotation.
+     *
+     * Example usage in tank spec:
+     * @code
+     * void UpdateRotation(::Unit* target) override {
+     *     // Create combat metrics
+     *     CombatMetrics metrics{};
+     *     metrics.damageTaken = CalculateRecentDamage();
+     *     metrics.healingReceived = CalculateRecentHealing();
+     *
+     *     // Update defensives BEFORE rotation
+     *     UpdateDefensives(diff, metrics);
+     *
+     *     // Then execute normal threat rotation
+     *     ExecuteThreatRotation(target);
+     * }
+     * @endcode
+     *
+     * The DefensiveManager will automatically:
+     * - Track incoming damage patterns
+     * - Determine optimal defensive usage timing
+     * - Prevent defensive stacking/waste
+     * - Prioritize emergency defensives at critical HP
+     */
+    void UpdateDefensives(uint32 diff, const CombatMetrics& metrics)
+    {
+        _defensiveManager.Update(diff, metrics);
+
+        if (_defensiveManager.NeedsEmergencyDefensive())
+        {
+            uint32 emergencySpell = _defensiveManager.UseEmergencyDefensive();
+            if (emergencySpell != 0)
+            {
+                this->CastSpell(this->GetBot(), emergencySpell);
+                TC_LOG_DEBUG("playerbot", "Tank: Emergency defensive {} used", emergencySpell);
+            }
+        }
+        else if (_defensiveManager.NeedsDefensive())
+        {
+            uint32 recommendedSpell = _defensiveManager.GetRecommendedDefensive();
+            if (recommendedSpell != 0)
+            {
+                this->CastSpell(this->GetBot(), recommendedSpell);
+                _defensiveManager.UseDefensiveCooldown(recommendedSpell);
+                TC_LOG_DEBUG("playerbot", "Tank: Defensive {} used", recommendedSpell);
+            }
+        }
+    }
+
+    /**
+     * Phase 5D: Get DefensiveManager for registering spec-specific defensives
+     *
+     * Call this in your tank spec constructor to register your defensives:
+     * @code
+     * ProtectionWarriorRefactored(Player* bot) : TankSpecialization(bot) {
+     *     // Register warrior defensives
+     *     GetDefensiveManager().RegisterDefensive(DefensiveCooldown(
+     *         SHIELD_WALL, 0.4f, 8000, 240000, DefensivePriority::HIGH));
+     *     GetDefensiveManager().RegisterDefensive(DefensiveCooldown(
+     *         LAST_STAND, 0.3f, 20000, 180000, DefensivePriority::EMERGENCY, true));
+     * }
+     * @endcode
+     */
+    DefensiveManager& GetDefensiveManager() { return _defensiveManager; }
+    const DefensiveManager& GetDefensiveManager() const { return _defensiveManager; }
+
 private:
     uint32 _lastTauntTime;
     bool _defensiveCooldownActive;
+    DefensiveManager _defensiveManager;  // Phase 5D: Intelligent defensive cooldown rotation
 };
 
 /**
