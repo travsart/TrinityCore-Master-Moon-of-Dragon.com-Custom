@@ -560,6 +560,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.h
 
+    # Manager Consolidation Phase 3: UnifiedMovementCoordinator (consolidates MovementArbiter, PathfindingAdapter, FormationManager, PositionManager)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/UnifiedMovementCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/UnifiedMovementCoordinator.h
+
     # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
