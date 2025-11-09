@@ -97,6 +97,11 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.h
 
+    # Hybrid AI Decision System: Utility AI Layer (Phase 1)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/UtilitySystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/UtilityContextBuilder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/Evaluators/CombatEvaluators.h
+
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
