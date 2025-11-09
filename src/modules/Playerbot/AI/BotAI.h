@@ -85,6 +85,11 @@ namespace Events
 
 class ManagerRegistry;
 
+// Phase 5E: Decision Fusion System forward declarations
+namespace bot { namespace ai {
+    class DecisionFusionSystem;
+}}
+
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
 {
@@ -403,6 +408,33 @@ public:
     ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
 
     // ========================================================================
+    // PHASE 5E: DECISION FUSION SYSTEM - Unified decision arbitration
+    // ========================================================================
+
+    /**
+     * @brief Get Decision Fusion System for unified action selection
+     *
+     * The DecisionFusionSystem collects votes from all decision-making systems
+     * (BehaviorPriorityManager, ActionScoringEngine, etc.) and fuses them
+     * into a single, optimal action selection.
+     *
+     * @return Pointer to DecisionFusionSystem, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto fusion = GetDecisionFusion())
+     * {
+     *     auto votes = fusion->CollectVotes(this, CombatContext::DUNGEON_BOSS);
+     *     auto result = fusion->FuseDecisions(votes);
+     *     if (result.IsValid())
+     *         ExecuteAction(result.actionId, result.target);
+     * }
+     * @endcode
+     */
+    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _decisionFusion.get(); }
+    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _decisionFusion.get(); }
+
+    // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
     // ========================================================================
 
@@ -705,6 +737,9 @@ protected:
     // Phase 7.1: Event system integration
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
     std::unique_ptr<ManagerRegistry> _managerRegistry;
+
+    // Phase 5E: Decision fusion system - Unified arbitration for all decision-making
+    std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

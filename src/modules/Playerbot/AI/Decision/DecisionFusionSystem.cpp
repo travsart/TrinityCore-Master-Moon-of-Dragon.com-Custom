@@ -6,6 +6,9 @@
 
 #include "DecisionFusionSystem.h"
 #include "BotAI.h"
+#include "BehaviorPriorityManager.h"
+#include "Common/ActionScoringEngine.h"
+#include "Combat/AdaptiveBehaviorManager.h"
 #include "Log.h"
 #include "Config.h"
 #include <algorithm>
@@ -77,22 +80,120 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     if (!ai)
         return votes;
 
-    // TODO: Integrate with existing decision systems
-    // This is a placeholder implementation that will be extended
-    // as we integrate with BehaviorPriorityManager, ActionPriorityQueue, etc.
-
-    // Example vote collection (to be replaced with actual system integration):
-    // 1. Query BehaviorPriorityManager for highest priority behavior
-    // 2. Query ActionPriorityQueue for highest priority spell
-    // 3. Query Behavior Tree for recommended action
-    // 4. Query AdaptiveBehaviorManager for role-specific recommendations
-    // 5. Query ActionScoringEngine for utility-scored actions
+    Player* bot = ai->GetBot();
+    if (!bot)
+        return votes;
 
     if (_debugLogging)
     {
         TC_LOG_DEBUG("playerbot", "DecisionFusionSystem: Collecting votes for bot {}, context {}",
-            ai->GetBot() ? ai->GetBot()->GetName() : "unknown",
-            static_cast<uint32>(context));
+            bot->GetName(), static_cast<uint32>(context));
+    }
+
+    // ========================================================================
+    // 1. BEHAVIOR PRIORITY MANAGER - Strategy-level decisions
+    // ========================================================================
+    if (auto priorityMgr = ai->GetPriorityManager())
+    {
+        BehaviorPriority activePriority = priorityMgr->GetActivePriority();
+
+        // Convert BehaviorPriority to actionId (use priority enum value as action ID)
+        // Confidence based on how long this priority has been active
+        // Urgency based on priority level (COMBAT=1.0, FOLLOW=0.5, SOLO=0.1)
+        float confidence = 0.8f; // BehaviorPriority is reliable
+        float urgency = 0.0f;
+
+        switch (activePriority)
+        {
+            case BehaviorPriority::COMBAT:    urgency = 1.0f; break;
+            case BehaviorPriority::FLEEING:   urgency = 0.95f; break;
+            case BehaviorPriority::CASTING:   urgency = 0.7f; break;
+            case BehaviorPriority::FOLLOW:    urgency = 0.5f; break;
+            case BehaviorPriority::MOVEMENT:  urgency = 0.4f; break;
+            case BehaviorPriority::GATHERING: urgency = 0.3f; break;
+            case BehaviorPriority::TRADING:   urgency = 0.2f; break;
+            case BehaviorPriority::SOCIAL:    urgency = 0.1f; break;
+            case BehaviorPriority::SOLO:      urgency = 0.1f; break;
+            default:                          urgency = 0.0f; break;
+        }
+
+        if (urgency > 0.0f)
+        {
+            DecisionVote vote(
+                DecisionSource::BEHAVIOR_PRIORITY,
+                static_cast<uint32>(activePriority),
+                nullptr, // BehaviorPriority doesn't specify targets
+                confidence,
+                urgency,
+                "BehaviorPriority: Active priority"
+            );
+            votes.push_back(vote);
+
+            if (_debugLogging)
+                LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_PRIORITY)]));
+        }
+    }
+
+    // ========================================================================
+    // 2. ACTION PRIORITY QUEUE - Spell priority (currently not implemented)
+    // ========================================================================
+    // Note: ActionPriorityQueue is not yet implemented in the codebase
+    // When implemented, it should provide the highest priority spell
+    // based on cooldown availability, resource cost, and combat situation
+
+    // ========================================================================
+    // 3. BEHAVIOR TREE - Hierarchical decisions (currently not implemented)
+    // ========================================================================
+    // Note: Behavior Trees are not yet implemented in the codebase
+    // When implemented, they should provide structured decision paths
+    // based on combat flow and state machines
+
+    // ========================================================================
+    // 4. ADAPTIVE BEHAVIOR MANAGER - Role-specific recommendations
+    // ========================================================================
+    // Note: AdaptiveBehaviorManager exists but needs GetRecommendedAction() method
+    // For now, provide a basic vote if in combat
+    if (bot->IsInCombat())
+    {
+        // Adaptive behavior would recommend actions based on role
+        // For now, provide a moderate confidence vote
+        DecisionVote vote(
+            DecisionSource::ADAPTIVE_BEHAVIOR,
+            0, // TODO: Get recommended action from AdaptiveBehaviorManager
+            nullptr,
+            0.6f, // Moderate confidence
+            0.5f, // Medium urgency
+            "AdaptiveBehavior: Role-based recommendation (stub)"
+        );
+        // Only add if we have a valid action (currently 0, so skip)
+        // votes.push_back(vote);
+    }
+
+    // ========================================================================
+    // 5. ACTION SCORING ENGINE - Utility-based scoring
+    // ========================================================================
+    // Note: ActionScoringEngine exists and can score actions
+    // However, we need a list of candidate actions to score
+    // This integration requires ClassAI to provide candidate spells
+    // For now, provide a framework vote if scoring is available
+
+    // Example of how this would work when fully integrated:
+    // std::vector<uint32> candidateSpells = GetCandidateSpells(bot);
+    // if (!candidateSpells.empty())
+    // {
+    //     ActionScoringEngine scorer(context, GetBotRole(bot));
+    //     auto scores = scorer.ScoreActions(candidateSpells, ...);
+    //     uint32 bestAction = scorer.GetBestAction(scores);
+    //     if (bestAction != 0)
+    //     {
+    //         DecisionVote vote(...);
+    //         votes.push_back(vote);
+    //     }
+    // }
+
+    if (_debugLogging)
+    {
+        TC_LOG_DEBUG("playerbot", "DecisionFusionSystem: Collected {} vote(s)", votes.size());
     }
 
     return votes;

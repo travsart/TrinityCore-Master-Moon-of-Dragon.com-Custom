@@ -38,6 +38,7 @@
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
+#include "Decision/DecisionFusionSystem.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/Arbiter/MovementArbiter.h"
 #include "Movement/Arbiter/MovementRequest.h"
@@ -124,6 +125,12 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _managerRegistry = std::make_unique<ManagerRegistry>();
 
     TC_LOG_INFO("module.playerbot", "🔄 EVENT DISPATCHER & MANAGER REGISTRY: {} - Phase 7.1 integration ready",
+                _bot->GetName());
+
+    // Phase 5E: Initialize decision fusion system for unified action arbitration
+    _decisionFusion = std::make_unique<bot::ai::DecisionFusionSystem>();
+
+    TC_LOG_INFO("module.playerbot", "🎯 DECISION FUSION SYSTEM: {} - Phase 5E unified arbitration ready",
                 _bot->GetName());
 
     // Phase 7.3: Legacy Phase 6 observer system removed (dead code)
