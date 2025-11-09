@@ -120,6 +120,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.h
 
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
