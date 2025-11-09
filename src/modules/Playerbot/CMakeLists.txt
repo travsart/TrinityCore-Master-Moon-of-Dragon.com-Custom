@@ -103,6 +103,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/UtilityContextBuilder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/Evaluators/CombatEvaluators.h
 
+    # Hybrid AI Decision System: Behavior Tree Execution Layer (Phase 2)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/CombatNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/HealingNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/MovementNodes.h
+
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
