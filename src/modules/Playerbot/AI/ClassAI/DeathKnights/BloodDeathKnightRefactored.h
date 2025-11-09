@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Blood Death Knight Refactored - Template-Based Implementation
  *
@@ -199,6 +199,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _boneShieldStacks;
     uint32 _lastMarrowrendTime;
 };
@@ -224,9 +225,6 @@ public:
         , _lastDeathStrikeTime(0)
     {        // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "BloodDeathKnightRefactored initialized for {}", bot->GetName());
     }
 
@@ -409,7 +407,27 @@ protected:
         if (healthPct < 80.0f && this->CanCastSpell(ANTI_MAGIC_SHELL, bot))
         {
             this->CastSpell(bot, ANTI_MAGIC_SHELL);
-            TC_LOG_DEBUG("playerbot", "Blood: Anti-Magic Shell");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {MARROWREND, 0, 1},
+            {HEART_STRIKE, 0, 1},
+            {BLOOD_BOIL, 0, 1},
+            {DEATH_STRIKE, 0, 1},
+            {DARK_COMMAND, CooldownPresets::DISPEL, 1},
+            {VAMPIRIC_BLOOD, 90000, 1},
+            {DANCING_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {ICEBOUND_FORTITUDE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {ANTI_MAGIC_SHELL, CooldownPresets::OFFENSIVE_60, 1},
+            {RUNE_TAP, 25000, 1},
+            {DEATH_GRIP, 25000, 1},
+            {DEATHS_ADVANCE, 90000, 1},
+            {GOREFIENDS_GRASP, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {ARMY_OF_THE_DEAD, 480000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Blood: Anti-Magic Shell");
             return;
         }
 
@@ -514,23 +532,7 @@ private:
         this->_resource.Consume(count);
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(MARROWREND, 0);                // No CD, rune-gated
-        RegisterCooldown(HEART_STRIKE, 0);              // No CD, rune-gated
-        RegisterCooldown(BLOOD_BOIL, 0);                // No CD, rune-gated
-        RegisterCooldown(DEATH_STRIKE, 0);              // No CD, RP-gated
-        RegisterCooldown(DARK_COMMAND, 8000);           // 8 sec CD (taunt)
-        RegisterCooldown(VAMPIRIC_BLOOD, 90000);        // 1.5 min CD
-        RegisterCooldown(DANCING_RUNE_WEAPON, 120000);  // 2 min CD
-        RegisterCooldown(ICEBOUND_FORTITUDE, 180000);   // 3 min CD
-        RegisterCooldown(ANTI_MAGIC_SHELL, 60000);      // 1 min CD
-        RegisterCooldown(RUNE_TAP, 25000);              // 25 sec CD
-        RegisterCooldown(DEATH_GRIP, 25000);            // 25 sec CD
-        RegisterCooldown(DEATHS_ADVANCE, 90000);        // 1.5 min CD
-        RegisterCooldown(GOREFIENDS_GRASP, 120000);     // 2 min CD
-        RegisterCooldown(ARMY_OF_THE_DEAD, 480000);     // 8 min CD
-    }
+    
 
 private:
     BloodBoneShieldTracker _boneShieldTracker;

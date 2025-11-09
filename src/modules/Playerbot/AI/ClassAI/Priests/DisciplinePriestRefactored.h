@@ -123,6 +123,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _atonementTargets; // GUID -> expiration time
 };
 
@@ -280,13 +281,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastRaptureTime = 0;
-        _lastEvangelismTime = 0;
-        _lastBarrierTime = 0;
-        _lastPainSuppressionTime = 0;
-    }    void UpdateDisciplineState()
+        void UpdateDisciplineState()
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -651,7 +646,7 @@ private:
     }
 
     // Member variables
-    AtonementTracker _atonementTracker;
+    BuffTracker _atonementTracker;
     PowerWordShieldTracker _shieldTracker;
 
     bool _raptureActive;

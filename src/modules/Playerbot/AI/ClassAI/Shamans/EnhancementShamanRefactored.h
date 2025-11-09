@@ -95,6 +95,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _maelstromStacks;
     uint32 _maelstromEndTime;
 };
@@ -235,11 +236,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastAscendanceTime = 0;
-        _lastFeralSpiritTime = 0;
-        _lastSunderingTime = 0;    }
+    
 
     void UpdateEnhancementState()
     {

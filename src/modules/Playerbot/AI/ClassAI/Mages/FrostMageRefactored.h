@@ -87,6 +87,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _fofStacks;
     uint32 _fofEndTime;
 };
@@ -259,11 +260,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastIcyVeinsTime = 0;
-        _lastFrozenOrbTime = 0;
-    }
+    
 
     void UpdateFrostState()    {
         Player* bot = this->GetBot();

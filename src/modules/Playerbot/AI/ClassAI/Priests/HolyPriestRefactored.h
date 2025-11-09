@@ -125,6 +125,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
 };
 
@@ -299,14 +300,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastApotheosisTime = 0;
-        _lastDivineHymnTime = 0;
-        _lastGuardianSpiritTime = 0;
-        _lastSalvationTime = 0;
-        _lastSymbolOfHopeTime = 0;
-    }
+    
 
     void UpdateHolyState()
     {
@@ -708,8 +702,8 @@ private:
     }
 
     // Member variables
-    RenewTracker _renewTracker;
-    PrayerOfMendingTracker _pomTracker;
+    HotTracker _renewTracker;
+    HotTracker _pomTracker;
 
     bool _apotheosisActive;
     uint32 _apotheosisEndTime;

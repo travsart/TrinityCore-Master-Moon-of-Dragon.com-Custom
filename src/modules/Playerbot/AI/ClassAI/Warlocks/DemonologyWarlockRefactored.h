@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Demonology Warlock Refactored - Template-Based Implementation
  *
@@ -221,6 +221,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _wildImpCount;
     bool _dreadstalkerActive;
     uint32 _dreadstalkerEndTime;
@@ -249,9 +250,6 @@ public:
         , _lastTyrantTime(0)
     {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "DemonologyWarlockRefactored initialized for {}", bot->GetName());
     }
 
@@ -317,7 +315,22 @@ protected:
         if (this->CanCastSpell(GRIMOIRE_FELGUARD, this->GetBot()))
         {
             this->CastSpell(this->GetBot(), GRIMOIRE_FELGUARD);
-            TC_LOG_DEBUG("playerbot", "Demonology: Grimoire Felguard");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {CALL_DREADSTALKERS, 0, 1},
+            {SUMMON_DEMONIC_TYRANT, 90000, 1},
+            {GRIMOIRE_FELGUARD, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {NETHER_PORTAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {GUILLOTINE, CooldownPresets::OFFENSIVE_45, 1},
+            {UNENDING_RESOLVE_DEMO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DARK_PACT_DEMO, CooldownPresets::OFFENSIVE_60, 1},
+            {MORTAL_COIL_DEMO, CooldownPresets::OFFENSIVE_45, 1},
+            {SHADOWFURY, CooldownPresets::OFFENSIVE_60, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Demonology: Grimoire Felguard");
             return;
         }
 
@@ -538,18 +551,7 @@ private:
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(CALL_DREADSTALKERS, 0);        // No CD, shard-gated
-        RegisterCooldown(SUMMON_DEMONIC_TYRANT, 90000); // 1.5 min CD
-        RegisterCooldown(GRIMOIRE_FELGUARD, 120000);    // 2 min CD
-        RegisterCooldown(NETHER_PORTAL, 180000);        // 3 min CD
-        RegisterCooldown(GUILLOTINE, 45000);            // 45 sec CD
-        RegisterCooldown(UNENDING_RESOLVE_DEMO, 180000);// 3 min CD
-        RegisterCooldown(DARK_PACT_DEMO, 60000);        // 1 min CD
-        RegisterCooldown(MORTAL_COIL_DEMO, 45000);      // 45 sec CD
-        RegisterCooldown(SHADOWFURY, 60000);            // 1 min CD
-    }
+    
 
 private:
     DemonologyDemonTracker _demonTracker;

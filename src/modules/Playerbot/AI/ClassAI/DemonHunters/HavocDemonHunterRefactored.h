@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Havoc Demon Hunter Specialization - REFACTORED
  *
@@ -128,6 +128,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     Player* _bot;
     uint32 _fragmentCount;
     uint32 _lastFragmentTime;
@@ -268,7 +269,6 @@ public:
         _resource = 0;      // Start with no fury
 
         // Setup Havoc-specific cooldown tracking
-        InitializeCooldowns();
     }
 
     // ========================================================================
@@ -758,19 +758,7 @@ private:
         _resource = std::min<uint32>(_resource + amount, _maxResource);
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Havoc specific cooldowns
-        RegisterCooldown(SPELL_METAMORPHOSIS, 240000);    // 4 minute CD (reduced by Cycle of Hatred)
-        RegisterCooldown(SPELL_EYE_BEAM, 30000);          // 30 second CD
-        RegisterCooldown(SPELL_BLADE_DANCE, 9000);        // 9 second CD
-        RegisterCooldown(SPELL_FEL_BARRAGE, 60000);       // 1 minute CD
-        RegisterCooldown(SPELL_CHAOS_NOVA, 60000);        // 1 minute CD
-        RegisterCooldown(SPELL_DARKNESS, 180000);         // 3 minute CD
-        RegisterCooldown(SPELL_BLUR, 60000);              // 1 minute CD
-        RegisterCooldown(SPELL_DISRUPT, 15000);           // 15 second CD
-        RegisterCooldown(SPELL_IMMOLATION_AURA, 30000);   // 30 second CD
-    }
+    
 
 private:
     HavocSoulFragmentTracker _soulFragments;

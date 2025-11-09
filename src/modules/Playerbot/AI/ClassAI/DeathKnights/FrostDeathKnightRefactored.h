@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Frost Death Knight Refactored - Template-Based Implementation
  *
@@ -189,6 +189,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     bool _kmActive;
     uint32 _kmStacks;
 };
@@ -251,9 +252,6 @@ public:
         , _lastRemorselessWinterTime(0)
     {        // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "FrostDeathKnightRefactored initialized for {}", bot->GetName());
     }
 
@@ -447,7 +445,25 @@ protected:
             this->CastSpell(bot, PILLAR_OF_FROST);
             _pillarOfFrostActive = true;
             _pillarEndTime = getMSTime() + 12000; // 12 sec duration
-            TC_LOG_DEBUG("playerbot", "Frost: Pillar of Frost activated");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {OBLITERATE, 0, 1},
+            {FROST_STRIKE, 0, 1},
+            {HOWLING_BLAST, 0, 1},
+            {REMORSELESS_WINTER, 20000, 1},
+            {PILLAR_OF_FROST, CooldownPresets::OFFENSIVE_60, 1},
+            {EMPOWER_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {BREATH_OF_SINDRAGOSA, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {FROSTWYRMS_FURY, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DEATH_GRIP_FROST, 25000, 1},
+            {ANTI_MAGIC_SHELL_FROST, CooldownPresets::OFFENSIVE_60, 1},
+            {ICEBOUND_FORTITUDE_FROST, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DEATHS_ADVANCE_FROST, 90000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Frost: Pillar of Frost activated");
         }
 
         // Empower Rune Weapon (rune refresh)
@@ -561,21 +577,7 @@ private:
         this->_resource.Consume(count);
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(OBLITERATE, 0);                // No CD, rune-gated
-        RegisterCooldown(FROST_STRIKE, 0);              // No CD, RP-gated
-        RegisterCooldown(HOWLING_BLAST, 0);             // No CD, rune-gated
-        RegisterCooldown(REMORSELESS_WINTER, 20000);    // 20 sec CD
-        RegisterCooldown(PILLAR_OF_FROST, 60000);       // 1 min CD
-        RegisterCooldown(EMPOWER_RUNE_WEAPON, 120000);  // 2 min CD
-        RegisterCooldown(BREATH_OF_SINDRAGOSA, 120000); // 2 min CD
-        RegisterCooldown(FROSTWYRMS_FURY, 180000);      // 3 min CD
-        RegisterCooldown(DEATH_GRIP_FROST, 25000);      // 25 sec CD
-        RegisterCooldown(ANTI_MAGIC_SHELL_FROST, 60000);// 1 min CD
-        RegisterCooldown(ICEBOUND_FORTITUDE_FROST, 180000); // 3 min CD
-        RegisterCooldown(DEATHS_ADVANCE_FROST, 90000);  // 1.5 min CD
-    }
+    
 
 private:
     FrostKillingMachineTracker _kmTracker;

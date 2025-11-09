@@ -83,6 +83,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _maelstrom;
     uint32 _maxMaelstrom;
 };
@@ -345,14 +346,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastAscendanceTime = 0;
-        _lastFireElementalTime = 0;
-        _lastStormkeeperTime = 0;
-        _lastEchoingShockTime = 0;
-        _lastPrimordialWaveTime = 0;
-    }
+    
 
     void UpdateElementalState()
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Subtlety Rogue Refactored - Template-Based Implementation
  *
@@ -162,6 +162,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _charges;
     const uint32 _maxCharges;
     bool _active;
@@ -204,9 +205,6 @@ public:
         this->_resource.maxEnergy = 100;
         this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "SubtletyRogueRefactored initialized for {}", bot->GetName());
     }
 
@@ -491,19 +489,7 @@ private:
         return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());
     }
 
-    void InitializeCooldowns()
-    {
-        this->RegisterCooldown(RogueAI::SHADOW_DANCE, 60000);        // 60 sec per charge
-        this->RegisterCooldown(RogueAI::SYMBOLS_OF_DEATH, 30000);    // 30 sec CD
-        this->RegisterCooldown(RogueAI::SHADOW_BLADES, 180000);      // 3 min CD
-        this->RegisterCooldown(SHURIKEN_TORNADO_TALENT, 60000);      // 1 min CD
-        this->RegisterCooldown(RogueAI::VANISH, 120000);             // 2 min CD
-        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000);   // 2 min CD
-        this->RegisterCooldown(RogueAI::EVASION, 120000);            // 2 min CD
-        this->RegisterCooldown(RogueAI::KICK, 15000);                // 15 sec CD
-        this->RegisterCooldown(RogueAI::BLIND, 120000);              // 2 min CD
-        this->RegisterCooldown(MARKED_FOR_DEATH_SUB, 60000);         // 1 min CD
-    }
+    
 
 private:
     ShadowDanceTracker _shadowDanceTracker;

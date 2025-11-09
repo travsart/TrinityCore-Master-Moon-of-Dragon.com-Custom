@@ -278,6 +278,7 @@ if (!thrash)
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _rakeTargets;
     std::unordered_map<ObjectGuid, uint32> _ripTargets;
     std::unordered_map<ObjectGuid, uint32> _thrashTargets;
@@ -414,11 +415,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastTigersFuryTime = 0;
-        _lastBerserkTime = 0;
-    }
+    
 
     void UpdateFeralState(::Unit* target)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Marksmanship Hunter Specialization - REFACTORED
  *
@@ -113,6 +113,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _charges;
     uint32 _expireTime;
     uint32 _aimedShotWindup;
@@ -249,8 +250,6 @@ public:
         // Resource regeneration is managed by the FocusResource type
 
         // Setup MM-specific cooldown tracking
-        InitializeCooldowns();
-
         // Check for Lone Wolf preference
         CheckLoneWolfStatus();
     }
@@ -556,19 +555,7 @@ private:
         }
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Marksmanship specific cooldowns
-        RegisterCooldown(SPELL_AIMED_SHOT, 12000);          // 12 second CD with charges
-        RegisterCooldown(SPELL_RAPID_FIRE, 20000);          // 20 second CD
-        RegisterCooldown(SPELL_TRUESHOT, 180000);           // 3 minute CD
-        RegisterCooldown(SPELL_DOUBLE_TAP, 60000);          // 1 minute CD
-        RegisterCooldown(SPELL_EXPLOSIVE_SHOT, 30000);      // 30 second CD
-        RegisterCooldown(SPELL_BINDING_SHOT, 45000);        // 45 second CD
-        RegisterCooldown(SPELL_BURSTING_SHOT, 30000);       // 30 second CD
-        RegisterCooldown(SPELL_COUNTER_SHOT_MM, 24000);     // 24 second CD
-        RegisterCooldown(SPELL_EXHILARATION_MM, 120000);    // 2 minute CD
-    }
+    
 
 private:
     // ========================================================================

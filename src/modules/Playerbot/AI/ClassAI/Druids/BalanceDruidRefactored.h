@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Balance Druid Refactored - Template-Based Implementation
  *
@@ -185,6 +185,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     EclipseState _currentEclipse;
     uint32 _eclipseEndTime;
 };
@@ -283,9 +284,6 @@ public:
         , _shootingStarsProc(false)
     {        // Initialize mana/astral power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "BalanceDruidRefactored initialized for {}", bot->GetName());
     }
 
@@ -476,7 +474,27 @@ protected:
         if (ap >= 40 && this->CanCastSpell(INCARNATION_CHOSEN, bot))
         {
             this->CastSpell(bot, INCARNATION_CHOSEN);
-            TC_LOG_DEBUG("playerbot", "Balance: Incarnation activated");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {WRATH, 0, 1},
+            {STARFIRE, 0, 1},
+            {STARSURGE, 0, 1},
+            {STARFALL, 0, 1},
+            {MOONFIRE, 0, 1},
+            {SUNFIRE, 0, 1},
+            {INCARNATION_CHOSEN, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {CELESTIAL_ALIGNMENT, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {CONVOKE_THE_SPIRITS, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {WARRIOR_OF_ELUNE, CooldownPresets::OFFENSIVE_45, 1},
+            {FURY_OF_ELUNE, CooldownPresets::OFFENSIVE_60, 1},
+            {BARKSKIN, CooldownPresets::OFFENSIVE_60, 1},
+            {RENEWAL, 90000, 1},
+            {SOLAR_BEAM, CooldownPresets::OFFENSIVE_60, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Balance: Incarnation activated");
         }
         else if (ap >= 40 && this->CanCastSpell(CELESTIAL_ALIGNMENT, bot))
         {
@@ -580,23 +598,7 @@ private:
         this->_resource.astralPower = (this->_resource.astralPower > amount) ? this->_resource.astralPower - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(WRATH, 0);                     // No CD
-        RegisterCooldown(STARFIRE, 0);                  // No CD
-        RegisterCooldown(STARSURGE, 0);                 // No CD, AP-gated
-        RegisterCooldown(STARFALL, 0);                  // No CD, AP-gated
-        RegisterCooldown(MOONFIRE, 0);                  // No CD
-        RegisterCooldown(SUNFIRE, 0);                   // No CD
-        RegisterCooldown(INCARNATION_CHOSEN, 180000);   // 3 min CD
-        RegisterCooldown(CELESTIAL_ALIGNMENT, 180000);  // 3 min CD
-        RegisterCooldown(CONVOKE_THE_SPIRITS, 120000);  // 2 min CD
-        RegisterCooldown(WARRIOR_OF_ELUNE, 45000);      // 45 sec CD
-        RegisterCooldown(FURY_OF_ELUNE, 60000);         // 1 min CD
-        RegisterCooldown(BARKSKIN, 60000);              // 1 min CD
-        RegisterCooldown(RENEWAL, 90000);               // 1.5 min CD
-        RegisterCooldown(SOLAR_BEAM, 60000);            // 1 min CD
-    }
+    
 
 private:
     BalanceEclipseTracker _eclipseTracker;

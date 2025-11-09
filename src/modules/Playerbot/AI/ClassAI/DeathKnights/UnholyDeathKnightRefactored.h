@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Unholy Death Knight Refactored - Template-Based Implementation
  *
@@ -182,6 +182,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
@@ -272,9 +273,6 @@ public:
     {
         // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "UnholyDeathKnightRefactored initialized for {}", bot->GetName());
     }
 
@@ -449,7 +447,28 @@ protected:
         {
             this->CastSpell(target, APOCALYPSE);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            TC_LOG_DEBUG("playerbot", "Unholy: Apocalypse");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {FESTERING_STRIKE, 0, 1},
+            {SCOURGE_STRIKE, 0, 1},
+            {DEATH_COIL, 0, 1},
+            {OUTBREAK, 0, 1},
+            {DARK_TRANSFORMATION, 0, 1},
+            {APOCALYPSE, 90000, 1},
+            {ARMY_OF_THE_DEAD_UNHOLY, 480000, 1},
+            {SUMMON_GARGOYLE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {UNHOLY_ASSAULT, 90000, 1},
+            {UNHOLY_BLIGHT, CooldownPresets::OFFENSIVE_45, 1},
+            {SOUL_REAPER, 6000, 1},
+            {DEATH_GRIP_UNHOLY, 25000, 1},
+            {ANTI_MAGIC_SHELL_UNHOLY, CooldownPresets::OFFENSIVE_60, 1},
+            {ICEBOUND_FORTITUDE_UNHOLY, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DEATHS_ADVANCE_UNHOLY, 90000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Unholy: Apocalypse");
         }
 
         // Army of the Dead
@@ -575,24 +594,7 @@ private:
         this->_resource.Consume(count);
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(FESTERING_STRIKE, 0);          // No CD, rune-gated
-        RegisterCooldown(SCOURGE_STRIKE, 0);            // No CD, rune-gated
-        RegisterCooldown(DEATH_COIL, 0);                // No CD, RP-gated
-        RegisterCooldown(OUTBREAK, 0);                  // No CD
-        RegisterCooldown(DARK_TRANSFORMATION, 0);       // No CD, RP-gated
-        RegisterCooldown(APOCALYPSE, 90000);            // 1.5 min CD
-        RegisterCooldown(ARMY_OF_THE_DEAD_UNHOLY, 480000); // 8 min CD
-        RegisterCooldown(SUMMON_GARGOYLE, 180000);      // 3 min CD
-        RegisterCooldown(UNHOLY_ASSAULT, 90000);        // 1.5 min CD
-        RegisterCooldown(UNHOLY_BLIGHT, 45000);         // 45 sec CD
-        RegisterCooldown(SOUL_REAPER, 6000);            // 6 sec CD
-        RegisterCooldown(DEATH_GRIP_UNHOLY, 25000);     // 25 sec CD
-        RegisterCooldown(ANTI_MAGIC_SHELL_UNHOLY, 60000); // 1 min CD
-        RegisterCooldown(ICEBOUND_FORTITUDE_UNHOLY, 180000); // 3 min CD
-        RegisterCooldown(DEATHS_ADVANCE_UNHOLY, 90000); // 1.5 min CD
-    }
+    
 
 private:
     UnholyFesteringWoundTracker _woundTracker;

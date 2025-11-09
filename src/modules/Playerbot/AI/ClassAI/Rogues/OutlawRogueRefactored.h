@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Outlaw Rogue Refactored - Template-Based Implementation
  *
@@ -189,6 +189,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::vector<Buff> _buffs;
 };
 
@@ -222,9 +223,6 @@ public:
         this->_resource.maxEnergy = 100;
         this->_resource.maxComboPoints = bot->HasSpell(193531) ? 6 : 5; // Deeper Stratagem        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "OutlawRogueRefactored initialized for {}", bot->GetName());
     }
 
@@ -506,25 +504,9 @@ private:
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
-    float GetDistanceToTarget(::Unit* target) const
-    {
-        if (!target || !this->GetBot())
-            return 1000.0f;
-        return this->GetBot()->GetDistance(target);
-    }
+    
 
-    void InitializeCooldowns()
-    {
-        this->RegisterCooldown(RogueAI::ADRENALINE_RUSH, 180000);       // 3 min CD
-        this->RegisterCooldown(RogueAI::KILLING_SPREE, 120000);         // 2 min CD
-        this->RegisterCooldown(BLADE_RUSH, 45000);                      // 45 sec CD
-        this->RegisterCooldown(RogueAI::VANISH, 120000);                // 2 min CD
-        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000);      // 2 min CD
-        this->RegisterCooldown(RogueAI::KICK, 15000);                   // 15 sec CD
-        this->RegisterCooldown(RogueAI::BLIND, 120000);                 // 2 min CD
-        this->RegisterCooldown(RogueAI::GOUGE, 15000);                  // 15 sec CD
-        this->RegisterCooldown(MARKED_FOR_DEATH, 60000);                // 1 min CD
-    }
+    
 
 private:
     RollTheBonesTracker _rollTheBonesTracker;

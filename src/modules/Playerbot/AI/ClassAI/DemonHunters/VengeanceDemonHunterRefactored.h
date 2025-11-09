@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Vengeance Demon Hunter Refactored - Template-Based Implementation
  *
@@ -134,6 +134,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _fragmentCount;
     const uint32 _maxFragments;
     uint32 _lastFragmentTime;
@@ -372,7 +373,24 @@ protected:
         {
             this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
             _lastSigilOfFlameTime = now;
-            TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame cast");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
+            {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
+            {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
+            {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
+            {SIGIL_OF_MISERY, 90000, 1},
+            {SIGIL_OF_CHAINS, 90000, 1},
+            {INFERNAL_STRIKE, 20000, 1},
+            {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
+            {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
+            {TORMENT, CooldownPresets::DISPEL, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame cast");
             return;
         }
 
@@ -687,21 +705,7 @@ private:
         _resource = std::min<uint32>(_resource + amount, _maxResource);
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Vengeance specific cooldowns
-        RegisterCooldown(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, 180000);  // 3 minute CD
-        RegisterCooldown(DemonHunterSpells::DEMON_SPIKES, 20000);              // 20 sec per charge
-        RegisterCooldown(DemonHunterSpells::FIERY_BRAND, 60000);               // 1 minute CD
-        RegisterCooldown(DemonHunterSpells::SIGIL_OF_FLAME, 30000);            // 30 sec CD
-        RegisterCooldown(SIGIL_OF_SILENCE, 60000);                             // 1 minute CD
-        RegisterCooldown(SIGIL_OF_MISERY, 90000);                              // 1.5 minute CD
-        RegisterCooldown(SIGIL_OF_CHAINS, 90000);                              // 1.5 minute CD
-        RegisterCooldown(INFERNAL_STRIKE, 20000);                              // 20 sec per charge
-        RegisterCooldown(SOUL_BARRIER, 30000);                                 // 30 sec CD
-        RegisterCooldown(FEL_DEVASTATION, 60000);                              // 1 minute CD
-        RegisterCooldown(TORMENT, 8000);                                       // 8 sec CD (taunt)
-    }
+    
 
 private:
     VengeanceSoulFragmentManager _soulFragments;

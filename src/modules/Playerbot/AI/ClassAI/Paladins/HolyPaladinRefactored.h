@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Holy Paladin Refactored - Template-Based Implementation
  *
@@ -164,6 +164,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     ObjectGuid _primaryBeaconGuid;
     ObjectGuid _secondaryBeaconGuid;
     bool _hasBeaconOfFaith;
@@ -196,9 +197,6 @@ public:
         // Check if bot has Beacon of Faith talent
         if (bot->HasSpell(BEACON_OF_FAITH))
             _beaconTracker.EnableBeaconOfFaith();
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "HolyPaladinRefactored initialized for {}", bot->GetName());
     }
 
@@ -573,19 +571,7 @@ private:
         this->_resource.holyPower = (this->_resource.holyPower > amount) ? this->_resource.holyPower - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(HOLY_SHOCK, 7500);             // 7.5 sec CD
-        RegisterCooldown(DIVINE_TOLL, 60000);           // 1 min CD
-        RegisterCooldown(AVENGING_WRATH_HOLY, 120000);  // 2 min CD
-        RegisterCooldown(AVENGING_CRUSADER, 120000);    // 2 min CD
-        RegisterCooldown(HOLY_AVENGER, 120000);         // 2 min CD
-        RegisterCooldown(LAY_ON_HANDS, 600000);         // 10 min CD
-        RegisterCooldown(DIVINE_SHIELD, 300000);        // 5 min CD
-        RegisterCooldown(DIVINE_PROTECTION, 300000);    // 5 min CD
-        RegisterCooldown(BLESSING_OF_SACRIFICE, 120000); // 2 min CD
-        RegisterCooldown(AURA_MASTERY, 180000);         // 3 min CD
-    }
+    
 
 private:
     HolyPaladinBeaconTracker _beaconTracker;

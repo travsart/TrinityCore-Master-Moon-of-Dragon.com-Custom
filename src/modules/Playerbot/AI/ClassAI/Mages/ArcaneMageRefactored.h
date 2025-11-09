@@ -78,6 +78,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _charges;
     uint32 _maxCharges;
 };
@@ -226,12 +227,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastArcaneSurgeTime = 0;
-        _lastEvocationTime = 0;
-        _lastPresenceOfMindTime = 0;
-    }
+    
 
     void UpdateArcaneState()    {
         Player* bot = this->GetBot();

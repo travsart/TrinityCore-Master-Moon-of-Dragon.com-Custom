@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Survival Hunter Specialization - REFACTORED
  *
@@ -155,6 +155,7 @@ public:
     void EnableWildfireInfusion() { _hasWildfireInfusion = true; }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _charges;
     uint32 _maxCharges;
     uint32 _lastRecharge;
@@ -360,7 +361,6 @@ public:
         _bombManager.EnableWildfireInfusion();
 
         // Setup Survival-specific cooldown tracking
-        InitializeCooldowns();
     }
 
     // ========================================================================
@@ -706,19 +706,7 @@ private:
         }
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Survival specific cooldowns
-        RegisterCooldown(SPELL_COORDINATED_ASSAULT, 120000);  // 2 minute CD
-        RegisterCooldown(SPELL_ASPECT_OF_EAGLE, 90000);       // 90 second CD
-        RegisterCooldown(SPELL_FLANKING_STRIKE, 30000);       // 30 second CD
-        RegisterCooldown(SPELL_KILL_COMMAND_SURV, 10000);     // 10 second CD
-        RegisterCooldown(SPELL_HARPOON, 30000);               // 30 second CD
-        RegisterCooldown(SPELL_BUTCHERY, 45000);              // 45 second CD
-        RegisterCooldown(SPELL_MUZZLE, 15000);                // 15 second CD
-        RegisterCooldown(SPELL_EXHILARATION_SURV, 120000);    // 2 minute CD
-        RegisterCooldown(SPELL_SURVIVAL_OF_FITTEST, 180000);  // 3 minute CD
-    }private:    // ========================================================================
+    private:    // ========================================================================
     // HUNTER SPECIALIZATION ABSTRACT METHOD IMPLEMENTATIONS
     // ========================================================================
 

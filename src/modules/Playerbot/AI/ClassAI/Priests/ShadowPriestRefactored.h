@@ -77,6 +77,7 @@ public:
     void Reset() { _insanity = 0; }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _insanity;
     uint32 _maxInsanity;
 };
@@ -354,13 +355,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastDarkAscensionTime = 0;
-        _lastVoidTorrentTime = 0;
-        _lastMindgamesTime = 0;
-        _lastVampiricEmbraceTime = 0;
-    }
+    
 
     void UpdateShadowState()
     {

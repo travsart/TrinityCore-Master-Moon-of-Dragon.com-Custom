@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Protection Paladin Refactored - Template-Based Implementation
  *
@@ -171,6 +171,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     bool _shieldActive;
     uint32 _shieldEndTime;
     uint32 _shieldStacks;
@@ -198,9 +199,6 @@ public:
     {
         // Initialize mana/holy power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored initialized for {}", bot->GetName());
     }
 
@@ -389,7 +387,24 @@ protected:
         if (healthPct < 15.0f && this->CanCastSpell(DIVINE_SHIELD_PROT, bot))
         {
             this->CastSpell(bot, DIVINE_SHIELD_PROT);
-            TC_LOG_DEBUG("playerbot", "Protection: Divine Shield emergency");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {JUDGMENT_PROT, 6000, 1},
+            {HAMMER_OF_WRATH_PROT, 7500, 1},
+            {AVENGERS_SHIELD, CooldownPresets::INTERRUPT, 1},
+            {GUARDIAN_OF_ANCIENT_KINGS, 300000, 1},
+            {ARDENT_DEFENDER, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {DIVINE_PROTECTION_PROT, CooldownPresets::OFFENSIVE_60, 1},
+            {AVENGING_WRATH_PROT, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {LAY_ON_HANDS_PROT, CooldownPresets::BLOODLUST, 1},
+            {DIVINE_SHIELD_PROT, 300000, 1},
+            {HAND_OF_RECKONING, CooldownPresets::DISPEL, 1},
+            {SERAPHIM, CooldownPresets::OFFENSIVE_45, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Protection: Divine Shield emergency");
             return;
         }
 
@@ -465,20 +480,7 @@ private:
         this->_resource.holyPower = (this->_resource.holyPower > amount) ? this->_resource.holyPower - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(JUDGMENT_PROT, 6000);              // 6 sec CD
-        RegisterCooldown(HAMMER_OF_WRATH_PROT, 7500);       // 7.5 sec CD
-        RegisterCooldown(AVENGERS_SHIELD, 15000);           // 15 sec CD
-        RegisterCooldown(GUARDIAN_OF_ANCIENT_KINGS, 300000); // 5 min CD
-        RegisterCooldown(ARDENT_DEFENDER, 120000);          // 2 min CD
-        RegisterCooldown(DIVINE_PROTECTION_PROT, 60000);    // 1 min CD
-        RegisterCooldown(AVENGING_WRATH_PROT, 120000);      // 2 min CD
-        RegisterCooldown(LAY_ON_HANDS_PROT, 600000);        // 10 min CD
-        RegisterCooldown(DIVINE_SHIELD_PROT, 300000);       // 5 min CD
-        RegisterCooldown(HAND_OF_RECKONING, 8000);          // 8 sec CD (taunt)
-        RegisterCooldown(SERAPHIM, 45000);                  // 45 sec CD
-    }
+    
 
 private:
     ProtectionShieldTracker _shieldTracker;

@@ -126,6 +126,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _riptideTargets; // GUID -> expiration time
 };
 
@@ -289,15 +290,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastAscendanceTime = 0;
-        _lastHealingTideTotemTime = 0;
-        _lastSpiritLinkTotemTime = 0;
-        _lastCloudburstTotemTime = 0;
-        _lastEarthenWallTotemTime = 0;
-        _lastAncestralProtectionTotemTime = 0;
-    }
+    
 
     void UpdateRestorationState()
     {

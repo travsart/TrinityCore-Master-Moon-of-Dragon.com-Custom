@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Affliction Warlock Refactored - Template-Based Implementation
  *
@@ -233,6 +233,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, std::unordered_map<uint32, DoTInfo>> _trackedDoTs;
 };
 
@@ -255,9 +256,6 @@ public:
         , _lastDarkglareTime(0)
     {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "AfflictionWarlockRefactored initialized for {}", bot->GetName());
     }
 
@@ -305,7 +303,21 @@ protected:
             {
                 this->CastSpell(this->GetBot(), SUMMON_DARKGLARE);
                 _lastDarkglareTime = getMSTime();
-                TC_LOG_DEBUG("playerbot", "Affliction: Summon Darkglare");
+                
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {SUMMON_DARKGLARE, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {PHANTOM_SINGULARITY, CooldownPresets::OFFENSIVE_45, 1},
+            {VILE_TAINT, 20000, 1},
+            {SOUL_ROT, CooldownPresets::OFFENSIVE_60, 1},
+            {UNENDING_RESOLVE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DARK_PACT, CooldownPresets::OFFENSIVE_60, 1},
+            {MORTAL_COIL, CooldownPresets::OFFENSIVE_45, 1},
+            {HOWL_OF_TERROR, 40000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Affliction: Summon Darkglare");
                 return;
             }
         }
@@ -528,17 +540,7 @@ private:
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(SUMMON_DARKGLARE, 120000);     // 2 min CD
-        RegisterCooldown(PHANTOM_SINGULARITY, 45000);   // 45 sec CD
-        RegisterCooldown(VILE_TAINT, 20000);            // 20 sec CD
-        RegisterCooldown(SOUL_ROT, 60000);              // 1 min CD
-        RegisterCooldown(UNENDING_RESOLVE, 180000);     // 3 min CD
-        RegisterCooldown(DARK_PACT, 60000);             // 1 min CD
-        RegisterCooldown(MORTAL_COIL, 45000);           // 45 sec CD
-        RegisterCooldown(HOWL_OF_TERROR, 40000);        // 40 sec CD
-    }
+    
 
 private:
     AfflictionDoTTracker _dotTracker;

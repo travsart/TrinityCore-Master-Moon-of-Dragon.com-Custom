@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Destruction Warlock Refactored - Template-Based Implementation
  *
@@ -183,6 +183,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
@@ -247,9 +248,6 @@ public:
         , _lastInfernalTime(0)
     {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "DestructionWarlockRefactored initialized for {}", bot->GetName());
     }
 
@@ -298,7 +296,24 @@ public:
         {
             this->CastSpell(this->GetBot(), SUMMON_INFERNAL);
             _lastInfernalTime = getMSTime();
-            TC_LOG_DEBUG("playerbot", "Destruction: Summon Infernal");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {CONFLAGRATE, 13000, 1},
+            {SUMMON_INFERNAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DARK_SOUL_INSTABILITY, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {SOUL_FIRE, 20000, 1},
+            {CATACLYSM, CooldownPresets::OFFENSIVE_30, 1},
+            {HAVOC, CooldownPresets::OFFENSIVE_30, 1},
+            {SHADOWBURN, 12000, 1},
+            {UNENDING_RESOLVE_DESTRO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DARK_PACT_DESTRO, CooldownPresets::OFFENSIVE_60, 1},
+            {MORTAL_COIL_DESTRO, CooldownPresets::OFFENSIVE_45, 1},
+            {HOWL_OF_TERROR_DESTRO, 40000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Destruction: Summon Infernal");
             // Continue rotation during Infernal
         }
 
@@ -560,20 +575,7 @@ private:
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(CONFLAGRATE, 13000);           // 13 sec CD (2 charges)
-        RegisterCooldown(SUMMON_INFERNAL, 180000);      // 3 min CD
-        RegisterCooldown(DARK_SOUL_INSTABILITY, 120000);// 2 min CD
-        RegisterCooldown(SOUL_FIRE, 20000);             // 20 sec CD
-        RegisterCooldown(CATACLYSM, 30000);             // 30 sec CD
-        RegisterCooldown(HAVOC, 30000);                 // 30 sec CD
-        RegisterCooldown(SHADOWBURN, 12000);            // 12 sec CD
-        RegisterCooldown(UNENDING_RESOLVE_DESTRO, 180000); // 3 min CD
-        RegisterCooldown(DARK_PACT_DESTRO, 60000);      // 1 min CD
-        RegisterCooldown(MORTAL_COIL_DESTRO, 45000);    // 45 sec CD
-        RegisterCooldown(HOWL_OF_TERROR_DESTRO, 40000); // 40 sec CD
-    }
+    
 
 private:
     DestructionImmolateTracker _immolateTracker;

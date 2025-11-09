@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Mistweaver Monk Refactored - Template-Based Implementation
  *
@@ -133,6 +133,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
@@ -215,9 +216,6 @@ public:
     {
         // Initialize mana resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "MistweaverMonkRefactored initialized for {}", bot->GetName());
     }
 
@@ -303,7 +301,22 @@ protected:
         if (lowHealthCount >= 3 && this->CanCastSpell(REVIVAL, bot))
         {
             this->CastSpell(bot, REVIVAL);
-            TC_LOG_DEBUG("playerbot", "Mistweaver: Revival raid heal");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {RENEWING_MIST, 8500, 1},
+            {ESSENCE_FONT, 12000, 1},
+            {LIFE_COCOON, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {REVIVAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {INVOKE_YULON, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {INVOKE_CHI_JI, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {THUNDER_FOCUS_TEA, CooldownPresets::OFFENSIVE_30, 1},
+            {FORTIFYING_BREW_MIST, 360000, 1},
+            {DIFFUSE_MAGIC_MIST, 90000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Mistweaver: Revival raid heal");
             return true;
         }
 
@@ -522,18 +535,7 @@ private:
         return lowestTarget;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(RENEWING_MIST, 8500);          // 8.5 sec CD (2 charges)
-        RegisterCooldown(ESSENCE_FONT, 12000);          // 12 sec CD
-        RegisterCooldown(LIFE_COCOON, 120000);          // 2 min CD
-        RegisterCooldown(REVIVAL, 180000);              // 3 min CD
-        RegisterCooldown(INVOKE_YULON, 180000);         // 3 min CD
-        RegisterCooldown(INVOKE_CHI_JI, 180000);        // 3 min CD
-        RegisterCooldown(THUNDER_FOCUS_TEA, 30000);     // 30 sec CD
-        RegisterCooldown(FORTIFYING_BREW_MIST, 360000); // 6 min CD
-        RegisterCooldown(DIFFUSE_MAGIC_MIST, 90000);    // 1.5 min CD
-    }
+    
 
 private:
     MistweaverReNewingMistTracker _renewingMistTracker;

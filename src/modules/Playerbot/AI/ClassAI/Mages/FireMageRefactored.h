@@ -98,6 +98,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     bool _hotStreakActive;
     bool _heatingUpActive;
     uint32 _hotStreakEndTime;
@@ -229,11 +230,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastCombustionTime = 0;
-        _lastPhoenixFlamesTime = 0;
-    }
+    
 
     void UpdateFireState()
     {

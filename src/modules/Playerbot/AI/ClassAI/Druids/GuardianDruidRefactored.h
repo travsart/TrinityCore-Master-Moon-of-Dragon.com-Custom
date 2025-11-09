@@ -92,6 +92,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _ironfurStacks;
     uint32 _ironfurEndTime;
 };
@@ -250,11 +251,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastBerserkTime = 0;
-        _lastFrenziedRegenerationTime = 0;
-    }
+    
 
     void UpdateGuardianState(::Unit* target)
     {

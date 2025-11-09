@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Brewmaster Monk Refactored - Template-Based Implementation
  *
@@ -176,6 +176,7 @@ public:
     bool ShouldPurify() const { return _staggerPercent > 4.0f; } // Purify at 4%+ of max HP
 
 private:
+    CooldownManager _cooldowns;
     uint32 _staggerAmount;
     float _staggerPercent;
     uint32 _lastStaggerCheck;
@@ -263,9 +264,6 @@ public:
         , _lastKegSmashTime(0)
     {        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "BrewmasterMonkRefactored initialized for {}", bot->GetName());
     }
 
@@ -463,7 +461,23 @@ protected:
                 this->CastSpell(bot, IRONSKIN_BREW);
                 _ironskinBrewActive = true;
                 _ironskinEndTime = getMSTime() + 7000; // 7 sec duration
-                TC_LOG_DEBUG("playerbot", "Brewmaster: Ironskin Brew applied");
+                
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {KEG_SMASH, CooldownPresets::DISPEL, 1},
+            {PROVOKE, CooldownPresets::DISPEL, 1},
+            {PURIFYING_BREW, 20000, 1},
+            {CELESTIAL_BREW, CooldownPresets::OFFENSIVE_60, 1},
+            {FORTIFYING_BREW_BREW, 360000, 1},
+            {DAMPEN_HARM, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {ZEN_MEDITATION, 300000, 1},
+            {INVOKE_NIUZAO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {WEAPONS_OF_ORDER, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {BONEDUST_BREW, CooldownPresets::OFFENSIVE_60, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Brewmaster: Ironskin Brew applied");
                 return;
             }
         }
@@ -563,19 +577,7 @@ private:
         this->_resource.chi = (this->_resource.chi > amount) ? this->_resource.chi - amount : 0;
     }
 
-    void InitializeCooldowns()
-    {
-        RegisterCooldown(KEG_SMASH, 8000);              // 8 sec CD
-        RegisterCooldown(PROVOKE, 8000);                // 8 sec CD (taunt)
-        RegisterCooldown(PURIFYING_BREW, 20000);        // 20 sec CD (2 charges)
-        RegisterCooldown(CELESTIAL_BREW, 60000);        // 1 min CD
-        RegisterCooldown(FORTIFYING_BREW_BREW, 360000); // 6 min CD
-        RegisterCooldown(DAMPEN_HARM, 120000);          // 2 min CD
-        RegisterCooldown(ZEN_MEDITATION, 300000);       // 5 min CD
-        RegisterCooldown(INVOKE_NIUZAO, 180000);        // 3 min CD
-        RegisterCooldown(WEAPONS_OF_ORDER, 120000);     // 2 min CD
-        RegisterCooldown(BONEDUST_BREW, 60000);         // 1 min CD
-    }
+    
 
 private:
     BrewmasterStaggerTracker _staggerTracker;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Protection Warrior Specialization - REFACTORED
  *
@@ -470,6 +470,7 @@ protected:
     }
 
 private:
+    CooldownManager _cooldowns;
     // ========================================================================
     // INITIALIZATION
     // ========================================================================

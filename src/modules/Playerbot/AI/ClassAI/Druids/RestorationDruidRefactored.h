@@ -201,6 +201,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _rejuvenationTargets;
     std::unordered_map<ObjectGuid, uint32> _lifebloomTargets;
     std::unordered_map<ObjectGuid, uint32> _wildGrowthTargets;
@@ -303,11 +304,7 @@ public:
         }
     }
 
-private:    void InitializeCooldowns()
-    {
-        _lastTranquilityTime = 0;
-        _lastInnervateTime = 0;
-    }
+private:    
 
     void UpdateRestorationState()
     {

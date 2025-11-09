@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Beast Mastery Hunter Specialization - REFACTORED
  *
@@ -211,6 +211,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     Player* _bot;
     uint32 _lastMendPet;
     uint32 _lastPetCommand;
@@ -253,7 +254,6 @@ public:
     {
         // Focus regeneration is handled by template system
         // Setup BM-specific cooldown tracking
-        InitializeCooldowns();
     }
 
     // ========================================================================
@@ -525,16 +525,7 @@ private:
         }
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Beast Mastery specific cooldowns
-        RegisterCooldown(SPELL_BESTIAL_WRATH, 90000);      // 90 second CD
-        RegisterCooldown(SPELL_ASPECT_OF_THE_WILD, 120000); // 2 minute CD
-        RegisterCooldown(SPELL_KILL_COMMAND, 7500);         // 7.5 second CD
-        RegisterCooldown(SPELL_DIRE_BEAST, 20000);          // 20 second CD
-        RegisterCooldown(SPELL_EXHILARATION, 120000);       // 2 minute CD
-        RegisterCooldown(SPELL_COUNTER_SHOT, 24000);        // 24 second CD
-    }
+    
 
 private:
     // ========================================================================
