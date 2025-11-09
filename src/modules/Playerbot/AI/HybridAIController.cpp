@@ -19,6 +19,8 @@
 #include "AI/BotAI.h"
 #include "Utility/UtilityContextBuilder.h"
 #include "Utility/Evaluators/CombatEvaluators.h"
+#include "ClassAI/ClassBehaviorTreeRegistry.h"
+#include "Player.h"
 #include "Log.h"
 
 namespace Playerbot
@@ -84,8 +86,41 @@ void HybridAIController::Initialize()
     // Create default behavior-to-tree mappings
     CreateDefaultBehaviorMappings();
 
-    TC_LOG_INFO("playerbot.ai", "HybridAIController initialized: {} behaviors, {} mappings",
-        _utilityAI->GetBehaviorCount(), _behaviorToTreeMap.size());
+    // Phase 5: Register class-specific behavior tree from ClassBehaviorTreeRegistry
+    if (_bot && _bot->GetBot())
+    {
+        Player* player = _bot->GetBot();
+        uint8 classId = player->getClass();
+        uint8 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+
+        // Get class-specific tree from registry
+        std::shared_ptr<BTNode> classTree = ClassBehaviorTreeRegistry::GetTree(
+            static_cast<WowClass>(classId), spec);
+
+        if (classTree)
+        {
+            // Register as custom "class_rotation" behavior
+            _customTreeBuilders["class_rotation"] = [classTree]() -> std::shared_ptr<BTNode> {
+                return classTree;
+            };
+
+            // Also map Combat behavior to use class tree instead of generic melee combat
+            _customTreeBuilders["Combat"] = [classTree]() -> std::shared_ptr<BTNode> {
+                return classTree;
+            };
+
+            TC_LOG_INFO("playerbot.ai", "HybridAIController: Registered class-specific tree for {} (Class: {}, Spec: {})",
+                player->GetName(), uint32(classId), uint32(spec));
+        }
+        else
+        {
+            TC_LOG_WARN("playerbot.ai", "HybridAIController: No class tree found for Class {} Spec {}, using default trees",
+                uint32(classId), uint32(spec));
+        }
+    }
+
+    TC_LOG_INFO("playerbot.ai", "HybridAIController initialized: {} behaviors, {} mappings, {} custom builders",
+        _utilityAI->GetBehaviorCount(), _behaviorToTreeMap.size(), _customTreeBuilders.size());
 }
 
 void HybridAIController::CreateDefaultBehaviorMappings()

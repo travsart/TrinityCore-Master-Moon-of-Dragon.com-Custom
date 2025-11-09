@@ -26,6 +26,7 @@
 #include "Professions/ProfessionManager.h"
 #include "Quest/QuestHubDatabase.h"
 #include "Equipment/BotGearFactory.h"
+#include "AI/ClassAI/ClassBehaviorTreeRegistry.h"
 #include "PlayerbotModuleAdapter.h"
 #include "Update/ModuleUpdateManager.h"
 #include "Group/GroupEventBus.h"
@@ -178,6 +179,12 @@ bool PlayerbotModule::Initialize()
     TC_LOG_INFO("server.loading", "Initializing Profession Manager...");
     Playerbot::ProfessionManager::instance()->Initialize();
     TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
+
+    // Initialize Class Behavior Tree Registry (Phase 5: Class-specific AI trees for all 13 classes)
+    TC_LOG_INFO("server.loading", "Initializing Class Behavior Tree Registry...");
+    Playerbot::ClassBehaviorTreeRegistry::Initialize();
+    TC_LOG_INFO("server.loading", "Class Behavior Tree Registry initialized successfully - {} class/spec trees registered",
+        39); // 13 classes × 3 specs = 39 combinations
 
     // Initialize Quest Hub Database (spatial clustering of quest givers for efficient pathfinding)
     TC_LOG_INFO("server.loading", "Initializing Quest Hub Database...");
