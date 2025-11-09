@@ -114,18 +114,7 @@ struct ManaSoulShardResourceDestro
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-        }
+            mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
     }
 };
@@ -246,30 +235,13 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit DestructionWarlockRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
+    explicit DestructionWarlockRefactored(Player* bot)        : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
         , WarlockSpecialization(bot)
         , _immolateTracker()
         , _havocTracker()
         , _backdraftStacks(0)
         , _lastInfernalTime(0)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Initialize mana/soul shard resources
+    {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
 
         InitializeCooldowns();
@@ -277,13 +249,7 @@ public:
         TC_LOG_DEBUG("playerbot", "DestructionWarlockRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -305,13 +271,7 @@ public:
         }
         else
         {
-            ExecuteSingleTargetRotation(target);
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-        }
+            ExecuteSingleTargetRotation(target);        }
     }
 
     void UpdateBuffs() override
@@ -326,13 +286,7 @@ public:
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 
         // Priority 1: Use Summon Infernal (major CD)
@@ -379,13 +333,7 @@ public:
         }
 
         // Priority 6: Chaos Bolt (shard spender)
-        if (shards >= 2 && this->CanCastSpell(CHAOS_BOLT, target))
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-        {
+        if (shards >= 2 && this->CanCastSpell(CHAOS_BOLT, target))        {
             this->CastSpell(target, CHAOS_BOLT);
             ConsumeSoulShard(2);
             return;
@@ -404,14 +352,7 @@ public:
             this->CastSpell(target, SHADOWBURN);
             GenerateSoulShard(1);
             return;
-        }
-
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-        // Priority 9: Incinerate (filler + shard gen)
+        }        // Priority 9: Incinerate (filler + shard gen)
         if (shards < 5 && this->CanCastSpell(INCINERATE, target))
         {
             this->CastSpell(target, INCINERATE);
@@ -424,18 +365,7 @@ public:
 
     void ExecuteCleaveRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return;
-            }
-        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
 
         // Priority 1: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
@@ -484,13 +414,7 @@ public:
         }
     }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
         uint32 shards = this->_resource.soulShards;
 
         // Priority 1: Summon Infernal
@@ -527,13 +451,7 @@ public:
         // Priority 5: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
         {
-            this->CastSpell(target, HAVOC);
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return;
-            }
-            _havocTracker.ApplyHavoc(target->GetGUID());
+            this->CastSpell(target, HAVOC);            _havocTracker.ApplyHavoc(target->GetGUID());
             return;
         }
 
@@ -582,14 +500,7 @@ public:
             TC_LOG_DEBUG("playerbot", "Destruction: Mortal Coil");
             return;
         }
-    }
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-    return;
-}
-
-    void EnsurePetActive()
+    }    void EnsurePetActive()
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -623,13 +534,7 @@ private:
         if (this->GetBot())
         {
             if (Aura* aura = this->GetBot()->GetAura(BACKDRAFT_BUFF))
-                _backdraftStacks = aura->GetStackAmount();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                    return nullptr;
-                }
-            else
+                _backdraftStacks = aura->GetStackAmount();            else
                 _backdraftStacks = 0;
         }
 

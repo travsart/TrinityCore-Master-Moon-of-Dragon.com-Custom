@@ -25,18 +25,7 @@
 namespace Playerbot
 {
 
-PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
-{
+PaladinAI::PaladinAI(Player* bot) : ClassAI(bot){
     _lastBlessingTime = 0;
     _lastAuraChange = 0;
     _lastConsecration = 0;
@@ -134,7 +123,6 @@ void PaladinAI::UpdateRotation(::Unit* target)
         if (priorityTarget && priorityTarget != target)
         if (!priorityTarget)
         {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
             return;
         }
         {
@@ -142,7 +130,6 @@ void PaladinAI::UpdateRotation(::Unit* target)
             target = priorityTarget;
                          if (!priorityTarget)
                          {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
                              return;
                          }
             TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} switching target to {}",
@@ -248,42 +235,18 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
         return false;
 
     // Check Holy Power requirements for specific abilities
-    if (!HasHolyPowerFor(spellId))
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-            return nullptr;
-        }
-        return false;
+    if (!HasHolyPowerFor(spellId))        return false;
 
-    return true;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
-}
+    return true;}
 
-void PaladinAI::OnCombatStart(::Unit* target)
-                 if (!target)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                     return;
-                 }
-{
+void PaladinAI::OnCombatStart(::Unit* target){
     _paladinMetrics.combatStartTime = std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-    _combatTime = 0;
+    _currentTarget = target->GetGUID();    _combatTime = 0;
 }
 
 void PaladinAI::OnCombatEnd()
@@ -534,13 +497,7 @@ void PaladinAI::UseDefensiveCooldowns()
                 RecordAbilityUsage(GUARDIAN_OF_ANCIENT_KINGS);
                 TC_LOG_DEBUG("module.playerbot.ai", "Protection Paladin {} activated Guardian of Ancient Kings",
                              GetBot()->GetName());
-                return;
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-                return nullptr;
-            }
-            }
+                return;            }
         }
     }
 
@@ -554,13 +511,7 @@ void PaladinAI::UseDefensiveCooldowns()
             for (GroupReference const& itr : group->GetMembers())
             {
                 Player* member = itr.GetSource();
-                if (member && member != GetBot() && member->GetHealthPct() < 30.0f)
-                                     if (!member)
-                                     {
-                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-                                         return;
-                                     }
-                {
+                if (member && member != GetBot() && member->GetHealthPct() < 30.0f)                {
                     if (CastSpell(member, BLESSING_OF_PROTECTION))
                     {
                         RecordAbilityUsage(BLESSING_OF_PROTECTION);
@@ -594,13 +545,7 @@ void PaladinAI::UseOffensiveCooldowns()
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinRetribution && CanUseAbility(CRUSADE))
     {
         if (CastSpell(CRUSADE))
-        {
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return nullptr;
-            }
-            RecordAbilityUsage(CRUSADE);
+        {            RecordAbilityUsage(CRUSADE);
             TC_LOG_DEBUG("module.playerbot.ai", "Retribution Paladin {} activated Crusade",
                          GetBot()->GetName());
         }
@@ -618,13 +563,7 @@ void PaladinAI::UseOffensiveCooldowns()
     }
 
     // Execution Sentence on primary target
-    Unit* target = GetBot()->GetSelectedUnit();
-                         if (!target)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                             return;
-                         }
-    if (target && CanUseAbility(EXECUTION_SENTENCE))
+    Unit* target = GetBot()->GetSelectedUnit();    if (target && CanUseAbility(EXECUTION_SENTENCE))
     {
         if (CastSpell(target, EXECUTION_SENTENCE))
         {
@@ -1091,51 +1030,14 @@ bool PaladinAI::IsAllyInDanger() const
     return false;
 }
 
-bool PaladinAI::ShouldUseLayOnHands() const
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-    return nullptr;
-}
-{
-    if (!GetBot())
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return false;
-        }
-        return false;
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-        return false;
-    }
-    // Use on self if critical
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-        return nullptr;
-    }
-    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-            return nullptr;
-        }
-        return true;
+bool PaladinAI::ShouldUseLayOnHands() const{
+    if (!GetBot())        return false;    // Use on self if critical    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
 
     // Use on tank if critical
     Group* group = GetBot()->GetGroup();
     if (group)
     {
-        for (GroupReference const& itr : group->GetMembers())
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-        {
+        for (GroupReference const& itr : group->GetMembers())        {
             Player* member = itr.GetSource();
             // TODO: Check if member is tank
             if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
@@ -1152,49 +1054,11 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
         return Position();
 
     // Get behind target for Retribution DPS
-    float angle = target->GetOrientation() + M_PI;  // Behind target
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return;
-    }
-    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
-        angle = target->GetOrientation();  // Face target for tanking
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return;
-        }
-
-    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-        return 0;
-    }
-    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-        return 0;
-    }
-    float z = target->GetPositionZ();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-        return;
-    }
-
-    return Position(x, y, z, angle);
+    float angle = target->GetOrientation() + M_PI;  // Behind target    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
+        angle = target->GetOrientation();  // Face target for tanking    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;    float z = target->GetPositionZ();    return Position(x, y, z, angle);
 }
 
-bool PaladinAI::IsValidTarget(::Unit* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-        return nullptr;
-    }
-{
+bool PaladinAI::IsValidTarget(::Unit* target){
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 

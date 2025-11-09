@@ -68,29 +68,7 @@ public:
         // Sync with actual aura
         if (Aura* aura = bot->GetAura(GUARDIAN_IRONFUR))
         {
-            _ironfurStacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            _ironfurEndTime = getMSTime() + aura->GetDuration();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-        }
+            _ironfurStacks = aura->GetStackAmount();            _ironfurEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _ironfurStacks = 0;
@@ -142,52 +120,20 @@ public:
         if (it != _thrashTargets.end() && getMSTime() < it->second.endTime)
             return it->second.stacks;
         return 0;
-    }
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return false;
-    }
-    [[nodiscard]] bool HasThrash(ObjectGuid guid) const
+    }    [[nodiscard]] bool HasThrash(ObjectGuid guid) const
     {
         return GetStacks(guid) > 0;
     }
 
-    void Update(Unit* target)
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-        return false;
-    }
-    {
+    void Update(Unit* target)    {
         if (!target)
             return;
 
-        ObjectGuid guid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-
-        // Sync with actual aura
+        ObjectGuid guid = target->GetGUID();        // Sync with actual aura
         if (Aura* aura = target->GetAura(GUARDIAN_THRASH))
         {
             auto& thrash = _thrashTargets[guid];
-            thrash.stacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return;
-            }
-            thrash.endTime = getMSTime() + aura->GetDuration();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-        }
+            thrash.stacks = aura->GetStackAmount();            thrash.endTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _thrashTargets.erase(guid);
@@ -213,13 +159,7 @@ public:
     using Base::CanCastSpell;
     using Base::GetEnemiesInRange;
     using Base::_resource;
-    explicit GuardianDruidRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : TankSpecialization<RageResource>(bot)
+    explicit GuardianDruidRefactored(Player* bot)        : TankSpecialization<RageResource>(bot)
         
         , _ironfurTracker()
         , _thrashTracker()
@@ -267,14 +207,7 @@ public:
         if (!bot)
             return;
 
-        float healthPct = bot->GetHealthPct();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-
-        // Survival Instincts (critical emergency - 50% damage reduction)
+        float healthPct = bot->GetHealthPct();        // Survival Instincts (critical emergency - 50% damage reduction)
         if (healthPct < 30.0f && this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
         {
             this->CastSpell(bot, GUARDIAN_SURVIVAL_INSTINCTS);
@@ -309,16 +242,7 @@ public:
         }
 
         // Regrowth (if out of combat and low health)
-        if (!bot)
-        {
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
+        
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(GUARDIAN_REGROWTH, bot))
         {
             this->CastSpell(bot, GUARDIAN_REGROWTH);
@@ -351,13 +275,7 @@ private:
         {
             _frenziedRegenerationActive = true;
             if (Aura* aura = bot->GetAura(GUARDIAN_FRENZIED_REGENERATION))
-                _frenziedRegenerationEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _frenziedRegenerationEndTime = getMSTime() + aura->GetDuration();        }
 
         // Berserk state
         if (_berserkActive && getMSTime() >= _berserkEndTime)
@@ -376,13 +294,7 @@ private:
 
     void MaintainBearForm()
     {
-        Player* bot = this->GetBot();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        if (!bot->HasAura(GUARDIAN_BEAR_FORM))
+        Player* bot = this->GetBot();        if (!bot->HasAura(GUARDIAN_BEAR_FORM))
         {
             if (this->CanCastSpell(GUARDIAN_BEAR_FORM, bot))
             {
@@ -421,20 +333,7 @@ private:
 
     void ExecuteSingleTargetThreatRotation(::Unit* target)
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-
-        // Berserk/Incarnation (major cooldown - increased damage and rage gen)
+        Player* bot = this->GetBot();        ObjectGuid targetGuid = target->GetGUID();        // Berserk/Incarnation (major cooldown - increased damage and rage gen)
         if (this->_resource < 50 && CanUseMajorCooldown())
         {
             if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))
@@ -469,26 +368,14 @@ private:
             if (this->CanCastSpell(GUARDIAN_THRASH, target))
             {
                 this->CastSpell(target, GUARDIAN_THRASH);
-                uint32 currentStacks = _thrashTracker.GetStacks(targetGuid);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return nullptr;
-}
-                _thrashTracker.ApplyThrash(targetGuid, 15000, 1); // 15 sec, add 1 stack
+                uint32 currentStacks = _thrashTracker.GetStacks(targetGuid);                _thrashTracker.ApplyThrash(targetGuid, 15000, 1); // 15 sec, add 1 stack
                 GenerateRage(5);
                 return;
             }
         }
 
         // Pulverize (consume Thrash stacks for damage buff - if talented)
-        if (bot->HasSpell(GUARDIAN_PULVERIZE) && _thrashTracker.GetStacks(targetGuid) >= 2)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (bot->HasSpell(GUARDIAN_PULVERIZE) && _thrashTracker.GetStacks(targetGuid) >= 2)        {
             if (this->CanCastSpell(GUARDIAN_PULVERIZE, target))
             {
                 this->CastSpell(target, GUARDIAN_PULVERIZE);
@@ -530,14 +417,7 @@ private:
     void ExecuteAoEThreatRotation(::Unit* target, uint32 enemyCount)
     {
         Player* bot = this->GetBot();
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-
-        // Berserk for AoE threat burst
+        ObjectGuid targetGuid = target->GetGUID();        // Berserk for AoE threat burst
         if (this->_resource < 50 && CanUseMajorCooldown())
         {
             if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))

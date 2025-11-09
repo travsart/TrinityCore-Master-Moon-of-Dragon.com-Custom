@@ -255,18 +255,7 @@ public:
     // CORE ROTATION - Marksmanship specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -294,19 +283,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-            return;
-        }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return 0;
-            }
-
-        // Maintain Lone Wolf (dismiss pet if we have one)
+        Player* bot = this->GetBot();        // Maintain Lone Wolf (dismiss pet if we have one)
         if (_loneWolfActive && !bot->GetPetGUID().IsEmpty())
         {
             bot->CastSpell(bot, SPELL_DISMISS_PET, false);
@@ -316,27 +293,14 @@ public:
         if (bot->GetHealthPct() < 30.0f && this->CanUseAbility(SPELL_ASPECT_TURTLE))
         {
             this->CastSpell(bot, SPELL_ASPECT_TURTLE);
-        }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-    return nullptr;
-}
-
-        // Use Exhilaration for healing
+        }        // Use Exhilaration for healing
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_EXHILARATION_MM))
         {
             this->CastSpell(bot, SPELL_EXHILARATION_MM);
         }
 
         // Apply Hunter's Mark to current target
-        if (Unit* target = bot->GetVictim())
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-        {
+        if (Unit* target = bot->GetVictim())        {
             if (!target->HasAura(SPELL_HUNTERS_MARK_MM) && this->CanUseAbility(SPELL_HUNTERS_MARK_MM))
             {
                 this->CastSpell(target, SPELL_HUNTERS_MARK_MM);

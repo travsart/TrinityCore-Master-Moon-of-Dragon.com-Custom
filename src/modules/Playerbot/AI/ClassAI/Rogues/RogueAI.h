@@ -55,18 +55,7 @@ public:
         if (!target || !_bot)
             return false;
 
-        float targetFacing = target->GetOrientation();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return;
-        }
-        float angleToMe = target->GetAbsoluteAngle(_bot);
+        float targetFacing = target->GetOrientation();        float angleToMe = target->GetAbsoluteAngle(_bot);
         float diff = std::abs(targetFacing - angleToMe);
 
         if (diff > M_PI)

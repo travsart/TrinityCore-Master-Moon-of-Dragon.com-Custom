@@ -87,18 +87,7 @@ public:
         {
             _hotStreakActive = true;
             if (Aura* aura = bot->GetAura(48108))
-                _hotStreakEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _hotStreakEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _hotStreakActive = false;
@@ -166,18 +155,7 @@ public:
     using Base::GetEnemiesInRange;
     using Base::_resource;
 
-    explicit FireMageRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : RangedDpsSpecialization<ManaResource>(bot)
+    explicit FireMageRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
         , _hotStreakTracker()
         , _fireBlastTracker()
         , _combustionActive(false)
@@ -272,13 +250,7 @@ private:
     void UpdateCooldownStates()
     {
         Player* bot = this->GetBot();
-        if (!bot)
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return;
-            }
-            return;
+        if (!bot)            return;
 
         // Combustion state
         if (_combustionActive && getMSTime() >= _combustionEndTime)
@@ -288,13 +260,7 @@ private:
         {
             _combustionActive = true;
             if (Aura* aura = bot->GetAura(FIRE_COMBUSTION))
-                _combustionEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _combustionEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -324,13 +290,7 @@ private:
                 this->CastSpell(target, FIRE_PYROBLAST);
                 _hotStreakTracker.ConsumeHotStreak();
                 return;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        }
+            }        }
 
         // Fire Blast (generate Hot Streak if Heating Up is active)
         if (_hotStreakTracker.IsHeatingUpActive() && _fireBlastTracker.HasCharge())
@@ -341,27 +301,10 @@ private:
                 _fireBlastTracker.ConsumeCharge();
                 _hotStreakTracker.ActivateHotStreak(); // Heating Up + crit = Hot Streak
                 return;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        }
+            }        }
 
         // Phoenix Flames (high damage, generates Heating Up)
-        if (bot->HasSpell(FIRE_PHOENIX_FLAMES) && (getMSTime() - _lastPhoenixFlamesTime) >= 30000)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (bot->HasSpell(FIRE_PHOENIX_FLAMES) && (getMSTime() - _lastPhoenixFlamesTime) >= 30000)        {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {
                 this->CastSpell(target, FIRE_PHOENIX_FLAMES);

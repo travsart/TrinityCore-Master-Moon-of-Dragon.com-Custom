@@ -72,18 +72,7 @@ enum BeastMasterySpells
 class BeastMasteryPetManager
 {
 public:
-    explicit BeastMasteryPetManager(Player* bot)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return nullptr;
-            }
-        : _bot(bot)
+    explicit BeastMasteryPetManager(Player* bot)        : _bot(bot)
         , _lastMendPet(0)
         , _lastPetCommand(0)
         , _petFrenzyStacks(0)
@@ -161,13 +150,7 @@ public:
         if (!HasActivePet())
             return false;
 
-        Pet* pet = _bot->GetPet();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return nullptr;
-            }
-        return pet && pet->GetHealthPct() < 70.0f;
+        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 70.0f;
     }
 
     void MendPet()
@@ -179,13 +162,7 @@ public:
         if (!HasActivePet() || !IsPetHealthLow())
             return;
 
-        Pet* pet = _bot->GetPet();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return;
-            }
-        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
+        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET, false);
             _lastMendPet = currentTime;
@@ -213,18 +190,7 @@ public:
 
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
 
-    void EnsurePetActive(Unit* target)
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-                return;
-            }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-    {
+    void EnsurePetActive(Unit* target)    {
         if (!HasActivePet())
         {
             SummonPet();
@@ -277,13 +243,7 @@ public:
         , _bestialWrathActive(false)
         , _bestialWrathEndTime(0)
         , _aspectOfTheWildActive(false)
-        , _aspectEndTime(0)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        , _wildCallProc(false)
+        , _aspectEndTime(0)        , _wildCallProc(false)
         , _lastKillCommand(0)
         , _lastCobraShot(0)
     {
@@ -296,13 +256,7 @@ public:
     // CORE ROTATION - Beast Mastery specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -315,13 +269,7 @@ public:
         // Check for AoE situation
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
         if (enemyCount >= 3)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-                return nullptr;
-            }
-            ExecuteAoERotation(target);
+        {            ExecuteAoERotation(target);
             return;
         }
 
@@ -332,16 +280,7 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-            return 0;
-        }
+        
 
         // Ensure pet is summoned
         if (!_petManager.HasActivePet())
@@ -363,13 +302,7 @@ public:
         }
 
         // Apply Hunter's Mark to current target
-        if (Unit* target = bot->GetVictim())
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-        {
+        if (Unit* target = bot->GetVictim())        {
             if (!target->HasAura(SPELL_HUNTERS_MARK) && this->CanUseAbility(SPELL_HUNTERS_MARK))
             {
                 this->CastSpell(target, SPELL_HUNTERS_MARK);
@@ -540,13 +473,7 @@ private:
         // Recharge Barbed Shot charges (12 second recharge)
         if (_barbedShotCharges < 2)
         {
-            if (currentTime - _lastBarbedShotRecharge > 12000)
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                return nullptr;
-            }
-            {
+            if (currentTime - _lastBarbedShotRecharge > 12000)            {
                 _barbedShotCharges++;
                 _lastBarbedShotRecharge = currentTime;
             }
@@ -569,13 +496,7 @@ private:
         return _barbedShotCharges > 0 || _wildCallProc;
     }
 
-    bool ShouldUseBestialWrath(Unit* target) const
-               if (!target)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                   return nullptr;
-               }
-    {
+    bool ShouldUseBestialWrath(Unit* target) const    {
         if (!target)
             return false;
 

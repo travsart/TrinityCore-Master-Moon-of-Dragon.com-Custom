@@ -366,18 +366,7 @@ public:
         }
     }
 
-    static void MigrateSpecialization(Player* bot, ClassAI* oldSpec, ClassAI* newSpec)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
-                  if (!bot)
-                  {
-                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                      return;
-                  }
-    {
+    static void MigrateSpecialization(Player* bot, ClassAI* oldSpec, ClassAI* newSpec)    {
         // Copy relevant state from old to new
         // This allows hot-swapping during runtime
 

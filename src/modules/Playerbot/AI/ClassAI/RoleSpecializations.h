@@ -102,25 +102,13 @@ protected:
             // First pass: Find tanks under 60%
             for (GroupReference* ref : *group)
             {
-                if (Player* member = ref->GetSource())
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                {
+                if (Player* member = ref->GetSource())                {
                     if (member->IsAlive() && IsTank(member) && member->GetHealthPct() < 60.0f)
                     {
                         if (member->GetHealthPct() < lowestPct)
                         {
                             lowestPct = member->GetHealthPct();
-                            lowestHealth = member;
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                return nullptr;
-            }
-                        }
+                            lowestHealth = member;                        }
                     }
                 }
             }
@@ -131,13 +119,7 @@ protected:
             // Second pass: Anyone critically injured
             for (GroupReference* ref : *group)
             {
-                if (Player* member = ref->GetSource())
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                {
+                if (Player* member = ref->GetSource())                {
                     if (member->IsAlive() && member->GetHealthPct() < lowestPct)
                     {
                         lowestPct = member->GetHealthPct();
@@ -175,14 +157,7 @@ protected:
         }
 
         return bestTarget;
-    }
-
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-        return 0;
-    }
-    uint32 CountInjuredAllies(float threshold) const
+    }    uint32 CountInjuredAllies(float threshold) const
     {
         uint32 count = 0;
 
@@ -192,18 +167,7 @@ protected:
             {
                 if (Player* member = ref->GetSource())
                 {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                    return nullptr;
-                }
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                        count++;
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        count++;
                 }
             }
         }
@@ -215,32 +179,8 @@ protected:
     {
         if (Group* group = this->GetBot()->GetGroup())
         {
-            for (GroupReference* ref : *group)
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                return nullptr;
-            }
-            {
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                    return false;
-                }
-                if (Player* member = ref->GetSource())
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                    return nullptr;
-                }
-                {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return false;
-                    }
-                        return true;
+            for (GroupReference* ref : *group)            {                if (Player* member = ref->GetSource())                {
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        return true;
                 }
             }
         }
@@ -251,25 +191,7 @@ protected:
     bool IsTank(Player* player) const
     {
         // Simple check - could be enhanced with role detection
-        return player->GetClass() == CLASS_WARRIOR ||
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return false;
-        }
-               player->GetClass() == CLASS_PALADIN ||
-               if (!player)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                   return false;
-               }
-               player->GetClass() == CLASS_DEATH_KNIGHT;
-               if (!player)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                   return false;
-               }
-    }
+        return player->GetClass() == CLASS_WARRIOR ||               player->GetClass() == CLASS_PALADIN ||               player->GetClass() == CLASS_DEATH_KNIGHT;    }
 
 protected:
     bool _healingMode;
@@ -409,13 +331,7 @@ protected:
         });
 
         // Apply DoTs to targets
-        for (Unit* target : targets)
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-        {
+        for (Unit* target : targets)        {
             if (GetMissingDotCount(target) > 0)
             {
                 ApplyMissingDoTs(target);
@@ -429,14 +345,7 @@ protected:
 
     std::list<Unit*> GetValidDotTargets() const
     {
-        std::list<Unit*> targets;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-
-        std::list<Unit*> hostileUnits;
+        std::list<Unit*> targets;        std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this->GetBot(), this->GetBot(), 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_search(this->GetBot(), hostileUnits, u_check);
         this->GetBot()->VisitNearbyObject(40.0f, u_search);
@@ -457,14 +366,7 @@ protected:
     uint32 GetMissingDotCount(Unit* target) const
     {
         uint32 missingCount = 0;
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-
-        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
         {
             return _maxDotsPerTarget; // No DoTs applied
         }
@@ -483,13 +385,7 @@ protected:
 
     void RefreshExpiringDoTs(Unit* target)
     {
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
             return;
 
         for (auto& [spellId, duration] : it->second)
@@ -648,14 +544,7 @@ public:
             }
         }
         return 0;
-    }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return 0;
-}
-
-    void UpdatePriority(uint32 spellId, float newPriority)
+    }    void UpdatePriority(uint32 spellId, float newPriority)
     {
         auto it = std::find_if(_abilities.begin(), _abilities.end(),
             [spellId](const AbilityPriority& a) { return a.spellId == spellId; });
@@ -682,13 +571,7 @@ private:
 /**
  * Snapshot system for DoT/HoT calculations
  */
-class SnapshotManager
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
-{
+class SnapshotManager{
 public:
     struct Snapshot
     {
@@ -704,13 +587,7 @@ public:
     {
         Snapshot snap;
         snap.spellId = spellId;
-        snap.targetGuid = target->GetGUID().GetCounter();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        snap.targetGuid = target->GetGUID().GetCounter();        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
         snap.critChance = caster->GetUnitCriticalChanceAgainst(BASE_ATTACK, target);
         snap.haste = caster->GetRatingBonusValue(CR_HASTE_MELEE);
         snap.timestamp = getMSTime();
@@ -736,13 +613,7 @@ public:
     }
 
 private:
-    uint64 GetKey(uint32 spellId, Unit* target) const
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return 0;
-        }
-    {
+    uint64 GetKey(uint32 spellId, Unit* target) const    {
         return (static_cast<uint64>(spellId) << 32) | target->GetGUID().GetCounter();
     }
 

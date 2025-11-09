@@ -25,18 +25,7 @@
 namespace Playerbot
 {
 
-WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
-{
+WarriorAI::WarriorAI(Player* bot) : ClassAI(bot){
     _lastStanceChange = 0;
     _lastBattleShout = 0;
     _lastCommandingShout = 0;
@@ -83,12 +72,10 @@ void WarriorAI::UpdateRotation(::Unit* target)
         Unit* interruptTarget = behaviors->GetInterruptTarget();
                                  if (!interruptTarget)
                                  {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
                                      return 0;
                                  }
                              if (!interruptTarget)
                              {
-                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
                                  return;
                              }
         if (interruptTarget && CanUseAbility(PUMMEL))
@@ -112,11 +99,13 @@ void WarriorAI::UpdateRotation(::Unit* target)
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
             return;
     }
-if (!priorityTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
-    return nullptr;
-}
+
+if (!priorityTarget)
+
+{
+    return nullptr;
+
+}
 
     // Priority 3: Check for target switching
     if (behaviors && behaviors->ShouldSwitchTarget())
@@ -128,7 +117,6 @@ void WarriorAI::UpdateRotation(::Unit* target)
             target = priorityTarget;
                          if (!priorityTarget)
                          {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
                              return;
                          }
             TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} switching target to {}",
@@ -438,13 +426,7 @@ Position WarriorAI::CalculateOptimalChargePosition(::Unit* target)
     return GetBot()->GetPosition();
 }
 
-void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-        return nullptr;
-    }
-{
+void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     if (!target || !GetBot())
         return;
 
@@ -462,13 +444,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
     }
 
     // Apply Rend for bleed damage
-    if (CanUseAbility(REND))
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-        return 0;
-    }
-    {
+    if (CanUseAbility(REND))    {
         if (!target->HasAura(REND, GetBot()->GetGUID()))
         {
             if (CastSpell(target, REND))
@@ -647,13 +623,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         if (snapshot_entity)
         {
 
-        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
- if (!target)
- {
-     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-     return;
- }
- entity = nullptr;
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid); entity = nullptr;
  if (snapshot_entity)
  {
  }
@@ -672,13 +642,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     return count;
 }
 
-bool WarriorAI::IsValidTarget(::Unit* target)
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-    return nullptr;
-}
-{
+bool WarriorAI::IsValidTarget(::Unit* target){
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 

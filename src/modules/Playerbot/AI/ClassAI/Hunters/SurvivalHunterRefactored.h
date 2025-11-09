@@ -285,19 +285,7 @@ private:
     void SummonPet()
     {
         if (!_bot || HasActivePet())
-            return;
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-            return;
-        }
-        _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
+            return;        _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
     }
 
     bool IsPetHealthLow() const
@@ -305,13 +293,7 @@ private:
         if (!HasActivePet())
             return false;
 
-        Pet* pet = _bot->GetPet();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return;
-            }
-        return pet && pet->GetHealthPct() < 60.0f;
+        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 60.0f;
     }
 
     void MendPet()
@@ -320,13 +302,7 @@ private:
         if (currentTime - _lastMendPet < 10000)
             return;
 
-        Pet* pet = _bot->GetPet();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return;
-            }
-        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
+        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET_SURV, false);
             _lastMendPet = currentTime;
@@ -389,13 +365,7 @@ public:
     // ========================================================================
 
     bool ShouldMaintainRange() const
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Survival wants to be in melee range
+    {        // Survival wants to be in melee range
         return false;
     }
 
@@ -403,13 +373,7 @@ public:
     // CORE ROTATION - Survival specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -430,40 +394,16 @@ public:
         // Check for AoE situation
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
         if (enemyCount >= 3)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-                return nullptr;
-            }
-            ExecuteAoERotation(target);
+        {            ExecuteAoERotation(target);
             return;
         }
 
-        // Single target rotation
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-        ExecuteSingleTargetRotation(target);
+        // Single target rotation        ExecuteSingleTargetRotation(target);
     }
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-
-        // Ensure pet is summoned
+        Player* bot = this->GetBot();        // Ensure pet is summoned
         if (!_petManager.HasActivePet())
         {
             bot->CastSpell(bot, SPELL_CALL_PET_SURV, false);
@@ -516,13 +456,7 @@ protected:
             case SPELL_BUTCHERY:            return 30;
             case SPELL_KILL_COMMAND_SURV:   return 0;   // Generates 15 focus
             case SPELL_WILDFIRE_BOMB:       return 0;   // No cost
-            case SPELL_SERPENT_STING:       return 20;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return;
-            }
-            case SPELL_FLANKING_STRIKE:     return 30;
+            case SPELL_SERPENT_STING:       return 20;            case SPELL_FLANKING_STRIKE:     return 30;
             case SPELL_HARPOON:             return 0;   // No cost
             case SPELL_COORDINATED_ASSAULT: return 0;   // No cost
             default:                        return 20;
@@ -547,13 +481,7 @@ protected:
         }
 
         // Priority 2: Maintain Serpent Sting
-        if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return 0;
-        }
-        {
+        if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)        {
             this->CastSpell(target, SPELL_SERPENT_STING);
             _lastSerpentSting = getMSTime();
             this->ConsumeResource(20);
@@ -697,14 +625,7 @@ private:
         if (_aspectOfEagleActive)
         {
             if (aspectStartTime == 0)
-                aspectStartTime = currentTime;
-
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                return nullptr;
-            }
-            if (currentTime - aspectStartTime > 90000)
+                aspectStartTime = currentTime;            if (currentTime - aspectStartTime > 90000)
             {
                 _aspectOfEagleActive = false;
                 aspectStartTime = 0;
@@ -726,13 +647,7 @@ private:
         }
     }
 
-    bool ShouldUseCoordinatedAssault(Unit* target) const
-               if (!target)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                   return nullptr;
-               }
-    {
+    bool ShouldUseCoordinatedAssault(Unit* target) const    {
         if (!target)
             return false;
 
@@ -799,25 +714,7 @@ private:
         RegisterCooldown(SPELL_MUZZLE, 15000);                // 15 second CD
         RegisterCooldown(SPELL_EXHILARATION_SURV, 120000);    // 2 minute CD
         RegisterCooldown(SPELL_SURVIVAL_OF_FITTEST, 180000);  // 3 minute CD
-    }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-    return;
-}
-
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-    return;
-}
-private:
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-        return;
-    }
-    // ========================================================================
+    }private:    // ========================================================================
     // HUNTER SPECIALIZATION ABSTRACT METHOD IMPLEMENTATIONS
     // ========================================================================
 
@@ -850,24 +747,7 @@ private:
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
-        float x = target->GetPositionX() + 15.0f * std::cos(angle);
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-            return;
-        }
-        float y = target->GetPositionY() + 15.0f * std::sin(angle);
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-            return;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-            return nullptr;
-        }
-        return Position(x, y, target->GetPositionZ());
+        float x = target->GetPositionX() + 15.0f * std::cos(angle);        float y = target->GetPositionY() + 15.0f * std::sin(angle);        return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 

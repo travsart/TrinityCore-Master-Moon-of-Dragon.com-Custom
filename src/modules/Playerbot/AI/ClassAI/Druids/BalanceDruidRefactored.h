@@ -115,18 +115,7 @@ struct ManaAstralPowerResource
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-        }
+            mana = bot->GetPower(POWER_MANA);        }
         astralPower = 0;
     }
 };
@@ -281,31 +270,14 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit BalanceDruidRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : RangedDpsSpecialization<ManaAstralPowerResource>(bot)
+    explicit BalanceDruidRefactored(Player* bot)        : RangedDpsSpecialization<ManaAstralPowerResource>(bot)
         
         , _eclipseTracker()
         , _dotTracker()
         , _starfallActive(false)
         , _starfallEndTime(0)
         , _shootingStarsProc(false)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Initialize mana/astral power resources
+    {        // Initialize mana/astral power resources
         this->_resource.Initialize(bot);
 
         InitializeCooldowns();
@@ -313,13 +285,7 @@ public:
         TC_LOG_DEBUG("playerbot", "BalanceDruidRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -342,14 +308,7 @@ public:
         {
             ExecuteSingleTargetRotation(target);
         }
-    }
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-    void UpdateBuffs() override
+    }    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -364,13 +323,7 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-        uint32 ap = this->_resource.astralPower;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 ap = this->_resource.astralPower;
 
         // Priority 1: Use Shooting Stars proc (free Starsurge)
         if (_shootingStarsProc && this->CanCastSpell(STARSURGE, target))

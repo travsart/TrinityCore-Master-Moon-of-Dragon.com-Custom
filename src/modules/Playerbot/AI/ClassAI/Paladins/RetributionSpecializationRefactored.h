@@ -54,18 +54,7 @@ public:
     // CORE ROTATION - Only Retribution-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsHostileTo");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -210,24 +199,12 @@ protected:
         }
     }
 
-    /**
-     if (!target)
-     {
-         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
-         return nullptr;
-     }
-     * Determine if we should use offensive cooldowns
+    /**     * Determine if we should use offensive cooldowns
      */
     bool ShouldUseCooldowns(::Unit* target) const
     {
         // Use on bosses or when multiple enemies
-        return (target->GetMaxHealth() > this->GetBot()->GetMaxHealth() * 10) ||
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetMaxHealth");
-            return nullptr;
-        }
-               this->GetEnemiesInRange(10.0f) >= 3;
+        return (target->GetMaxHealth() > this->GetBot()->GetMaxHealth() * 10) ||               this->GetEnemiesInRange(10.0f) >= 3;
     }
 
     // ========================================================================

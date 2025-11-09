@@ -67,18 +67,7 @@ public:
     // CORE ROTATION - Only Protection-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -190,24 +179,12 @@ protected:
     // TANK-SPECIFIC OVERRIDES
     // ========================================================================
 
-    bool ShouldUseTaunt(::Unit* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-        return 0;
-    }
-    {
+    bool ShouldUseTaunt(::Unit* target)    {
         if (!target)
             return false;
 
         // Taunt if we don't have aggro
-        return target->GetVictim() != this->GetBot();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-            return;
-        }
-    }
+        return target->GetVictim() != this->GetBot();    }
 
     void ManageThreat(::Unit* target) override
     {
@@ -330,14 +307,7 @@ protected:
 
         // Update defensive cooldown tracking
         _lastStandActive = bot->HasAura(SPELL_LAST_STAND);
-        _shieldWallActive = bot->HasAura(SPELL_SHIELD_WALL);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-    return;
-}
-
-        // Check shield equipment periodically
+        _shieldWallActive = bot->HasAura(SPELL_SHIELD_WALL);        // Check shield equipment periodically
         if (currentTime % 5000 == 0) // Every 5 seconds
         {
             CheckShieldStatus();
@@ -358,13 +328,7 @@ protected:
     {
         Player* bot = this->GetBot();
 
-        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-            return;
-        }
-        _hasShieldEquipped = offHand &&
+        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasShieldEquipped = offHand &&
                            offHand->GetTemplate() &&
                            offHand->GetTemplate()->GetClass() == ITEM_CLASS_ARMOR &&
                            offHand->GetTemplate()->GetSubClass() == ITEM_SUBCLASS_ARMOR_SHIELD;
@@ -388,14 +352,7 @@ protected:
         if (!_threatPriority.empty())
         {
             ThreatTarget topPriority = _threatPriority.top();
-            _threatPriority.pop();
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
-
-            if (ShouldUseTaunt(topPriority.target))
+            _threatPriority.pop();            if (ShouldUseTaunt(topPriority.target))
             {
                 this->CastSpell(topPriority.target, SPELL_TAUNT);
                 _lastTaunt = getMSTime();
@@ -409,18 +366,7 @@ protected:
             return;
 
         // Track sunder stacks (max 5)
-        _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-    }
+        _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);    }
 
     // ========================================================================
     // CONDITION CHECKS
@@ -438,13 +384,7 @@ protected:
         if (!target)
             return false;
 
-        auto it = _sunderStacks.find(target->GetGUID());
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        return it != _sunderStacks.end() && it->second >= 5;
+        auto it = _sunderStacks.find(target->GetGUID());        return it != _sunderStacks.end() && it->second >= 5;
     }
 
     bool ShouldUseAvatar() const

@@ -176,18 +176,7 @@ public:
         if (Aura* aura = bot->GetAura(KILLING_MACHINE))
         {
             _kmActive = true;
-            _kmStacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return;
-            }
-        }
+            _kmStacks = aura->GetStackAmount();        }
         else
         {
             _kmActive = false;
@@ -248,18 +237,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit FrostDeathKnightRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
+    explicit FrostDeathKnightRefactored(Player* bot)        : MeleeDpsSpecialization<FrostRuneRunicPowerResource>(bot)
         
         , _kmTracker()
         , _rimeTracker()
@@ -267,13 +245,7 @@ public:
         , _pillarEndTime(0)
         , _breathOfSindragosaActive(false)
         , _lastRemorselessWinterTime(0)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Initialize runes/runic power resources
+    {        // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
 
         InitializeCooldowns();
@@ -281,13 +253,7 @@ public:
         TC_LOG_DEBUG("playerbot", "FrostDeathKnightRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 

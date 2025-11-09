@@ -73,18 +73,7 @@ public:
 
         // Sync with actual Arcane Charges buff
         if (Aura* aura = bot->GetAura(36032)) // Arcane Charges buff ID
-            _charges = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-        else
+            _charges = aura->GetStackAmount();        else
             _charges = 0;
     }
 
@@ -130,19 +119,7 @@ public:
         if (Aura* aura = bot->GetAura(263725)) // Clearcasting buff ID
         {
             _clearcastingActive = true;
-            _clearcastingStacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return;
-            }
-            _clearcastingEndTime = getMSTime() + aura->GetDuration();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-        }
+            _clearcastingStacks = aura->GetStackAmount();            _clearcastingEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _clearcastingActive = false;
@@ -167,13 +144,7 @@ public:
     using Base::GetEnemiesInRange;
     using Base::_resource;
 
-    explicit ArcaneMageRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : RangedDpsSpecialization<ManaResource>(bot)
+    explicit ArcaneMageRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
         , _chargeTracker()
         , _clearcastingTracker()
         , _arcaneSurgeActive(false)
@@ -196,25 +167,13 @@ public:
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
 
         if (enemyCount >= 3)
-            ExecuteAoERotation(target, enemyCount);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        else
+            ExecuteAoERotation(target, enemyCount);        else
             ExecuteSingleTargetRotation(target);
     }
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (!bot)
+        Player* bot = this->GetBot();        if (!bot)
             return;
 
         // Arcane Intellect buff
@@ -274,13 +233,7 @@ private:
         _lastPresenceOfMindTime = 0;
     }
 
-    void UpdateArcaneState()
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-        return nullptr;
-    }
-    {
+    void UpdateArcaneState()    {
         Player* bot = this->GetBot();
         if (!bot)
             return;
@@ -304,19 +257,7 @@ private:
         if (bot->HasAura(ARCANE_SURGE))
         {
             _arcaneSurgeActive = true;
-            if (Aura* aura = bot->GetAura(ARCANE_SURGE))
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                _arcaneSurgeEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+            if (Aura* aura = bot->GetAura(ARCANE_SURGE))                _arcaneSurgeEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -342,13 +283,7 @@ private:
         }
 
         // Touch of the Magi (apply damage amplification debuff at 4 charges)
-        if (charges >= 4 && bot->HasSpell(TOUCH_OF_MAGE))
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (charges >= 4 && bot->HasSpell(TOUCH_OF_MAGE))        {
             if (this->CanCastSpell(TOUCH_OF_MAGE, target))
             {
                 this->CastSpell(target, TOUCH_OF_MAGE);

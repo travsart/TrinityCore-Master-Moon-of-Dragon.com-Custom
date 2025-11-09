@@ -24,13 +24,7 @@
 namespace Playerbot
 {
 
-MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-{
+MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER){
     TC_LOG_DEBUG("playerbots", "MonkAI initialized for player {}", bot->GetName());
 }
 
@@ -72,19 +66,22 @@ void MonkAI::UpdateRotation(::Unit* target)
         {
             // Spear Hand Strike is melee range interrupt
             if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
-if (!interruptTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
-    return 0;
-}
-if (!interruptTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
-    return 0;
-}
+
+if (!interruptTarget)
+
+{
+    return 0;
+
+}
+
+if (!interruptTarget)
+
+{
+    return 0;
+
+}
                                  if (!interruptTarget)
                                  {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
                                      return;
                                  }
             {
@@ -104,7 +101,6 @@ void MonkAI::UpdateRotation(::Unit* target)
             if (GetBot()->GetDistance(interruptTarget) <= 20.0f)
                                  if (!interruptTarget)
                                  {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: interruptTarget in method GetName");
                                      return;
                                  }
             {
@@ -123,7 +119,6 @@ void MonkAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->NeedsDefensive())
     if (!priorityTarget)
     {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
         return 0;
     }
     {
@@ -142,7 +137,6 @@ void MonkAI::UpdateRotation(::Unit* target)
             target = priorityTarget;
                          if (!priorityTarget)
                          {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
                              return;
                          }
             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} switching target to {}",
@@ -551,7 +545,6 @@ void MonkAI::UseDefensiveCooldowns()
         {
             if (!healTarget)
             {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healTarget in method GetName");
                 return nullptr;
             }
             if (CastSpell(ZEN_MEDITATION))
@@ -570,7 +563,6 @@ void MonkAI::UseDefensiveCooldowns()
         Unit* healTarget = GetLowestHealthAlly(40.0f);
                              if (!healTarget)
                              {
-                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healTarget in method GetName");
                                  return;
                              }
         if (healTarget && healTarget->GetHealthPct() < 30.0f)

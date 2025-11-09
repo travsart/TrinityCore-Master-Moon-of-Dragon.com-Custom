@@ -54,18 +54,7 @@ enum PriestTalents
 // CONSTRUCTOR/DESTRUCTOR
 // ============================================================================
 
-PriestAI::PriestAI(Player* bot) : ClassAI(bot),
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
-    _manaSpent(0),
+PriestAI::PriestAI(Player* bot) : ClassAI(bot),    _manaSpent(0),
     _healingDone(0),
     _damageDealt(0),
     _playersHealed(0),
@@ -173,18 +162,7 @@ bool PriestAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void PriestAI::OnCombatStart(::Unit* target)
-                 if (!target)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                     return nullptr;
-                 }
-                 if (!target)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                     return;
-                 }
-{
+void PriestAI::OnCombatStart(::Unit* target){
     if (!GetBot() || !target)
         return;
 
@@ -272,23 +250,7 @@ void PriestAI::ConsumeResource(uint32 spellId)
     }
 }
 
-Position PriestAI::GetOptimalPosition(::Unit* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-        return nullptr;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-        return nullptr;
-    }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-    return nullptr;
-}
-{
+Position PriestAI::GetOptimalPosition(::Unit* target){
     if (!GetBot() || !target)
         return Position();
 
@@ -299,26 +261,7 @@ Position PriestAI::GetOptimalPosition(::Unit* target)
     // Position behind and to the side for safety
     angle += M_PI / 4; // 45 degrees offset
 
-    float x = target->GetPositionX() - optimalRange * std::cos(angle);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-        return;
-    }
-    float y = target->GetPositionY() - optimalRange * std::sin(angle);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-        return;
-    }
-    float z = target->GetPositionZ();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-        return;
-    }
-
-    return Position(x, y, z);
+    float x = target->GetPositionX() - optimalRange * std::cos(angle);    float y = target->GetPositionY() - optimalRange * std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float PriestAI::GetOptimalRange(::Unit* target)
@@ -536,14 +479,7 @@ bool PriestAI::HandleDispelPriority()
 
     // Check cooldown
     if (getMSTime() - _lastDispel < DISPEL_COOLDOWN)
-        return false;
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-        return nullptr;
-    }
-    // Check if there are dispellable debuffs in the group
+        return false;    // Check if there are dispellable debuffs in the group
     ::Unit* dispelTarget = GetBestDispelTarget();
     if (dispelTarget)
     {
@@ -566,13 +502,7 @@ bool PriestAI::HandleTargetSwitchPriority(::Unit*& target)
     ::Unit* priorityTarget = behaviors->GetPriorityTarget();
     if (priorityTarget && priorityTarget != target)
     {
-        target = priorityTarget;
-                     if (!target)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                         return;
-                     }
-        TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
+        target = priorityTarget;        TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
                      GetBot()->GetName(), target->GetName());
         return true;
     }
@@ -831,14 +761,7 @@ void PriestAI::CastFearWard()
     {
         _lastFearWard = getMSTime();
     }
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-    return;
-}
-
-void PriestAI::CastDesperatePrayer()
+}void PriestAI::CastDesperatePrayer()
 {
     if (!GetBot() || !this->IsSpellReady(DESPERATE_PRAYER))
         return;
@@ -866,13 +789,7 @@ void PriestAI::CastDesperatePrayer()
     {
         for (GroupReference const& ref : group->GetMembers())
         {
-            Player* player = ref.GetSource();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-                return;
-            }
-            if (!player || !player->IsAlive())
+            Player* player = ref.GetSource();            if (!player || !player->IsAlive())
                 continue;
 
             float healthPct = player->GetHealthPct();
@@ -924,13 +841,7 @@ void PriestAI::CastDesperatePrayer()
         // Third pass - any member
         for (GroupReference const& ref : group->GetMembers())
         {
-            Player* player = ref.GetSource();
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-    return nullptr;
-}
-            if (player && HasDispellableDebuff(player))
+            Player* player = ref.GetSource();            if (player && HasDispellableDebuff(player))
                 return player;
         }
     }
@@ -973,36 +884,12 @@ if (!player)
     {
         for (GroupReference const& ref : group->GetMembers())
         {
-            Player* player = ref.GetSource();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-                return;
-            }
-            if (!player || !player->IsAlive())
-                if (!unit)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-                    return;
-                }
-                continue;
+            Player* player = ref.GetSource();            if (!player || !player->IsAlive())                continue;
 
-            float healthPct = player->GetHealthPct();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                return;
-            }
-            if (healthPct < lowestHealthPct && GetBot()->GetDistance(player) <= maxRange)
+            float healthPct = player->GetHealthPct();            if (healthPct < lowestHealthPct && GetBot()->GetDistance(player) <= maxRange)
             {
                 lowestHealthPct = healthPct;
-                lowestHealthTarget = player;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return;
-}
-            }
+                lowestHealthTarget = player;            }
         }
     }
 
@@ -1035,20 +922,8 @@ bool PriestAI::IsTank(::Unit* unit)
     if (!unit)
         return false;
 
-    if (Player* player = unit->ToPlayer())
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-        return nullptr;
-    }
-    {
-        uint8 playerClass = player->GetClass();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
-        return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN || playerClass == CLASS_DEATH_KNIGHT);
+    if (Player* player = unit->ToPlayer())    {
+        uint8 playerClass = player->GetClass();        return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN || playerClass == CLASS_DEATH_KNIGHT);
     }
 
     return false;
@@ -1061,13 +936,7 @@ bool PriestAI::IsHealer(::Unit* unit)
 
     if (Player* player = unit->ToPlayer())
     {
-        uint8 playerClass = player->GetClass();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
-        return (playerClass == CLASS_PRIEST || playerClass == CLASS_DRUID ||
+        uint8 playerClass = player->GetClass();        return (playerClass == CLASS_PRIEST || playerClass == CLASS_DRUID ||
                 playerClass == CLASS_SHAMAN || playerClass == CLASS_PALADIN);
     }
 

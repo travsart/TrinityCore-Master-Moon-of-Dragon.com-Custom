@@ -112,25 +112,8 @@ struct ManaHolyPowerResource
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            maxHolyPower = bot->GetMaxPower(POWER_HOLY_POWER);
-            holyPower = bot->GetPower(POWER_HOLY_POWER);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-        }
+            mana = bot->GetPower(POWER_MANA);            maxHolyPower = bot->GetMaxPower(POWER_HOLY_POWER);
+            holyPower = bot->GetPower(POWER_HOLY_POWER);        }
     }
 };
 #endif // PLAYERBOT_RESOURCE_TYPES_MANA_HOLY_POWER
@@ -201,27 +184,10 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit ProtectionPaladinRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : TankSpecialization<ManaHolyPowerResource>(bot)
+    explicit ProtectionPaladinRefactored(Player* bot)        : TankSpecialization<ManaHolyPowerResource>(bot)
         , PaladinSpecialization(bot)
         , _shieldTracker()
-        , _consecrationActive(false)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        , _consecrationEndTime(0)
+        , _consecrationActive(false)        , _consecrationEndTime(0)
         , _grandCrusaderProc(false)
         , _lastJudgmentTime(0)
         , _lastAvengersShieldTime(0)
@@ -234,13 +200,7 @@ public:
         TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -260,13 +220,7 @@ public:
     }
 
     void UpdateBuffs() override
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-            return;
-        }
-        Player* bot = this->GetBot();
+    {        Player* bot = this->GetBot();
         if (!bot)
             return;
 
@@ -281,13 +235,7 @@ public:
     }
 
     // OnTauntRequired - calls base class virtual taunt method
-    void TauntTarget(::Unit* target) override
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return;
-            }
-    {
+    void TauntTarget(::Unit* target) override    {
         if (this->CanCastSpell(HAND_OF_RECKONING, target))
         {
             this->CastSpell(target, HAND_OF_RECKONING);

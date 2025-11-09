@@ -79,29 +79,7 @@ public:
 
         if (Aura* aura = bot->GetAura(44544)) // Fingers of Frost buff ID
         {
-            _fofStacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            _fofEndTime = getMSTime() + aura->GetDuration();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-        }
+            _fofStacks = aura->GetStackAmount();            _fofEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _fofStacks = 0;
@@ -133,14 +111,7 @@ public:
     [[nodiscard]] bool IsActive() const
     {
         return _brainFreezeActive && getMSTime() < _brainFreezeEndTime;
-    }
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-    return false;
-}
-
-    void Update(Player* bot)
+    }    void Update(Player* bot)
     {
         if (!bot)
             return;
@@ -149,13 +120,7 @@ public:
         {
             _brainFreezeActive = true;
             if (Aura* aura = bot->GetAura(190446))
-                _brainFreezeEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _brainFreezeEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _brainFreezeActive = false;
@@ -209,13 +174,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit FrostMageRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : RangedDpsSpecialization<ManaResource>(bot)
+    explicit FrostMageRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
         , _fofTracker()
         , _brainFreezeTracker()
         , _icicleTracker()
@@ -306,13 +265,7 @@ private:
         _lastFrozenOrbTime = 0;
     }
 
-    void UpdateFrostState()
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-        return nullptr;
-    }
-    {
+    void UpdateFrostState()    {
         Player* bot = this->GetBot();
         // Resource (mana) is managed by the base template class automatically
         _fofTracker.Update(bot);
@@ -332,29 +285,12 @@ private:
         {
             _icyVeinsActive = true;
             if (Aura* aura = bot->GetAura(FROST_ICY_VEINS))
-                _icyVeinsEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _icyVeinsEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        Player* bot = this->GetBot();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-    return;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-    return nullptr;
-}
-        // Icy Veins (major DPS cooldown)
+        Player* bot = this->GetBot();        // Icy Veins (major DPS cooldown)
         if (!_icyVeinsActive)
         {
             if (this->CanCastSpell(FROST_ICY_VEINS, bot))
@@ -379,13 +315,7 @@ private:
             }
         }
 
-        // Glacial Spike with 5 icicles (if talented)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (bot->HasSpell(FROST_GLACIAL_SPIKE) && _icicleTracker.IsMaxIcicles())
+        // Glacial Spike with 5 icicles (if talented)        if (bot->HasSpell(FROST_GLACIAL_SPIKE) && _icicleTracker.IsMaxIcicles())
         {
             if (this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
             {
@@ -395,20 +325,8 @@ private:
             }
         }
 
-        // Ray of Frost with Icy Veins (if talented - channeled damage)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
+        // Ray of Frost with Icy Veins (if talented - channeled damage)        if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
+        {            if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
             {
                 this->CastSpell(target, FROST_RAY_OF_FROST);
                 return;
@@ -442,13 +360,7 @@ private:
             }
         }
 
-        // Comet Storm (if talented - burst damage)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (bot->HasSpell(FROST_COMET_STORM))
+        // Comet Storm (if talented - burst damage)        if (bot->HasSpell(FROST_COMET_STORM))
         {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
             {
@@ -459,13 +371,7 @@ private:
 
         // Frostbolt (builder - generates icicles and procs)
         if (this->CanCastSpell(FROST_FROSTBOLT, target))
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            this->CastSpell(target, FROST_FROSTBOLT);
+        {            this->CastSpell(target, FROST_FROSTBOLT);
             _icicleTracker.AddIcicle();
 
             // Chance to proc Brain Freeze
@@ -505,13 +411,7 @@ private:
         }
 
         // Comet Storm for AoE damage
-        if (bot->HasSpell(FROST_COMET_STORM) && enemyCount >= 3)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (bot->HasSpell(FROST_COMET_STORM) && enemyCount >= 3)        {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
             {
                 this->CastSpell(target, FROST_COMET_STORM);

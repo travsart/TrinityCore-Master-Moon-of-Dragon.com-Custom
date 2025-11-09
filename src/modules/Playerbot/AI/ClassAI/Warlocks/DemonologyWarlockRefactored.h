@@ -116,18 +116,7 @@ struct ManaSoulShardResourceDemo
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-        }
+            mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
         available = mana > 0;
     }
@@ -249,29 +238,12 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit DemonologyWarlockRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
+    explicit DemonologyWarlockRefactored(Player* bot)        : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
         , WarlockSpecialization(bot)
         , _demonTracker()
         , _demonicCoreStacks(0)
         , _lastTyrantTime(0)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Initialize mana/soul shard resources
+    {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
 
         InitializeCooldowns();
@@ -279,13 +251,7 @@ public:
         TC_LOG_DEBUG("playerbot", "DemonologyWarlockRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -531,13 +497,7 @@ protected:
 
         // Summon Felguard (Demonology's main pet)
         if (this->CanCastSpell(SUMMON_FELGUARD, bot))
-        {
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            this->CastSpell(bot, SUMMON_FELGUARD);
+        {            this->CastSpell(bot, SUMMON_FELGUARD);
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Felguard");
         }
     }
@@ -552,13 +512,7 @@ private:
         if (this->GetBot())
         {
             if (Aura* aura = this->GetBot()->GetAura(DEMONIC_CORE))
-                _demonicCoreStacks = aura->GetStackAmount();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                    return nullptr;
-                }
-            else
+                _demonicCoreStacks = aura->GetStackAmount();            else
                 _demonicCoreStacks = 0;
         }
 

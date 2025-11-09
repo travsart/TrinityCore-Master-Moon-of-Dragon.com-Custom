@@ -108,18 +108,7 @@ struct EnergyChiResourceWindwalker
     void Initialize(Player* bot) {
         if (bot) {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-            energy = bot->GetPower(POWER_ENERGY);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-        }
+            energy = bot->GetPower(POWER_ENERGY);        }
         chi = 0;
     }
 };
@@ -227,30 +216,13 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit WindwalkerMonkRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
+    explicit WindwalkerMonkRefactored(Player* bot)        : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
         , MonkSpecialization(bot)
         , _hitComboTracker()
         , _sefTracker()
         , _lastRisingSunKickTime(0)
         , _comboBreaker(false)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        // Initialize energy/chi resources
+    {        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
 
         InitializeCooldowns();
@@ -258,13 +230,7 @@ public:
         TC_LOG_DEBUG("playerbot", "WindwalkerMonkRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 

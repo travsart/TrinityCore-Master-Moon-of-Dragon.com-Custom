@@ -409,29 +409,7 @@ private:
             else if (healthPct < 60.0f) priority = 200;
 
             // Tank priority boost
-            if (target->GetTypeId() == TYPEID_PLAYER) {
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
-                return;
-            }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
-                return nullptr;
-            }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
-                return;
-            }
-                Player* player = target->ToPlayer();
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
-                    return nullptr;
-                }
-                if (player) // TODO: Implement role detection
+            if (target->GetTypeId() == TYPEID_PLAYER) {                Player* player = target->ToPlayer();                if (player) // TODO: Implement role detection
                     priority += 50; // Generic player boost
             }
 

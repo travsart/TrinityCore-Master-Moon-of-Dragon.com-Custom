@@ -191,18 +191,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit HolyPriestRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : HealerSpecialization<ManaResource>(bot)
+    explicit HolyPriestRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
         , PriestSpecialization(bot)
         , _renewTracker()
         , _pomTracker()
@@ -220,40 +209,19 @@ public:
 
     void UpdateRotation(::Unit* target) override
     {
-        Player* bot = this->GetBot();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-                return;
-            }
-        if (!target || !bot)
+        Player* bot = this->GetBot();        if (!target || !bot)
             return;
 
         UpdateHolyState();
 
         // Holy is a healer - check group health first
         if (Group* group = bot->GetGroup())
-        if (!bot)
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-            return nullptr;
-        }
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-            return nullptr;
-        }
+        
         {
             std::vector<Unit*> groupMembers;
             for (GroupReference const& ref : group->GetMembers())
             {
-                if (Player* member = ref.GetSource())
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                {
+                if (Player* member = ref.GetSource())                {
                     if (member->IsAlive() && bot->IsInMap(member))
                         groupMembers.push_back(member);
                 }
@@ -349,14 +317,7 @@ private:
         _renewTracker.Update(bot);
         _pomTracker.Update(bot);
         UpdateCooldownStates();
-    }
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-    return;
-}
-
-    void UpdateCooldownStates()
+    }    void UpdateCooldownStates()
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -370,13 +331,7 @@ private:
         {
             _apotheosisActive = true;
             if (Aura* aura = bot->GetAura(HOLY_APOTHEOSIS))
-                _apotheosisEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _apotheosisEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
@@ -395,14 +350,7 @@ private:
 
         // AoE healing
         if (HandleAoEHealing(group))
-            return true;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-    return nullptr;
-}
-
-        // Direct healing
+            return true;        // Direct healing
         if (HandleDirectHealing(group))
             return true;
 
@@ -420,25 +368,13 @@ private:
         }
 
         if (criticalHealthCount >= 3 && (getMSTime() - _lastSalvationTime) >= 720000) // 12 min CD
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
+        {            if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
             {
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SALVATION, bot))
                 {
                     this->CastSpell(bot, HOLY_HOLY_WORD_SALVATION);
                     _lastSalvationTime = getMSTime();
-                    return true;
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                }
+                    return true;                }
             }
         }
 
@@ -462,31 +398,13 @@ private:
 
         // Apotheosis (healing burst mode)
         if (lowHealthCount >= 3 && (getMSTime() - _lastApotheosisTime) >= 120000) // 2 min CD
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(HOLY_APOTHEOSIS))
+        {            if (bot->HasSpell(HOLY_APOTHEOSIS))
             {
                 if (this->CanCastSpell(HOLY_APOTHEOSIS, bot))
                 {
-                    this->CastSpell(bot, HOLY_APOTHEOSIS);
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                        return nullptr;
-                    }
-                    _apotheosisActive = true;
+                    this->CastSpell(bot, HOLY_APOTHEOSIS);                    _apotheosisActive = true;
                     _apotheosisEndTime = getMSTime() + 20000; // 20 sec
-                    _lastApotheosisTime = getMSTime();
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                        return nullptr;
-                    }
-                    return true;
+                    _lastApotheosisTime = getMSTime();                    return true;
                 }
             }
         }
@@ -513,42 +431,14 @@ private:
         if (!bot)
             return false;
 
-        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-            return;
-        }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-        if (manaPercent < 20 && (getMSTime() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
+        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);        if (manaPercent < 20 && (getMSTime() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
         {
             if (bot->HasSpell(HOLY_SYMBOL_OF_HOPE))
-            {
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                    return nullptr;
-                }
-                if (this->CanCastSpell(HOLY_SYMBOL_OF_HOPE, bot))
+            {                if (this->CanCastSpell(HOLY_SYMBOL_OF_HOPE, bot))
                 {
                     this->CastSpell(bot, HOLY_SYMBOL_OF_HOPE);
                     _lastSymbolOfHopeTime = getMSTime();
-                    return true;
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                    return nullptr;
-                }
-                }
+                    return true;                }
             }
         }
 
@@ -562,13 +452,7 @@ private:
         // Prayer of Mending (bouncing heal)
         if (!_pomTracker.HasActivePomOnAnyTarget())
         {
-            for (Unit* member : group)
-                        if (!member)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                            return;
-                        }
-            {
+            for (Unit* member : group)            {
                 if (member && member->GetHealthPct() < 95.0f)
                 {
                     if (this->CanCastSpell(HOLY_PRAYER_OF_MENDING, member))
@@ -584,18 +468,7 @@ private:
         // Renew on injured allies
         if (activeRenews < group.size())
         {
-            for (Unit* member : group)
-                                if (!member)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                                    return nullptr;
-                                }
-                            if (!member)
-                            {
-                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                                return;
-                            }
-            {
+            for (Unit* member : group)            {
                 if (member && member->GetHealthPct() < 90.0f)
                 {
                     if (_renewTracker.NeedsRenewRefresh(member->GetGUID()))
@@ -621,13 +494,7 @@ private:
         {
             if (member && member->GetHealthPct() < 50.0f)
             {
-                if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                {
+                if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))                {
                     this->CastSpell(member, HOLY_HOLY_WORD_SERENITY);
                     return true;
                 }
@@ -661,13 +528,7 @@ private:
         if (stackedAlliesCount >= 3 && stackedTarget)
         {
             if (this->CanCastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget))
-            {
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
+            {                this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
                 return true;
             }
         }
@@ -679,25 +540,13 @@ private:
     {
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
-        for (Unit* member : group)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        for (Unit* member : group)        {
             if (member && member->GetHealthPct() < 85.0f)
                 ++injuredCount;
         }
 
         if (injuredCount >= 3)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(HOLY_CIRCLE_OF_HEALING))
+        {            if (bot->HasSpell(HOLY_CIRCLE_OF_HEALING))
             {
                 for (Unit* member : group)
                 {
@@ -731,13 +580,7 @@ private:
 
         // Divine Star (damage + healing)
         if (injuredCount >= 2)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(HOLY_DIVINE_STAR))
+        {            if (bot->HasSpell(HOLY_DIVINE_STAR))
             {
                 if (this->CanCastSpell(HOLY_DIVINE_STAR, bot))
                 {
@@ -749,13 +592,7 @@ private:
 
         // Halo (large AoE damage + healing)
         if (injuredCount >= 4)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(HOLY_HALO))
+        {            if (bot->HasSpell(HOLY_HALO))
             {
                 if (this->CanCastSpell(HOLY_HALO, bot))
                 {
@@ -794,14 +631,7 @@ private:
                     return true;
                 }
             }
-        }
-
-        if (!victim)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
-            return nullptr;
-        }
-        return false;
+        }        return false;
     }
 
     bool HandleSelfHealing()
@@ -871,14 +701,7 @@ private:
             // Simplified tank detection - check if player is currently tanking
             // A more robust implementation would check spec, but talent API is deprecated
             if (Unit* victim = player->GetVictim())
-                return victim->GetVictim() == player;
-                if (!victim)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetVictim");
-                    return nullptr;
-                }
-
-            return false;
+                return victim->GetVictim() == player;            return false;
         }
 
         return false;

@@ -24,18 +24,7 @@
 namespace Playerbot
 {
 
-DruidAI::DruidAI(Player* bot) : ClassAI(bot),
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    _currentForm(DruidForm::HUMANOID),
+DruidAI::DruidAI(Player* bot) : ClassAI(bot),    _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
     _energy(100),
@@ -199,18 +188,7 @@ bool DruidAI::HandleDefensives()
     if (!bot)
         return false;
 
-    float healthPercent = bot->GetHealthPct();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return 0;
-}
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
-    uint32 currentTime = getMSTime();
+    float healthPercent = bot->GetHealthPct();    uint32 currentTime = getMSTime();
 
     // Survival Instincts - critical health
     if (healthPercent < 30.0f &&
@@ -224,14 +202,7 @@ bool DruidAI::HandleDefensives()
                          bot->GetName(), healthPercent);
             return true;
         }
-    }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
-
-    // Barkskin - moderate damage reduction
+    }    // Barkskin - moderate damage reduction
     if (healthPercent < 50.0f &&
         currentTime > _lastBarkskin + 60000 &&
         CanUseAbility(BARKSKIN))
@@ -239,35 +210,13 @@ bool DruidAI::HandleDefensives()
         if (CastSpell(BARKSKIN))
         {
             _lastBarkskin = currentTime;
-            TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Barkskin at {}% health",
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
-                         bot->GetName(), healthPercent);
+            TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Barkskin at {}% health",                         bot->GetName(), healthPercent);
             return true;
         }
     }
 
     // Frenzied Regeneration - Guardian healing
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
-        healthPercent < 60.0f &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&        healthPercent < 60.0f &&
         currentTime > _lastFrenziedRegen + 30000 &&
         CanUseAbility(FRENZIED_REGENERATION))
     {
@@ -281,18 +230,7 @@ bool DruidAI::HandleDefensives()
     }
 
     // Ironbark - Restoration defensive for allies
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)
-                                 if (!bot)
-                                 {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                     return nullptr;
-                                 }
-                             if (!bot)
-                             {
-                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                 return;
-                             }
-    {
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)    {
         Unit* lowestAlly = GetLowestHealthAlly(40.0f);
         if (lowestAlly && lowestAlly->GetHealthPct() < 40.0f &&
             CanUseAbility(IRONBARK))
@@ -305,20 +243,16 @@ bool DruidAI::HandleDefensives()
             }
         }
     }
-if (!priorityTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
-    return nullptr;
-}
+
+if (!priorityTarget)
+
+{
+    return nullptr;
+
+}
 
     // Cenarion Ward - preemptive defense
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
-        healthPercent < 70.0f &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&        healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
         if (CastSpell(bot, CENARION_WARD))
@@ -341,7 +275,6 @@ bool DruidAI::HandleTargetSwitching(::Unit*& target)
         target = priorityTarget;
                      if (!priorityTarget)
                      {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetName");
                          return;
                      }
         TC_LOG_DEBUG("module.playerbot.ai", "Druid {} switching target to {}",
@@ -957,21 +890,9 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Check form requirements
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-        return nullptr;
-    }
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    // Check form requirements    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (spellInfo)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        // Check if spell requires specific form
+    {        // Check if spell requires specific form
         if (spellInfo->Stances)
         {
             bool canCastInForm = false;
@@ -997,13 +918,7 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void DruidAI::OnCombatStart(::Unit* target)
-                 if (!target)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                     return;
-                 }
-{
+void DruidAI::OnCombatStart(::Unit* target){
     if (!target || !GetBot())
         return;
 
@@ -1011,13 +926,7 @@ void DruidAI::OnCombatStart(::Unit* target)
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-    _combatTime = 0;
+    _currentTarget = target->GetGUID();    _combatTime = 0;
 
     // Update resources
     UpdateResources();
@@ -1157,41 +1066,11 @@ bool DruidAI::ShiftToForm(DruidForm form)
             spellId = MOONKIN_FORM;
             break;
         case DruidForm::TREE_OF_LIFE:
-            spellId = TREE_OF_LIFE;
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return;
-            }
-            break;
-        case DruidForm::TRAVEL:
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return;
-            }
-            spellId = TRAVEL_FORM;
-            break;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        case DruidForm::HUMANOID:
-            // Cancel current form
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-            {
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+            spellId = TREE_OF_LIFE;            break;
+        case DruidForm::TRAVEL:            spellId = TRAVEL_FORM;
+            break;        case DruidForm::HUMANOID:
+            // Cancel current form            if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+            {                bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
                 _lastFormShift = currentTime;
                 _currentForm = DruidForm::HUMANOID;
                 return true;
@@ -1209,60 +1088,14 @@ bool DruidAI::ShiftToForm(DruidForm form)
             _currentForm = form;
             return true;
         }
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-        return nullptr;
-    }
-    return false;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-    return;
-}
-
-DruidAI::DruidForm DruidAI::GetCurrentForm() const
-{
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-        return nullptr;
-    }
-    return _currentForm;
+    }    return false;
+}DruidAI::DruidForm DruidAI::GetCurrentForm() const
+{    return _currentForm;
 }
 
 bool DruidAI::CanShiftToForm(DruidForm form) const
 {
-    Player* bot = GetBot();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-        return nullptr;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-        return;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return;
-            }
-    if (!bot)
+    Player* bot = GetBot();    if (!bot)
         return false;
 
     switch (form)
@@ -1296,28 +1129,10 @@ void DruidAI::UpdateResources()
     switch (powerType)
     {
         case POWER_ENERGY:
-            _energy = bot->GetPower(POWER_ENERGY);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            // Combo points are stored as a separate power type
-            _comboPoints = bot->GetPower(POWER_COMBO_POINTS);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            break;
+            _energy = bot->GetPower(POWER_ENERGY);            // Combo points are stored as a separate power type
+            _comboPoints = bot->GetPower(POWER_COMBO_POINTS);            break;
         case POWER_RAGE:
-            _rage = bot->GetPower(POWER_RAGE);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
-            break;
+            _rage = bot->GetPower(POWER_RAGE);            break;
         case POWER_MANA:
             // Mana is tracked via GetPower directly
             break;

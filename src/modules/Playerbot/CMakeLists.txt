@@ -214,6 +214,11 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
 
+    # ClassAI Common Utilities (Deduplication Phase: Unified Systems)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/StatusEffectTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/CooldownManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/RotationHelpers.h
+
     # ClassAI Behavior Tree Integration (Phase 5: 13 Classes × 3 Specs)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.h

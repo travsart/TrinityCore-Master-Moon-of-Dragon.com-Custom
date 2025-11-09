@@ -66,18 +66,7 @@ public:
     // CORE ROTATION - Only Arms-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -198,24 +187,11 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_WHIRLWIND);
             return;
-        }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return nullptr;
-}
-
-        // Priority 8: Rend for DoT (if not already applied)
+        }        // Priority 8: Rend for DoT (if not already applied)
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
         {
             this->CastSpell(target, SPELL_REND);
-            _rendTracking[target->GetGUID()] = getMSTime() + 21000;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-            return;
+            _rendTracking[target->GetGUID()] = getMSTime() + 21000;            return;
         }
 
         // Priority 9: Heroic Strike as rage dump
@@ -358,14 +334,7 @@ protected:
             this->CastSpell(this->GetBot(), stanceSpell);
             _currentStance = stance;
         }
-    }
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-    // ========================================================================
+    }    // ========================================================================
     // DEEP WOUNDS MANAGEMENT
     // ========================================================================
 
@@ -375,13 +344,7 @@ protected:
             return;
 
         // Deep Wounds is applied by critical strikes
-        _deepWoundsTracking[target->GetGUID()] = getMSTime() + 21000; // 21 second duration
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-    }
+        _deepWoundsTracking[target->GetGUID()] = getMSTime() + 21000; // 21 second duration    }
 
     void CleanupExpiredDeepWounds()
     {
@@ -404,13 +367,7 @@ protected:
         return target && (target->GetHealthPct() <= 20.0f || _suddenDeathProc);
     }
 
-    bool ShouldUseColossusSmash(::Unit* target) const
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return false;
-        }
-    {
+    bool ShouldUseColossusSmash(::Unit* target) const    {
         // Use on cooldown for damage window
         return !_colossusSmashActive && target;
     }
@@ -432,13 +389,7 @@ protected:
         if (!target)
             return false;
 
-        auto it = _rendTracking.find(target->GetGUID());
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        return it != _rendTracking.end() && it->second > getMSTime();
+        auto it = _rendTracking.find(target->GetGUID());        return it != _rendTracking.end() && it->second > getMSTime();
     }
 
     bool HasTacticalMastery() const

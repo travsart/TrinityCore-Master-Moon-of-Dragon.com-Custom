@@ -43,19 +43,7 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     // Initialize component managers for class-specific mechanics
     _actionQueue = std::make_unique<ActionPriorityQueue>();
     _cooldownManager = std::make_unique<CooldownManager>();
-    _resourceManager = std::make_unique<ResourceManager>(bot);
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return nullptr;
-                     }
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
-
-    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
+    _resourceManager = std::make_unique<ResourceManager>(bot);    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
                  bot ? bot->GetName() : "null");
 }
 
@@ -116,24 +104,11 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 // COMBAT STATE MANAGEMENT
 // ============================================================================
 
-void ClassAI::OnCombatStart(::Unit* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-        return;
-    }
-{
+void ClassAI::OnCombatStart(::Unit* target){
     // Called by BotAI when entering combat
     _inCombat = true;
     _combatTime = 0;
-    _currentCombatTarget = target;
-                 if (!target)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                     return;
-                 }
-
-    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
+    _currentCombatTarget = target;    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
 
     // Let BotAI handle base combat start logic
@@ -151,7 +126,6 @@ void ClassAI::OnCombatEnd()
 
     if (!newTarget)
     {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
         return nullptr;
     }
     // Let BotAI handle base combat end logic
@@ -163,7 +137,6 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
     _currentCombatTarget = newTarget;
                  if (!newTarget)
                  {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
                      return;
                  }
     _lastTargetSwitch = _combatTime;
@@ -283,13 +256,7 @@ void ClassAI::UpdateTargeting()
         if (distanceSq < nearestDistanceSq)
         {
             nearestDistanceSq = distanceSq;
-            nearestEnemy = target;
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-            return;
-        }
-        }
+            nearestEnemy = target;        }
     }
 
     return nearestEnemy;
@@ -311,13 +278,7 @@ void ClassAI::UpdateTargeting()
     Group* group = GetBot()->GetGroup();
     for (GroupReference* itr : *group)
     {
-        if (Player* member = itr->GetSource())
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                return nullptr;
-            }
-        {
+        if (Player* member = itr->GetSource())        {
             if (!member->IsAlive() || !member->IsWithinDistInMap(GetBot(), 40.0f))
                 continue;
 
@@ -455,11 +416,13 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 
     if (!HasLineOfSight(target))
         return false;
-if (!checkTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: checkTarget in method HasAura");
-    return nullptr;
-}
+
+if (!checkTarget)
+
+{
+    return nullptr;
+
+}
 
     // Cast the spell
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -468,14 +431,7 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 
     GetBot()->CastSpell(target, spellId, false);
     ConsumeResource(spellId);
-    _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
-
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-        return;
-    }
-    return true;
+    _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);    return true;
 }
 
 bool ClassAI::CastSpell(uint32 spellId)
@@ -486,19 +442,11 @@ bool ClassAI::CastSpell(uint32 spellId)
 
 // ============================================================================
 // AURA UTILITIES
-// ============================================================================
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-    return;
-}
-
-bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
+// ============================================================================bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 {
     ::Unit* checkTarget = target ? target : GetBot();
     if (!checkTarget)
     {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: checkTarget in method HasAura");
         return;
     }
     if (!checkTarget)
@@ -513,13 +461,7 @@ uint32 ClassAI::GetAuraStacks(uint32 spellId, ::Unit* target)
     if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        if (!aura)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-            return nullptr;
-        }
-        return aura->GetStackAmount();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetStackAmount();
 
     return 0;
 }
@@ -530,13 +472,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
     if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        if (!aura)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-            return nullptr;
-        }
-        return aura->GetDuration();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetDuration();
 
     return 0;
 }
@@ -548,30 +484,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
 bool ClassAI::IsMoving() const
 {
     return GetBot() && GetBot()->IsMoving();
-}
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-    return nullptr;
-}
-
-bool ClassAI::IsInMeleeRange(::Unit* target) const
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-    return;
-}
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-        return nullptr;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return nullptr;
-    }
-{
+}bool ClassAI::IsInMeleeRange(::Unit* target) const{
     if (!target || !GetBot())
         return false;
 
@@ -613,30 +526,7 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetAngle(target);
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-        return;
-    }
-    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-        return;
-    }
-    pos.m_positionZ = target->GetPositionZ();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-        return;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return;
-    }
-    pos.SetOrientation(target->GetOrientation());
+    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);    pos.m_positionZ = target->GetPositionZ();    pos.SetOrientation(target->GetOrientation());
 
     return pos;
 }

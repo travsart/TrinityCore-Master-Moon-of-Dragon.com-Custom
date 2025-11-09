@@ -1,16 +1,24 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Assassination Rogue Refactored - Template-Based Implementation
  *
- * This file provides a complete, template-based implementation of Assassination Rogue
- * using the MeleeDpsSpecialization with dual resource system (Energy + Combo Points).
+ * Fully refactored to use unified utility classes:
+ * - DotTracker from Common/StatusEffectTracker.h (eliminates custom tracker)
+ * - CooldownManager from Common/CooldownManager.h (eliminates InitializeCooldowns())
+ * - Helper utilities from Common/RotationHelpers.h
+ *
+ * BEFORE: 434 lines with duplicate tracker and cooldown code
+ * AFTER: ~320 lines using shared utilities
  */
 
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
-#include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
+#include "RogueResourceTypes.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -18,94 +26,6 @@
 
 namespace Playerbot
 {
-
-// NOTE: Spell IDs are defined in RogueSpecialization.h (included above)
-// NOTE: ComboPointsAssassination is defined in RogueResourceTypes.h (spec-specific resource type)
-
-// ============================================================================
-// ASSASSINATION DOT TRACKER
-// ============================================================================
-
-class AssassinationDotTracker
-{
-public:
-    struct DotInfo
-    {
-        uint32 spellId;
-        uint32 endTime;
-        uint32 duration;
-        bool active;
-
-        DotInfo() : spellId(0), endTime(0), duration(0), active(false) {}
-        DotInfo(uint32 id, uint32 dur) : spellId(id), endTime(0), duration(dur), active(false) {}
-
-        uint32 GetTimeRemaining() const {
-            if (!active) return 0;
-            uint32 now = getMSTime();
-            return endTime > now ? endTime - now : 0;
-        }
-
-        bool NeedsRefresh() const {
-            return !active || GetTimeRemaining() < 5400; // Pandemic window (30% of duration)
-        }
-    };
-
-    AssassinationDotTracker()
-    {
-        _dots[RogueAI::GARROTE] = DotInfo(RogueAI::GARROTE, 18000);
-        _dots[RogueAI::RUPTURE] = DotInfo(RogueAI::RUPTURE, 24000); // 4s per CP
-        _dots[RogueAI::CRIMSON_TEMPEST] = DotInfo(RogueAI::CRIMSON_TEMPEST, 14000);
-    }
-
-    void ApplyDot(uint32 spellId, uint32 comboPoints = 0)
-    {
-        if (_dots.find(spellId) != _dots.end())
-        {
-            uint32 duration = _dots[spellId].duration;
-            if (spellId == RogueAI::RUPTURE)
-                duration = 4000 * std::max(1u, comboPoints); // 4s per CP
-
-            _dots[spellId].active = true;
-            _dots[spellId].endTime = getMSTime() + duration;
-        }
-    }
-
-    bool IsActive(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        if (it != _dots.end())
-            return it->second.active && it->second.GetTimeRemaining() > 0;
-        return false;
-    }
-
-    bool NeedsRefresh(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        return it != _dots.end() && it->second.NeedsRefresh();
-    }
-
-    uint32 GetTimeRemaining(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        return it != _dots.end() ? it->second.GetTimeRemaining() : 0;
-    }
-
-    void Update()
-    {
-        uint32 now = getMSTime();
-        for (auto& [spellId, dot] : _dots)
-        {
-            if (dot.active && now >= dot.endTime)
-            {
-                dot.active = false;
-                dot.endTime = 0;
-            }
-        }
-    }
-
-private:
-    std::unordered_map<uint32, DotInfo> _dots;
-};
 
 // ============================================================================
 // ASSASSINATION ROGUE REFACTORED
@@ -138,6 +58,7 @@ public:
     explicit AssassinationRogueRefactored(Player* bot)
         : MeleeDpsSpecialization<ComboPointsAssassination>(bot)
         , _dotTracker()
+        , _cooldowns()
         , _inStealth(false)
         , _lastMutilateTime(0)
         , _lastEnvenomTime(0)
@@ -146,57 +67,31 @@ public:
     {
         // Initialize energy/combo resources
         this->_resource.maxEnergy = bot->HasSpell(RogueAI::VIGOR) ? 120 : 100;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
         this->_resource.maxComboPoints = bot->HasSpell(RogueAI::DEEPER_STRATAGEM) ? 6 : 5;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
-        InitializeCooldowns();
+        // Register DoT tracking
+        _dotTracker.RegisterDot(RogueAI::GARROTE, 18000);
+        _dotTracker.RegisterDot(RogueAI::RUPTURE, 24000); // 4s base per CP
+        _dotTracker.RegisterDot(RogueAI::CRIMSON_TEMPEST, 14000);
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {VENDETTA, CooldownPresets::MINOR_OFFENSIVE, 1},      // 2 min CD
+            {RogueAI::DEATHMARK, CooldownPresets::MINOR_OFFENSIVE, 1}, // 2 min CD
+            {KINGSBANE, CooldownPresets::OFFENSIVE_60, 1},        // 1 min CD
+            {EXSANGUINATE, CooldownPresets::OFFENSIVE_45, 1},     // 45 sec CD
+            {RogueAI::VANISH, CooldownPresets::MINOR_OFFENSIVE, 1},    // 2 min CD
+            {RogueAI::CLOAK_OF_SHADOWS, CooldownPresets::MINOR_DEFENSIVE, 1}, // 2 min CD
+            {RogueAI::KICK, CooldownPresets::INTERRUPT, 1},       // 15 sec CD
+            {RogueAI::BLIND, CooldownPresets::MINOR_DEFENSIVE, 1} // 2 min CD
+        });
 
         TC_LOG_DEBUG("playerbot", "AssassinationRogueRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -215,13 +110,7 @@ public:
 
         // Main rotation
         uint32 enemyCount = this->GetEnemiesInRange(10.0f);
-        if (enemyCount >= 3)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-        {
+        if (enemyCount >= 3)        {
             ExecuteAoERotation(target, enemyCount);
         }
         else
@@ -232,14 +121,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-
-        // Maintain poisons
+        Player* bot = this->GetBot();        // Maintain poisons
         if (!bot->HasAura(RogueAI::DEADLY_POISON) && this->CanCastSpell(RogueAI::DEADLY_POISON, bot))
         {
             this->CastSpell(bot, RogueAI::DEADLY_POISON);
@@ -285,12 +167,12 @@ protected:
         }
 
         // Priority 3: Refresh Garrote
-        if (_dotTracker.NeedsRefresh(RogueAI::GARROTE) && energy >= 45)
+        if (_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE) && energy >= 45)
         {
             if (this->CanCastSpell(RogueAI::GARROTE, target))
             {
                 this->CastSpell(target, RogueAI::GARROTE);
-                _dotTracker.ApplyDot(RogueAI::GARROTE);
+                _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
                 ConsumeEnergy(45);
                 return;
             }
@@ -300,12 +182,13 @@ protected:
         if (cp >= (maxCp - 1))
         {
             // Refresh Rupture if needed
-            if (_dotTracker.NeedsRefresh(RogueAI::RUPTURE) && energy >= 25)
+            if (_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE) && energy >= 25)
             {
                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                 {
                     this->CastSpell(target, RogueAI::RUPTURE);
-                    _dotTracker.ApplyDot(RogueAI::RUPTURE, cp);
+                    uint32 ruptDuration = 4000 * cp; // 4s per CP
+                    _dotTracker.ApplyDot(target->GetGUID(), RogueAI::RUPTURE, ruptDuration);
                     ConsumeEnergy(25);
                     this->_resource.comboPoints = 0;
                     return;
@@ -369,7 +252,7 @@ protected:
             if (this->GetBot()->HasSpell(RogueAI::CRIMSON_TEMPEST) && this->CanCastSpell(RogueAI::CRIMSON_TEMPEST, this->GetBot()))
             {
                 this->CastSpell(this->GetBot(), RogueAI::CRIMSON_TEMPEST);
-                _dotTracker.ApplyDot(RogueAI::CRIMSON_TEMPEST);
+                _dotTracker.ApplyDot(target->GetGUID(), RogueAI::CRIMSON_TEMPEST);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -398,7 +281,7 @@ protected:
         if (this->CanCastSpell(RogueAI::GARROTE, target))
         {
             this->CastSpell(target, RogueAI::GARROTE);
-            _dotTracker.ApplyDot(RogueAI::GARROTE);
+            _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
             _inStealth = false;
             return;
         }
@@ -460,25 +343,13 @@ private:
 
     float GetDistanceToTarget(::Unit* target) const
     {
-        if (!target || !this->GetBot())
-            return 1000.0f;
-        return this->GetBot()->GetDistance(target);
-    }
-
-    void InitializeCooldowns()
-    {
-        this->RegisterCooldown(VENDETTA, 120000);                // 2 min CD
-        this->RegisterCooldown(RogueAI::DEATHMARK, 120000);      // 2 min CD
-        this->RegisterCooldown(KINGSBANE, 60000);                // 1 min CD
-        this->RegisterCooldown(EXSANGUINATE, 45000);             // 45 sec CD
-        this->RegisterCooldown(RogueAI::VANISH, 120000);         // 2 min CD
-        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000); // 2 min CD
-        this->RegisterCooldown(RogueAI::KICK, 15000);            // 15 sec CD
-        this->RegisterCooldown(RogueAI::BLIND, 120000);          // 2 min CD
+        return PositionUtils::GetDistance(this->GetBot(), target);
     }
 
 private:
-    AssassinationDotTracker _dotTracker;
+    // Unified utilities (eliminates duplicate tracker code)
+    DotTracker _dotTracker;
+    CooldownManager _cooldowns;
     bool _inStealth;
     uint32 _lastMutilateTime;
     uint32 _lastEnvenomTime;

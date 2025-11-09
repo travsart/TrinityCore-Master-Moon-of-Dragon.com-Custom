@@ -66,18 +66,7 @@ public:
     // CORE ROTATION - Only Fury-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -259,19 +248,7 @@ protected:
         }
 
         // Update Whirlwind buff tracking (affects next 2 abilities)
-        _hasWhirlwindBuff = bot->HasAura(SPELL_WHIRLWIND_BUFF);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-        return nullptr;
-    }
-
-        // Check execute phase
+        _hasWhirlwindBuff = bot->HasAura(SPELL_WHIRLWIND_BUFF);        // Check execute phase
         _executePhaseActive = (target->GetHealthPct() <= 20.0f);
 
         // Update Furious Slash decay (stacks fall off after 4 seconds)
@@ -289,20 +266,7 @@ protected:
         Player* bot = this->GetBot();
 
         // Check if bot has weapons in both hands
-        Item* mainHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-            return;
-        }
-        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-            return;
-        }
-
-        _hasDualWield = mainHand && offHand &&
+        Item* mainHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasDualWield = mainHand && offHand &&
                        offHand->GetTemplate() &&
                        offHand->GetTemplate()->GetClass() == ITEM_CLASS_WEAPON;
     }

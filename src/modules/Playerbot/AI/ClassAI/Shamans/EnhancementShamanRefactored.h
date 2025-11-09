@@ -83,29 +83,7 @@ public:
         // Check if Maelstrom Weapon buff is active
         if (Aura* aura = bot->GetAura(187880)) // Maelstrom Weapon buff ID
         {
-            _maelstromStacks = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return;
-            }
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            _maelstromEndTime = getMSTime() + aura->GetDuration();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                return nullptr;
-            }
-        }
+            _maelstromStacks = aura->GetStackAmount();            _maelstromEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _maelstromStacks = 0;
@@ -153,13 +131,7 @@ public:
         {
             _stormbringerActive = true;
             if (Aura* aura = bot->GetAura(201846))
-                _stormbringerEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+                _stormbringerEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _stormbringerActive = false;
@@ -183,13 +155,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit EnhancementShamanRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        : MeleeDpsSpecialization<ManaResource>(bot)
+    explicit EnhancementShamanRefactored(Player* bot)        : MeleeDpsSpecialization<ManaResource>(bot)
         , ShamanSpecialization(bot)
         , _maelstromWeaponTracker()
         , _stormbringerTracker()
@@ -273,13 +239,7 @@ private:
     {
         _lastAscendanceTime = 0;
         _lastFeralSpiritTime = 0;
-        _lastSunderingTime = 0;
-    if (!aura)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-        return;
-    }
-    }
+        _lastSunderingTime = 0;    }
 
     void UpdateEnhancementState()
     {
@@ -298,19 +258,7 @@ private:
         if (bot->HasAura(ENH_ASCENDANCE))
         {
             _ascendanceActive = true;
-            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                _ascendanceEndTime = getMSTime() + aura->GetDuration();
-                if (!aura)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetDuration");
-                    return nullptr;
-                }
-        }
+            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -330,13 +278,7 @@ private:
 
         // Ascendance (burst mode - Stormstrike becomes Windstrike)
         if ((getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(ENH_ASCENDANCE))
+        {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
@@ -344,13 +286,7 @@ private:
                     _ascendanceActive = true;
                     _ascendanceEndTime = getMSTime() + 15000;
                     _lastAscendanceTime = getMSTime();
-                    return;
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return nullptr;
-                }
-                }
+                    return;                }
             }
         }
 
@@ -372,29 +308,14 @@ private:
             {
                 this->CastSpell(target, ENH_STORMSTRIKE);
                 _stormbringerTracker.ConsumeProc();
-                _maelstromWeaponTracker.AddStack(1);
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                    return;
-                }
-                return;
+                _maelstromWeaponTracker.AddStack(1);                return;
             }
         }
 
         // Lava Burst at 5 Maelstrom Weapon stacks (instant cast, high damage)
         if (_maelstromWeaponTracker.IsMaxStacks())
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-            }
+            
             if (bot->HasSpell(ENH_LAVA_BURST))
             {
                 if (this->CanCastSpell(ENH_LAVA_BURST, target))
@@ -403,13 +324,7 @@ private:
                     _maelstromWeaponTracker.ConsumeStacks();
                     return;
                 }
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        }
+            }        }
 
         // Lightning Bolt at 5+ Maelstrom Weapon stacks (instant cast)
         if (maelstromStacks >= 5)
@@ -423,13 +338,7 @@ private:
         }
 
         // Elemental Blast at 5 stacks (talent)
-        if (maelstromStacks >= 5 && bot->HasSpell(ENH_ELEMENTAL_BLAST))
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (maelstromStacks >= 5 && bot->HasSpell(ENH_ELEMENTAL_BLAST))        {
             if (this->CanCastSpell(ENH_ELEMENTAL_BLAST, target))
             {
                 this->CastSpell(target, ENH_ELEMENTAL_BLAST);
@@ -438,13 +347,7 @@ private:
             }
         }
 
-        // Flame Shock (maintain DoT)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return nullptr;
-        }
-        if (!target->HasAura(ENH_FLAME_SHOCK))
+        // Flame Shock (maintain DoT)        if (!target->HasAura(ENH_FLAME_SHOCK))
         {
             if (this->CanCastSpell(ENH_FLAME_SHOCK, target))
             {
@@ -453,25 +356,13 @@ private:
             }
         }
 
-        // Ice Strike (talent - high damage, generates Maelstrom Weapon)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        if (bot->HasSpell(ENH_ICE_STRIKE))
+        // Ice Strike (talent - high damage, generates Maelstrom Weapon)        if (bot->HasSpell(ENH_ICE_STRIKE))
         {
             if (this->CanCastSpell(ENH_ICE_STRIKE, target))
             {
                 this->CastSpell(target, ENH_ICE_STRIKE);
                 _maelstromWeaponTracker.AddStack(1);
-                return;
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            }
+                return;            }
         }
 
         // Stormstrike (main melee attack)
@@ -484,13 +375,7 @@ private:
             if (rand() % 100 < 10) // 10% chance (simplified)
                 _stormbringerTracker.ActivateProc();
 
-            return;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        }
+            return;        }
 
         // Lava Lash (filler - consumes Flame Shock for extra damage)
         if (this->CanCastSpell(ENH_LAVA_LASH, target))
@@ -503,28 +388,10 @@ private:
         // Rockbiter (builder - low priority)
         if (this->CanCastSpell(ENH_ROCKBITER, target))
         {
-            this->CastSpell(target, ENH_ROCKBITER);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            return;
-        }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-        return;
-    }
-    }
+            this->CastSpell(target, ENH_ROCKBITER);            return;
+        }    }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                    return nullptr;
-                }
-    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 
         // Feral Spirit for AoE burst
@@ -540,13 +407,7 @@ private:
 
         // Ascendance for AoE burst
         if ((getMSTime() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
-        {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return nullptr;
-            }
-            if (bot->HasSpell(ENH_ASCENDANCE))
+        {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
@@ -560,13 +421,7 @@ private:
         }
 
         // Sundering (AoE damage + debuff)
-        if (bot->HasSpell(ENH_SUNDERING) && enemyCount >= 3)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
+        if (bot->HasSpell(ENH_SUNDERING) && enemyCount >= 3)        {
             if ((getMSTime() - _lastSunderingTime) >= 40000) // 40 sec CD
             {
                 if (this->CanCastSpell(ENH_SUNDERING, target))
@@ -579,19 +434,7 @@ private:
         }
 
         // Fire Nova (AoE explosion from Flame Shock targets)
-        if (bot->HasSpell(ENH_FIRE_NOVA) && enemyCount >= 3)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return nullptr;
-        }
-        {
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-            if (target->HasAura(ENH_FLAME_SHOCK))
+        if (bot->HasSpell(ENH_FIRE_NOVA) && enemyCount >= 3)        {            if (target->HasAura(ENH_FLAME_SHOCK))
             {
                 if (this->CanCastSpell(ENH_FIRE_NOVA, bot))
                 {
@@ -601,13 +444,7 @@ private:
             }
         }
 
-        // Flame Shock on priority target
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return nullptr;
-        }
-        if (!target->HasAura(ENH_FLAME_SHOCK))
+        // Flame Shock on priority target        if (!target->HasAura(ENH_FLAME_SHOCK))
         {
             if (this->CanCastSpell(ENH_FLAME_SHOCK, target))
             {

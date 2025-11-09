@@ -169,32 +169,11 @@ public:
         if (!target)
             return;
 
-        ObjectGuid guid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-            return;
-        }
+        ObjectGuid guid = target->GetGUID();        
 
         // Sync with actual aura
         if (Aura* aura = target->GetAura(FESTERING_WOUND))
-            _trackedTargets[guid] = aura->GetStackAmount();
-            if (!aura)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-                return nullptr;
-            }
-        else
+            _trackedTargets[guid] = aura->GetStackAmount();        else
             _trackedTargets.erase(guid);
     }
 
@@ -282,25 +261,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit UnholyDeathKnightRefactored(Player* bot)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)
-        
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        , _woundTracker()
+    explicit UnholyDeathKnightRefactored(Player* bot)        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)        , _woundTracker()
         , _petTracker()
         , _suddenDoomProc(false)
         , _lastOutbreakTime(0)
@@ -313,13 +274,7 @@ public:
         TC_LOG_DEBUG("playerbot", "UnholyDeathKnightRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -337,24 +292,11 @@ public:
         if (enemyCount >= 3)
         {
             ExecuteAoERotation(target, enemyCount);
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        else
+        }        else
         {
             ExecuteSingleTargetRotation(target);
         }
-    }
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-        return;
-    }
-    void UpdateBuffs() override
+    }    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -368,22 +310,9 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        uint32 rp = this->_resource.runicPower;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
-        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return 0;
-        }
-
-        // Priority 1: Apply/maintain Virulent Plague
+        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);        // Priority 1: Apply/maintain Virulent Plague
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
         {
             this->CastSpell(target, OUTBREAK);
@@ -436,13 +365,7 @@ protected:
         }
 
         // Priority 7: Death Coil (dump RP)
-        if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-                return nullptr;
-            }
-        {
+        if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))        {
             this->CastSpell(target, DEATH_COIL);
             ConsumeRunicPower(30);
             return;
@@ -467,13 +390,7 @@ protected:
         }
     }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return nullptr;
-        }
-    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
         uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
@@ -485,13 +402,7 @@ protected:
         }
 
         // Priority 2: Epidemic (spread disease)
-        if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
-        {
+        if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))        {
             this->CastSpell(target, EPIDEMIC);
             ConsumeRunes(RuneType::UNHOLY, 1);
             GenerateRunicPower(10);
@@ -526,13 +437,7 @@ protected:
 
     void HandleCooldowns(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
-        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
+        ObjectGuid targetGuid = target->GetGUID();        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
         // Apocalypse (burst wounds + summon ghouls)

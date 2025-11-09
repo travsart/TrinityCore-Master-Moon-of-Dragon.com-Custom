@@ -271,18 +271,7 @@ public:
     // CORE ROTATION - Havoc specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -357,18 +346,7 @@ public:
         }
     }
 
-    Position GetOptimalPosition(::Unit* target)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return nullptr;
-        }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-                return nullptr;
-            }
-    {
+    Position GetOptimalPosition(::Unit* target)    {
         // Havoc prefers to be behind target for Chaos Strike crit bonus
         if (target)
         {
@@ -379,44 +357,10 @@ public:
             }
 
             // Normal positioning - behind target
-            float angle = target->GetOrientation() + M_PI;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-                return;
-            }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-                return;
-            }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-                return;
-            }
-            float distance = 3.0f;
+            float angle = target->GetOrientation() + M_PI;            float distance = 3.0f;
 
             Position pos;
-            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-                return nullptr;
-            }
-            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-                return nullptr;
-            }
-            pos.m_positionZ = target->GetPositionZ();
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-                return;
-            }
-            pos.SetOrientation(target->GetRelativeAngle(&pos));
+            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;            pos.m_positionZ = target->GetPositionZ();            pos.SetOrientation(target->GetRelativeAngle(&pos));
 
             return pos;
         }
@@ -606,13 +550,7 @@ private:
         // Check Immolation Aura expiry
         if (_immolationAuraActive && currentTime > _immolationAuraEndTime)
         {
-            _immolationAuraActive = false;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                return;
-            }
-            _immolationAuraEndTime = 0;
+            _immolationAuraActive = false;            _immolationAuraEndTime = 0;
         }
 
         // Check Furious Gaze expiry
@@ -631,13 +569,7 @@ private:
 
     bool ShouldUseMetamorphosis()
     {
-        ::Unit* target = this->GetBot()->GetVictim();
-               if (!target)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-                   return nullptr;
-               }
-        if (!target)
+        ::Unit* target = this->GetBot()->GetVictim();        if (!target)
             return false;
 
         // Use on high priority targets or burst opportunities
@@ -665,26 +597,7 @@ private:
             if (this->GetBot()->GetSpellHistory()->HasCooldown(SPELL_EYE_BEAM))
             {
                 uint32 cooldownRemaining = static_cast<uint32>(this->GetBot()->GetSpellHistory()->GetRemainingCooldown(spellInfo).count());
-                return cooldownRemaining < 2000;
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-                return nullptr;
-            }
-            }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-            return nullptr;
-        }
-        }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-    return nullptr;
-}
-
-        return true; // No cooldown, ready to cast
+                return cooldownRemaining < 2000;            }        }        return true; // No cooldown, ready to cast
     }
 
     Position GetEyeBeamPosition(Unit* target)
@@ -711,32 +624,7 @@ private:
 
         // Position at optimal angle
         Position pos;
-        pos.m_positionX = target->GetPositionX() - cos(bestAngle) * 5.0f;
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionX");
-            return nullptr;
-        }
-        pos.m_positionY = target->GetPositionY() - sin(bestAngle) * 5.0f;
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionY");
-            return nullptr;
-        }
-        pos.m_positionZ = target->GetPositionZ();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPositionZ");
-            return;
-        }
-        pos.SetOrientation(bestAngle);
-
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-            return;
-        }
-        return pos;
+        pos.m_positionX = target->GetPositionX() - cos(bestAngle) * 5.0f;        pos.m_positionY = target->GetPositionY() - sin(bestAngle) * 5.0f;        pos.m_positionZ = target->GetPositionZ();        pos.SetOrientation(bestAngle);        return pos;
     }
 
     bool BuildMomentum(Unit* target)
@@ -779,13 +667,7 @@ private:
         {
             for (GroupReference& itr : group->GetMembers())
             {
-                if (Player* member = itr.GetSource())
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                {
+                if (Player* member = itr.GetSource())                {
                     if (member->IsAlive() && member->GetHealthPct() < 50.0f)
                         injuredCount++;
                 }

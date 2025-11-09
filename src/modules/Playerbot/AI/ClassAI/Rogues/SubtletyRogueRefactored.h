@@ -198,33 +198,7 @@ public:
     {
         // Initialize energy/combo resources
         this->_resource.maxEnergy = 100;
-        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-        this->_resource.energy = this->_resource.maxEnergy;
+        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
         InitializeCooldowns();
@@ -232,13 +206,7 @@ public:
         TC_LOG_DEBUG("playerbot", "SubtletyRogueRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -249,13 +217,7 @@ public:
         _inStealth = this->GetBot()->HasAuraType(SPELL_AURA_MOD_STEALTH) || _shadowDanceTracker.IsActive();
 
         // Main rotation
-        uint32 enemyCount = this->GetEnemiesInRange(10.0f);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return;
-        }
-        if (enemyCount >= 3)
+        uint32 enemyCount = this->GetEnemiesInRange(10.0f);        if (enemyCount >= 3)
         {
             ExecuteAoERotation(target, enemyCount);
         }
@@ -267,14 +229,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-
-        // Enter stealth out of combat
+        Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
             this->CastSpell(bot, RogueAI::STEALTH);
@@ -510,13 +465,7 @@ private:
     }
 
     void ConsumeEnergy(uint32 amount)
-    {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return;
-        }
-        this->_resource.energy = (this->_resource.energy > amount) ? this->_resource.energy - amount : 0;
+    {        this->_resource.energy = (this->_resource.energy > amount) ? this->_resource.energy - amount : 0;
     }
 
     void GenerateComboPoints(uint32 amount)
@@ -533,13 +482,7 @@ private:
         return GetBot()->isInBack(target);
     }
 
-    bool HasRupture(::Unit* target) const
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method HasAura");
-            return false;
-        }
-    {
+    bool HasRupture(::Unit* target) const    {
         // Simplified - check if target has Rupture aura
         return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());
     }

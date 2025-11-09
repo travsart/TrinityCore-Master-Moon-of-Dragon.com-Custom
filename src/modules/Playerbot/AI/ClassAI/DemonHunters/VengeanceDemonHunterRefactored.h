@@ -286,37 +286,13 @@ public:
         _resource = 0;      // Start with no Pain
 
         // Setup Vengeance-specific cooldown tracking
-        InitializeCooldowns();
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
+        InitializeCooldowns();        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
     }
 
-    // ========================================================================
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-        return nullptr;
-    }
-    // CORE ROTATION - Vengeance specific logic
+    // ========================================================================    // CORE ROTATION - Vengeance specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return;
-        }
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -347,24 +323,11 @@ public:
         {
             this->CastSpell(bot, DemonHunterSpells::IMMOLATION_AURA);
             _immolationAuraActive = true;
-        }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-    return 0;
-}
-
-        // Emergency defensive cooldowns
+        }        // Emergency defensive cooldowns
         HandleEmergencyDefensives();
     }
 
-    void OnTauntRequired(::Unit* target)
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return;
-            }
-    {
+    void OnTauntRequired(::Unit* target)    {
         if (this->CanCastSpell(TORMENT, target))
         {
             this->CastSpell(target, TORMENT);

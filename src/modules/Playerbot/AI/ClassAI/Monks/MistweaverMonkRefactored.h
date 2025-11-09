@@ -202,18 +202,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit MistweaverMonkRefactored(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        : HealerSpecialization<ManaResource>(bot)
+    explicit MistweaverMonkRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
         , MonkSpecialization(bot)
         , _renewingMistTracker()
         , _soothingMistTracker()
@@ -367,21 +356,8 @@ protected:
                     _thunderFocusTeaActive = false;
                     return true;
                 }
-            }
-
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                return nullptr;
-            }
-            // Empowered Renewing Mist (instant 2 charges)
-            Unit* target = SelectHealingTarget(group);
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                    return;
-                }
-            if (target && this->CanCastSpell(RENEWING_MIST, target))
+            }            // Empowered Renewing Mist (instant 2 charges)
+            Unit* target = SelectHealingTarget(group);            if (target && this->CanCastSpell(RENEWING_MIST, target))
             {
                 this->CastSpell(target, RENEWING_MIST);
                 _renewingMistTracker.AddTarget(target->GetGUID());
@@ -462,23 +438,11 @@ protected:
         return false;
     }
 
-    bool HandleSoothingMist(const std::vector<Unit*>& group)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return nullptr;
-    }
-    {
+    bool HandleSoothingMist(const std::vector<Unit*>& group)    {
         // If not channeling, start on lowest target
         if (!_soothingMistTracker.IsChanneling())
         {
-            Unit* target = SelectHealingTarget(group);
-                    if (!target)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                        return;
-                    }
-            if (target && target->GetHealthPct() < 90.0f)
+            Unit* target = SelectHealingTarget(group);            if (target && target->GetHealthPct() < 90.0f)
             {
                 if (this->CanCastSpell(SOOTHING_MIST, target))
                 {
