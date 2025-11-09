@@ -1021,91 +1021,196 @@ sizeof(ActionScoringEngine) =
 
 ### A. Configuration File
 
-**New File**: `configs/playerbot_weights.conf`
+**File**: `src/modules/Playerbot/conf/playerbots.conf.dist`
+
+All weighting system configuration is included in the main playerbot configuration file.
 
 ```ini
 ###################################################################################################
-# PLAYERBOT WEIGHTING SYSTEM CONFIGURATION
+# AI WEIGHTING SYSTEM - UTILITY-BASED DECISION MAKING
+#
+#    Playerbot.AI.Weighting.Enable
+#        Description: Enable utility-based action scoring system
+#        Default:     0 (disabled)
+#        Note:        When disabled, uses order-based priority (legacy behavior)
+#                     When enabled, scores actions across 6 categories for intelligent decisions
+#
+#    Playerbot.AI.Weighting.LogScoring
+#        Description: Enable detailed action scoring logs
+#        Default:     0 (disabled)
+#        Note:        Logs score breakdown for each action decision
+#                     Useful for debugging AI behavior
+#                     Logs to: Logger.playerbot.weighting (DEBUG level)
+#
+#    Playerbot.AI.Weighting.LogTopActions
+#        Description: Number of top-scored actions to log
+#        Default:     3
+#        Range:       1-10
+#        Note:        Only applies when LogScoring is enabled
+#
 ###################################################################################################
 
-[General]
-# Enable weighting system (fallback to order-based if disabled)
-EnableWeightingSystem = 1
+Playerbot.AI.Weighting.Enable = 0
+Playerbot.AI.Weighting.LogScoring = 0
+Playerbot.AI.Weighting.LogTopActions = 3
 
-# Global weight multipliers (for server-wide tuning)
-GlobalSurvivalMultiplier = 1.0
-GlobalGroupProtectionMultiplier = 1.0
-GlobalDamageMultiplier = 1.0
-GlobalResourceMultiplier = 1.0
-GlobalPositioningMultiplier = 1.0
-GlobalStrategicMultiplier = 1.0
+###################################################################################################
+# AI WEIGHTING - BASE CATEGORY WEIGHTS
+#
+# These are the foundational weights for the 6 scoring categories.
+# All roles start with these base values, then apply role-specific multipliers.
+#
+#    Playerbot.AI.Weighting.SurvivalWeight
+#        Description: Base weight for survival/self-preservation scoring
+#        Default:     200
+#        Range:       50-500
+#        Note:        Personal health risk, immediate danger avoidance
+#
+#    Playerbot.AI.Weighting.GroupProtectionWeight
+#        Description: Base weight for group protection scoring
+#        Default:     180
+#        Range:       50-500
+#        Note:        Ally healing, interrupts, threat management
+#
+#    Playerbot.AI.Weighting.DamageWeight
+#        Description: Base weight for damage optimization scoring
+#        Default:     150
+#        Range:       50-500
+#        Note:        DPS output, cooldown alignment, burst windows
+#
+#    Playerbot.AI.Weighting.ResourceWeight
+#        Description: Base weight for resource efficiency scoring
+#        Default:     100
+#        Range:       50-300
+#        Note:        Mana conservation, cooldown usage, GCD optimization
+#
+#    Playerbot.AI.Weighting.PositioningWeight
+#        Description: Base weight for positioning/mechanics scoring
+#        Default:     120
+#        Range:       50-400
+#        Note:        Movement, mechanic avoidance, formation
+#
+#    Playerbot.AI.Weighting.StrategicWeight
+#        Description: Base weight for strategic value scoring
+#        Default:     80
+#        Range:       50-300
+#        Note:        Fight phase awareness, long-term decisions
+#
+###################################################################################################
 
-# Debug logging
-EnableWeightDebugLogging = 0
-LogTopNActions = 3  # Log top 3 scored actions
+Playerbot.AI.Weighting.SurvivalWeight = 200
+Playerbot.AI.Weighting.GroupProtectionWeight = 180
+Playerbot.AI.Weighting.DamageWeight = 150
+Playerbot.AI.Weighting.ResourceWeight = 100
+Playerbot.AI.Weighting.PositioningWeight = 120
+Playerbot.AI.Weighting.StrategicWeight = 80
 
-[Tank]
-SurvivalWeight = 200
-GroupProtectionWeight = 180
-DamageWeight = 150
-ResourceWeight = 100
-PositioningWeight = 120
-StrategicWeight = 80
+###################################################################################################
+# AI WEIGHTING - TANK ROLE MULTIPLIERS
+#
+# Applied to base weights for tank specializations.
+# Example: Survival score = SurvivalWeight × Tank.SurvivalMultiplier × context modifier
+#
+###################################################################################################
 
-SurvivalMultiplier = 1.5
-GroupProtectionMultiplier = 1.2
-DamageMultiplier = 0.8
-ResourceMultiplier = 0.9
-PositioningMultiplier = 1.2
-StrategicMultiplier = 1.0
+Playerbot.AI.Weighting.Tank.SurvivalMultiplier = 1.5
+Playerbot.AI.Weighting.Tank.GroupProtectionMultiplier = 1.2
+Playerbot.AI.Weighting.Tank.DamageMultiplier = 0.8
+Playerbot.AI.Weighting.Tank.ResourceMultiplier = 0.9
+Playerbot.AI.Weighting.Tank.PositioningMultiplier = 1.2
+Playerbot.AI.Weighting.Tank.StrategicMultiplier = 1.0
 
-[Healer]
-SurvivalWeight = 200
-GroupProtectionWeight = 180
-DamageWeight = 150
-ResourceWeight = 100
-PositioningWeight = 120
-StrategicWeight = 80
+###################################################################################################
+# AI WEIGHTING - HEALER ROLE MULTIPLIERS
+#
+# Applied to base weights for healer specializations.
+#
+###################################################################################################
 
-SurvivalMultiplier = 1.3
-GroupProtectionMultiplier = 2.0
-DamageMultiplier = 0.3
-ResourceMultiplier = 1.5
-PositioningMultiplier = 1.1
-StrategicMultiplier = 1.0
+Playerbot.AI.Weighting.Healer.SurvivalMultiplier = 1.3
+Playerbot.AI.Weighting.Healer.GroupProtectionMultiplier = 2.0
+Playerbot.AI.Weighting.Healer.DamageMultiplier = 0.3
+Playerbot.AI.Weighting.Healer.ResourceMultiplier = 1.5
+Playerbot.AI.Weighting.Healer.PositioningMultiplier = 1.1
+Playerbot.AI.Weighting.Healer.StrategicMultiplier = 1.0
 
-[DPS]
-SurvivalWeight = 200
-GroupProtectionWeight = 180
-DamageWeight = 150
-ResourceWeight = 100
-PositioningWeight = 120
-StrategicWeight = 80
+###################################################################################################
+# AI WEIGHTING - DPS ROLE MULTIPLIERS
+#
+# Applied to base weights for DPS specializations (melee and ranged).
+#
+###################################################################################################
 
-SurvivalMultiplier = 1.0
-GroupProtectionMultiplier = 0.8
-DamageMultiplier = 1.5
-ResourceMultiplier = 1.0
-PositioningMultiplier = 1.1
-StrategicMultiplier = 1.0
+Playerbot.AI.Weighting.DPS.SurvivalMultiplier = 1.0
+Playerbot.AI.Weighting.DPS.GroupProtectionMultiplier = 0.8
+Playerbot.AI.Weighting.DPS.DamageMultiplier = 1.5
+Playerbot.AI.Weighting.DPS.ResourceMultiplier = 1.0
+Playerbot.AI.Weighting.DPS.PositioningMultiplier = 1.1
+Playerbot.AI.Weighting.DPS.StrategicMultiplier = 1.0
 
-[Context.SoloQuesting]
-SurvivalModifier = 1.3
-GroupProtectionModifier = 0.5
-DamageModifier = 1.2
-ResourceModifier = 0.9
-PositioningModifier = 1.0
-StrategicModifier = 0.8
+###################################################################################################
+# AI WEIGHTING - CONTEXT MODIFIERS
+#
+# These modifiers adjust weights based on combat context (solo, dungeon, raid, PvP).
+# Applied after role multipliers: FinalScore = BaseWeight × RoleMultiplier × ContextModifier
+#
+###################################################################################################
 
-[Context.DungeonBoss]
-SurvivalModifier = 1.1
-GroupProtectionModifier = 1.5
-DamageModifier = 1.2
-ResourceModifier = 1.1
-PositioningModifier = 1.4
-StrategicModifier = 1.3
+# Solo Questing Context
+Playerbot.AI.Weighting.Context.Solo.SurvivalModifier = 1.3
+Playerbot.AI.Weighting.Context.Solo.GroupProtectionModifier = 0.5
+Playerbot.AI.Weighting.Context.Solo.DamageModifier = 1.2
+Playerbot.AI.Weighting.Context.Solo.ResourceModifier = 0.9
+Playerbot.AI.Weighting.Context.Solo.PositioningModifier = 1.0
+Playerbot.AI.Weighting.Context.Solo.StrategicModifier = 0.8
 
-# ... (similar blocks for other contexts)
+# Dungeon Trash Context
+Playerbot.AI.Weighting.Context.DungeonTrash.SurvivalModifier = 1.0
+Playerbot.AI.Weighting.Context.DungeonTrash.GroupProtectionModifier = 1.2
+Playerbot.AI.Weighting.Context.DungeonTrash.DamageModifier = 1.3
+Playerbot.AI.Weighting.Context.DungeonTrash.ResourceModifier = 1.0
+Playerbot.AI.Weighting.Context.DungeonTrash.PositioningModifier = 1.1
+Playerbot.AI.Weighting.Context.DungeonTrash.StrategicModifier = 0.9
+
+# Dungeon Boss Context
+Playerbot.AI.Weighting.Context.DungeonBoss.SurvivalModifier = 1.1
+Playerbot.AI.Weighting.Context.DungeonBoss.GroupProtectionModifier = 1.5
+Playerbot.AI.Weighting.Context.DungeonBoss.DamageModifier = 1.2
+Playerbot.AI.Weighting.Context.DungeonBoss.ResourceModifier = 1.1
+Playerbot.AI.Weighting.Context.DungeonBoss.PositioningModifier = 1.4
+Playerbot.AI.Weighting.Context.DungeonBoss.StrategicModifier = 1.3
+
+# Raid Normal Context
+Playerbot.AI.Weighting.Context.RaidNormal.SurvivalModifier = 1.0
+Playerbot.AI.Weighting.Context.RaidNormal.GroupProtectionModifier = 1.8
+Playerbot.AI.Weighting.Context.RaidNormal.DamageModifier = 1.0
+Playerbot.AI.Weighting.Context.RaidNormal.ResourceModifier = 1.2
+Playerbot.AI.Weighting.Context.RaidNormal.PositioningModifier = 1.5
+Playerbot.AI.Weighting.Context.RaidNormal.StrategicModifier = 1.5
+
+# Raid Heroic/Mythic Context
+Playerbot.AI.Weighting.Context.RaidHeroic.SurvivalModifier = 1.2
+Playerbot.AI.Weighting.Context.RaidHeroic.GroupProtectionModifier = 2.0
+Playerbot.AI.Weighting.Context.RaidHeroic.DamageModifier = 1.1
+Playerbot.AI.Weighting.Context.RaidHeroic.ResourceModifier = 1.4
+Playerbot.AI.Weighting.Context.RaidHeroic.PositioningModifier = 1.8
+Playerbot.AI.Weighting.Context.RaidHeroic.StrategicModifier = 1.8
+
+# PvP Arena Context
+Playerbot.AI.Weighting.Context.PvPArena.SurvivalModifier = 1.4
+Playerbot.AI.Weighting.Context.PvPArena.GroupProtectionModifier = 1.6
+Playerbot.AI.Weighting.Context.PvPArena.DamageModifier = 1.3
+Playerbot.AI.Weighting.Context.PvPArena.ResourceModifier = 0.8
+Playerbot.AI.Weighting.Context.PvPArena.PositioningModifier = 1.3
+Playerbot.AI.Weighting.Context.PvPArena.StrategicModifier = 1.2
+
+# PvP Battleground Context
+Playerbot.AI.Weighting.Context.PvPBG.SurvivalModifier = 1.1
+Playerbot.AI.Weighting.Context.PvPBG.GroupProtectionModifier = 1.3
+Playerbot.AI.Weighting.Context.PvPBG.DamageModifier = 1.2
+Playerbot.AI.Weighting.Context.PvPBG.ResourceModifier = 0.9
+Playerbot.AI.Weighting.Context.PvPBG.PositioningModifier = 1.2
+Playerbot.AI.Weighting.Context.PvPBG.StrategicModifier = 1.4
 ```
 
 ### B. Runtime Tuning API
