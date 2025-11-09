@@ -146,6 +146,9 @@ public:
         , _lastResourceUpdate(0)
         , _globalCooldownEnd(0)
         , _performanceMetrics{}
+        , _movementIntegration(botPtr)      // Phase 5D: Movement AI
+        , _targetManager(botPtr)            // Phase 5D: Target selection
+        , _crowdControlManager(botPtr)      // Phase 5D: CC coordination
     {
         InitializeResource();
     }
@@ -349,6 +352,63 @@ protected:
         }
         return 0;
     }
+
+    // ========================================================================
+    // PHASE 5D: MANAGER INTEGRATION - Combat subsystem access
+    // ========================================================================
+
+    /**
+     * Get MovementIntegration for intelligent positioning
+     *
+     * Example usage in rotation:
+     * @code
+     * void UpdateRotation(::Unit* target) override {
+     *     CombatSituation situation{};
+     *     situation.enemyCount = GetEnemiesInRange(10.0f);
+     *     situation.inMelee = GetBot()->GetDistance(target) <= 5.0f;
+     *
+     *     GetMovementIntegration().Update(diff, situation);
+     *
+     *     if (GetMovementIntegration().NeedsEmergencyMovement()) {
+     *         Position safePos = GetMovementIntegration().GetOptimalPosition();
+     *         MoveTo(safePos);
+     *     }
+     * }
+     * @endcode
+     */
+    MovementIntegration& GetMovementIntegration() { return _movementIntegration; }
+    const MovementIntegration& GetMovementIntegration() const { return _movementIntegration; }
+
+    /**
+     * Get TargetManager for intelligent target selection
+     *
+     * Example usage:
+     * @code
+     * ::Unit* target = GetTargetManager().SelectBestTarget();
+     * if (target && ShouldSwitchTarget(target)) {
+     *     SetTarget(target->GetGUID());
+     * }
+     * @endcode
+     */
+    TargetManager& GetTargetManager() { return _targetManager; }
+    const TargetManager& GetTargetManager() const { return _targetManager; }
+
+    /**
+     * Get CrowdControlManager for CC coordination
+     *
+     * Example usage:
+     * @code
+     * if (enemyCount >= 3) {
+     *     ::Unit* ccTarget = GetCrowdControlManager().GetBestCCTarget();
+     *     if (ccTarget && !GetCrowdControlManager().HasDiminishingReturns(ccTarget, MECHANIC_POLYMORPH)) {
+     *         CastSpell(ccTarget, POLYMORPH);
+     *         GetCrowdControlManager().ApplyCrowdControl(ccTarget, MECHANIC_POLYMORPH, 8000);
+     *     }
+     * }
+     * @endcode
+     */
+    CrowdControlManager& GetCrowdControlManager() { return _crowdControlManager; }
+    const CrowdControlManager& GetCrowdControlManager() const { return _crowdControlManager; }
 
     // ========================================================================
     // INTERNAL RESOURCE HANDLING - Specialized for simple/complex types
@@ -562,6 +622,11 @@ protected:
         std::chrono::steady_clock::time_point combatStartTime;
         std::chrono::milliseconds totalCombatTime{0};
     } _performanceMetrics;
+
+    // Phase 5D: Combat managers (available to all combat specs)
+    MovementIntegration _movementIntegration;       // Intelligent movement and positioning
+    TargetManager _targetManager;                   // Smart target selection and switching
+    CrowdControlManager _crowdControlManager;       // CC coordination and DR tracking
 
     // Constants
     static constexpr uint32 GLOBAL_COOLDOWN_MS = 1500;
