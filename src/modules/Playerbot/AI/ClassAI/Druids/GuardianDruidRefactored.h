@@ -19,6 +19,7 @@
 #define PLAYERBOT_GUARDIANDRUIDREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
+#include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -47,6 +48,7 @@ constexpr uint32 GUARDIAN_BEAR_FORM = 5487;
 constexpr uint32 GUARDIAN_BRISTLING_FUR = 155835; // Talent
 constexpr uint32 GUARDIAN_RENEWAL = 108238;
 constexpr uint32 GUARDIAN_REGROWTH = 8936;
+constexpr uint32 GUARDIAN_GROWL = 6795; // Taunt
 
 // Ironfur stacking tracker
 class GuardianIronfurTracker
@@ -251,10 +253,26 @@ public:
         }
 
         // Regrowth (if out of combat and low health)
-        
+
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(GUARDIAN_REGROWTH, bot))
         {
             this->CastSpell(bot, GUARDIAN_REGROWTH);
+        }
+    }
+
+    // Phase 5C: Threat management using ThreatAssistant service
+    void ManageThreat(::Unit* target) override
+    {
+        if (!target)
+            return;
+
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(GUARDIAN_GROWL, tauntTarget))
+        {
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, GUARDIAN_GROWL);
+            _lastTaunt = getMSTime();
+            TC_LOG_DEBUG("playerbot", "Guardian: Growl taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }
 
@@ -509,7 +527,9 @@ private:
     bool _frenziedRegenerationActive;
     uint32 _frenziedRegenerationEndTime;
     bool _berserkActive;
-    uint32 _berserkEndTime;    uint32 _lastFrenziedRegenerationTime;
+    uint32 _berserkEndTime;
+    uint32 _lastFrenziedRegenerationTime;
+    uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
 };
 
 } // namespace Playerbot

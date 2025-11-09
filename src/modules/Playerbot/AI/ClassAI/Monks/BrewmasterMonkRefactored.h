@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -297,11 +298,14 @@ public:
         HandleEmergencyDefensives();
     }
 
+    // Phase 5C: Threat management using ThreatAssistant service
     void OnTauntRequired(::Unit* target) override    {
-        if (this->CanCastSpell(PROVOKE, target))
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(PROVOKE, tauntTarget))
         {
-            this->CastSpell(target, PROVOKE);
-            TC_LOG_DEBUG("playerbot", "Brewmaster: Taunt cast on {}", target->GetName());
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, PROVOKE);
+            TC_LOG_DEBUG("playerbot", "Brewmaster: Provoke taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }
 

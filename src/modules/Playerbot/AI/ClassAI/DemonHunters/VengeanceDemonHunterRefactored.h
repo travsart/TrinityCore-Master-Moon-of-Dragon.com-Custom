@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -332,11 +333,14 @@ public:
         HandleEmergencyDefensives();
     }
 
+    // Phase 5C: Threat management using ThreatAssistant service
     void OnTauntRequired(::Unit* target)    {
-        if (this->CanCastSpell(TORMENT, target))
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(TORMENT, tauntTarget))
         {
-            this->CastSpell(target, TORMENT);
-            TC_LOG_DEBUG("playerbot", "Vengeance: Taunt cast on {}", target->GetName());
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, TORMENT);
+            TC_LOG_DEBUG("playerbot", "Vengeance: Torment taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }
 

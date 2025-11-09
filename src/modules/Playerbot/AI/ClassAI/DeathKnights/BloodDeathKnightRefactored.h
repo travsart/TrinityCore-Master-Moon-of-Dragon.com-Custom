@@ -15,6 +15,7 @@
 #include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -258,6 +259,22 @@ public:
 
         // Emergency defensives
         HandleEmergencyDefensives();
+    }
+
+    // Phase 5C: Threat management using ThreatAssistant service
+    void ManageThreat(::Unit* target) override
+    {
+        if (!target)
+            return;
+
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(DARK_COMMAND, tauntTarget))
+        {
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, DARK_COMMAND);
+            _lastTaunt = getMSTime();
+            TC_LOG_DEBUG("playerbot", "Blood DK: Dark Command taunt via ThreatAssistant on {}", tauntTarget->GetName());
+        }
     }
 
 
@@ -540,6 +557,7 @@ private:
     uint32 _deathsAndDecayEndTime;
     bool _crimsonScourgeProc;
     uint32 _lastDeathStrikeTime;
+    uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
 };
 
 } // namespace Playerbot
