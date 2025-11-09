@@ -129,6 +129,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.h
 
+    # Integrated AI System: Bridges BT + Blackboard + Coordination (Phase 4 Week 2)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Integration/IntegratedAIContext.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Integration/IntegratedAIContext.h
+
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.h
