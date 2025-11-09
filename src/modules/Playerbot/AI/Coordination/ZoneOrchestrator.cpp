@@ -23,6 +23,8 @@
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 // ============================================================================
 // ZoneObjective
@@ -565,4 +567,5 @@ ZoneOrchestratorManager::GlobalStats ZoneOrchestratorManager::GetGlobalStats()
     return stats;
 }
 
+} // namespace Coordination
 } // namespace Playerbot

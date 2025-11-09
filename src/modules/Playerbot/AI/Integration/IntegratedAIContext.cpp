@@ -63,25 +63,25 @@ SharedBlackboard* IntegratedAIContext::GetZoneBlackboard() const
     return _cachedZoneBlackboard;
 }
 
-GroupCoordinator* IntegratedAIContext::GetGroupCoordinator() const
+Coordination::GroupCoordinator* IntegratedAIContext::GetGroupCoordinator() const
 {
     // Would retrieve from group coordination manager
     // Placeholder implementation
     return _cachedGroupCoordinator;
 }
 
-RaidOrchestrator* IntegratedAIContext::GetRaidOrchestrator() const
+Coordination::RaidOrchestrator* IntegratedAIContext::GetRaidOrchestrator() const
 {
     // Would retrieve from raid coordination manager
     // Placeholder implementation
     return _cachedRaidOrchestrator;
 }
 
-ZoneOrchestrator* IntegratedAIContext::GetZoneOrchestrator() const
+Coordination::ZoneOrchestrator* IntegratedAIContext::GetZoneOrchestrator() const
 {
     if (!_cachedZoneOrchestrator)
     {
-        _cachedZoneOrchestrator = ZoneOrchestratorManager::GetOrchestrator(GetZoneId());
+        _cachedZoneOrchestrator = Coordination::ZoneOrchestratorManager::GetOrchestrator(GetZoneId());
     }
     return _cachedZoneOrchestrator;
 }
@@ -233,7 +233,7 @@ BTStatus BTCheckGroupFocusTarget::TickWithContext(IntegratedAIContext& context)
 
 BTStatus BTFollowGroupStrategy::TickWithContext(IntegratedAIContext& context)
 {
-    GroupCoordinator* coordinator = context.GetGroupCoordinator();
+    Coordination::GroupCoordinator* coordinator = context.GetGroupCoordinator();
     if (!coordinator)
         return BTStatus::FAILURE;
 
@@ -250,13 +250,13 @@ BTStatus BTFollowGroupStrategy::TickWithContext(IntegratedAIContext& context)
 
 BTStatus BTUseCoordinatedCooldown::TickWithContext(IntegratedAIContext& context)
 {
-    RaidOrchestrator* raid = context.GetRaidOrchestrator();
+    Coordination::RaidOrchestrator* raid = context.GetRaidOrchestrator();
     if (!raid)
         return BTStatus::FAILURE;
 
     // Check if it's our turn for this cooldown
     // This would integrate with RoleCoordinator cooldown rotation
-    HealerCoordinator* healers = raid->GetRoleCoordinatorManager()->GetHealerCoordinator();
+    Coordination::HealerCoordinator* healers = raid->GetRoleCoordinatorManager()->GetHealerCoordinator();
     if (healers)
     {
         ObjectGuid nextHealer = healers->GetNextCooldownHealer(_cooldownType);
@@ -355,7 +355,7 @@ BTStatus BTRequestGroupAssistance::TickWithContext(IntegratedAIContext& context)
 
 BTStatus BTRespondToZoneObjective::TickWithContext(IntegratedAIContext& context)
 {
-    ZoneOrchestrator* zone = context.GetZoneOrchestrator();
+    Coordination::ZoneOrchestrator* zone = context.GetZoneOrchestrator();
     if (!zone)
         return BTStatus::FAILURE;
 

@@ -30,6 +30,8 @@ class Player;
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 /**
  * @brief Zone-wide activity type
@@ -330,6 +332,7 @@ private:
     static std::unordered_map<uint32, std::unique_ptr<ZoneOrchestrator>> _orchestrators;
 };
 
+} // namespace Coordination
 } // namespace Playerbot
 
 #endif // TRINITYCORE_ZONE_ORCHESTRATOR_H

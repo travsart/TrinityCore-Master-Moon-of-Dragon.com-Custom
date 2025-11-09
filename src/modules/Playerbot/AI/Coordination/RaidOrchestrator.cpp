@@ -25,6 +25,8 @@
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 // ============================================================================
 // RaidDirective
@@ -683,4 +685,5 @@ EncounterPhase OnyxiaStrategy::DetectPhase(float bossHealthPct) const
     return EncounterPhase::NORMAL; // Phase 1
 }
 
+} // namespace Coordination
 } // namespace Playerbot

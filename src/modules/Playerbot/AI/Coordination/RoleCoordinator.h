@@ -27,6 +27,8 @@
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 /**
  * @brief Base class for role-specific coordination
@@ -317,6 +319,7 @@ private:
     std::unique_ptr<DPSCoordinator> _dpsCoordinator;
 };
 
+} // namespace Coordination
 } // namespace Playerbot
 
 #endif // TRINITYCORE_ROLE_COORDINATOR_H

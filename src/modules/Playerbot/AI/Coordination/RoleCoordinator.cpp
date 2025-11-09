@@ -25,6 +25,8 @@
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 // ============================================================================
 // TankCoordinator
@@ -724,4 +726,5 @@ void RoleCoordinatorManager::Update(GroupCoordinator* group, uint32 diff)
     _dpsCoordinator->Update(group, diff);
 }
 
+} // namespace Coordination
 } // namespace Playerbot

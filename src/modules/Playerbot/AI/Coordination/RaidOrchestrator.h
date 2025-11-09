@@ -31,6 +31,8 @@ class Group;
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 /**
  * @brief Raid-wide formation positions
@@ -325,6 +327,7 @@ public:
     EncounterPhase DetectPhase(float bossHealthPct) const override;
 };
 
+} // namespace Coordination
 } // namespace Playerbot
 
 #endif // TRINITYCORE_RAID_ORCHESTRATOR_H

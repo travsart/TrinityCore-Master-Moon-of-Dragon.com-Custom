@@ -24,6 +24,8 @@
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 // ============================================================================
 // TacticalAssignment

@@ -32,6 +32,14 @@ namespace Playerbot
 
 class BotAI;
 
+// Forward declarations from Coordination namespace
+namespace Coordination
+{
+    class GroupCoordinator;
+    class RaidOrchestrator;
+    class ZoneOrchestrator;
+}
+
 /**
  * @brief Integrated AI Context
  * Provides unified access to all AI systems for bot decision-making
@@ -76,17 +84,17 @@ public:
     /**
      * @brief Get group coordinator
      */
-    GroupCoordinator* GetGroupCoordinator() const;
+    Coordination::GroupCoordinator* GetGroupCoordinator() const;
 
     /**
      * @brief Get raid orchestrator
      */
-    RaidOrchestrator* GetRaidOrchestrator() const;
+    Coordination::RaidOrchestrator* GetRaidOrchestrator() const;
 
     /**
      * @brief Get zone orchestrator
      */
-    ZoneOrchestrator* GetZoneOrchestrator() const;
+    Coordination::ZoneOrchestrator* GetZoneOrchestrator() const;
 
     /**
      * @brief Propagate local data to group
@@ -138,9 +146,9 @@ private:
     mutable SharedBlackboard* _cachedGroupBlackboard = nullptr;
     mutable SharedBlackboard* _cachedRaidBlackboard = nullptr;
     mutable SharedBlackboard* _cachedZoneBlackboard = nullptr;
-    mutable GroupCoordinator* _cachedGroupCoordinator = nullptr;
-    mutable RaidOrchestrator* _cachedRaidOrchestrator = nullptr;
-    mutable ZoneOrchestrator* _cachedZoneOrchestrator = nullptr;
+    mutable Coordination::GroupCoordinator* _cachedGroupCoordinator = nullptr;
+    mutable Coordination::RaidOrchestrator* _cachedRaidOrchestrator = nullptr;
+    mutable Coordination::ZoneOrchestrator* _cachedZoneOrchestrator = nullptr;
 };
 
 /**

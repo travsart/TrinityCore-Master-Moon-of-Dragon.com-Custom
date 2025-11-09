@@ -31,6 +31,8 @@ class Player;
 
 namespace Playerbot
 {
+namespace Coordination
+{
 
 class BotAI;
 
@@ -258,6 +260,7 @@ private:
     uint64 _totalUpdateTime = 0; // microseconds
 };
 
+} // namespace Coordination
 } // namespace Playerbot
 
 #endif // TRINITYCORE_GROUP_COORDINATOR_H
