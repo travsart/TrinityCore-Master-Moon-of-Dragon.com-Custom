@@ -31,13 +31,13 @@ void BotAI::InitializeHybridAI()
     TC_LOG_DEBUG("playerbot.ai", "Bot {} - Initializing Hybrid AI Decision System (Utility AI + Behavior Trees)",
         _bot->GetName());
 
-    // Create Hybrid AI Controller
-    _hybridAI = std::make_unique<HybridAIController>(this, nullptr);
+    // Create Hybrid AI Controller with SharedBlackboard (Phase 4)
+    _hybridAI = std::make_unique<HybridAIController>(this, _sharedBlackboard);
 
     // Initialize with default behaviors and mappings
     _hybridAI->Initialize();
 
-    TC_LOG_INFO("playerbot.ai", "Bot {} - Hybrid AI initialized successfully", _bot->GetName());
+    TC_LOG_INFO("playerbot.ai", "Bot {} - Hybrid AI initialized successfully with SharedBlackboard integration", _bot->GetName());
 }
 
 // ============================================================================

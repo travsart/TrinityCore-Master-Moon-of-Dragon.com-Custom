@@ -21,6 +21,7 @@
 #include "Strategy/Strategy.h"
 #include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
+#include "Blackboard/SharedBlackboard.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -283,6 +284,12 @@ public:
      * @return Pointer to controller, or nullptr if not initialized
      */
     class HybridAIController* GetHybridAI() const { return _hybridAI.get(); }
+
+    /**
+     * @brief Get Shared Blackboard (Phase 4)
+     * @return Pointer to blackboard, or nullptr if not initialized
+     */
+    SharedBlackboard* GetSharedBlackboard() const { return _sharedBlackboard; }
 
     // ========================================================================
     // DEATH RECOVERY - Resurrection management
@@ -633,6 +640,9 @@ protected:
 
     // Hybrid AI Decision System: Utility AI + Behavior Trees (Phase 2 Week 3)
     std::unique_ptr<class HybridAIController> _hybridAI;
+
+    // Shared Blackboard: Thread-safe shared state system (Phase 4)
+    SharedBlackboard* _sharedBlackboard = nullptr;
 
     // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;

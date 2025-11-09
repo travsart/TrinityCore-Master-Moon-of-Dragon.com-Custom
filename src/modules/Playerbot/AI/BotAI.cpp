@@ -109,10 +109,13 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize combat state manager for automatic combat state synchronization
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
 
+    // Phase 4: Initialize Shared Blackboard (thread-safe shared state system)
+    _sharedBlackboard = BlackboardManager::GetBotBlackboard(_bot->GetGUID());
+
     // Phase 2 Week 3: Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
     InitializeHybridAI();
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState, HybridAI systems ready",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState, SharedBlackboard, HybridAI systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -557,6 +560,14 @@ BotAI::~BotAI()
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
     return nullptr;
 }
+
+    // Phase 4: Cleanup Shared Blackboard
+    if (_sharedBlackboard && _bot)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Removing bot from BlackboardManager");
+        BlackboardManager::RemoveBotBlackboard(_bot->GetGUID());
+        _sharedBlackboard = nullptr;
+    }
 
     // 5. Support systems
     if (_targetScanner)
