@@ -214,6 +214,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
 
+    # ClassAI Behavior Tree Integration (Phase 5: 13 Classes × 3 Specs)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.h
+
     # ClassAI Template Architecture (Phase 3: Code Duplication Elimination)
     # Note: .cpp removed due to old SPEC_* constants, but .h still needed for template definitions
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.cpp
