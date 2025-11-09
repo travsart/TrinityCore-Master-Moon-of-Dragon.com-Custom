@@ -12,6 +12,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 // Old HunterSpecialization.h removed
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"

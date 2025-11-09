@@ -9,6 +9,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
 #include "Player.h"

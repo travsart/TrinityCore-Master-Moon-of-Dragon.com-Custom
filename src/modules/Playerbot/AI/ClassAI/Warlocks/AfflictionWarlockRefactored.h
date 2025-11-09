@@ -8,6 +8,10 @@
  */
 
 #pragma once
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "Pet.h"
 
 #include "../CombatSpecializationTemplates.h"
