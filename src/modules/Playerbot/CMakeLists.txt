@@ -108,6 +108,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/CombatNodes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/HealingNodes.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/MovementNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.h
 
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
