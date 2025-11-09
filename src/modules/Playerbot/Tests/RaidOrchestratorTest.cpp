@@ -19,6 +19,7 @@
 #include "AI/Coordination/RaidOrchestrator.h"
 
 using namespace Playerbot;
+using namespace Playerbot::Coordination;
 
 // ============================================================================
 // RaidDirective Tests

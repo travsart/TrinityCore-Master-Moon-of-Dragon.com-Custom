@@ -19,6 +19,7 @@
 #include "AI/Coordination/ZoneOrchestrator.h"
 
 using namespace Playerbot;
+using namespace Playerbot::Coordination;
 
 // ============================================================================
 // ZoneObjective Tests

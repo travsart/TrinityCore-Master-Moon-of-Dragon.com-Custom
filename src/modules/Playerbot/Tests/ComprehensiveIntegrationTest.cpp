@@ -45,6 +45,7 @@
 #include "AI/ClassAI/ClassBehaviorTreeRegistry.h"
 
 using namespace Playerbot;
+using namespace Playerbot::Coordination;
 
 // ============================================================================
 // Test Fixtures
