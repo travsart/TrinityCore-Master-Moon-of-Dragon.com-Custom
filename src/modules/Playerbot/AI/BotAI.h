@@ -261,6 +261,34 @@ public:
     GroupCoordinator const* GetGroupCoordinator() const { return _groupCoordinator.get(); }
 
     // ========================================================================
+    // UTILITY AI DECISION SYSTEM - Hybrid AI Phase 1
+    // ========================================================================
+
+    /**
+     * @brief Initialize utility-based decision system
+     * Called during BotAI constructor
+     */
+    void InitializeUtilityAI();
+
+    /**
+     * @brief Update utility AI decision (throttled to 500ms)
+     * Selects highest-scoring behavior based on current context
+     * @param diff Time since last UpdateAI() call
+     */
+    void UpdateUtilityDecision(uint32 diff);
+
+    /**
+     * @brief Get currently active utility behavior
+     * @return Pointer to active behavior, or nullptr if none selected
+     */
+    class UtilityBehavior* GetActiveUtilityBehavior() const { return _activeUtilityBehavior; }
+
+    /**
+     * @brief Get last utility context (for debugging)
+     */
+    struct UtilityContext const& GetLastUtilityContext() const { return _lastUtilityContext; }
+
+    // ========================================================================
     // DEATH RECOVERY - Resurrection management
     // ========================================================================
 
@@ -606,6 +634,12 @@ protected:
     std::unordered_map<std::string, std::unique_ptr<Strategy>> _strategies;
     std::vector<std::string> _activeStrategies;
     std::unique_ptr<BehaviorPriorityManager> _priorityManager;
+
+    // Hybrid AI Decision System: Utility AI Layer (Phase 1 Week 2)
+    std::unique_ptr<class UtilityAI> _utilityAI;
+    struct UtilityContext _lastUtilityContext;
+    class UtilityBehavior* _activeUtilityBehavior = nullptr;
+    uint32 _lastUtilityUpdate = 0;
 
     // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;

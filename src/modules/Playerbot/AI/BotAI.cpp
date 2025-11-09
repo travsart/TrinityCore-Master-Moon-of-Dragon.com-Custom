@@ -108,28 +108,11 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 
     // Initialize combat state manager for automatic combat state synchronization
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return nullptr;
-                    }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return nullptr;
-                    }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState systems ready",
+    // Phase 1 Week 2: Initialize Utility AI decision system
+    InitializeUtilityAI();
+
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, MovementArbiter, CombatState, UtilityAI systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -958,6 +941,9 @@ void BotAI::UpdateAI(uint32 diff)
 
     // Update internal values and caches
     UpdateValues(diff);
+
+    // Phase 1 Week 2: Update Utility AI decision (throttled to 500ms)
+    UpdateUtilityDecision(diff);
 
     // Update all active strategies (including follow, idle, social)
     // CRITICAL: Must run every frame for smooth following

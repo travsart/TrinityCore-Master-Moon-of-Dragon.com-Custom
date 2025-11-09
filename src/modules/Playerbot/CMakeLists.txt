@@ -85,6 +85,7 @@ set(PLAYERBOT_SOURCES
     # AI system (AI Framework implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_UtilityAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
     # Phase 2.1: BehaviorManager Base Class - Manager Pattern Foundation
