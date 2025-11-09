@@ -57,6 +57,7 @@
 #include "Interfaces/ILootCoordination.h"
 #include "Interfaces/ILootDistribution.h"
 #include "Interfaces/IUnifiedLootManager.h"
+#include "Interfaces/IUnifiedQuestManager.h"
 #include "Interfaces/IMarketAnalysis.h"
 #include "Interfaces/ITradeSystem.h"
 #include "Interfaces/IQuestPickup.h"
@@ -141,6 +142,7 @@
 #include "Social/LootCoordination.h"
 #include "Social/LootDistribution.h"
 #include "Social/UnifiedLootManager.h"
+#include "Quest/UnifiedQuestManager.h"
 #include "Social/MarketAnalysis.h"
 #include "Social/TradeSystem.h"
 #include "Quest/QuestPickup.h"
@@ -569,6 +571,16 @@ inline void RegisterPlayerbotServices()
             )
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IUnifiedLootManager (consolidates 3 managers)");
+
+        // Register UnifiedQuestManager (Manager Consolidation Phase 2)
+        // Consolidates: QuestPickup, QuestCompletion, QuestValidation, QuestTurnIn, DynamicQuestSystem
+        container.RegisterInstance<IUnifiedQuestManager>(
+            std::shared_ptr<IUnifiedQuestManager>(
+                Playerbot::UnifiedQuestManager::instance(),
+                [](IUnifiedQuestManager*) {} // No-op deleter (singleton)
+            )
+        );
+        TC_LOG_INFO("playerbot.di", "  - Registered IUnifiedQuestManager (consolidates 5 managers)");
 
         // Register MarketAnalysis (Phase 24)
         container.RegisterInstance<IMarketAnalysis>(

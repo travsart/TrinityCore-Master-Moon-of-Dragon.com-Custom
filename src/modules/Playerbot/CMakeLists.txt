@@ -556,6 +556,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.h
 
+    # Manager Consolidation Phase 2: UnifiedQuestManager (consolidates QuestPickup, QuestCompletion, QuestValidation, QuestTurnIn, DynamicQuestSystem)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.h
+
     # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.h
