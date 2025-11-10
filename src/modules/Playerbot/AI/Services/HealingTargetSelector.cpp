@@ -339,11 +339,52 @@ bool HealingTargetSelector::HasIncomingHeals(Player* target)
     if (!target)
         return false;
 
-    // TODO: Implement sophisticated incoming heal detection
-    // Check if other healers are casting on this target
-    // This requires integration with spell cast tracking
+    // Check if target is being healed by other group members
+    Group* group = target->GetGroup();
+    if (!group)
+        return false;
 
-    return false;  // Placeholder
+    // Iterate through group members to find healing spells being cast on target
+    for (GroupReference* itr : *group)
+    {
+        Player* member = itr->GetSource();
+        if (!member || member == target)
+            continue;
+
+        // Check if member is currently casting
+        if (Spell* spell = member->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+        {
+            // Check if spell targets our target
+            if (spell->m_targets.GetUnitTarget() == target)
+            {
+                // Check if spell is a healing spell
+                SpellInfo const* spellInfo = spell->GetSpellInfo();
+                if (spellInfo && spellInfo->IsPositive() && spellInfo->HasEffect(SPELL_EFFECT_HEAL))
+                {
+                    TC_LOG_TRACE("playerbot", "HealingTargetSelector: Target {} has incoming heal from {}",
+                                target->GetName(), member->GetName());
+                    return true;
+                }
+            }
+        }
+
+        // Also check channeled spells
+        if (Spell* channelSpell = member->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+        {
+            if (channelSpell->m_targets.GetUnitTarget() == target)
+            {
+                SpellInfo const* spellInfo = channelSpell->GetSpellInfo();
+                if (spellInfo && spellInfo->IsPositive() && spellInfo->HasEffect(SPELL_EFFECT_HEAL))
+                {
+                    TC_LOG_TRACE("playerbot", "HealingTargetSelector: Target {} has incoming channeled heal from {}",
+                                target->GetName(), member->GetName());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 uint32 HealingTargetSelector::CountDispellableDebuffs(Player* target, DispelType type)

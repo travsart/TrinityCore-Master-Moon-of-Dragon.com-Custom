@@ -102,14 +102,21 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
     if (!tank->IsWithinLOSInMap(target))
         return false;
 
-    // TODO: Integrate with bot spell casting system
-    // This is a placeholder that should be replaced with actual spell casting
-    // return tank->CastSpell(target, tauntSpellId, false);
+    // Cast taunt spell
+    SpellCastResult result = tank->CastSpell(target, tauntSpellId, false);
 
-    TC_LOG_DEBUG("playerbot", "ThreatAssistant: Tank {} taunting {} with spell {}",
-        tank->GetName(), target->GetName(), tauntSpellId);
-
-    return true;  // Placeholder return
+    if (result == SPELL_CAST_OK)
+    {
+        TC_LOG_DEBUG("playerbot", "ThreatAssistant: Tank {} successfully taunted {} with spell {}",
+            tank->GetName(), target->GetName(), tauntSpellId);
+        return true;
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbot", "ThreatAssistant: Tank {} failed to taunt {} with spell {} (result: {})",
+            tank->GetName(), target->GetName(), tauntSpellId, static_cast<uint32>(result));
+        return false;
+    }
 }
 
 std::vector<ThreatTarget> ThreatAssistant::GetDangerousTargets(Player* tank, float minThreatPercent)

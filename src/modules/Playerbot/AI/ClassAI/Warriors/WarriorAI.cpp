@@ -100,13 +100,6 @@ void WarriorAI::UpdateRotation(::Unit* target)
             return;
     }
 
-if (!priorityTarget)
-
-{
-    return nullptr;
-
-}
-
     // Priority 3: Check for target switching
     if (behaviors && behaviors->ShouldSwitchTarget())
     {
@@ -115,10 +108,6 @@ if (!priorityTarget)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
-                         if (!priorityTarget)
-                         {
-                             return;
-                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }

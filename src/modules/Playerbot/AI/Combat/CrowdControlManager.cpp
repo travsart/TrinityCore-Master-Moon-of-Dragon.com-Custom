@@ -371,17 +371,87 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
     if (!target || !_bot || spellId == 0)
         return false;
 
-    // TODO: Implement target type checking
-    // - Polymorph only works on beasts, humanoids
-    // - Banish only works on demons, elementals
-    // - Shackle only works on undead
-    // - etc.
+    // Get spell info
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return false;
+
+    // Check if bot knows the spell
+    if (!_bot->HasSpell(spellId))
+        return false;
 
     // Check cooldown
-    // Check mana cost
-    // Check range
+    if (_bot->GetSpellHistory()->HasCooldown(spellId))
+        return false;
 
-    return true;  // Placeholder
+    // Check power cost
+    if (_bot->GetPower(_bot->GetPowerType()) < spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()))
+        return false;
+
+    // Check range
+    float range = spellInfo->GetMaxRange(false);
+    if (_bot->GetDistance(target) > range)
+        return false;
+
+    // Check line of sight
+    if (!_bot->IsWithinLOSInMap(target))
+        return false;
+
+    // Check target type based on creature type
+    if (Creature* creature = target->ToCreature())
+    {
+        uint32 creatureType = creature->GetCreatureType();
+
+        // Check spell mechanic/effect to determine which creature types it works on
+        // Polymorph-like spells: work on beasts, humanoids, critters
+        if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
+            spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_CONFUSE))
+        {
+            if (creatureType != CREATURE_TYPE_BEAST &&
+                creatureType != CREATURE_TYPE_HUMANOID &&
+                creatureType != CREATURE_TYPE_CRITTER)
+            {
+                return false;
+            }
+        }
+
+        // Banish: works on demons and elementals
+        if (spellInfo->GetMechanic() == MECHANIC_BANISH)
+        {
+            if (creatureType != CREATURE_TYPE_DEMON &&
+                creatureType != CREATURE_TYPE_ELEMENTAL)
+            {
+                return false;
+            }
+        }
+
+        // Shackle: works on undead
+        if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
+            spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_SHAPESHIFT))
+        {
+            if (creatureType != CREATURE_TYPE_UNDEAD)
+            {
+                return false;
+            }
+        }
+
+        // Fear: works on humanoids and beasts (generally)
+        if (spellInfo->GetMechanic() == MECHANIC_FEAR)
+        {
+            if (creatureType == CREATURE_TYPE_MECHANICAL ||
+                creatureType == CREATURE_TYPE_UNDEAD ||
+                creatureType == CREATURE_TYPE_ELEMENTAL)
+            {
+                return false;
+            }
+        }
+    }
+
+    // Check if target is immune to CC
+    if (target->IsImmunedToSpell(spellInfo))
+        return false;
+
+    return true;
 }
 
 void CrowdControlManager::UpdateExpiredCCs()

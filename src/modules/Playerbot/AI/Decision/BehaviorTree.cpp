@@ -328,8 +328,13 @@ std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
                 return target && target->GetHealthPct() > 50.0f;
             }),
             Condition("Cooldowns Available", [](Player* bot, Unit*) {
-                // Check if major cooldowns are available
-                return true; // Placeholder
+                if (!bot)
+                    return false;
+
+                // Check if we're in combat and not recently used cooldowns
+                // This is a simplified check for the demo tree
+                // Real implementations in Refactored specs check specific cooldowns
+                return bot->IsInCombat();
             }),
             Action("Use Offensive Cooldown", [](Player* bot, Unit*) {
                 TC_LOG_DEBUG("playerbot", "BehaviorTree: Using offensive cooldown");
@@ -339,9 +344,24 @@ std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
 
         // AoE if 3+ enemies
         Sequence("AoE Rotation", {
-            Condition("3+ Enemies", [](Player* bot, Unit*) {
-                // Count nearby enemies
-                return false; // Placeholder
+            Condition("3+ Enemies", [](Player* bot, Unit* target) {
+                if (!bot || !target)
+                    return false;
+
+                // Count nearby enemies within 10 yards
+                uint32 enemyCount = 0;
+                std::list<Creature*> creatures;
+                Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(bot, bot, 10.0f);
+                Trinity::CreatureListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, creatures, check);
+                Cell::VisitGridObjects(bot, searcher, 10.0f);
+
+                for (Creature* creature : creatures)
+                {
+                    if (creature && bot->IsValidAttackTarget(creature))
+                        enemyCount++;
+                }
+
+                return enemyCount >= 3;
             }),
             Action("Cast AoE Spell", [](Player* bot, Unit*) {
                 TC_LOG_DEBUG("playerbot", "BehaviorTree: Casting AoE");

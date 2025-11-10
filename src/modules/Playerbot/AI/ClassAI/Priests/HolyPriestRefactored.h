@@ -877,12 +877,13 @@ private:
 
     // Member variables
     RenewTracker _renewTracker;
-    HotTracker _pomTracker;
+    PrayerOfMendingTracker _pomTracker;
 
     bool _apotheosisActive;
     uint32 _apotheosisEndTime;
 
-    uint32 _lastApotheosisTime;    uint32 _lastSalvationTime;
+    uint32 _lastApotheosisTime;
+    uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
 };
 

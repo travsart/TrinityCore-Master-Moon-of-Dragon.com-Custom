@@ -124,10 +124,6 @@ void ClassAI::OnCombatEnd()
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
-    if (!newTarget)
-    {
-        return nullptr;
-    }
     // Let BotAI handle base combat end logic
     BotAI::OnCombatEnd();
 }
@@ -135,10 +131,6 @@ void ClassAI::OnCombatEnd()
 void ClassAI::OnTargetChanged(::Unit* newTarget)
 {
     _currentCombatTarget = newTarget;
-                 if (!newTarget)
-                 {
-                     return;
-                 }
     _lastTargetSwitch = _combatTime;
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} switching target to {}",
@@ -417,13 +409,6 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     if (!HasLineOfSight(target))
         return false;
 
-if (!checkTarget)
-
-{
-    return nullptr;
-
-}
-
     // Cast the spell
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
@@ -431,7 +416,8 @@ if (!checkTarget)
 
     GetBot()->CastSpell(target, spellId, false);
     ConsumeResource(spellId);
-    _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);    return true;
+    _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
+    return true;
 }
 
 bool ClassAI::CastSpell(uint32 spellId)
@@ -442,13 +428,11 @@ bool ClassAI::CastSpell(uint32 spellId)
 
 // ============================================================================
 // AURA UTILITIES
-// ============================================================================bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
+// ============================================================================
+
+bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 {
     ::Unit* checkTarget = target ? target : GetBot();
-    if (!checkTarget)
-    {
-        return;
-    }
     if (!checkTarget)
         return false;
 
@@ -484,7 +468,10 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
 bool ClassAI::IsMoving() const
 {
     return GetBot() && GetBot()->IsMoving();
-}bool ClassAI::IsInMeleeRange(::Unit* target) const{
+}
+
+bool ClassAI::IsInMeleeRange(::Unit* target) const
+{
     if (!target || !GetBot())
         return false;
 
@@ -526,7 +513,10 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetAngle(target);
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);    pos.m_positionZ = target->GetPositionZ();    pos.SetOrientation(target->GetOrientation());
+    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);
+    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);
+    pos.m_positionZ = target->GetPositionZ();
+    pos.SetOrientation(target->GetOrientation());
 
     return pos;
 }

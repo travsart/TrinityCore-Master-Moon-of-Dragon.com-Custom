@@ -88,6 +88,10 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_HybridAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
 
+    # Specialized AI Factory - Enterprise-grade spec routing with Phase 5 integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.h
+
     # Phase 2.1: BehaviorManager Base Class - Manager Pattern Foundation
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.h
@@ -265,6 +269,11 @@ set(PLAYERBOT_SOURCES
     # Evoker AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
+
+    # Evoker Refactored Specializations (Template-based with Phase 5 integration)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/DevastationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/PreservationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/AugmentationEvokerRefactored.h
 
     # Hunter AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
