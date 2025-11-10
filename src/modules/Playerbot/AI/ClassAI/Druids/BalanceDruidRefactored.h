@@ -19,6 +19,10 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -285,6 +289,9 @@ public:
     {        // Initialize mana/astral power resources
         this->_resource.Initialize(bot);
         TC_LOG_DEBUG("playerbot", "BalanceDruidRefactored initialized for {}", bot->GetName());
+
+        // Phase 5: Initialize decision systems
+        InitializeBalanceMechanics();
     }
 
     void UpdateRotation(::Unit* target) override    {
@@ -598,7 +605,279 @@ private:
         this->_resource.astralPower = (this->_resource.astralPower > amount) ? this->_resource.astralPower - amount : 0;
     }
 
-    
+    void InitializeBalanceMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(BARKSKIN, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(BARKSKIN, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "HP < 50% (damage reduction)");
+
+            // CRITICAL: Major burst cooldowns
+            queue->RegisterSpell(INCARNATION_CHOSEN, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(INCARNATION_CHOSEN, [this](Player* bot, Unit*) {
+                return bot && bot->HasSpell(INCARNATION_CHOSEN) && this->_resource.astralPower >= 40;
+            }, "40+ AP (major burst, 3min CD)");
+
+            queue->RegisterSpell(CELESTIAL_ALIGNMENT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(CELESTIAL_ALIGNMENT, [this](Player* bot, Unit*) {
+                return bot && this->_resource.astralPower >= 40;
+            }, "40+ AP (burst damage, 3min CD)");
+
+            queue->RegisterSpell(CONVOKE_THE_SPIRITS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(CONVOKE_THE_SPIRITS, [this](Player* bot, Unit*) {
+                return bot && bot->HasSpell(CONVOKE_THE_SPIRITS);
+            }, "Random spell burst (2min CD, talent)");
+
+            // HIGH: DoT Maintenance
+            queue->RegisterSpell(MOONFIRE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(MOONFIRE, [this](Player*, Unit* target) {
+                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), MOONFIRE);
+            }, "Refresh Moonfire (pandemic window)");
+
+            queue->RegisterSpell(SUNFIRE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SUNFIRE, [this](Player*, Unit* target) {
+                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), SUNFIRE);
+            }, "Refresh Sunfire");
+
+            queue->RegisterSpell(STELLAR_FLARE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(STELLAR_FLARE, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(STELLAR_FLARE) &&
+                       this->_dotTracker.NeedsRefresh(target->GetGUID(), STELLAR_FLARE);
+            }, "Refresh Stellar Flare (talent)");
+
+            // MEDIUM: Astral Power Spenders
+            queue->RegisterSpell(STARSURGE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(STARSURGE, [this](Player*, Unit* target) {
+                return target && (this->_shootingStarsProc || this->_resource.astralPower >= 30);
+            }, "30 AP or Shooting Stars proc");
+
+            queue->RegisterSpell(STARFALL, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(STARFALL, [this](Player*, Unit*) {
+                return this->_resource.astralPower >= 50 && !this->_starfallActive &&
+                       this->GetEnemiesInRange(40.0f) >= 3;
+            }, "50 AP, 3+ enemies (AoE ground effect)");
+
+            // LOW: Astral Power Generators
+            queue->RegisterSpell(STARFIRE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(STARFIRE, [this](Player*, Unit* target) {
+                return target && (this->_eclipseTracker.IsInLunarEclipse() || !this->_eclipseTracker.IsInEclipse());
+            }, "Lunar Eclipse or no Eclipse (8 AP)");
+
+            queue->RegisterSpell(WRATH, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WRATH, [this](Player*, Unit* target) {
+                return target && this->_eclipseTracker.IsInSolarEclipse();
+            }, "Solar Eclipse (6 AP)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Balance Druid DPS", {
+                // Tier 1: Burst Cooldowns (Incarnation/Celestial Alignment, Convoke)
+                Sequence("Burst Cooldowns", {
+                    Condition("40+ AP and in combat", [this](Player* bot) {
+                        return bot && bot->IsInCombat() && this->_resource.astralPower >= 40;
+                    }),
+                    Selector("Use burst cooldowns", {
+                        Sequence("Incarnation (talent)", {
+                            Condition("Has Incarnation", [this](Player* bot) {
+                                return bot->HasSpell(INCARNATION_CHOSEN);
+                            }),
+                            Action("Cast Incarnation", [this](Player* bot) {
+                                if (this->CanCastSpell(INCARNATION_CHOSEN, bot))
+                                {
+                                    this->CastSpell(bot, INCARNATION_CHOSEN);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Celestial Alignment", {
+                            Action("Cast Celestial Alignment", [this](Player* bot) {
+                                if (this->CanCastSpell(CELESTIAL_ALIGNMENT, bot))
+                                {
+                                    this->CastSpell(bot, CELESTIAL_ALIGNMENT);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Convoke the Spirits (talent)", {
+                            Condition("Has Convoke", [this](Player* bot) {
+                                return bot->HasSpell(CONVOKE_THE_SPIRITS);
+                            }),
+                            Action("Cast Convoke", [this](Player* bot) {
+                                if (this->CanCastSpell(CONVOKE_THE_SPIRITS, bot))
+                                {
+                                    this->CastSpell(bot, CONVOKE_THE_SPIRITS);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: DoT Maintenance (Moonfire, Sunfire, Stellar Flare)
+                Sequence("DoT Maintenance", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Apply/Refresh DoTs", {
+                        Sequence("Moonfire", {
+                            Condition("Needs Moonfire", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), MOONFIRE);
+                            }),
+                            Action("Cast Moonfire", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(MOONFIRE, target))
+                                {
+                                    this->CastSpell(target, MOONFIRE);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), MOONFIRE, 22000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Sunfire", {
+                            Condition("Needs Sunfire", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), SUNFIRE);
+                            }),
+                            Action("Cast Sunfire", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SUNFIRE, target))
+                                {
+                                    this->CastSpell(target, SUNFIRE);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), SUNFIRE, 18000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Stellar Flare (talent)", {
+                            Condition("Needs Stellar Flare", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return bot->HasSpell(STELLAR_FLARE) && target &&
+                                       this->_dotTracker.NeedsRefresh(target->GetGUID(), STELLAR_FLARE);
+                            }),
+                            Action("Cast Stellar Flare", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(STELLAR_FLARE, target))
+                                {
+                                    this->CastSpell(target, STELLAR_FLARE);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), STELLAR_FLARE, 24000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Astral Power Spender (Starsurge, Starfall)
+                Sequence("AP Spender", {
+                    Condition("Has 30+ AP and target", [this](Player* bot) {
+                        return bot && bot->GetVictim() &&
+                               (this->_resource.astralPower >= 30 || this->_shootingStarsProc);
+                    }),
+                    Selector("Spend AP", {
+                        Sequence("Starfall (AoE)", {
+                            Condition("50+ AP, 3+ enemies, not active", [this](Player*) {
+                                return this->_resource.astralPower >= 50 && !this->_starfallActive &&
+                                       this->GetEnemiesInRange(40.0f) >= 3;
+                            }),
+                            Action("Cast Starfall", [this](Player* bot) {
+                                if (this->CanCastSpell(STARFALL, bot))
+                                {
+                                    this->CastSpell(bot, STARFALL);
+                                    this->_starfallActive = true;
+                                    this->_starfallEndTime = getMSTime() + 8000;
+                                    this->ConsumeAstralPower(50);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Starsurge (single target)", {
+                            Condition("30+ AP or Shooting Stars proc", [this](Player*) {
+                                return this->_resource.astralPower >= 30 || this->_shootingStarsProc;
+                            }),
+                            Action("Cast Starsurge", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(STARSURGE, target))
+                                {
+                                    this->CastSpell(target, STARSURGE);
+                                    if (this->_shootingStarsProc)
+                                        this->_shootingStarsProc = false;
+                                    else
+                                        this->ConsumeAstralPower(30);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: AP Generator (Starfire in Lunar, Wrath in Solar)
+                Sequence("AP Generator", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Generate AP", {
+                        Sequence("Starfire (Lunar Eclipse)", {
+                            Condition("Lunar Eclipse or no Eclipse", [this](Player*) {
+                                return this->_eclipseTracker.IsInLunarEclipse() || !this->_eclipseTracker.IsInEclipse();
+                            }),
+                            Action("Cast Starfire", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(STARFIRE, target))
+                                {
+                                    this->CastSpell(target, STARFIRE);
+                                    this->GenerateAstralPower(8);
+                                    if (!this->_eclipseTracker.IsInEclipse())
+                                        this->_eclipseTracker.EnterLunarEclipse();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Wrath (Solar Eclipse)", {
+                            Condition("Solar Eclipse", [this](Player*) {
+                                return this->_eclipseTracker.IsInSolarEclipse();
+                            }),
+                            Action("Cast Wrath", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(WRATH, target))
+                                {
+                                    this->CastSpell(target, WRATH);
+                                    this->GenerateAstralPower(6);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
+
+
 
 private:
     BalanceEclipseTracker _eclipseTracker;
