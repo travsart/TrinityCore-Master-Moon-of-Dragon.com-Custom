@@ -642,6 +642,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
 
     # Banking System - Personal Bank Automation
     ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
@@ -685,11 +687,10 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.h
 
-    # Advanced Features - Group/Raid, Economy, Social, Advanced Behaviors
+    # Advanced Features - Group/Raid, Social, Advanced Behaviors
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
@@ -1209,8 +1210,7 @@ source_group("Game" FILES
 source_group("Advanced" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
