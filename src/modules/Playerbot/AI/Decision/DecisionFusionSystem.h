@@ -285,6 +285,29 @@ private:
      * @brief Get system name for logging
      */
     [[nodiscard]] static const char* GetSourceName(DecisionSource source);
+
+    /**
+     * @brief Determine bot role from class and spec
+     * @param bot Player bot
+     * @return Bot role for ActionScoringEngine
+     */
+    [[nodiscard]] BotRole DetermineBotRole(Player* bot) const;
+
+    /**
+     * @brief Evaluate scoring category for ActionScoringEngine
+     * @param category Scoring category to evaluate
+     * @param bot Player bot
+     * @param target Current target
+     * @param spellId Spell being scored
+     * @param context Combat context
+     * @return Score value (0.0-1.0)
+     */
+    [[nodiscard]] float EvaluateScoringCategory(
+        ScoringCategory category,
+        Player* bot,
+        Unit* target,
+        uint32 spellId,
+        CombatContext context) const;
 };
 
 }} // namespace bot::ai
