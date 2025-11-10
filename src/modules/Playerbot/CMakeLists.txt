@@ -1170,6 +1170,17 @@ source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
+)
+
+source_group("Banking" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.h
 )
 
 source_group("Economy" FILES

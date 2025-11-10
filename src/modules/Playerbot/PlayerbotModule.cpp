@@ -24,6 +24,10 @@
 #include "Session/BotPacketRelay.h"
 #include "Chat/BotChatCommandHandler.h"
 #include "Professions/ProfessionManager.h"
+#include "Professions/ProfessionAuctionBridge.h"
+#include "Professions/GatheringMaterialsBridge.h"
+#include "Professions/AuctionMaterialsBridge.h"
+#include "Banking/BankingManager.h"
 #include "Quest/QuestHubDatabase.h"
 #include "Equipment/BotGearFactory.h"
 #include "AI/ClassAI/ClassBehaviorTreeRegistry.h"
@@ -179,6 +183,27 @@ bool PlayerbotModule::Initialize()
     TC_LOG_INFO("server.loading", "Initializing Profession Manager...");
     Playerbot::ProfessionManager::instance()->Initialize();
     TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
+
+    // Initialize Profession Bridges (Phase 3 Option C: Economic integration)
+    TC_LOG_INFO("server.loading", "Initializing Profession-Auction Bridge...");
+    Playerbot::ProfessionAuctionBridge::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Profession-Auction Bridge initialized successfully");
+
+    TC_LOG_INFO("server.loading", "Initializing Gathering-Materials Bridge...");
+    Playerbot::GatheringMaterialsBridge::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Gathering-Materials Bridge initialized successfully");
+
+    TC_LOG_INFO("server.loading", "Initializing Auction-Materials Bridge...");
+    Playerbot::AuctionMaterialsBridge::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Auction-Materials Bridge initialized successfully");
+
+    TC_LOG_INFO("server.loading", "Initializing Banking Manager...");
+    Playerbot::BankingManager::instance()->OnInitialize();
+    TC_LOG_INFO("server.loading", "Banking Manager initialized successfully");
+
+    TC_LOG_INFO("server.loading", "Initializing Profession Event Bus...");
+    // ProfessionEventBus is event-driven, no initialization required (lazy init)
+    TC_LOG_INFO("server.loading", "Profession Event Bus ready");
 
     // Initialize Class Behavior Tree Registry (Phase 5: Class-specific AI trees for all 13 classes)
     TC_LOG_INFO("server.loading", "Initializing Class Behavior Tree Registry...");
