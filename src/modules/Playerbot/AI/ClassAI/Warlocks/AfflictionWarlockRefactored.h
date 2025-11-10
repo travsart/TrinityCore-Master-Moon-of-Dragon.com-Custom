@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Affliction Warlock Refactored - Template-Based Implementation
  *
@@ -8,6 +8,10 @@
  */
 
 #pragma once
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "Pet.h"
 
 #include "../CombatSpecializationTemplates.h"
@@ -16,6 +20,10 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -117,8 +125,7 @@ struct ManaSoulShardResource
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-        }
+            mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
         available = mana > 0;
     }
@@ -230,6 +237,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, std::unordered_map<uint32, DoTInfo>> _trackedDoTs;
 };
 
@@ -245,23 +253,20 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit AfflictionWarlockRefactored(Player* bot)
-        : RangedDpsSpecialization<ManaSoulShardResource>(bot)
+    explicit AfflictionWarlockRefactored(Player* bot)        : RangedDpsSpecialization<ManaSoulShardResource>(bot)
         , WarlockSpecialization(bot)
         , _dotTracker()
         , _nightfallProc(false)
         , _lastDarkglareTime(0)
-    {
-        // Initialize mana/soul shard resources
+    {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "AfflictionWarlockRefactored initialized for {}", bot->GetName());
+
+        // Phase 5: Initialize decision systems
+        InitializeAfflictionMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -281,9 +286,7 @@ public:
         {
             ExecuteSingleTargetRotation(target);
         }
-    }
-
-    void UpdateBuffs() override
+    }    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -297,8 +300,7 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 
         // Priority 1: Use Darkglare when all DoTs are up
@@ -308,7 +310,21 @@ protected:
             {
                 this->CastSpell(this->GetBot(), SUMMON_DARKGLARE);
                 _lastDarkglareTime = getMSTime();
-                TC_LOG_DEBUG("playerbot", "Affliction: Summon Darkglare");
+                
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {SUMMON_DARKGLARE, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {PHANTOM_SINGULARITY, CooldownPresets::OFFENSIVE_45, 1},
+            {VILE_TAINT, 20000, 1},
+            {SOUL_ROT, CooldownPresets::OFFENSIVE_60, 1},
+            {UNENDING_RESOLVE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DARK_PACT, CooldownPresets::OFFENSIVE_60, 1},
+            {MORTAL_COIL, CooldownPresets::OFFENSIVE_45, 1},
+            {HOWL_OF_TERROR, 40000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Affliction: Summon Darkglare");
                 return;
             }
         }
@@ -430,8 +446,82 @@ protected:
             return;
         }
 
-        // Priority 4: Apply Agony on all targets
-        // TODO: Implement multi-target DoT tracking
+        // Priority 4: Apply Agony on all targets (multi-target DoT tracking)
+        {
+            Player* bot = this->GetBot();
+            if (!bot) return;
+
+            // Get all nearby enemies within 40 yards
+            std::list<::Unit*> nearbyEnemies;
+            Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+            Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, nearbyEnemies, u_check);
+            Cell::VisitAllObjects(bot, searcher, 40.0f);
+
+            // Limit DoT spreading to prevent excessive target count
+            uint32 dotTargetsProcessed = 0;
+            const uint32 MAX_DOT_TARGETS = 8; // Limit to 8 targets for performance
+
+            for (::Unit* enemy : nearbyEnemies)
+            {
+                if (!enemy || !enemy->IsAlive() || !bot->IsValidAttackTarget(enemy))
+                    continue;
+
+                if (dotTargetsProcessed >= MAX_DOT_TARGETS)
+                    break;
+
+                ObjectGuid enemyGuid = enemy->GetGUID();
+
+                // Priority: Apply Agony if missing or needs refresh
+                if (_dotTracker.NeedsRefresh(enemyGuid, AGONY, 5000)) // Refresh with 5s remaining
+                {
+                    if (this->CanCastSpell(AGONY, enemy))
+                    {
+                        if (this->CastSpell(enemy, AGONY))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, AGONY, 18000, 1); // 18s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Agony to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update to avoid ability spam
+                        }
+                    }
+                }
+
+                // Apply Corruption if missing (secondary priority)
+                if (!_dotTracker.HasDoT(enemyGuid, CORRUPTION))
+                {
+                    if (this->CanCastSpell(CORRUPTION, enemy))
+                    {
+                        if (this->CastSpell(enemy, CORRUPTION))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, CORRUPTION, 14000); // 14s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Corruption to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update
+                        }
+                    }
+                }
+
+                // Apply Siphon Life if talented and missing (tertiary priority)
+                if (bot->HasSpell(SIPHON_LIFE) && !_dotTracker.HasDoT(enemyGuid, SIPHON_LIFE))
+                {
+                    if (this->CanCastSpell(SIPHON_LIFE, enemy))
+                    {
+                        if (this->CastSpell(enemy, SIPHON_LIFE))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, SIPHON_LIFE, 15000); // 15s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Siphon Life to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update
+                        }
+                    }
+                }
+
+                dotTargetsProcessed++;
+            }
+        }
 
         // Priority 5: Malefic Rapture (AoE shard spender)
         if (shards >= 2 && this->CanCastSpell(MALEFIC_RAPTURE, target))
@@ -531,17 +621,244 @@ private:
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
     }
 
-    void InitializeCooldowns()
+    void InitializeAfflictionMechanics()
     {
-        RegisterCooldown(SUMMON_DARKGLARE, 120000);     // 2 min CD
-        RegisterCooldown(PHANTOM_SINGULARITY, 45000);   // 45 sec CD
-        RegisterCooldown(VILE_TAINT, 20000);            // 20 sec CD
-        RegisterCooldown(SOUL_ROT, 60000);              // 1 min CD
-        RegisterCooldown(UNENDING_RESOLVE, 180000);     // 3 min CD
-        RegisterCooldown(DARK_PACT, 60000);             // 1 min CD
-        RegisterCooldown(MORTAL_COIL, 45000);           // 45 sec CD
-        RegisterCooldown(HOWL_OF_TERROR, 40000);        // 40 sec CD
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(UNENDING_RESOLVE, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(UNENDING_RESOLVE, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "HP < 40% (damage reduction)");
+
+            // CRITICAL: Major burst cooldown - Darkglare extends all DoTs
+            queue->RegisterSpell(SUMMON_DARKGLARE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SUMMON_DARKGLARE, [this](Player* bot, Unit* target) {
+                return target && this->_dotTracker.GetDoTCount(target->GetGUID()) >= 3;
+            }, "3+ DoTs active (extend duration)");
+
+            // HIGH: Core DoTs (highest to lowest priority)
+            queue->RegisterSpell(AGONY, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(AGONY, [this](Player*, Unit* target) {
+                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), AGONY);
+            }, "Refresh Agony (pandemic window)");
+
+            queue->RegisterSpell(CORRUPTION, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(CORRUPTION, [this](Player*, Unit* target) {
+                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), CORRUPTION);
+            }, "Refresh Corruption");
+
+            queue->RegisterSpell(UNSTABLE_AFFLICTION, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(UNSTABLE_AFFLICTION, [this](Player*, Unit* target) {
+                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), UNSTABLE_AFFLICTION);
+            }, "Refresh UA (generates shard)");
+
+            queue->RegisterSpell(SIPHON_LIFE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SIPHON_LIFE, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(SIPHON_LIFE) &&
+                       this->_dotTracker.NeedsRefresh(target->GetGUID(), SIPHON_LIFE);
+            }, "Refresh Siphon Life (talent)");
+
+            // MEDIUM: Cooldown DoTs
+            queue->RegisterSpell(PHANTOM_SINGULARITY, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(PHANTOM_SINGULARITY, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(PHANTOM_SINGULARITY);
+            }, "AoE DoT (45s CD)");
+
+            queue->RegisterSpell(VILE_TAINT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(VILE_TAINT, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(VILE_TAINT);
+            }, "AoE DoT (20s CD)");
+
+            queue->RegisterSpell(SOUL_ROT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SOUL_ROT, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(SOUL_ROT);
+            }, "AoE DoT (60s CD)");
+
+            // MEDIUM: Shard spender
+            queue->RegisterSpell(MALEFIC_RAPTURE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(MALEFIC_RAPTURE, [this](Player*, Unit* target) {
+                return target && this->_resource.soulShards >= 1 &&
+                       this->_dotTracker.GetDoTCount(target->GetGUID()) >= 2;
+            }, "Spend shard (2+ DoTs active)");
+
+            // MEDIUM: Execute phase
+            queue->RegisterSpell(DRAIN_SOUL, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DRAIN_SOUL, [](Player*, Unit* target) {
+                return target && target->GetHealthPct() < 20.0f;
+            }, "Execute < 20% (generates shards)");
+
+            // LOW: Filler + shard generator
+            queue->RegisterSpell(SHADOW_BOLT_AFF, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_BOLT_AFF, [this](Player*, Unit* target) {
+                return target && this->_resource.soulShards < 5;
+            }, "Filler (generates shards)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Affliction Warlock DPS", {
+                // Tier 1: Burst Window (Darkglare extends all DoTs)
+                Sequence("Burst Cooldown", {
+                    Condition("3+ DoTs active", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        return bot && target && this->_dotTracker.GetDoTCount(target->GetGUID()) >= 3;
+                    }),
+                    Action("Cast Darkglare", [this](Player* bot) {
+                        if (this->CanCastSpell(SUMMON_DARKGLARE, bot))
+                        {
+                            this->CastSpell(bot, SUMMON_DARKGLARE);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 2: DoT Maintenance (Agony → Corruption → UA → Siphon Life)
+                Sequence("DoT Maintenance", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Apply/Refresh DoTs", {
+                        Sequence("Agony", {
+                            Condition("Needs Agony", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), AGONY);
+                            }),
+                            Action("Cast Agony", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(AGONY, target))
+                                {
+                                    this->CastSpell(target, AGONY);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), AGONY, 18000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Corruption", {
+                            Condition("Needs Corruption", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), CORRUPTION);
+                            }),
+                            Action("Cast Corruption", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(CORRUPTION, target))
+                                {
+                                    this->CastSpell(target, CORRUPTION);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), CORRUPTION, 14000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Unstable Affliction", {
+                            Condition("Needs UA", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), UNSTABLE_AFFLICTION);
+                            }),
+                            Action("Cast UA", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(UNSTABLE_AFFLICTION, target))
+                                {
+                                    this->CastSpell(target, UNSTABLE_AFFLICTION);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), UNSTABLE_AFFLICTION, 8000);
+                                    this->GenerateSoulShard(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Siphon Life", {
+                            Condition("Needs Siphon Life", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return bot && target && bot->HasSpell(SIPHON_LIFE) &&
+                                       this->_dotTracker.NeedsRefresh(target->GetGUID(), SIPHON_LIFE);
+                            }),
+                            Action("Cast Siphon Life", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SIPHON_LIFE, target))
+                                {
+                                    this->CastSpell(target, SIPHON_LIFE);
+                                    this->_dotTracker.ApplyDoT(target->GetGUID(), SIPHON_LIFE, 15000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Shard Spender (Malefic Rapture when 2+ DoTs active)
+                Sequence("Shard Spender", {
+                    Condition("1+ shards and 2+ DoTs", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        return bot && target && this->_resource.soulShards >= 1 &&
+                               this->_dotTracker.GetDoTCount(target->GetGUID()) >= 2;
+                    }),
+                    Action("Cast Malefic Rapture", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        if (target && this->CanCastSpell(MALEFIC_RAPTURE, target))
+                        {
+                            this->CastSpell(target, MALEFIC_RAPTURE);
+                            this->ConsumeSoulShard(1);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 4: Shard Generator (Drain Soul execute, Shadow Bolt filler)
+                Sequence("Shard Generator", {
+                    Condition("Has target and < 5 shards", [this](Player* bot) {
+                        return bot && bot->GetVictim() && this->_resource.soulShards < 5;
+                    }),
+                    Selector("Generate shards", {
+                        Sequence("Drain Soul (execute)", {
+                            Condition("Target < 20% HP", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && target->GetHealthPct() < 20.0f;
+                            }),
+                            Action("Cast Drain Soul", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(DRAIN_SOUL, target))
+                                {
+                                    this->CastSpell(target, DRAIN_SOUL);
+                                    this->GenerateSoulShard(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Shadow Bolt (filler)", {
+                            Action("Cast Shadow Bolt", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SHADOW_BOLT_AFF, target))
+                                {
+                                    this->CastSpell(target, SHADOW_BOLT_AFF);
+                                    this->GenerateSoulShard(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
     }
+
+
 
 private:
     AfflictionDoTTracker _dotTracker;

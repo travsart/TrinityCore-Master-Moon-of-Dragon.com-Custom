@@ -13,12 +13,15 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Player.h"
 #include "Actions/Action.h"
 #include "Triggers/Trigger.h"
 #include "Strategy/Strategy.h"
+#include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
+#include "Blackboard/SharedBlackboard.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -41,11 +44,17 @@ class QuestManager;
 class TradeManager;
 class GatheringManager;
 class AuctionManager;
-class GroupCoordinator;
+class GroupCoordinator; // Advanced/GroupCoordinator
 class DeathRecoveryManager;
 class MovementArbiter;
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
+
+// Phase 3: Tactical Coordination forward declarations
+namespace Coordination
+{
+    class GroupCoordinator;
+}
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -75,6 +84,13 @@ namespace Events
 }
 
 class ManagerRegistry;
+
+// Phase 5E: Decision Fusion System forward declarations
+namespace bot { namespace ai {
+    class DecisionFusionSystem;
+    class ActionPriorityQueue;
+    class BehaviorTree;
+}}
 
 // TriggerResult comparator for priority queue
 struct TriggerResultComparator
@@ -200,6 +216,16 @@ public:
     // ========================================================================
 
     Player* GetBot() const { return _bot; }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     ObjectGuid GetBotGuid() const { return _bot ? _bot->GetGUID() : ObjectGuid::Empty; }
 
     // ========================================================================
@@ -247,6 +273,44 @@ public:
 
     GroupCoordinator* GetGroupCoordinator() { return _groupCoordinator.get(); }
     GroupCoordinator const* GetGroupCoordinator() const { return _groupCoordinator.get(); }
+
+    /**
+     * @brief Get Tactical Group Coordinator (Phase 3)
+     * Combat-focused coordination separate from Advanced/GroupCoordinator
+     * @return Pointer to tactical coordinator, or nullptr if not in group
+     */
+    Coordination::GroupCoordinator* GetTacticalCoordinator() { return _tacticalCoordinator.get(); }
+    Coordination::GroupCoordinator const* GetTacticalCoordinator() const { return _tacticalCoordinator.get(); }
+
+    // ========================================================================
+    // UTILITY AI DECISION SYSTEM - Hybrid AI Phase 1
+    // ========================================================================
+
+    /**
+     * @brief Initialize Hybrid AI Decision System (Phase 2 Week 3)
+     * Creates HybridAIController with Utility AI + Behavior Trees
+     * Called during BotAI constructor
+     */
+    void InitializeHybridAI();
+
+    /**
+     * @brief Update Hybrid AI (Phase 2 Week 3)
+     * Selects best behavior via Utility AI, executes via Behavior Tree
+     * @param diff Time since last UpdateAI() call
+     */
+    void UpdateHybridAI(uint32 diff);
+
+    /**
+     * @brief Get Hybrid AI Controller (Phase 2 Week 3)
+     * @return Pointer to controller, or nullptr if not initialized
+     */
+    class HybridAIController* GetHybridAI() const { return _hybridAI.get(); }
+
+    /**
+     * @brief Get Shared Blackboard (Phase 4)
+     * @return Pointer to blackboard, or nullptr if not initialized
+     */
+    SharedBlackboard* GetSharedBlackboard() const { return _sharedBlackboard; }
 
     // ========================================================================
     // DEATH RECOVERY - Resurrection management
@@ -344,6 +408,83 @@ public:
 
     ManagerRegistry* GetManagerRegistry() { return _managerRegistry.get(); }
     ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
+
+    // ========================================================================
+    // PHASE 5E: DECISION FUSION SYSTEM - Unified decision arbitration
+    // ========================================================================
+
+    /**
+     * @brief Get Decision Fusion System for unified action selection
+     *
+     * The DecisionFusionSystem collects votes from all decision-making systems
+     * (BehaviorPriorityManager, ActionScoringEngine, etc.) and fuses them
+     * into a single, optimal action selection.
+     *
+     * @return Pointer to DecisionFusionSystem, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto fusion = GetDecisionFusion())
+     * {
+     *     auto votes = fusion->CollectVotes(this, CombatContext::DUNGEON_BOSS);
+     *     auto result = fusion->FuseDecisions(votes);
+     *     if (result.IsValid())
+     *         ExecuteAction(result.actionId, result.target);
+     * }
+     * @endcode
+     */
+    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _decisionFusion.get(); }
+    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _decisionFusion.get(); }
+
+    /**
+     * @brief Get Action Priority Queue for spell priority management
+     *
+     * The ActionPriorityQueue manages spell priorities dynamically based on
+     * cooldowns, resources, combat situations, and custom conditions.
+     *
+     * @return Pointer to ActionPriorityQueue, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto queue = GetActionPriorityQueue())
+     * {
+     *     queue->RegisterSpell(FIREBALL, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+     *     queue->AddCondition(PYROBLAST, [](Player* bot, Unit*) {
+     *         return bot->HasAura(HOT_STREAK);
+     *     }, "Hot Streak proc");
+     *
+     *     uint32 bestSpell = queue->GetHighestPrioritySpell(GetBot(), target, context);
+     *     if (bestSpell)
+     *         CastSpell(target, bestSpell);
+     * }
+     * @endcode
+     */
+    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _actionPriorityQueue.get(); }
+    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _actionPriorityQueue.get(); }
+
+    /**
+     * @brief Get Behavior Tree for hierarchical combat flow
+     *
+     * The BehaviorTree provides structured decision-making through hierarchical
+     * node execution (Sequences, Selectors, Conditions, Actions).
+     *
+     * @return Pointer to BehaviorTree, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto tree = GetBehaviorTree())
+     * {
+     *     // Execute one tick of the tree
+     *     NodeStatus status = tree->Tick(GetBot(), target);
+     *
+     *     // Tree can span multiple ticks if RUNNING
+     *     if (status == NodeStatus::RUNNING)
+     *         return; // Continue next frame
+     * }
+     * @endcode
+     */
+    bot::ai::BehaviorTree* GetBehaviorTree() { return _behaviorTree.get(); }
+    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _behaviorTree.get(); }
 
     // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
@@ -595,6 +736,12 @@ protected:
     std::vector<std::string> _activeStrategies;
     std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
+    // Hybrid AI Decision System: Utility AI + Behavior Trees (Phase 2 Week 3)
+    std::unique_ptr<class HybridAIController> _hybridAI;
+
+    // Shared Blackboard: Thread-safe shared state system (Phase 4)
+    SharedBlackboard* _sharedBlackboard = nullptr;
+
     // Action system
     std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;
     std::shared_ptr<Action> _currentAction;
@@ -625,7 +772,10 @@ protected:
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<AuctionManager> _auctionManager;
-    std::unique_ptr<GroupCoordinator> _groupCoordinator;
+    std::unique_ptr<GroupCoordinator> _groupCoordinator; // Advanced/GroupCoordinator - loot/quest/formation
+
+    // Phase 3: Tactical Group Coordination (separate from Advanced/GroupCoordinator)
+    std::unique_ptr<Coordination::GroupCoordinator> _tacticalCoordinator;
 
     // Death recovery system
     std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
@@ -640,6 +790,15 @@ protected:
     std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
     std::unique_ptr<ManagerRegistry> _managerRegistry;
 
+    // Phase 5E: Decision fusion system - Unified arbitration for all decision-making
+    std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
+
+    // Phase 5 Enhancement: Action priority queue - Spell priority management
+    std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
+
+    // Phase 5 Enhancement: Behavior tree - Hierarchical combat flow
+    std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
+
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
 
@@ -648,6 +807,9 @@ protected:
 
     // Profession automation timer (check every 15 seconds)
     uint32 _professionCheckTimer = 0;
+
+    // Banking automation timer (check every 5 minutes)
+    uint32 _bankingCheckTimer = 0;
 
     // CRITICAL FIX #19: ObjectAccessor Deadlock Resolution
     // Cache for all ObjectAccessor results to eliminate recursive TrinityCore
@@ -671,7 +833,7 @@ protected:
     //
     // Performance impact: Negligible - lock contention was already minimal, and
     // recursive_mutex overhead is only a few nanoseconds per acquisition.
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Phase 7.3: Legacy observers removed (dead code)
     // Events now handled by EventDispatcher → Managers architecture
@@ -698,7 +860,7 @@ public:
 // AI FACTORY - Creates appropriate AI for each class
 // ========================================================================
 
-class TC_GAME_API BotAIFactory
+class TC_GAME_API BotAIFactory final : public IBotAIFactory
 {
     BotAIFactory() = default;
     ~BotAIFactory() = default;
@@ -709,23 +871,23 @@ public:
     static BotAIFactory* instance();
 
     // AI creation
-    std::unique_ptr<BotAI> CreateAI(Player* bot);
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId);
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec);
+    std::unique_ptr<BotAI> CreateAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) override;
+    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) override;
 
     // Specialized AI creation
-    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type);
-    std::unique_ptr<BotAI> CreatePvPAI(Player* bot);
-    std::unique_ptr<BotAI> CreatePvEAI(Player* bot);
-    std::unique_ptr<BotAI> CreateRaidAI(Player* bot);
+    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type) override;
+    std::unique_ptr<BotAI> CreatePvPAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreatePvEAI(Player* bot) override;
+    std::unique_ptr<BotAI> CreateRaidAI(Player* bot) override;
 
     // AI registration
     void RegisterAICreator(std::string const& type,
-                          std::function<std::unique_ptr<BotAI>(Player*)> creator);
+                          std::function<std::unique_ptr<BotAI>(Player*)> creator) override;
 
     // Initialization
-    void InitializeDefaultTriggers(BotAI* ai);
-    void InitializeDefaultValues(BotAI* ai);
+    void InitializeDefaultTriggers(BotAI* ai) override;
+    void InitializeDefaultValues(BotAI* ai) override;
 
 private:
     void InitializeDefaultStrategies(BotAI* ai);

@@ -19,6 +19,7 @@
 #define TRINITY_BOT_STATE_MACHINE_H
 
 #include "BotStateTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "StateTransitions.h"
 #include "Define.h"
 #include "Player.h"
@@ -357,7 +358,7 @@ private:
     TransitionPolicy m_policy;
 
     // Thread safety
-    mutable std::recursive_mutex m_stateMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> m_stateMutex;
 
     // Transition history (circular buffer, last 10 transitions)
     std::array<TransitionEvent, 10> m_transitionHistory;

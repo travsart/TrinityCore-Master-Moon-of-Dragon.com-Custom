@@ -87,6 +87,16 @@ bool MemberJoinedHandler::HandleEvent(GroupEvent const& event)
 
     /*
     if (Player* newMember = ObjectAccessor::FindConnectedPlayer(newMemberGuid))
+        if (!newMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newMember in method GetName");
+            return nullptr;
+        }
+            if (!newMember)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newMember in method GetName");
+                return nullptr;
+            }
     {
         // Update formation
         _botAI->GetFormationMgr()->AddMember(newMember);
@@ -96,11 +106,21 @@ bool MemberJoinedHandler::HandleEvent(GroupEvent const& event)
             _botAI->Say(fmt::format("Welcome to the group, {}!", newMember->GetName()));
 
         // Update healing/buff priorities
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         _botAI->GetHealingMgr()->AddHealTarget(newMember);
     }
     */
 
     TC_LOG_INFO("playerbot.group", "Bot {} handled member joined: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), newMemberGuid.ToString());
 
     return true;
@@ -139,6 +159,11 @@ bool MemberLeftHandler::HandleEvent(GroupEvent const& event)
     _botAI->GetFormationMgr()->RemoveMember(leftMemberGuid);
 
     // Remove from healing priorities
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     _botAI->GetHealingMgr()->RemoveHealTarget(leftMemberGuid);
 
     // Check if departed member was tank/healer - adjust strategy
@@ -149,6 +174,11 @@ bool MemberLeftHandler::HandleEvent(GroupEvent const& event)
     */
 
     TC_LOG_INFO("playerbot.group", "Bot {} handled member left: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), leftMemberGuid.ToString());
 
     return true;
@@ -164,6 +194,11 @@ bool LeaderChangedHandler::HandleEvent(GroupEvent const& event)
         return true;
 
     Player* bot = GetBotPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
         return false;
 
@@ -197,6 +232,11 @@ bool LeaderChangedHandler::HandleEvent(GroupEvent const& event)
     */
 
     TC_LOG_INFO("playerbot.group", "Bot {} handled leader changed to: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), newLeaderGuid.ToString());
 
     return true;
@@ -210,6 +250,11 @@ bool GroupDisbandedHandler::HandleEvent(GroupEvent const& event)
 {
     // Don't check IsBotInEventGroup - group is already disbanded
     Player* bot = GetBotPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (!bot)
         return false;
 
@@ -239,6 +284,11 @@ bool GroupDisbandedHandler::HandleEvent(GroupEvent const& event)
     */
 
     TC_LOG_INFO("playerbot.group", "Bot {} handled group disbanded: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), event.groupGuid.ToString());
 
     return true;
@@ -355,6 +405,26 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
         return true;
 
     Player* bot = GetBotPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method SendDirectMessage");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method SendDirectMessage");
+                return;
+            }
     if (!bot)
         return false;
 
@@ -383,6 +453,16 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
             // Send ready response
             WorldPackets::Party::ReadyCheckResponseClient response;
             response.Player = bot->GetGUID();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method SendDirectMessage");
+                return;
+            }
             response.IsReady = true;
             bot->SendDirectMessage(response.Write());
         }
@@ -392,6 +472,16 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
             _botAI->PrepareForCombat([bot, group]() {
                 WorldPackets::Party::ReadyCheckResponseClient response;
                 response.Player = bot->GetGUID();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method SendDirectMessage");
+                    return;
+                }
                 response.IsReady = true;
                 bot->SendDirectMessage(response.Write());
             });
@@ -448,6 +538,11 @@ bool RaidConvertedHandler::HandleEvent(GroupEvent const& event)
     }
     else
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         // Switch to party formation
         _botAI->GetFormationMgr()->SwitchToPartyFormation();
 
@@ -494,6 +589,11 @@ bool SubgroupChangedHandler::HandleEvent(GroupEvent const& event)
 
     // Check if it's the bot itself that moved
     if (memberGuid == bot->GetGUID())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
     {
         _botAI->OnSubgroupChanged(newSubgroup);
         return true;
@@ -526,6 +626,11 @@ bool RoleAssignmentHandler::HandleEvent(GroupEvent const& event)
         return true;
 
     Player* bot = GetBotPlayer();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return;
+}
     if (!bot)
         return false;
 
@@ -583,6 +688,11 @@ bool RoleAssignmentHandler::HandleEvent(GroupEvent const& event)
         // TODO: Check if bot gained/lost assistant powers
         /*
         if (memberGuid == bot->GetGUID())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         {
             if (isAssigned)
                 _botAI->EnableAssistantPowers();

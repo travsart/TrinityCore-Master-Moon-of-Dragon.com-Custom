@@ -416,25 +416,67 @@ void BotLifecycleMgr::UpdateZonePopulations()
 {
     LIFECYCLE_LOG_DEBUG("Updating zone populations");
 
-    // This would query current bot positions and update zone population counts
-    // For now, we'll implement basic population tracking
+    // Query current bot positions and update zone population counts
+    // NOTE: Using direct SQL execution for now. Should convert to prepared statements
+    // when PlayerbotDatabase prepared statement infrastructure is fully ready.
 
-    // TODO: Implement proper database access when PBDB statements are ready
-    /*
-    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_SEL_TOTAL_POPULATION);
-    PreparedQueryResult result = PlayerbotDatabase.Query(stmt);
-
-    if (result)
+    try
     {
-        Field* fields = result->Fetch();
-        uint32 totalBots = fields[0].GetUInt32();
-        uint32 targetTotal = fields[1].GetUInt32();
+        // Query total population from playerbot_zone_populations (legacy table)
+        QueryResult result = sPlayerbotDatabase->Query(
+            "SELECT SUM(current_bots) as total_bots, SUM(target_population) as target_total "
+            "FROM playerbot_zone_populations WHERE is_enabled = 1"
+        );
 
-        _metrics.totalBotsManaged = totalBots;
+        if (result)
+        {
+            Field* fields = result->Fetch();
+            uint32 totalBots = fields[0].GetUInt32();
+            uint32 targetTotal = fields[1].GetUInt32();
 
-        LIFECYCLE_LOG_DEBUG("Current population: {} / {} target", totalBots, targetTotal);
+            _metrics.totalBotsManaged = totalBots;
+
+            LIFECYCLE_LOG_DEBUG("Current population: {} / {} target", totalBots, targetTotal);
+        }
+
+        // Update zone population cache table (new migration 007 table)
+        // This aggregates data for faster lookup
+        result = sPlayerbotDatabase->Query(
+            "SELECT zone_id, COUNT(*) as bot_count FROM playerbot_state "
+            "GROUP BY zone_id"
+        );
+
+        if (result)
+        {
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 zoneId = fields[0].GetUInt32();
+                uint32 botCount = fields[1].GetUInt32();
+
+                // Update the bot_zone_population table
+                std::ostringstream ss;
+                ss << "INSERT INTO bot_zone_population "
+                   << "(zone_id, bot_count, player_count, total_count, max_capacity, density_score) "
+                   << "VALUES (" << zoneId << ", " << botCount << ", 0, " << botCount << ", 100, "
+                   << (static_cast<float>(botCount) / 100.0f) << ") "
+                   << "ON DUPLICATE KEY UPDATE "
+                   << "bot_count = " << botCount << ", "
+                   << "total_count = bot_count + player_count, "
+                   << "density_score = bot_count / GREATEST(max_capacity, 1), "
+                   << "last_updated = CURRENT_TIMESTAMP";
+
+                sPlayerbotDatabase->Execute(ss.str());
+
+            } while (result->NextRow());
+
+            LIFECYCLE_LOG_DEBUG("Updated zone population cache for all zones");
+        }
     }
-    */
+    catch (std::exception const& e)
+    {
+        LIFECYCLE_LOG_ERROR("Exception while updating zone populations: {}", e.what());
+    }
 }
 
 void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
@@ -464,24 +506,75 @@ void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
             break;
     }
 
-    // TODO: Insert event into database when PBDB statements are ready
-    /*
-    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_INS_LIFECYCLE_EVENT);
-    stmt->SetData(0, category.c_str());
-    stmt->SetData(1, type.c_str());
-    stmt->SetData(2, "INFO");
-    stmt->SetData(3, "BotLifecycleMgr");
-    stmt->SetData(4, eventInfo.botGuid.IsEmpty() ? 0 : eventInfo.botGuid.GetCounter());
-    stmt->SetData(5, eventInfo.accountId);
-    stmt->SetData(6, eventInfo.data.c_str());
-    stmt->SetData(7, nullptr); // JSON details - could be expanded
-    stmt->SetData(8, eventInfo.processingTimeMs);
-    stmt->SetData(9, static_cast<float>(_metrics.memoryUsageMB.load()));
-    stmt->SetData(10, _metrics.activeBots.load());
-    stmt->SetData(11, eventInfo.correlationId.empty() ? nullptr : eventInfo.correlationId.c_str());
+    // Insert event into database
+    // NOTE: Using direct SQL execution for now. Should convert to prepared statements
+    // when PlayerbotDatabase prepared statement infrastructure is fully ready.
 
-    PlayerbotDatabase.Execute(stmt);
-    */
+    try
+    {
+        std::ostringstream ss;
+        ss << "INSERT INTO bot_lifecycle_events "
+           << "(event_category, event_type, severity, bot_guid, account_id, zone_id, message, metadata) "
+           << "VALUES ("
+           << "'" << category << "', "
+           << "'" << type << "', "
+           << "'INFO', ";
+
+        // bot_guid
+        if (eventInfo.botGuid.IsEmpty())
+            ss << "NULL, ";
+        else
+            ss << eventInfo.botGuid.GetCounter() << ", ";
+
+        // account_id
+        ss << eventInfo.accountId << ", ";
+
+        // zone_id (extract from data if available)
+        ss << "NULL, ";
+
+        // message (escape single quotes)
+        std::string escapedData = eventInfo.data;
+        size_t pos = 0;
+        while ((pos = escapedData.find("'", pos)) != std::string::npos)
+        {
+            escapedData.replace(pos, 1, "''");
+            pos += 2;
+        }
+        ss << "'" << escapedData << "', ";
+
+        // metadata (JSON)
+        ss << "JSON_OBJECT("
+           << "'processingTimeMs', " << eventInfo.processingTimeMs << ", "
+           << "'memoryUsageMB', " << static_cast<float>(_metrics.memoryUsageMB.load()) << ", "
+           << "'activeBots', " << _metrics.activeBots.load();
+
+        if (!eventInfo.correlationId.empty())
+        {
+            std::string escapedCorrelation = eventInfo.correlationId;
+            pos = 0;
+            while ((pos = escapedCorrelation.find("'", pos)) != std::string::npos)
+            {
+                escapedCorrelation.replace(pos, 1, "''");
+                pos += 2;
+            }
+            ss << ", 'correlationId', '" << escapedCorrelation << "'";
+        }
+
+        ss << "))";
+
+        if (sPlayerbotDatabase->Execute(ss.str()))
+        {
+            LIFECYCLE_LOG_TRACE("Logged lifecycle event: {} - {}", category, type);
+        }
+        else
+        {
+            LIFECYCLE_LOG_ERROR("Failed to insert lifecycle event into database");
+        }
+    }
+    catch (std::exception const& e)
+    {
+        LIFECYCLE_LOG_ERROR("Exception while logging lifecycle event: {}", e.what());
+    }
 }
 
 void BotLifecycleMgr::UpdatePerformanceMetrics()
@@ -601,18 +694,58 @@ void BotLifecycleMgr::RunMaintenance()
 
 void BotLifecycleMgr::CleanupOldEvents()
 {
-    // TODO: Cleanup database events when PBDB statements are ready
-    /*
-    // Clean up events older than 7 days
-    PlayerbotDatabasePreparedStatement* stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_EVENTS);
-    stmt->SetData(0, uint32(7 * 24 * 60 * 60)); // 7 days in seconds
-    PlayerbotDatabase.Execute(stmt);
+    // Clean up old lifecycle events from database
+    // NOTE: Using direct SQL execution for now. Should convert to prepared statements
+    // when PlayerbotDatabase prepared statement infrastructure is fully ready.
 
-    // Clean up spawn logs older than 30 days
-    stmt = PlayerbotDatabase.GetPreparedStatement(PBDB_CLEANUP_OLD_SPAWN_LOGS);
-    stmt->SetData(0, uint32(30 * 24 * 60 * 60)); // 30 days in seconds
-    PlayerbotDatabase.Execute(stmt);
-    */
+    try
+    {
+        // Clean up events older than 7 days (DEBUG and INFO only)
+        // Keep WARNING, ERROR, CRITICAL events for 14 days
+        std::ostringstream ss;
+        ss << "DELETE FROM bot_lifecycle_events "
+           << "WHERE timestamp < DATE_SUB(NOW(), INTERVAL 7 DAY) "
+           << "AND severity IN ('DEBUG', 'INFO') "
+           << "AND processed = 1";
+
+        if (sPlayerbotDatabase->Execute(ss.str()))
+        {
+            LIFECYCLE_LOG_DEBUG("Cleaned up old DEBUG/INFO lifecycle events (> 7 days)");
+        }
+
+        // Clean up old WARNING/ERROR/CRITICAL events (> 14 days)
+        ss.str("");
+        ss.clear();
+        ss << "DELETE FROM bot_lifecycle_events "
+           << "WHERE timestamp < DATE_SUB(NOW(), INTERVAL 14 DAY) "
+           << "AND severity IN ('WARNING', 'ERROR', 'CRITICAL') "
+           << "AND processed = 1";
+
+        if (sPlayerbotDatabase->Execute(ss.str()))
+        {
+            LIFECYCLE_LOG_DEBUG("Cleaned up old WARNING/ERROR/CRITICAL lifecycle events (> 14 days)");
+        }
+
+        // Clean up spawn logs older than 30 days (from legacy table)
+        ss.str("");
+        ss.clear();
+        ss << "DELETE FROM playerbot_spawn_log "
+           << "WHERE event_timestamp < DATE_SUB(NOW(), INTERVAL 30 DAY)";
+
+        if (sPlayerbotDatabase->Execute(ss.str()))
+        {
+            LIFECYCLE_LOG_DEBUG("Cleaned up old spawn logs (> 30 days)");
+        }
+
+        // Optimize tables after cleanup to reclaim space
+        sPlayerbotDatabase->Execute("OPTIMIZE TABLE bot_lifecycle_events");
+
+        LIFECYCLE_LOG_INFO("Database cleanup completed successfully");
+    }
+    catch (std::exception const& e)
+    {
+        LIFECYCLE_LOG_ERROR("Exception while cleaning up old events: {}", e.what());
+    }
 }
 
 void BotLifecycleMgr::OptimizePerformance()

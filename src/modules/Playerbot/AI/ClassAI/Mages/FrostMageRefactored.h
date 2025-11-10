@@ -25,6 +25,10 @@
 #include <unordered_map>
 #include "Log.h"
 #include "../CombatSpecializationTemplates.h"
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -79,9 +83,7 @@ public:
 
         if (Aura* aura = bot->GetAura(44544)) // Fingers of Frost buff ID
         {
-            _fofStacks = aura->GetStackAmount();
-            _fofEndTime = getMSTime() + aura->GetDuration();
-        }
+            _fofStacks = aura->GetStackAmount();            _fofEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _fofStacks = 0;
@@ -89,6 +91,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _fofStacks;
     uint32 _fofEndTime;
 };
@@ -113,9 +116,7 @@ public:
     [[nodiscard]] bool IsActive() const
     {
         return _brainFreezeActive && getMSTime() < _brainFreezeEndTime;
-    }
-
-    void Update(Player* bot)
+    }    void Update(Player* bot)
     {
         if (!bot)
             return;
@@ -124,8 +125,7 @@ public:
         {
             _brainFreezeActive = true;
             if (Aura* aura = bot->GetAura(190446))
-                _brainFreezeEndTime = getMSTime() + aura->GetDuration();
-        }
+                _brainFreezeEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _brainFreezeActive = false;
@@ -179,18 +179,30 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit FrostMageRefactored(Player* bot)
-        : RangedDpsSpecialization<ManaResource>(bot)
+    explicit FrostMageRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
         , _fofTracker()
         , _brainFreezeTracker()
         , _icicleTracker()
         , _icyVeinsActive(false)
         , _icyVeinsEndTime(0)
-        , _lastIcyVeinsTime(0)
-        , _lastFrozenOrbTime(0)
+        
+        
+        , _cooldowns()
     {
-        InitializeCooldowns();
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {FROST_ICY_VEINS, 180000, 1},
+            {FROST_FROZEN_ORB, 60000, 1},
+            {FROST_COMET_STORM, 30000, 1},
+            {FROST_RAY_OF_FROST, 75000, 1},
+            {FROST_SHIFTING_POWER, 60000, 1},
+            {FROST_ICE_BLOCK, 240000, 1},
+            {FROST_MIRROR_IMAGE, 120000, 1}
+        });
         TC_LOG_DEBUG("playerbot", "FrostMageRefactored initialized for {}", bot->GetName());
+
+        // Phase 5: Initialize decision systems
+        InitializeFrostMechanics();
     }
 
     void UpdateRotation(::Unit* target) override
@@ -265,14 +277,9 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastIcyVeinsTime = 0;
-        _lastFrozenOrbTime = 0;
-    }
+    
 
-    void UpdateFrostState()
-    {
+    void UpdateFrostState()    {
         Player* bot = this->GetBot();
         // Resource (mana) is managed by the base template class automatically
         _fofTracker.Update(bot);
@@ -292,14 +299,12 @@ private:
         {
             _icyVeinsActive = true;
             if (Aura* aura = bot->GetAura(FROST_ICY_VEINS))
-                _icyVeinsEndTime = getMSTime() + aura->GetDuration();
-        }
+                _icyVeinsEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        Player* bot = this->GetBot();
-        // Icy Veins (major DPS cooldown)
+        Player* bot = this->GetBot();        // Icy Veins (major DPS cooldown)
         if (!_icyVeinsActive)
         {
             if (this->CanCastSpell(FROST_ICY_VEINS, bot))
@@ -324,8 +329,7 @@ private:
             }
         }
 
-        // Glacial Spike with 5 icicles (if talented)
-        if (bot->HasSpell(FROST_GLACIAL_SPIKE) && _icicleTracker.IsMaxIcicles())
+        // Glacial Spike with 5 icicles (if talented)        if (bot->HasSpell(FROST_GLACIAL_SPIKE) && _icicleTracker.IsMaxIcicles())
         {
             if (this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
             {
@@ -335,10 +339,8 @@ private:
             }
         }
 
-        // Ray of Frost with Icy Veins (if talented - channeled damage)
-        if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
-        {
-            if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
+        // Ray of Frost with Icy Veins (if talented - channeled damage)        if (bot->HasSpell(FROST_RAY_OF_FROST) && _icyVeinsActive)
+        {            if (this->CanCastSpell(FROST_RAY_OF_FROST, target))
             {
                 this->CastSpell(target, FROST_RAY_OF_FROST);
                 return;
@@ -372,8 +374,7 @@ private:
             }
         }
 
-        // Comet Storm (if talented - burst damage)
-        if (bot->HasSpell(FROST_COMET_STORM))
+        // Comet Storm (if talented - burst damage)        if (bot->HasSpell(FROST_COMET_STORM))
         {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
             {
@@ -384,8 +385,7 @@ private:
 
         // Frostbolt (builder - generates icicles and procs)
         if (this->CanCastSpell(FROST_FROSTBOLT, target))
-        {
-            this->CastSpell(target, FROST_FROSTBOLT);
+        {            this->CastSpell(target, FROST_FROSTBOLT);
             _icicleTracker.AddIcicle();
 
             // Chance to proc Brain Freeze
@@ -425,8 +425,7 @@ private:
         }
 
         // Comet Storm for AoE damage
-        if (bot->HasSpell(FROST_COMET_STORM) && enemyCount >= 3)
-        {
+        if (bot->HasSpell(FROST_COMET_STORM) && enemyCount >= 3)        {
             if (this->CanCastSpell(FROST_COMET_STORM, target))
             {
                 this->CastSpell(target, FROST_COMET_STORM);
@@ -445,7 +444,7 @@ private:
         }
 
         // Cone of Cold (close-range AoE)
-        if (GetNearbyEnemies(12.0f) >= 3)
+        if (this->GetEnemiesInRange(12.0f) >= 3)
         {
             if (this->CanCastSpell(FROST_CONE_OF_COLD, target))
             {
@@ -501,9 +500,188 @@ private:
         return std::min(count, 10u);
     }
 
-    [[nodiscard]] uint32 GetNearbyEnemies(float range) const
+    void InitializeFrostMechanics()
     {
-        return GetEnemiesInRange(range);
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive immunity
+            queue->RegisterSpell(FROST_ICE_BLOCK, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FROST_ICE_BLOCK, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 20.0f;
+            }, "Bot HP < 20% (immunity)");
+
+            // CRITICAL: Major burst cooldown
+            queue->RegisterSpell(FROST_ICY_VEINS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(FROST_ICY_VEINS, [this](Player* bot, Unit* target) {
+                return target && !this->_icyVeinsActive && bot->GetPowerPct(POWER_MANA) >= 70;
+            }, "Major burst (20s, 30% haste), 70%+ mana");
+
+            // CRITICAL: Frozen Orb generates procs and AoE
+            queue->RegisterSpell(FROST_FROZEN_ORB, SpellPriority::CRITICAL, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FROST_FROZEN_ORB, [this](Player*, Unit* target) {
+                return target;
+            }, "AoE damage + FoF procs");
+
+            // HIGH: Glacial Spike at 5 icicles (if talented)
+            queue->RegisterSpell(FROST_GLACIAL_SPIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FROST_GLACIAL_SPIKE, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(FROST_GLACIAL_SPIKE) && this->_icicleTracker.IsMaxIcicles();
+            }, "5 icicles (massive burst)");
+
+            // HIGH: Flurry with Brain Freeze proc
+            queue->RegisterSpell(FROST_FLURRY, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FROST_FLURRY, [this](Player*, Unit* target) {
+                return target && this->_brainFreezeTracker.IsActive();
+            }, "Brain Freeze proc (instant, Winter's Chill)");
+
+            // HIGH: Ice Lance with Fingers of Frost proc
+            queue->RegisterSpell(FROST_ICE_LANCE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FROST_ICE_LANCE, [this](Player*, Unit* target) {
+                return target && this->_fofTracker.IsActive();
+            }, "FoF proc (shatter damage)");
+
+            // MEDIUM: Comet Storm (if talented)
+            queue->RegisterSpell(FROST_COMET_STORM, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FROST_COMET_STORM, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(FROST_COMET_STORM);
+            }, "AoE burst damage");
+
+            // MEDIUM: Blizzard for AoE
+            queue->RegisterSpell(FROST_BLIZZARD, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FROST_BLIZZARD, [this](Player*, Unit* target) {
+                return target && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "3+ enemies (ground AoE)");
+
+            // LOW: Frostbolt (builder)
+            queue->RegisterSpell(FROST_FROSTBOLT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FROST_FROSTBOLT, [](Player*, Unit* target) {
+                return target != nullptr;
+            }, "Builder (icicles + Brain Freeze procs)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Frost Mage DPS", {
+                // Tier 1: Burst Cooldowns (Icy Veins, Frozen Orb)
+                Sequence("Burst Cooldowns", {
+                    Condition("In combat with target", [this](Player* bot) {
+                        return bot && bot->IsInCombat() && bot->GetVictim();
+                    }),
+                    Selector("Use burst abilities", {
+                        Sequence("Icy Veins", {
+                            Condition("Icy Veins ready", [this](Player* bot) {
+                                return bot && !this->_icyVeinsActive && bot->GetPowerPct(POWER_MANA) >= 70;
+                            }),
+                            Action("Cast Icy Veins", [this](Player* bot) {
+                                if (this->CanCastSpell(FROST_ICY_VEINS, bot))
+                                {
+                                    this->CastSpell(bot, FROST_ICY_VEINS);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Frozen Orb", {
+                            Condition("Has target", [this](Player* bot) {
+                                return bot && bot->GetVictim();
+                            }),
+                            Action("Cast Frozen Orb", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(FROST_FROZEN_ORB, target))
+                                {
+                                    this->CastSpell(target, FROST_FROZEN_ORB);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Proc Windows (Brain Freeze → Flurry → Ice Lance, Fingers of Frost → Ice Lance)
+                Sequence("Proc Windows", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Use procs", {
+                        Sequence("Brain Freeze combo", {
+                            Condition("Brain Freeze active", [this](Player*) {
+                                return this->_brainFreezeTracker.IsActive();
+                            }),
+                            Action("Cast Flurry then Ice Lance", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(FROST_FLURRY, target))
+                                {
+                                    this->CastSpell(target, FROST_FLURRY);
+                                    // Follow up with Ice Lance
+                                    if (this->CanCastSpell(FROST_ICE_LANCE, target))
+                                        this->CastSpell(target, FROST_ICE_LANCE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Fingers of Frost", {
+                            Condition("FoF proc active", [this](Player*) {
+                                return this->_fofTracker.IsActive();
+                            }),
+                            Action("Cast Ice Lance", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(FROST_ICE_LANCE, target))
+                                {
+                                    this->CastSpell(target, FROST_ICE_LANCE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Icicle Spender (Glacial Spike at 5 icicles)
+                Sequence("Icicle Spender", {
+                    Condition("5 icicles ready", [this](Player* bot) {
+                        return bot && bot->GetVictim() && bot->HasSpell(FROST_GLACIAL_SPIKE) &&
+                               this->_icicleTracker.IsMaxIcicles();
+                    }),
+                    Action("Cast Glacial Spike", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        if (target && this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
+                        {
+                            this->CastSpell(target, FROST_GLACIAL_SPIKE);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 4: Builder (Frostbolt generates icicles and Brain Freeze procs)
+                Sequence("Builder", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Action("Cast Frostbolt", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        if (target && this->CanCastSpell(FROST_FROSTBOLT, target))
+                        {
+                            this->CastSpell(target, FROST_FROSTBOLT);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
     }
 
     // Member variables
@@ -512,11 +690,7 @@ private:
     IcicleTracker _icicleTracker;
 
     bool _icyVeinsActive;
-    uint32 _icyVeinsEndTime;
-
-    uint32 _lastIcyVeinsTime;
-    uint32 _lastFrozenOrbTime;
-};
+    uint32 _icyVeinsEndTime;};
 
 } // namespace Playerbot
 

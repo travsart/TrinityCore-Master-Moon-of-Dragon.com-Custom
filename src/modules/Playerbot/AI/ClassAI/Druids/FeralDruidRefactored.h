@@ -25,6 +25,10 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -65,10 +69,8 @@ struct EnergyComboResource
         if (!bot)
             return;
 
-        energy = bot->GetPower(POWER_ENERGY);
-        maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-        comboPoints = bot->GetPower(POWER_COMBO_POINTS);
-        maxComboPoints = bot->GetMaxPower(POWER_COMBO_POINTS);
+        energy = bot->GetPower(POWER_ENERGY);        maxEnergy = bot->GetMaxPower(POWER_ENERGY);
+        comboPoints = bot->GetPower(POWER_COMBO_POINTS);        maxComboPoints = bot->GetMaxPower(POWER_COMBO_POINTS);
     }
 
     void Update(Player* bot)
@@ -76,9 +78,7 @@ struct EnergyComboResource
         if (!bot)
             return;
 
-        energy = bot->GetPower(POWER_ENERGY);
-        comboPoints = bot->GetPower(POWER_COMBO_POINTS);
-    }
+        energy = bot->GetPower(POWER_ENERGY);        comboPoints = bot->GetPower(POWER_COMBO_POINTS);    }
 
     // ComplexResource interface requirements
     [[nodiscard]] bool Consume(uint32 amount)
@@ -170,9 +170,16 @@ public:
     {
         auto it = _ripTargets.find(guid);
         if (it != _ripTargets.end())
+    if (!rip)
+    {
+        return false;    }
         {
             uint32 now = getMSTime();
             return now < it->second ? (it->second - now) : 0;
+        if (!rake)
+        {
+            return nullptr;
+        }
         }
         return 0;
     }
@@ -189,31 +196,52 @@ public:
         return remaining < pandemicWindow; // Refresh in pandemic window
     }
 
+if (!thrash)
+
+{
+    return false;
+
+}
+
     void Update(Unit* target)
     {
         if (!target)
             return;
 
-        ObjectGuid guid = target->GetGUID();
-
-        // Sync with actual auras
+        ObjectGuid guid = target->GetGUID();        // Sync with actual auras
         if (Aura* rake = target->GetAura(FERAL_RAKE))
             _rakeTargets[guid] = getMSTime() + rake->GetDuration();
+            if (!rake)
+            {
+                return nullptr;
+            }
         else
             _rakeTargets.erase(guid);
 
         if (Aura* rip = target->GetAura(FERAL_RIP))
             _ripTargets[guid] = getMSTime() + rip->GetDuration();
+            if (!rip)
+            {
+                return nullptr;
+            }
         else
             _ripTargets.erase(guid);
 
         if (Aura* thrash = target->GetAura(FERAL_THRASH_CAT))
             _thrashTargets[guid] = getMSTime() + thrash->GetDuration();
+            if (!thrash)
+            {
+                return nullptr;
+            }
         else
             _thrashTargets.erase(guid);
 
         if (Aura* moonfire = target->GetAura(FERAL_MOONFIRE_CAT))
             _moonfireTargets[guid] = getMSTime() + moonfire->GetDuration();
+            if (!moonfire)
+            {
+                return nullptr;
+            }
         else
             _moonfireTargets.erase(guid);
     }
@@ -249,13 +277,12 @@ public:
         for (auto it = _moonfireTargets.begin(); it != _moonfireTargets.end();)
         {
             if (now >= it->second)
-                it = _moonfireTargets.erase(it);
-            else
-                ++it;
+                it = _moonfireTargets.erase(it);            else                ++it;
         }
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _rakeTargets;
     std::unordered_map<ObjectGuid, uint32> _ripTargets;
     std::unordered_map<ObjectGuid, uint32> _thrashTargets;
@@ -295,9 +322,7 @@ public:
         if (Aura* aura = bot->GetAura(FERAL_BLOODTALONS))
         {
             _bloodtalonsActive = true;
-            _bloodtalonsStacks = aura->GetStackAmount();
-            _bloodtalonsEndTime = getMSTime() + aura->GetDuration();
-        }
+            _bloodtalonsStacks = aura->GetStackAmount();            _bloodtalonsEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _bloodtalonsActive = false;
@@ -321,8 +346,7 @@ public:
     using Base::CanCastSpell;
     using Base::GetEnemiesInRange;
     using Base::_resource;
-    explicit FeralDruidRefactored(Player* bot)
-        : MeleeDpsSpecialization<EnergyComboResource>(bot)
+    explicit FeralDruidRefactored(Player* bot)        : MeleeDpsSpecialization<EnergyComboResource>(bot)
         
         , _bleedTracker()
         , _bloodtalonsTracker()
@@ -330,12 +354,22 @@ public:
         , _tigersFuryEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        , _lastTigersFuryTime(0)
-        , _lastBerserkTime(0)
+        
+        , _cooldowns()
     {
-        this->_resource.Initialize(bot);
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {FERAL_BERSERK, 180000, 1},
+            {FERAL_INCARNATION, 180000, 1},
+            {FERAL_CONVOKE, 120000, 1},
+            {FERAL_TIGERS_FURY, 30000, 1},
+            {FERAL_BRUTAL_SLASH, 8000, 3}
+        });
+
+        this->_resource.Initialize(bot);        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
+
+        // Phase 5: Initialize decision systems
+        InitializeFeralMechanics();
     }
 
     void UpdateRotation(::Unit* target) override
@@ -360,9 +394,7 @@ public:
             return;
 
         MaintainCatForm();
-    }
-
-    void UpdateDefensives()
+    }    void UpdateDefensives()
     {
         if (!bot)
             return;
@@ -392,17 +424,12 @@ public:
 
         // Regrowth (if out of combat and low health)
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(FERAL_REGROWTH, bot))
-        {
-            this->CastSpell(bot, FERAL_REGROWTH);
+        {            this->CastSpell(bot, FERAL_REGROWTH);
         }
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastTigersFuryTime = 0;
-        _lastBerserkTime = 0;
-    }
+    
 
     void UpdateFeralState(::Unit* target)
     {
@@ -422,8 +449,7 @@ private:
         {
             _tigersFuryActive = true;
             if (Aura* aura = bot->GetAura(FERAL_TIGERS_FURY))
-                _tigersFuryEndTime = getMSTime() + aura->GetDuration();
-        }
+                _tigersFuryEndTime = getMSTime() + aura->GetDuration();        }
 
         // Berserk state
         if (_berserkActive && getMSTime() >= _berserkEndTime)
@@ -453,8 +479,7 @@ private:
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        uint32 cp = this->_resource.comboPoints;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy regeneration (use when low energy and not capped on combo points)
         if (this->_resource.GetEnergyPercent() < 50 && cp < this->_resource.maxComboPoints)
@@ -491,8 +516,7 @@ private:
         }
 
         // Rip (maintain bleed at 5 combo points)
-        if (cp >= 5 && _bleedTracker.NeedsRipRefresh(targetGuid))
-        {
+        if (cp >= 5 && _bleedTracker.NeedsRipRefresh(targetGuid))        {
             if (this->CanCastSpell(FERAL_RIP, target))
             {
                 this->CastSpell(target, FERAL_RIP);
@@ -572,8 +596,7 @@ private:
 
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        uint32 cp = this->_resource.comboPoints;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy
         if (this->_resource.GetEnergyPercent() < 50 && cp < this->_resource.maxComboPoints)
@@ -680,6 +703,361 @@ private:
             this->_resource.comboPoints = 0;
     }
 
+    void InitializeFeralMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(FERAL_SURVIVAL_INSTINCTS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FERAL_SURVIVAL_INSTINCTS, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 30.0f;
+            }, "HP < 30% (critical emergency)");
+
+            // CRITICAL: Major burst cooldowns
+            queue->RegisterSpell(FERAL_INCARNATION_KING, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(FERAL_INCARNATION_KING, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(FERAL_INCARNATION_KING) &&
+                       this->_resource.comboPoints >= 4 &&
+                       this->_bleedTracker.HasRake(target->GetGUID()) &&
+                       this->_bleedTracker.HasRip(target->GetGUID());
+            }, "4+ CP, bleeds up (30s burst, talent)");
+
+            queue->RegisterSpell(FERAL_BERSERK, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(FERAL_BERSERK, [this](Player*, Unit* target) {
+                return target && this->_resource.comboPoints >= 4 &&
+                       this->_bleedTracker.HasRake(target->GetGUID()) &&
+                       this->_bleedTracker.HasRip(target->GetGUID());
+            }, "4+ CP, bleeds up (15s burst)");
+
+            // HIGH: Finishers (5 CP)
+            queue->RegisterSpell(FERAL_RIP, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_RIP, [this](Player*, Unit* target) {
+                return target && this->_resource.comboPoints >= 5 &&
+                       this->_bleedTracker.NeedsRipRefresh(target->GetGUID());
+            }, "5 CP, refresh Rip (bleed finisher)");
+
+            queue->RegisterSpell(FERAL_FEROCIOUS_BITE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_FEROCIOUS_BITE, [this](Player*, Unit* target) {
+                return target && this->_resource.comboPoints >= 5 &&
+                       this->_bleedTracker.HasRip(target->GetGUID()) &&
+                       this->_bleedTracker.GetRipTimeRemaining(target->GetGUID()) > 10000;
+            }, "5 CP, Rip up >10s (damage finisher)");
+
+            queue->RegisterSpell(FERAL_PRIMAL_WRATH, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FERAL_PRIMAL_WRATH, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(FERAL_PRIMAL_WRATH) &&
+                       this->_resource.comboPoints >= 5 &&
+                       this->GetEnemiesInRange(8.0f) >= 3;
+            }, "5 CP, 3+ enemies (AoE Rip finisher)");
+
+            // MEDIUM: Resource management
+            queue->RegisterSpell(FERAL_TIGERS_FURY, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(FERAL_TIGERS_FURY, [this](Player*, Unit*) {
+                return this->_resource.GetEnergyPercent() < 50 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+            }, "Energy < 50%, not capped CP (energy regen)");
+
+            // MEDIUM: Bleed maintenance
+            queue->RegisterSpell(FERAL_RAKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_RAKE, [this](Player*, Unit* target) {
+                return target && this->_resource.HasEnergy(35) &&
+                       this->_bleedTracker.NeedsRakeRefresh(target->GetGUID());
+            }, "35 energy, refresh Rake (bleed builder)");
+
+            queue->RegisterSpell(FERAL_THRASH_CAT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FERAL_THRASH_CAT, [this](Player*, Unit* target) {
+                return target && this->_resource.HasEnergy(45) &&
+                       !this->_bleedTracker.HasThrash(target->GetGUID()) &&
+                       this->GetEnemiesInRange(8.0f) >= 2;
+            }, "45 energy, 2+ enemies (AoE bleed)");
+
+            queue->RegisterSpell(FERAL_MOONFIRE_CAT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_MOONFIRE_CAT, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(FERAL_MOONFIRE_CAT) &&
+                       this->_resource.HasEnergy(30) &&
+                       !this->_bleedTracker.HasMoonfire(target->GetGUID());
+            }, "30 energy, Lunar Inspiration talent (DoT builder)");
+
+            // LOW: Builders
+            queue->RegisterSpell(FERAL_BRUTAL_SLASH, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_BRUTAL_SLASH, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(FERAL_BRUTAL_SLASH) &&
+                       this->_resource.HasEnergy(25);
+            }, "25 energy (strong builder, talent)");
+
+            queue->RegisterSpell(FERAL_SHRED, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FERAL_SHRED, [this](Player*, Unit* target) {
+                return target && this->_resource.HasEnergy(40);
+            }, "40 energy (ST builder)");
+
+            queue->RegisterSpell(FERAL_SWIPE_CAT, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FERAL_SWIPE_CAT, [this](Player*, Unit* target) {
+                return target && this->_resource.HasEnergy(35) &&
+                       this->GetEnemiesInRange(8.0f) >= 3;
+            }, "35 energy, 3+ enemies (AoE builder)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Feral Druid DPS", {
+                // Tier 1: Burst Cooldowns (Berserk/Incarnation with 4+ CP and bleeds)
+                Sequence("Burst Cooldowns", {
+                    Condition("4+ CP and bleeds active", [this](Player* bot) {
+                        Unit* target = bot ? bot->GetVictim() : nullptr;
+                        return bot && target && this->_resource.comboPoints >= 4 &&
+                               this->_bleedTracker.HasRake(target->GetGUID()) &&
+                               this->_bleedTracker.HasRip(target->GetGUID());
+                    }),
+                    Selector("Use burst", {
+                        Sequence("Incarnation (talent)", {
+                            Condition("Has Incarnation", [this](Player* bot) {
+                                return bot && bot->HasSpell(FERAL_INCARNATION_KING);
+                            }),
+                            Action("Cast Incarnation", [this](Player* bot) {
+                                if (this->CanCastSpell(FERAL_INCARNATION_KING, bot))
+                                {
+                                    this->CastSpell(bot, FERAL_INCARNATION_KING);
+                                    this->_berserkActive = true;
+                                    this->_berserkEndTime = getMSTime() + 30000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Berserk", {
+                            Action("Cast Berserk", [this](Player* bot) {
+                                if (this->CanCastSpell(FERAL_BERSERK, bot))
+                                {
+                                    this->CastSpell(bot, FERAL_BERSERK);
+                                    this->_berserkActive = true;
+                                    this->_berserkEndTime = getMSTime() + 15000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Finishers (5 CP - Rip, Ferocious Bite, Primal Wrath)
+                Sequence("Finishers", {
+                    Condition("5 CP", [this](Player*) {
+                        return this->_resource.comboPoints >= 5;
+                    }),
+                    Selector("Use finisher", {
+                        Sequence("Primal Wrath (AoE)", {
+                            Condition("3+ enemies", [this](Player* bot) {
+                                return bot && bot->HasSpell(FERAL_PRIMAL_WRATH) &&
+                                       this->GetEnemiesInRange(8.0f) >= 3;
+                            }),
+                            Action("Cast Primal Wrath", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_PRIMAL_WRATH, target))
+                                {
+                                    this->CastSpell(target, FERAL_PRIMAL_WRATH);
+                                    this->ConsumeComboPoints(this->_resource.comboPoints);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Rip (refresh)", {
+                            Condition("Needs Rip refresh", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                return target && this->_bleedTracker.NeedsRipRefresh(target->GetGUID());
+                            }),
+                            Action("Cast Rip", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_RIP, target))
+                                {
+                                    this->CastSpell(target, FERAL_RIP);
+                                    this->_bleedTracker.ApplyRip(target->GetGUID(), 24000);
+                                    this->ConsumeComboPoints(this->_resource.comboPoints);
+                                    if (this->_bloodtalonsTracker.IsActive())
+                                        this->_bloodtalonsTracker.ConsumeStack();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Ferocious Bite (damage)", {
+                            Condition("Rip up >10s", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                return target && this->_bleedTracker.HasRip(target->GetGUID()) &&
+                                       this->_bleedTracker.GetRipTimeRemaining(target->GetGUID()) > 10000;
+                            }),
+                            Action("Cast Ferocious Bite", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_FEROCIOUS_BITE, target))
+                                {
+                                    this->CastSpell(target, FERAL_FEROCIOUS_BITE);
+                                    this->ConsumeComboPoints(this->_resource.comboPoints);
+                                    if (this->_bloodtalonsTracker.IsActive())
+                                        this->_bloodtalonsTracker.ConsumeStack();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Bleed Maintenance & Resource Management
+                Sequence("Bleeds & Resources", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Maintain bleeds and resources", {
+                        Sequence("Tiger's Fury (energy)", {
+                            Condition("Low energy and not capped CP", [this](Player*) {
+                                return this->_resource.GetEnergyPercent() < 50 &&
+                                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+                            }),
+                            Action("Cast Tiger's Fury", [this](Player* bot) {
+                                if (this->CanCastSpell(FERAL_TIGERS_FURY, bot))
+                                {
+                                    this->CastSpell(bot, FERAL_TIGERS_FURY);
+                                    this->_tigersFuryActive = true;
+                                    this->_tigersFuryEndTime = getMSTime() + 15000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Rake (bleed)", {
+                            Condition("Needs Rake refresh and 35 energy", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                return target && this->_resource.HasEnergy(35) &&
+                                       this->_bleedTracker.NeedsRakeRefresh(target->GetGUID());
+                            }),
+                            Action("Cast Rake", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_RAKE, target))
+                                {
+                                    this->CastSpell(target, FERAL_RAKE);
+                                    this->_bleedTracker.ApplyRake(target->GetGUID(), 15000);
+                                    this->GenerateComboPoints(1);
+                                    if (this->_bloodtalonsTracker.IsActive())
+                                        this->_bloodtalonsTracker.ConsumeStack();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Thrash (AoE bleed)", {
+                            Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                return target && this->_resource.HasEnergy(45) &&
+                                       !this->_bleedTracker.HasThrash(target->GetGUID()) &&
+                                       this->GetEnemiesInRange(8.0f) >= 2;
+                            }),
+                            Action("Cast Thrash", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_THRASH_CAT, target))
+                                {
+                                    this->CastSpell(target, FERAL_THRASH_CAT);
+                                    this->_bleedTracker.ApplyThrash(target->GetGUID(), 15000);
+                                    this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Moonfire (Lunar Inspiration)", {
+                            Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                return bot && target && bot->HasSpell(FERAL_MOONFIRE_CAT) &&
+                                       this->_resource.HasEnergy(30) &&
+                                       !this->_bleedTracker.HasMoonfire(target->GetGUID());
+                            }),
+                            Action("Cast Moonfire", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_MOONFIRE_CAT, target))
+                                {
+                                    this->CastSpell(target, FERAL_MOONFIRE_CAT);
+                                    this->_bleedTracker.ApplyMoonfire(target->GetGUID(), 16000);
+                                    this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Builders (Brutal Slash, Shred, Swipe)
+                Sequence("Builders", {
+                    Condition("Has target and energy", [this](Player* bot) {
+                        return bot && bot->GetVictim() && this->_resource.GetAvailable() >= 25;
+                    }),
+                    Selector("Generate combo points", {
+                        Sequence("Brutal Slash (talent)", {
+                            Condition("Has Brutal Slash and 25 energy", [this](Player* bot) {
+                                return bot && bot->HasSpell(FERAL_BRUTAL_SLASH) &&
+                                       this->_resource.HasEnergy(25);
+                            }),
+                            Action("Cast Brutal Slash", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_BRUTAL_SLASH, target))
+                                {
+                                    this->CastSpell(target, FERAL_BRUTAL_SLASH);
+                                    this->GenerateComboPoints(1);
+                                    if (this->_bloodtalonsTracker.IsActive())
+                                        this->_bloodtalonsTracker.ConsumeStack();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Swipe (AoE)", {
+                            Condition("3+ enemies and 35 energy", [this](Player*) {
+                                return this->GetEnemiesInRange(8.0f) >= 3 &&
+                                       this->_resource.HasEnergy(35);
+                            }),
+                            Action("Cast Swipe", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_SWIPE_CAT, target))
+                                {
+                                    this->CastSpell(target, FERAL_SWIPE_CAT);
+                                    this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Shred (ST)", {
+                            Condition("40 energy", [this](Player*) {
+                                return this->_resource.HasEnergy(40);
+                            }),
+                            Action("Cast Shred", [this](Player* bot) {
+                                Unit* target = bot ? bot->GetVictim() : nullptr;
+                                if (target && this->CanCastSpell(FERAL_SHRED, target))
+                                {
+                                    this->CastSpell(target, FERAL_SHRED);
+                                    this->GenerateComboPoints(1);
+                                    if (this->_bloodtalonsTracker.IsActive())
+                                        this->_bloodtalonsTracker.ConsumeStack();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
+
     // Note: GetEnemiesInRange is provided by the base template class
     // No need to redefine it here - use Base::GetEnemiesInRange
 
@@ -692,9 +1070,7 @@ private:
     bool _berserkActive;
     uint32 _berserkEndTime;
 
-    uint32 _lastTigersFuryTime;
-    uint32 _lastBerserkTime;
-};
+    uint32 _lastTigersFuryTime;};
 
 } // namespace Playerbot
 

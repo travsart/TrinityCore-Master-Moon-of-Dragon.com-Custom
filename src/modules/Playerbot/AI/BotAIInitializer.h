@@ -6,6 +6,7 @@
 #define BOT_AI_INITIALIZER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include <memory>
 #include <functional>
@@ -284,7 +285,7 @@ public:
 private:
     // Track active AIs
     static std::unordered_map<ObjectGuid, BotAI*> _activeAIs;
-    static std::recursive_mutex _aiMutex;
+    static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _aiMutex;
 };
 
 /**

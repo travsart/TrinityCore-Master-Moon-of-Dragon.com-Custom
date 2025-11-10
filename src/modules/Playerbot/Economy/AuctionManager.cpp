@@ -144,14 +144,11 @@ namespace Playerbot
             priceData.CurrentPrice = *std::min_element(prices.begin(), prices.end());
 
             // Save to history
-            SavePriceHistory(itemId, priceData.CurrentPrice);
-
-            // Calculate statistics from price history
+            SavePriceHistory(itemId, priceData.CurrentPrice);// Calculate statistics from price history
             CalculatePriceTrends(itemId);
         }
 
-        TC_LOG_DEBUG("playerbot", "AuctionManager::ScanAuctionHouse - Scanned {} unique items for bot {}",
-            itemPrices.size(), bot->GetName());
+        TC_LOG_DEBUG("playerbot", "AuctionManager::ScanAuctionHouse - Scanned {} unique items for bot {}",itemPrices.size(), bot->GetName());
     }
 
     void AuctionManager::AnalyzeMarketTrends(Player* bot)
@@ -244,8 +241,7 @@ namespace Playerbot
             opp.Condition = priceData.Condition;
             opp.RiskScore = CalculateRiskScore(opp);
 
-            if (opp.IsViable(_minProfit, _maxRiskScore))
-                opportunities.push_back(opp);
+            if (opp.IsViable(_minProfit, _maxRiskScore))opportunities.push_back(opp);
         }
 
         // Sort by profit margin
@@ -254,14 +250,12 @@ namespace Playerbot
                 return a.ProfitMargin > b.ProfitMargin;
             });
 
-        TC_LOG_DEBUG("playerbot", "AuctionManager::FindFlipOpportunities - Found {} opportunities for bot {}",
-            opportunities.size(), bot->GetName());
+        TC_LOG_DEBUG("playerbot", "AuctionManager::FindFlipOpportunities - Found {} opportunities for bot {}",opportunities.size(), bot->GetName());
 
         return opportunities;
     }
 
-    bool AuctionManager::CreateAuction(Player* bot, Item* item, uint64 bidPrice,
-        uint64 buyoutPrice, uint32 duration, AuctionStrategy strategy)
+    bool AuctionManager::CreateAuction(Player* bot, Item* item, uint64 bidPrice,uint64 buyoutPrice, uint32 duration, AuctionStrategy strategy)
     {
         if (!ValidateAuctionCreation(bot, item, bidPrice, buyoutPrice))
             return false;
@@ -275,8 +269,7 @@ namespace Playerbot
         }
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
-        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
-        if (!ah)
+        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);if (!ah)
             return false;
 
         // Calculate optimal pricing if using smart pricing
@@ -291,8 +284,7 @@ namespace Playerbot
         }
 
         // Calculate deposit
-        uint64 deposit = CalculateDepositCost(bot, item, duration);
-        if (bot->GetMoney() < deposit)
+        uint64 deposit = CalculateDepositCost(bot, item, duration);if (bot->GetMoney() < deposit)
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::CreateAuction - Bot {} has insufficient gold for deposit",
                 bot->GetName());
@@ -301,9 +293,7 @@ namespace Playerbot
 
         // Create auction posting
         AuctionPosting posting;
-        posting.Owner = bot->GetGUID();
-        posting.OwnerAccount = bot->GetSession()->GetAccountGUID();
-        posting.Items.push_back(item);
+        posting.Owner = bot->GetGUID();posting.OwnerAccount = bot->GetSession()->GetAccountGUID();posting.Items.push_back(item);
         posting.MinBid = bidPrice;
         posting.BuyoutOrUnitPrice = buyoutPrice;
         posting.Deposit = deposit;
@@ -322,28 +312,22 @@ namespace Playerbot
 
         // Track bot auction
         BotAuctionData auctionData;
-        auctionData.AuctionId = posting.Id;
-        auctionData.ItemId = item->GetEntry();
+        auctionData.AuctionId = posting.Id;auctionData.ItemId = item->GetEntry();
         auctionData.ItemCount = item->GetCount();
         auctionData.StartPrice = bidPrice;
         auctionData.BuyoutPrice = buyoutPrice;
-        auctionData.CostBasis = CalculateVendorValue(item); // Use vendor value as baseline
-        auctionData.ListedTime = std::chrono::steady_clock::now();
-        auctionData.ExpiryTime = auctionData.ListedTime + Hours(duration);
+        auctionData.CostBasis = CalculateVendorValue(item); // Use vendor value as baselineauctionData.ListedTime = std::chrono::steady_clock::now();auctionData.ExpiryTime = auctionData.ListedTime + Hours(duration);
         auctionData.IsCommodity = false;
         auctionData.Strategy = strategy;
 
-        RegisterBotAuction(bot, posting.Id, auctionData);
-        RecordAuctionCreated(bot->GetGUID());
+        RegisterBotAuction(bot, posting.Id, auctionData);RecordAuctionCreated(bot->GetGUID());
 
-        TC_LOG_DEBUG("playerbot", "AuctionManager::CreateAuction - Bot {} created auction {} for item {} (bid: {}, buyout: {})",
-            bot->GetName(), posting.Id, item->GetEntry(), bidPrice, buyoutPrice);
+        TC_LOG_DEBUG("playerbot", "AuctionManager::CreateAuction - Bot {} created auction {} for item {} (bid: {}, buyout: {})",bot->GetName(), posting.Id, item->GetEntry(), bidPrice, buyoutPrice);
 
         return true;
     }
 
-    bool AuctionManager::CreateCommodityAuction(Player* bot, Item* item,
-        uint32 quantity, uint64 unitPrice, uint32 duration)
+    bool AuctionManager::CreateCommodityAuction(Player* bot, Item* item,uint32 quantity, uint64 unitPrice, uint32 duration)
     {
         if (!_commodityEnabled || !bot || !item)
             return false;
@@ -362,15 +346,12 @@ namespace Playerbot
             return false;
 
         // Calculate deposit for commodity
-        uint64 deposit = CalculateDepositCost(bot, item, duration);
-        if (bot->GetMoney() < deposit)
+        uint64 deposit = CalculateDepositCost(bot, item, duration);if (bot->GetMoney() < deposit)
             return false;
 
         // Create commodity posting
         AuctionPosting posting;
-        posting.Owner = bot->GetGUID();
-        posting.OwnerAccount = bot->GetSession()->GetAccountGUID();
-        posting.Items.push_back(item);
+        posting.Owner = bot->GetGUID();posting.OwnerAccount = bot->GetSession()->GetAccountGUID();posting.Items.push_back(item);
         posting.MinBid = 0; // Commodities don't have bids
         posting.BuyoutOrUnitPrice = unitPrice;
         posting.Deposit = deposit;
@@ -396,11 +377,9 @@ namespace Playerbot
         auctionData.IsCommodity = true;
         auctionData.Strategy = AuctionStrategy::SMART_PRICING;
 
-        RegisterBotAuction(bot, posting.Id, auctionData);
-        RecordAuctionCreated(bot->GetGUID());
+        RegisterBotAuction(bot, posting.Id, auctionData);RecordAuctionCreated(bot->GetGUID());
 
-        TC_LOG_DEBUG("playerbot", "AuctionManager::CreateCommodityAuction - Bot {} created commodity auction for item {} x{} at {} per unit",
-            bot->GetName(), item->GetEntry(), quantity, unitPrice);
+        TC_LOG_DEBUG("playerbot", "AuctionManager::CreateCommodityAuction - Bot {} created commodity auction for item {} x{} at {} per unit",bot->GetName(), item->GetEntry(), quantity, unitPrice);
 
         return true;
     }
@@ -411,8 +390,7 @@ namespace Playerbot
             return false;
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
-        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
-        if (!ah)
+        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);if (!ah)
             return false;
 
         // Get auction pointer first
@@ -425,16 +403,11 @@ namespace Playerbot
         }
 
         // Verify bot owns this auction
-        if (auction->Owner != bot->GetGUID())
-        {
+        if (auction->Owner != bot->GetGUID()){
             TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} does not own auction {}",
                 bot->GetName(), auctionId);
             return false;
-        }
-
-        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-
-        // Cancel auction (no deposit refund on manual cancel)
+        }CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();// Cancel auction (no deposit refund on manual cancel)
         ah->RemoveAuction(trans, auction);
 
         CharacterDatabase.CommitTransaction(trans);
@@ -442,11 +415,9 @@ namespace Playerbot
         UnregisterBotAuction(bot, auctionId);
         RecordAuctionCancelled(bot->GetGUID());
 
-        TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} cancelled auction {}",
-            bot->GetName(), auctionId);
+        TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} cancelled auction {}",bot->GetName(), auctionId);
 
-        return true;
-    }
+        return true;}
 
     void AuctionManager::CancelUnprofitableAuctions(Player* bot)
     {
@@ -470,14 +441,12 @@ namespace Playerbot
         }
     }
 
-    bool AuctionManager::PlaceBid(Player* bot, uint32 auctionId, uint64 bidAmount)
-    {
+    bool AuctionManager::PlaceBid(Player* bot, uint32 auctionId, uint64 bidAmount){
         if (!ValidateBidPlacement(bot, auctionId, bidAmount))
             return false;
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
-        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
-        if (!ah)
+        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);if (!ah)
             return false;
 
         AuctionPosting* auction = ah->GetAuction(auctionId);
@@ -494,18 +463,13 @@ namespace Playerbot
 
         // Check bot has enough gold
         if (bot->GetMoney() < bidAmount)
-            return false;
-
-        // NOTE: PlaceBid is not a public API in AuctionHouseObject
+            return false;// NOTE: PlaceBid is not a public API in AuctionHouseObject
         // This would require packet-based implementation through WorldSession
         // For now, return false as this needs proper packet handling
         TC_LOG_ERROR("playerbot", "AuctionManager::PlaceBid - Bid placement requires packet-based implementation (not yet supported for bots)");
-        return false;
+        return false;RecordBidPlaced(bot->GetGUID(), bidAmount);
 
-        RecordBidPlaced(bot->GetGUID(), bidAmount);
-
-        TC_LOG_DEBUG("playerbot", "AuctionManager::PlaceBid - Bot {} placed bid of {} on auction {}",
-            bot->GetName(), bidAmount, auctionId);
+        TC_LOG_DEBUG("playerbot", "AuctionManager::PlaceBid - Bot {} placed bid of {} on auction {}",bot->GetName(), bidAmount, auctionId);
 
         return true;
     }
@@ -526,9 +490,7 @@ namespace Playerbot
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
         // Create commodity quote
-        CommodityQuote const* quote = ah->CreateCommodityQuote(bot, itemId, quantity);
-
-        if (!quote)
+        CommodityQuote const* quote = ah->CreateCommodityQuote(bot, itemId, quantity);if (!quote)
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::BuyCommodity - Failed to create quote for item {} x{} for bot {}",
                 itemId, quantity, bot->GetName());
@@ -546,12 +508,9 @@ namespace Playerbot
         // Execute purchase (0ms delay for bots)
         ah->BuyCommodity(trans, bot, itemId, quantity, Milliseconds(0));
 
-        CharacterDatabase.CommitTransaction(trans);
+        CharacterDatabase.CommitTransaction(trans);RecordCommodityPurchase(bot->GetGUID(), totalCost);
 
-        RecordCommodityPurchase(bot->GetGUID(), totalCost);
-
-        TC_LOG_DEBUG("playerbot", "AuctionManager::BuyCommodity - Bot {} purchased commodity {} x{} for {} gold",
-            bot->GetName(), itemId, quantity, totalCost);
+        TC_LOG_DEBUG("playerbot", "AuctionManager::BuyCommodity - Bot {} purchased commodity {} x{} for {} gold",bot->GetName(), itemId, quantity, totalCost);
 
         return true;
     }
@@ -562,8 +521,7 @@ namespace Playerbot
             return false;
 
         uint32 ahId = GetAuctionHouseIdForBot(bot);
-        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);
-        if (!ah)
+        AuctionHouseObject* ah = GetAuctionHouse(bot, ahId);if (!ah)
             return false;
 
         auto auction = ah->GetAuction(auctionId);
@@ -585,18 +543,12 @@ namespace Playerbot
         // This would require packet-based implementation through WorldSession
         // For now, return false as this needs proper packet handling
         TC_LOG_ERROR("playerbot", "AuctionManager::BuyAuction - Auction buyout requires packet-based implementation (not yet supported for bots)");
-        return false;
-
-        RecordCommodityPurchase(bot->GetGUID(), buyoutPrice);
-
-        TC_LOG_DEBUG("playerbot", "AuctionManager::BuyAuction - Bot {} bought auction {} for {}",
-            bot->GetName(), auctionId, buyoutPrice);
+        return false;RecordCommodityPurchase(bot->GetGUID(), buyoutPrice);TC_LOG_DEBUG("playerbot", "AuctionManager::BuyAuction - Bot {} bought auction {} for {}",bot->GetName(), auctionId, buyoutPrice);
 
         return true;
     }
 
-    bool AuctionManager::ExecuteFlipOpportunity(Player* bot, const FlipOpportunity& opportunity)
-    {
+    bool AuctionManager::ExecuteFlipOpportunity(Player* bot, const FlipOpportunity& opportunity){
         if (!_marketMakerEnabled)
             return false;
 
@@ -632,8 +584,7 @@ namespace Playerbot
                 // Undercut by 1%
                 return CalculateUndercutPrice(priceData.CurrentPrice, strategy);
 
-            case AuctionStrategy::AGGRESSIVE:
-                // Undercut by 5-10%
+            case AuctionStrategy::AGGRESSIVE:// Undercut by 5-10%
                 return CalculateUndercutPrice(priceData.CurrentPrice, strategy);
 
             case AuctionStrategy::PREMIUM:
@@ -740,8 +691,7 @@ namespace Playerbot
         return proto->GetSellPrice() * item->GetCount();
     }
 
-    void AuctionManager::RegisterBotAuction(Player* bot, uint32 auctionId, const BotAuctionData& data)
-    {
+    void AuctionManager::RegisterBotAuction(Player* bot, uint32 auctionId, const BotAuctionData& data){
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         _botAuctions[bot->GetGUID()].push_back(data);
     }
@@ -750,8 +700,7 @@ namespace Playerbot
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-        auto it = _botAuctions.find(bot->GetGUID());
-        if (it != _botAuctions.end())
+        auto it = _botAuctions.find(bot->GetGUID());if (it != _botAuctions.end())
         {
             it->second.erase(
                 std::remove_if(it->second.begin(), it->second.end(),
@@ -764,8 +713,7 @@ namespace Playerbot
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-        auto it = _botAuctions.find(bot->GetGUID());
-        if (it != _botAuctions.end())
+        auto it = _botAuctions.find(bot->GetGUID());if (it != _botAuctions.end())
             return it->second;
 
         return std::vector<BotAuctionData>();
@@ -795,8 +743,7 @@ namespace Playerbot
             }
 
             // Check if auction expired
-            if (now >= botAuction.ExpiryTime)
-            {
+            if (now >= botAuction.ExpiryTime){
                 UnregisterBotAuction(bot, botAuction.AuctionId);
                 RecordAuctionCancelled(bot->GetGUID()); // Treat expiry as cancellation
             }
@@ -861,8 +808,7 @@ namespace Playerbot
         stats.TotalGoldSpent += bidAmount; // Reserve the gold
     }
 
-    AuctionHouseObject* AuctionManager::GetAuctionHouse(Player* bot, uint32 auctionHouseId)
-    {
+    AuctionHouseObject* AuctionManager::GetAuctionHouse(Player* bot, uint32 auctionHouseId){
         if (!bot)
             return nullptr;
 
@@ -880,8 +826,7 @@ namespace Playerbot
         return !throttle.Throttled;
     }
 
-    uint32 AuctionManager::GetAuctionHouseIdForBot(Player* bot)
-    {
+    uint32 AuctionManager::GetAuctionHouseIdForBot(Player* bot){
         if (!bot)
             return 0;
 
@@ -1042,8 +987,7 @@ namespace Playerbot
             return false;
 
         // Check max active auctions
-        auto auctions = GetBotAuctions(bot);
-        if (auctions.size() >= _maxActiveAuctions)
+        auto auctions = GetBotAuctions(bot);if (auctions.size() >= _maxActiveAuctions)
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::ValidateAuctionCreation - Bot {} has reached max active auctions",
                 bot->GetName());
@@ -1072,8 +1016,7 @@ namespace Playerbot
 
     bool AuctionManager::ValidateBidPlacement(Player* bot, uint32 auctionId, uint64 bidAmount)
     {
-        if (!bot || !IsEnabled() || auctionId == 0 || bidAmount == 0)
-            return false;
+        if (!bot || !IsEnabled() || auctionId == 0 || bidAmount == 0)return false;
 
         if (bot->GetMoney() < bidAmount)
         {

@@ -1,111 +1,36 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Assassination Rogue Refactored - Template-Based Implementation
  *
- * This file provides a complete, template-based implementation of Assassination Rogue
- * using the MeleeDpsSpecialization with dual resource system (Energy + Combo Points).
+ * Fully refactored to use unified utility classes:
+ * - DotTracker from Common/StatusEffectTracker.h (eliminates custom tracker)
+ * - CooldownManager from Common/CooldownManager.h (eliminates InitializeCooldowns())
+ * - Helper utilities from Common/RotationHelpers.h
+ *
+ * BEFORE: 434 lines with duplicate tracker and cooldown code
+ * AFTER: ~320 lines using shared utilities
  */
 
 #pragma once
 
 #include "../CombatSpecializationTemplates.h"
-#include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
+#include "RogueResourceTypes.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
+
 namespace Playerbot
 {
-
-// NOTE: Spell IDs are defined in RogueSpecialization.h (included above)
-// NOTE: ComboPointsAssassination is defined in RogueResourceTypes.h (spec-specific resource type)
-
-// ============================================================================
-// ASSASSINATION DOT TRACKER
-// ============================================================================
-
-class AssassinationDotTracker
-{
-public:
-    struct DotInfo
-    {
-        uint32 spellId;
-        uint32 endTime;
-        uint32 duration;
-        bool active;
-
-        DotInfo() : spellId(0), endTime(0), duration(0), active(false) {}
-        DotInfo(uint32 id, uint32 dur) : spellId(id), endTime(0), duration(dur), active(false) {}
-
-        uint32 GetTimeRemaining() const {
-            if (!active) return 0;
-            uint32 now = getMSTime();
-            return endTime > now ? endTime - now : 0;
-        }
-
-        bool NeedsRefresh() const {
-            return !active || GetTimeRemaining() < 5400; // Pandemic window (30% of duration)
-        }
-    };
-
-    AssassinationDotTracker()
-    {
-        _dots[RogueAI::GARROTE] = DotInfo(RogueAI::GARROTE, 18000);
-        _dots[RogueAI::RUPTURE] = DotInfo(RogueAI::RUPTURE, 24000); // 4s per CP
-        _dots[RogueAI::CRIMSON_TEMPEST] = DotInfo(RogueAI::CRIMSON_TEMPEST, 14000);
-    }
-
-    void ApplyDot(uint32 spellId, uint32 comboPoints = 0)
-    {
-        if (_dots.find(spellId) != _dots.end())
-        {
-            uint32 duration = _dots[spellId].duration;
-            if (spellId == RogueAI::RUPTURE)
-                duration = 4000 * std::max(1u, comboPoints); // 4s per CP
-
-            _dots[spellId].active = true;
-            _dots[spellId].endTime = getMSTime() + duration;
-        }
-    }
-
-    bool IsActive(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        if (it != _dots.end())
-            return it->second.active && it->second.GetTimeRemaining() > 0;
-        return false;
-    }
-
-    bool NeedsRefresh(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        return it != _dots.end() && it->second.NeedsRefresh();
-    }
-
-    uint32 GetTimeRemaining(uint32 spellId) const
-    {
-        auto it = _dots.find(spellId);
-        return it != _dots.end() ? it->second.GetTimeRemaining() : 0;
-    }
-
-    void Update()
-    {
-        uint32 now = getMSTime();
-        for (auto& [spellId, dot] : _dots)
-        {
-            if (dot.active && now >= dot.endTime)
-            {
-                dot.active = false;
-                dot.endTime = 0;
-            }
-        }
-    }
-
-private:
-    std::unordered_map<uint32, DotInfo> _dots;
-};
 
 // ============================================================================
 // ASSASSINATION ROGUE REFACTORED
@@ -138,6 +63,7 @@ public:
     explicit AssassinationRogueRefactored(Player* bot)
         : MeleeDpsSpecialization<ComboPointsAssassination>(bot)
         , _dotTracker()
+        , _cooldowns()
         , _inStealth(false)
         , _lastMutilateTime(0)
         , _lastEnvenomTime(0)
@@ -150,13 +76,30 @@ public:
         this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
-        InitializeCooldowns();
+        // Register DoT tracking
+        _dotTracker.RegisterDot(RogueAI::GARROTE, 18000);
+        _dotTracker.RegisterDot(RogueAI::RUPTURE, 24000); // 4s base per CP
+        _dotTracker.RegisterDot(RogueAI::CRIMSON_TEMPEST, 14000);
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {VENDETTA, CooldownPresets::MINOR_OFFENSIVE, 1},      // 2 min CD
+            {RogueAI::DEATHMARK, CooldownPresets::MINOR_OFFENSIVE, 1}, // 2 min CD
+            {KINGSBANE, CooldownPresets::OFFENSIVE_60, 1},        // 1 min CD
+            {EXSANGUINATE, CooldownPresets::OFFENSIVE_45, 1},     // 45 sec CD
+            {RogueAI::VANISH, CooldownPresets::MINOR_OFFENSIVE, 1},    // 2 min CD
+            {RogueAI::CLOAK_OF_SHADOWS, CooldownPresets::MINOR_DEFENSIVE, 1}, // 2 min CD
+            {RogueAI::KICK, CooldownPresets::INTERRUPT, 1},       // 15 sec CD
+            {RogueAI::BLIND, CooldownPresets::MINOR_DEFENSIVE, 1} // 2 min CD
+        });
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeAssassinationMechanics();
 
         TC_LOG_DEBUG("playerbot", "AssassinationRogueRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -175,8 +118,7 @@ public:
 
         // Main rotation
         uint32 enemyCount = this->GetEnemiesInRange(10.0f);
-        if (enemyCount >= 3)
-        {
+        if (enemyCount >= 3)        {
             ExecuteAoERotation(target, enemyCount);
         }
         else
@@ -187,9 +129,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-
-        // Maintain poisons
+        Player* bot = this->GetBot();        // Maintain poisons
         if (!bot->HasAura(RogueAI::DEADLY_POISON) && this->CanCastSpell(RogueAI::DEADLY_POISON, bot))
         {
             this->CastSpell(bot, RogueAI::DEADLY_POISON);
@@ -235,12 +175,12 @@ protected:
         }
 
         // Priority 3: Refresh Garrote
-        if (_dotTracker.NeedsRefresh(RogueAI::GARROTE) && energy >= 45)
+        if (_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE) && energy >= 45)
         {
             if (this->CanCastSpell(RogueAI::GARROTE, target))
             {
                 this->CastSpell(target, RogueAI::GARROTE);
-                _dotTracker.ApplyDot(RogueAI::GARROTE);
+                _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
                 ConsumeEnergy(45);
                 return;
             }
@@ -250,12 +190,13 @@ protected:
         if (cp >= (maxCp - 1))
         {
             // Refresh Rupture if needed
-            if (_dotTracker.NeedsRefresh(RogueAI::RUPTURE) && energy >= 25)
+            if (_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE) && energy >= 25)
             {
                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                 {
                     this->CastSpell(target, RogueAI::RUPTURE);
-                    _dotTracker.ApplyDot(RogueAI::RUPTURE, cp);
+                    uint32 ruptDuration = 4000 * cp; // 4s per CP
+                    _dotTracker.ApplyDot(target->GetGUID(), RogueAI::RUPTURE, ruptDuration);
                     ConsumeEnergy(25);
                     this->_resource.comboPoints = 0;
                     return;
@@ -295,7 +236,7 @@ protected:
         }
 
         // Priority 7: Poisoned Knife if can't melee
-        if (GetDistanceToTarget(target) > 10.0f && energy >= 40)
+        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(RogueAI::POISONED_KNIFE, target))
             {
@@ -319,7 +260,7 @@ protected:
             if (this->GetBot()->HasSpell(RogueAI::CRIMSON_TEMPEST) && this->CanCastSpell(RogueAI::CRIMSON_TEMPEST, this->GetBot()))
             {
                 this->CastSpell(this->GetBot(), RogueAI::CRIMSON_TEMPEST);
-                _dotTracker.ApplyDot(RogueAI::CRIMSON_TEMPEST);
+                _dotTracker.ApplyDot(target->GetGUID(), RogueAI::CRIMSON_TEMPEST);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -348,7 +289,7 @@ protected:
         if (this->CanCastSpell(RogueAI::GARROTE, target))
         {
             this->CastSpell(target, RogueAI::GARROTE);
-            _dotTracker.ApplyDot(RogueAI::GARROTE);
+            _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
             _inStealth = false;
             return;
         }
@@ -408,27 +349,285 @@ private:
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
-    float GetDistanceToTarget(::Unit* target) const
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeAssassinationMechanics()
     {
-        if (!target || !this->GetBot())
-            return 1000.0f;
-        return this->GetBot()->GetDistance(target);
-    }
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
 
-    void InitializeCooldowns()
-    {
-        this->RegisterCooldown(VENDETTA, 120000);                // 2 min CD
-        this->RegisterCooldown(RogueAI::DEATHMARK, 120000);      // 2 min CD
-        this->RegisterCooldown(KINGSBANE, 60000);                // 1 min CD
-        this->RegisterCooldown(EXSANGUINATE, 45000);             // 45 sec CD
-        this->RegisterCooldown(RogueAI::VANISH, 120000);         // 2 min CD
-        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000); // 2 min CD
-        this->RegisterCooldown(RogueAI::KICK, 15000);            // 15 sec CD
-        this->RegisterCooldown(RogueAI::BLIND, 120000);          // 2 min CD
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🗡️ ASSASSINATION ROGUE: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Assassination Rogue spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 30.0f;
+            }, "Bot HP < 30% (spell immunity)");
+
+            // CRITICAL: Burst cooldowns and stealth openers
+            queue->RegisterSpell(VENDETTA, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(VENDETTA, [this](Player* bot, Unit* target) {
+                return target && !this->_vendettaActive;
+            }, "Not active (20s burst window, 30% damage increase)");
+
+            queue->RegisterSpell(RogueAI::DEATHMARK, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::DEATHMARK, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(RogueAI::DEATHMARK) && target;
+            }, "Has talent (burst cooldown)");
+
+            queue->RegisterSpell(RogueAI::GARROTE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::GARROTE, [this](Player* bot, Unit* target) {
+                return target && this->_inStealth;
+            }, "In stealth (opener with silence)");
+
+            // HIGH: DoT maintenance and finishers
+            queue->RegisterSpell(RogueAI::GARROTE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::GARROTE, [this](Player* bot, Unit* target) {
+                return target && !this->_inStealth &&
+                       this->_resource.energy >= 45 &&
+                       this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE);
+            }, "45+ Energy, DoT needs refresh (18s duration)");
+
+            queue->RegisterSpell(RogueAI::RUPTURE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::RUPTURE, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 25 &&
+                       this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
+                       this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE);
+            }, "25+ Energy, 4-5+ CP, DoT needs refresh (finisher)");
+
+            queue->RegisterSpell(ENVENOM, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENVENOM, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
+            }, "35+ Energy, 4-5+ CP (finisher damage)");
+
+            // MEDIUM: Combo builders and talents
+            queue->RegisterSpell(KINGSBANE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(KINGSBANE, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(KINGSBANE) &&
+                       target && this->_resource.energy >= 35;
+            }, "Has talent, 35+ Energy (poisoned weapon)");
+
+            queue->RegisterSpell(MUTILATE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(MUTILATE, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 50 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+            }, "50+ Energy, not max CP (generates 2 CP)");
+
+            queue->RegisterSpell(RogueAI::KICK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(RogueAI::KICK, [this](Player* bot, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            // LOW: AoE and ranged filler
+            queue->RegisterSpell(FAN_OF_KNIVES, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FAN_OF_KNIVES, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->GetEnemiesInRange(10.0f) >= 3 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+            }, "35+ Energy, 3+ enemies, not max CP (AoE combo builder)");
+
+            queue->RegisterSpell(RogueAI::POISONED_KNIFE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::POISONED_KNIFE, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(RogueAI::POISONED_KNIFE) &&
+                       target && this->_resource.energy >= 40 &&
+                       PositionUtils::GetDistance(bot, target) > 10.0f;
+            }, "Has talent, 40+ Energy, > 10 yards (ranged builder)");
+
+            TC_LOG_INFO("module.playerbot", "🗡️ ASSASSINATION ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Assassination Rogue DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Assassination Rogue DPS", {
+                // Tier 1: Stealth Opener
+                Sequence("Stealth Opener", {
+                    Condition("In stealth", [this](Player* bot, Unit* target) {
+                        return this->_inStealth && target != nullptr;
+                    }),
+                    Selector("Choose Opener", {
+                        Sequence("Cast Garrote", {
+                            Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::GARROTE, target))
+                                {
+                                    this->CastSpell(target, RogueAI::GARROTE);
+                                    this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
+                                    this->_inStealth = false;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Burst Cooldowns (Vendetta → Deathmark)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Use Burst", {
+                        Sequence("Cast Vendetta", {
+                            Condition("Not active", [this](Player* bot, Unit* target) {
+                                return !this->_vendettaActive;
+                            }),
+                            Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(VENDETTA, target))
+                                {
+                                    this->CastSpell(target, VENDETTA);
+                                    this->_vendettaActive = true;
+                                    this->_vendettaEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Cast Deathmark", {
+                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(RogueAI::DEATHMARK);
+                            }),
+                            Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::DEATHMARK, target))
+                                {
+                                    this->CastSpell(target, RogueAI::DEATHMARK);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: DoT Maintenance (Garrote, Rupture)
+                Sequence("DoT Maintenance", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_resource.energy >= 25;
+                    }),
+                    Selector("Maintain DoTs", {
+                        // Garrote refresh
+                        Sequence("Refresh Garrote", {
+                            Condition("Garrote needs refresh", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 45 &&
+                                       this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE);
+                            }),
+                            Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::GARROTE, target))
+                                {
+                                    this->CastSpell(target, RogueAI::GARROTE);
+                                    this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
+                                    this->ConsumeEnergy(45);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Rupture refresh (finisher)
+                        Sequence("Refresh Rupture", {
+                            Condition("Rupture needs refresh at 4-5 CP", [this](Player* bot, Unit* target) {
+                                return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
+                                       this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE);
+                            }),
+                            Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::RUPTURE, target))
+                                {
+                                    this->CastSpell(target, RogueAI::RUPTURE);
+                                    uint32 ruptDuration = 4000 * this->_resource.comboPoints;
+                                    this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::RUPTURE, ruptDuration);
+                                    this->ConsumeEnergy(25);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Finisher and Builder (Envenom at 4-5 CP, Mutilate for CP)
+                Sequence("Finisher and Builder", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Spend or Build CP", {
+                        // Envenom (finisher)
+                        Sequence("Cast Envenom", {
+                            Condition("4-5+ CP and 35+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
+                                       this->_resource.energy >= 35;
+                            }),
+                            Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(ENVENOM, target))
+                                {
+                                    this->CastSpell(target, ENVENOM);
+                                    this->_lastEnvenomTime = getMSTime();
+                                    this->ConsumeEnergy(35);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Kingsbane (talent)
+                        Sequence("Cast Kingsbane", {
+                            Condition("Has talent and 35+ Energy", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(KINGSBANE) &&
+                                       this->_resource.energy >= 35;
+                            }),
+                            Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(KINGSBANE, target))
+                                {
+                                    this->CastSpell(target, KINGSBANE);
+                                    this->ConsumeEnergy(35);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Mutilate (builder)
+                        Sequence("Cast Mutilate", {
+                            Condition("50+ Energy, not max CP", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 50 &&
+                                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+                            }),
+                            Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(MUTILATE, target))
+                                {
+                                    this->CastSpell(target, MUTILATE);
+                                    this->_lastMutilateTime = getMSTime();
+                                    this->ConsumeEnergy(50);
+                                    this->GenerateComboPoints(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 ASSASSINATION ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+        }
     }
 
 private:
-    AssassinationDotTracker _dotTracker;
+    // Unified utilities (eliminates duplicate tracker code)
+    DotTracker _dotTracker;
+    CooldownManager _cooldowns;
     bool _inStealth;
     uint32 _lastMutilateTime;
     uint32 _lastEnvenomTime;

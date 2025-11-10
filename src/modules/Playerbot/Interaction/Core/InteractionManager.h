@@ -11,6 +11,7 @@
 #define _PLAYERBOT_INTERACTIONMANAGER_H_
 
 #include "InteractionTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Position.h"
@@ -642,8 +643,8 @@ namespace Playerbot
         std::unordered_map<ObjectGuid, NPCInteractionData> m_npcDatabase;
 
         // Thread safety - shared_mutex allows concurrent reads
-        mutable std::recursive_mutex m_mutex;
-        mutable std::recursive_mutex m_npcMutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_npcMutex;
 
         // Performance tracking - atomic for thread safety
         std::atomic<uint64> m_totalInteractionsStarted{0};

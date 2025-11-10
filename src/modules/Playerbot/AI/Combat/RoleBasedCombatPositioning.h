@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "EnumFlag.h"
 #include "ObjectGuid.h"
 #include "Position.h"
@@ -234,7 +235,7 @@ private:
 
 private:
     TankPositionConfig _config;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float MIN_TANK_DISTANCE = 2.0f;
@@ -291,7 +292,7 @@ private:
 
 private:
     HealerPositionConfig _config;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float MIN_HEALER_DISTANCE = 15.0f;
@@ -352,7 +353,7 @@ private:
 
 private:
     DPSPositionConfig _config;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float MELEE_MIN_DISTANCE = 2.0f;
@@ -458,7 +459,7 @@ private:
     std::chrono::microseconds _averageCalculationTime{0};
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr uint32 STRATEGY_UPDATE_INTERVAL = 5000;  // 5 seconds

@@ -19,6 +19,7 @@
 #define PLAYERBOT_PROFILER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <atomic>
 #include <string>
 #include <unordered_map>
@@ -94,7 +95,7 @@ public:
 
 private:
     std::unordered_map<std::string, SectionData> _sections;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     std::atomic<bool> _enabled{false};
     std::atomic<uint32> _samplingRate{10};

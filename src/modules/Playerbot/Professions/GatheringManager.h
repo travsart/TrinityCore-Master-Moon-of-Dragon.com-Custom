@@ -11,6 +11,7 @@
 #define TRINITYCORE_GATHERING_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "AI/BehaviorManager.h"
 #include "ObjectGuid.h"
 #include "Position.h"
@@ -529,7 +530,7 @@ namespace Playerbot
         // THREAD SAFETY
         // ========================================================================
 
-        mutable std::recursive_mutex _nodeMutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _nodeMutex;
     };
 
 } // namespace Playerbot

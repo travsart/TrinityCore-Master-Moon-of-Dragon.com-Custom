@@ -10,11 +10,13 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "DungeonBehavior.h"
 #include "Player.h"
 #include "Group.h"
 #include "Map.h"
 #include "InstanceScript.h"
+#include "../Core/DI/Interfaces/IInstanceCoordination.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -32,46 +34,46 @@ namespace Playerbot
  * This system handles instance-specific coordination, including formation movement,
  * encounter preparation, loot distribution, and group communication within dungeons.
  */
-class TC_GAME_API InstanceCoordination
+class TC_GAME_API InstanceCoordination final : public IInstanceCoordination
 {
 public:
     static InstanceCoordination* instance();
 
     // Core instance coordination
-    void InitializeInstanceCoordination(Group* group, Map* instanceMap);
-    void UpdateInstanceCoordination(Group* group, uint32 diff);
-    void HandleInstanceCompletion(Group* group);
-    void HandleInstanceFailure(Group* group);
+    void InitializeInstanceCoordination(Group* group, Map* instanceMap) override;
+    void UpdateInstanceCoordination(Group* group, uint32 diff) override;
+    void HandleInstanceCompletion(Group* group) override;
+    void HandleInstanceFailure(Group* group) override;
 
     // Group formation and movement
-    void CoordinateGroupMovement(Group* group, const Position& destination);
-    void MaintainDungeonFormation(Group* group);
-    void HandleFormationBreaks(Group* group);
-    void AdaptFormationToTerrain(Group* group, const Position& location);
+    void CoordinateGroupMovement(Group* group, const Position& destination) override;
+    void MaintainDungeonFormation(Group* group) override;
+    void HandleFormationBreaks(Group* group) override;
+    void AdaptFormationToTerrain(Group* group, const Position& location) override;
 
     // Encounter preparation and coordination
-    void PrepareForEncounter(Group* group, uint32 encounterId);
-    void CoordinateEncounterStart(Group* group, uint32 encounterId);
-    void MonitorEncounterProgress(Group* group, uint32 encounterId);
-    void HandleEncounterRecovery(Group* group, uint32 encounterId);
+    void PrepareForEncounter(Group* group, uint32 encounterId) override;
+    void CoordinateEncounterStart(Group* group, uint32 encounterId) override;
+    void MonitorEncounterProgress(Group* group, uint32 encounterId) override;
+    void HandleEncounterRecovery(Group* group, uint32 encounterId) override;
 
     // Resource management and optimization
-    void CoordinateResourceUsage(Group* group);
-    void ManageGroupMana(Group* group);
-    void CoordinateRestBreaks(Group* group);
-    void OptimizeGroupEfficiency(Group* group);
+    void CoordinateResourceUsage(Group* group) override;
+    void ManageGroupMana(Group* group) override;
+    void CoordinateRestBreaks(Group* group) override;
+    void OptimizeGroupEfficiency(Group* group) override;
 
     // Communication and coordination
-    void BroadcastInstanceInformation(Group* group, const std::string& message);
-    void CoordinateGroupActions(Group* group, const std::string& action);
-    void HandleGroupDecisionMaking(Group* group, const std::string& decision);
-    void SynchronizeGroupStates(Group* group);
+    void BroadcastInstanceInformation(Group* group, const std::string& message) override;
+    void CoordinateGroupActions(Group* group, const std::string& action) override;
+    void HandleGroupDecisionMaking(Group* group, const std::string& decision) override;
+    void SynchronizeGroupStates(Group* group) override;
 
     // Loot coordination and distribution
-    void CoordinateLootDistribution(Group* group, const std::vector<uint32>& lootItems);
-    void HandleLootRolling(Group* group, uint32 itemId);
-    void ManageLootPriorities(Group* group);
-    void ResolveeLootConflicts(Group* group, uint32 itemId);
+    void CoordinateLootDistribution(Group* group, const std::vector<uint32>& lootItems) override;
+    void HandleLootRolling(Group* group, uint32 itemId) override;
+    void ManageLootPriorities(Group* group) override;
+    void ResolveeLootConflicts(Group* group, uint32 itemId) override;
 
     // Progress tracking and optimization
     struct InstanceProgress
@@ -95,21 +97,21 @@ public:
             , isOnTrack(true) {}
     };
 
-    InstanceProgress GetInstanceProgress(uint32 groupId);
-    void UpdateInstanceProgress(Group* group);
-    void AnalyzeProgressEfficiency(Group* group);
+    InstanceProgress GetInstanceProgress(uint32 groupId) override;
+    void UpdateInstanceProgress(Group* group) override;
+    void AnalyzeProgressEfficiency(Group* group) override;
 
     // Route planning and navigation
-    void PlanInstanceRoute(Group* group, const std::vector<uint32>& objectiveIds);
-    void UpdateNavigationRoute(Group* group, const Position& currentLocation);
-    void HandleNavigationObstacles(Group* group, const std::vector<Position>& obstacles);
-    Position GetNextWaypoint(Group* group);
+    void PlanInstanceRoute(Group* group, const std::vector<uint32>& objectiveIds) override;
+    void UpdateNavigationRoute(Group* group, const Position& currentLocation) override;
+    void HandleNavigationObstacles(Group* group, const std::vector<Position>& obstacles) override;
+    Position GetNextWaypoint(Group* group) override;
 
     // Safety and emergency coordination
-    void MonitorGroupSafety(Group* group);
-    void HandleEmergencySituations(Group* group, const std::string& emergency);
-    void CoordinateEmergencyEvacuation(Group* group);
-    void HandlePlayerIncapacitation(Group* group, Player* incapacitatedPlayer);
+    void MonitorGroupSafety(Group* group) override;
+    void HandleEmergencySituations(Group* group, const std::string& emergency) override;
+    void CoordinateEmergencyEvacuation(Group* group) override;
+    void HandlePlayerIncapacitation(Group* group, Player* incapacitatedPlayer) override;
 
     // Performance optimization
     struct CoordinationMetrics
@@ -136,36 +138,36 @@ public:
         }
     };
 
-    CoordinationMetrics GetGroupCoordinationMetrics(uint32 groupId);
-    CoordinationMetrics GetGlobalCoordinationMetrics();
+    CoordinationMetrics GetGroupCoordinationMetrics(uint32 groupId) override;
+    CoordinationMetrics GetGlobalCoordinationMetrics() override;
 
     // Advanced coordination features
-    void EnablePredictiveCoordination(Group* group, bool enable);
-    void AdaptCoordinationToGroupSkill(Group* group);
-    void OptimizeCoordinationAlgorithms(Group* group);
-    void HandleDynamicGroupChanges(Group* group, Player* newMember = nullptr);
+    void EnablePredictiveCoordination(Group* group, bool enable) override;
+    void AdaptCoordinationToGroupSkill(Group* group) override;
+    void OptimizeCoordinationAlgorithms(Group* group) override;
+    void HandleDynamicGroupChanges(Group* group, Player* newMember = nullptr) override;
 
     // Instance-specific coordination strategies
-    void ApplyInstanceSpecificStrategy(Group* group, uint32 instanceId);
-    void HandleInstanceMechanics(Group* group, const std::string& mechanic);
-    void AdaptToInstanceDifficulty(Group* group, float difficultyRating);
+    void ApplyInstanceSpecificStrategy(Group* group, uint32 instanceId) override;
+    void HandleInstanceMechanics(Group* group, const std::string& mechanic) override;
+    void AdaptToInstanceDifficulty(Group* group, float difficultyRating) override;
 
     // Configuration and settings
-    void SetCoordinationPrecision(uint32 groupId, float precision); // 0.0 = loose, 1.0 = strict
-    void SetFormationStyle(uint32 groupId, const std::string& formationStyle);
-    void EnableAdvancedCoordination(uint32 groupId, bool enable);
-    void SetCommunicationLevel(uint32 groupId, uint32 level); // 0 = minimal, 3 = verbose
+    void SetCoordinationPrecision(uint32 groupId, float precision) override; // 0.0 = loose, 1.0 = strict
+    void SetFormationStyle(uint32 groupId, const std::string& formationStyle) override;
+    void EnableAdvancedCoordination(uint32 groupId, bool enable) override;
+    void SetCommunicationLevel(uint32 groupId, uint32 level) override; // 0 = minimal, 3 = verbose
 
     // Error handling and recovery
-    void HandleCoordinationError(Group* group, const std::string& error);
-    void RecoverFromCoordinationFailure(Group* group);
-    void DiagnoseCoordinationIssues(Group* group);
-    void ResetCoordinationState(Group* group);
+    void HandleCoordinationError(Group* group, const std::string& error) override;
+    void RecoverFromCoordinationFailure(Group* group) override;
+    void DiagnoseCoordinationIssues(Group* group) override;
+    void ResetCoordinationState(Group* group) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateGroupCoordination(Group* group, uint32 diff);
-    void CleanupInactiveCoordinations();
+    void Update(uint32 diff) override;
+    void UpdateGroupCoordination(Group* group, uint32 diff) override;
+    void CleanupInactiveCoordinations() override;
 
 private:
     InstanceCoordination();
@@ -175,7 +177,7 @@ private:
     std::unordered_map<uint32, InstanceProgress> _instanceProgress; // groupId -> progress
     std::unordered_map<uint32, CoordinationMetrics> _groupMetrics;
     std::unordered_map<uint32, std::vector<Position>> _groupRoutes; // groupId -> waypoints
-    mutable std::recursive_mutex _coordinationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _coordinationMutex;
 
     // Formation and movement data
     struct FormationData
@@ -193,7 +195,7 @@ private:
     };
 
     std::unordered_map<uint32, FormationData> _groupFormations; // groupId -> formation
-    mutable std::recursive_mutex _formationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _formationMutex;
 
     // Communication and decision tracking
     struct CoordinationState

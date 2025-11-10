@@ -11,6 +11,7 @@
 #define PLAYERBOT_GROUP_INVITATION_HANDLER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "WorldPacket.h"
 #include <memory>
@@ -261,7 +262,7 @@ private:
 
     // Member variables
     Player* _bot;                                           // The bot player instance
-    mutable std::recursive_mutex _invitationMutex;                   // Thread safety mutex
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _invitationMutex;                   // Thread safety mutex
     std::queue<PendingInvitation> _pendingInvitations;     // Queue of pending invitations
     ObjectGuid _currentInviter;                            // Currently processing inviter
 

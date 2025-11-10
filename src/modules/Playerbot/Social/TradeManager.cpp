@@ -167,6 +167,21 @@ namespace Playerbot
     }
 
     bool TradeManager::InitiateTrade(Player* target, std::string const& reason)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
     {
         if (!target)
             return false;
@@ -214,10 +229,25 @@ namespace Playerbot
             LogTradeAction("INITIATE_FAILED", "Target already trading");
             return false;
         }
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+    return nullptr;
+}
 
         // Initialize trade session
         ResetTradeSession();
         m_currentSession.traderGuid = targetGuid;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
+            return nullptr;
+        }
         m_currentSession.startTime = std::chrono::steady_clock::now();
         SetTradeState(TradeState::INITIATING);
 
@@ -310,6 +340,11 @@ namespace Playerbot
                 LogTradeAction("ACCEPT_FAILED", "Item validation failed");
                 CancelTrade("Invalid items in trade");
                 return false;
+            if (!trader)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+                return nullptr;
+            }
             }
 
             if (!IsTradeSafe())
@@ -320,6 +355,11 @@ namespace Playerbot
             }
         }
 
+        if (!trader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+            return nullptr;
+        }
         // Check for scam (skip for owner trades)
         if (m_securityLevel >= TradeSecurity::STANDARD)
         {
@@ -331,6 +371,11 @@ namespace Playerbot
                 // For now, we'll allow trades with group leader as owner
                 Group* group = GetBot()->GetGroup();
                 if (group && group->GetLeaderGUID() == trader->GetGUID())
+                if (!trader)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+                    return;
+                }
                     isOwnerTrade = true;
             }
 
@@ -470,10 +515,20 @@ namespace Playerbot
 
         TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
+            if (!trader)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+                return;
+            }
             return false;
 
         // Validate gold amount
         if (!ValidateTradeGold(gold))
+        if (!trader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetName");
+            return;
+        }
         {
             LogTradeAction("SET_GOLD_FAILED", "Invalid gold amount: " + std::to_string(gold));
             return false;
@@ -485,10 +540,20 @@ namespace Playerbot
             LogTradeAction("SET_GOLD_FAILED", "Insufficient gold");
             return false;
         }
+if (!trader)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+    return nullptr;
+}
 
         // Set gold in trade
         myTrade->SetMoney(gold);
         m_currentSession.offeredGold = gold;
+        if (!trader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetName");
+            return;
+        }
         SetTradeState(TradeState::ADDING_ITEMS);
 
         LogTradeAction("SET_GOLD", "Set gold to " + std::to_string(gold));
@@ -501,6 +566,16 @@ namespace Playerbot
             return;
 
         m_currentSession.traderGuid = trader->GetGUID();
+        if (!trader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGUID");
+            return;
+        }
+        if (!trader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetName");
+            return nullptr;
+        }
         SetTradeState(TradeState::ADDING_ITEMS);
         m_currentSession.startTime = std::chrono::steady_clock::now();
 
@@ -573,6 +648,11 @@ namespace Playerbot
         {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - it->second.requestTime).count();
+if (!recipient)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: recipient in method GetName");
+    return;
+}
 
             if (elapsed > TRADE_REQUEST_TIMEOUT)
             {
@@ -598,6 +678,11 @@ namespace Playerbot
             if (m_updateTimer >= TRADE_UPDATE_INTERVAL)
             {
                 m_updateTimer = 0;
+                if (!recipient)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: recipient in method GetName");
+                    return;
+                }
                 ProcessTradeUpdate(elapsed);
             }
 
@@ -606,6 +691,11 @@ namespace Playerbot
                 now - m_currentSession.startTime).count();
 
             if (elapsed > TRADE_TIMEOUT)
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return;
+            }
             {
                 LogTradeAction("TRADE_TIMEOUT", "Trade timed out after " + std::to_string(elapsed) + "ms");
                 CancelTrade("Trade timeout");
@@ -617,6 +707,11 @@ namespace Playerbot
         {
             auto& transfer = m_pendingTransfers.front();
             Player* recipient = ObjectAccessor::FindPlayer(transfer.second);
+                        if (!recipient)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: recipient in method GetName");
+                            return nullptr;
+                        }
 
             if (recipient && transfer.first)
             {
@@ -631,6 +726,11 @@ namespace Playerbot
         }
     }
 
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return;
+    }
     bool TradeManager::DistributeLoot(std::vector<Item*> const& items, bool useNeedGreed)
     {
         if (!GetBot() || items.empty())
@@ -656,11 +756,21 @@ namespace Playerbot
         uint32 distributedCount = 0;
         for (Item* item : items)
         {
+            if (!owner)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: owner in method GetItemByPos");
+                return nullptr;
+            }
             if (!item)
                 continue;
 
             // Find best recipient
             std::vector<Player*> candidates;
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return;
+            }
             for (Group::MemberSlot const& member : group->GetMemberSlots())
             {
                 if (Player* player = ObjectAccessor::FindPlayer(member.guid))
@@ -677,6 +787,11 @@ namespace Playerbot
             if (recipient)
             {
                 m_pendingTransfers.push({item, recipient->GetGUID()});
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return;
+                }
                 distributedCount++;
             }
         }
@@ -686,9 +801,29 @@ namespace Playerbot
         return distributedCount > 0;
     }
 
+    if (!owner)
+    {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGroup");
+            return nullptr;
+        }
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: owner in method GetItemByPos");
+        return;
+    }
     bool TradeManager::SendItemToPlayer(Item* item, Player* recipient)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
+        return nullptr;
+    }
     {
         if (!item || !recipient || !GetBot())
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             return false;
 
         // Check if we can trade with recipient
@@ -698,12 +833,22 @@ namespace Playerbot
         // Initiate trade
         if (!InitiateTrade(recipient, "Sending item"))
             return false;
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+    return nullptr;
+}
 
         // Add item to trade
         if (!AddItemToTrade(item))
         {
             CancelTrade("Failed to add item");
             return false;
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
         }
 
         // Auto-accept after a short delay
@@ -712,6 +857,11 @@ namespace Playerbot
         return true;
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     bool TradeManager::RequestItemFromPlayer(uint32 itemEntry, Player* owner)
     {
         if (!owner || !GetBot() || itemEntry == 0)
@@ -722,8 +872,28 @@ namespace Playerbot
         for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
             if (Item* item = owner->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (!owner)
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGroup");
+                return;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: owner in method GetItemByPos");
+                return nullptr;
+            }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
+                return nullptr;
+            }
             {
                 if (item->GetEntry() == itemEntry)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                    return nullptr;
+                }
                 {
                     hasItem = true;
                     break;
@@ -733,24 +903,54 @@ namespace Playerbot
 
         if (!hasItem)
         {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             LogTradeAction("REQUEST_ITEM_FAILED", "Owner doesn't have item " + std::to_string(itemEntry));
             return false;
         }
 
         // Initiate trade
         return InitiateTrade(owner, "Requesting item " + std::to_string(itemEntry));
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+        return;
+    }
     }
 
     bool TradeManager::ValidateTradeTarget(Player* target) const
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return nullptr;
+        }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return nullptr;
+    }
     {
         if (!target || !GetBot())
             return false;
 
         // Check blacklist
         if (IsBlacklisted(target->GetGUID()))
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         {
             LogTradeAction("VALIDATE_TARGET_FAILED", "Target is blacklisted");
             return false;
+        if (!memberPlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+            return nullptr;
+        }
         }
 
         // Check permissions based on security level
@@ -759,10 +959,25 @@ namespace Playerbot
             // Must be in same group or guild
             Group* myGroup = GetBot()->GetGroup();
             Group* theirGroup = target->GetGroup();
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGroup");
+                return;
+            }
 
             bool sameGroup = myGroup && theirGroup && myGroup == theirGroup;
             bool sameGuild = GetBot()->GetGuildId() &&
                            GetBot()->GetGuildId() == target->GetGuildId();
+                           if (!target)
+                           {
+                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
+                               return false;
+                           }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
 
             if (!sameGroup && !sameGuild && !IsWhitelisted(target->GetGUID()))
             {
@@ -774,6 +989,16 @@ namespace Playerbot
         // Check if target is the group leader (acting as owner)
         Group* myGroup = GetBot()->GetGroup();
         if (myGroup && myGroup->GetLeaderGUID() == target->GetGUID())
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return nullptr;
+            }
             return true;
 
         // Check whitelist requirement
@@ -787,15 +1012,30 @@ namespace Playerbot
         }
 
         return true;
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return nullptr;
+    }
     }
 
     bool TradeManager::ValidateTradeItems() const
     {
         if (!GetBot())
             return false;
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return false;
+}
 
         TradeData* myTrade = GetBot()->GetTradeData();
         if (!myTrade)
+            if (!memberPlayer)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+                return;
+            }
             return true;
 
         // Check each offered item
@@ -858,6 +1098,16 @@ namespace Playerbot
         // Allow one-sided trades from group leader (acting as owner)
         Group* group = GetBot()->GetGroup();
         if (group && group->GetLeaderGUID() == m_currentSession.traderGuid)
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+            return;
+        }
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
             return true;
 
         // Allow one-sided trades from other group members
@@ -867,6 +1117,11 @@ namespace Playerbot
             {
                 Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
                 if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
+                if (!memberPlayer)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+                    return;
+                }
                     return true;
             }
         }
@@ -881,6 +1136,11 @@ namespace Playerbot
             return false;
 
         return CheckForScamPatterns();
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return;
+    }
     }
 
     bool TradeManager::IsTradeSafe() const
@@ -890,9 +1150,19 @@ namespace Playerbot
             return false;
 
         // Check item validity
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         if (!ValidateTradeItems())
             return false;
 
+        if (!memberPlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+            return nullptr;
+        }
         // Check gold validity
         if (!ValidateTradeGold(m_currentSession.offeredGold))
             return false;
@@ -907,6 +1177,11 @@ namespace Playerbot
 
         return EstimateItemValue(item->GetEntry(), item->GetCount());
     }
+if (!trader)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGuildId");
+    return;
+}
 
     uint32 TradeManager::EstimateItemValue(uint32 itemEntry, uint32 count) const
     {
@@ -966,6 +1241,11 @@ namespace Playerbot
         {
             if (!myTrade->GetItem(TradeSlots(slot)))
                 return slot;
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+            return nullptr;
+        }
         }
 
         return MAX_TRADE_ITEMS;
@@ -975,9 +1255,19 @@ namespace Playerbot
     {
         std::vector<Item*> tradableItems;
 
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         if (!GetBot())
             return tradableItems;
 
+        if (!memberPlayer)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+            return nullptr;
+        }
         // Check main inventory
         for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
@@ -992,6 +1282,11 @@ namespace Playerbot
         for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         {
             if (Bag* bag = GetBot()->GetBagByPos(i))
+            if (!trader)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGuildId");
+                return nullptr;
+            }
             {
                 for (uint32 j = 0; j < bag->GetBagSize(); ++j)
                 {
@@ -1050,20 +1345,40 @@ namespace Playerbot
             bool shouldAutoAccept = false;
 
             // Auto-accept from group leader (acting as owner)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+                return nullptr;
+            }
             Group* group = GetBot()->GetGroup();
             if (group && group->GetLeaderGUID() == m_currentSession.traderGuid)
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                return;
+            }
                 shouldAutoAccept = true;
 
             // Auto-accept from group members
             if (m_autoAcceptGroup && !shouldAutoAccept)
             {
                 Group* group = GetBot()->GetGroup();
+                    if (!group)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                        return nullptr;
+                    }
                 if (group)
                 {
                     for (Group::MemberSlot const& member : group->GetMemberSlots())
                     {
                         Player* memberPlayer = ObjectAccessor::FindPlayer(member.guid);
                         if (memberPlayer && memberPlayer->GetGUID() == m_currentSession.traderGuid)
+                        if (!memberPlayer)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: memberPlayer in method GetGUID");
+                            return;
+                        }
                         {
                             shouldAutoAccept = true;
                             break;
@@ -1077,8 +1392,23 @@ namespace Playerbot
             {
                 Player* trader = ObjectAccessor::FindPlayer(m_currentSession.traderGuid);
                 if (trader && GetBot()->GetGuildId() &&
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return nullptr;
+                    }
                     GetBot()->GetGuildId() == trader->GetGuildId())
+                    if (!trader)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trader in method GetGuildId");
+                        return nullptr;
+                    }
                 {
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return nullptr;
+                    }
                     shouldAutoAccept = true;
                 }
             }
@@ -1135,6 +1465,11 @@ namespace Playerbot
                     baseValue /= 3;
                     break;
             }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+            return nullptr;
+        }
         }
 
         return baseValue;
@@ -1177,6 +1512,11 @@ namespace Playerbot
             return false;
 
         // Check if bot can use the item
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
         if (!GetBot()->CanUseItem(itemTemplate))
             return false;
 
@@ -1184,6 +1524,11 @@ namespace Playerbot
         // This would need more complex logic based on bot's current gear
         // For now, return true if usable
         return true;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     }
 
     bool TradeManager::IsItemUsableByBot(Item* item) const
@@ -1241,6 +1586,11 @@ namespace Playerbot
         if (slot < EQUIPMENT_SLOT_END)
         {
             if (Item* currentItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+                return nullptr;
+            }
             {
                 if (itemTemplate->GetBaseItemLevel() > currentItem->GetTemplate()->GetBaseItemLevel())
                     priority += 500;
@@ -1283,6 +1633,16 @@ namespace Playerbot
             if (Player* player = ObjectAccessor::FindPlayer(member.guid))
             {
                 distribution.playerPriorities[player->GetGUID()] = 0;
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return nullptr;
+                }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                            return nullptr;
+                        }
 
                 // Build needs list
                 for (Item* item : distribution.items)

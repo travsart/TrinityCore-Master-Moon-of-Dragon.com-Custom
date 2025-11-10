@@ -30,10 +30,12 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
 #include "ProfessionManager.h"
+#include "../Core/DI/Interfaces/IFarmingCoordinator.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -152,7 +154,7 @@ struct FarmingStatistics
 /**
  * @brief Complete farming coordination system for profession leveling
  */
-class TC_GAME_API FarmingCoordinator
+class TC_GAME_API FarmingCoordinator final : public IFarmingCoordinator
 {
 public:
     static FarmingCoordinator* instance();
@@ -164,24 +166,24 @@ public:
     /**
      * Initialize farming coordinator on server startup
      */
-    void Initialize();
+    void Initialize() override;
 
     /**
      * Update farming coordination for player (called periodically)
      */
-    void Update(::Player* player, uint32 diff);
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Enable/disable farming coordination for player
      */
-    void SetEnabled(::Player* player, bool enabled);
-    bool IsEnabled(::Player* player) const;
+    void SetEnabled(::Player* player, bool enabled) override;
+    bool IsEnabled(::Player* player) const override;
 
     /**
      * Get coordination profile for player
      */
-    void SetCoordinatorProfile(uint32 playerGuid, FarmingCoordinatorProfile const& profile);
-    FarmingCoordinatorProfile GetCoordinatorProfile(uint32 playerGuid) const;
+    void SetCoordinatorProfile(uint32 playerGuid, FarmingCoordinatorProfile const& profile) override;
+    FarmingCoordinatorProfile GetCoordinatorProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // SKILL ANALYSIS
@@ -191,30 +193,30 @@ public:
      * Check if profession skill needs catch-up farming
      * Returns true if skill gap exceeds threshold
      */
-    bool NeedsFarming(::Player* player, ProfessionType profession) const;
+    bool NeedsFarming(::Player* player, ProfessionType profession) const override;
 
     /**
      * Calculate skill gap for profession
      * Returns: (target skill) - (current skill)
      * Positive = behind, Negative = ahead
      */
-    int32 GetSkillGap(::Player* player, ProfessionType profession) const;
+    int32 GetSkillGap(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get target skill level for character level
      * Formula: character_level × skillLevelMultiplier
      */
-    uint16 GetTargetSkillLevel(::Player* player, ProfessionType profession) const;
+    uint16 GetTargetSkillLevel(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get professions that need farming (sorted by priority)
      */
-    std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const;
+    std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const override;
 
     /**
      * Calculate recommended farming duration based on skill gap
      */
-    uint32 CalculateFarmingDuration(::Player* player, ProfessionType profession) const;
+    uint32 CalculateFarmingDuration(::Player* player, ProfessionType profession) const override;
 
     // ============================================================================
     // FARMING SESSION MANAGEMENT
@@ -223,32 +225,32 @@ public:
     /**
      * Start farming session for profession
      */
-    bool StartFarmingSession(::Player* player, ProfessionType profession, FarmingSessionType sessionType = FarmingSessionType::SKILL_CATCHUP);
+    bool StartFarmingSession(::Player* player, ProfessionType profession, FarmingSessionType sessionType = FarmingSessionType::SKILL_CATCHUP) override;
 
     /**
      * Stop active farming session
      */
-    void StopFarmingSession(::Player* player);
+    void StopFarmingSession(::Player* player) override;
 
     /**
      * Get active farming session for player
      */
-    FarmingSession const* GetActiveFarmingSession(uint32 playerGuid) const;
+    FarmingSession const* GetActiveFarmingSession(uint32 playerGuid) const override;
 
     /**
      * Check if player has active farming session
      */
-    bool HasActiveFarmingSession(::Player* player) const;
+    bool HasActiveFarmingSession(::Player* player) const override;
 
     /**
      * Update farming session progress
      */
-    void UpdateFarmingSession(::Player* player, uint32 diff);
+    void UpdateFarmingSession(::Player* player, uint32 diff) override;
 
     /**
      * Check if farming session should end
      */
-    bool ShouldEndFarmingSession(::Player* player, FarmingSession const& session) const;
+    bool ShouldEndFarmingSession(::Player* player, FarmingSession const& session) const override;
 
     // ============================================================================
     // ZONE SELECTION
@@ -257,12 +259,12 @@ public:
     /**
      * Get optimal farming zone for profession and skill level
      */
-    FarmingZoneInfo const* GetOptimalFarmingZone(::Player* player, ProfessionType profession) const;
+    FarmingZoneInfo const* GetOptimalFarmingZone(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get all suitable zones for skill level
      */
-    std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const;
+    std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const override;
 
     /**
      * Calculate zone score based on:
@@ -271,7 +273,7 @@ public:
      * - Skill-up potential
      * - Safety (PvP risk)
      */
-    float CalculateZoneScore(::Player* player, FarmingZoneInfo const& zone) const;
+    float CalculateZoneScore(::Player* player, FarmingZoneInfo const& zone) const override;
 
     // ============================================================================
     // MATERIAL MANAGEMENT
@@ -280,29 +282,29 @@ public:
     /**
      * Check if material stockpile target reached
      */
-    bool HasReachedStockpileTarget(::Player* player, uint32 itemId) const;
+    bool HasReachedStockpileTarget(::Player* player, uint32 itemId) const override;
 
     /**
      * Get current material count in inventory
      */
-    uint32 GetMaterialCount(::Player* player, uint32 itemId) const;
+    uint32 GetMaterialCount(::Player* player, uint32 itemId) const override;
 
     /**
      * Get materials needed for auction house target
      */
-    std::vector<std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const;
+    std::vector<std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const override;
 
     // ============================================================================
     // STATISTICS
     // ============================================================================
 
-    FarmingStatistics const& GetPlayerStatistics(uint32 playerGuid) const;
-    FarmingStatistics const& GetGlobalStatistics() const;
+    FarmingStatistics const& GetPlayerStatistics(uint32 playerGuid) const override;
+    FarmingStatistics const& GetGlobalStatistics() const override;
 
     /**
      * Reset statistics for player
      */
-    void ResetStatistics(uint32 playerGuid);
+    void ResetStatistics(uint32 playerGuid) override;
 
 private:
     FarmingCoordinator();
@@ -367,7 +369,7 @@ private:
     std::unordered_map<uint32, FarmingStatistics> _playerStatistics;
     FarmingStatistics _globalStatistics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
 
     // Session ID generator
     std::atomic<uint32> _nextSessionId{1};

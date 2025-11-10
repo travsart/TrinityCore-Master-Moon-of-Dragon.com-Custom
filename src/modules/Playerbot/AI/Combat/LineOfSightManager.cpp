@@ -26,6 +26,11 @@ namespace Playerbot
 {
 
 LineOfSightManager::LineOfSightManager(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     : _bot(bot), _cacheDuration(DEFAULT_CACHE_DURATION), _lastCacheCleanup(0),
       _maxRange(DEFAULT_MAX_RANGE), _heightTolerance(DEFAULT_HEIGHT_TOLERANCE),
       _angleTolerance(M_PI/3), _enableCaching(true), _profilingEnabled(false),
@@ -58,7 +63,17 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
         }
 
         ObjectGuid sourceGuid = context.source->GetGUID();
+        if (!source)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: source in method GetGUID");
+            return;
+        }
         ObjectGuid targetGuid = context.target->GetGUID();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 
         if (_enableCaching)
         {
@@ -88,6 +103,11 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
             cacheEntry.checkType = context.checkType;
 
             AddCacheEntry(cacheEntry);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
 
         if (result.hasLineOfSight)
@@ -100,9 +120,24 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
         TrackPerformance(duration, false, result.hasLineOfSight);
     }
     catch (const std::exception& e)
+    if (!bot)
     {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    {
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+            return;
+        }
         result.hasLineOfSight = false;
         result.failureReason = std::string("Exception during LoS check: ") + e.what();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         TC_LOG_ERROR("playerbot.los", "Exception in CheckLineOfSight for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -116,6 +151,11 @@ LoSResult LineOfSightManager::CheckLineOfSight(Unit* target, LoSCheckType checkT
     context.source = _bot;
     context.target = target;
     context.sourcePos = _bot->GetPosition();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
     context.targetPos = target->GetPosition();
     context.checkType = checkType;
     context.maxRange = _maxRange;
@@ -142,7 +182,17 @@ LoSResult LineOfSightManager::CheckLineOfSight(Unit* target, LoSCheckType checkT
 
 LoSResult LineOfSightManager::CheckLineOfSight(const Position& targetPos, LoSCheckType checkType)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     LoSContext context;
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+        return nullptr;
+    }
     context.bot = _bot;
     context.source = _bot;
     context.target = nullptr;
@@ -213,8 +263,18 @@ bool LineOfSightManager::CanHealTarget(Unit* target)
 }
 
 bool LineOfSightManager::CanInterruptTarget(Unit* target)
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+        return nullptr;
+    }
 {
     if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return false;
 
     LoSResult result = CheckLineOfSight(target, LoSCheckType::INTERRUPT);
@@ -236,6 +296,21 @@ std::vector<Position> LineOfSightManager::FindLineOfSightPositions(Unit* target,
 
     Position targetPos = target->GetPosition();
     Position botPos = _bot->GetPosition();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
 
     for (float angle = 0.0f; angle < 2.0f * M_PI; angle += M_PI / 8.0f)
     {
@@ -259,11 +334,26 @@ std::vector<Position> LineOfSightManager::FindLineOfSightPositions(Unit* target,
 Position LineOfSightManager::FindBestLineOfSightPosition(Unit* target, float preferredRange)
 {
     if (!target)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot->GetPosition();
 
     std::vector<Position> candidates = FindLineOfSightPositions(target, preferredRange > 0.0f ? preferredRange : 20.0f);
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+        return nullptr;
+    }
 
     if (candidates.empty())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         return _bot->GetPosition();
 
     Position botPos = _bot->GetPosition();
@@ -273,6 +363,11 @@ Position LineOfSightManager::FindBestLineOfSightPosition(Unit* target, float pre
     for (const Position& pos : candidates)
     {
         float distance = pos.GetExactDist(&botPos);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
         float score = 100.0f - distance;
 
         if (preferredRange > 0.0f)
@@ -299,6 +394,11 @@ bool LineOfSightManager::HasLineOfSightFromPosition(const Position& fromPos, Uni
     LoSContext context;
     context.bot = _bot;
     context.source = _bot;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     context.target = target;
     context.sourcePos = fromPos;
     context.targetPos = target->GetPosition();
@@ -306,6 +406,11 @@ bool LineOfSightManager::HasLineOfSightFromPosition(const Position& fromPos, Uni
     context.validationFlags = LoSValidation::BASIC_LOS;
 
     LoSResult result = CheckLineOfSight(context);
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+        return nullptr;
+    }
     return result.hasLineOfSight;
 }
 
@@ -315,6 +420,21 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return visibleEnemies;
 
@@ -332,10 +452,25 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     // Resolve GUIDs to Unit pointers and filter visible enemies
     for (ObjectGuid guid : nearbyGuids)
     {
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+                return nullptr;
+            }
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return;
+        }
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -357,6 +492,16 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return visibleAllies;
 
@@ -370,6 +515,11 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
             return visibleAllies;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+        return nullptr;
+    }
     // Query nearby creature GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
@@ -378,6 +528,21 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
     for (ObjectGuid guid : nearbyGuids)
     {
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return;
+        }
         if (!unit || !unit->IsAlive())
             continue;
 
@@ -426,6 +591,16 @@ bool LineOfSightManager::IsHeightDifferenceBlocking(Unit* target)
         return false;
 
     float heightDiff = std::abs(_bot->GetPositionZ() - target->GetPositionZ());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+        return;
+    }
     return heightDiff > _heightTolerance;
 }
 
@@ -446,6 +621,11 @@ void LineOfSightManager::ClearCache()
 {
     // No lock needed - line of sight cache is per-bot instance data
     _losCache.clear();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     TC_LOG_DEBUG("playerbot.los", "LoS cache cleared for bot {}", _bot->GetName());
 }
 
@@ -477,6 +657,11 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
 
     Position from = context.sourcePos;
     Position to = context.targetPos;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     result.distance = CalculateDistance3D(from, to);
     result.heightDifference = std::abs(to.GetPositionZ() - from.GetPositionZ());
@@ -487,6 +672,11 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
         result.failureReason = "Target out of range";
         return result;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     if (!IsHeightDifferenceAcceptable(from, to, context.maxHeightDiff))
     {
@@ -499,6 +689,11 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
     {
         result.blockedByTerrain = true;
         result.failureReason = "Blocked by terrain";
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
         return result;
     }
 
@@ -513,8 +708,23 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
     {
         result.blockedByObject = true;
         result.failureReason = "Blocked by object";
+    if (!obj)
+    {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
+        return nullptr;
+    }
         return result;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     if ((context.validationFlags & LoSValidation::UNITS) && !context.ignoreUnits && CheckUnitBlocking(from, to, context.target))
     {
@@ -547,12 +757,27 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
     }
 
     result.hasLineOfSight = true;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     return result;
 }
 
 bool LineOfSightManager::CheckTerrainBlocking(const Position& from, const Position& to)
 {
     Map* map = _bot->GetMap();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return true;
 
@@ -563,8 +788,23 @@ bool LineOfSightManager::CheckTerrainBlocking(const Position& from, const Positi
 bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Position& to)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+        return;
+    }
+    }
     if (!map)
         return false;
+if (!unit)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+    return;
+}
 
     return !map->IsInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,
                                to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f, LINEOFSIGHT_CHECK_VMAP);
@@ -575,6 +815,21 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     float searchRange = std::max(from.GetExactDist(&to), 30.0f);
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return false;
 
@@ -596,10 +851,20 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
     for (ObjectGuid guid : nearbyGuids)
     {
         GameObject* obj = _bot->GetMap()->GetGameObject(guid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return 0;
+        }
         if (!obj || !obj->IsInWorld())
             continue;
 
         if (obj->GetGoType() == GAMEOBJECT_TYPE_DOOR && obj->GetGoState() == GO_STATE_ACTIVE)
+        if (!obj)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
+            return nullptr;
+        }
             continue;
 
         float objDistance = std::sqrt(obj->GetExactDistSq(from)); // Calculate once from squared distance
@@ -623,6 +888,16 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     float searchRange = from.GetExactDist(&to);
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return false;
 
@@ -645,6 +920,11 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     {
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!unit || unit == _bot || unit == ignoreUnit)
+        if (!unit)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+            return nullptr;
+        }
             continue;
 
         if (!unit->IsAlive())
@@ -665,6 +945,11 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
 bool LineOfSightManager::CheckWaterBlocking(const Position& from, const Position& to)
 {
     Map* map = _bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return false;
 

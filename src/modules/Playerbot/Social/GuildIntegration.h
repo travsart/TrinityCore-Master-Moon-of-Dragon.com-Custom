@@ -10,10 +10,12 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "Chat.h"
+#include "../Core/DI/Interfaces/IGuildIntegration.h"
 #include <unordered_map>
 #include <vector>
 #include <queue>
@@ -78,35 +80,35 @@ struct GuildChatMessage
  * This system provides intelligent guild interactions including chat participation,
  * guild bank management, event coordination, and social activities for playerbots.
  */
-class TC_GAME_API GuildIntegration
+class TC_GAME_API GuildIntegration final : public IGuildIntegration
 {
 public:
     static GuildIntegration* instance();
 
     // Core guild functionality using TrinityCore's Guild system
-    void ProcessGuildInteraction(Player* player);
-    void HandleGuildChat(Player* player, const GuildChatMessage& message);
-    void ParticipateInGuildActivities(Player* player);
-    void ManageGuildResponsibilities(Player* player);
+    void ProcessGuildInteraction(Player* player) override;
+    void HandleGuildChat(Player* player, const GuildChatMessage& message) override;
+    void ParticipateInGuildActivities(Player* player) override;
+    void ManageGuildResponsibilities(Player* player) override;
 
     // Guild chat automation
-    void AutomateGuildChatParticipation(Player* player);
-    void RespondToGuildChat(Player* player, const GuildChatMessage& message);
-    void InitiateGuildConversation(Player* player);
-    void ShareGuildInformation(Player* player, const std::string& topic);
+    void AutomateGuildChatParticipation(Player* player) override;
+    void RespondToGuildChat(Player* player, const GuildChatMessage& message) override;
+    void InitiateGuildConversation(Player* player) override;
+    void ShareGuildInformation(Player* player, const std::string& topic) override;
 
     // Guild bank management
-    void AutomateGuildBankInteractions(Player* player);
-    void DepositItemsToGuildBank(Player* player);
-    void WithdrawNeededItems(Player* player);
-    void OrganizeGuildBank(Player* player);
-    void ManageGuildBankPermissions(Player* player);
+    void AutomateGuildBankInteractions(Player* player) override;
+    void DepositItemsToGuildBank(Player* player) override;
+    void WithdrawNeededItems(Player* player) override;
+    void OrganizeGuildBank(Player* player) override;
+    void ManageGuildBankPermissions(Player* player) override;
 
     // Guild event coordination
-    void CoordinateGuildEvents(Player* player);
-    void ScheduleGuildActivities(Player* player);
-    void ManageGuildCalendar(Player* player);
-    void OrganizeGuildRuns(Player* player);
+    void CoordinateGuildEvents(Player* player) override;
+    void ScheduleGuildActivities(Player* player) override;
+    void ManageGuildCalendar(Player* player) override;
+    void OrganizeGuildRuns(Player* player) override;
 
     // Advanced guild features
     struct GuildProfile
@@ -129,8 +131,8 @@ public:
             , dailyActivityQuota(10), autoAcceptGuildInvites(true) {}
     };
 
-    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile);
-    GuildProfile GetGuildProfile(uint32 playerGuid);
+    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile) override;
+    GuildProfile GetGuildProfile(uint32 playerGuid) override;
 
     // Guild participation tracking
     struct GuildParticipation
@@ -159,20 +161,20 @@ public:
             , joinDate(getMSTime()) {}
     };
 
-    GuildParticipation GetGuildParticipation(uint32 playerGuid);
-    void UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType);
+    GuildParticipation GetGuildParticipation(uint32 playerGuid) override;
+    void UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType) override;
 
     // Guild recruitment assistance
-    void AssistWithRecruitment(Player* player);
-    void EvaluateRecruitmentCandidates(Player* player);
-    void WelcomeNewGuildMembers(Player* player);
-    void MentorJuniorMembers(Player* player);
+    void AssistWithRecruitment(Player* player) override;
+    void EvaluateRecruitmentCandidates(Player* player) override;
+    void WelcomeNewGuildMembers(Player* player) override;
+    void MentorJuniorMembers(Player* player) override;
 
     // Guild leadership support
-    void SupportGuildLeadership(Player* player);
-    void HandleOfficerDuties(Player* player);
-    void AssistWithGuildManagement(Player* player);
-    void ProvideMemberFeedback(Player* player);
+    void SupportGuildLeadership(Player* player) override;
+    void HandleOfficerDuties(Player* player) override;
+    void AssistWithGuildManagement(Player* player) override;
+    void ProvideMemberFeedback(Player* player) override;
 
     // Chat intelligence and response generation
     struct ChatIntelligence
@@ -188,22 +190,22 @@ public:
         ChatIntelligence() : lastResponseTime(0), responseFrequency(0.3f) {}
     };
 
-    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
-    std::string GenerateConversationStarter(Player* player);
-    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message);
-    void LearnFromGuildConversations(Player* player);
+    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) override;
+    std::string GenerateConversationStarter(Player* player) override;
+    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message) override;
+    void LearnFromGuildConversations(Player* player) override;
 
     // Guild achievement coordination
-    void ContributeToGuildAchievements(Player* player);
-    void CoordinateAchievementEfforts(Guild* guild);
-    void TrackAchievementProgress(Player* player);
-    void CelebrateGuildAchievements(Player* player);
+    void ContributeToGuildAchievements(Player* player) override;
+    void CoordinateAchievementEfforts(Guild* guild) override;
+    void TrackAchievementProgress(Player* player) override;
+    void CelebrateGuildAchievements(Player* player) override;
 
     // Guild social features
-    void OrganizeSocialEvents(Player* player);
-    void ParticipateInGuildTradition(Player* player);
-    void MaintainGuildFriendships(Player* player);
-    void HandleGuildConflicts(Player* player);
+    void OrganizeSocialEvents(Player* player) override;
+    void ParticipateInGuildTradition(Player* player) override;
+    void MaintainGuildFriendships(Player* player) override;
+    void HandleGuildConflicts(Player* player) override;
 
     // Performance monitoring
     struct GuildMetrics
@@ -257,45 +259,45 @@ public:
         }
     };
 
-    GuildMetrics GetPlayerGuildMetrics(uint32 playerGuid);
-    GuildMetrics GetGuildBotMetrics(uint32 guildId);
+    GuildMetrics GetPlayerGuildMetrics(uint32 playerGuid) override;
+    GuildMetrics GetGuildBotMetrics(uint32 guildId) override;
 
     // Guild bank automation
-    void OptimizeGuildBankUsage(Player* player);
-    void AutoDepositValuableItems(Player* player);
-    void AutoWithdrawNeededConsumables(Player* player);
-    void ManageGuildBankTabs(Player* player);
-    void TrackGuildBankActivity(Player* player);
+    void OptimizeGuildBankUsage(Player* player) override;
+    void AutoDepositValuableItems(Player* player) override;
+    void AutoWithdrawNeededConsumables(Player* player) override;
+    void ManageGuildBankTabs(Player* player) override;
+    void TrackGuildBankActivity(Player* player) override;
 
     // Guild event management
-    void CreateGuildEvent(Player* player, const std::string& eventType);
-    void ManageGuildCalendarEvents(Player* player);
-    void CoordinateRaidScheduling(Player* player);
-    void OrganizePvPEvents(Player* player);
+    void CreateGuildEvent(Player* player, const std::string& eventType) override;
+    void ManageGuildCalendarEvents(Player* player) override;
+    void CoordinateRaidScheduling(Player* player) override;
+    void OrganizePvPEvents(Player* player) override;
 
     // Advanced guild AI
-    void AnalyzeGuildDynamics(Guild* guild);
-    void AdaptToGuildCulture(Player* player);
-    void DetectGuildMoodAndTone(Guild* guild);
-    void AdjustBehaviorToGuildNorms(Player* player);
+    void AnalyzeGuildDynamics(Guild* guild) override;
+    void AdaptToGuildCulture(Player* player) override;
+    void DetectGuildMoodAndTone(Guild* guild) override;
+    void AdjustBehaviorToGuildNorms(Player* player) override;
 
     // Configuration and customization
-    void SetGuildAutomationLevel(uint32 playerGuid, float level);
-    void EnableGuildActivity(uint32 playerGuid, GuildActivityType activity, bool enable);
-    void SetGuildChatFrequency(uint32 playerGuid, float frequency);
-    void ConfigureGuildBankAccess(uint32 playerGuid, bool autoDeposit, bool autoWithdraw);
+    void SetGuildAutomationLevel(uint32 playerGuid, float level) override;
+    void EnableGuildActivity(uint32 playerGuid, GuildActivityType activity, bool enable) override;
+    void SetGuildChatFrequency(uint32 playerGuid, float frequency) override;
+    void ConfigureGuildBankAccess(uint32 playerGuid, bool autoDeposit, bool autoWithdraw) override;
 
     // Error handling and recovery
-    void HandleGuildInteractionError(uint32 playerGuid, const std::string& error);
-    void RecoverFromGuildFailure(uint32 playerGuid);
-    void HandleGuildLeaving(Player* player);
-    void HandleGuildInvitations(Player* player, uint32 guildId);
+    void HandleGuildInteractionError(uint32 playerGuid, const std::string& error) override;
+    void RecoverFromGuildFailure(uint32 playerGuid) override;
+    void HandleGuildLeaving(Player* player) override;
+    void HandleGuildInvitations(Player* player, uint32 guildId) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateGuildParticipation();
-    void ProcessGuildEvents();
-    void CleanupGuildData();
+    void Update(uint32 diff) override;
+    void UpdateGuildParticipation() override;
+    void ProcessGuildEvents() override;
+    void CleanupGuildData() override;
 
 private:
     GuildIntegration();
@@ -312,13 +314,13 @@ private:
     std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
     std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
     std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
-    mutable std::recursive_mutex _guildMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _guildMutex;
 
     // Chat intelligence system
     std::unordered_map<uint32, ChatIntelligence> _chatIntelligence; // playerGuid -> intelligence
     std::unordered_map<std::string, std::vector<std::string>> _globalResponseTemplates;
     std::vector<std::string> _conversationTopics;
-    mutable std::recursive_mutex _chatMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _chatMutex;
 
     // Guild activity tracking
     struct GuildActivityTracker

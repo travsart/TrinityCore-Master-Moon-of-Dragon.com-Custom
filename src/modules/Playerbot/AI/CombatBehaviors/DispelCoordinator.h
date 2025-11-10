@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "SpellInfo.h"
 #include "SharedDefines.h"
@@ -444,7 +445,7 @@ private:
     static inline std::unordered_map<uint32, DebuffData> s_debuffDatabase;
     static inline std::unordered_map<uint32, PurgeableBuff> s_purgeDatabase;
     static inline bool s_databaseInitialized = false;
-    static inline std::recursive_mutex s_databaseMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> s_databaseMutex;
 };
 
 } // namespace Playerbot

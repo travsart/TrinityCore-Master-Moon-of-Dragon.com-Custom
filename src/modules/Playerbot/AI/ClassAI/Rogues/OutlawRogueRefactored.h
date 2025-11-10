@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Outlaw Rogue Refactored - Template-Based Implementation
  *
@@ -9,12 +9,21 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "RogueResourceTypes.h"  // Shared EnergyComboResource definition
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -185,6 +194,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::vector<Buff> _buffs;
 };
 
@@ -216,17 +226,16 @@ public:
     {
         // Initialize energy/combo resources
         this->_resource.maxEnergy = 100;
-        this->_resource.maxComboPoints = bot->HasSpell(193531) ? 6 : 5; // Deeper Stratagem
-        this->_resource.energy = this->_resource.maxEnergy;
+        this->_resource.maxComboPoints = bot->HasSpell(193531) ? 6 : 5; // Deeper Stratagem        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
-        InitializeCooldowns();
+        // Phase 5 Integration: Initialize decision systems
+        InitializeOutlawMechanics();
 
         TC_LOG_DEBUG("playerbot", "OutlawRogueRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -244,8 +253,7 @@ public:
         }
 
         // Main rotation
-        uint32 enemyCount = this->GetEnemiesInRange(8.0f);
-        if (enemyCount >= 2)
+        uint32 enemyCount = this->GetEnemiesInRange(8.0f);        if (enemyCount >= 2)
         {
             ExecuteAoERotation(target, enemyCount);
         }
@@ -257,9 +265,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-
-        // Enter stealth out of combat
+        Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
             this->CastSpell(bot, RogueAI::STEALTH);
@@ -372,7 +378,7 @@ protected:
         }
 
         // Priority 8: Pistol Shot if can't melee
-        if (GetDistanceToTarget(target) > 10.0f && energy >= 40)
+        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(PISTOL_SHOT, target))
             {
@@ -507,24 +513,264 @@ private:
         this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
-    float GetDistanceToTarget(::Unit* target) const
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeOutlawMechanics()
     {
-        if (!target || !this->GetBot())
-            return 1000.0f;
-        return this->GetBot()->GetDistance(target);
-    }
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
 
-    void InitializeCooldowns()
-    {
-        this->RegisterCooldown(RogueAI::ADRENALINE_RUSH, 180000);       // 3 min CD
-        this->RegisterCooldown(RogueAI::KILLING_SPREE, 120000);         // 2 min CD
-        this->RegisterCooldown(BLADE_RUSH, 45000);                      // 45 sec CD
-        this->RegisterCooldown(RogueAI::VANISH, 120000);                // 2 min CD
-        this->RegisterCooldown(RogueAI::CLOAK_OF_SHADOWS, 120000);      // 2 min CD
-        this->RegisterCooldown(RogueAI::KICK, 15000);                   // 15 sec CD
-        this->RegisterCooldown(RogueAI::BLIND, 120000);                 // 2 min CD
-        this->RegisterCooldown(RogueAI::GOUGE, 15000);                  // 15 sec CD
-        this->RegisterCooldown(MARKED_FOR_DEATH, 60000);                // 1 min CD
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🏴‍☠️ OUTLAW ROGUE: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Outlaw Rogue spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 30.0f;
+            }, "Bot HP < 30% (spell immunity)");
+
+            queue->RegisterSpell(FEINT_OUTLAW, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FEINT_OUTLAW, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "Bot HP < 50% (threat reduction + damage reduction)");
+
+            // CRITICAL: Burst cooldowns and Roll the Bones
+            queue->RegisterSpell(RogueAI::ADRENALINE_RUSH, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::ADRENALINE_RUSH, [this](Player* bot, Unit* target) {
+                return target && !this->_adrenalineRushActive;
+            }, "Not active (20s burst, 2.5x energy regen)");
+
+            queue->RegisterSpell(ROLL_THE_BONES, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ROLL_THE_BONES, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 25 &&
+                       this->_resource.comboPoints >= 1 &&
+                       this->_rollTheBonesTracker.NeedsReroll();
+            }, "25+ Energy, 1+ CP, needs reroll (random buffs)");
+
+            // HIGH: Finishers at 5-6 CP
+            queue->RegisterSpell(BETWEEN_THE_EYES, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(BETWEEN_THE_EYES, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 25 &&
+                       this->_resource.comboPoints >= this->_resource.maxComboPoints;
+            }, "25+ Energy, max CP (finisher with stun)");
+
+            queue->RegisterSpell(DISPATCH_OUTLAW, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISPATCH_OUTLAW, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
+            }, "35+ Energy, 4-5+ CP (finisher damage)");
+
+            // MEDIUM: Combo builders and AoE
+            queue->RegisterSpell(RogueAI::BLADE_FLURRY, SpellPriority::MEDIUM, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::BLADE_FLURRY, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 15 &&
+                       !this->_bladeFlurryActive &&
+                       this->GetEnemiesInRange(8.0f) >= 2;
+            }, "15+ Energy, not active, 2+ enemies (12s cleave)");
+
+            queue->RegisterSpell(BLADE_RUSH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(BLADE_RUSH, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(BLADE_RUSH) &&
+                       target && this->_resource.energy >= 25;
+            }, "Has talent, 25+ Energy (charge + AoE + 1 CP)");
+
+            queue->RegisterSpell(PISTOL_SHOT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(PISTOL_SHOT, [this](Player* bot, Unit* target) {
+                return target && bot->HasAura(OPPORTUNITY_PROC);
+            }, "Opportunity proc (free Pistol Shot, 1 CP)");
+
+            queue->RegisterSpell(RogueAI::SINISTER_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::SINISTER_STRIKE, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 45 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+            }, "45+ Energy, not max CP (generates 1-2 CP)");
+
+            queue->RegisterSpell(RogueAI::KICK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(RogueAI::KICK, [this](Player* bot, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            // LOW: Ranged filler
+            queue->RegisterSpell(PISTOL_SHOT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(PISTOL_SHOT, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 40 &&
+                       !bot->HasAura(OPPORTUNITY_PROC) &&
+                       PositionUtils::GetDistance(bot, target) > 10.0f;
+            }, "40+ Energy, > 10 yards, no proc (ranged builder)");
+
+            TC_LOG_INFO("module.playerbot", "🏴‍☠️ OUTLAW ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Outlaw Rogue DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Outlaw Rogue DPS", {
+                // Tier 1: Burst Cooldowns (Adrenaline Rush)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Use Burst", {
+                        Sequence("Cast Adrenaline Rush", {
+                            Condition("Not active", [this](Player* bot, Unit* target) {
+                                return !this->_adrenalineRushActive;
+                            }),
+                            Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, bot))
+                                {
+                                    this->CastSpell(bot, RogueAI::ADRENALINE_RUSH);
+                                    this->_adrenalineRushActive = true;
+                                    this->_adrenalineRushEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Roll the Bones (maintain buffs)
+                Sequence("Roll the Bones", {
+                    Condition("Target exists and needs reroll", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_resource.energy >= 25 &&
+                               this->_resource.comboPoints >= 1 &&
+                               this->_rollTheBonesTracker.NeedsReroll();
+                    }),
+                    Action("Cast Roll the Bones", [this](Player* bot, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(ROLL_THE_BONES, bot))
+                        {
+                            this->CastSpell(bot, ROLL_THE_BONES);
+                            this->_rollTheBonesTracker.RollBuffs(bot);
+                            this->ConsumeEnergy(25);
+                            this->_resource.comboPoints = 0;
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 3: Finishers (Between the Eyes, Dispatch at 5-6 CP)
+                Sequence("Finishers", {
+                    Condition("Target exists and has CP", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
+                    }),
+                    Selector("Choose Finisher", {
+                        // Between the Eyes at max CP
+                        Sequence("Cast Between the Eyes", {
+                            Condition("Max CP and 25+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.comboPoints >= this->_resource.maxComboPoints &&
+                                       this->_resource.energy >= 25;
+                            }),
+                            Action("Cast Between the Eyes", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(BETWEEN_THE_EYES, target))
+                                {
+                                    this->CastSpell(target, BETWEEN_THE_EYES);
+                                    this->ConsumeEnergy(25);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Dispatch at 4-5+ CP
+                        Sequence("Cast Dispatch", {
+                            Condition("35+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 35;
+                            }),
+                            Action("Cast Dispatch", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(DISPATCH_OUTLAW, target))
+                                {
+                                    this->CastSpell(target, DISPATCH_OUTLAW);
+                                    this->_lastDispatchTime = getMSTime();
+                                    this->ConsumeEnergy(35);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Combo Builders (Opportunity proc, Blade Rush, Sinister Strike)
+                Sequence("Combo Builders", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               this->_resource.comboPoints < this->_resource.maxComboPoints;
+                    }),
+                    Selector("Build Combo Points", {
+                        // Opportunity proc (free Pistol Shot)
+                        Sequence("Cast Pistol Shot with proc", {
+                            Condition("Has Opportunity proc", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasAura(OPPORTUNITY_PROC);
+                            }),
+                            Action("Cast Pistol Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(PISTOL_SHOT, target))
+                                {
+                                    this->CastSpell(target, PISTOL_SHOT);
+                                    this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Blade Rush (talent)
+                        Sequence("Cast Blade Rush", {
+                            Condition("Has talent and 25+ Energy", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(BLADE_RUSH) &&
+                                       this->_resource.energy >= 25;
+                            }),
+                            Action("Cast Blade Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(BLADE_RUSH, target))
+                                {
+                                    this->CastSpell(target, BLADE_RUSH);
+                                    this->ConsumeEnergy(25);
+                                    this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Sinister Strike
+                        Sequence("Cast Sinister Strike", {
+                            Condition("45+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 45;
+                            }),
+                            Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
+                                {
+                                    this->CastSpell(target, RogueAI::SINISTER_STRIKE);
+                                    this->_lastSinisterStrikeTime = getMSTime();
+                                    this->ConsumeEnergy(45);
+                                    this->GenerateComboPoints(1);
+                                    // Broadside buff gives extra CP
+                                    if (this->_rollTheBonesTracker.HasGoodBuffs())
+                                        this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 OUTLAW ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+        }
     }
 
 private:

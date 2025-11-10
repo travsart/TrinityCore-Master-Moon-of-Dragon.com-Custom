@@ -45,6 +45,21 @@ namespace Playerbot
     }
 
     bool MovementValidator::ValidateDestination(Player* bot, Position const& destination) const
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
     {
         if (!bot || !bot->GetMap())
             return false;
@@ -52,6 +67,36 @@ namespace Playerbot
         _totalValidations.fetch_add(1);
 
         Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
 
         // Check if destination is in void
         if (IsVoidPosition(map, destination))
@@ -61,31 +106,71 @@ namespace Playerbot
             _totalFailures.fetch_add(1);
             return false;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 
         // Check if destination is in dangerous terrain
         if (IsDangerousTerrain(map, destination))
         {
             TC_LOG_DEBUG("playerbot.movement", "Destination in dangerous terrain for bot %s",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 bot->GetName().c_str());
             _totalFailures.fetch_add(1);
             return false;
         }
 
         // Check if destination requires flying and bot can't fly
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+            return nullptr;
+        }
         if (RequiresFlying(map, destination) && !bot->CanFly())
         {
             TC_LOG_DEBUG("playerbot.movement", "Destination requires flying for bot %s",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 bot->GetName().c_str());
             _totalFailures.fetch_add(1);
             return false;
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
         // Check if destination is reachable (basic LOS check)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         if (!HasLineOfSight(map, bot->GetPosition(), destination))
         {
             // LOS blocked doesn't mean unreachable if we can path around
             // This is just a quick check, pathfinding will do detailed validation
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_DEBUG("playerbot.movement", "No direct LOS to destination for bot %s",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 bot->GetName().c_str());
         }
 
@@ -93,6 +178,16 @@ namespace Playerbot
         if (!bot->CanFly())
         {
             float currentZ = bot->GetPositionZ();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                return nullptr;
+            }
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
             float destZ = destination.GetPositionZ();
             float groundZ = destZ;
 
@@ -112,9 +207,24 @@ namespace Playerbot
                 // Check if we'd need to fall too far
                 float fallDistance = currentZ - groundZ;
                 if (fallDistance > 0 && !IsSafeFall(bot, fallDistance))
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                    return;
+                }
                 {
                     TC_LOG_DEBUG("playerbot.movement",
                         "Unsafe fall distance (%.2f) to destination for bot %s",
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                            return nullptr;
+                        }
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         fallDistance, bot->GetName().c_str());
                     _totalFailures.fetch_add(1);
                     return false;
@@ -146,6 +256,11 @@ namespace Playerbot
         if (path.totalLength > MovementConstants::DISTANCE_VERY_FAR * 3)
         {
             TC_LOG_DEBUG("playerbot.movement", "Path too long (%.2f) for bot %s",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 path.totalLength, bot->GetName().c_str());
             _totalFailures.fetch_add(1);
             return false;
@@ -155,12 +270,22 @@ namespace Playerbot
     }
 
     bool MovementValidator::ValidatePathSegment(Player* bot, Position const& start,
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
                                                Position const& end) const
     {
         if (!bot || !bot->GetMap())
             return false;
 
         Map* map = bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
 
         // Check segment length
         float distance = start.GetExactDist(&end);
@@ -194,6 +319,11 @@ namespace Playerbot
 
         return true;
     }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
 
     bool MovementValidator::IsDangerousTerrain(Map* map, Position const& position) const
     {
@@ -209,6 +339,11 @@ namespace Playerbot
                 return true;
             }
         }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return nullptr;
+}
 
         // Check liquid type at position
         PhaseShift phaseShift;
@@ -228,6 +363,11 @@ namespace Playerbot
         return false;
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     bool MovementValidator::IsVoidPosition(Map* map, Position const& position) const
     {
         if (!map)
@@ -244,6 +384,11 @@ namespace Playerbot
         // Check if position is outside map bounds using line of sight check
         PhaseShift phaseShift;
         if (!map->isInLineOfSight(phaseShift, position.GetPositionX(), position.GetPositionY(),
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
             position.GetPositionZ() + 2.0f, position.GetPositionX(),
             position.GetPositionY(), position.GetPositionZ() - 100.0f,
             LINEOFSIGHT_CHECK_VMAP, VMAP::ModelIgnoreFlags::Nothing))
@@ -260,6 +405,16 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         auto now = std::chrono::steady_clock::now();
 
         std::lock_guard<std::recursive_mutex> lock(_dataLock);
@@ -275,6 +430,11 @@ namespace Playerbot
 
         // Get current position
         Position currentPos = bot->GetPosition();
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
 
         // Calculate distance moved
         float distance = data.lastPosition.GetExactDist(&currentPos);
@@ -292,6 +452,11 @@ namespace Playerbot
                     data.isStuck = true;
                     data.stuckStartTime = now;
                     _totalStuckDetections.fetch_add(1);
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_DEBUG("playerbot.movement", "Bot %s is stuck at position (%.2f, %.2f, %.2f)",
                         bot->GetName().c_str(), currentPos.GetPositionX(),
                         currentPos.GetPositionY(), currentPos.GetPositionZ());
@@ -304,15 +469,30 @@ namespace Playerbot
             // Moving normally, reset counter
             if (data.stuckCounter > 0)
                 data.stuckCounter--;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
             if (data.isStuck && distance > _stuckThreshold * 2)
             {
                 data.Reset();
                 TC_LOG_DEBUG("playerbot.movement", "Bot %s is no longer stuck",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName().c_str());
             }
 
             // Update last valid position if we've moved significantly
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
             if (distance > _stuckThreshold)
                 data.lastValidPosition = currentPos;
         }
@@ -327,6 +507,11 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         std::lock_guard<std::recursive_mutex> lock(_dataLock);
         auto& data = _stuckData[guid];
@@ -345,6 +530,11 @@ namespace Playerbot
         {
             // Strategy 1: Move backward
             float angle = bot->GetOrientation() + M_PI;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+                return nullptr;
+            }
             float distance = 5.0f + data.unstuckAttempts * 2.0f;
             unstuckPos = bot->GetNearPosition(distance, angle);
             foundPosition = ValidateDestination(bot, unstuckPos);
@@ -353,6 +543,11 @@ namespace Playerbot
         {
             // Strategy 2: Move to random direction
             foundPosition = CalculateUnstuckPosition(bot, unstuckPos);
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
         }
         else
         {
@@ -379,6 +574,11 @@ namespace Playerbot
         if (data.unstuckAttempts > 10)
         {
             TC_LOG_WARN("playerbot.movement", "Failed to unstuck bot %s after %u attempts",
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 bot->GetName().c_str(), data.unstuckAttempts);
             data.Reset();
             return false;
@@ -394,6 +594,11 @@ namespace Playerbot
 
         std::lock_guard<std::recursive_mutex> lock(_dataLock);
         auto it = _stuckData.find(bot->GetGUID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         if (it != _stuckData.end())
         {
             it->second.Reset();

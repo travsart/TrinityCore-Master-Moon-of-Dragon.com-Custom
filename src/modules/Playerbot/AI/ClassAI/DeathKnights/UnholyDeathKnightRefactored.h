@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Unholy Death Knight Refactored - Template-Based Implementation
  *
@@ -9,6 +9,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "Player.h"
@@ -16,6 +20,9 @@
 #include "SpellAuraEffects.h"
 #include "Pet.h"
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -169,16 +176,16 @@ public:
         if (!target)
             return;
 
-        ObjectGuid guid = target->GetGUID();
+        ObjectGuid guid = target->GetGUID();        
 
         // Sync with actual aura
         if (Aura* aura = target->GetAura(FESTERING_WOUND))
-            _trackedTargets[guid] = aura->GetStackAmount();
-        else
+            _trackedTargets[guid] = aura->GetStackAmount();        else
             _trackedTargets.erase(guid);
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
@@ -262,24 +269,18 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit UnholyDeathKnightRefactored(Player* bot)
-        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)
-        
-        , _woundTracker()
+    explicit UnholyDeathKnightRefactored(Player* bot)        : MeleeDpsSpecialization<UnholyRuneRunicPowerResource>(bot)        , _woundTracker()
         , _petTracker()
         , _suddenDoomProc(false)
         , _lastOutbreakTime(0)
     {
         // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "UnholyDeathKnightRefactored initialized for {}", bot->GetName());
+        InitializeUnholyMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -297,14 +298,11 @@ public:
         if (enemyCount >= 3)
         {
             ExecuteAoERotation(target, enemyCount);
-        }
-        else
+        }        else
         {
             ExecuteSingleTargetRotation(target);
         }
-    }
-
-    void UpdateBuffs() override
+    }    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -318,12 +316,9 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        uint32 rp = this->_resource.runicPower;
+        ObjectGuid targetGuid = target->GetGUID();        uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
-        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
-
-        // Priority 1: Apply/maintain Virulent Plague
+        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);        // Priority 1: Apply/maintain Virulent Plague
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
         {
             this->CastSpell(target, OUTBREAK);
@@ -376,8 +371,7 @@ protected:
         }
 
         // Priority 7: Death Coil (dump RP)
-        if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))
-        {
+        if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))        {
             this->CastSpell(target, DEATH_COIL);
             ConsumeRunicPower(30);
             return;
@@ -402,8 +396,7 @@ protected:
         }
     }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
-    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
         uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
@@ -415,8 +408,7 @@ protected:
         }
 
         // Priority 2: Epidemic (spread disease)
-        if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))
-        {
+        if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))        {
             this->CastSpell(target, EPIDEMIC);
             ConsumeRunes(RuneType::UNHOLY, 1);
             GenerateRunicPower(10);
@@ -451,8 +443,7 @@ protected:
 
     void HandleCooldowns(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();
-        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
+        ObjectGuid targetGuid = target->GetGUID();        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
         // Apocalypse (burst wounds + summon ghouls)
@@ -460,7 +451,28 @@ protected:
         {
             this->CastSpell(target, APOCALYPSE);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            TC_LOG_DEBUG("playerbot", "Unholy: Apocalypse");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {FESTERING_STRIKE, 0, 1},
+            {SCOURGE_STRIKE, 0, 1},
+            {DEATH_COIL, 0, 1},
+            {OUTBREAK, 0, 1},
+            {DARK_TRANSFORMATION, 0, 1},
+            {APOCALYPSE, 90000, 1},
+            {ARMY_OF_THE_DEAD_UNHOLY, 480000, 1},
+            {SUMMON_GARGOYLE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {UNHOLY_ASSAULT, 90000, 1},
+            {UNHOLY_BLIGHT, CooldownPresets::OFFENSIVE_45, 1},
+            {SOUL_REAPER, 6000, 1},
+            {DEATH_GRIP_UNHOLY, 25000, 1},
+            {ANTI_MAGIC_SHELL_UNHOLY, CooldownPresets::OFFENSIVE_60, 1},
+            {ICEBOUND_FORTITUDE_UNHOLY, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DEATHS_ADVANCE_UNHOLY, 90000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Unholy: Apocalypse");
         }
 
         // Army of the Dead
@@ -586,23 +598,48 @@ private:
         this->_resource.Consume(count);
     }
 
-    void InitializeCooldowns()
+    void InitializeUnholyMechanics()
     {
-        RegisterCooldown(FESTERING_STRIKE, 0);          // No CD, rune-gated
-        RegisterCooldown(SCOURGE_STRIKE, 0);            // No CD, rune-gated
-        RegisterCooldown(DEATH_COIL, 0);                // No CD, RP-gated
-        RegisterCooldown(OUTBREAK, 0);                  // No CD
-        RegisterCooldown(DARK_TRANSFORMATION, 0);       // No CD, RP-gated
-        RegisterCooldown(APOCALYPSE, 90000);            // 1.5 min CD
-        RegisterCooldown(ARMY_OF_THE_DEAD_UNHOLY, 480000); // 8 min CD
-        RegisterCooldown(SUMMON_GARGOYLE, 180000);      // 3 min CD
-        RegisterCooldown(UNHOLY_ASSAULT, 90000);        // 1.5 min CD
-        RegisterCooldown(UNHOLY_BLIGHT, 45000);         // 45 sec CD
-        RegisterCooldown(SOUL_REAPER, 6000);            // 6 sec CD
-        RegisterCooldown(DEATH_GRIP_UNHOLY, 25000);     // 25 sec CD
-        RegisterCooldown(ANTI_MAGIC_SHELL_UNHOLY, 60000); // 1 min CD
-        RegisterCooldown(ICEBOUND_FORTITUDE_UNHOLY, 180000); // 3 min CD
-        RegisterCooldown(DEATHS_ADVANCE_UNHOLY, 90000); // 1.5 min CD
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue) {
+            queue->RegisterSpell(UNHOLY_ANTIMAGIC_SHELL, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(UNHOLY_ANTIMAGIC_SHELL, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(UNHOLY_ARMY_OF_DEAD, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(UNHOLY_ARMY_OF_DEAD, [](Player*, Unit* target) { return target != nullptr; }, "Major CD");
+
+            queue->RegisterSpell(UNHOLY_APOCALYPSE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(UNHOLY_APOCALYPSE, [this](Player*, Unit* target) { return target && this->_woundTracker.GetWounds(target->GetGUID()) >= 4; }, "4+ wounds");
+
+            queue->RegisterSpell(UNHOLY_FESTERING_STRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(UNHOLY_FESTERING_STRIKE, [this](Player*, Unit* target) { return target && this->_woundTracker.GetWounds(target->GetGUID()) < 4; }, "< 4 wounds");
+
+            queue->RegisterSpell(UNHOLY_SCOURGE_STRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(UNHOLY_SCOURGE_STRIKE, [this](Player*, Unit* target) { return target && this->_woundTracker.GetWounds(target->GetGUID()) > 0; }, "Has wounds");
+
+            queue->RegisterSpell(UNHOLY_DEATH_COIL, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(UNHOLY_DEATH_COIL, [this](Player*, Unit* target) { return target && (this->_suddenDoomProc || this->_resource.runicPower >= 40); }, "Sudden Doom or 40 RP");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree) {
+            auto root = Selector("Unholy DK", {
+                Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("Army/Apocalypse", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(bot, UNHOLY_ARMY_OF_DEAD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
+                    Action("Festering Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(t, UNHOLY_FESTERING_STRIKE); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
+                    Action("Scourge Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(t, UNHOLY_SCOURGE_STRIKE); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("RP Dump", { Condition("40+ RP", [this](Player*) { return this->_resource.runicPower >= 40; }),
+                    Action("Death Coil", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(t, UNHOLY_DEATH_COIL); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
     }
 
 private:

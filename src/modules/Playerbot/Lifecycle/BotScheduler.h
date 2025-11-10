@@ -10,7 +10,9 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBotScheduler.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -21,8 +23,6 @@
 #include <mutex>
 #include <shared_mutex>
 #include <queue>
-#include <unordered_map>
-#include <mutex>
 
 namespace Playerbot
 {
@@ -154,7 +154,7 @@ struct SchedulerStats
     }
 };
 
-class TC_GAME_API BotScheduler
+class TC_GAME_API BotScheduler final : public IBotScheduler
 {
 public:
     BotScheduler(BotScheduler const&) = delete;
@@ -162,68 +162,73 @@ public:
 
     static BotScheduler* instance();
 
+    // IBotScheduler interface implementation
+    using SchedulerConfig = Playerbot::SchedulerConfig;
+    using SchedulerStats = Playerbot::SchedulerStats;
+
     // Initialization and shutdown
-    bool Initialize();
-    void Shutdown();
-    void Update(uint32 diff);
+    bool Initialize() override;
+    void Shutdown() override;
+    void Update(uint32 diff) override;
 
     // Configuration management
-    void LoadConfig();
-    SchedulerConfig const& GetConfig() const { return _config; }
-    void SetConfig(SchedulerConfig const& config) { _config = config; }
+    void LoadConfig() override;
+    SchedulerConfig const& GetConfig() const override { return _config; }
+    void SetConfig(SchedulerConfig const& config) override { _config = config; }
 
     // Activity pattern management
-    void LoadActivityPatterns();
-    void RegisterPattern(std::string const& name, ActivityPattern const& pattern);
-    ActivityPattern const* GetPattern(std::string const& name) const;
-    std::vector<std::string> GetAvailablePatterns() const;
-    bool RemovePattern(std::string const& name);
+    void LoadActivityPatterns() override;
+    void RegisterPattern(std::string const& name, ActivityPattern const& pattern) override;
+    ActivityPattern const* GetPattern(std::string const& name) const override;
+    std::vector<std::string> GetAvailablePatterns() const override;
+    bool RemovePattern(std::string const& name) override;
 
     // Bot scheduling operations
-    void ScheduleBot(ObjectGuid guid, std::string const& patternName = "default");
-    void UnscheduleBot(ObjectGuid guid);
-    void ScheduleAction(ScheduleEntry const& entry);
-    void ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::time_point when);
-    void ScheduleLogout(ObjectGuid guid, std::chrono::system_clock::time_point when);
+    void ScheduleBot(ObjectGuid guid, std::string const& patternName = "default") override;
+    void UnscheduleBot(ObjectGuid guid) override;
+    void ScheduleAction(ScheduleEntry const& entry) override;
+    void ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::time_point when) override;
+    void ScheduleLogout(ObjectGuid guid, std::chrono::system_clock::time_point when) override;
 
     // Pattern assignment and management
-    void AssignPattern(ObjectGuid guid, std::string const& patternName);
-    std::string GetBotPattern(ObjectGuid guid) const;
-    BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const;
+    void AssignPattern(ObjectGuid guid, std::string const& patternName) override;
+    std::string GetBotPattern(ObjectGuid guid) const override;
+    BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const override;
 
     // Time calculation algorithms
-    std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid);
-    std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid);
+    std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) override;
+    std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) override;
     std::chrono::system_clock::time_point CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration);
 
     // Schedule processing and execution
-    void ProcessSchedule();
-    void ExecuteScheduledAction(ScheduleEntry const& entry);
+    void ProcessSchedule() override;
+    void ExecuteScheduledAction(ScheduleEntry const& entry) override;
     void ProcessPendingActions();
 
     // Query operations
-    bool IsBotScheduled(ObjectGuid guid) const;
-    bool IsBotActive(ObjectGuid guid) const;
-    uint32 GetScheduledBotCount() const;
+    bool IsBotScheduled(ObjectGuid guid) const override;
+    bool IsBotActive(ObjectGuid guid) const override;
+    uint32 GetScheduledBotCount() const override;
     std::vector<ObjectGuid> GetScheduledBots() const;
     std::vector<ScheduleEntry> GetUpcomingActions(uint32 minutes = 60) const;
 
     // Statistics and monitoring
-    SchedulerStats const& GetStats() const { return _stats; }
-    void ResetStats();
+    SchedulerStats const& GetStats() const override { return _stats; }
+    void ResetStats() override;
 
     // Lifecycle management interface
     std::vector<ScheduledAction> GetBotsReadyForLogin(uint32 maxCount = 10);
     std::vector<ScheduledAction> GetBotsReadyForLogout(uint32 maxCount = 10);
-    void OnBotLoggedIn(ObjectGuid guid);
-    void OnBotLoginFailed(ObjectGuid guid, std::string const& reason = "");
-    void SetEnabled(bool enabled) { _enabled = enabled; }
+    void OnBotLoggedIn(ObjectGuid guid) override;
+    void OnBotLoginFailed(ObjectGuid guid, std::string const& reason = "") override;
+    void SetEnabled(bool enabled) override { _enabled = enabled; }
+    bool IsEnabled() const override { return _enabled.load(); }
     void UpdateScheduleDatabase();
 
     // Admin and debug commands
-    void DumpSchedule() const;
+    void DumpSchedule() const override;
     void DumpBotSchedule(ObjectGuid guid) const;
-    bool ValidateSchedule() const;
+    bool ValidateSchedule() const override;
 
 private:
     BotScheduler() = default;
@@ -261,16 +266,16 @@ private:
     SchedulerStats _stats;
 
     // Thread-safe activity pattern storage
-    mutable std::recursive_mutex _patternMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _patternMutex;
     std::unordered_map<std::string, ActivityPattern> _activityPatterns;
 
     // Thread-safe bot schedule state storage (TBB removed)
-    mutable std::recursive_mutex _scheduleMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleMutex;
     std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
     // Priority queue for scheduled actions (TBB removed)
     std::priority_queue<ScheduleEntry> _scheduleQueue;
-    mutable std::recursive_mutex _scheduleQueueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleQueueMutex;
 
     // Runtime state
     std::atomic<bool> _enabled{true};

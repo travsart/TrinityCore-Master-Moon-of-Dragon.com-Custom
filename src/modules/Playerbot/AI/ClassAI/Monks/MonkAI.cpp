@@ -24,8 +24,7 @@
 namespace Playerbot
 {
 
-MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
-{
+MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER){
     TC_LOG_DEBUG("playerbots", "MonkAI initialized for player {}", bot->GetName());
 }
 
@@ -67,6 +66,24 @@ void MonkAI::UpdateRotation(::Unit* target)
         {
             // Spear Hand Strike is melee range interrupt
             if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
+
+if (!interruptTarget)
+
+{
+    return 0;
+
+}
+
+if (!interruptTarget)
+
+{
+    return 0;
+
+}
+                                 if (!interruptTarget)
+                                 {
+                                     return;
+                                 }
             {
                 if (CastSpell(interruptTarget, SPEAR_HAND_STRIKE))
                 {
@@ -82,6 +99,10 @@ void MonkAI::UpdateRotation(::Unit* target)
         if (interruptTarget && CanUseAbility(PARALYSIS))
         {
             if (GetBot()->GetDistance(interruptTarget) <= 20.0f)
+                                 if (!interruptTarget)
+                                 {
+                                     return;
+                                 }
             {
                 if (CastSpell(interruptTarget, PARALYSIS))
                 {
@@ -96,6 +117,10 @@ void MonkAI::UpdateRotation(::Unit* target)
 
     // Priority 2: Handle defensive abilities based on spec
     if (behaviors && behaviors->NeedsDefensive())
+    if (!priorityTarget)
+    {
+        return 0;
+    }
     {
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
@@ -110,6 +135,10 @@ void MonkAI::UpdateRotation(::Unit* target)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+                         if (!priorityTarget)
+                         {
+                             return;
+                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -309,13 +338,279 @@ void MonkAI::UpdateBuffs()
     }
 
     // Specialized buff management for level 10+ with spec
-    // TODO: Implement monk buff management
+    Player* bot = GetBot();
+    if (!bot)
+        return;
+
+    // Apply Legacy of the White Tiger / Legacy of the Emperor (raid-wide stat buff)
+    uint32 legacyBuff = 0;
+    if (bot->HasSpell(LEGACY_OF_THE_WHITE_TIGER))
+        legacyBuff = LEGACY_OF_THE_WHITE_TIGER;
+    else if (bot->HasSpell(LEGACY_OF_THE_EMPEROR))
+        legacyBuff = LEGACY_OF_THE_EMPEROR;
+
+    if (legacyBuff != 0 && !bot->HasAura(legacyBuff))
+    {
+        uint32 now = getMSTime();
+        if (now - _lastLegacyBuff > 300000) // 5 minute buff duration, recast check
+        {
+            if (CastSpell(bot, legacyBuff))
+            {
+                _lastLegacyBuff = now;
+                RecordAbilityUsage(legacyBuff);
+                TC_LOG_DEBUG("module.playerbot.monk", "Monk {} applied Legacy buff", bot->GetName());
+            }
+        }
+    }
+
+    // Specialization-specific buff management
+    ChrSpecialization spec = bot->GetPrimarySpecialization();
+
+    switch (static_cast<int>(spec))
+    {
+        case 268: // Brewmaster
+        {
+            // Maintain Ironskin Brew uptime when tanking
+            if (!bot->HasAura(IRONSKIN_BREW) && bot->IsInCombat())
+            {
+                if (bot->HasSpell(IRONSKIN_BREW) && HasEnoughResource(IRONSKIN_BREW))
+                {
+                    if (CastSpell(bot, IRONSKIN_BREW))
+                    {
+                        ConsumeResource(IRONSKIN_BREW);
+                        RecordAbilityUsage(IRONSKIN_BREW);
+                        TC_LOG_DEBUG("module.playerbot.monk", "Brewmaster {} activated Ironskin Brew", bot->GetName());
+                    }
+                }
+            }
+
+            // Use Fortifying Brew defensively
+            if (bot->GetHealthPct() < 40.0f && bot->HasSpell(FORTIFYING_BREW))
+            {
+                if (CastSpell(bot, FORTIFYING_BREW))
+                {
+                    RecordAbilityUsage(FORTIFYING_BREW);
+                    TC_LOG_DEBUG("module.playerbot.monk", "Brewmaster {} used Fortifying Brew", bot->GetName());
+                }
+            }
+            break;
+        }
+
+        case 270: // Mistweaver
+        {
+            // Maintain Thunder Focus Tea charges for optimal healing
+            if (bot->HasSpell(THUNDER_FOCUS_TEA) && !bot->HasAura(THUNDER_FOCUS_TEA))
+            {
+                if (CastSpell(bot, THUNDER_FOCUS_TEA))
+                {
+                    RecordAbilityUsage(THUNDER_FOCUS_TEA);
+                    TC_LOG_DEBUG("module.playerbot.monk", "Mistweaver {} prepared Thunder Focus Tea", bot->GetName());
+                }
+            }
+
+            // Use Mana Tea when low on mana
+            if (bot->GetPowerPct(POWER_MANA) < 50.0f && bot->HasSpell(MANA_TEA))
+            {
+                if (CastSpell(bot, MANA_TEA))
+                {
+                    RecordAbilityUsage(MANA_TEA);
+                    TC_LOG_DEBUG("module.playerbot.monk", "Mistweaver {} used Mana Tea", bot->GetName());
+                }
+            }
+            break;
+        }
+
+        case 269: // Windwalker
+        {
+            // Activate Storm, Earth, and Fire during burst windows
+            if (bot->IsInCombat() && bot->HasSpell(STORM_EARTH_AND_FIRE))
+            {
+                Unit* target = bot->GetVictim();
+                if (target && target->GetHealthPct() > 70.0f) // Boss-level target
+                {
+                    if (!bot->HasAura(STORM_EARTH_AND_FIRE))
+                    {
+                        if (CastSpell(target, STORM_EARTH_AND_FIRE))
+                        {
+                            RecordAbilityUsage(STORM_EARTH_AND_FIRE);
+                            TC_LOG_DEBUG("module.playerbot.monk", "Windwalker {} activated Storm Earth and Fire", bot->GetName());
+                        }
+                    }
+                }
+            }
+
+            // Use Energizing Elixir when low on resources
+            if (bot->HasSpell(ENERGIZING_ELIXIR))
+            {
+                uint32 currentChi = _chiManager.current.load();
+                uint32 currentEnergy = _energyManager.current.load();
+                if (currentChi < 2 && currentEnergy < 40)
+                {
+                    if (CastSpell(bot, ENERGIZING_ELIXIR))
+                    {
+                        _chiManager.GenerateChi(2);
+                        _energyManager.current.store(std::min(_energyManager.current.load() + 50, _energyManager.maximum.load()));
+                        RecordAbilityUsage(ENERGIZING_ELIXIR);
+                        TC_LOG_DEBUG("module.playerbot.monk", "Windwalker {} used Energizing Elixir", bot->GetName());
+                    }
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    // Universal defensive buffs
+    if (bot->GetHealthPct() < 35.0f)
+    {
+        // Touch of Karma - reflect damage back to attacker
+        if (bot->HasSpell(TOUCH_OF_KARMA) && !bot->HasAura(TOUCH_OF_KARMA))
+        {
+            Unit* attacker = bot->GetVictim();
+            if (attacker && CastSpell(attacker, TOUCH_OF_KARMA))
+            {
+                RecordAbilityUsage(TOUCH_OF_KARMA);
+                _defensiveCooldownsUsed.store(_defensiveCooldownsUsed.load() + 1);
+                TC_LOG_DEBUG("module.playerbot.monk", "Monk {} used Touch of Karma", bot->GetName());
+            }
+        }
+
+        // Diffuse Magic - reduce magic damage
+        if (bot->HasSpell(DIFFUSE_MAGIC) && !bot->HasAura(DIFFUSE_MAGIC))
+        {
+            if (CastSpell(bot, DIFFUSE_MAGIC))
+            {
+                RecordAbilityUsage(DIFFUSE_MAGIC);
+                _defensiveCooldownsUsed.store(_defensiveCooldownsUsed.load() + 1);
+                TC_LOG_DEBUG("module.playerbot.monk", "Monk {} used Diffuse Magic", bot->GetName());
+            }
+        }
+    }
 }
 
 void MonkAI::UpdateCooldowns(uint32 diff)
 {
-    // Basic cooldown management - placeholder implementation
-    // TODO: Implement monk cooldown management
+    if (!GetBot())
+        return;
+
+    // Update Chi and Energy regeneration
+    _chiManager.efficiency.store(_chiManager.CalculateEfficiency());
+    ManageEnergyRegeneration(diff);
+
+    // Update ability cooldown tracking
+    uint32 now = getMSTime();
+
+    // Track form management cooldown
+    if (_formManager.lastFormChange.load() > 0)
+    {
+        uint32 timeSinceChange = now - _formManager.lastFormChange.load();
+        if (timeSinceChange > FORM_CHANGE_COOLDOWN)
+        {
+            _formManager.UpdateFormDuration(diff);
+        }
+    }
+
+    // Track mobility cooldowns
+    if (_lastMobilityUse > 0)
+    {
+        uint32 timeSinceMobility = now - _lastMobilityUse;
+        if (timeSinceMobility > ROLL_COOLDOWN)
+        {
+            _lastMobilityUse = 0; // Reset cooldown marker
+        }
+    }
+
+    // Track defensive cooldowns
+    if (_lastDefensiveUse > 0)
+    {
+        uint32 timeSinceDefensive = now - _lastDefensiveUse;
+        if (timeSinceDefensive > 60000) // 1 minute general defensive cooldown
+        {
+            _lastDefensiveUse = 0;
+        }
+    }
+
+    // Track interrupt cooldowns
+    if (_lastInterruptAttempt > 0)
+    {
+        uint32 timeSinceInterrupt = now - _lastInterruptAttempt;
+        if (timeSinceInterrupt > 15000) // 15 second interrupt cooldown
+        {
+            _lastInterruptAttempt = 0;
+        }
+    }
+
+    // Update Brewmaster stagger tracking
+    if (_currentSpec == MonkSpec::BREWMASTER)
+    {
+        _staggerManager.UpdateStaggerTracking(_staggerManager.GetStaggerLevel(GetBot()->GetMaxHealth()), diff);
+    }
+
+    // Update Mistweaver healing priority
+    if (_currentSpec == MonkSpec::MISTWEAVER)
+    {
+        // Check healing efficiency periodically
+        uint32 totalHealing = _healingSystem.totalHealing.load();
+        uint32 overhealingDone = _healingSystem.overhealingDone.load();
+        if (totalHealing > 0)
+        {
+            float efficiency = 1.0f - (static_cast<float>(overhealingDone) / totalHealing);
+            _healingSystem.healingEfficiency.store(efficiency);
+        }
+    }
+
+    // Update Windwalker combo strike tracking
+    if (_currentSpec == MonkSpec::WINDWALKER)
+    {
+        // Decay combo count if no abilities used recently
+        uint32 lastAbilityTime = _comboTracker.lastAbility.load();
+        if (lastAbilityTime > 0 && now - lastAbilityTime > COMBO_STRIKE_WINDOW)
+        {
+            _comboTracker.Reset();
+        }
+    }
+
+    // Update metrics
+    UpdateMetrics(diff);
+}
+
+void MonkAI::ManageEnergyRegeneration(uint32 diff)
+{
+    // Regenerate energy over time
+    _energyManager.RegenerateEnergy(diff);
+
+    // Update bot's actual energy
+    if (GetBot())
+    {
+        uint32 currentEnergy = GetBot()->GetPower(POWER_ENERGY);
+        _energyManager.current.store(currentEnergy);
+    }
+}
+
+void MonkAI::UpdateMetrics(uint32 diff)
+{
+    // Update performance metrics
+    _monkMetrics.averageChiEfficiency.store(_chiManager.CalculateEfficiency());
+    _monkMetrics.averageEnergyEfficiency.store(_energyManager.efficiency.load());
+
+    if (_currentSpec == MonkSpec::BREWMASTER)
+    {
+        _monkMetrics.staggerMitigationScore.store(_staggerManager.CalculateMitigationEfficiency());
+    }
+
+    if (_currentSpec == MonkSpec::MISTWEAVER)
+    {
+        _monkMetrics.healingEfficiencyScore.store(_healingSystem.healingEfficiency.load());
+    }
+
+    if (_currentSpec == MonkSpec::WINDWALKER)
+    {
+        float comboScore = _comboTracker.comboCount.load() > 0 ?
+                           _comboTracker.comboDamageBonus.load() : 0.0f;
+        _monkMetrics.comboStrikeScore.store(comboScore);
+    }
 }
 
 bool MonkAI::CanUseAbility(uint32 spellId)
@@ -338,14 +633,256 @@ void MonkAI::OnCombatEnd()
 
 bool MonkAI::HasEnoughResource(uint32 spellId)
 {
-    // Resource check - placeholder implementation
-    return true; // TODO: Implement proper resource checking
+    if (!GetBot())
+        return false;
+
+    // Determine resource cost based on spell
+    switch (spellId)
+    {
+        // Chi generators (Energy cost)
+        case TIGER_PALM:
+            return GetBot()->GetPower(POWER_ENERGY) >= 50;
+        case EXPEL_HARM:
+            return GetBot()->GetPower(POWER_ENERGY) >= 15;
+        case JAB:
+            return GetBot()->GetPower(POWER_ENERGY) >= 40;
+
+        // Chi spenders
+        case BLACKOUT_KICK:
+            return _chiManager.current.load() >= 1;
+        case RISING_SUN_KICK:
+            return _chiManager.current.load() >= 2;
+        case FISTS_OF_FURY:
+            return _chiManager.current.load() >= 3;
+        case SPINNING_CRANE_KICK:
+            return _chiManager.current.load() >= 2;
+        case WHIRLING_DRAGON_PUNCH:
+            return _chiManager.current.load() >= 2;
+        case TOUCH_OF_DEATH:
+            return _chiManager.current.load() >= 3;
+        case RUSHING_JADE_WIND:
+            return _chiManager.current.load() >= 1;
+
+        // Brewmaster abilities
+        case KEG_SMASH:
+            return GetBot()->GetPower(POWER_ENERGY) >= 40;
+        case BREATH_OF_FIRE:
+            return _chiManager.current.load() >= 1;
+        case IRONSKIN_BREW:
+            return true; // Brew charges handled separately
+        case PURIFYING_BREW:
+            return true; // Brew charges handled separately
+        case BLACK_OX_BREW:
+            return true; // Cooldown based
+
+        // Mistweaver abilities (Mana cost)
+        case RENEWING_MIST:
+            return GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 2 / 100); // 2% mana
+        case ENVELOPING_MIST:
+            return _chiManager.current.load() >= 3 && GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 5 / 100); // 3 Chi + 5% mana
+        case VIVIFY:
+            return GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 4 / 100); // 4% mana
+        case ESSENCE_FONT:
+            return _chiManager.current.load() >= 2 && GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 6 / 100); // 2 Chi + 6% mana
+        case SOOTHING_MIST:
+            return GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 3 / 100); // 3% mana/sec
+        case LIFE_COCOON:
+            return GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 3 / 100); // 3% mana
+        case REVIVAL:
+            return GetBot()->GetPower(POWER_MANA) >= (GetBot()->GetMaxPower(POWER_MANA) * 20 / 100); // 20% mana
+        case SHEILUNS_GIFT:
+            return true; // Stack based
+
+        // Energy cost abilities
+        case CRACKLING_JADE_LIGHTNING:
+            return GetBot()->GetPower(POWER_ENERGY) >= 20;
+        case FLYING_SERPENT_KICK:
+            return true; // No resource cost
+        case ROLL:
+        case CHI_TORPEDO:
+            return true; // Charge based
+
+        // Cooldown based abilities
+        case STORM_EARTH_AND_FIRE:
+        case SERENITY:
+        case FORTIFYING_BREW:
+        case THUNDER_FOCUS_TEA:
+        case MANA_TEA:
+        case ENERGIZING_ELIXIR:
+        case TOUCH_OF_KARMA:
+        case DIFFUSE_MAGIC:
+        case DAMPEN_HARM:
+        case ZEN_MEDITATION:
+        case PARALYSIS:
+        case LEG_SWEEP:
+        case SPEAR_HAND_STRIKE:
+        case RING_OF_PEACE:
+        case DETOX:
+        case RESUSCITATE:
+        case CHI_WAVE:
+        case CHI_BURST:
+        case TIGERS_LUST:
+        case TRANSCENDENCE:
+        case TRANSCENDENCE_TRANSFER:
+            return true; // Cooldown and situational based
+
+        default:
+            return true; // Unknown spells assumed available
+    }
 }
 
 void MonkAI::ConsumeResource(uint32 spellId)
 {
-    // Resource consumption - placeholder implementation
-    // TODO: Implement proper resource consumption
+    if (!GetBot())
+        return;
+
+    // Consume resources based on spell
+    switch (spellId)
+    {
+        // Chi generators (consume Energy, generate Chi)
+        case TIGER_PALM:
+            if (GetBot()->GetPower(POWER_ENERGY) >= 50)
+            {
+                GetBot()->ModifyPower(POWER_ENERGY, -50);
+                _energyManager.SpendEnergy(50);
+                _energySpent.store(_energySpent.load() + 50);
+            }
+            break;
+
+        case EXPEL_HARM:
+            if (GetBot()->GetPower(POWER_ENERGY) >= 15)
+            {
+                GetBot()->ModifyPower(POWER_ENERGY, -15);
+                _energyManager.SpendEnergy(15);
+                _energySpent.store(_energySpent.load() + 15);
+            }
+            break;
+
+        case JAB:
+            if (GetBot()->GetPower(POWER_ENERGY) >= 40)
+            {
+                GetBot()->ModifyPower(POWER_ENERGY, -40);
+                _energyManager.SpendEnergy(40);
+                _energySpent.store(_energySpent.load() + 40);
+            }
+            break;
+
+        // Chi spenders
+        case BLACKOUT_KICK:
+            if (_chiManager.ConsumeChi(1))
+            {
+                _chiSpent.store(_chiSpent.load() + 1);
+            }
+            break;
+
+        case RISING_SUN_KICK:
+            if (_chiManager.ConsumeChi(2))
+            {
+                _chiSpent.store(_chiSpent.load() + 2);
+            }
+            break;
+
+        case FISTS_OF_FURY:
+        case TOUCH_OF_DEATH:
+            if (_chiManager.ConsumeChi(3))
+            {
+                _chiSpent.store(_chiSpent.load() + 3);
+            }
+            break;
+
+        case SPINNING_CRANE_KICK:
+        case WHIRLING_DRAGON_PUNCH:
+            if (_chiManager.ConsumeChi(2))
+            {
+                _chiSpent.store(_chiSpent.load() + 2);
+            }
+            break;
+
+        case RUSHING_JADE_WIND:
+        case BREATH_OF_FIRE:
+            if (_chiManager.ConsumeChi(1))
+            {
+                _chiSpent.store(_chiSpent.load() + 1);
+            }
+            break;
+
+        // Brewmaster energy spenders
+        case KEG_SMASH:
+            if (GetBot()->GetPower(POWER_ENERGY) >= 40)
+            {
+                GetBot()->ModifyPower(POWER_ENERGY, -40);
+                _energyManager.SpendEnergy(40);
+                _energySpent.store(_energySpent.load() + 40);
+            }
+            break;
+
+        // Mistweaver mana spenders
+        case RENEWING_MIST:
+        {
+            uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 2 / 100;
+            GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            break;
+        }
+
+        case ENVELOPING_MIST:
+        {
+            if (_chiManager.ConsumeChi(3))
+            {
+                _chiSpent.store(_chiSpent.load() + 3);
+                uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 5 / 100;
+                GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            }
+            break;
+        }
+
+        case VIVIFY:
+        {
+            uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 4 / 100;
+            GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            break;
+        }
+
+        case ESSENCE_FONT:
+        {
+            if (_chiManager.ConsumeChi(2))
+            {
+                _chiSpent.store(_chiSpent.load() + 2);
+                uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 6 / 100;
+                GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            }
+            break;
+        }
+
+        case LIFE_COCOON:
+        {
+            uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 3 / 100;
+            GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            break;
+        }
+
+        case REVIVAL:
+        {
+            uint32 cost = GetBot()->GetMaxPower(POWER_MANA) * 20 / 100;
+            GetBot()->ModifyPower(POWER_MANA, -static_cast<int32>(cost));
+            break;
+        }
+
+        case CRACKLING_JADE_LIGHTNING:
+            if (GetBot()->GetPower(POWER_ENERGY) >= 20)
+            {
+                GetBot()->ModifyPower(POWER_ENERGY, -20);
+                _energyManager.SpendEnergy(20);
+                _energySpent.store(_energySpent.load() + 20);
+            }
+            break;
+
+        // Abilities with no resource cost
+        default:
+            break;
+    }
+
+    TC_LOG_DEBUG("module.playerbot.monk", "Monk {} consumed resources for spell {}",
+                 GetBot()->GetName(), spellId);
 }
 
 Position MonkAI::GetOptimalPosition(::Unit* target)
@@ -514,6 +1051,10 @@ void MonkAI::UseDefensiveCooldowns()
     {
         if (CanUseAbility(ZEN_MEDITATION))
         {
+            if (!healTarget)
+            {
+                return nullptr;
+            }
             if (CastSpell(ZEN_MEDITATION))
             {
                 RecordAbilityUsage(ZEN_MEDITATION);
@@ -528,6 +1069,10 @@ void MonkAI::UseDefensiveCooldowns()
     if (_currentSpec == MonkSpec::MISTWEAVER && CanUseAbility(LIFE_COCOON))
     {
         Unit* healTarget = GetLowestHealthAlly(40.0f);
+                             if (!healTarget)
+                             {
+                                 return;
+                             }
         if (healTarget && healTarget->GetHealthPct() < 30.0f)
         {
             if (CastSpell(healTarget, LIFE_COCOON))

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -289,8 +290,8 @@ private:
 
     // System state
     bool _initialized;
-    mutable std::recursive_mutex _profilesMutex;
-    mutable std::recursive_mutex _clusterMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _profilesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _clusterMutex;
 
     // Profile storage
     std::unordered_map<ObjectGuid, std::shared_ptr<PlayerProfile>> _profiles;

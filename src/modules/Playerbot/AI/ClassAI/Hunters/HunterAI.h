@@ -296,7 +296,17 @@ public:
         BESTIAL_WRATH = 19574,
         TRUESHOT = 288613,
         BARRAGE = 120360,
-        VOLLEY = 260243
+        VOLLEY = 260243,
+
+        // Tracking Abilities (WoW 11.2)
+        TRACK_BEASTS = 1494,
+        TRACK_DEMONS = 19878,
+        TRACK_DRAGONKIN = 19879,
+        TRACK_ELEMENTALS = 19880,
+        TRACK_GIANTS = 19882,
+        TRACK_HUMANOIDS = 19883,
+        TRACK_UNDEAD = 19884,
+        TRACK_HIDDEN = 19885
     };
 };
 

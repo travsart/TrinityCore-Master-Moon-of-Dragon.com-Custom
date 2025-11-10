@@ -85,7 +85,12 @@ set(PLAYERBOT_SOURCES
     # AI system (AI Framework implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_HybridAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
+
+    # Specialized AI Factory - Enterprise-grade spec routing with Phase 5 integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/SpecializedAIFactory.h
 
     # Phase 2.1: BehaviorManager Base Class - Manager Pattern Foundation
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.cpp
@@ -96,6 +101,41 @@ set(PLAYERBOT_SOURCES
     # Phase 2.1 Refactoring: BehaviorPriorityManager - Priority-based Behavior Coordination (Fixes Issues #2 & #3)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorPriorityManager.h
+
+    # Hybrid AI Decision System: Utility AI Layer (Phase 1)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/UtilitySystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/UtilityContextBuilder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Utility/Evaluators/CombatEvaluators.h
+
+    # Hybrid AI Decision System: Behavior Tree Execution Layer (Phase 2)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTree.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/CombatNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/HealingNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/Nodes/MovementNodes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorTree/BehaviorTreeFactory.h
+
+    # Hybrid AI Decision System: Controller Integration (Phase 2 Week 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/HybridAIController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/HybridAIController.h
+
+    # Hierarchical Group Coordination System (Phase 3)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/ZoneOrchestrator.h
+
+    # Blackboard Shared State System (Phase 4)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Blackboard/SharedBlackboard.h
+
+    # Integrated AI System: Bridges BT + Blackboard + Coordination (Phase 4 Week 2)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Integration/IntegratedAIContext.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Integration/IntegratedAIContext.h
 
     # AI Strategy System (minimal implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Strategy/Strategy.cpp
@@ -175,6 +215,15 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h
 
+    # ClassAI Common Utilities (Deduplication Phase: Unified Systems)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/StatusEffectTracker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/CooldownManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Common/RotationHelpers.h
+
+    # ClassAI Behavior Tree Integration (Phase 5: 13 Classes × 3 Specs)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassBehaviorTreeRegistry.h
+
     # ClassAI Template Architecture (Phase 3: Code Duplication Elimination)
     # Note: .cpp removed due to old SPEC_* constants, but .h still needed for template definitions
     # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CombatSpecializationTemplates.cpp
@@ -217,6 +266,11 @@ set(PLAYERBOT_SOURCES
     # Evoker AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/EvokerAI.h
+
+    # Evoker Refactored Specializations (Template-based with Phase 5 integration)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/DevastationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/PreservationEvokerRefactored.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Evokers/AugmentationEvokerRefactored.h
 
     # Hunter AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Hunters/HunterAI.cpp
@@ -549,6 +603,17 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+    # Manager Consolidation Phase 1: UnifiedLootManager (consolidates LootAnalysis, LootCoordination, LootDistribution)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.h
+
+    # Manager Consolidation Phase 2: UnifiedQuestManager (consolidates QuestPickup, QuestCompletion, QuestValidation, QuestTurnIn, DynamicQuestSystem)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/UnifiedQuestManager.h
+
+    # Manager Consolidation Phase 3: UnifiedMovementCoordinator (consolidates MovementArbiter, PathfindingAdapter, FormationManager, PositionManager)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/UnifiedMovementCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/UnifiedMovementCoordinator.h
 
     # Equipment Management - Complete Auto-Equip + Junk Selling + Consumables
     ${CMAKE_CURRENT_SOURCE_DIR}/Equipment/EquipmentManager.cpp
@@ -570,6 +635,16 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
+
+    # Banking System - Personal Bank Automation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.h
 
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp
@@ -609,11 +684,10 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/Config/PlayerbotQuestConfig.h
 
-    # Advanced Features - Group/Raid, Economy, Social, Advanced Behaviors
+    # Advanced Features - Group/Raid, Social, Advanced Behaviors
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp
@@ -1091,6 +1165,17 @@ source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
+)
+
+source_group("Banking" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.h
 )
 
 source_group("Economy" FILES
@@ -1131,8 +1216,7 @@ source_group("Game" FILES
 source_group("Advanced" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/EconomyManager.h
+    # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/AdvancedBehaviorManager.cpp

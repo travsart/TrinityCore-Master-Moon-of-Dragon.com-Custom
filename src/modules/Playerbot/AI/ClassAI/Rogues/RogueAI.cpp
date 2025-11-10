@@ -173,9 +173,8 @@ private:
 // ============================================================================
 
 Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpec spec)
-{
-    if (!target || !_bot)
-        return _bot->GetPosition();
+        {
+    if (!target || !_bot)        return _bot->GetPosition();
 
     // Calculate position based on specialization requirements
     switch (spec)
@@ -184,22 +183,17 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
         case RogueSpec::SUBTLETY:
             // Assassination and Subtlety prefer behind target for Backstab/Ambush
             {
-                float angle = target->GetOrientation() + M_PI; // 180 degrees behind
-                float distance = 3.0f; // Close melee range
-                float x = target->GetPositionX() + distance * std::cos(angle);
-                float y = target->GetPositionY() + distance * std::sin(angle);
-                float z = target->GetPositionZ();
-                return Position(x, y, z, angle);
+                float angle = target->GetOrientation() + M_PI; // 180 degrees behind                float distance = 3.0f; // Close melee range
+                float x = target->GetPositionX() + distance * std::cos(angle);                float y = target->GetPositionY() + distance * std::sin(angle);
+                
+                float z = target->GetPositionZ();                return Position(x, y, z, angle);
             }
 
         case RogueSpec::COMBAT:
             // Combat can attack from any angle, prefer frontal positioning
             {
-                float angle = target->GetOrientation(); // Face to face
-                float distance = 4.0f; // Slightly further for Blade Flurry AoE
-                float x = target->GetPositionX() + distance * std::cos(angle);
-                float y = target->GetPositionY() + distance * std::sin(angle);
-                float z = target->GetPositionZ();
+                float angle = target->GetOrientation(); // Face to face                float distance = 4.0f; // Slightly further for Blade Flurry AoE
+                float x = target->GetPositionX() + distance * std::cos(angle);                float y = target->GetPositionY() + distance * std::sin(angle);                float z = target->GetPositionZ();                
                 return Position(x, y, z, target->GetOrientation());
             }
 
@@ -244,14 +238,16 @@ RogueAI::RogueAI(Player* bot) :
     // Initialize performance tracking
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
-    _positioning = new RogueCombatPositioning(bot);
-
-    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
+    _positioning = new RogueCombatPositioning(bot);    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
 }
 
 void RogueAI::InitializeCombatSystems()
 {
     // Initialize advanced combat system components
+    if (!interruptTarget)
+    {
+        return;
+    }
     _threatManager = std::make_unique<BotThreatManager>(GetBot());
     _targetSelector = std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
     _positionManager = std::make_unique<PositionManager>(GetBot(), _threatManager.get());
@@ -276,6 +272,10 @@ void RogueAI::UpdateRotation(Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
+        if (!priorityTarget)
+        {
+            return nullptr;
+        }
         if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
             return;
 
@@ -299,6 +299,10 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+                             if (!interruptTarget)
+                             {
+                                 return;
+                             }
         if (interruptTarget && CanUseAbility(KICK))
         {
             // Cast Kick on the interrupt target
@@ -330,6 +334,10 @@ void RogueAI::UpdateRotation(Unit* target)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+                         if (!priorityTarget)
+                         {
+                             return;
+                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -450,16 +458,13 @@ void RogueAI::UpdateRotation(Unit* target)
                 }
                 break;
         }
-    }
-
-    // Priority 6: Stealth and Openers
+    }    // Priority 6: Stealth and Openers
     if (!GetBot()->IsInCombat() && !HasAura(STEALTH))
     {
         // Enter stealth for opener opportunity
         if (CanUseAbility(STEALTH))
         {
-            float distance = GetBot()->GetDistance(target);
-            if (distance > 5.0f && distance < 25.0f)
+            float distance = GetBot()->GetDistance(target);            if (distance > 5.0f && distance < 25.0f)
             {
                 if (CastSpell(STEALTH))
                 {
@@ -478,9 +483,7 @@ void RogueAI::UpdateRotation(Unit* target)
     {
         if (ExecuteStealthOpener(target))
             return;
-    }
-
-    // Priority 7: Execute normal rotation (all specs use baseline logic in RogueAI)
+    }    // Priority 7: Execute normal rotation (all specs use baseline logic in RogueAI)
     ExecuteRogueBasicRotation(target);
 
     // Update performance metrics
@@ -516,8 +519,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     }
 
     // Apply Rupture for bleed damage
-    if (comboPoints >= 3 && !target->HasAura(RUPTURE, GetBot()->GetGUID()))
-    {
+    if (comboPoints >= 3 && !target->HasAura(RUPTURE, GetBot()->GetGUID()))    {
         if (CanUseAbility(RUPTURE))
         {
             if (CastSpell(target, RUPTURE))
@@ -530,8 +532,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     }
 
     // Use Expose Armor if no sunder armor debuff present
-    if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))
-    {
+    if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))    {
         if (CanUseAbility(EXPOSE_ARMOR))
         {
             if (CastSpell(target, EXPOSE_ARMOR))
@@ -544,8 +545,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     }
 
     // Kidney Shot for control
-    if (comboPoints >= 4 && target->GetTypeId() == TYPEID_PLAYER)
-    {
+    if (comboPoints >= 4 && target->GetTypeId() == TYPEID_PLAYER)    {
         if (CanUseAbility(KIDNEY_SHOT))
         {
             if (CastSpell(target, KIDNEY_SHOT))
@@ -601,8 +601,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     }
 }
 
-void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success)
-{
+void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success){
     if (success)
     {
         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} successfully interrupted {} with spell {}",
@@ -813,8 +812,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Build combo points
-        if (energy >= 40)
-        {
+        if (energy >= 40)        {
             if (BuildComboPoints(target))
                 return;
         }
@@ -899,8 +897,7 @@ bool RogueAI::ExecuteFinisher(Unit* target)
     }
 
     // Kidney Shot for control
-    if (target->GetTypeId() == TYPEID_PLAYER && CanUseAbility(KIDNEY_SHOT))
-    {
+    if (target->GetTypeId() == TYPEID_PLAYER && CanUseAbility(KIDNEY_SHOT))    {
         CastSpell(target, KIDNEY_SHOT);
         _combatMetrics->RecordAbilityUsage(KIDNEY_SHOT, true, 25);
         _metrics->totalFinishersExecuted++;
@@ -1111,9 +1108,7 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
 
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (!spellInfo)
-        return false;
-
-    // Check energy cost
+        return false;    // Check energy cost
     auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
     for (auto const& cost : powerCosts)
     {
@@ -1127,8 +1122,7 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
 
     // Check combo point requirements for finishers
     if (IsFinisher(spellId))
-    {
-        uint8 comboPoints = GetBot()->GetPower(POWER_COMBO_POINTS);
+    {        uint8 comboPoints = GetBot()->GetPower(POWER_COMBO_POINTS);
         if (comboPoints < 1)
             return false;
     }
@@ -1203,8 +1197,7 @@ void RogueAI::OnCombatStart(Unit* target)
     }
 
     // Use offensive cooldowns for boss fights
-    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
-    {
+    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())    {
         ActivateBurstCooldowns(target);
     }
 

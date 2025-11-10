@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
 #include <vector>
@@ -117,7 +118,7 @@ private:
         bool isValid = false;
     };
 
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _cacheMutex;
     std::unordered_map<uint32, CharacterCacheEntry> _characterCache; // accountId -> characters
 
     void UpdateCharacterCache(uint32 accountId, std::vector<ObjectGuid> const& characters);
@@ -133,7 +134,7 @@ private:
     };
 
     std::queue<PendingRequest> _pendingRequests;
-    mutable std::recursive_mutex _requestMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _requestMutex;
     std::atomic<bool> _processingRequests{false};
 
     void QueueRequest(SpawnRequest const& request, CharacterCallback callback);

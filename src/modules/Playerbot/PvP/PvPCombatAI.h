@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "Unit.h"
@@ -22,6 +23,9 @@
 
 namespace Playerbot
 {
+    // Interface
+    #include "Core/DI/Interfaces/IPvPCombatAI.h"
+
 
 /**
  * @brief PvP target priority types
@@ -151,7 +155,7 @@ struct PvPCombatProfile
  * - Peel mechanics (protecting allies)
  * - Kiting and positioning
  */
-class TC_GAME_API PvPCombatAI
+class TC_GAME_API PvPCombatAI final : public IPvPCombatAI
 {
 public:
     static PvPCombatAI* instance();
@@ -160,8 +164,8 @@ public:
     // INITIALIZATION
     // ============================================================================
 
-    void Initialize();
-    void Update(::Player* player, uint32 diff);
+    void Initialize() override;
+    void Update(::Player* player, uint32 diff) override;
 
     // ============================================================================
     // TARGET SELECTION
@@ -170,27 +174,27 @@ public:
     /**
      * Select best PvP target based on priority algorithm
      */
-    ::Unit* SelectBestTarget(::Player* player) const;
+    ::Unit* SelectBestTarget(::Player* player) const override;
 
     /**
      * Assess threat level of target
      */
-    ThreatAssessment AssessThreat(::Player* player, ::Unit* target) const;
+    ThreatAssessment AssessThreat(::Player* player, ::Unit* target) const override;
 
     /**
      * Find all enemy players in range
      */
-    std::vector<::Unit*> GetEnemyPlayers(::Player* player, float range) const;
+    std::vector<::Unit*> GetEnemyPlayers(::Player* player, float range) const override;
 
     /**
      * Find healers in enemy team
      */
-    std::vector<::Unit*> GetEnemyHealers(::Player* player) const;
+    std::vector<::Unit*> GetEnemyHealers(::Player* player) const override;
 
     /**
      * Switch target if current target is suboptimal
      */
-    bool ShouldSwitchTarget(::Player* player) const;
+    bool ShouldSwitchTarget(::Player* player) const override;
 
     // ============================================================================
     // CC CHAIN COORDINATION
@@ -199,27 +203,27 @@ public:
     /**
      * Execute CC chain on target
      */
-    bool ExecuteCCChain(::Player* player, ::Unit* target);
+    bool ExecuteCCChain(::Player* player, ::Unit* target) override;
 
     /**
      * Get next CC ability in chain
      */
-    uint32 GetNextCCAbility(::Player* player, ::Unit* target) const;
+    uint32 GetNextCCAbility(::Player* player, ::Unit* target) const override;
 
     /**
      * Check if target has diminishing returns
      */
-    uint32 GetDiminishingReturnsLevel(::Unit* target, CCType ccType) const;
+    uint32 GetDiminishingReturnsLevel(::Unit* target, CCType ccType) const override;
 
     /**
      * Track CC used on target
      */
-    void TrackCCUsed(::Unit* target, CCType ccType);
+    void TrackCCUsed(::Unit* target, CCType ccType) override;
 
     /**
      * Check if target is CC immune
      */
-    bool IsTargetCCImmune(::Unit* target, CCType ccType) const;
+    bool IsTargetCCImmune(::Unit* target, CCType ccType) const override;
 
     // ============================================================================
     // DEFENSIVE COOLDOWNS
@@ -228,22 +232,22 @@ public:
     /**
      * Use defensive cooldown if needed
      */
-    bool UseDefensiveCooldown(::Player* player);
+    bool UseDefensiveCooldown(::Player* player) override;
 
     /**
      * Get best defensive cooldown for situation
      */
-    uint32 GetBestDefensiveCooldown(::Player* player) const;
+    uint32 GetBestDefensiveCooldown(::Player* player) const override;
 
     /**
      * Check if should use immunity
      */
-    bool ShouldUseImmunity(::Player* player) const;
+    bool ShouldUseImmunity(::Player* player) const override;
 
     /**
      * Use trinket to break CC
      */
-    bool UseTrinket(::Player* player);
+    bool UseTrinket(::Player* player) override;
 
     // ============================================================================
     // OFFENSIVE BURSTS
@@ -252,22 +256,22 @@ public:
     /**
      * Execute offensive burst sequence
      */
-    bool ExecuteOffensiveBurst(::Player* player, ::Unit* target);
+    bool ExecuteOffensiveBurst(::Player* player, ::Unit* target) override;
 
     /**
      * Check if should burst target
      */
-    bool ShouldBurstTarget(::Player* player, ::Unit* target) const;
+    bool ShouldBurstTarget(::Player* player, ::Unit* target) const override;
 
     /**
      * Get offensive cooldowns to use
      */
-    std::vector<uint32> GetOffensiveCooldowns(::Player* player) const;
+    std::vector<uint32> GetOffensiveCooldowns(::Player* player) const override;
 
     /**
      * Stack offensive cooldowns
      */
-    bool StackOffensiveCooldowns(::Player* player);
+    bool StackOffensiveCooldowns(::Player* player) override;
 
     // ============================================================================
     // INTERRUPT COORDINATION
@@ -276,17 +280,17 @@ public:
     /**
      * Interrupt enemy cast
      */
-    bool InterruptCast(::Player* player, ::Unit* target);
+    bool InterruptCast(::Player* player, ::Unit* target) override;
 
     /**
      * Check if should interrupt
      */
-    bool ShouldInterrupt(::Player* player, ::Unit* target) const;
+    bool ShouldInterrupt(::Player* player, ::Unit* target) const override;
 
     /**
      * Get interrupt spell ID
      */
-    uint32 GetInterruptSpell(::Player* player) const;
+    uint32 GetInterruptSpell(::Player* player) const override;
 
     // ============================================================================
     // PEEL MECHANICS
@@ -295,31 +299,31 @@ public:
     /**
      * Peel for ally under attack
      */
-    bool PeelForAlly(::Player* player, ::Unit* ally);
+    bool PeelForAlly(::Player* player, ::Unit* ally) override;
 
     /**
      * Find ally needing peel
      */
-    ::Unit* FindAllyNeedingPeel(::Player* player) const;
+    ::Unit* FindAllyNeedingPeel(::Player* player) const override;
 
     /**
      * Get peel ability for class
      */
-    uint32 GetPeelAbility(::Player* player) const;
+    uint32 GetPeelAbility(::Player* player) const override;
 
     // ============================================================================
     // COMBAT STATE
     // ============================================================================
 
-    void SetCombatState(::Player* player, PvPCombatState state);
-    PvPCombatState GetCombatState(::Player* player) const;
+    void SetCombatState(::Player* player, PvPCombatState state) override;
+    PvPCombatState GetCombatState(::Player* player) const override;
 
     // ============================================================================
     // PROFILES
     // ============================================================================
 
-    void SetCombatProfile(uint32 playerGuid, PvPCombatProfile const& profile);
-    PvPCombatProfile GetCombatProfile(uint32 playerGuid) const;
+    void SetCombatProfile(uint32 playerGuid, PvPCombatProfile const& profile) override;
+    PvPCombatProfile GetCombatProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // METRICS
@@ -353,8 +357,8 @@ public:
         }
     };
 
-    PvPMetrics const& GetPlayerMetrics(uint32 playerGuid) const;
-    PvPMetrics const& GetGlobalMetrics() const;
+    PvPMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
+    PvPMetrics const& GetGlobalMetrics() const override;
 
 private:
     PvPCombatAI();
@@ -455,7 +459,7 @@ private:
     std::unordered_map<uint32, PvPMetrics> _playerMetrics;
     PvPMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TARGET_SELECTOR> _mutex;
 
     // Update intervals
     static constexpr uint32 COMBAT_UPDATE_INTERVAL = 100;  // 100ms for PvP responsiveness

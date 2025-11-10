@@ -25,6 +25,16 @@
 namespace Playerbot
 {
     ExampleManager::ExampleManager(Player* bot, BotAI* ai)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         : BehaviorManager(bot, ai, 500, "ExampleManager") // 500ms update interval
     {
         // Reserve space for task queue to avoid allocations
@@ -57,6 +67,41 @@ namespace Playerbot
         // Example initialization - check if bot is ready
         Player* bot = GetBot();
         if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+        if (!bot)
             return false;
 
         // Check if bot is fully loaded in world
@@ -68,6 +113,21 @@ namespace Playerbot
 
         // Check if bot has required data loaded
         if (bot->GetLevel() == 0)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         {
             LogDebug("Bot {} level not loaded, deferring initialization", bot->GetName());
             return false; // Retry on next update
@@ -75,6 +135,11 @@ namespace Playerbot
 
         // Perform one-time setup
         LogDebug("Initialized successfully for bot {} (Level {})", bot->GetName(), bot->GetLevel());
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+    return nullptr;
+}
 
         // Add an initial idle task
         Task idleTask(Task::TASK_IDLE, 0, 2000);
@@ -105,6 +170,11 @@ namespace Playerbot
         m_tasksProcessedThisUpdate = 0;
 
         Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
         if (!bot || !bot->IsInWorld())
         {
             LogWarning("Bot not available during update");

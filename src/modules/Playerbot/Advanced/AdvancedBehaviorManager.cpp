@@ -202,6 +202,31 @@ bool AdvancedBehaviorManager::LeaveDungeon()
 
     // Leave dungeon via teleport to homebind
     WorldLocation homebind = m_bot->m_homebind;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+    return nullptr;
+}
+                          if (!bot)
+                          {
+                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+                              return nullptr;
+                          }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
+                      if (!bot)
+                      {
+                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
+                          return;
+                      }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+    return;
+}
     m_bot->TeleportTo(homebind.GetMapId(), homebind.GetPositionX(), homebind.GetPositionY(),
                       homebind.GetPositionZ(), m_bot->GetOrientation());
 
@@ -215,6 +240,26 @@ bool AdvancedBehaviorManager::IsInDungeon() const
 
     Map* map = m_bot->GetMap();
     if (!map)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method IsDungeon");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+        if (!map)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method IsDungeon");
+            return nullptr;
+        }
+    if (!map)
         return false;
 
     return map->IsDungeon();
@@ -226,6 +271,11 @@ AdvancedBehaviorManager::DungeonStrategy const* AdvancedBehaviorManager::GetCurr
         return nullptr;
 
     Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
     if (!map)
         return nullptr;
 
@@ -290,6 +340,11 @@ void AdvancedBehaviorManager::HandleBossMechanic(Creature* boss, uint32 spellId)
     {
         DispelBossDebuff(spellId);
         return;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     }
 
     // Move to safe position if damaging AoE
@@ -307,6 +362,11 @@ void AdvancedBehaviorManager::AvoidDangerZone(Position const& center, float radi
 
     // Check if bot is in danger zone
     if (m_bot->GetExactDist2d(center.GetPositionX(), center.GetPositionY()) <= radius)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         // Find safe position outside radius
         Position safePos = FindSafePosition(m_bot->GetPosition());
@@ -316,6 +376,21 @@ void AdvancedBehaviorManager::AvoidDangerZone(Position const& center, float radi
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                    return nullptr;
+                }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
                 PlayerBotMovementPriority::DUNGEON_MECHANIC,
                 safePos,
                 "Danger zone escape",
@@ -347,7 +422,17 @@ void AdvancedBehaviorManager::AvoidDangerZone(Position const& center, float radi
 void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
 {
     if (!m_bot || !boss)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+            return nullptr;
+        }
         return;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+    return nullptr;
+}
 
     // Find interrupt spell based on class
     uint32 interruptSpell = 0;
@@ -358,8 +443,18 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
             interruptSpell = 6552; // Pummel
             break;
         case CLASS_ROGUE:
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+                return;
+            }
             interruptSpell = 1766; // Kick
             break;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
         case CLASS_SHAMAN:
             interruptSpell = 57994; // Wind Shear
             break;
@@ -376,13 +471,33 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
             return; // No interrupt available
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     if (m_bot->HasSpell(interruptSpell))
         m_bot->CastSpell(boss, interruptSpell, false);
 }
 
 void AdvancedBehaviorManager::DispelBossDebuff(uint32 spellId)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+        return;
+    }
     if (!m_bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+            return;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
+        }
         return;
 
     // Dispel mechanics handled by class AI
@@ -398,9 +513,29 @@ void AdvancedBehaviorManager::MoveToBossSafeSpot(Creature* boss)
 
     // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
     BotAI* botAI = dynamic_cast<BotAI*>(m_bot->GetAI());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestPointMovement(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
             PlayerBotMovementPriority::DUNGEON_MECHANIC,
             safePos,
             "Boss safe spot positioning",
@@ -427,6 +562,16 @@ void AdvancedBehaviorManager::HandleTrashPull()
 
     // Find nearest trash mob
     Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return;
 
@@ -448,10 +593,25 @@ void AdvancedBehaviorManager::HandleTrashPull()
     for (auto const& snapshot : creatureSnapshots)
     {
         if (!snapshot.IsAlive())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+            }
             continue;
 
         // Get Creature* for complex checks
         Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+        return nullptr;
+    }
         if (!creature || creature->IsFriendlyTo(m_bot))
             continue;
 
@@ -491,11 +651,21 @@ void AdvancedBehaviorManager::PrioritizeCrowdControl(std::vector<Creature*> cons
 
 void AdvancedBehaviorManager::HandlePatrolAvoidance()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     if (!m_bot)
         return;
 
     // Detect nearby patrols and avoid aggro
     Map* map = m_bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return;
 
@@ -517,6 +687,11 @@ void AdvancedBehaviorManager::HandlePatrolAvoidance()
     for (auto const& snapshot : creatureSnapshots)
     {
         if (!snapshot.IsAlive())
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             continue;
 
         // Get Creature* for complex checks
@@ -551,12 +726,37 @@ bool AdvancedBehaviorManager::QueueForBattleground(BattlegroundType type)
     return false;
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 bool AdvancedBehaviorManager::LeaveBattleground()
 {
     if (!m_bot || !IsInBattleground())
         return false;
 
     Battleground* bg = m_bot->GetBattleground();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return false;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return false;
+    }
     if (!bg)
         return false;
 
@@ -578,6 +778,16 @@ void AdvancedBehaviorManager::ExecuteBattlegroundStrategy()
         return;
 
     Battleground* bg = m_bot->GetBattleground();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
     if (!bg)
         return;
 
@@ -621,6 +831,16 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestPointMovement(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return false;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
             PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
             flagPos,
             "PvP flag defense",
@@ -646,22 +866,62 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
 
     std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
+    if (!bot)
+    {
+        if (!carrier)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetGUID");
+            return nullptr;
+        }
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 20.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = m_bot->GetMap();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (!cellVisitMap)
             return;
 
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         if (!spatialGrid)
         {
+            if (!carrier)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetPosition");
+                return;
+            }
             sSpatialGridManager.CreateGrid(cellVisitMap);
             spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         }
 
         if (spatialGrid)
+        if (!carrier)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetMap");
+            return;
+        }
         {
             std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 m_bot->GetPosition(), 20.0f);
@@ -669,12 +929,27 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
             for (ObjectGuid guid : nearbyGuids)
             {
                 GameObject* go = m_bot->GetMap()->GetGameObject(guid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
                 if (go)
                 {
+                    if (!carrier)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetPosition");
+                        return nullptr;
+                    }
                     // Original logic from searcher
                 }
             }
         }
+    if (!carrier)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetMap");
+        return nullptr;
+    }
     }
 
     for (Player* player : nearbyPlayers)
@@ -700,6 +975,11 @@ void AdvancedBehaviorManager::AttackBase(GameObject* flag)
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestPointMovement(
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
             PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
             flagPos,
             "PvP flag capture",
@@ -720,12 +1000,22 @@ void AdvancedBehaviorManager::AttackBase(GameObject* flag)
 
     // Interact with flag when in range
     if (m_bot->GetExactDist2d(flagPos.GetPositionX(), flagPos.GetPositionY()) < 5.0f)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     {
         flag->Use(m_bot, false);
     }
 }
 
 void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
+            if (!carrier)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetGUID");
+                return;
+            }
 {
     if (!m_bot || !carrier)
         return;
@@ -736,6 +1026,16 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestFollowMovement(
+        if (!bot)
+        {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+                return false;
+            }
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
             PlayerBotMovementPriority::PVP_TACTICAL,
             carrier->GetGUID(),
             3.0f,
@@ -757,6 +1057,26 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
 
     // Attack enemies near carrier
     Map* map = m_bot->GetMap();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     if (!map)
         return;
 
@@ -767,9 +1087,24 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = carrier->GetMap();
+        if (!carrier)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetPosition");
+            return;
+        }
+        if (!carrier)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetMap");
+            return;
+        }
         if (!cellVisitMap)
             return;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         if (!spatialGrid)
         {
@@ -785,6 +1120,11 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
             for (ObjectGuid guid : nearbyGuids)
             {
                 GameObject* go = carrier->GetMap()->GetGameObject(guid);
+        if (!carrier)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: carrier in method GetMap");
+            return nullptr;
+        }
                 if (go)
                 {
                     // Original logic from searcher
@@ -803,16 +1143,31 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
     }
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
 void AdvancedBehaviorManager::ReturnFlag()
 {
     if (!m_bot || !IsInBattleground())
         return;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     // Find flag object and return it
     // Framework in place for flag return logic
 }
 
 void AdvancedBehaviorManager::CaptureObjective(GameObject* objective)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return;
+}
 {
     if (!m_bot || !objective)
         return;
@@ -825,6 +1180,16 @@ void AdvancedBehaviorManager::CaptureObjective(GameObject* objective)
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestPointMovement(
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return false;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
             PlayerBotMovementPriority::PVP_FLAG_CAPTURE,
             objPos,
             "PvP objective capture",
@@ -852,6 +1217,11 @@ void AdvancedBehaviorManager::CaptureObjective(GameObject* objective)
 }
 
 void AdvancedBehaviorManager::FocusPvPTarget(Player* target)
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+            return;
+        }
 {
     if (!m_bot || !target)
         return;
@@ -890,11 +1260,26 @@ void AdvancedBehaviorManager::PrioritizeHealers()
 
     std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 40.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
         if (!cellVisitMap)
             return;
 
@@ -938,6 +1323,11 @@ void AdvancedBehaviorManager::PrioritizeHealers()
             FocusPvPTarget(player);
             break;
         }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     }
 }
 
@@ -953,11 +1343,36 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
 
     std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 50.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return;
+        }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return nullptr;
+        }
         if (!cellVisitMap)
             return;
 
@@ -980,14 +1395,34 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
                 if (creature)
                 {
                     // Original logic from searcher
+                if (!rare)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetEntry");
+                    return;
                 }
+                }
+            if (!rare)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetName");
+                return nullptr;
+            }
             }
         }
     }
 
+    if (!rare)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method IsElite");
+        return nullptr;
+    }
     for (Player* player : nearbyPlayers)
     {
         if (!player || player->IsFriendlyTo(m_bot))
+            if (!rare)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetEntry");
+                return nullptr;
+            }
             continue;
 
         // Check if player has flag aura (specific to WSG)
@@ -1008,10 +1443,20 @@ bool AdvancedBehaviorManager::ParticipateInWorldEvent(WorldEventType type)
 {
     if (!m_bot || !m_eventEnabled)
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+    return false;
+}
 
     if (!IsEventActive(type))
         return false;
 
+    if (!rare)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method IsElite");
+        return nullptr;
+    }
     m_activeEvent = type;
 
     // Execute event-specific behavior
@@ -1102,12 +1547,27 @@ void AdvancedBehaviorManager::ExploreZone(uint32 zoneId)
 }
 
 void AdvancedBehaviorManager::DiscoverFlightPaths()
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 {
     if (!m_bot)
         return;
 
     // Find nearby flight masters
     Map* map = m_bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     if (!map)
         return;
 
@@ -1130,7 +1590,22 @@ void AdvancedBehaviorManager::DiscoverFlightPaths()
     {
         // Get Creature* for NPC flag checks
         Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+            return nullptr;
+        }
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
+    return nullptr;
+}
         if (!creature)
+            if (!boss)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: boss in method GetEntry");
+                return;
+            }
             continue;
 
         // Check if creature is flight master (npc_flag UNIT_NPC_FLAG_FLIGHTMASTER)
@@ -1171,8 +1646,28 @@ void AdvancedBehaviorManager::TrackRareSpawn(Creature* rare)
     spawn.lastSeenTime = time(nullptr);
     spawn.isElite = rare->IsElite();
     spawn.level = rare->GetLevel();
+    if (!rare)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetEntry");
+        return;
+    }
+if (!rare)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetName");
+    return;
+}
 
     m_trackedRares[rare->GetEntry()] = spawn;
+        if (!rare)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method IsElite");
+            return nullptr;
+        }
+    if (!rare)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetEntry");
+        return;
+    }
 }
 
 std::vector<AdvancedBehaviorManager::RareSpawn> AdvancedBehaviorManager::GetTrackedRares() const
@@ -1187,14 +1682,39 @@ std::vector<AdvancedBehaviorManager::RareSpawn> AdvancedBehaviorManager::GetTrac
 }
 
 bool AdvancedBehaviorManager::ShouldEngageRare(Creature* rare) const
+if (!rare)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method IsElite");
+    return;
+}
 {
     if (!m_bot || !rare)
         return false;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+    return nullptr;
+}
 
     // Check if bot is strong enough
     if (rare->GetLevel() > m_bot->GetLevel() + 3)
+        if (!bot)
+        {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+            return nullptr;
+        }
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     // Check if bot has group support for elite rares
     if (rare->IsElite() && !m_bot->GetGroup())
         return false;
@@ -1210,6 +1730,11 @@ void AdvancedBehaviorManager::FindNearbyTreasures()
     ScanForTreasures();
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 bool AdvancedBehaviorManager::LootTreasure(GameObject* treasure)
 {
     if (!m_bot || !treasure)
@@ -1287,6 +1812,11 @@ void AdvancedBehaviorManager::AnalyzeDungeonComposition()
         return;
 
     Group* group = m_bot->GetGroup();
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
     if (!group)
         return;
 
@@ -1301,11 +1831,21 @@ void AdvancedBehaviorManager::AssignDungeonRole()
 
     // Determine role based on spec
     uint8 botClass = m_bot->GetClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+        return;
+    }
 
     // Tank classes
     if (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
         botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DEMON_HUNTER ||
         botClass == CLASS_DRUID || botClass == CLASS_MONK)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return nullptr;
+    }
     {
         m_dungeonRole = DungeonRole::TANK;
     }
@@ -1313,6 +1853,11 @@ void AdvancedBehaviorManager::AssignDungeonRole()
     else if (botClass == CLASS_PRIEST || botClass == CLASS_PALADIN ||
              botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
              botClass == CLASS_MONK || botClass == CLASS_EVOKER)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     {
         m_dungeonRole = DungeonRole::HEALER;
     }
@@ -1333,8 +1878,18 @@ void AdvancedBehaviorManager::StartBossFight(Creature* boss)
         m_currentBossFight.reset();
 
     m_currentBossFight = std::make_unique<ActiveBossFight>();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     m_currentBossFight->boss = boss;
     m_currentBossFight->bossEntry = boss->GetEntry();
+    if (!boss)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: boss in method GetEntry");
+        return nullptr;
+    }
     m_currentBossFight->startTime = getMSTime();
     m_currentBossFight->phase = 1;
 }
@@ -1364,6 +1919,11 @@ void AdvancedBehaviorManager::UpdateBossFight(uint32 diff)
     }
 
     // Check for phase transitions
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return;
+    }
     uint32 healthPct = boss->GetHealthPct();
     if (healthPct < 70 && m_currentBossFight->phase == 1)
         AdvanceBossPhase();
@@ -1380,6 +1940,11 @@ void AdvancedBehaviorManager::AdvanceBossPhase()
 }
 
 void AdvancedBehaviorManager::UpdatePvPBehavior(uint32 diff)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
 {
     if (!IsInBattleground())
         return;
@@ -1397,7 +1962,17 @@ void AdvancedBehaviorManager::LoadBattlegroundStrategies()
 
     m_bgStrategies[strategy.type] = strategy;
 }
+if (!go)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
+    return;
+}
 
+if (!go)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetEntry");
+    return;
+}
 AdvancedBehaviorManager::BattlegroundStrategy* AdvancedBehaviorManager::GetBattlegroundStrategy(BattlegroundType type)
 {
     auto itr = m_bgStrategies.find(type);
@@ -1419,16 +1994,36 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
 
     // Find optimal PvP target
     Map* map = m_bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
     if (!map)
         return nullptr;
 
     std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 40.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = m_bot->GetMap();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
         if (!cellVisitMap)
             return nullptr;
 
@@ -1541,6 +2136,11 @@ void AdvancedBehaviorManager::UpdateExploration(uint32 diff)
         return;
 
     uint32 currentZone = m_bot->GetZoneId();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
+            return nullptr;
+        }
     if (currentZone != 0)
         ExploreZone(currentZone);
 
@@ -1561,6 +2161,16 @@ void AdvancedBehaviorManager::ScanForRares()
         return;
 
     Map* map = m_bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return false;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!map)
         return;
 
@@ -1613,6 +2223,16 @@ void AdvancedBehaviorManager::ScanForTreasures()
         return;
 
     Map* map = m_bot->GetMap();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     if (!map)
         return;
 
@@ -1648,6 +2268,11 @@ void AdvancedBehaviorManager::ScanForTreasures()
             treasure.guid = go->GetGUID();
             treasure.entry = go->GetEntry();
             treasure.position = go->GetPosition();
+            if (!go)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetEntry");
+                return nullptr;
+            }
             treasure.discoveredTime = time(nullptr);
             treasure.isLooted = false;
 

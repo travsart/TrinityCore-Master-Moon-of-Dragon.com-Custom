@@ -131,8 +131,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         {
             if (CastSpell(interruptTarget, SPELL_QUELL))
             {
-                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} interrupted {} with Quell",
-                             _bot->GetName(), interruptTarget->GetName());
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} interrupted {} with Quell",                             _bot->GetName(), interruptTarget->GetName());
                 return;
             }
         }
@@ -141,9 +140,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
     // Priority 2: Defensives - Obsidian Scales, Renewing Blaze
     if (behaviors && behaviors->NeedsDefensive())
     {
-        float healthPct = _bot->GetHealthPct();
-
-        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
+        float healthPct = _bot->GetHealthPct();        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
         {
             if (CastSpell(_bot, OBSIDIAN_SCALES))
             {
@@ -155,8 +152,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
 
         if (healthPct < 50.0f && CanUseAbility(RENEWING_BLAZE))
         {
-            if (CastSpell(_bot, RENEWING_BLAZE))
-            {
+            if (CastSpell(_bot, RENEWING_BLAZE))            {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Renewing Blaze at {}% health",
                              _bot->GetName(), healthPct);
                 return;
@@ -171,6 +167,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             if (healTarget && CastSpell(healTarget, VERDANT_EMBRACE))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Verdant Embrace to escape",
+                             
                              _bot->GetName());
                 return;
             }
@@ -179,11 +176,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
 
     // Priority 3: Positioning - Maintain mid-range (20-25 yards for empowered spells)
     if (behaviors && behaviors->NeedsRepositioning())
-    {
-        Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
-
-        // Too close - use Hover to gain distance
+    {        Position optimalPos = behaviors->GetOptimalPosition();
+        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Too close - use Hover to gain distance
         if (distance < 15.0f && CanUseAbility(HOVER))
         {
             if (CastSpell(_bot, HOVER))
@@ -199,8 +193,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         {
             if (CastSpell(_bot, WING_BUFFET))
             {
-                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Wing Buffet for space",
-                             _bot->GetName());
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Wing Buffet for space",                             _bot->GetName());
                 return;
             }
         }
@@ -215,6 +208,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
             TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} switching to priority target {}",
+                         
                          _bot->GetName(), priorityTarget->GetName());
         }
     }
@@ -223,14 +217,12 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldUseCrowdControl())
     {
         ::Unit* ccTarget = behaviors->GetCrowdControlTarget();
-        if (ccTarget && ccTarget != target)
-        {
+        if (ccTarget && ccTarget != target)        {
             if (CanUseAbility(SLEEP_WALK))
             {
                 if (CastSpell(ccTarget, SLEEP_WALK))
                 {
-                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} Sleep Walking secondary target",
-                                 _bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} Sleep Walking secondary target",                                 _bot->GetName());
                     return;
                 }
             }
@@ -239,8 +231,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
 
     // Priority 6: AoE Decisions - Pyre, Eternity's Surge based on enemy count
     if (behaviors && behaviors->ShouldAOE())
-    {
-        EvokerSpec currentSpec = DetectSpecialization();
+    {        EvokerSpec currentSpec = DetectSpecialization();
         if (currentSpec == EvokerSpec::DEVASTATION)
         {
             // Pyre for AoE with Essence Burst proc
@@ -248,29 +239,23 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(target, PYRE))
                 {
-                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Pyre for AoE",
-                                 _bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Pyre for AoE",                                 _bot->GetName());
                     return;
                 }
-            }
-
-            // Eternity's Surge (empowered) for AoE burst
+            }            // Eternity's Surge (empowered) for AoE burst
             if (_essence.current >= 3 && CanUseAbility(ETERNITYS_SURGE))
             {
                 StartEmpoweredSpell(ETERNITYS_SURGE, EmpowermentLevel::RANK_3, target);
-                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Eternity's Surge (Rank 3) for AoE",
-                             _bot->GetName());
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Eternity's Surge (Rank 3) for AoE",                             _bot->GetName());
                 return;
             }
-        }
-        else if (currentSpec == EvokerSpec::PRESERVATION)
+        }        else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             // Dream Breath (empowered) for AoE healing
             if (_essence.current >= 3 && CanUseAbility(DREAM_BREATH))
             {
                 StartEmpoweredSpell(DREAM_BREATH, EmpowermentLevel::RANK_3, target);
-                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Dream Breath (Rank 3) for AoE healing",
-                             _bot->GetName());
+                TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Dream Breath (Rank 3) for AoE healing",                             _bot->GetName());
                 return;
             }
 
@@ -279,8 +264,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(_bot, EMERALD_BLOSSOM))
                 {
-                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Emerald Blossom for AoE healing",
-                                 _bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Emerald Blossom for AoE healing",                                 _bot->GetName());
                     return;
                 }
             }
@@ -298,8 +282,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(_bot, SPELL_DRAGONRAGE))
                 {
-                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Dragonrage",
-                                 _bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Dragonrage",                                 _bot->GetName());
                     _dragonrageStacks = 40; // Starts at 40 stacks
                     return;
                 }
@@ -312,8 +295,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(_bot, EMERALD_COMMUNION))
                 {
-                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Emerald Communion",
-                                 _bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Emerald Communion",                                 _bot->GetName());
                     return;
                 }
             }
@@ -477,18 +459,13 @@ void EvokerAI::OnCombatEnd()
         ProcessEchoHealing();
 }
 
-bool EvokerAI::HasEnoughResource(uint32 spellId)
-{
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
-    if (!spellInfo)
+bool EvokerAI::HasEnoughResource(uint32 spellId){
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());    if (!spellInfo)
         return false;
 
     // Most evoker abilities require essence
     switch (spellId)
-    {
-        case AZURE_STRIKE:
-        case LIVING_FLAME:
-            return true; // Free abilities
+    {        case AZURE_STRIKE:        case LIVING_FLAME:            return true; // Free abilities
 
         case ETERNITYS_SURGE:
         case DISINTEGRATE:
@@ -547,8 +524,7 @@ void EvokerAI::ConsumeResource(uint32 spellId)
 
 Position EvokerAI::GetOptimalPosition(::Unit* target)
 {
-    if (!target)
-        return _bot->GetPosition();
+    if (!target)        return _bot->GetPosition();
 
     Position pos = _bot->GetPosition();
     float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
@@ -556,10 +532,7 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
 
     if (distance > optimalRange || distance < optimalRange * 0.8f)
     {
-        pos = target->GetPosition();
-        pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);
-        pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);
-    }
+        pos = target->GetPosition();        pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);        pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);    }
 
     return pos;
 }
@@ -667,9 +640,7 @@ void EvokerAI::UpdateAugmentationRotation(::Unit* target)
 
 void EvokerAI::UpdateEssenceManagement(::Unit* target)
 {
-    // Essence regenerates naturally over time (handled in UpdateCooldowns)
-
-    // DEADLOCK FIX: Use target parameter instead of ObjectAccessor (worker thread safe)
+    // Essence regenerates naturally over time (handled in UpdateCooldowns)    // DEADLOCK FIX: Use target parameter instead of ObjectAccessor (worker thread safe)
     if (!target || !target->IsInWorld())
         return;
 
@@ -721,8 +692,7 @@ float EvokerAI::GetEssencePercent()
 }
 
 void EvokerAI::UpdateEmpowermentSystem()
-{
-    if (_isChannelingEmpowered)
+{    if (_isChannelingEmpowered)
         UpdateEmpoweredChanneling();
 }
 
@@ -758,14 +728,12 @@ void EvokerAI::ReleaseEmpoweredSpell()
     ::Unit* target = _currentEmpoweredSpell.target;
 
     if (target && CanUseAbility(spellId))
-    {
-        _bot->CastSpell(target, spellId, false);
+    {        _bot->CastSpell(target, spellId, false);
         ConsumeResource(spellId);
         _empoweredSpellsCast++;
     }
 
-    // Reset empowered spell state
-    _currentEmpoweredSpell = EmpoweredSpell();
+    // Reset empowered spell state    _currentEmpoweredSpell = EmpoweredSpell();
     _isChannelingEmpowered = false;
 }
 
@@ -805,14 +773,11 @@ void EvokerAI::CreateEcho(::Unit* target, uint32 healAmount, uint32 numHeals)
     _activeEchoes.emplace_back(target, numHeals, healAmount);
 }
 
-void EvokerAI::ProcessEchoHealing()
-{
+void EvokerAI::ProcessEchoHealing(){
     for (auto& echo : _activeEchoes)
-    {
-        if (echo.ShouldHeal() && echo.target)
+    {        if (echo.ShouldHeal() && echo.target)
         {
-            // Perform echo healing
-            _bot->CastSpell(echo.target, ECHO, false);
+            // Perform echo healing            _bot->CastSpell(echo.target, ECHO, false);
             echo.ProcessHeal();
             _echoHealsPerformed++;
         }
@@ -822,12 +787,9 @@ void EvokerAI::ProcessEchoHealing()
 void EvokerAI::RemoveExpiredEchoes()
 {
     _activeEchoes.erase(
-        std::remove_if(_activeEchoes.begin(), _activeEchoes.end(),
-            [](const Echo& echo) { return echo.remainingHeals == 0 || !echo.target; }),
+        std::remove_if(_activeEchoes.begin(), _activeEchoes.end(),            [](const Echo& echo) { return echo.remainingHeals == 0 || !echo.target; }),
         _activeEchoes.end());
-}
-
-uint32 EvokerAI::GetActiveEchoCount()
+}uint32 EvokerAI::GetActiveEchoCount()
 {
     return static_cast<uint32>(_activeEchoes.size());
 }
@@ -849,8 +811,7 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
 
     uint32 aspectSpellId = 0;
     switch (aspect)
-    {
-        case EvokerAspect::BRONZE: aspectSpellId = BRONZE_ASPECT; break;
+    {        case EvokerAspect::BRONZE: aspectSpellId = BRONZE_ASPECT; break;
         case EvokerAspect::AZURE: aspectSpellId = AZURE_ASPECT; break;
         case EvokerAspect::GREEN: aspectSpellId = GREEN_ASPECT; break;
         case EvokerAspect::RED: aspectSpellId = RED_ASPECT; break;
@@ -859,8 +820,7 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
     }
 
     if (CanUseAbility(aspectSpellId))
-    {
-        _bot->CastSpell(_bot, aspectSpellId, false);
+    {        _bot->CastSpell(_bot, aspectSpellId, false);
         _currentAspect = aspect;
         _lastAspectShift = _aspectCooldown;
         _canShiftAspect = false;
@@ -901,8 +861,7 @@ bool EvokerAI::CanShiftAspect()
     }
 
     // Check group members
-    if (Group* group = _bot->GetGroup())
-    {
+    if (Group* group = _bot->GetGroup())    {
         float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
         {
@@ -923,8 +882,7 @@ bool EvokerAI::CanShiftAspect()
 ::Unit* EvokerAI::GetBestAugmentationTarget()
 {
     // Find ally DPS for augmentation buffs
-    if (Group* group = _bot->GetGroup())
-    {
+    if (Group* group = _bot->GetGroup())    {
         float rangeSq = OPTIMAL_CASTING_RANGE * OPTIMAL_CASTING_RANGE;
         for (auto const& member : group->GetMemberSlots())
         {
@@ -950,8 +908,7 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     Trinity::AnyUnitInObjectRangeCheck check(_bot, EMPOWERED_SPELL_RANGE);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();
-    if (!map)
+    Map* map = _bot->GetMap();    if (!map)
         return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);

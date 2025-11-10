@@ -16,6 +16,7 @@
 #define PLAYERBOT_LAZY_MANAGER_FACTORY_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <memory>
 #include <functional>
 #include <unordered_map>
@@ -262,12 +263,12 @@ private:
     std::atomic<bool> _deathRecoveryManagerInit{false};
 
     // Thread safety for manager creation
-    mutable std::shared_mutex _mutex;       ///< Shared mutex for read-optimized access
+    mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;       ///< Shared mutex for read-optimized access
 
     // Performance tracking
     std::atomic<size_t> _initCount{0};      ///< Number of initialized managers
     std::chrono::milliseconds _totalInitTime{0};  ///< Total init time
-    mutable std::mutex _metricsMutex;       ///< Protects metrics updates
+    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _metricsMutex;       ///< Protects metrics updates
 
     // Deleted copy/move operations
     LazyManagerFactory(LazyManagerFactory const&) = delete;

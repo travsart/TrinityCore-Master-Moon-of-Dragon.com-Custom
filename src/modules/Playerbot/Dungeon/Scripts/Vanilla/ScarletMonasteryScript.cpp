@@ -77,6 +77,16 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: Player {} entered Scarlet Monastery",
             player->GetGUID().GetCounter());
@@ -357,6 +367,16 @@ public:
                 if (boss->HasAura(13323) || boss->HasAura(9435))
                 {
                     float distance = player->GetExactDist(boss);
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                                return nullptr;
+                            }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                            return nullptr;
+                        }
 
                     // If within 20 yards of Doan during detonation, RUN AWAY
                     if (distance < 20.0f)
@@ -369,8 +389,23 @@ public:
 
                         float angle = doanPos.GetAngle(&playerPos);
                         float newX = player->GetPositionX() + cos(angle) * 15.0f;
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                            return 0;
+                        }
                         float newY = player->GetPositionY() + sin(angle) * 15.0f;
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                            return 0;
+                        }
                         float newZ = player->GetPositionZ();
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                            return;
+                        }
 
                         Position safePos(newX, newY, newZ);
                         MoveTo(player, safePos);
@@ -455,6 +490,26 @@ public:
     }
 
     void HandlePositioning(::Player* player, ::Creature* boss) override
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return;
+                    }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                    return;
+                }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                    return;
+                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -481,8 +536,23 @@ public:
 
                         float angle = herodPos.GetAngle(&playerPos);
                         float newX = player->GetPositionX() + cos(angle) * 12.0f;
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                            return 0;
+                        }
                         float newY = player->GetPositionY() + sin(angle) * 12.0f;
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                            return 0;
+                        }
                         float newZ = player->GetPositionZ();
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                            return;
+                        }
 
                         Position safePos(newX, newY, newZ);
                         MoveTo(player, safePos);
@@ -498,6 +568,11 @@ public:
                     {
                         // Return to melee range after whirlwind ends
                         float distance = player->GetExactDist(boss);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                         if (distance > 5.0f)
                         {
                             MoveTo(player, boss->GetPosition());
@@ -508,9 +583,19 @@ public:
                 break;
             }
 
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
             case 6487: // Arcanist Doan
             {
                 // Stay spread for Arcane Explosion
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return nullptr;
+                }
                 HandleSpreadMechanic(player, boss);
                 return;
             }
@@ -528,6 +613,11 @@ public:
 
         // Fall back to generic
         DungeonScript::HandlePositioning(player, boss);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
@@ -535,17 +625,37 @@ public:
         uint32 entry = boss->GetEntry();
 
         switch (entry)
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return nullptr;
+        }
         {
             case 3983: // Interrogator Vishas
             {
                 // Shadow Word: Pain - dispel disease/magic
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -564,12 +674,22 @@ public:
             {
                 // Deep Sleep - mass sleep that needs wakeup
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <unordered_map>
@@ -390,7 +391,7 @@ private:
     uint32 _kitingStartTime;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float DEFAULT_OPTIMAL_DISTANCE = 20.0f;    // 20 yards

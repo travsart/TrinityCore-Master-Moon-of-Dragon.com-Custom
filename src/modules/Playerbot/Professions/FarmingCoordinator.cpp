@@ -50,6 +50,16 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     uint32 currentTime = getMSTime();
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
@@ -71,6 +81,21 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
 
     // Check if any profession needs farming
     auto professionsNeedingFarm = GetProfessionsNeedingFarm(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
     if (!professionsNeedingFarm.empty())
     {
         // Start farming session for highest priority profession
@@ -89,6 +114,16 @@ void FarmingCoordinator::SetEnabled(::Player* player, bool enabled)
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = FarmingCoordinatorProfile();
@@ -103,6 +138,11 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     auto it = _profiles.find(playerGuid);
     if (it == _profiles.end())
@@ -115,6 +155,11 @@ void FarmingCoordinator::SetCoordinatorProfile(uint32 playerGuid, FarmingCoordin
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     _profiles[playerGuid] = profile;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 }
 
 FarmingCoordinatorProfile FarmingCoordinator::GetCoordinatorProfile(uint32 playerGuid) const
@@ -139,6 +184,21 @@ bool FarmingCoordinator::NeedsFarming(::Player* player, ProfessionType professio
 
     int32 skillGap = GetSkillGap(player, profession);
     FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     return skillGap > static_cast<int32>(profile.skillGapThreshold);
 }
@@ -160,13 +220,28 @@ uint16 FarmingCoordinator::GetTargetSkillLevel(::Player* player, ProfessionType 
         return 0;
 
     FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     uint16 charLevel = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
 
     // Target = Character Level × skillLevelMultiplier (default: 5.0)
     return static_cast<uint16>(charLevel * profile.skillLevelMultiplier);
 }
 
 std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Player* player) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 {
     std::vector<ProfessionType> professions;
 
@@ -182,6 +257,11 @@ std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Play
         if (NeedsFarming(player, profInfo.profession))
         {
             int32 skillGap = GetSkillGap(player, profInfo.profession);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
             professions.push_back(profInfo.profession);
         }
     }
@@ -197,6 +277,11 @@ std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Play
 }
 
 uint32 FarmingCoordinator::CalculateFarmingDuration(::Player* player, ProfessionType profession) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
 {
     if (!player)
         return 0;
@@ -206,6 +291,16 @@ uint32 FarmingCoordinator::CalculateFarmingDuration(::Player* player, Profession
         return 0;
 
     FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(player->GetGUID().GetCounter());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     // Estimate: ~10 skill points per 5 minutes of farming
     uint32 estimatedDuration = (skillGap / 10) * 300000; // 5 minutes in ms
@@ -228,9 +323,29 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     // Check if session already active
     if (_activeSessions.find(playerGuid) != _activeSessions.end())
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
     {
         TC_LOG_DEBUG("playerbots", "FarmingCoordinator: Player {} already has active farming session", player->GetName());
         return false;
@@ -265,6 +380,11 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
 
     // Travel to farming zone
     if (!TravelToFarmingZone(player, *zone))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
     {
         TC_LOG_ERROR("playerbots", "FarmingCoordinator: Failed to travel to farming zone");
         _activeSessions.erase(playerGuid);
@@ -278,12 +398,27 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
 }
 
 void FarmingCoordinator::StopFarmingSession(::Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 {
     if (!player)
         return;
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     auto it = _activeSessions.find(playerGuid);
     if (it == _activeSessions.end())
@@ -309,6 +444,11 @@ void FarmingCoordinator::StopFarmingSession(::Player* player)
 
     // Record last farming time for cooldown
     _lastFarmingTimes[playerGuid] = getMSTime();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
 
     TC_LOG_INFO("playerbots", "FarmingCoordinator: Stopped farming session {} for player {} (gathered {} nodes)",
         session.sessionId, player->GetName(), session.nodesGathered);
@@ -321,6 +461,11 @@ FarmingSession const* FarmingCoordinator::GetActiveFarmingSession(uint32 playerG
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     auto it = _activeSessions.find(playerGuid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+            return;
+        }
     if (it != _activeSessions.end())
         return &it->second;
 
@@ -334,6 +479,11 @@ bool FarmingCoordinator::HasActiveFarmingSession(::Player* player) const
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _activeSessions.find(player->GetGUID().GetCounter()) != _activeSessions.end();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 }
 
 void FarmingCoordinator::UpdateFarmingSession(::Player* player, uint32 diff)
@@ -342,6 +492,11 @@ void FarmingCoordinator::UpdateFarmingSession(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     auto it = _activeSessions.find(playerGuid);
     if (it == _activeSessions.end())
@@ -363,6 +518,11 @@ void FarmingCoordinator::UpdateFarmingSession(::Player* player, uint32 diff)
     // Update session progress (gather stats from GatheringAutomation)
     // In full implementation, track nodes gathered during this session
 }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+    return;
+}
 
 bool FarmingCoordinator::ShouldEndFarmingSession(::Player* player, FarmingSession const& session) const
 {
@@ -374,6 +534,16 @@ bool FarmingCoordinator::ShouldEndFarmingSession(::Player* player, FarmingSessio
     if (currentSkill >= session.targetSkill)
     {
         TC_LOG_INFO("playerbots", "FarmingCoordinator: Skill target reached ({} >= {})",
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+        return nullptr;
+    }
             currentSkill, session.targetSkill);
         return true;
     }
@@ -403,6 +573,11 @@ FarmingZoneInfo const* FarmingCoordinator::GetOptimalFarmingZone(::Player* playe
         return nullptr;
 
     auto zones = GetSuitableZones(player, profession);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     if (zones.empty())
         return nullptr;
 
@@ -439,6 +614,11 @@ std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* play
 
     uint16 skillLevel = ProfessionManager::instance()->GetProfessionSkill(player, profession);
     uint8 charLevel = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
 
     // Filter zones by skill level and character level
     for (auto const& zone : it->second)
@@ -468,6 +648,11 @@ float FarmingCoordinator::CalculateZoneScore(::Player* player, FarmingZoneInfo c
 
     // Level match bonus
     uint8 charLevel = player->GetLevel();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+        return;
+    }
     int8 levelDiff = std::abs(static_cast<int8>(charLevel) - static_cast<int8>(zone.recommendedCharLevel));
     if (levelDiff == 0)
         score += 20.0f;
@@ -489,6 +674,11 @@ bool FarmingCoordinator::HasReachedStockpileTarget(::Player* player, uint32 item
 {
     uint32 currentCount = GetMaterialCount(player, itemId);
     FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     return currentCount >= profile.materialStockpileTarget;
 }
@@ -541,6 +731,16 @@ void FarmingCoordinator::ResetStatistics(uint32 playerGuid)
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+    return nullptr;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+    return;
+}
         it->second.Reset();
 }
 
@@ -564,19 +764,39 @@ void FarmingCoordinator::InitializeZoneDatabase()
 void FarmingCoordinator::InitializeMiningZones()
 {
     std::vector<FarmingZoneInfo> miningZones;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+    return;
+}
 
     // Elwynn Forest (Alliance - Copper 1-75)
     FarmingZoneInfo elwynn;
     elwynn.zoneId = 12;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
+        return nullptr;
+    }
     elwynn.zoneName = "Elwynn Forest";
     elwynn.minSkillLevel = 1;
     elwynn.maxSkillLevel = 75;
     elwynn.profession = ProfessionType::MINING;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
     elwynn.centerPosition.Relocate(-9449.0f, -1366.0f, 47.0f, 0.0f);
     elwynn.zoneRadius = 1000.0f;
     elwynn.recommendedCharLevel = 5;
     elwynn.isContested = false;
     miningZones.push_back(elwynn);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 
     // Westfall (Alliance - Copper/Tin 50-125)
     FarmingZoneInfo westfall;
@@ -630,6 +850,11 @@ uint32 FarmingCoordinator::GenerateSessionId()
 }
 
 bool FarmingCoordinator::TravelToFarmingZone(::Player* player, FarmingZoneInfo const& zone)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+        return;
+    }
 {
     if (!player)
         return false;
@@ -644,6 +869,11 @@ bool FarmingCoordinator::TravelToFarmingZone(::Player* player, FarmingZoneInfo c
 }
 
 void FarmingCoordinator::ReturnToOriginalPosition(::Player* player, FarmingSession const& session)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
+        return;
+    }
 {
     if (!player)
         return;
@@ -654,6 +884,21 @@ void FarmingCoordinator::ReturnToOriginalPosition(::Player* player, FarmingSessi
 }
 
 bool FarmingCoordinator::CanStartFarming(::Player* player) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return nullptr;
+    }
 {
     if (!player)
         return false;
@@ -673,6 +918,11 @@ bool FarmingCoordinator::CanStartFarming(::Player* player) const
     // Check farming cooldown
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     auto it = _lastFarmingTimes.find(playerGuid);
     if (it != _lastFarmingTimes.end())

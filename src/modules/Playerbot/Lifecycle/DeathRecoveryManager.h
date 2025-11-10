@@ -29,6 +29,7 @@
 #define TRINITYCORE_PLAYERBOT_DEATH_RECOVERY_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "ObjectGuid.h"
 #include <chrono>
@@ -533,7 +534,7 @@ private:
     DeathRecoveryStatistics m_stats;
 
     // Thread safety
-    mutable std::recursive_mutex m_mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> m_mutex;
 
     // GHOST AURA FIX: Resurrection synchronization to prevent duplicate aura application
     mutable std::timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts with timeout support

@@ -80,6 +80,21 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
 
         // Get spell info (needed for all subsequent checks)
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return nullptr;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
         if (!spellInfo)
         {
             result.result = ValidationResult::SPELL_NOT_FOUND;
@@ -96,6 +111,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             if (result.result != ValidationResult::SUCCESS)
             {
                 result.failureReason = fmt::format("Spell {} not learned by {}", spellId, caster->GetName());
+                if (!caster)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+                    return;
+                }
                 if (options.logFailures)
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
                 return result;
@@ -158,6 +178,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         if (!options.skipTargetCheck && target)
         {
             result.result = ValidateTarget(spellInfo, caster, target, options);
+                if (!caster)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+                    return nullptr;
+                }
             if (result.result != ValidationResult::SUCCESS)
             {
                 result.failureReason = fmt::format("Target validation failed for spell {}", spellId);
@@ -174,6 +199,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
     {
         // Skip validation - build packet directly (DANGEROUS!)
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
         result.packet = BuildCastSpellPacketInternal(caster, spellInfo, target, nullptr);
     }
 
@@ -208,6 +238,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         if (!options.skipSpellCheck)
         {
             result.result = ValidatePlayer(caster);
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+    return nullptr;
+}
             if (result.result != ValidationResult::SUCCESS)
             {
                 result.failureReason = "Player validation failed";
@@ -232,6 +267,16 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
 
         // Get spell info (needed for all subsequent checks)
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
         if (!spellInfo)
         {
             result.result = ValidationResult::SPELL_NOT_FOUND;
@@ -248,6 +293,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             if (result.result != ValidationResult::SUCCESS)
             {
                 result.failureReason = fmt::format("Spell {} not learned by {}", spellId, caster->GetName());
+                if (!caster)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+                    return;
+                }
                 if (options.logFailures)
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
                 return result;
@@ -289,6 +339,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
                 result.failureReason = fmt::format("Caster state invalid for spell {}", spellId);
                 if (options.logFailures)
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
+                if (!goTarget)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: goTarget in method GetGUID");
+                    return nullptr;
+                }
                 return result;
             }
         }
@@ -304,6 +359,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
                 return result;
             }
+        if (!goTarget)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: goTarget in method GetEntry");
+            return nullptr;
+        }
         }
 
         // Step 8: Validate GameObject target (if provided)
@@ -314,6 +374,16 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             {
                 result.result = ValidationResult::INVALID_TARGET;
                 result.failureReason = fmt::format("GameObject {} (entry {}) not in world",
+                    if (!goTarget)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: goTarget in method GetGUID");
+                        return;
+                    if (!caster)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+                        return;
+                    }
+                    }
                     goTarget->GetGUID().ToString(), goTarget->GetEntry());
                 if (options.logFailures)
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
@@ -324,6 +394,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             if (!options.skipRangeCheck)
             {
                 float distance = caster->GetDistance(goTarget);
+                        if (!goTarget)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: goTarget in method GetEntry");
+                            return;
+                        }
                 float maxRange = spellInfo->GetMaxRange();
                 if (maxRange > 0.0f && distance > maxRange)
                 {
@@ -344,7 +419,17 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
     {
         // Skip validation - build packet directly (DANGEROUS!)
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
         result.packet = BuildCastSpellPacketInternalGameObject(caster, spellInfo, goTarget);
+            if (!caster)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+                return nullptr;
+            }
     }
 
     if (!result.packet)
@@ -375,6 +460,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacketAtPositi
     if (!options.skipValidation)
     {
         result.result = ValidatePlayer(caster);
+            if (!caster)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+                return nullptr;
+            }
         if (result.result != ValidationResult::SUCCESS)
         {
             result.failureReason = "Player validation failed";
@@ -393,6 +483,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacketAtPositi
         }
 
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return;
+        }
         if (!spellInfo)
         {
             result.result = ValidationResult::SPELL_NOT_FOUND;
@@ -418,6 +513,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacketAtPositi
     else
     {
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return;
+        }
         result.packet = BuildCastSpellPacketInternal(caster, spellInfo, nullptr, &position);
     }
 
@@ -522,6 +622,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCancelChannelPacket(Pla
 // ============================================================================
 
 SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCancelAutoRepeatPacket(Player* caster)
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+    return;
+}
 {
     BuildResult result;
     result.result = ValidationResult::SUCCESS;
@@ -576,6 +681,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
     }
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, caster->GetMap()->GetDifficultyID());
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return;
+    }
     if (!spellInfo)
     {
         result.result = ValidationResult::SPELL_NOT_FOUND;
@@ -584,6 +694,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
     }
 
     result.result = ValidateSpellLearned(spellInfo, caster);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetSession");
+        return;
+    }
     if (result.result != ValidationResult::SUCCESS)
     {
         result.failureReason = fmt::format("Spell {} not learned", spellId);
@@ -591,6 +706,16 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
     }
 
     result.result = ValidateCooldown(spellInfo, caster);
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsInWorld");
+            return;
+        }
     if (result.result != ValidationResult::SUCCESS)
     {
         result.failureReason = fmt::format("Spell {} on cooldown", spellId);
@@ -605,6 +730,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
     }
 
     result.result = ValidateCasterState(spellInfo, caster, validateOnly);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return;
+    }
     if (result.result != ValidationResult::SUCCESS)
     {
         result.failureReason = "Caster state invalid";
@@ -621,6 +751,11 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
     if (target)
     {
         result.result = ValidateTarget(spellInfo, caster, target, validateOnly);
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method HasSpell");
+        return nullptr;
+    }
         if (result.result != ValidationResult::SUCCESS)
         {
             result.failureReason = "Target validation failed";
@@ -639,6 +774,26 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::ValidateSpellCast(
 // ============================================================================
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePlayer(Player const* caster)
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPower");
+        return nullptr;
+    }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetSession");
+            return nullptr;
+        }
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+            return nullptr;
+        }
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsInWorld");
+        return nullptr;
+    }
 {
     if (!caster)
         return ValidationResult::PLAYER_NULLPTR;
@@ -656,6 +811,16 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePlayer(Player c
 }
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateSpellId(uint32 spellId, Player const* caster)
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
+    return nullptr;
+}
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return nullptr;
+    }
 {
     if (spellId == 0)
         return ValidationResult::INVALID_SPELL_ID;
@@ -679,6 +844,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateSpellInfo(Spell
 }
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateSpellLearned(SpellInfo const* spellInfo, Player const* caster)
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method HasSpell");
+        return nullptr;
+    }
 {
     if (!spellInfo)
         return ValidationResult::SPELL_NOT_FOUND;
@@ -703,6 +873,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateCooldown(SpellI
 }
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateResources(SpellInfo const* spellInfo, Player const* caster)
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPower");
+            return nullptr;
+        }
 {
     if (!spellInfo)
         return ValidationResult::SPELL_NOT_FOUND;
@@ -712,6 +887,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateResources(Spell
     {
         if (caster->GetPower(cost.Power) < cost.Amount)
         {
+            if (!target)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+                return nullptr;
+            }
             switch (cost.Power)
             {
                 case POWER_MANA:
@@ -734,6 +914,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateResources(Spell
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateCasterState(
     SpellInfo const* spellInfo,
     Player const* caster,
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
+        return nullptr;
+    }
     BuildOptions const& options)
 {
     if (!spellInfo)
@@ -782,7 +967,17 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateGlobalCooldown(
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTarget(
     SpellInfo const* spellInfo,
     Player const* caster,
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return nullptr;
+    }
     Unit const* target,
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+        return nullptr;
+    }
     BuildOptions const& options)
 {
     if (!spellInfo)
@@ -807,6 +1002,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTarget(
             return ValidationResult::TARGET_HOSTILE;
     }
     else
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return nullptr;
+    }
     {
         if (caster->IsFriendlyTo(target))
             return ValidationResult::TARGET_FRIENDLY;
@@ -824,6 +1024,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTarget(
     if (!options.skipRangeCheck)
     {
         ValidationResult losCheck = ValidateTargetLOS(caster, target);
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+    return nullptr;
+}
         if (losCheck != ValidationResult::SUCCESS)
             return losCheck;
     }
@@ -850,6 +1055,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTargetRange(
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTargetLOS(
     Player const* caster,
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return nullptr;
+    }
     Unit const* target)
 {
     if (!target)
@@ -865,6 +1075,16 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTargetLOS(
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePositionTarget(
     SpellInfo const* spellInfo,
     Player const* caster,
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return nullptr;
+    }
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return nullptr;
+    }
     Position const& position)
 {
     if (!spellInfo)
@@ -877,6 +1097,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePositionTarget(
     // Check range to position
     float maxRange = spellInfo->GetMaxRange(spellInfo->IsPositive(), const_cast<Player*>(caster));
     float distance = caster->GetExactDist(&position);
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+    return nullptr;
+}
 
     if (distance > maxRange)
         return ValidationResult::TARGET_OUT_OF_RANGE;
@@ -890,6 +1115,11 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePositionTarget(
 
 std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
     Player* caster,
+if (!caster)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+    return nullptr;
+}
     SpellInfo const* spellInfo,
     Unit* target,
     Position const* position)
@@ -903,6 +1133,21 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
     // Build SpellCastRequest structure
     WorldPackets::Spells::SpellCastRequest castRequest;
     castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, caster->GetMapId(), spellInfo->Id, caster->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+        return;
+    }
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return;
+    }
     castRequest.SpellID = spellInfo->Id;
     castRequest.Visual = WorldPackets::Spells::SpellCastVisual();
     castRequest.SendCastFlags = 0;
@@ -923,8 +1168,18 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
     else
     {
         // Self-cast or no target
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         castRequest.Target.Flags = TARGET_FLAG_UNIT;
         castRequest.Target.Unit = caster->GetGUID();
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+            return;
+        }
     }
 
     // Write SpellCastRequest to packet
@@ -936,6 +1191,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternal(
 
     TC_LOG_TRACE("playerbot.spells.packets",
         "Built CMSG_CAST_SPELL packet: caster={}, spell={}, target={}",
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         caster->GetName(), spellInfo->Id, target ? target->GetName() : "none");
 
     return packet;
@@ -955,6 +1215,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
     // Build SpellCastRequest structure
     WorldPackets::Spells::SpellCastRequest castRequest;
     castRequest.CastID = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, caster->GetMapId(), spellInfo->Id, caster->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetMap");
+        return;
+    }
     castRequest.SpellID = spellInfo->Id;
     castRequest.Visual = WorldPackets::Spells::SpellCastVisual();
     castRequest.SendCastFlags = 0;
@@ -971,6 +1236,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
         // Self-cast if no GameObject provided
         castRequest.Target.Flags = TARGET_FLAG_UNIT;
         castRequest.Target.Unit = caster->GetGUID();
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+            return;
+        }
     }
 
     // Write SpellCastRequest to packet
@@ -980,6 +1250,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCastSpellPacketInternalGam
 
     TC_LOG_TRACE("playerbot.spells.packets",
         "Built CMSG_CAST_SPELL packet (GameObject): caster={}, spell={}, goTarget={}",
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         caster->GetName(), spellInfo->Id, goTarget ? goTarget->GetGUID().ToString() : "none");
 
     return packet;
@@ -996,6 +1271,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCancelCastPacketInternal(P
 
     TC_LOG_TRACE("playerbot.spells.packets",
         "Built CMSG_CANCEL_CAST packet: caster={}, spell={}",
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         caster->GetName(), spellId);
 
     return packet;
@@ -1009,9 +1289,19 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCancelAuraPacketInternal(P
     auto packet = std::make_unique<WorldPacket>(CMSG_CANCEL_AURA);
     *packet << spellId;
     *packet << caster->GetGUID(); // Caster GUID
+    if (!caster)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+        return;
+    }
 
     TC_LOG_TRACE("playerbot.spells.packets",
         "Built CMSG_CANCEL_AURA packet: caster={}, spell={}",
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         caster->GetName(), spellId);
 
     return packet;
@@ -1028,6 +1318,11 @@ std::unique_ptr<WorldPacket> SpellPacketBuilder::BuildCancelChannelPacketInterna
 
     TC_LOG_TRACE("playerbot.spells.packets",
         "Built CMSG_CANCEL_CHANNELLING packet: caster={}, spell={}, reason={}",
+        if (!caster)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetName");
+            return;
+        }
         caster->GetName(), spellId, reason);
 
     return packet;

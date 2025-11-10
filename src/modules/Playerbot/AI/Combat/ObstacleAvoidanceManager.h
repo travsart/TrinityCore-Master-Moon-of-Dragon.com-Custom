@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <unordered_map>
@@ -387,7 +388,7 @@ private:
     mutable AvoidanceMetrics _metrics;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float DEFAULT_SCAN_RADIUS = 15.0f;         // 15 yards scan radius

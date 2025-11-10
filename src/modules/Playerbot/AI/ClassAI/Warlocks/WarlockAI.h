@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../ClassAI.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include "../../Combat/InterruptManager.h"
 #include "../../Combat/BotThreatManager.h"
@@ -174,7 +175,7 @@ private:
     // Soul shard tracking
     std::atomic<uint32> _currentSoulShards{0};
     std::queue<uint32> _soulShardHistory;
-    mutable std::recursive_mutex _soulShardMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _soulShardMutex;
 
     // Pet management
     std::atomic<bool> _petActive{false};

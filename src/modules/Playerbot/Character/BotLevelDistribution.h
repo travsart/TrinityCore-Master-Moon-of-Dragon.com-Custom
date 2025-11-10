@@ -19,6 +19,7 @@
 
 #include "Define.h"
 #include "SharedDefines.h"
+#include "Core/DI/Interfaces/IBotLevelDistribution.h"
 #include <atomic>
 #include <vector>
 #include <map>
@@ -198,40 +199,42 @@ struct DistributionStats
  * - Lock-free counter updates
  * - Minimal contention
  */
-class TC_GAME_API BotLevelDistribution
+class TC_GAME_API BotLevelDistribution final : public IBotLevelDistribution
 {
 public:
     static BotLevelDistribution* instance();
 
+    // IBotLevelDistribution interface implementation
+
     // Initialization
-    bool LoadConfig();
-    void ReloadConfig();
+    bool LoadConfig() override;
+    void ReloadConfig() override;
 
     // Bracket selection
-    LevelBracket const* SelectBracket(TeamId faction) const;
+    LevelBracket const* SelectBracket(TeamId faction) const override;
     LevelBracket const* SelectBracketWeighted(TeamId faction) const;
-    LevelBracket const* GetBracketForLevel(uint32 level, TeamId faction) const;
+    LevelBracket const* GetBracketForLevel(uint32 level, TeamId faction) const override;
 
     // Distribution analysis
     DistributionStats GetDistributionStats() const;
     std::vector<LevelBracket const*> GetUnderpopulatedBrackets(TeamId faction) const;
     std::vector<LevelBracket const*> GetOverpopulatedBrackets(TeamId faction) const;
-    bool IsDistributionBalanced(TeamId faction) const;
+    bool IsDistributionBalanced(TeamId faction) const override;
 
     // Counter updates
-    void IncrementBracket(uint32 level, TeamId faction);
-    void DecrementBracket(uint32 level, TeamId faction);
-    void RecalculateDistribution();
+    void IncrementBracket(uint32 level, TeamId faction) override;
+    void DecrementBracket(uint32 level, TeamId faction) override;
+    void RecalculateDistribution() override;
 
     // Configuration queries
-    uint32 GetNumBrackets() const { return m_numBrackets; }
+    uint32 GetNumBrackets() const override { return m_numBrackets; }
     float GetTolerancePercent() const { return 15.0f; }  // ±15% tolerance
-    bool IsEnabled() const { return m_enabled; }
-    bool IsDynamicDistribution() const { return m_dynamicDistribution; }
+    bool IsEnabled() const override { return m_enabled; }
+    bool IsDynamicDistribution() const override { return m_dynamicDistribution; }
 
     // Debugging
-    void PrintDistributionReport() const;
-    std::string GetDistributionSummary() const;
+    void PrintDistributionReport() const override;
+    std::string GetDistributionSummary() const override;
 
 private:
     BotLevelDistribution() = default;

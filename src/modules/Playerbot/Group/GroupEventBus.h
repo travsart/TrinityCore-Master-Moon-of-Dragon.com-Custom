@@ -11,7 +11,9 @@
 #define PLAYERBOT_GROUP_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IGroupEventBus.h"
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -173,7 +175,7 @@ struct GroupEvent
  * - Batch processing: 50 events in <5ms
  * - Memory overhead: <1KB per active event
  */
-class TC_GAME_API GroupEventBus
+class TC_GAME_API GroupEventBus final : public IGroupEventBus
 {
 public:
     /**
@@ -189,7 +191,7 @@ public:
      *
      * Thread-safe: Can be called from any thread (TrinityCore hooks)
      */
-    bool PublishEvent(GroupEvent const& event);
+    bool PublishEvent(GroupEvent const& event) override;
 
     /**
      * Subscribe to specific event types
@@ -199,14 +201,14 @@ public:
      *
      * Note: Subscriber must call Unsubscribe before destruction
      */
-    bool Subscribe(BotAI* subscriber, std::vector<GroupEventType> const& types);
+    bool Subscribe(BotAI* subscriber, std::vector<GroupEventType> const& types) override;
 
     /**
      * Subscribe to all event types
      * @param subscriber The BotAI that wants to receive all events
      * @return true if subscription was successful
      */
-    bool SubscribeAll(BotAI* subscriber);
+    bool SubscribeAll(BotAI* subscriber) override;
 
     /**
      * Unsubscribe from all events
@@ -214,7 +216,7 @@ public:
      *
      * Must be called in BotAI destructor to prevent dangling pointers
      */
-    void Unsubscribe(BotAI* subscriber);
+    void Unsubscribe(BotAI* subscriber) override;
 
     /**
      * Process pending events and deliver to subscribers
@@ -224,7 +226,7 @@ public:
      *
      * Should be called from World update loop at regular intervals
      */
-    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 100);
+    uint32 ProcessEvents(uint32 diff, uint32 maxEvents = 100) override;
 
     /**
      * Process events for a specific group only
@@ -232,25 +234,25 @@ public:
      * @param diff Time elapsed since last update
      * @return Number of events processed
      */
-    uint32 ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff);
+    uint32 ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff) override;
 
     /**
      * Clear all events for a specific group (on disbanding)
      * @param groupGuid The group to clear events for
      */
-    void ClearGroupEvents(ObjectGuid groupGuid);
+    void ClearGroupEvents(ObjectGuid groupGuid) override;
 
     /**
      * Get pending event count
      * @return Number of events in queue
      */
-    uint32 GetPendingEventCount() const;
+    uint32 GetPendingEventCount() const override;
 
     /**
      * Get subscriber count
      * @return Number of active subscribers
      */
-    uint32 GetSubscriberCount() const;
+    uint32 GetSubscriberCount() const override;
 
     // Statistics and monitoring
     struct Statistics
@@ -273,20 +275,20 @@ public:
     /**
      * Configuration
      */
-    void SetMaxQueueSize(uint32 size) { _maxQueueSize = size; }
-    void SetEventTTL(uint32 ttlMs) { _eventTTLMs = ttlMs; }
-    void SetBatchSize(uint32 size) { _batchSize = size; }
+    void SetMaxQueueSize(uint32 size) override { _maxQueueSize = size; }
+    void SetEventTTL(uint32 ttlMs) override { _eventTTLMs = ttlMs; }
+    void SetBatchSize(uint32 size) override { _batchSize = size; }
 
-    uint32 GetMaxQueueSize() const { return _maxQueueSize; }
-    uint32 GetEventTTL() const { return _eventTTLMs; }
-    uint32 GetBatchSize() const { return _batchSize; }
+    uint32 GetMaxQueueSize() const override { return _maxQueueSize; }
+    uint32 GetEventTTL() const override { return _eventTTLMs; }
+    uint32 GetBatchSize() const override { return _batchSize; }
 
     /**
      * Debugging and diagnostics
      */
-    void DumpSubscribers() const;
-    void DumpEventQueue() const;
-    std::vector<GroupEvent> GetQueueSnapshot() const;
+    void DumpSubscribers() const override;
+    void DumpEventQueue() const override;
+    std::vector<GroupEvent> GetQueueSnapshot() const override;
 
 private:
     GroupEventBus();
@@ -333,13 +335,13 @@ private:
 private:
     // Event queue (priority queue for automatic priority sorting)
     std::priority_queue<GroupEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _queueMutex;
 
     // Subscriber management
     // Map: EventType → Vector of subscribers for that type
     std::unordered_map<GroupEventType, std::vector<BotAI*>> _subscribers;
     std::vector<BotAI*> _globalSubscribers; // Subscribed to all events
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _subscriberMutex;
 
     // Configuration
     std::atomic<uint32_t> _maxQueueSize{10000};     // Maximum events in queue

@@ -10,9 +10,11 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "LootDistribution.h"
 #include "Player.h"
 #include "Item.h"
+#include "Core/DI/Interfaces/ILootAnalysis.h"
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -27,22 +29,22 @@ namespace Playerbot
  * This system provides comprehensive analysis of loot items to determine
  * their value, upgrade potential, and appropriateness for each player.
  */
-class TC_GAME_API LootAnalysis
+class TC_GAME_API LootAnalysis final : public ILootAnalysis
 {
 public:
     static LootAnalysis* instance();
 
     // Core item analysis
-    float CalculateItemValue(Player* player, const LootItem& item);
-    float CalculateUpgradeValue(Player* player, const LootItem& item);
-    bool IsSignificantUpgrade(Player* player, const LootItem& item);
-    float CalculateStatWeight(Player* player, uint32 statType);
+    float CalculateItemValue(Player* player, const LootItem& item) override;
+    float CalculateUpgradeValue(Player* player, const LootItem& item) override;
+    bool IsSignificantUpgrade(Player* player, const LootItem& item) override;
+    float CalculateStatWeight(Player* player, uint32 statType) override;
 
     // Item comparison and evaluation
-    float CompareItems(Player* player, const LootItem& newItem, const Item* currentItem);
-    float CalculateItemScore(Player* player, const LootItem& item);
-    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player);
-    float GetItemLevelWeight(Player* player, uint32 itemLevel);
+    float CompareItems(Player* player, const LootItem& newItem, const Item* currentItem) override;
+    float CalculateItemScore(Player* player, const LootItem& item) override;
+    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) override;
+    float GetItemLevelWeight(Player* player, uint32 itemLevel) override;
 
     // Class and spec specific analysis
     float CalculateArmorValue(Player* player, const LootItem& item);
@@ -109,22 +111,22 @@ public:
     float CalculateWeightedStatValue(const StatWeights& weights, const LootItem& item);
 
     // Equipment slot analysis
-    bool CanEquipItem(Player* player, const LootItem& item);
-    uint32 GetEquipmentSlot(const LootItem& item);
-    Item* GetCurrentEquippedItem(Player* player, uint32 slot);
+    bool CanEquipItem(Player* player, const LootItem& item) override;
+    uint32 GetEquipmentSlot(const LootItem& item) override;
+    Item* GetCurrentEquippedItem(Player* player, uint32 slot) override;
     std::vector<uint32> GetAffectedSlots(const LootItem& item);
 
     // Market and vendor value analysis
-    float CalculateVendorValue(const LootItem& item);
-    float CalculateAuctionHouseValue(const LootItem& item);
-    float CalculateDisenchantValue(const LootItem& item);
-    bool IsValuableForVendoring(const LootItem& item);
+    float CalculateVendorValue(const LootItem& item) override;
+    float CalculateAuctionHouseValue(const LootItem& item) override;
+    float CalculateDisenchantValue(const LootItem& item) override;
+    bool IsValuableForVendoring(const LootItem& item) override;
 
     // Group context analysis
-    void AnalyzeGroupLootNeeds(Group* group, const LootItem& item);
-    std::vector<std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item);
-    bool IsItemContestedInGroup(Group* group, const LootItem& item);
-    Player* GetBestCandidateForItem(Group* group, const LootItem& item);
+    void AnalyzeGroupLootNeeds(Group* group, const LootItem& item) override;
+    std::vector<std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item) override;
+    bool IsItemContestedInGroup(Group* group, const LootItem& item) override;
+    Player* GetBestCandidateForItem(Group* group, const LootItem& item) override;
 
     // Learning and adaptation
     void UpdateAnalysisAccuracy(Player* player, const LootItem& item, LootRollType actualDecision);
@@ -171,7 +173,7 @@ private:
     // Analysis cache
     std::unordered_map<uint64, ItemAnalysisResult> _analysisCache; // (playerGuid << 32 | itemId) -> result
     std::unordered_map<uint32, std::unordered_map<uint32, float>> _statWeightCache; // playerGuid -> statType -> weight
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _cacheMutex;
 
     // Stat weights database
     std::unordered_map<uint8, std::unordered_map<uint8, StatWeights>> _classSpecStatWeights; // class -> spec -> weights

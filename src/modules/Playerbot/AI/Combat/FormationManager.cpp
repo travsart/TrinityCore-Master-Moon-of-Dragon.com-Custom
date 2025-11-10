@@ -26,6 +26,16 @@ namespace Playerbot
 {
 
 FormationManager::FormationManager(Player* bot)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     : _bot(bot), _leader(nullptr), _isLeader(false), _inFormation(false),
       _currentFormation(FormationType::NONE), _movementState(MovementState::STATIONARY),
       _currentIntegrity(FormationIntegrity::PERFECT), _formationOrientation(0.0f),
@@ -46,12 +56,32 @@ FormationManager::FormationManager(Player* bot)
 }
 
 bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation)
+            if (!group)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                return;
+            }
 {
     // No lock needed - _members is per-bot instance data
     try
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         if (_inFormation)
         {
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
             TC_LOG_DEBUG("playerbot.formation", "Bot {} already in formation", _bot->GetName());
             return false;
         }
@@ -61,8 +91,18 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
         Player* groupLeader = nullptr;
         if (Group* group = _bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return;
+        }
         {
             groupLeader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                return;
+            }
         }
 
         if (!groupLeader && !groupMembers.empty())
@@ -72,6 +112,21 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
         _leader = groupLeader;
         _isLeader = (_leader == _bot);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+    return;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 
         for (Player* member : groupMembers)
         {
@@ -95,9 +150,39 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
         _inFormation = true;
 
         if (_isLeader)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         {
             _formationCenter = _bot->GetPosition();
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
             _formationOrientation = _bot->GetOrientation();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+                return;
+            }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         }
         else
         {
@@ -105,6 +190,11 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
             _formationOrientation = _leader ? _leader->GetOrientation() : 0.0f;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         AssignFormationPositions();
         _metrics.formationChanges++;
 
@@ -122,6 +212,11 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
 bool FormationManager::LeaveFormation()
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     // No lock needed - _inFormation and _members are per-bot instance data
     if (!_inFormation)
         return false;
@@ -133,6 +228,11 @@ bool FormationManager::LeaveFormation()
     _leader = nullptr;
     _isLeader = false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("playerbot.formation", "Bot {} left formation", _bot->GetName());
     return true;
 }
@@ -145,6 +245,11 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
 
     if (!_isLeader)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot.formation", "Bot {} cannot change formation - not leader", _bot->GetName());
         return false;
     }
@@ -158,10 +263,20 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
     _metrics.formationChanges++;
 
     auto endTime = std::chrono::steady_clock::now();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "ChangeFormation");
 
     TC_LOG_DEBUG("playerbot.formation", "Bot {} changed formation to {}",
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
                _bot->GetName(), static_cast<uint32>(newFormation));
 
     return true;
@@ -189,11 +304,21 @@ void FormationManager::UpdateFormation(uint32 diff)
             _lastIntegrityCheck = currentTime;
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (_movementState == MovementState::MOVING)
         {
             MaintainFormationDuringMovement();
         }
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (RequiresReformation() && currentTime - _lastReformation >= MIN_REFORMATION_INTERVAL)
         {
             TriggerReformationIfNeeded();
@@ -208,6 +333,11 @@ void FormationManager::UpdateFormation(uint32 diff)
     }
     catch (const std::exception& e)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("playerbot.formation", "Exception in UpdateFormation for bot {}: {}", _bot->GetName(), e.what());
     }
 }
@@ -244,11 +374,21 @@ bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
         TrackPerformance(duration, "ExecuteFormationCommand");
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("playerbot.formation", "Bot {} executed formation command", _bot->GetName());
         return true;
     }
     catch (const std::exception& e)
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_ERROR("playerbot.formation", "Exception executing formation command for bot {}: {}", _bot->GetName(), e.what());
         return false;
     }
@@ -259,6 +399,11 @@ bool FormationManager::MoveFormationToPosition(const Position& targetPos, float 
     if (!_inFormation || !_isLeader)
         return false;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return false;
+    }
     FormationCommand command;
     command.targetPosition = targetPos;
     command.targetOrientation = orientation != 0.0f ? orientation : _formationOrientation;
@@ -266,6 +411,11 @@ bool FormationManager::MoveFormationToPosition(const Position& targetPos, float 
     command.maintainCohesion = true;
     command.reason = "Formation movement";
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return nullptr;
+    }
     return ExecuteFormationCommand(command);
 }
 
@@ -366,6 +516,11 @@ FormationIntegrity FormationManager::AssessFormationIntegrity()
     }
 
     float averageDeviation = totalDeviation / _members.size();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+        return;
+    }
     float inPositionRatio = static_cast<float>(inPosition) / _members.size();
     float closePositionRatio = static_cast<float>(inPosition + closeToPosition) / _members.size();
 
@@ -587,13 +742,28 @@ std::vector<Position> FormationManager::CalculateDungeonFormation(const Position
         FormationRole::SUPPORT
     };
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+        return nullptr;
+    }
     for (size_t i = 0; i < _members.size(); ++i)
     {
         FormationRole role = (i < orderedRoles.size()) ? orderedRoles[i] : FormationRole::SUPPORT;
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
         Position pos = CalculateRoleBasedPosition(role, leaderPos, orientation);
         positions.push_back(pos);
     }
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsMoving");
+        return nullptr;
+    }
     return positions;
 }
 
@@ -639,6 +809,11 @@ Position FormationManager::CalculateRoleBasedPosition(FormationRole role, const 
 
     return pos;
 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
 void FormationManager::AssignFormationPositions()
 {
@@ -652,11 +827,21 @@ void FormationManager::AssignFormationPositions()
 }
 
 void FormationManager::UpdateMemberPositions()
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return nullptr;
+}
 {
     uint32 currentTime = getMSTime();
 
     for (FormationMember& member : _members)
     {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return nullptr;
+        }
         if (!member.player || !member.player->IsInWorld())
             continue;
 
@@ -665,6 +850,11 @@ void FormationManager::UpdateMemberPositions()
         member.distanceFromLeader = _leader ? member.currentPosition.GetExactDist(_leader) : 0.0f;
         member.isInPosition = member.distanceFromAssigned <= _formationSpacing * 0.8f;
         member.isMoving = member.player->IsMoving();
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
         member.lastPositionUpdate = currentTime;
     }
 }
@@ -709,6 +899,11 @@ void FormationManager::TriggerReformationIfNeeded()
     _metrics.reformationEvents++;
 
     TC_LOG_DEBUG("playerbot.formation", "Formation {} triggered reformation due to poor integrity",
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
                _bot->GetName());
 }
 
@@ -722,6 +917,11 @@ float FormationManager::CalculateCohesionLevel()
 
     for (const FormationMember& member : _members)
     {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return nullptr;
+        }
         if (member.player && member.player->IsInWorld())
         {
             totalDistance += member.distanceFromAssigned;
@@ -744,6 +944,11 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
         return FormationRole::SUPPORT;
 
     uint8 playerClass = player->getClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
     uint32 spec = player->GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID);
 
     switch (playerClass)

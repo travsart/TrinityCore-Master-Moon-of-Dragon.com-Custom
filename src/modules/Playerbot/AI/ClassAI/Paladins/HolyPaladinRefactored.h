@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Holy Paladin Refactored - Template-Based Implementation
  *
@@ -9,6 +9,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "Player.h"
@@ -16,6 +20,12 @@
 #include "SpellAuraEffects.h"
 #include "Group.h"
 #include "Log.h"
+#include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
+
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
 
 namespace Playerbot
 {
@@ -112,8 +122,7 @@ struct ManaHolyPowerResource
     void Initialize(Player* bot) {
         if (bot) {
             maxMana = bot->GetMaxPower(POWER_MANA);
-            mana = bot->GetPower(POWER_MANA);
-        }
+            mana = bot->GetPower(POWER_MANA);        }
         holyPower = 0;
     }
 };
@@ -152,8 +161,7 @@ public:
 
     void EnableBeaconOfFaith() { _hasBeaconOfFaith = true; }
 
-    bool NeedsBeaconRefresh(Player* bot, Unit* target) const
-    {
+    bool NeedsBeaconRefresh(Player* bot, Unit* target) const    {
         if (!target || !bot)
             return false;
 
@@ -162,6 +170,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     ObjectGuid _primaryBeaconGuid;
     ObjectGuid _secondaryBeaconGuid;
     bool _hasBeaconOfFaith;
@@ -180,8 +189,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit HolyPaladinRefactored(Player* bot)
-        : HealerSpecialization<ManaHolyPowerResource>(bot)
+    explicit HolyPaladinRefactored(Player* bot)        : HealerSpecialization<ManaHolyPowerResource>(bot)
         , PaladinSpecialization(bot)
         , _beaconTracker()
         , _avengingWrathActive(false)
@@ -196,7 +204,8 @@ public:
         if (bot->HasSpell(BEACON_OF_FAITH))
             _beaconTracker.EnableBeaconOfFaith();
 
-        InitializeCooldowns();
+        // Initialize Phase 5 systems
+        InitializeHolyPaladinMechanics();
 
         TC_LOG_DEBUG("playerbot", "HolyPaladinRefactored initialized for {}", bot->GetName());
     }
@@ -215,8 +224,7 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-        if (!bot)
+        Player* bot = this->GetBot();        if (!bot)
             return;
 
         // Maintain Devotion Aura
@@ -236,9 +244,7 @@ protected:
     void ExecuteHealingRotation()
     {
         Player* bot = this->GetBot();
-        Group* group = bot->GetGroup();
-
-        // Update beacon targets
+        Group* group = bot->GetGroup();        // Update beacon targets
         UpdateBeacons(group);
 
         // Emergency healing
@@ -289,8 +295,7 @@ protected:
     {
         Player* bot = this->GetBot();
 
-        // Self emergency
-        if (bot->GetHealthPct() < 25.0f)
+        // Self emergency        if (bot->GetHealthPct() < 25.0f)
         {
             // Lay on Hands
             if (this->CanCastSpell(LAY_ON_HANDS, bot))
@@ -313,8 +318,7 @@ protected:
         {
             for (GroupReference const& ref : group->GetMembers())
             {
-                if (Player* member = ref.GetSource())
-                {
+                if (Player* member = ref.GetSource())                {
                     if (member->IsAlive() && member->GetHealthPct() < 20.0f)
                     {
                         // Lay on Hands on critical ally
@@ -380,6 +384,10 @@ protected:
         // Critical: Flash of Light
         if (healthPct < 50.0f)
         {
+            if (!tank)
+            {
+                return nullptr;
+            }
             if (this->CanCastSpell(FLASH_OF_LIGHT, target))
             {
                 this->CastSpell(target, FLASH_OF_LIGHT);
@@ -393,6 +401,10 @@ protected:
             if (this->CanCastSpell(HOLY_LIGHT, target))
             {
                 this->CastSpell(target, HOLY_LIGHT);
+                if (!secondTank)
+                {
+                    return nullptr;
+                }
                 return;
             }
         }
@@ -405,9 +417,12 @@ protected:
 
         // Assign beacon to main tank
         Player* tank = GetMainTank(group);
+                if (!tank)
+                {
+                    return;
+                }
         if (tank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), tank))
-        {
-            if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
+        {            if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
             {
                 this->CastSpell(tank, BEACON_OF_LIGHT);
                 _beaconTracker.SetPrimaryBeacon(tank->GetGUID());
@@ -418,6 +433,10 @@ protected:
         if (_beaconTracker.HasSecondaryBeacon())
         {
             Player* secondTank = GetOffTank(group);
+                    if (!secondTank)
+                    {
+                        return;
+                    }
             if (secondTank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), secondTank))
             {
                 if (this->CanCastSpell(BEACON_OF_FAITH, secondTank))
@@ -431,26 +450,10 @@ protected:
 
     Unit* SelectHealingTarget(Group* group)
     {
-        if (!group)
-            return GetBot();
-
-        Unit* lowestHealth = nullptr;
-        float lowestPct = 100.0f;
-
-        // Priority: Self > Tank > Healers > DPS
-        for (GroupReference const& ref : group->GetMembers())
-        {
-            if (Player* member = ref.GetSource())
-            {
-                if (member->IsAlive() && member->GetHealthPct() < lowestPct)
-                {
-                    lowestPct = member->GetHealthPct();
-                    lowestHealth = member;
-                }
-            }
-        }
-
-        return lowestHealth ? lowestHealth : this->GetBot();
+        // Use unified HealingTargetSelector service (Phase 5B integration)
+        // Eliminates 20+ lines of duplicated healing target logic
+        Unit* target = bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
+        return target ? target : this->GetBot();
     }
 
 private:
@@ -502,6 +505,7 @@ private:
             if (Player* member = ref.GetSource())
             {
                 if (member->IsAlive() && member->GetHealthPct() < (threshold * 100.0f))
+                
                     count++;
             }
         }
@@ -550,9 +554,7 @@ private:
         // Simplified tank detection - check if player is currently tanking
         // A more robust implementation would check spec, but talent API is deprecated
         if (Unit* victim = player->GetVictim())
-            return victim->GetVictim() == player;
-
-        return false;
+            return victim->GetVictim() == player;        return false;
     }
 
     void GenerateHolyPower(uint32 amount)
@@ -565,19 +567,428 @@ private:
         this->_resource.holyPower = (this->_resource.holyPower > amount) ? this->_resource.holyPower - amount : 0;
     }
 
-    void InitializeCooldowns()
+    void InitializeHolyPaladinMechanics()
     {
-        RegisterCooldown(HOLY_SHOCK, 7500);             // 7.5 sec CD
-        RegisterCooldown(DIVINE_TOLL, 60000);           // 1 min CD
-        RegisterCooldown(AVENGING_WRATH_HOLY, 120000);  // 2 min CD
-        RegisterCooldown(AVENGING_CRUSADER, 120000);    // 2 min CD
-        RegisterCooldown(HOLY_AVENGER, 120000);         // 2 min CD
-        RegisterCooldown(LAY_ON_HANDS, 600000);         // 10 min CD
-        RegisterCooldown(DIVINE_SHIELD, 300000);        // 5 min CD
-        RegisterCooldown(DIVINE_PROTECTION, 300000);    // 5 min CD
-        RegisterCooldown(BLESSING_OF_SACRIFICE, 120000); // 2 min CD
-        RegisterCooldown(AURA_MASTERY, 180000);         // 3 min CD
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue (Healer Focus)
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // ====================================================================
+            // EMERGENCY TIER - Life-saving heals
+            // ====================================================================
+            queue->RegisterSpell(LAY_ON_HANDS,
+                SpellPriority::EMERGENCY,
+                SpellCategory::HEALING);
+            queue->AddCondition(LAY_ON_HANDS,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 20.0f;
+                },
+                "Target HP < 20% (Lay on Hands)");
+
+            queue->RegisterSpell(DIVINE_SHIELD,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DIVINE_SHIELD,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 15.0f;
+                },
+                "Self HP < 15% (Divine Shield)");
+
+            // ====================================================================
+            // CRITICAL TIER - Holy Power spenders and fast heals
+            // ====================================================================
+            queue->RegisterSpell(WORD_OF_GLORY,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(WORD_OF_GLORY,
+                [this](Player* bot, Unit* target) {
+                    // Use Word of Glory when we have 3+ HP and target needs healing
+                    return this->_resource.holyPower >= 3 &&
+                           target && target->GetHealthPct() < 70.0f;
+                },
+                "3+ HP and target < 70%");
+
+            queue->RegisterSpell(LIGHT_OF_DAWN,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(LIGHT_OF_DAWN,
+                [this](Player* bot, Unit*) {
+                    // AoE heal when 3+ HP and multiple injured
+                    Group* group = bot->GetGroup();
+                    uint32 injured = this->CountInjuredAllies(group, 0.7f);
+                    return this->_resource.holyPower >= 3 && injured >= 3;
+                },
+                "3+ HP and 3+ allies injured");
+
+            queue->RegisterSpell(FLASH_OF_LIGHT,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(FLASH_OF_LIGHT,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 40.0f;
+                },
+                "Target HP < 40% (fast heal)");
+
+            // ====================================================================
+            // HIGH TIER - Holy Power generation and emergency defensive
+            // ====================================================================
+            queue->RegisterSpell(HOLY_SHOCK,
+                SpellPriority::HIGH,
+                SpellCategory::HEALING);
+            queue->AddCondition(HOLY_SHOCK,
+                [this](Player* bot, Unit* target) {
+                    // Generate HP when below max, or use for emergency healing
+                    return (this->_resource.holyPower < 5 && target && target->GetHealthPct() < 90.0f) ||
+                           (target && target->GetHealthPct() < 60.0f);
+                },
+                "HP < 5 or target < 60%");
+
+            queue->RegisterSpell(DIVINE_PROTECTION,
+                SpellPriority::HIGH,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DIVINE_PROTECTION,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 50.0f;
+                },
+                "Self HP < 50% (damage reduction)");
+
+            queue->RegisterSpell(BLESSING_OF_SACRIFICE,
+                SpellPriority::HIGH,
+                SpellCategory::UTILITY);
+            queue->AddCondition(BLESSING_OF_SACRIFICE,
+                [](Player* bot, Unit* target) {
+                    // Redirect tank damage when they're in danger
+                    return target && target->GetHealthPct() < 35.0f &&
+                           bot->GetHealthPct() > 60.0f;
+                },
+                "Tank < 35% and self > 60%");
+
+            // ====================================================================
+            // MEDIUM TIER - Standard healing and cooldowns
+            // ====================================================================
+            queue->RegisterSpell(HOLY_LIGHT,
+                SpellPriority::MEDIUM,
+                SpellCategory::HEALING);
+            queue->AddCondition(HOLY_LIGHT,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 85.0f;
+                },
+                "Target HP < 85% (efficient heal)");
+
+            queue->RegisterSpell(AVENGING_WRATH_HOLY,
+                SpellPriority::MEDIUM,
+                SpellCategory::OFFENSIVE);
+            queue->AddCondition(AVENGING_WRATH_HOLY,
+                [this](Player* bot, Unit*) {
+                    // Use when multiple allies injured
+                    Group* group = bot->GetGroup();
+                    return this->CountInjuredAllies(group, 0.6f) >= 3;
+                },
+                "3+ allies injured (healing boost)");
+
+            queue->RegisterSpell(BEACON_OF_LIGHT,
+                SpellPriority::MEDIUM,
+                SpellCategory::UTILITY);
+            queue->AddCondition(BEACON_OF_LIGHT,
+                [this](Player* bot, Unit* target) {
+                    return target && this->_beaconTracker.NeedsBeaconRefresh(bot, target);
+                },
+                "Beacon needs refresh");
+
+            queue->RegisterSpell(DIVINE_TOLL,
+                SpellPriority::MEDIUM,
+                SpellCategory::HEALING);
+            queue->AddCondition(DIVINE_TOLL,
+                [this](Player* bot, Unit*) {
+                    // Burst HP generation
+                    Group* group = bot->GetGroup();
+                    return this->_resource.holyPower < 3 &&
+                           this->CountInjuredAllies(group, 0.7f) >= 2;
+                },
+                "HP < 3 and 2+ injured");
+
+            // ====================================================================
+            // LOW TIER - Utility and maintenance
+            // ====================================================================
+            queue->RegisterSpell(CLEANSE,
+                SpellPriority::LOW,
+                SpellCategory::UTILITY);
+
+            queue->RegisterSpell(BLESSING_OF_FREEDOM,
+                SpellPriority::LOW,
+                SpellCategory::UTILITY);
+
+            queue->RegisterSpell(BLESSING_OF_PROTECTION,
+                SpellPriority::LOW,
+                SpellCategory::DEFENSIVE);
+
+            TC_LOG_INFO("module.playerbot", "✨ HOLY PALADIN: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree (Healer Flow)
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Holy Paladin Healer", {
+                // ================================================================
+                // TIER 1: EMERGENCY HEALING (HP < 20%)
+                // ================================================================
+                Sequence("Emergency Healing", {
+                    Condition("Critical HP < 20%", [](Player* bot, Unit*) {
+                        // Check self or group for critical HP
+                        if (bot->GetHealthPct() < 20.0f)
+                            return true;
+
+                        Group* group = bot->GetGroup();
+                        if (!group)
+                            return false;
+
+                        for (GroupReference const& ref : group->GetMembers())
+                        {
+                            if (Player* member = ref.GetSource())
+                            {
+                                if (member->IsAlive() && member->GetHealthPct() < 20.0f)
+                                    return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    Selector("Emergency Response", {
+                        // Lay on Hands for critical allies
+                        Action("Cast Lay on Hands", [this](Player* bot, Unit* target) {
+                            Unit* criticalTarget = this->SelectHealingTarget(bot->GetGroup());
+                            if (criticalTarget && criticalTarget->GetHealthPct() < 20.0f &&
+                                this->CanCastSpell(LAY_ON_HANDS, criticalTarget))
+                            {
+                                this->CastSpell(criticalTarget, LAY_ON_HANDS);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Divine Shield for self
+                        Action("Cast Divine Shield", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 15.0f &&
+                                this->CanCastSpell(DIVINE_SHIELD, bot))
+                            {
+                                this->CastSpell(bot, DIVINE_SHIELD);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Word of Glory emergency spend
+                        Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                            if (this->_resource.holyPower >= 3)
+                            {
+                                Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                                if (healTarget && healTarget->GetHealthPct() < 30.0f &&
+                                    this->CanCastSpell(WORD_OF_GLORY, healTarget))
+                                {
+                                    this->CastSpell(healTarget, WORD_OF_GLORY);
+                                    this->ConsumeHolyPower(3);
+                                    return NodeStatus::SUCCESS;
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Flash of Light spam
+                        Action("Cast Flash of Light", [this](Player* bot, Unit* target) {
+                            Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                            if (healTarget && healTarget->GetHealthPct() < 25.0f &&
+                                this->CanCastSpell(FLASH_OF_LIGHT, healTarget))
+                            {
+                                this->CastSpell(healTarget, FLASH_OF_LIGHT);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 2: HOLY POWER MANAGEMENT
+                // ================================================================
+                Sequence("Holy Power Management", {
+                    Selector("HP Generation and Spending", {
+                        // Spend HP when at max
+                        Sequence("Spend Holy Power", {
+                            Condition("HP >= 3", [this](Player* bot, Unit*) {
+                                return this->_resource.holyPower >= 3;
+                            }),
+                            Selector("HP Spender Priority", {
+                                // Light of Dawn for AoE
+                                Sequence("Light of Dawn AoE", {
+                                    Condition("3+ injured", [this](Player* bot, Unit*) {
+                                        Group* group = bot->GetGroup();
+                                        return this->CountInjuredAllies(group, 0.7f) >= 3;
+                                    }),
+                                    Action("Cast Light of Dawn", [this](Player* bot, Unit* target) {
+                                        if (this->CanCastSpell(LIGHT_OF_DAWN, bot))
+                                        {
+                                            this->CastSpell(bot, LIGHT_OF_DAWN);
+                                            this->ConsumeHolyPower(3);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                }),
+                                // Word of Glory single target
+                                Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                                    Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                                    if (healTarget && healTarget->GetHealthPct() < 80.0f &&
+                                        this->CanCastSpell(WORD_OF_GLORY, healTarget))
+                                    {
+                                        this->CastSpell(healTarget, WORD_OF_GLORY);
+                                        this->ConsumeHolyPower(3);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            })
+                        }),
+                        // Generate HP
+                        Sequence("Generate Holy Power", {
+                            Condition("HP < 5", [this](Player* bot, Unit*) {
+                                return this->_resource.holyPower < 5;
+                            }),
+                            Selector("HP Generator Priority", {
+                                // Holy Shock
+                                Action("Cast Holy Shock", [this](Player* bot, Unit* target) {
+                                    Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                                    if (healTarget && healTarget->GetHealthPct() < 90.0f &&
+                                        this->CanCastSpell(HOLY_SHOCK, healTarget))
+                                    {
+                                        this->CastSpell(healTarget, HOLY_SHOCK);
+                                        this->GenerateHolyPower(1);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                }),
+                                // Divine Toll burst
+                                Action("Cast Divine Toll", [this](Player* bot, Unit* target) {
+                                    if (this->_resource.holyPower < 3 &&
+                                        this->CanCastSpell(DIVINE_TOLL, bot))
+                                    {
+                                        this->CastSpell(bot, DIVINE_TOLL);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            })
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 3: BEACON MAINTENANCE
+                // ================================================================
+                Sequence("Beacon Maintenance", {
+                    Condition("Has group", [](Player* bot, Unit*) {
+                        return bot->GetGroup() != nullptr;
+                    }),
+                    Selector("Beacon Priority", {
+                        // Primary beacon on tank
+                        Action("Cast Beacon of Light", [this](Player* bot, Unit* target) {
+                            Player* tank = this->GetMainTank(bot->GetGroup());
+                            if (tank && this->_beaconTracker.NeedsBeaconRefresh(bot, tank) &&
+                                this->CanCastSpell(BEACON_OF_LIGHT, tank))
+                            {
+                                this->CastSpell(tank, BEACON_OF_LIGHT);
+                                this->_beaconTracker.SetPrimaryBeacon(tank->GetGUID());
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Secondary beacon if talented
+                        Action("Cast Beacon of Faith", [this](Player* bot, Unit* target) {
+                            if (this->_beaconTracker.HasSecondaryBeacon())
+                            {
+                                Player* secondTank = this->GetOffTank(bot->GetGroup());
+                                if (secondTank && this->_beaconTracker.NeedsBeaconRefresh(bot, secondTank) &&
+                                    this->CanCastSpell(BEACON_OF_FAITH, secondTank))
+                                {
+                                    this->CastSpell(secondTank, BEACON_OF_FAITH);
+                                    this->_beaconTracker.SetSecondaryBeacon(secondTank->GetGUID());
+                                    return NodeStatus::SUCCESS;
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 4: STANDARD HEALING ROTATION
+                // ================================================================
+                Sequence("Standard Healing", {
+                    Selector("Healing Priority", {
+                        // Cooldown usage
+                        Sequence("Use Avenging Wrath", {
+                            Condition("3+ injured", [this](Player* bot, Unit*) {
+                                Group* group = bot->GetGroup();
+                                return this->CountInjuredAllies(group, 0.6f) >= 3;
+                            }),
+                            Action("Cast Avenging Wrath", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(AVENGING_WRATH_HOLY, bot))
+                                {
+                                    this->CastSpell(bot, AVENGING_WRATH_HOLY);
+                                    this->_avengingWrathActive = true;
+                                    this->_avengingWrathEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Flash of Light for moderate damage
+                        Sequence("Flash of Light", {
+                            Condition("Target < 50%", [this](Player* bot, Unit*) {
+                                Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                                return healTarget && healTarget->GetHealthPct() < 50.0f;
+                            }),
+                            Action("Cast Flash of Light", [this](Player* bot, Unit* target) {
+                                Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                                if (healTarget && this->CanCastSpell(FLASH_OF_LIGHT, healTarget))
+                                {
+                                    this->CastSpell(healTarget, FLASH_OF_LIGHT);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Holy Light for efficient healing
+                        Action("Cast Holy Light", [this](Player* bot, Unit* target) {
+                            Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
+                            if (healTarget && healTarget->GetHealthPct() < 85.0f &&
+                                this->CanCastSpell(HOLY_LIGHT, healTarget))
+                            {
+                                this->CastSpell(healTarget, HOLY_LIGHT);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 HOLY PALADIN: BehaviorTree initialized with healer flow");
+        }
     }
+
+
 
 private:
     HolyPaladinBeaconTracker _beaconTracker;

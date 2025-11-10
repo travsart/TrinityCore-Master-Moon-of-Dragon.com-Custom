@@ -8,6 +8,7 @@
  */
 
 #include "AdaptiveBehaviorManager.h"
+#include "Decision/DecisionFusionSystem.h"
 #include "Player.h"
 #include "Group.h"
 #include "SpellInfo.h"
@@ -71,6 +72,11 @@ void AdaptiveBehaviorManager::CreateEmergencyTankProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         // Emergency tank activation logic
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating emergency tank mode", bot->GetName());
         ActivateStrategy(flags);
@@ -91,11 +97,21 @@ void AdaptiveBehaviorManager::CreateAOEProfile()
 
     profile.condition = [](const CombatMetrics& metrics, CombatSituation situation) {
         return situation == CombatSituation::AOE_HEAVY ||
+               if (!bot)
+               {
+                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                   return;
+               }
                metrics.enemyCount >= 4 ||
                (metrics.enemyCount >= 3 && metrics.nearestEnemyDistance <= 8.0f);
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating AOE mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -111,6 +127,11 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
     profile.strategyFlags = STRATEGY_SURVIVAL | STRATEGY_DEFENSIVE | STRATEGY_USE_CONSUMABLES | STRATEGY_USE_COOLDOWNS;
     profile.minDuration = 5000;
     profile.maxDuration = 15000;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     profile.cooldown = 30000;
 
     profile.condition = [](const CombatMetrics& metrics, CombatSituation situation) {
@@ -121,6 +142,16 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -144,6 +175,16 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating burst phase", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -167,6 +208,11 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating resource conservation", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -294,6 +340,11 @@ void AdaptiveBehaviorManager::EvaluateProfileActivation(BehaviorProfile& profile
     bool shouldActivate = profile.condition(metrics, situation);
 
     if (shouldActivate && !profile.isActive)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     {
         // Check cooldown
         if (profile.lastActivated > 0 && profile.cooldown > 0)
@@ -303,6 +354,11 @@ void AdaptiveBehaviorManager::EvaluateProfileActivation(BehaviorProfile& profile
         }
 
         ApplyProfile(profile);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     }
     else if (!shouldActivate && profile.isActive && profile.activeTime >= profile.minDuration)
     {
@@ -319,6 +375,11 @@ void AdaptiveBehaviorManager::ApplyProfile(BehaviorProfile& profile)
     profile.lastActivated = getMSTime();
     profile.activeTime = 0;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.playerbot", "Bot {} activated behavior profile: {}", _bot->GetName(), profile.name);
 }
 
@@ -328,6 +389,11 @@ void AdaptiveBehaviorManager::RemoveProfile(BehaviorProfile& profile)
     profile.isActive = false;
     profile.activeTime = 0;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
     TC_LOG_DEBUG("bot.playerbot", "Bot {} deactivated behavior profile: {}", _bot->GetName(), profile.name);
 }
 
@@ -344,6 +410,11 @@ void AdaptiveBehaviorManager::AdaptToComposition()
     if (!IsOptimalComposition())
     {
         // Missing tank - someone may need to emergency tank
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         if (_groupComposition.tanks == 0 && CanPerformRole(BotRole::TANK))
         {
             ActivateStrategy(STRATEGY_EMERGENCY_TANK);
@@ -379,6 +450,11 @@ void AdaptiveBehaviorManager::AssignRoles()
     _roleAssignment.isTemporary = false;
 
     TC_LOG_DEBUG("bot.playerbot", "Bot {} assigned roles - Primary: {}, Secondary: {}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         _bot->GetName(), GetRoleName(primary), GetRoleName(secondary));
 }
 
@@ -472,6 +548,11 @@ std::vector<std::string> AdaptiveBehaviorManager::GetActiveProfileNames() const
 bool AdaptiveBehaviorManager::CanPerformRole(BotRole role) const
 {
     Classes botClass = GetBotClass();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 
     switch (role)
     {
@@ -482,10 +563,20 @@ bool AdaptiveBehaviorManager::CanPerformRole(BotRole role) const
         case BotRole::HEALER:
             return botClass == CLASS_PRIEST || botClass == CLASS_DRUID ||
                    botClass == CLASS_SHAMAN || botClass == CLASS_PALADIN;
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                       return nullptr;
+                   }
 
         case BotRole::MELEE_DPS:
             return botClass == CLASS_WARRIOR || botClass == CLASS_ROGUE ||
                    botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_PALADIN ||
+                   if (!bot)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+                       return nullptr;
+                   }
                    botClass == CLASS_SHAMAN || botClass == CLASS_DRUID;
 
         case BotRole::RANGED_DPS:
@@ -496,6 +587,11 @@ bool AdaptiveBehaviorManager::CanPerformRole(BotRole role) const
         case BotRole::CROWD_CONTROL:
             return botClass == CLASS_MAGE || botClass == CLASS_ROGUE ||
                    botClass == CLASS_HUNTER || botClass == CLASS_WARLOCK;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 
         default:
             return true;
@@ -522,10 +618,20 @@ void AdaptiveBehaviorManager::UpdateGroupComposition()
     _groupComposition.Reset();
 
     Group* group = _bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
     {
         _groupComposition.totalMembers = 1;
         _groupComposition.alive = _bot->IsAlive() ? 1 : 0;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+            return;
+        }
         return;
     }
 
@@ -956,6 +1062,11 @@ void AdaptiveBehaviorManager::ApplyPositioningStrategies(CombatSituation situati
             DeactivateStrategy(STRATEGY_SPREAD);
             break;
 
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return;
+        }
         case CombatSituation::KITE:
             ActivateStrategy(STRATEGY_KITE | STRATEGY_MOBILITY | STRATEGY_STAY_RANGED);
             DeactivateStrategy(STRATEGY_STAY_MELEE);
@@ -1011,6 +1122,11 @@ void AdaptiveBehaviorManager::ApplyResourceStrategies(const CombatMetrics& metri
 
 Classes AdaptiveBehaviorManager::GetBotClass() const
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     return static_cast<Classes>(_bot->GetClass());
 }
 
@@ -1081,6 +1197,232 @@ void AdaptiveBehaviorManager::ResetStrategies()
 {
     _activeStrategies = STRATEGY_NONE;
     _strategyActiveTimes.clear();
+}
+
+// ============================================================================
+// DECISION FUSION INTEGRATION
+// ============================================================================
+
+bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, bot::ai::CombatContext context) const
+{
+    using namespace bot::ai;
+
+    DecisionVote vote;
+    vote.source = DecisionSource::ADAPTIVE_BEHAVIOR;
+    vote.target = target;
+
+    // No recommendation if bot is invalid
+    if (!_bot)
+        return vote;
+
+    // ========================================================================
+    // 1. DETERMINE ACTION PRIORITY BASED ON ROLE
+    // ========================================================================
+
+    // Emergency healing/tanking takes absolute priority
+    if (ShouldEmergencyHeal())
+    {
+        vote.actionId = 0; // TODO: Get emergency heal spell from ClassAI
+        vote.confidence = 1.0f; // Maximum confidence for emergency
+        vote.urgency = 1.0f;    // Maximum urgency
+        vote.reasoning = "AdaptiveBehavior: Emergency healing required";
+        return vote;
+    }
+
+    if (ShouldEmergencyTank())
+    {
+        vote.actionId = 0; // TODO: Get emergency defensive from ClassAI
+        vote.confidence = 1.0f;
+        vote.urgency = 1.0f;
+        vote.reasoning = "AdaptiveBehavior: Emergency tanking required";
+        return vote;
+    }
+
+    // ========================================================================
+    // 2. ROLE-BASED ACTION RECOMMENDATION
+    // ========================================================================
+
+    BotRole primaryRole = GetPrimaryRole();
+    float roleEffectiveness = _roleAssignment.roleEffectiveness / 100.0f; // Normalize to 0-1
+
+    // Base confidence on role effectiveness
+    vote.confidence = std::min(std::max(roleEffectiveness, 0.3f), 0.8f); // Clamp 0.3-0.8
+
+    // Base urgency on context and active strategies
+    vote.urgency = 0.5f; // Default medium urgency
+
+    // ========================================================================
+    // 3. CONTEXT-BASED URGENCY ADJUSTMENTS
+    // ========================================================================
+
+    switch (context)
+    {
+        case CombatContext::RAID_MYTHIC:
+        case CombatContext::RAID_HEROIC:
+            vote.urgency += 0.2f; // Higher urgency in raid content
+            break;
+        case CombatContext::DUNGEON_BOSS:
+            vote.urgency += 0.15f;
+            break;
+        case CombatContext::PVP_ARENA:
+            vote.urgency += 0.25f; // Highest urgency in arena
+            break;
+        case CombatContext::PVP_BG:
+            vote.urgency += 0.15f;
+            break;
+        default:
+            break;
+    }
+
+    // ========================================================================
+    // 4. STRATEGY-BASED URGENCY ADJUSTMENTS
+    // ========================================================================
+
+    if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+        vote.urgency += 0.2f;  // Increase urgency during burst windows
+
+    if (IsStrategyActive(STRATEGY_SURVIVAL))
+        vote.urgency += 0.3f;  // High urgency in survival mode
+
+    if (IsStrategyActive(STRATEGY_EMERGENCY_TANK) || IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
+        vote.urgency += 0.4f;  // Very high urgency for emergency strategies
+
+    if (IsStrategyActive(STRATEGY_SAVE_COOLDOWNS))
+        vote.urgency -= 0.1f;  // Reduce urgency when saving cooldowns
+
+    // ========================================================================
+    // 5. ROLE-SPECIFIC ACTION REASONING
+    // ========================================================================
+
+    std::string reasoning = "AdaptiveBehavior: ";
+
+    switch (primaryRole)
+    {
+        case BotRole::TANK:
+        case BotRole::OFF_TANK:
+            reasoning += "Tank role - ";
+            if (IsStrategyActive(STRATEGY_DEFENSIVE))
+                reasoning += "Defensive strategy";
+            else if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+                reasoning += "AoE threat generation";
+            else
+                reasoning += "Threat maintenance";
+
+            // Tanks have higher urgency if not tanking current target
+            if (target && target->GetVictim() != _bot)
+                vote.urgency += 0.2f;
+            break;
+
+        case BotRole::HEALER:
+        case BotRole::OFF_HEALER:
+            reasoning += "Healer role - ";
+            if (IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
+                reasoning += "Emergency healing";
+            else if (_groupComposition.averageItemLevel > 0)
+            {
+                float healthPercentage = static_cast<float>(_groupComposition.alive) /
+                                        static_cast<float>(_groupComposition.totalMembers) * 100.0f;
+                if (healthPercentage < 60.0f)
+                {
+                    reasoning += "Group health critical";
+                    vote.urgency += 0.3f;
+                }
+                else if (healthPercentage < 80.0f)
+                {
+                    reasoning += "Group health low";
+                    vote.urgency += 0.15f;
+                }
+                else
+                    reasoning += "Maintenance healing";
+            }
+            else
+                reasoning += "Group healing";
+            break;
+
+        case BotRole::MELEE_DPS:
+            reasoning += "Melee DPS - ";
+            if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+                reasoning += "AoE damage";
+            else if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+                reasoning += "Burst window";
+            else if (target && target->GetHealthPct() < 20.0f)
+            {
+                reasoning += "Execute range";
+                vote.urgency += 0.2f;
+            }
+            else
+                reasoning += "Single target rotation";
+            break;
+
+        case BotRole::RANGED_DPS:
+            reasoning += "Ranged DPS - ";
+            if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+                reasoning += "AoE damage";
+            else if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+                reasoning += "Burst window";
+            else if (target && target->GetHealthPct() < 20.0f)
+            {
+                reasoning += "Execute range";
+                vote.urgency += 0.2f;
+            }
+            else
+                reasoning += "Single target rotation";
+            break;
+
+        case BotRole::CROWD_CONTROL:
+            reasoning += "Crowd Control - ";
+            if (IsStrategyActive(STRATEGY_CROWD_CONTROL))
+            {
+                reasoning += "CC priority";
+                vote.urgency += 0.25f;
+            }
+            else
+                reasoning += "DPS rotation";
+            break;
+
+        case BotRole::SUPPORT:
+            reasoning += "Support role - ";
+            if (IsStrategyActive(STRATEGY_INTERRUPT_FOCUS))
+                reasoning += "Interrupt focus";
+            else
+                reasoning += "Utility support";
+            break;
+
+        case BotRole::HYBRID:
+            reasoning += "Hybrid role - ";
+            // Hybrid adapts based on needs
+            if (ShouldUseDefensiveCooldowns())
+                reasoning += "Defensive support";
+            else if (_groupComposition.healers == 0)
+                reasoning += "Off-healing";
+            else
+                reasoning += "DPS";
+            break;
+
+        default:
+            reasoning += "No specific role";
+            vote.confidence = 0.2f; // Low confidence without role
+            break;
+    }
+
+    // Add active profile information if any
+    if (_activeProfile)
+        reasoning += " (" + _activeProfile->name + ")";
+
+    // Clamp urgency to 0-1 range
+    vote.urgency = std::min(std::max(vote.urgency, 0.0f), 1.0f);
+
+    vote.reasoning = reasoning;
+
+    // ========================================================================
+    // 6. RETURN VOTE
+    // ========================================================================
+
+    // Note: actionId remains 0 as placeholder
+    // In production, this would query ClassAI for role-appropriate spell
+    // For now, DecisionFusion will use this vote for weighting other systems
+
+    return vote;
 }
 
 } // namespace Playerbot

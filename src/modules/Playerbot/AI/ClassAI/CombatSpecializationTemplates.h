@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "Creature.h"
@@ -30,6 +31,10 @@
 #include "GridNotifiers.h"
 #include "Log.h"
 #include "Group.h"
+#include "../Combat/MovementIntegration.h"
+#include "../Combat/TargetManager.h"
+#include "../Combat/CrowdControlManager.h"
+#include "../Combat/DefensiveManager.h"
 #include <unordered_map>
 #include <concepts>
 #include <type_traits>
@@ -41,6 +46,9 @@
 
 namespace Playerbot
 {
+
+// Phase 5D: Forward declarations for combat managers
+struct CombatMetrics;
 
 // ============================================================================
 // RESOURCE TYPE CONCEPTS - C++20 Concepts for type safety
@@ -138,6 +146,9 @@ public:
         , _lastResourceUpdate(0)
         , _globalCooldownEnd(0)
         , _performanceMetrics{}
+        , _movementIntegration(botPtr)      // Phase 5D: Movement AI
+        , _targetManager(botPtr)            // Phase 5D: Target selection
+        , _crowdControlManager(botPtr)      // Phase 5D: CC coordination
     {
         InitializeResource();
     }
@@ -254,8 +265,7 @@ protected:
         ClassAI::OnCombatStart(target);
 
         _combatStartTime = getMSTime();
-        _currentTarget = target;
-        _consecutiveFailedCasts = 0;
+        _currentTarget = target;        _consecutiveFailedCasts = 0;
 
         // Reset performance metrics for this combat
         _performanceMetrics.combatStartTime = std::chrono::steady_clock::now();
@@ -342,6 +352,63 @@ protected:
         }
         return 0;
     }
+
+    // ========================================================================
+    // PHASE 5D: MANAGER INTEGRATION - Combat subsystem access
+    // ========================================================================
+
+    /**
+     * Get MovementIntegration for intelligent positioning
+     *
+     * Example usage in rotation:
+     * @code
+     * void UpdateRotation(::Unit* target) override {
+     *     CombatSituation situation{};
+     *     situation.enemyCount = GetEnemiesInRange(10.0f);
+     *     situation.inMelee = GetBot()->GetDistance(target) <= 5.0f;
+     *
+     *     GetMovementIntegration().Update(diff, situation);
+     *
+     *     if (GetMovementIntegration().NeedsEmergencyMovement()) {
+     *         Position safePos = GetMovementIntegration().GetOptimalPosition();
+     *         MoveTo(safePos);
+     *     }
+     * }
+     * @endcode
+     */
+    MovementIntegration& GetMovementIntegration() { return _movementIntegration; }
+    const MovementIntegration& GetMovementIntegration() const { return _movementIntegration; }
+
+    /**
+     * Get TargetManager for intelligent target selection
+     *
+     * Example usage:
+     * @code
+     * ::Unit* target = GetTargetManager().SelectBestTarget();
+     * if (target && ShouldSwitchTarget(target)) {
+     *     SetTarget(target->GetGUID());
+     * }
+     * @endcode
+     */
+    TargetManager& GetTargetManager() { return _targetManager; }
+    const TargetManager& GetTargetManager() const { return _targetManager; }
+
+    /**
+     * Get CrowdControlManager for CC coordination
+     *
+     * Example usage:
+     * @code
+     * if (enemyCount >= 3) {
+     *     ::Unit* ccTarget = GetCrowdControlManager().GetBestCCTarget();
+     *     if (ccTarget && !GetCrowdControlManager().HasDiminishingReturns(ccTarget, MECHANIC_POLYMORPH)) {
+     *         CastSpell(ccTarget, POLYMORPH);
+     *         GetCrowdControlManager().ApplyCrowdControl(ccTarget, MECHANIC_POLYMORPH, 8000);
+     *     }
+     * }
+     * @endcode
+     */
+    CrowdControlManager& GetCrowdControlManager() { return _crowdControlManager; }
+    const CrowdControlManager& GetCrowdControlManager() const { return _crowdControlManager; }
 
     // ========================================================================
     // INTERNAL RESOURCE HANDLING - Specialized for simple/complex types
@@ -438,13 +505,10 @@ private:
      */
     void CleanupExpiredDots()
     {
-        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
-
-        // Remove DoTs for dead or invalid targets
+        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
         std::erase_if(_activeDots, [bot](const auto& pair) {
-            Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);
-            return !target || !target->IsAlive();
+            Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);            return !target || !target->IsAlive();
         });
     }
 
@@ -453,8 +517,7 @@ protected:
      * Helper method for refactored specializations - check if spell can be cast
      * This bridges the gap between old CanCastSpell() calls and new architecture
      */
-    bool CanCastSpell(uint32 spellId, ::Unit* target = nullptr)
-    {
+    bool CanCastSpell(uint32 spellId, ::Unit* target = nullptr)    {
         // Use CanUseAbility for basic checks
         if (!CanUseAbility(spellId))
             return false;
@@ -479,8 +542,7 @@ protected:
                 return false;
         }
 
-        return true;
-    }
+        return true;    }
 
     /**
      * Get number of enemies in range (for AoE decision making)
@@ -495,8 +557,7 @@ protected:
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
-        Map* map = bot->GetMap();
-        if (map)
+        Map* map = bot->GetMap();        if (map)
         {
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
             if (spatialGrid)
@@ -532,7 +593,7 @@ protected:
     uint32 _lastResourceUpdate;
 
     // Cooldown tracking (thread-safe)
-    mutable std::recursive_mutex _cooldownMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cooldownMutex;
     std::unordered_map<uint32, uint32> _cooldowns;
     std::unordered_map<uint32, uint32> _cooldownDurations; // Registered cooldown durations
     std::atomic<uint32> _globalCooldownEnd;
@@ -542,7 +603,7 @@ protected:
     std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint32>> _activeDots; // targetGuid -> (spellId -> duration)
 
     // Resource management (thread-safe)
-    mutable std::recursive_mutex _resourceMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _resourceMutex;
 
     // Combat state
     ::Unit* _currentTarget = nullptr;
@@ -562,6 +623,11 @@ protected:
         std::chrono::milliseconds totalCombatTime{0};
     } _performanceMetrics;
 
+    // Phase 5D: Combat managers (available to all combat specs)
+    MovementIntegration _movementIntegration;       // Intelligent movement and positioning
+    TargetManager _targetManager;                   // Smart target selection and switching
+    CrowdControlManager _crowdControlManager;       // CC coordination and DR tracking
+
     // Constants
     static constexpr uint32 GLOBAL_COOLDOWN_MS = 1500;
     static constexpr uint32 MAX_FAILED_CASTS = 5;
@@ -575,14 +641,10 @@ protected:
  * Melee DPS Specialization Template
  * Provides melee-specific defaults and behavior
  */
-template<typename ResourceType>
-    requires ValidResource<ResourceType>
+template<typename ResourceType>    requires ValidResource<ResourceType>
 class MeleeDpsSpecialization : public CombatSpecializationTemplate<ResourceType>
 {
-public:
-    explicit MeleeDpsSpecialization(Player* bot)
-        : CombatSpecializationTemplate<ResourceType>(bot)
-    {
+public:    explicit MeleeDpsSpecialization(Player* bot)        : CombatSpecializationTemplate<ResourceType>(bot)    {
     }
 
     float GetOptimalRange(::Unit* target) override final
@@ -596,14 +658,10 @@ protected:
         // Prefer behind target for melee DPS
         if (target)
         {
-            float angle = target->GetOrientation() + M_PI; // Behind target
-            float distance = 3.0f; // Close but not too close
+            float angle = target->GetOrientation() + M_PI; // Behind target            float distance = 3.0f; // Close but not too close
 
             Position pos;
-            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;
-            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;
-            pos.m_positionZ = target->GetPositionZ();
-            pos.SetOrientation(target->GetAbsoluteAngle(&pos));
+            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;            pos.m_positionZ = target->GetPositionZ();            pos.SetOrientation(target->GetAbsoluteAngle(&pos));
 
             return pos;
         }
@@ -663,9 +721,7 @@ protected:
         if (target)
         {
             // Maintain optimal distance for ranged DPS
-            float currentDistance = this->GetBot()->GetDistance(target);
-
-            if (currentDistance < _minimumRange)
+            float currentDistance = this->GetBot()->GetDistance(target);            if (currentDistance < _minimumRange)
             {
                 // Too close, need to move back (kite)
                 return GetKitePosition(target);
@@ -680,8 +736,7 @@ protected:
     }
 
     /**
-     * Get position for kiting away from target
-     */
+     * Get position for kiting away from target     */
     Position GetKitePosition(::Unit* target) const
     {
         float angle = this->GetBot()->GetRelativeAngle(target) + M_PI; // Away from target
@@ -719,8 +774,7 @@ protected:
     bool ShouldKite(::Unit* target) const
     {
         return target &&
-               target->GetVictim() == this->GetBot() &&
-               target->GetDistance(this->GetBot()) < _minimumRange;
+               target->GetVictim() == this->GetBot() &&               target->GetDistance(this->GetBot()) < _minimumRange;
     }
 
 private:
@@ -728,8 +782,7 @@ private:
     float _minimumRange;
 };
 
-/**
- * Tank Specialization Template
+/** * Tank Specialization Template
  * Provides tank-specific defaults and behavior
  */
 template<typename ResourceType>
@@ -741,6 +794,7 @@ public:
         : CombatSpecializationTemplate<ResourceType>(bot)
         , _lastTauntTime(0)
         , _defensiveCooldownActive(false)
+        , _defensiveManager(bot)  // Phase 5D: DefensiveManager integration
     {
     }
 
@@ -760,9 +814,7 @@ protected:
             float optimalAngle = angleToGroup + M_PI; // Opposite of group
 
             Position pos;
-            pos.m_positionX = target->GetPositionX() + cos(optimalAngle) * 3.0f;
-            pos.m_positionY = target->GetPositionY() + sin(optimalAngle) * 3.0f;
-            pos.m_positionZ = target->GetPositionZ();
+            pos.m_positionX = target->GetPositionX() + cos(optimalAngle) * 3.0f;            pos.m_positionY = target->GetPositionY() + sin(optimalAngle) * 3.0f;            pos.m_positionZ = target->GetPositionZ();            
             pos.SetOrientation(target->GetAbsoluteAngle(&pos));
 
             return pos;
@@ -779,8 +831,7 @@ protected:
             return;
 
         // Check if we have aggro
-        if (target->GetVictim() != this->GetBot())
-        {
+        if (target->GetVictim() != this->GetBot())        {
             uint32 currentTime = getMSTime();
             if (currentTime - _lastTauntTime > 8000) // 8 second taunt cooldown
             {
@@ -823,12 +874,8 @@ protected:
             {
                 if (Player* member = itr.GetSource())
                 {
-                    if (member != this->GetBot() && member->IsAlive())
-                    {
-                        center.m_positionX += member->GetPositionX();
-                        center.m_positionY += member->GetPositionY();
-                        center.m_positionZ += member->GetPositionZ();
-                        count++;
+                    if (member != this->GetBot() && member->IsAlive())                    {
+                        center.m_positionX += member->GetPositionX();                        center.m_positionY += member->GetPositionY();                        center.m_positionZ += member->GetPositionZ();                        count++;
                     }
                 }
             }
@@ -858,14 +905,84 @@ protected:
      */
     virtual void UseDefensiveCooldown() {}
 
+    /**
+     * Phase 5D: Update defensive cooldowns using DefensiveManager
+     *
+     * Call this from your spec's UpdateRotation() method to integrate
+     * intelligent defensive cooldown rotation.
+     *
+     * Example usage in tank spec:
+     * @code
+     * void UpdateRotation(::Unit* target) override {
+     *     // Create combat metrics
+     *     CombatMetrics metrics{};
+     *     metrics.damageTaken = CalculateRecentDamage();
+     *     metrics.healingReceived = CalculateRecentHealing();
+     *
+     *     // Update defensives BEFORE rotation
+     *     UpdateDefensives(diff, metrics);
+     *
+     *     // Then execute normal threat rotation
+     *     ExecuteThreatRotation(target);
+     * }
+     * @endcode
+     *
+     * The DefensiveManager will automatically:
+     * - Track incoming damage patterns
+     * - Determine optimal defensive usage timing
+     * - Prevent defensive stacking/waste
+     * - Prioritize emergency defensives at critical HP
+     */
+    void UpdateDefensives(uint32 diff, const CombatMetrics& metrics)
+    {
+        _defensiveManager.Update(diff, metrics);
+
+        if (_defensiveManager.NeedsEmergencyDefensive())
+        {
+            uint32 emergencySpell = _defensiveManager.UseEmergencyDefensive();
+            if (emergencySpell != 0)
+            {
+                this->CastSpell(this->GetBot(), emergencySpell);
+                TC_LOG_DEBUG("playerbot", "Tank: Emergency defensive {} used", emergencySpell);
+            }
+        }
+        else if (_defensiveManager.NeedsDefensive())
+        {
+            uint32 recommendedSpell = _defensiveManager.GetRecommendedDefensive();
+            if (recommendedSpell != 0)
+            {
+                this->CastSpell(this->GetBot(), recommendedSpell);
+                _defensiveManager.UseDefensiveCooldown(recommendedSpell);
+                TC_LOG_DEBUG("playerbot", "Tank: Defensive {} used", recommendedSpell);
+            }
+        }
+    }
+
+    /**
+     * Phase 5D: Get DefensiveManager for registering spec-specific defensives
+     *
+     * Call this in your tank spec constructor to register your defensives:
+     * @code
+     * ProtectionWarriorRefactored(Player* bot) : TankSpecialization(bot) {
+     *     // Register warrior defensives
+     *     GetDefensiveManager().RegisterDefensive(DefensiveCooldown(
+     *         SHIELD_WALL, 0.4f, 8000, 240000, DefensivePriority::HIGH));
+     *     GetDefensiveManager().RegisterDefensive(DefensiveCooldown(
+     *         LAST_STAND, 0.3f, 20000, 180000, DefensivePriority::EMERGENCY, true));
+     * }
+     * @endcode
+     */
+    DefensiveManager& GetDefensiveManager() { return _defensiveManager; }
+    const DefensiveManager& GetDefensiveManager() const { return _defensiveManager; }
+
 private:
     uint32 _lastTauntTime;
     bool _defensiveCooldownActive;
+    DefensiveManager _defensiveManager;  // Phase 5D: Intelligent defensive cooldown rotation
 };
 
 /**
- * Healer Specialization Template
- * Provides healer-specific defaults and behavior
+ * Healer Specialization Template * Provides healer-specific defaults and behavior
  */
 template<typename ResourceType>
     requires ValidResource<ResourceType>
@@ -891,12 +1008,8 @@ protected:
         Position allyCenter = CalculateAllyCenter();
         Position enemyCenter = CalculateEnemyCenter();
 
-        if (enemyCenter.IsPositionValid())
-        {
-            // Move away from enemies while staying near allies
-            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;
-
-            Position pos;
+        if (enemyCenter.IsPositionValid())        {
+            // Move away from enemies while staying near allies            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;            Position pos;
             pos.m_positionX = allyCenter.m_positionX + cos(angleFromEnemies) * 15.0f;
             pos.m_positionY = allyCenter.m_positionY + sin(angleFromEnemies) * 15.0f;
             pos.m_positionZ = allyCenter.m_positionZ;
@@ -927,8 +1040,7 @@ protected:
         {
             for (GroupReference& itr : group->GetMembers())
             {
-                if (Player* member = itr.GetSource())
-                {
+                if (Player* member = itr.GetSource())                {
                     if (member->IsAlive() && member->GetHealthPct() < lowestHealthPct)
                     {
                         lowestHealthPct = member->GetHealthPct();
@@ -953,8 +1065,7 @@ protected:
         {
             for (GroupReference& itr : group->GetMembers())
             {
-                if (Player* member = itr.GetSource())
-                {
+                if (Player* member = itr.GetSource())                {
                     if (member->IsAlive() && member->GetHealthPct() < 80.0f)
                     {
                         injuredCount++;
@@ -980,14 +1091,10 @@ protected:
         {
             for (GroupReference& itr : group->GetMembers())
             {
-                if (Player* member = itr.GetSource())
-                {
+                if (Player* member = itr.GetSource())                {
                     if (member->IsAlive())
                     {
-                        center.m_positionX += member->GetPositionX();
-                        center.m_positionY += member->GetPositionY();
-                        center.m_positionZ += member->GetPositionZ();
-                        count++;
+                        center.m_positionX += member->GetPositionX();                        center.m_positionY += member->GetPositionY();                        center.m_positionZ += member->GetPositionZ();                        count++;
                     }
                 }
             }

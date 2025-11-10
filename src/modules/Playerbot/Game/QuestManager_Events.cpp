@@ -40,6 +40,16 @@ namespace Playerbot
             return;
 
         Player* bot = GetBot();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return;
+        }
         if (!bot || !bot->IsInWorld())
             return;
 
@@ -63,11 +73,21 @@ namespace Playerbot
                 catch (std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_ACCEPTED data for event {}: {}",
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return;
+                        }
                         event.eventId, e.what());
                     return;
                 }
 
                 TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} accepted quest {} ({}daily, {}weekly)",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName(), questData.questId,
                     questData.isDaily ? "" : "not ", questData.isWeekly ? "" : "not ");
 
@@ -87,6 +107,11 @@ namespace Playerbot
 
                 QuestEventData questData;
                 try
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 {
                     questData = std::any_cast<QuestEventData>(event.eventData);
                 }
@@ -97,6 +122,11 @@ namespace Playerbot
                 }
 
                 TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} completed quest {} (XP: {}, Gold: {}, Rep: {})",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName(), questData.questId, questData.experienceGained,
                     questData.goldReward, questData.reputationGained);
 
@@ -119,6 +149,11 @@ namespace Playerbot
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: QUEST_ABANDONED event {} missing data", event.eventId);
                     ForceUpdate();
                     return;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 }
 
                 QuestEventData questData;
@@ -133,7 +168,22 @@ namespace Playerbot
                     return;
                 }
 
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} abandoned quest {}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
+                        return;
+                    }
                     bot->GetName(), questData.questId);
 
                 ForceUpdate();
@@ -148,11 +198,26 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_WARN("module.playerbot", "QuestManager: Bot {} failed quest {}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId);
                     }
                     catch (std::bad_any_cast const&)
                     {
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         TC_LOG_WARN("module.playerbot", "QuestManager: Bot {} failed quest (no data)", bot->GetName());
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     }
                 }
 
@@ -177,12 +242,22 @@ namespace Playerbot
                 }
                 catch (std::bad_any_cast const&)
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_OBJECTIVE_COMPLETE data");
                     ForceUpdate();
                     return;
                 }
 
                 TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} completed objective {} for quest {} ({}/{})",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName(), questData.objectiveIndex, questData.questId,
                     questData.objectiveCount, questData.objectiveRequired);
 
@@ -203,14 +278,34 @@ namespace Playerbot
             {
                 if (event.eventData.has_value())
                 {
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return nullptr;
+                    }
                     try
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} quest {} status changed (complete: {})",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
+                            }
                             bot->GetName(), questData.questId, questData.isComplete);
                     }
                     catch (std::bad_any_cast const&) { }
                 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
                 UpdateQuestProgress();
                 ForceUpdate();
@@ -221,6 +316,11 @@ namespace Playerbot
             {
                 // Extract shared quest data
                 if (!event.eventData.has_value())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 {
                     TC_LOG_DEBUG("module.playerbot", "QuestManager::OnEventInternal: QUEST_SHARED missing data");
                     return;
@@ -238,6 +338,16 @@ namespace Playerbot
                 }
 
                 TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} received shared quest {}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     bot->GetName(), questData.questId);
 
                 // Accept shared quest if eligible
@@ -246,14 +356,34 @@ namespace Playerbot
                     if (AcceptSharedQuest(questData.questId))
                     {
                         TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} accepted shared quest {}",
+                            if (!bot)
+                            {
+                                if (!bot)
+                                {
+                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                    return nullptr;
+                                }
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId);
                     }
                     else
                     {
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} declined shared quest {} (not eligible or log full)",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId);
                     }
                 }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
 
                 ForceUpdate();
                 break;
@@ -261,10 +391,20 @@ namespace Playerbot
 
             case StateMachine::EventType::QUEST_AVAILABLE:
             {
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 TC_LOG_DEBUG("module.playerbot", "QuestManager: Quest giver available near bot {}", bot->GetName());
 
                 // Trigger quest scan on next update
                 ScanForQuests();
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
                 ForceUpdate();
                 break;
             }
@@ -278,8 +418,18 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} turned in quest {} (Reward: item {}, XP: {}, Gold: {})",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId, questData.rewardItemId,
                             questData.experienceGained, questData.goldReward);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
 
                         // Check for quest chain continuation
                         if (questData.nextQuestId != 0)
@@ -293,8 +443,18 @@ namespace Playerbot
                     }
                     catch (std::bad_any_cast const&)
                     {
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                            return nullptr;
+                        }
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} turned in quest (no details)", bot->GetName());
                     }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return nullptr;
+                }
                 }
 
                 ForceUpdate();
@@ -309,6 +469,11 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} chose reward item {} for quest {}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.rewardItemId, questData.questId);
                     }
                     catch (std::bad_any_cast const&) { }
@@ -325,6 +490,11 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} collected quest item for quest {} ({}/{})",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId,
                             questData.objectiveCount, questData.objectiveRequired);
                     }
@@ -345,6 +515,11 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} kill credit for quest {} ({}/{})",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId,
                             questData.objectiveCount, questData.objectiveRequired);
                     }
@@ -365,6 +540,11 @@ namespace Playerbot
                     {
                         QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} explored area for quest {}",
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                                return;
+                            }
                             bot->GetName(), questData.questId);
                     }
                     catch (std::bad_any_cast const&) { }

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Action.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <chrono>
 #include <memory>
@@ -222,8 +223,8 @@ private:
     };
 
     // Thread safety
-    mutable std::recursive_mutex _metricsMutex;
-    mutable std::recursive_mutex _executionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _metricsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _executionMutex;
 
     // Deleted operations
     SpellInterruptAction(SpellInterruptAction const&) = delete;

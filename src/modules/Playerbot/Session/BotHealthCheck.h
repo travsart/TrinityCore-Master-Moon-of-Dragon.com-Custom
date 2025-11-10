@@ -6,7 +6,9 @@
 #define BOT_HEALTH_CHECK_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBotHealthCheck.h"
 #include <vector>
 #include <unordered_set>
 #include <mutex>
@@ -61,7 +63,7 @@ struct HealthCheckResult
  * - Provide recovery recommendations
  * - Generate health reports
  */
-class TC_GAME_API BotHealthCheck final
+class TC_GAME_API BotHealthCheck final : public IBotHealthCheck
 {
 public:
     static BotHealthCheck* instance()
@@ -70,58 +72,56 @@ public:
         return &instance;
     }
 
-    // Initialization
-    bool Initialize();
-    void Shutdown();
-
-    // Health checks (called periodically)
-    void PerformHealthChecks(uint32 currentTime);
+    // IBotHealthCheck interface implementation
+    bool Initialize() override;
+    void Shutdown() override;
+    void PerformHealthChecks(uint32 currentTime) override;
 
     // Stall detection
-    void CheckForStalledBots(uint32 currentTime);
-    std::vector<ObjectGuid> GetStalledBots() const;
-    bool IsBotStalled(ObjectGuid botGuid) const;
+    void CheckForStalledBots(uint32 currentTime) override;
+    std::vector<ObjectGuid> GetStalledBots() const override;
+    bool IsBotStalled(ObjectGuid botGuid) const override;
 
     // Deadlock detection
-    void CheckForDeadlocks(uint32 currentTime);
-    bool IsSystemDeadlocked() const { return _systemDeadlocked.load(); }
-    uint32 GetTimeSinceLastProgress() const;
+    void CheckForDeadlocks(uint32 currentTime) override;
+    bool IsSystemDeadlocked() const override { return _systemDeadlocked.load(); }
+    uint32 GetTimeSinceLastProgress() const override;
 
     // Error rate monitoring
-    void RecordError(ObjectGuid botGuid, std::string const& errorType);
-    float GetSystemErrorRate() const; // Errors per second
-    bool IsErrorRateExcessive() const;
+    void RecordError(ObjectGuid botGuid, std::string const& errorType) override;
+    float GetSystemErrorRate() const override;
+    bool IsErrorRateExcessive() const override;
 
     // System health
-    HealthStatus GetSystemHealth() const;
-    HealthStatus GetBotHealth(ObjectGuid botGuid) const;
-    std::vector<HealthCheckResult> GetRecentHealthIssues() const;
+    HealthStatus GetSystemHealth() const override;
+    HealthStatus GetBotHealth(ObjectGuid botGuid) const override;
+    std::vector<HealthCheckResult> GetRecentHealthIssues() const override;
 
     // Recovery actions
-    void TriggerAutomaticRecovery(ObjectGuid botGuid);
-    void TriggerSystemRecovery();
+    void TriggerAutomaticRecovery(ObjectGuid botGuid) override;
+    void TriggerSystemRecovery() override;
 
     // Configuration
-    void SetStallThreshold(uint32 milliseconds) { _stallThresholdMs = milliseconds; }
-    void SetDeadlockThreshold(uint32 milliseconds) { _deadlockThresholdMs = milliseconds; }
-    void SetErrorRateThreshold(float errorsPerSecond) { _errorRateThreshold = errorsPerSecond; }
-    void SetAutoRecoveryEnabled(bool enabled) { _autoRecoveryEnabled.store(enabled); }
+    void SetStallThreshold(uint32 milliseconds) override { _stallThresholdMs = milliseconds; }
+    void SetDeadlockThreshold(uint32 milliseconds) override { _deadlockThresholdMs = milliseconds; }
+    void SetErrorRateThreshold(float errorsPerSecond) override { _errorRateThreshold = errorsPerSecond; }
+    void SetAutoRecoveryEnabled(bool enabled) override { _autoRecoveryEnabled.store(enabled); }
 
-    uint32 GetStallThreshold() const { return _stallThresholdMs; }
-    uint32 GetDeadlockThreshold() const { return _deadlockThresholdMs; }
-    float GetErrorRateThreshold() const { return _errorRateThreshold; }
-    bool IsAutoRecoveryEnabled() const { return _autoRecoveryEnabled.load(); }
+    uint32 GetStallThreshold() const override { return _stallThresholdMs; }
+    uint32 GetDeadlockThreshold() const override { return _deadlockThresholdMs; }
+    float GetErrorRateThreshold() const override { return _errorRateThreshold; }
+    bool IsAutoRecoveryEnabled() const override { return _autoRecoveryEnabled.load(); }
 
     // Heartbeat (called every tick to track system progress)
-    void RecordHeartbeat(uint32 currentTime);
+    void RecordHeartbeat(uint32 currentTime) override;
 
     // Reporting
-    void LogHealthReport() const;
-    void LogDetailedHealthStatus() const;
+    void LogHealthReport() const override;
+    void LogDetailedHealthStatus() const override;
 
     // Administrative
-    void ClearStalledBot(ObjectGuid botGuid);
-    void ClearAllHealthIssues();
+    void ClearStalledBot(ObjectGuid botGuid) override;
+    void ClearAllHealthIssues() override;
 
 private:
     BotHealthCheck() = default;
@@ -130,7 +130,7 @@ private:
     BotHealthCheck& operator=(const BotHealthCheck&) = delete;
 
     // Stall tracking
-    mutable std::recursive_mutex _stalledBotsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _stalledBotsMutex;
     std::unordered_set<ObjectGuid> _stalledBots;
     uint32 _stallThresholdMs{5000}; // 5 seconds
 
@@ -138,7 +138,7 @@ private:
     std::atomic<bool> _systemDeadlocked{false};
     uint32 _lastHeartbeatTime{0};
     uint32 _deadlockThresholdMs{10000}; // 10 seconds
-    mutable std::recursive_mutex _heartbeatMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _heartbeatMutex;
 
     // Error tracking
     struct ErrorRecord
@@ -147,13 +147,13 @@ private:
         std::string errorType;
         uint32 timestamp;
     };
-    mutable std::recursive_mutex _errorsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _errorsMutex;
     std::vector<ErrorRecord> _recentErrors;
     static constexpr uint32 ERROR_HISTORY_DURATION_MS = 60000; // 1 minute
     float _errorRateThreshold{10.0f}; // 10 errors per second
 
     // Health issues history
-    mutable std::recursive_mutex _healthIssuesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _healthIssuesMutex;
     std::vector<HealthCheckResult> _healthIssues;
     static constexpr uint32 HEALTH_ISSUE_HISTORY_SIZE = 100;
 

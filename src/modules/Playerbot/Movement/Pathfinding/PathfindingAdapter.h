@@ -11,6 +11,7 @@
 #define TRINITY_PLAYERBOT_PATHFINDING_ADAPTER_H
 
 #include "../Core/MovementTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "PathGenerator.h"
 #include <memory>
 #include <unordered_map>
@@ -283,7 +284,7 @@ namespace Playerbot
         };
 
         // Cache management
-        mutable std::recursive_mutex _cacheLock;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _cacheLock;
         std::unordered_map<uint64, CachedPath> _pathCache;
         std::queue<uint64> _cacheOrder; // LRU tracking
 

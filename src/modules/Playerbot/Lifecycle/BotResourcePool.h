@@ -10,6 +10,8 @@
 #pragma once
 
 #include "Define.h"
+#include "../Core/DI/Interfaces/IBotResourcePool.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <queue>
@@ -38,7 +40,7 @@ class BotSession;
  * - Memory reuse patterns
  * - Automatic pool scaling
  */
-class TC_GAME_API BotResourcePool
+class TC_GAME_API BotResourcePool final : public IBotResourcePool
 {
 public:
     BotResourcePool();
@@ -48,15 +50,15 @@ public:
     static BotResourcePool* instance();
 
     // Pool lifecycle
-    bool Initialize(uint32 initialPoolSize = 100);
-    void Shutdown();
-    void Update(uint32 diff);
+    bool Initialize(uint32 initialPoolSize = 100) override;
+    void Shutdown() override;
+    void Update(uint32 diff) override;
 
     // Session pool management
-    std::shared_ptr<BotSession> AcquireSession(uint32 accountId);
-    void ReleaseSession(std::shared_ptr<BotSession> session);
-    void ReturnSession(ObjectGuid botGuid);
-    void AddSession(std::shared_ptr<BotSession> session);
+    std::shared_ptr<BotSession> AcquireSession(uint32 accountId) override;
+    void ReleaseSession(std::shared_ptr<BotSession> session) override;
+    void ReturnSession(ObjectGuid botGuid) override;
+    void AddSession(std::shared_ptr<BotSession> session) override;
 
     // Pool statistics for monitoring
     struct PoolStats
@@ -84,19 +86,19 @@ public:
     };
 
     PoolStats const& GetStats() const { return _stats; }
-    void ResetStats();
+    void ResetStats() override;
 
     // Pool configuration
-    void SetMaxPoolSize(uint32 maxSize) { _maxPoolSize = maxSize; }
-    void SetMinPoolSize(uint32 minSize) { _minPoolSize = minSize; }
+    void SetMaxPoolSize(uint32 maxSize) override { _maxPoolSize = maxSize; }
+    void SetMinPoolSize(uint32 minSize) override { _minPoolSize = minSize; }
 
-    uint32 GetActiveSessionCount() const { return _stats.sessionsActive.load(); }
-    uint32 GetPooledSessionCount() const { return _stats.sessionsPooled.load(); }
+    uint32 GetActiveSessionCount() const override { return _stats.sessionsActive.load(); }
+    uint32 GetPooledSessionCount() const override { return _stats.sessionsPooled.load(); }
 
     // Additional methods needed by BotSpawnOrchestrator
-    void CleanupIdleSessions();
-    uint32 GetAvailableSessionCount() const;
-    bool CanAllocateSession() const;
+    void CleanupIdleSessions() override;
+    uint32 GetAvailableSessionCount() const override;
+    bool CanAllocateSession() const override;
 
 private:
     // Session pool management
@@ -106,7 +108,7 @@ private:
     bool IsSessionReusable(std::shared_ptr<BotSession> const& session);
 
     // Pool data
-    mutable std::recursive_mutex _poolMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _poolMutex;
     std::queue<std::shared_ptr<BotSession>> _sessionPool;
     std::unordered_set<std::shared_ptr<BotSession>> _activeSessions;
 
@@ -124,7 +126,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotResourcePool> _instance;
-    inline static std::recursive_mutex _instanceMutex;
+    inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable
     BotResourcePool(BotResourcePool const&) = delete;

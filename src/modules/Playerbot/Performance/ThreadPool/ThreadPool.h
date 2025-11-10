@@ -29,6 +29,7 @@
 
 #include "Define.h"
 #include "ThreadPoolDiagnostics.h"
+#include "Threading/LockHierarchy.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -104,8 +105,8 @@ private:
     alignas(64) std::unique_ptr<Node[]> _array;
     alignas(64) std::atomic<size_t> _capacity{INITIAL_CAPACITY};
 
-    // Expansion lock
-    std::recursive_mutex _expansionMutex;
+    // Expansion lock (ordered to prevent deadlocks)
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SPATIAL_GRID> _expansionMutex;
 
 public:
     WorkStealingQueue();
@@ -417,7 +418,7 @@ private:
     private:
         std::vector<std::unique_ptr<T>> _pool;
         std::queue<T*> _available;
-        std::recursive_mutex _mutex;
+        Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::DATABASE_POOL> _mutex;
 
     public:
         ObjectPool(size_t initialSize = 1000)
@@ -474,7 +475,7 @@ private:
     // Workers are not created in constructor, but lazily on first Submit() call
     // This prevents worker threads from starting before World is fully initialized
     std::atomic<bool> _workersCreated{false};
-    std::recursive_mutex _workerCreationMutex;
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _workerCreationMutex;
 
     // Async initialization support for non-blocking startup
     std::future<void> _initFuture;

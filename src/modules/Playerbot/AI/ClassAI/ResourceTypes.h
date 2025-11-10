@@ -416,8 +416,7 @@ public:
 
     void Regenerate(uint32 diff)
     {
-        // Very slow regeneration out of combat
-        if (!_bot || !_bot->IsInCombat())
+        // Very slow regeneration out of combat        if (!_bot || !_bot->IsInCombat())
         {
             float regenRate = 0.1f; // 0.1 shards per second out of combat
             _shards = std::min(_shards + (regenRate * diff / 1000.0f), _maxShards);

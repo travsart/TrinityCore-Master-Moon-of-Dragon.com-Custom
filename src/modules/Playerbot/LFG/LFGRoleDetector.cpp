@@ -54,6 +54,16 @@ uint8 LFGRoleDetector::DetectPlayerRole(Player* player)
 
     // Priority 3: Use class default
     uint8 classRole = GetDefaultRoleForClass(player->GetClass());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return 0;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return 0;
+    }
     return classRole;
 }
 
@@ -72,11 +82,21 @@ uint8 LFGRoleDetector::DetectBotRole(Player* bot)
 }
 
 bool LFGRoleDetector::CanPerformRole(Player* player, uint8 role)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
 {
     if (!player)
         return false;
 
     uint8 playerClass = player->GetClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
 
     switch (role)
     {
@@ -98,6 +118,16 @@ uint8 LFGRoleDetector::GetBestRoleForPlayer(Player* player)
 
     // Try spec-based detection first
     uint8 specRole = DetectRoleFromSpec(player);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return 0;
+    }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
     if (specRole == lfg::PLAYER_ROLE_TANK || specRole == lfg::PLAYER_ROLE_HEALER)
         return specRole; // Tank and healer specs are definitive
 
@@ -105,6 +135,21 @@ uint8 LFGRoleDetector::GetBestRoleForPlayer(Player* player)
     uint32 tankScore = CalculateTankScore(player);
     uint32 healerScore = CalculateHealerScore(player);
     uint32 dpsScore = CalculateDPSScore(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
 
     // Find highest score
     if (tankScore > healerScore && tankScore > dpsScore && ClassCanTank(player->GetClass()))
@@ -123,6 +168,11 @@ uint8 LFGRoleDetector::GetAllPerformableRoles(Player* player)
 
     uint8 roles = lfg::PLAYER_ROLE_NONE;
     uint8 playerClass = player->GetClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
 
     if (ClassCanTank(playerClass))
         roles |= lfg::PLAYER_ROLE_TANK;
@@ -154,6 +204,11 @@ uint8 LFGRoleDetector::GetRoleFromSpecialization(Player* player, uint32 specId)
 }
 
 uint8 LFGRoleDetector::DetectRoleFromSpec(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return nullptr;
+}
 {
     if (!player)
         return lfg::PLAYER_ROLE_NONE;
@@ -180,6 +235,11 @@ uint8 LFGRoleDetector::DetectRoleFromGear(Player* player)
     const uint32 THRESHOLD = 100;
 
     uint8 playerClass = player->GetClass();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
 
     // Check for tank gear
     if (tankScore > healerScore + THRESHOLD && tankScore > dpsScore + THRESHOLD && ClassCanTank(playerClass))
@@ -212,6 +272,11 @@ uint8 LFGRoleDetector::GetDefaultRoleForClass(uint8 playerClass)
         case CLASS_SHAMAN:
         case CLASS_DRUID:
             return lfg::PLAYER_ROLE_HEALER; // Healing classes default to healer
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+    return nullptr;
+}
 
         case CLASS_ROGUE:
         case CLASS_HUNTER:
@@ -228,6 +293,11 @@ uint8 LFGRoleDetector::GetDefaultRoleForClass(uint8 playerClass)
 }
 
 uint32 LFGRoleDetector::CalculateTankScore(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
 {
     if (!player)
         return 0;
@@ -243,6 +313,11 @@ uint32 LFGRoleDetector::CalculateTankScore(Player* player)
 
     // Bonus for shield equipped
     Item* offhand = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
+        return;
+    }
     if (offhand && offhand->GetTemplate()->GetInventoryType() == INVTYPE_SHIELD)
     {
         score += 150; // Significant bonus for shield
@@ -255,6 +330,11 @@ uint32 LFGRoleDetector::CalculateTankScore(Player* player)
 }
 
 uint32 LFGRoleDetector::CalculateHealerScore(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
 {
     if (!player)
         return 0;

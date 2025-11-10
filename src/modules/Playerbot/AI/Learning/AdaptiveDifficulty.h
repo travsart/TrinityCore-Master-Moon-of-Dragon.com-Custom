@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -284,11 +285,11 @@ private:
     float _targetWinRate;
 
     // Player profiles
-    mutable std::recursive_mutex _profilesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _profilesMutex;
     std::unordered_map<ObjectGuid, std::shared_ptr<PlayerSkillProfile>> _playerProfiles;
 
     // Bot difficulty settings
-    mutable std::recursive_mutex _botDifficultyMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _botDifficultyMutex;
     std::unordered_map<uint32_t, DifficultySettings> _botDifficulties;
 
     // Difficulty curves

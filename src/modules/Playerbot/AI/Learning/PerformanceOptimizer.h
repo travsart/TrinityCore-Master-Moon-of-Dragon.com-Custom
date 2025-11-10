@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <memory>
 #include <vector>
@@ -298,7 +299,7 @@ private:
     bool _autoOptimize;
 
     // Profiles
-    mutable std::recursive_mutex _profilesMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _profilesMutex;
     std::unordered_map<uint32_t, std::shared_ptr<PerformanceProfile>> _profiles;
 
     // Evolutionary optimizers per bot
@@ -309,7 +310,7 @@ private:
     std::unordered_map<OptimizationGoal, std::vector<OptimizationStrategy>> _goalStrategies;
 
     // Tuning parameters
-    mutable std::recursive_mutex _parametersMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _parametersMutex;
     std::unordered_map<std::string, TuningParameter> _tuningParameters;
 
     // Benchmarks

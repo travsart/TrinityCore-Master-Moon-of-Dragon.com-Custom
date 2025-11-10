@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Survival Hunter Specialization - REFACTORED
  *
@@ -12,6 +12,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 // Old HunterSpecialization.h removed
 #include "ObjectGuid.h"
 #include "../../../Spatial/SpatialGridManager.h"
@@ -26,6 +30,11 @@
 #include "CharmInfo.h"
 #include <unordered_map>
 #include <array>
+
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -151,6 +160,7 @@ public:
     void EnableWildfireInfusion() { _hasWildfireInfusion = true; }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _charges;
     uint32 _maxCharges;
     uint32 _lastRecharge;
@@ -285,9 +295,7 @@ private:
     void SummonPet()
     {
         if (!_bot || HasActivePet())
-            return;
-
-        _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
+            return;        _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
     }
 
     bool IsPetHealthLow() const
@@ -295,8 +303,7 @@ private:
         if (!HasActivePet())
             return false;
 
-        Pet* pet = _bot->GetPet();
-        return pet && pet->GetHealthPct() < 60.0f;
+        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 60.0f;
     }
 
     void MendPet()
@@ -305,8 +312,7 @@ private:
         if (currentTime - _lastMendPet < 10000)
             return;
 
-        Pet* pet = _bot->GetPet();
-        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
+        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET_SURV, false);
             _lastMendPet = currentTime;
@@ -360,7 +366,9 @@ public:
         _bombManager.EnableWildfireInfusion();
 
         // Setup Survival-specific cooldown tracking
-        InitializeCooldowns();
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeSurvivalMechanics();
     }
 
     // ========================================================================
@@ -369,8 +377,7 @@ public:
     // ========================================================================
 
     bool ShouldMaintainRange() const
-    {
-        // Survival wants to be in melee range
+    {        // Survival wants to be in melee range
         return false;
     }
 
@@ -378,8 +385,7 @@ public:
     // CORE ROTATION - Survival specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -400,20 +406,16 @@ public:
         // Check for AoE situation
         uint32 enemyCount = this->GetEnemiesInRange(8.0f);
         if (enemyCount >= 3)
-        {
-            ExecuteAoERotation(target);
+        {            ExecuteAoERotation(target);
             return;
         }
 
-        // Single target rotation
-        ExecuteSingleTargetRotation(target);
+        // Single target rotation        ExecuteSingleTargetRotation(target);
     }
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();
-
-        // Ensure pet is summoned
+        Player* bot = this->GetBot();        // Ensure pet is summoned
         if (!_petManager.HasActivePet())
         {
             bot->CastSpell(bot, SPELL_CALL_PET_SURV, false);
@@ -466,8 +468,7 @@ protected:
             case SPELL_BUTCHERY:            return 30;
             case SPELL_KILL_COMMAND_SURV:   return 0;   // Generates 15 focus
             case SPELL_WILDFIRE_BOMB:       return 0;   // No cost
-            case SPELL_SERPENT_STING:       return 20;
-            case SPELL_FLANKING_STRIKE:     return 30;
+            case SPELL_SERPENT_STING:       return 20;            case SPELL_FLANKING_STRIKE:     return 30;
             case SPELL_HARPOON:             return 0;   // No cost
             case SPELL_COORDINATED_ASSAULT: return 0;   // No cost
             default:                        return 20;
@@ -492,8 +493,7 @@ protected:
         }
 
         // Priority 2: Maintain Serpent Sting
-        if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)
-        {
+        if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)        {
             this->CastSpell(target, SPELL_SERPENT_STING);
             _lastSerpentSting = getMSTime();
             this->ConsumeResource(20);
@@ -637,9 +637,7 @@ private:
         if (_aspectOfEagleActive)
         {
             if (aspectStartTime == 0)
-                aspectStartTime = currentTime;
-
-            if (currentTime - aspectStartTime > 90000)
+                aspectStartTime = currentTime;            if (currentTime - aspectStartTime > 90000)
             {
                 _aspectOfEagleActive = false;
                 aspectStartTime = 0;
@@ -661,8 +659,7 @@ private:
         }
     }
 
-    bool ShouldUseCoordinatedAssault(Unit* target) const
-    {
+    bool ShouldUseCoordinatedAssault(Unit* target) const    {
         if (!target)
             return false;
 
@@ -717,22 +714,7 @@ private:
         }
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Survival specific cooldowns
-        RegisterCooldown(SPELL_COORDINATED_ASSAULT, 120000);  // 2 minute CD
-        RegisterCooldown(SPELL_ASPECT_OF_EAGLE, 90000);       // 90 second CD
-        RegisterCooldown(SPELL_FLANKING_STRIKE, 30000);       // 30 second CD
-        RegisterCooldown(SPELL_KILL_COMMAND_SURV, 10000);     // 10 second CD
-        RegisterCooldown(SPELL_HARPOON, 30000);               // 30 second CD
-        RegisterCooldown(SPELL_BUTCHERY, 45000);              // 45 second CD
-        RegisterCooldown(SPELL_MUZZLE, 15000);                // 15 second CD
-        RegisterCooldown(SPELL_EXHILARATION_SURV, 120000);    // 2 minute CD
-        RegisterCooldown(SPELL_SURVIVAL_OF_FITTEST, 180000);  // 3 minute CD
-    }
-
-private:
-    // ========================================================================
+    private:    // ========================================================================
     // HUNTER SPECIALIZATION ABSTRACT METHOD IMPLEMENTATIONS
     // ========================================================================
 
@@ -765,9 +747,7 @@ private:
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
-        float x = target->GetPositionX() + 15.0f * std::cos(angle);
-        float y = target->GetPositionY() + 15.0f * std::sin(angle);
-        return Position(x, y, target->GetPositionZ());
+        float x = target->GetPositionX() + 15.0f * std::cos(angle);        float y = target->GetPositionY() + 15.0f * std::sin(angle);        return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 
@@ -787,6 +767,305 @@ private:
     // Note: GetOptimalRange is final in base class - Survival should base melee range behavior
     // The base class RangedDpsSpecialization returns 30-40 yards, but Survival needs melee (see line 364)
     Position GetOptimalPosition(::Unit* /*target*/) { return Position(); /* Handled by base class */ }
+
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeSurvivalMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🗡️ SURVIVAL HUNTER: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Survival Hunter spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Survival cooldowns
+            queue->RegisterSpell(SPELL_SURVIVAL_OF_FITTEST, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_SURVIVAL_OF_FITTEST, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "Bot HP < 50% (damage reduction)");
+
+            queue->RegisterSpell(SPELL_EXHILARATION_SURV, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_EXHILARATION_SURV, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "Bot HP < 40% (self heal + pet heal)");
+
+            // CRITICAL: Burst cooldowns and gap closer
+            queue->RegisterSpell(SPELL_COORDINATED_ASSAULT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_COORDINATED_ASSAULT, [this](Player* bot, Unit* target) {
+                return target && !this->_coordinatedAssaultActive &&
+                       this->ShouldUseCoordinatedAssault(target);
+            }, "Not active, suitable target (20s burst)");
+
+            queue->RegisterSpell(SPELL_HARPOON, SpellPriority::CRITICAL, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_HARPOON, [this](Player* bot, Unit* target) {
+                return target && bot->GetDistance(target) > 5.0f &&
+                       bot->GetDistance(target) < 30.0f;
+            }, "5-30 yards from target (gap closer)");
+
+            // HIGH: Core rotation abilities
+            queue->RegisterSpell(SPELL_WILDFIRE_BOMB, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_WILDFIRE_BOMB, [this](Player* bot, Unit* target) {
+                return target && this->_bombManager.HasCharge();
+            }, "Has bomb charge (2 charges, 18s recharge)");
+
+            queue->RegisterSpell(SPELL_KILL_COMMAND_SURV, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_KILL_COMMAND_SURV, [this](Player* bot, Unit* target) {
+                return target && this->_resource < 50 &&
+                       this->_petManager.HasActivePet();
+            }, "< 50 Focus, pet alive (generates 15 Focus)");
+
+            queue->RegisterSpell(SPELL_SERPENT_STING, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_SERPENT_STING, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 20 &&
+                       !target->HasAura(SPELL_SERPENT_STING);
+            }, "20+ Focus, DoT missing (primary DoT)");
+
+            // MEDIUM: Stacking and coordination abilities
+            queue->RegisterSpell(SPELL_MONGOOSE_BITE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_MONGOOSE_BITE, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 30 &&
+                       (this->_mongooseTracker.IsWindowActive() || this->_mongooseTracker.HasCharges());
+            }, "30+ Focus, window active or has charges (stacks to 5)");
+
+            queue->RegisterSpell(SPELL_FLANKING_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_FLANKING_STRIKE, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SPELL_FLANKING_STRIKE) &&
+                       target && this->_resource >= 30 &&
+                       this->_petManager.HasActivePet();
+            }, "Has talent, 30+ Focus, pet alive (pet coordination)");
+
+            queue->RegisterSpell(SPELL_MUZZLE, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_MUZZLE, [this](Player* bot, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            // LOW: Filler abilities
+            queue->RegisterSpell(SPELL_RAPTOR_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_RAPTOR_STRIKE, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 30 &&
+                       this->GetEnemiesInRange(8.0f) < 3;
+            }, "30+ Focus, < 3 enemies (single target filler)");
+
+            queue->RegisterSpell(SPELL_CARVE, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_CARVE, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 35 &&
+                       this->GetEnemiesInRange(8.0f) >= 3;
+            }, "35+ Focus, 3+ enemies (AoE cleave)");
+
+            queue->RegisterSpell(SPELL_BUTCHERY, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_BUTCHERY, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SPELL_BUTCHERY) &&
+                       target && this->_resource >= 30 &&
+                       this->GetEnemiesInRange(8.0f) >= 3;
+            }, "Has talent, 30+ Focus, 3+ enemies (AoE burst)");
+
+            TC_LOG_INFO("module.playerbot", "🗡️ SURVIVAL HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Survival Hunter melee DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Survival Hunter Melee DPS", {
+                // Tier 1: Burst Window (Coordinated Assault)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Use Burst", {
+                        Sequence("Cast Coordinated Assault", {
+                            Condition("Should use CA", [this](Player* bot, Unit* target) {
+                                return !this->_coordinatedAssaultActive &&
+                                       this->ShouldUseCoordinatedAssault(target);
+                            }),
+                            Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_COORDINATED_ASSAULT))
+                                {
+                                    this->CastSpell(bot, SPELL_COORDINATED_ASSAULT);
+                                    this->_coordinatedAssaultActive = true;
+                                    this->_coordinatedAssaultEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Resource Management (Wildfire Bomb, Kill Command, Serpent Sting)
+                Sequence("Resource Management", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Manage Resources", {
+                        // Wildfire Bomb (has charge)
+                        Sequence("Cast Wildfire Bomb", {
+                            Condition("Has bomb charge", [this](Player* bot, Unit* target) {
+                                return this->_bombManager.HasCharge();
+                            }),
+                            Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
+                                uint32 bombSpell = this->_bombManager.GetBombSpell();
+                                this->CastSpell(target, bombSpell);
+                                this->_bombManager.UseCharge();
+                                if (this->_guerillaTacticsActive)
+                                    this->_guerillaTacticsActive = false;
+                                return NodeStatus::SUCCESS;
+                            })
+                        }),
+                        // Kill Command (focus generation)
+                        Sequence("Cast Kill Command", {
+                            Condition("< 50 Focus and pet alive", [this](Player* bot, Unit* target) {
+                                return this->_resource < 50 && this->_petManager.HasActivePet();
+                            }),
+                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
+                                {
+                                    this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
+                                    this->_lastKillCommand = getMSTime();
+                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Serpent Sting (DoT maintenance)
+                        Sequence("Maintain Serpent Sting", {
+                            Condition("DoT missing and 20+ Focus", [this](Player* bot, Unit* target) {
+                                return !target->HasAura(SPELL_SERPENT_STING) && this->_resource >= 20;
+                            }),
+                            Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->_resource >= 20)
+                                {
+                                    this->CastSpell(target, SPELL_SERPENT_STING);
+                                    this->_lastSerpentSting = getMSTime();
+                                    this->ConsumeResource(20);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Melee Abilities (Mongoose Bite, Flanking Strike)
+                Sequence("Melee Abilities", {
+                    Condition("Target exists and 30+ Focus", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_resource >= 30;
+                    }),
+                    Selector("Cast Melee Abilities", {
+                        // Mongoose Bite (stacking)
+                        Sequence("Cast Mongoose Bite", {
+                            Condition("Window active or has charges", [this](Player* bot, Unit* target) {
+                                return this->_mongooseTracker.IsWindowActive() ||
+                                       this->_mongooseTracker.HasCharges();
+                            }),
+                            Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->_resource >= 30)
+                                {
+                                    this->CastSpell(target, SPELL_MONGOOSE_BITE);
+                                    this->_mongooseTracker.OnMongooseBiteCast();
+                                    this->ConsumeResource(30);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Flanking Strike (pet coordination)
+                        Sequence("Cast Flanking Strike", {
+                            Condition("Has talent and pet alive", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(SPELL_FLANKING_STRIKE) &&
+                                       this->_petManager.HasActivePet();
+                            }),
+                            Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_FLANKING_STRIKE))
+                                {
+                                    this->CastSpell(target, SPELL_FLANKING_STRIKE);
+                                    this->ConsumeResource(30);
+                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Filler Rotation (Raptor Strike ST, Carve/Butchery AoE)
+                Sequence("Filler Rotation", {
+                    Condition("Target exists and 30+ Focus", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_resource >= 30;
+                    }),
+                    Selector("Choose Filler", {
+                        // AoE filler (3+ enemies)
+                        Sequence("AoE Filler", {
+                            Condition("3+ enemies", [this](Player* bot, Unit* target) {
+                                return this->GetEnemiesInRange(8.0f) >= 3;
+                            }),
+                            Selector("Cast AoE Ability", {
+                                // Butchery (talent)
+                                Sequence("Cast Butchery", {
+                                    Condition("Has Butchery", [this](Player* bot, Unit* target) {
+                                        return bot && bot->HasSpell(SPELL_BUTCHERY);
+                                    }),
+                                    Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
+                                        if (this->_resource >= 30)
+                                        {
+                                            this->CastSpell(bot, SPELL_BUTCHERY);
+                                            this->ConsumeResource(30);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                }),
+                                // Carve (baseline)
+                                Sequence("Cast Carve", {
+                                    Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                                        return this->_resource >= 35;
+                                    }),
+                                    Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
+                                        if (this->_resource >= 35)
+                                        {
+                                            this->CastSpell(bot, SPELL_CARVE);
+                                            this->ConsumeResource(35);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                })
+                            })
+                        }),
+                        // Single target filler
+                        Sequence("Single Target Filler", {
+                            Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->_resource >= 30)
+                                {
+                                    this->CastSpell(target, SPELL_RAPTOR_STRIKE);
+                                    this->_lastRaptorStrike = getMSTime();
+                                    this->ConsumeResource(30);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 SURVIVAL HUNTER: BehaviorTree initialized with 4-tier melee DPS rotation");
+        }
+    }
 
 private:
     WildfireBombManager _bombManager;

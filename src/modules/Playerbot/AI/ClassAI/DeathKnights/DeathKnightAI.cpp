@@ -244,38 +244,26 @@ private:
 class DeathKnightCombatPositioning
 {
 public:
-    explicit DeathKnightCombatPositioning(Player* bot) : _bot(bot) {}
-
-    Position CalculateOptimalPosition(Unit* target, DeathKnightSpec detectedSpec)
+    explicit DeathKnightCombatPositioning(Player* bot) : _bot(bot) {}    Position CalculateOptimalPosition(Unit* target, DeathKnightSpec detectedSpec)
     {
         if (!target || !_bot)
             return _bot->GetPosition();
 
         Position optimalPos = _bot->GetPosition();
-        float currentDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
-
-        switch (detectedSpec)
+        float currentDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        switch (detectedSpec)
         {
             case DeathKnightSpec::BLOOD:
                 // Tank positioning - in front of target
                 if (currentDistance > 5.0f)
                 {
-                    float angle = target->GetOrientation();
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
+                    float angle = target->GetOrientation();                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;                    optimalPos.m_positionZ = target->GetPositionZ();                }
                 break;
 
             case DeathKnightSpec::FROST:
                 // Melee DPS positioning - behind or to the side
                 if (currentDistance > 5.0f)
                 {
-                    float angle = target->GetOrientation() + M_PI; // Behind target
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
+                    float angle = target->GetOrientation() + M_PI; // Behind target                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 3.0f;                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 3.0f;                    optimalPos.m_positionZ = target->GetPositionZ();                }
                 break;
 
             case DeathKnightSpec::UNHOLY:
@@ -283,19 +271,12 @@ public:
                 if (currentDistance > 5.0f && currentDistance < 30.0f)
                 {
                     // Stay at mid-range for Death Coil
-                    float angle = target->GetRelativeAngle(_bot);
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 10.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 10.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
+                    float angle = target->GetRelativeAngle(_bot);                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 10.0f;                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 10.0f;                    optimalPos.m_positionZ = target->GetPositionZ();                }
                 else if (currentDistance > 30.0f)
                 {
                     // Use Death Grip range
                     float angle = target->GetRelativeAngle(_bot);
-                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 25.0f;
-                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 25.0f;
-                    optimalPos.m_positionZ = target->GetPositionZ();
-                }
+                    optimalPos.m_positionX = target->GetPositionX() + cos(angle) * 25.0f;                    optimalPos.m_positionY = target->GetPositionY() + sin(angle) * 25.0f;                    optimalPos.m_positionZ = target->GetPositionZ();                }
                 break;
         }
 
@@ -344,9 +325,7 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     _combatMetrics = std::make_unique<DeathKnightCombatMetrics>();
     _runeManager = std::make_unique<RuneManager>(bot);
     _diseaseManager = std::make_unique<DiseaseManager>(bot);
-    _positioning = std::make_unique<DeathKnightCombatPositioning>(bot);
-
-    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
+    _positioning = std::make_unique<DeathKnightCombatPositioning>(bot);    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
 }
 
@@ -784,8 +763,7 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
             return _runeManager->HasRunes(0u, 0u, 1u);
         case BLOOD_STRIKE:
         case HEART_STRIKE:
-        case BLOOD_BOIL:
-            return _runeManager->HasRunes(1u, 0u, 0u);
+        case BLOOD_BOIL:            return _runeManager->HasRunes(1u, 0u, 0u);
         case DEATH_STRIKE:
         case OBLITERATE:
             return _runeManager->HasRunes(0u, 1u, 1u);
@@ -796,11 +774,12 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     }
 
     return true;
-}
-
-void DeathKnightAI::ConsumeResource(uint32 spellId)
-{
-    if (!GetBot())
+}void DeathKnightAI::ConsumeResource(uint32 spellId)
+{    if (!GetBot())
+        if (!creature)
+        {
+            return;
+        }
         return;
 
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
@@ -811,8 +790,7 @@ void DeathKnightAI::ConsumeResource(uint32 spellId)
     auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
     for (auto const& cost : powerCosts)
     {
-        if (cost.Power == POWER_RUNIC_POWER)
-        {
+        if (cost.Power == POWER_RUNIC_POWER)        {
             _metrics->totalRunicPowerSpent += cost.Amount;
             _runicPowerSpent += cost.Amount;
         }
@@ -865,8 +843,7 @@ void DeathKnightAI::OnCombatStart(Unit* target)
     }
 
     // Use offensive cooldowns for boss fights
-    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
-    {
+    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())    {
         ActivateBurstCooldowns(target);
 
         // Army of the Dead for major encounters
@@ -878,10 +855,11 @@ void DeathKnightAI::OnCombatStart(Unit* target)
     }
 
     // Use defensive cooldowns if taking magic damage
-    if (target->GetTypeId() == TYPEID_UNIT)
-    {
-        Creature* creature = target->ToCreature();
-        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+    if (target->GetTypeId() == TYPEID_UNIT)    {
+        Creature* creature = target->ToCreature();                 if (!creature)
+                 {
+                     return;
+                 }        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
         {
             if (CanUseAbility(ANTI_MAGIC_SHELL))
             {
@@ -1059,6 +1037,10 @@ bool DeathKnightAI::HandleDefensives()
             TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} activated Icebound Fortitude",
                          GetBot()->GetName());
             actionTaken = true;
+        if (!priorityTarget)
+        {
+            return nullptr;
+        }
         }
     }
 
@@ -1162,6 +1144,10 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
 
     OnTargetChanged(priorityTarget);
     target = priorityTarget;
+                 if (!priorityTarget)
+                 {
+                     return;
+                 }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} switching target to {}",
                  GetBot()->GetName(), priorityTarget->GetName());
@@ -1227,8 +1213,7 @@ bool DeathKnightAI::HandleAoERotation(Unit* target)
         if (CastSpell(BLOOD_BOIL))
         {
             _runeManager->ConsumeRunes(1, 0, 0);
-            RecordAbilityUsage(BLOOD_BOIL);
-            TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} using Blood Boil to spread diseases",
+            RecordAbilityUsage(BLOOD_BOIL);            TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} using Blood Boil to spread diseases",
                          GetBot()->GetName());
             return true;
         }
@@ -1338,8 +1323,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
     }
 
     // Army of the Dead for major fights (all specs)
-    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
-    {
+    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())    {
         if (CanUseAbility(ARMY_OF_THE_DEAD))
         {
             if (CastSpell(ARMY_OF_THE_DEAD))
@@ -1391,10 +1375,11 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
                         RecordAbilityUsage(RUNE_STRIKE);
                         return true;
                     }
+                }                break;            case DeathKnightSpec::UNHOLY:
+                if (!creature)
+                {
+                    return nullptr;
                 }
-                break;
-
-            case DeathKnightSpec::UNHOLY:
                 if (CanUseAbility(DEATH_COIL))
                 {
                     if (CastSpell(target, DEATH_COIL))
@@ -1419,17 +1404,21 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
                          GetBot()->GetName());
             return true;
         }
-    }
-
-    return false;
+    }    return false;
 }
 
 void DeathKnightAI::ExecuteSpecializationRotation(Unit* target)
+if (!currentVictim)
+{
+    return nullptr;
+}
 {
     if (!target || !GetBot())
-        return;
-
-    // Update presence if needed
+        if (!currentVictim)
+        {
+            return nullptr;
+        }
+        return;    // Update presence if needed
     UpdatePresenceIfNeeded();
 
     // Check if we're on global cooldown
@@ -1507,10 +1496,12 @@ bool DeathKnightAI::ShouldUseDeathGrip(Unit* target) const
         return false;
 
     // Check if target is a caster that should be pulled
-    if (target->GetTypeId() == TYPEID_UNIT)
-    {
-        Creature* creature = target->ToCreature();
-        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+    if (target->GetTypeId() == TYPEID_UNIT)    {
+        Creature* creature = target->ToCreature();        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+        if (!creature)
+        {
+            return;
+        }
             return true;
     }
 
@@ -1535,16 +1526,22 @@ bool DeathKnightAI::ShouldUseDarkCommand(Unit* target) const
         return false;
 
     // Check if we need to taunt
-    Unit* currentVictim = target->GetVictim();
-    if (!currentVictim || currentVictim == GetBot())
+    Unit* currentVictim = target->GetVictim();    if (!currentVictim || currentVictim == GetBot())
         return false;
 
     // Taunt if attacking a healer or squishy
     if (currentVictim->GetTypeId() == TYPEID_PLAYER)
+    if (!currentVictim)
+    {
+        return nullptr;
+    }
     {
         Player* player = currentVictim->ToPlayer();
-        if (player && (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_MAGE))
-            return true;
+        if (!currentVictim)
+        {
+            return nullptr;
+        }
+        if (player && (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_MAGE))            return true;
     }
 
     return false;

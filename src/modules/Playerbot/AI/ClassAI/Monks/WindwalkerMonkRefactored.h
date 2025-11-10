@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Windwalker Monk Refactored - Template-Based Implementation
  *
@@ -9,12 +9,19 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -108,8 +115,7 @@ struct EnergyChiResourceWindwalker
     void Initialize(Player* bot) {
         if (bot) {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-            energy = bot->GetPower(POWER_ENERGY);
-        }
+            energy = bot->GetPower(POWER_ENERGY);        }
         chi = 0;
     }
 };
@@ -157,6 +163,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _lastSpellCast;
     uint32 _comboCount;
 };
@@ -217,24 +224,19 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit WindwalkerMonkRefactored(Player* bot)
-        : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
+    explicit WindwalkerMonkRefactored(Player* bot)        : MeleeDpsSpecialization<EnergyChiResourceWindwalker>(bot)
         , MonkSpecialization(bot)
         , _hitComboTracker()
         , _sefTracker()
         , _lastRisingSunKickTime(0)
         , _comboBreaker(false)
-    {
-        // Initialize energy/chi resources
+    {        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "WindwalkerMonkRefactored initialized for {}", bot->GetName());
+        InitializeWindwalkerMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -441,7 +443,28 @@ protected:
         {
             this->CastSpell(STORM_EARTH_AND_FIRE, this->GetBot());
             _sefTracker.Activate();
-            TC_LOG_DEBUG("playerbot", "Windwalker: Storm, Earth, and Fire activated");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {RISING_SUN_KICK, 10000, 1},
+            {FISTS_OF_FURY, 24000, 1},
+            {WHIRLING_DRAGON_PUNCH, 24000, 1},
+            {STRIKE_OF_THE_WINDLORD, 40000, 1},
+            {STORM_EARTH_AND_FIRE, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {INVOKE_XUEN, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {SERENITY, 90000, 1},
+            {TOUCH_OF_DEATH, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {TOUCH_OF_KARMA, 90000, 1},
+            {FORTIFYING_BREW_WIND, 360000, 1},
+            {DIFFUSE_MAGIC_WIND, 90000, 1},
+            {LEG_SWEEP, CooldownPresets::OFFENSIVE_60, 1},
+            {RING_OF_PEACE, CooldownPresets::OFFENSIVE_45, 1},
+            {CHI_WAVE_WIND, CooldownPresets::INTERRUPT, 1},
+            {CHI_BURST_WIND, CooldownPresets::OFFENSIVE_30, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Windwalker: Storm, Earth, and Fire activated");
         }
 
         // Invoke Xuen the White Tiger
@@ -511,23 +534,46 @@ private:
         this->_resource.chi = (this->_resource.chi > amount) ? this->_resource.chi - amount : 0;
     }
 
-    void InitializeCooldowns()
+    void InitializeWindwalkerMechanics()
     {
-        RegisterCooldown(RISING_SUN_KICK, 10000);       // 10 sec CD
-        RegisterCooldown(FISTS_OF_FURY, 24000);         // 24 sec CD
-        RegisterCooldown(WHIRLING_DRAGON_PUNCH, 24000); // 24 sec CD
-        RegisterCooldown(STRIKE_OF_THE_WINDLORD, 40000);// 40 sec CD
-        RegisterCooldown(STORM_EARTH_AND_FIRE, 120000); // 2 min CD
-        RegisterCooldown(INVOKE_XUEN, 120000);          // 2 min CD
-        RegisterCooldown(SERENITY, 90000);              // 1.5 min CD
-        RegisterCooldown(TOUCH_OF_DEATH, 180000);       // 3 min CD
-        RegisterCooldown(TOUCH_OF_KARMA, 90000);        // 1.5 min CD
-        RegisterCooldown(FORTIFYING_BREW_WIND, 360000); // 6 min CD
-        RegisterCooldown(DIFFUSE_MAGIC_WIND, 90000);    // 1.5 min CD
-        RegisterCooldown(LEG_SWEEP, 60000);             // 1 min CD
-        RegisterCooldown(RING_OF_PEACE, 45000);         // 45 sec CD
-        RegisterCooldown(CHI_WAVE_WIND, 15000);         // 15 sec CD
-        RegisterCooldown(CHI_BURST_WIND, 30000);        // 30 sec CD
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue) {
+            queue->RegisterSpell(WW_TOUCH_OF_KARMA, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(WW_TOUCH_OF_KARMA, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(WW_STORM_EARTH_FIRE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(WW_STORM_EARTH_FIRE, [](Player*, Unit* target) { return target != nullptr; }, "Burst CD");
+
+            queue->RegisterSpell(WW_RISING_SUN_KICK, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_RISING_SUN_KICK, [this](Player*, Unit* target) { return target && this->_resource.chi >= 2; }, "2 chi (priority)");
+
+            queue->RegisterSpell(WW_FISTS_OF_FURY, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(WW_FISTS_OF_FURY, [this](Player*, Unit* target) { return target && this->_resource.chi >= 3; }, "3 chi (channel)");
+
+            queue->RegisterSpell(WW_BLACKOUT_KICK, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_BLACKOUT_KICK, [this](Player*, Unit* target) { return target && this->_resource.chi >= 1; }, "1 chi (spender)");
+
+            queue->RegisterSpell(WW_TIGER_PALM, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_TIGER_PALM, [this](Player*, Unit* target) { return target && this->_resource.energy >= 50; }, "50 energy (builder)");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree) {
+            auto root = Selector("Windwalker Monk", {
+                Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("SEF", [this](Player* bot) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(bot, WW_STORM_EARTH_FIRE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Chi Spender", { Condition("2+ chi", [this](Player*) { return this->_resource.chi >= 2; }),
+                    Action("RSK/FoF", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(t, WW_RISING_SUN_KICK); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Builder", { Condition("50+ energy", [this](Player*) { return this->_resource.energy >= 50; }),
+                    Action("Tiger Palm", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(t, WW_TIGER_PALM); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
     }
 
 private:

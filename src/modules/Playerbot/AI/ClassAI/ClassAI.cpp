@@ -56,8 +56,7 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     // Initialize unified combat behavior system
     // This provides advanced combat coordination across all managers
     try {
-        _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);
-        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
+        _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
                      bot ? bot->GetName() : "null");
     }
     catch (const std::exception& e) {
@@ -242,17 +241,14 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 }
 
 // ============================================================================
-// COMBAT STATE MANAGEMENT
-// ============================================================================
+// COMBAT STATE MANAGEMENT// ============================================================================
 
 void ClassAI::OnCombatStart(::Unit* target)
 {
     // Called by BotAI when entering combat
     _inCombat = true;
     _combatTime = 0;
-    _currentCombatTarget = target;
-
-    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
+    _currentCombatTarget = target;    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
 
     // CRITICAL FIX: Initiate auto-attack when entering combat
@@ -269,8 +265,7 @@ void ClassAI::OnCombatStart(::Unit* target)
         // Start auto-attack (true = melee, but works for ranged too)
         GetBot()->Attack(target, true);
 
-        TC_LOG_DEBUG("playerbot.classai", "Bot {} initiated auto-attack on {}",
-                     GetBot()->GetName(), target->GetName());
+        TC_LOG_DEBUG("playerbot.classai", "Bot {} initiated auto-attack on {}",                     GetBot()->GetName(), target->GetName());
     }
 
     // Notify combat behavior system
@@ -292,6 +287,10 @@ void ClassAI::OnCombatEnd()
     _combatTime = 0;
     _currentCombatTarget = nullptr;
 
+    if (!newTarget)
+    {
+        return nullptr;
+    }
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
     // Notify combat behavior system
@@ -307,8 +306,16 @@ void ClassAI::OnCombatEnd()
 }
 
 void ClassAI::OnTargetChanged(::Unit* newTarget)
+if (!newTarget)
+{
+    return;
+}
 {
     _currentCombatTarget = newTarget;
+                 if (!newTarget)
+                 {
+                     return;
+                 }
     _lastTargetSwitch = _combatTime;
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} switching target to {}",
@@ -319,6 +326,10 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
     if (newTarget && GetBot())
     {
         float optimalRange = GetOptimalRange(newTarget);
+                if (!newTarget)
+                {
+                    return;
+                }
 
         // Melee classes (optimal range <= 5 yards) need to face target
         if (optimalRange <= 5.0f)
@@ -328,15 +339,13 @@ void ClassAI::OnTargetChanged(::Unit* newTarget)
                 "Bot {} (melee) now facing target {} (FIX FOR ISSUE #3)",
                 GetBot()->GetName(), newTarget->GetName());
         }
-    }
-}
+    }}
 
 // ============================================================================
 // TARGETING
 // ============================================================================
 
-void ClassAI::UpdateTargeting()
-{
+void ClassAI::UpdateTargeting(){
     // Select best combat target
     ::Unit* bestTarget = GetBestAttackTarget();
 
@@ -344,33 +353,26 @@ void ClassAI::UpdateTargeting()
     {
         OnTargetChanged(bestTarget);
     }
-}
-
-::Unit* ClassAI::GetBestAttackTarget()
+}::Unit* ClassAI::GetBestAttackTarget()
 {
     if (!GetBot())
         return nullptr;
 
     // Priority 1: Current victim
-    if (::Unit* victim = GetBot()->GetVictim())
-        return victim;
+    if (::Unit* victim = GetBot()->GetVictim())        return victim;
 
     // Priority 2: Group leader's target (FIX FOR ISSUE #2)
     // Bots should assist the group leader's target for coordinated combat
     if (Group* group = GetBot()->GetGroup())
     {
-        ObjectGuid leaderGuid = group->GetLeaderGUID();
-
-        // Find leader in group members (avoid ObjectAccessor for thread safety)
+        ObjectGuid leaderGuid = group->GetLeaderGUID();        // Find leader in group members (avoid ObjectAccessor for thread safety)
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
             {
-                if (member->GetGUID() == leaderGuid)
-                {
+                if (member->GetGUID() == leaderGuid)                {
                     // Found leader - get their target
-                    if (::Unit* leaderTarget = member->GetVictim())
-                    {
+                    if (::Unit* leaderTarget = member->GetVictim())                    {
                         if (GetBot()->IsValidAttackTarget(leaderTarget))
                         {
                             TC_LOG_TRACE("module.playerbot.classai",
@@ -394,8 +396,7 @@ void ClassAI::UpdateTargeting()
         // Check if victim matches selected target (no ObjectAccessor needed)
         if (::Unit* victim = GetBot()->GetVictim())
         {
-            if (victim->GetGUID() == targetGuid && GetBot()->IsValidAttackTarget(victim))
-                return victim;
+            if (victim->GetGUID() == targetGuid && GetBot()->IsValidAttackTarget(victim))                return victim;
         }
         // Selected target is different from victim - skip to avoid ObjectAccessor call
         // GetNearestEnemy() will handle finding a new target
@@ -426,9 +427,7 @@ void ClassAI::UpdateTargeting()
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
             return nullptr;
-    }
-
-    // Query nearby creature GUIDs (lock-free!)
+    }    // Query nearby creature GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
 
@@ -476,8 +475,7 @@ void ClassAI::UpdateTargeting()
     Group* group = GetBot()->GetGroup();
     for (GroupReference const& itr : group->GetMembers())
     {
-        if (Player* member = itr.GetSource())
-        {
+        if (Player* member = itr.GetSource())        {
             if (!member->IsAlive() || !member->IsWithinDistInMap(GetBot(), 40.0f))
                 continue;
 
@@ -588,9 +586,7 @@ float ClassAI::GetSpellRange(uint32 spellId)
         return 0.0f;
 
     return spellInfo->GetMaxRange();
-}
-
-uint32 ClassAI::GetSpellCooldown(uint32 spellId)
+}uint32 ClassAI::GetSpellCooldown(uint32 spellId)
 {
     if (!spellId || !GetBot())
         return 0;
@@ -641,9 +637,7 @@ bool ClassAI::RequestBotSpellCast(uint32 spellId, ::Unit* target)
     }
 
     // Queue the new spell
-    _pendingSpellCastRequest = std::make_unique<BotSpellCastRequest>(spellId, target);
-
-    TC_LOG_DEBUG("module.playerbot.classai", "Bot {} queued spell {} targeting {}",
+    _pendingSpellCastRequest = std::make_unique<BotSpellCastRequest>(spellId, target);    TC_LOG_DEBUG("module.playerbot.classai", "Bot {} queued spell {} targeting {}",
                 GetBot()->GetName(), spellId,
                 target ? target->GetName() : "self");
 
@@ -706,12 +700,10 @@ bool ClassAI::CanExecutePendingSpell() const
 
     if (!GetBot())
     {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO BOT");
-        return false;
+        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO BOT");        return false;
     }
 
-    // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots
-    // Unlike players who have packet-driven spell casting, bots queue spells
+    // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots    // Unlike players who have packet-driven spell casting, bots queue spells
     // and then ExecutePendingSpell() calls Spell::prepare() which sets the state.
     // Checking for UNIT_STATE_CASTING creates a catch-22 where the bot waits
     // forever for a spell to finish that never started.
@@ -722,8 +714,7 @@ bool ClassAI::CanExecutePendingSpell() const
     //
     // If no current spell and GCD is ready, execute the pending spell.
 
-    // Check if bot is currently casting a different spell
-    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    // Check if bot is currently casting a different spell    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
                     GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
@@ -749,8 +740,7 @@ bool ClassAI::CanExecutePendingSpell() const
     {
         TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} GCD NOT READY ({} ms remaining) for spell {}",
                     GetBot()->GetName(), gcdRemaining.count(), _pendingSpellCastRequest->spellId);
-        return false;
-    }
+        return false;    }
 
     TC_LOG_ERROR("module.playerbot.classai", "✅ CanExecutePendingSpell: Bot {} READY TO EXECUTE spell {}",
                 GetBot()->GetName(), _pendingSpellCastRequest->spellId);
@@ -767,13 +757,11 @@ void ClassAI::ExecutePendingSpell()
     uint32 spellId = _pendingSpellCastRequest->spellId;
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());
-    if (!spellInfo)
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, bot->GetMap()->GetDifficultyID());    if (!spellInfo)
     {
         TC_LOG_ERROR("module.playerbot.classai", "Bot {} ExecutePendingSpell: Invalid spell ID {}",
                     bot->GetName(), spellId);
-        CancelPendingSpell();
-        return;
+        CancelPendingSpell();        return;
     }
 
     // Validate target is still valid
@@ -806,8 +794,7 @@ void ClassAI::ExecutePendingSpell()
 
     // CRITICAL: Face the target before casting (required for spell validation)
     // Players auto-face when casting, bots need to do it explicitly
-    if (target && target != bot)
-    {
+    if (target && target != bot)    {
         bot->SetFacingToObject(target);
         TC_LOG_ERROR("module.playerbot.classai", "🎯 Bot {} facing target {} before spell cast",
                     bot->GetName(), target->GetName());
@@ -825,9 +812,7 @@ void ClassAI::ExecutePendingSpell()
 
     // Create Spell object (exactly like players do)
     // See Player.cpp:31038 - Spell* spell = new Spell(castingUnit, spellInfo, triggerFlag);
-    Spell* spell = new Spell(bot, spellInfo, triggerFlags);
-
-    // Prepare the spell (this is where proper validation happens at the right time)
+    Spell* spell = new Spell(bot, spellInfo, triggerFlags);    // Prepare the spell (this is where proper validation happens at the right time)
     // See Player.cpp:31048 - spell->prepare(targets);
     // This will handle:
     // - Resource consumption
@@ -835,9 +820,7 @@ void ClassAI::ExecutePendingSpell()
     // - Range/LOS checks
     // - Cast time processing
     // - Combat state management
-    SpellCastResult result = spell->prepare(targets);
-
-    uint32 queuedDuration = getMSTime() - _pendingSpellCastRequest->queuedAtTime;
+    SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = getMSTime() - _pendingSpellCastRequest->queuedAtTime;
 
     if (result == SPELL_CAST_OK)
     {
@@ -847,8 +830,7 @@ void ClassAI::ExecutePendingSpell()
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",
-                    bot->GetName(), spellId,
+        TC_LOG_ERROR("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",                    bot->GetName(), spellId,
                     uint32(result), queuedDuration);
     }
 
@@ -875,6 +857,10 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 {
     if (!target || !spellId || !GetBot())
         return false;
+if (!checkTarget)
+{
+    return nullptr;
+}
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
@@ -884,8 +870,7 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
 
     // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))
-    {
-        TC_LOG_TRACE("playerbot.classai.spell",
+    {        TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} not usable for bot {}",
                      spellId, GetBot()->GetName());
         return false;
@@ -896,8 +881,7 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} target out of range for bot {}",
                      spellId, GetBot()->GetName());
-        return false;
-    }
+        return false;    }
 
     if (!HasLineOfSight(target))
     {
@@ -926,9 +910,7 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     options.skipRangeCheck = false;    // Check spell range (double-check after ClassAI check)
     options.logFailures = true;        // Log validation failures
 
-    auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);
-
-    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
         // Packet successfully queued to main thread
 
@@ -948,11 +930,7 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} validation failed for bot {}: {} ({})",
                      spellId, GetBot()->GetName(),
-                     static_cast<uint8>(result.result),
-                     result.failureReason);
-        return false;
-    }
-}
+                     static_cast<uint8>(result.result),                     result.failureReason);        return false;    }}
 
 bool ClassAI::CastSpell(uint32 spellId)
 {
@@ -968,6 +946,10 @@ bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 {
     ::Unit* checkTarget = target ? target : GetBot();
     if (!checkTarget)
+    {
+        return;
+    }
+    if (!checkTarget)
         return false;
 
     return checkTarget->HasAura(spellId);
@@ -975,12 +957,10 @@ bool ClassAI::HasAura(uint32 spellId, ::Unit* target)
 
 uint32 ClassAI::GetAuraStacks(uint32 spellId, ::Unit* target)
 {
-    ::Unit* checkTarget = target ? target : GetBot();
-    if (!checkTarget)
+    ::Unit* checkTarget = target ? target : GetBot();    if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        return aura->GetStackAmount();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetStackAmount();
 
     return 0;
 }
@@ -991,8 +971,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
     if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        return aura->GetDuration();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetDuration();
 
     return 0;
 }
@@ -1014,8 +993,7 @@ bool ClassAI::IsInMeleeRange(::Unit* target) const
     return GetBot()->IsWithinMeleeRange(target);
 }
 
-bool ClassAI::ShouldMoveToTarget(::Unit* target) const
-{
+bool ClassAI::ShouldMoveToTarget(::Unit* target) const{
     if (!target || !GetBot())
         return false;
 
@@ -1049,10 +1027,7 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetRelativeAngle(target);
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);
-    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);
-    pos.m_positionZ = target->GetPositionZ();
-    pos.SetOrientation(target->GetOrientation());
+    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);    pos.m_positionZ = target->GetPositionZ();    pos.SetOrientation(target->GetOrientation());
 
     return pos;
 }
@@ -1068,16 +1043,14 @@ void ClassAI::RecordPerformanceMetric(std::string const& metric, uint32 value)
                  metric, value, GetBot() ? GetBot()->GetName() : "null");
 }
 
-// ============================================================================
-// COMBAT BEHAVIOR INTEGRATION
+// ============================================================================// COMBAT BEHAVIOR INTEGRATION
 // ============================================================================
 
 bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
 {
     if (!GetBot() || !action.target || action.spellId == 0)
     {
-        TC_LOG_TRACE("playerbot.classai", "ExecuteRecommendedAction: Invalid parameters - bot={}, target={}, spell={}",
-                     GetBot() ? "valid" : "null", action.target ? "valid" : "null", action.spellId);
+        TC_LOG_TRACE("playerbot.classai", "ExecuteRecommendedAction: Invalid parameters - bot={}, target={}, spell={}",                     GetBot() ? "valid" : "null", action.target ? "valid" : "null", action.spellId);
         return false;
     }
 
@@ -1100,8 +1073,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - target out of range",
                      GetBot()->GetName(), action.spellId);
 
-        // For movement-related actions, we might want to move closer
-        if (action.type == CombatActionType::MOVEMENT)
+        // For movement-related actions, we might want to move closer        if (action.type == CombatActionType::MOVEMENT)
         {
             // Movement is handled by BotAI strategies, just log the need if position is valid
             if (action.position.m_positionX != 0.0f || action.position.m_positionY != 0.0f)
@@ -1116,8 +1088,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
 
     // Check line of sight
     if (!HasLineOfSight(action.target))
-    {
-        TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - no line of sight",
+    {        TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - no line of sight",
                      GetBot()->GetName(), action.spellId);
         return false;
     }
@@ -1130,8 +1101,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         {
             // Interrupt requires special handling - face target quickly
             GetBot()->SetFacingToObject(action.target);
-            success = CastSpell(action.target, action.spellId);
-            if (success)
+            success = CastSpell(action.target, action.spellId);            if (success)
             {
                 TC_LOG_INFO("playerbot.classai", "Bot {} successfully interrupted {} with spell {}",
                             GetBot()->GetName(), action.target->GetName(), action.spellId);
@@ -1162,8 +1132,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
             // CC requires careful targeting
             if (action.target != _currentCombatTarget)  // Don't CC our main target
             {
-                success = CastSpell(action.target, action.spellId);
-                if (success)
+                success = CastSpell(action.target, action.spellId);                if (success)
                 {
                     TC_LOG_INFO("playerbot.classai", "Bot {} applied crowd control {} to {}",
                                 GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1175,8 +1144,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::EMERGENCY:
         {
             // Emergency actions are highest priority - try to force cast
-            success = CastSpell(action.target, action.spellId);
-            if (success)
+            success = CastSpell(action.target, action.spellId);            if (success)
             {
                 TC_LOG_WARN("playerbot.classai", "Bot {} executed EMERGENCY action: {} on {}",
                             GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1187,8 +1155,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::COOLDOWN:
         {
             // Major cooldowns
-            success = CastSpell(action.target, action.spellId);
-            if (success)
+            success = CastSpell(action.target, action.spellId);            if (success)
             {
                 TC_LOG_INFO("playerbot.classai", "Bot {} activated cooldown {} on {}",
                             GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1199,8 +1166,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::TARGET_SWITCH:
         {
             // Target switch is handled by OnTargetChanged, just validate
-            if (action.target && action.target != _currentCombatTarget)
-            {
+            if (action.target && action.target != _currentCombatTarget)            {
                 OnTargetChanged(action.target);
                 success = true;
                 TC_LOG_INFO("playerbot.classai", "Bot {} switched target to {}",
@@ -1237,8 +1203,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         default:
         {
             // Normal rotation ability
-            success = CastSpell(action.target, action.spellId);
-            if (success)
+            success = CastSpell(action.target, action.spellId);            if (success)
             {
                 TC_LOG_TRACE("playerbot.classai", "Bot {} cast rotation spell {} on {}",
                              GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1256,8 +1221,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
     {
         RecordPerformanceMetric("recommended_action_fail", 1);
         TC_LOG_TRACE("playerbot.classai", "Bot {} failed to execute {} action: {} on {}",
-                     GetBot()->GetName(), GetActionName(action.type), action.spellId,
-                     action.target->GetName());
+                     GetBot()->GetName(), GetActionName(action.type), action.spellId,                     action.target->GetName());
     }
 
     return success;

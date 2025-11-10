@@ -44,10 +44,65 @@ void GuildIntegration::ProcessGuildInteraction(Player* player)
         return;
 
     Guild* guild = player->GetGuild();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     if (!guild)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return 0;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     uint32 guildId = guild->GetId();
 
     // Initialize tracking data if needed
@@ -62,18 +117,68 @@ void GuildIntegration::ProcessGuildInteraction(Player* player)
     // Handle guild-specific interactions
     AutomateGuildChatParticipation(player);
     AutomateGuildBankInteractions(player);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     ParticipateInGuildActivities(player);
+if (!player)
+{
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return;
+}
 }
 
 void GuildIntegration::HandleGuildChat(Player* player, const GuildChatMessage& message)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     // Store message in chat history
     auto& tracker = _guildTracking[player->GetGuild()->GetId()];
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     tracker.chatHistory.push(message);
 
     // Limit chat history size
@@ -91,12 +196,37 @@ void GuildIntegration::HandleGuildChat(Player* player, const GuildChatMessage& m
 }
 
 void GuildIntegration::ParticipateInGuildActivities(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     GuildProfile profile = GetGuildProfile(playerGuid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 
     // Participate in various guild activities based on profile
     for (GuildActivityType activity : profile.activeActivities)
@@ -133,11 +263,36 @@ void GuildIntegration::ParticipateInGuildActivities(Player* player)
 }
 
 void GuildIntegration::ManageGuildResponsibilities(Player* player)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return nullptr;
+            }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return;
+}
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     GuildProfile profile = GetGuildProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     // Handle role-specific responsibilities
     switch (profile.preferredRole)
@@ -166,11 +321,36 @@ void GuildIntegration::ManageGuildResponsibilities(Player* player)
 }
 
 void GuildIntegration::AutomateGuildChatParticipation(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     GuildProfile profile = GetGuildProfile(playerGuid);
 
     if (!IsAppropriateTimeToChat(player))
@@ -193,6 +373,11 @@ void GuildIntegration::AutomateGuildChatParticipation(Player* player)
         {
             InitiateGuildConversation(player);
         }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
         else if (action <= 60)
         {
             // Share information about something relevant
@@ -212,10 +397,35 @@ void GuildIntegration::RespondToGuildChat(Player* player, const GuildChatMessage
         return;
 
     std::string response = GenerateGuildChatResponse(player, message);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
     if (!response.empty())
     {
         SendGuildChatMessage(player, response);
         UpdateGuildParticipation(player->GetGUID().GetCounter(), GuildActivityType::CHAT_PARTICIPATION);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     }
 }
 
@@ -232,6 +442,21 @@ void GuildIntegration::InitiateGuildConversation(Player* player)
 }
 
 void GuildIntegration::ShareGuildInformation(Player* player, const std::string& topic)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                return nullptr;
+            }
 {
     if (!player)
         return;
@@ -246,6 +471,11 @@ void GuildIntegration::ShareGuildInformation(Player* player, const std::string& 
             "The guild bank has some useful consumables available.",
             "Anyone need help with dungeons or quests?",
             "Remember to contribute to guild achievements when you can."
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
         };
     }
     else if (topic == "tips")
@@ -257,6 +487,11 @@ void GuildIntegration::ShareGuildInformation(Player* player, const std::string& 
             "The guild calendar has upcoming events marked."
         };
     }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return nullptr;
+}
 
     if (!infoMessages.empty())
     {
@@ -269,11 +504,46 @@ void GuildIntegration::ShareGuildInformation(Player* player, const std::string& 
 }
 
 void GuildIntegration::AutomateGuildBankInteractions(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     uint32 currentTime = getMSTime();
     auto& state = _playerStates[playerGuid];
@@ -287,6 +557,16 @@ void GuildIntegration::AutomateGuildBankInteractions(Player* player)
 
     // Decide what to do with guild bank
     GuildProfile profile = GetGuildProfile(playerGuid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
 
     if (rand() % 100 < 30) // 30% chance to deposit
     {
@@ -302,6 +582,16 @@ void GuildIntegration::AutomateGuildBankInteractions(Player* player)
 }
 
 void GuildIntegration::DepositItemsToGuildBank(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -313,6 +603,26 @@ void GuildIntegration::DepositItemsToGuildBank(Player* player)
     for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
     {
         if (Bag* pBag = player->GetBagByPos(bag))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                            return nullptr;
+                        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
         {
             for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
             {
@@ -331,8 +641,28 @@ void GuildIntegration::DepositItemsToGuildBank(Player* player)
     for (Item* item : itemsToDeposit)
     {
         // In a real implementation, this would interact with the guild bank system
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
         TC_LOG_DEBUG("playerbot.guild", "Player {} depositing item {} to guild bank",
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return;
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                        return;
+                    }
+                    }
                     player->GetName(), item->GetEntry());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return;
+}
 
         if (itemsToDeposit.size() >= 3) // Limit deposits per session
             break;
@@ -340,6 +670,31 @@ void GuildIntegration::DepositItemsToGuildBank(Player* player)
 }
 
 void GuildIntegration::WithdrawNeededItems(Player* player)
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                                return;
+                            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                                return nullptr;
+                            }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                            return nullptr;
+                        }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                            return;
+                        }
 {
     if (!player || !player->GetGuild())
         return;
@@ -354,6 +709,11 @@ void GuildIntegration::WithdrawNeededItems(Player* player)
     for (uint32 itemId : neededItems)
     {
         if (ShouldWithdrawItem(player, itemId))
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
         {
             // In a real implementation, this would interact with the guild bank system
             TC_LOG_DEBUG("playerbot.guild", "Player {} withdrawing item {} from guild bank",
@@ -363,6 +723,16 @@ void GuildIntegration::WithdrawNeededItems(Player* player)
 }
 
 void GuildIntegration::OrganizeGuildBank(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -375,6 +745,11 @@ void GuildIntegration::OrganizeGuildBank(Player* player)
 }
 
 void GuildIntegration::ManageGuildBankPermissions(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -386,6 +761,26 @@ void GuildIntegration::ManageGuildBankPermissions(Player* player)
 }
 
 void GuildIntegration::CoordinateGuildEvents(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return nullptr;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -398,6 +793,16 @@ void GuildIntegration::CoordinateGuildEvents(Player* player)
 }
 
 void GuildIntegration::ScheduleGuildActivities(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return nullptr;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -410,18 +815,53 @@ void GuildIntegration::ScheduleGuildActivities(Player* player)
 }
 
 void GuildIntegration::ManageGuildCalendar(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return nullptr;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
 
     // Manage guild calendar events
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     // Create new events
     // Update existing events
     // Send invitations
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
     // Track attendance
 }
 
 void GuildIntegration::OrganizeGuildRuns(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -436,6 +876,11 @@ void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& pr
 {
     std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     _playerProfiles[playerGuid] = profile;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return;
+}
 }
 
 GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
@@ -443,6 +888,11 @@ GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGu
     std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerProfiles.find(playerGuid);
     if (it != _playerProfiles.end())
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return 0;
+    }
         return it->second;
 
     return GuildProfile(); // Return default profile
@@ -452,6 +902,11 @@ GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uin
 {
     std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerParticipation.find(playerGuid);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     if (it != _playerParticipation.end())
         return it->second;
 
@@ -463,6 +918,16 @@ void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivity
     std::lock_guard<std::recursive_mutex> lock(_guildMutex);
 
     auto& participation = _playerParticipation[playerGuid];
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+            return nullptr;
+        }
     participation.activityCounts[activityType]++;
     participation.lastActivity = getMSTime();
 
@@ -487,6 +952,16 @@ void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivity
 }
 
 void GuildIntegration::AssistWithRecruitment(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -499,6 +974,11 @@ void GuildIntegration::AssistWithRecruitment(Player* player)
 }
 
 void GuildIntegration::EvaluateRecruitmentCandidates(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -510,6 +990,11 @@ void GuildIntegration::EvaluateRecruitmentCandidates(Player* player)
 }
 
 void GuildIntegration::WelcomeNewGuildMembers(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -522,6 +1007,16 @@ void GuildIntegration::WelcomeNewGuildMembers(Player* player)
 }
 
 void GuildIntegration::MentorJuniorMembers(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -534,6 +1029,16 @@ void GuildIntegration::MentorJuniorMembers(Player* player)
 }
 
 void GuildIntegration::SupportGuildLeadership(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -543,9 +1048,24 @@ void GuildIntegration::SupportGuildLeadership(Player* player)
     // Help enforce guild rules
     // Coordinate with other officers
     // Handle administrative tasks
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return;
+}
 }
 
 void GuildIntegration::HandleOfficerDuties(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -558,6 +1078,16 @@ void GuildIntegration::HandleOfficerDuties(Player* player)
 }
 
 void GuildIntegration::AssistWithGuildManagement(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -570,6 +1100,16 @@ void GuildIntegration::AssistWithGuildManagement(Player* player)
 }
 
 void GuildIntegration::ProvideMemberFeedback(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -582,12 +1122,27 @@ void GuildIntegration::ProvideMemberFeedback(Player* player)
 }
 
 std::string GuildIntegration::GenerateGuildChatResponse(Player* player, const GuildChatMessage& message)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return nullptr;
+}
 {
     if (!player)
         return "";
 
     // Analyze message content and generate appropriate response
     float relevance = CalculateMessageRelevance(player, message);
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return "";
+    }
 
     if (relevance < 0.3f) // Not relevant enough to respond
         return "";
@@ -610,6 +1165,16 @@ std::string GuildIntegration::GenerateConversationStarter(Player* player)
         return "";
 
     GuildProfile profile = GetGuildProfile(player->GetGUID().GetCounter());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     // Select conversation starter based on profile and current context
     std::vector<std::string> starters;
@@ -671,10 +1236,30 @@ bool GuildIntegration::ShouldRespondToMessage(Player* player, const GuildChatMes
 
     // Don't respond to own messages
     if (message.senderId == player->GetGUID().GetCounter())
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
         return false;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     GuildProfile profile = GetGuildProfile(playerGuid);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return nullptr;
+}
 
     // Check if message requires response
     if (message.requiresResponse)
@@ -682,6 +1267,21 @@ bool GuildIntegration::ShouldRespondToMessage(Player* player, const GuildChatMes
 
     // Calculate relevance and decide based on chat style
     float relevance = CalculateMessageRelevance(player, message);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return nullptr;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+                return nullptr;
+            }
     float threshold = 0.7f;
 
     switch (profile.chatStyle)
@@ -719,6 +1319,16 @@ void GuildIntegration::LearnFromGuildConversations(Player* player)
 }
 
 void GuildIntegration::ContributeToGuildAchievements(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -741,6 +1351,16 @@ void GuildIntegration::CoordinateAchievementEfforts(Guild* guild)
 }
 
 void GuildIntegration::TrackAchievementProgress(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -752,6 +1372,11 @@ void GuildIntegration::TrackAchievementProgress(Player* player)
 }
 
 void GuildIntegration::CelebrateGuildAchievements(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
 {
     if (!player || !player->GetGuild())
         return;
@@ -767,6 +1392,11 @@ GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 pl
     std::lock_guard<std::recursive_mutex> lock(_guildMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
         return it->second;
 
     GuildMetrics metrics;
@@ -845,11 +1475,26 @@ void GuildIntegration::LoadGuildSpecificData(uint32 guildId)
 {
     // Load guild-specific configuration and data
     // Custom chat templates
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
     // Guild-specific rules and preferences
     // Member interaction history
 }
 
 bool GuildIntegration::IsAppropriateTimeToChat(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return;
+}
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
 {
     if (!player)
         return false;
@@ -859,6 +1504,11 @@ bool GuildIntegration::IsAppropriateTimeToChat(Player* player)
 
     uint32 currentTime = getMSTime();
     auto& chatIntel = _chatIntelligence[player->GetGUID().GetCounter()];
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
 
     // Don't chat too frequently
     if (currentTime - chatIntel.lastResponseTime < 30000) // 30 seconds cooldown
@@ -866,6 +1516,11 @@ bool GuildIntegration::IsAppropriateTimeToChat(Player* player)
 
     // Check if guild is active
     Guild* guild = player->GetGuild();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return;
+    }
     if (!guild)
         return false;
 
@@ -904,6 +1559,11 @@ std::string GuildIntegration::PersonalizeResponse(Player* player, const std::str
 
     // Add player-specific touches based on guild profile
     GuildProfile profile = GetGuildProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     // Modify tone based on chat style
     switch (profile.chatStyle)
@@ -933,6 +1593,11 @@ float GuildIntegration::CalculateMessageRelevance(Player* player, const GuildCha
     std::vector<std::string> keywords = ExtractKeywords(message.content);
 
     GuildProfile profile = GetGuildProfile(player->GetGUID().GetCounter());
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
 
     for (const std::string& keyword : keywords)
     {
@@ -969,6 +1634,11 @@ float GuildIntegration::CalculateMessageRelevance(Player* player, const GuildCha
 
     // Check if message is directed at the bot
     if (message.content.find(player->GetName()) != std::string::npos)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
     {
         relevance += 0.5f;
     }
@@ -1034,6 +1704,16 @@ bool GuildIntegration::ShouldWithdrawItem(Player* player, uint32 itemId)
 }
 
 void GuildIntegration::SendGuildChatMessage(Player* player, const std::string& message)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return;
+    }
 {
     if (!player || !player->GetGuild() || message.empty())
         return;
@@ -1043,6 +1723,11 @@ void GuildIntegration::SendGuildChatMessage(Player* player, const std::string& m
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
     UpdateGuildMetrics(playerGuid, GuildActivityType::CHAT_PARTICIPATION, true);
 }
 

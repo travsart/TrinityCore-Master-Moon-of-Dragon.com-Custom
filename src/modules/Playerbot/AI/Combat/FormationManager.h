@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <unordered_map>
@@ -349,7 +350,7 @@ private:
     mutable FormationMetrics _metrics;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr uint32 DEFAULT_UPDATE_INTERVAL = 250;      // 250ms

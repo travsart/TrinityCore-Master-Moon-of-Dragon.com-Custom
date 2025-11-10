@@ -10,8 +10,10 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
+#include "Core/DI/Interfaces/IBotSpawnEventBus.h"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -125,7 +127,7 @@ struct PopulationChangedEvent : public BotSpawnEvent
  * - Automatic event deduplication
  * - Memory-efficient event storage
  */
-class TC_GAME_API BotSpawnEventBus
+class TC_GAME_API BotSpawnEventBus final : public IBotSpawnEventBus
 {
 public:
     using EventHandler = std::function<void(std::shared_ptr<BotSpawnEvent>)>;
@@ -137,30 +139,30 @@ public:
     static BotSpawnEventBus* instance();
 
     // Lifecycle
-    bool Initialize();
-    void Shutdown();
-    void Update(uint32 diff);
+    bool Initialize() override;
+    void Shutdown() override;
+    void Update(uint32 diff) override;
 
     // === EVENT PUBLISHING ===
-    void PublishEvent(std::shared_ptr<BotSpawnEvent> event);
+    void PublishEvent(std::shared_ptr<BotSpawnEvent> event) override;
 
     // Convenience methods for common events
-    void PublishSpawnRequest(SpawnRequest const& request, std::function<void(bool, ObjectGuid)> callback);
-    void PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request);
-    void PublishSessionCreated(std::shared_ptr<BotSession> session, SpawnRequest const& request);
-    void PublishSpawnCompleted(ObjectGuid botGuid, bool success, std::string const& details = "");
-    void PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount);
+    void PublishSpawnRequest(SpawnRequest const& request, std::function<void(bool, ObjectGuid)> callback) override;
+    void PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request) override;
+    void PublishSessionCreated(std::shared_ptr<BotSession> session, SpawnRequest const& request) override;
+    void PublishSpawnCompleted(ObjectGuid botGuid, bool success, std::string const& details = "") override;
+    void PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount) override;
 
     // === EVENT SUBSCRIPTION ===
     using HandlerId = uint64;
 
-    HandlerId Subscribe(BotSpawnEventType eventType, EventHandler handler);
-    HandlerId SubscribeToAll(EventHandler handler);
-    void Unsubscribe(HandlerId handlerId);
+    HandlerId Subscribe(BotSpawnEventType eventType, EventHandler handler) override;
+    HandlerId SubscribeToAll(EventHandler handler) override;
+    void Unsubscribe(HandlerId handlerId) override;
 
     // === EVENT PROCESSING ===
-    void ProcessEvents();
-    void ProcessEventsOfType(BotSpawnEventType eventType);
+    void ProcessEvents() override;
+    void ProcessEventsOfType(BotSpawnEventType eventType) override;
 
     // === PERFORMANCE AND MONITORING ===
     struct EventStats
@@ -182,16 +184,16 @@ public:
         }
     };
 
-    EventStats const& GetStats() const { return _stats; }
-    void ResetStats();
+    EventStats const& GetStats() const override { return _stats; }
+    void ResetStats() override;
 
     // === CONFIGURATION ===
-    void SetMaxQueueSize(uint32 maxSize) { _maxQueueSize = maxSize; }
-    void SetBatchSize(uint32 batchSize) { _batchSize = batchSize; }
-    void SetProcessingEnabled(bool enabled) { _processingEnabled = enabled; }
+    void SetMaxQueueSize(uint32 maxSize) override { _maxQueueSize = maxSize; }
+    void SetBatchSize(uint32 batchSize) override { _batchSize = batchSize; }
+    void SetProcessingEnabled(bool enabled) override { _processingEnabled = enabled; }
 
-    uint32 GetQueuedEventCount() const { return _stats.queuedEvents.load(); }
-    bool IsHealthy() const;
+    uint32 GetQueuedEventCount() const override { return _stats.queuedEvents.load(); }
+    bool IsHealthy() const override;
 
 private:
     // Event queue management
@@ -203,7 +205,7 @@ private:
     };
 
     std::queue<QueuedEvent> _eventQueue;
-    mutable std::recursive_mutex _queueMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _queueMutex;
 
     // Event handlers
     struct EventSubscription
@@ -215,7 +217,7 @@ private:
     };
 
     std::vector<EventSubscription> _subscriptions;
-    mutable std::recursive_mutex _subscriptionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _subscriptionMutex;
     std::atomic<HandlerId> _nextHandlerId{1};
 
     // Event processing
@@ -244,7 +246,7 @@ private:
 
     // Singleton
     inline static std::unique_ptr<BotSpawnEventBus> _instance;
-    inline static std::recursive_mutex _instanceMutex;
+    inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable
     BotSpawnEventBus(BotSpawnEventBus const&) = delete;

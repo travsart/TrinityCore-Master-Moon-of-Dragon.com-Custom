@@ -58,13 +58,24 @@ enum PlayerbotDatabaseStatements : uint32
     PBDB_UPD_ZONE_SETTINGS,             // UPDATE playerbot_zone_populations SET spawn_weight = ?, population_multiplier = ? WHERE zone_id = ? AND map_id = ?
 
     // Lifecycle Events (PBDB_EVENT_*)
-    PBDB_INS_LIFECYCLE_EVENT,           // INSERT INTO playerbot_lifecycle_events (event_category, event_type, severity, ...) VALUES (?, ?, ?, ...)
-    PBDB_SEL_RECENT_EVENTS,             // SELECT * FROM playerbot_lifecycle_events WHERE event_timestamp >= ? ORDER BY event_timestamp DESC LIMIT ?
-    PBDB_SEL_EVENTS_BY_CATEGORY,        // SELECT * FROM playerbot_lifecycle_events WHERE event_category = ? ORDER BY event_timestamp DESC LIMIT ?
-    PBDB_SEL_EVENTS_BY_SEVERITY,        // SELECT * FROM playerbot_lifecycle_events WHERE severity IN (?, ?) ORDER BY event_timestamp DESC LIMIT ?
-    PBDB_SEL_EVENTS_BY_BOT,             // SELECT * FROM playerbot_lifecycle_events WHERE bot_guid = ? ORDER BY event_timestamp DESC LIMIT ?
-    PBDB_SEL_EVENTS_BY_CORRELATION,     // SELECT * FROM playerbot_lifecycle_events WHERE correlation_id = ? ORDER BY event_timestamp
-    PBDB_DEL_OLD_EVENTS,                // DELETE FROM playerbot_lifecycle_events WHERE event_timestamp < ? AND severity NOT IN ('ERROR', 'CRITICAL')
+    PBDB_INS_LIFECYCLE_EVENT,           // INSERT INTO bot_lifecycle_events (event_category, event_type, severity, bot_guid, account_id, zone_id, message, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    PBDB_SEL_RECENT_EVENTS,             // SELECT * FROM bot_lifecycle_events WHERE timestamp >= ? ORDER BY timestamp DESC LIMIT ?
+    PBDB_SEL_EVENTS_BY_CATEGORY,        // SELECT * FROM bot_lifecycle_events WHERE event_category = ? ORDER BY timestamp DESC LIMIT ?
+    PBDB_SEL_EVENTS_BY_SEVERITY,        // SELECT * FROM bot_lifecycle_events WHERE severity IN (?, ?) ORDER BY timestamp DESC LIMIT ?
+    PBDB_SEL_EVENTS_BY_BOT,             // SELECT * FROM bot_lifecycle_events WHERE bot_guid = ? ORDER BY timestamp DESC LIMIT ?
+    PBDB_SEL_EVENTS_BY_CORRELATION,     // SELECT * FROM bot_lifecycle_events WHERE correlation_id = ? ORDER BY timestamp
+    PBDB_DEL_OLD_EVENTS,                // DELETE FROM bot_lifecycle_events WHERE timestamp < ? AND severity NOT IN ('ERROR', 'CRITICAL')
+
+    // Bot Account Metadata (PBDB_ACCOUNT_*)
+    PBDB_SEL_ACCOUNT_METADATA,          // SELECT * FROM bot_account_metadata WHERE account_id = ?
+    PBDB_INS_ACCOUNT_METADATA,          // INSERT INTO bot_account_metadata (account_id, bnet_account_id, email, character_count, expansion, locale, last_ip, join_date, total_time_played, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    PBDB_UPD_ACCOUNT_METADATA,          // UPDATE bot_account_metadata SET email = ?, character_count = ?, expansion = ?, locale = ?, last_ip = ?, last_login = NOW(), total_time_played = ?, notes = ? WHERE account_id = ?
+    PBDB_DEL_ACCOUNT_METADATA,          // DELETE FROM bot_account_metadata WHERE account_id = ?
+
+    // Zone Population Management (PBDB_ZONE_POP_*)
+    PBDB_SEL_ZONE_POPULATION_CURRENT,   // SELECT * FROM bot_zone_population WHERE zone_id = ?
+    PBDB_UPD_ZONE_POPULATION_STATS,     // UPDATE bot_zone_population SET bot_count = ?, player_count = ?, total_count = ?, density_score = ? WHERE zone_id = ?
+    PBDB_INS_ZONE_POPULATION_ENTRY,     // INSERT INTO bot_zone_population (zone_id, bot_count, player_count, total_count, max_capacity, density_score) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE bot_count = VALUES(bot_count), player_count = VALUES(player_count), total_count = VALUES(total_count), density_score = VALUES(density_score)
 
     // Statistics and Monitoring (PBDB_STATS_*)
     PBDB_SEL_ACTIVE_BOT_COUNT,          // SELECT COUNT(*) FROM playerbot_schedules WHERE is_active = 1

@@ -206,43 +206,84 @@ char const* const PlayerbotDB::statements[MAX_PLAYERBOTDATABASE_STATEMENTS] =
 
     // Lifecycle Events (PBDB_EVENT_*)
     /* PBDB_INS_LIFECYCLE_EVENT */
-    "INSERT INTO playerbot_lifecycle_events "
-    "(event_category, event_type, severity, component, bot_guid, account_id, "
-    "message, details, execution_time_ms, memory_usage_mb, active_bots_count, correlation_id) "
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO bot_lifecycle_events "
+    "(event_category, event_type, severity, bot_guid, account_id, zone_id, message, metadata) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 
     /* PBDB_SEL_RECENT_EVENTS */
-    "SELECT event_id, event_timestamp, event_category, event_type, severity, "
-    "component, bot_guid, message, execution_time_ms "
-    "FROM playerbot_lifecycle_events "
-    "WHERE event_timestamp >= ? ORDER BY event_timestamp DESC LIMIT ?",
+    "SELECT event_id, timestamp, event_category, event_type, severity, "
+    "bot_guid, account_id, zone_id, message, metadata "
+    "FROM bot_lifecycle_events "
+    "WHERE timestamp >= ? ORDER BY timestamp DESC LIMIT ?",
 
     /* PBDB_SEL_EVENTS_BY_CATEGORY */
-    "SELECT event_id, event_timestamp, event_type, severity, component, message "
-    "FROM playerbot_lifecycle_events "
-    "WHERE event_category = ? ORDER BY event_timestamp DESC LIMIT ?",
+    "SELECT event_id, timestamp, event_type, severity, bot_guid, message "
+    "FROM bot_lifecycle_events "
+    "WHERE event_category = ? ORDER BY timestamp DESC LIMIT ?",
 
     /* PBDB_SEL_EVENTS_BY_SEVERITY */
-    "SELECT event_id, event_timestamp, event_category, event_type, component, "
-    "bot_guid, message, details "
-    "FROM playerbot_lifecycle_events "
-    "WHERE severity IN (?, ?) ORDER BY event_timestamp DESC LIMIT ?",
+    "SELECT event_id, timestamp, event_category, event_type, "
+    "bot_guid, account_id, zone_id, message, metadata "
+    "FROM bot_lifecycle_events "
+    "WHERE severity IN (?, ?) ORDER BY timestamp DESC LIMIT ?",
 
     /* PBDB_SEL_EVENTS_BY_BOT */
-    "SELECT event_id, event_timestamp, event_category, event_type, severity, "
-    "component, message, execution_time_ms "
-    "FROM playerbot_lifecycle_events "
-    "WHERE bot_guid = ? ORDER BY event_timestamp DESC LIMIT ?",
+    "SELECT event_id, timestamp, event_category, event_type, severity, "
+    "zone_id, message, metadata "
+    "FROM bot_lifecycle_events "
+    "WHERE bot_guid = ? ORDER BY timestamp DESC LIMIT ?",
 
     /* PBDB_SEL_EVENTS_BY_CORRELATION */
-    "SELECT event_id, event_timestamp, event_category, event_type, severity, "
-    "component, bot_guid, message "
-    "FROM playerbot_lifecycle_events "
-    "WHERE correlation_id = ? ORDER BY event_timestamp",
+    "SELECT event_id, timestamp, event_category, event_type, severity, "
+    "bot_guid, account_id, message "
+    "FROM bot_lifecycle_events "
+    "WHERE correlation_id = ? ORDER BY timestamp",
 
     /* PBDB_DEL_OLD_EVENTS */
-    "DELETE FROM playerbot_lifecycle_events "
-    "WHERE event_timestamp < ? AND severity NOT IN ('ERROR', 'CRITICAL')",
+    "DELETE FROM bot_lifecycle_events "
+    "WHERE timestamp < ? AND severity NOT IN ('ERROR', 'CRITICAL')",
+
+    // Bot Account Metadata (PBDB_ACCOUNT_*)
+    /* PBDB_SEL_ACCOUNT_METADATA */
+    "SELECT account_id, bnet_account_id, email, character_count, expansion, locale, "
+    "last_ip, join_date, last_login, total_time_played, notes, created_at, updated_at "
+    "FROM bot_account_metadata WHERE account_id = ?",
+
+    /* PBDB_INS_ACCOUNT_METADATA */
+    "INSERT INTO bot_account_metadata "
+    "(account_id, bnet_account_id, email, character_count, expansion, locale, "
+    "last_ip, join_date, total_time_played, notes) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+
+    /* PBDB_UPD_ACCOUNT_METADATA */
+    "UPDATE bot_account_metadata SET "
+    "email = ?, character_count = ?, expansion = ?, locale = ?, last_ip = ?, "
+    "last_login = NOW(), total_time_played = ?, notes = ? "
+    "WHERE account_id = ?",
+
+    /* PBDB_DEL_ACCOUNT_METADATA */
+    "DELETE FROM bot_account_metadata WHERE account_id = ?",
+
+    // Zone Population Management (PBDB_ZONE_POP_*)
+    /* PBDB_SEL_ZONE_POPULATION_CURRENT */
+    "SELECT zone_id, bot_count, player_count, total_count, max_capacity, "
+    "density_score, last_updated "
+    "FROM bot_zone_population WHERE zone_id = ?",
+
+    /* PBDB_UPD_ZONE_POPULATION_STATS */
+    "UPDATE bot_zone_population SET "
+    "bot_count = ?, player_count = ?, total_count = ?, density_score = ?, "
+    "last_updated = CURRENT_TIMESTAMP "
+    "WHERE zone_id = ?",
+
+    /* PBDB_INS_ZONE_POPULATION_ENTRY */
+    "INSERT INTO bot_zone_population "
+    "(zone_id, bot_count, player_count, total_count, max_capacity, density_score) "
+    "VALUES (?, ?, ?, ?, ?, ?) "
+    "ON DUPLICATE KEY UPDATE "
+    "bot_count = VALUES(bot_count), player_count = VALUES(player_count), "
+    "total_count = VALUES(total_count), density_score = VALUES(density_score), "
+    "last_updated = CURRENT_TIMESTAMP",
 
     // Statistics and Monitoring (PBDB_STATS_*)
     /* PBDB_SEL_ACTIVE_BOT_COUNT */

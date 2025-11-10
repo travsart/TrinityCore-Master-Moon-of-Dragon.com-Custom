@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <unordered_map>
@@ -424,10 +425,10 @@ private:
 
     // Logging and debugging
     std::vector<std::string> _testLog;
-    mutable std::recursive_mutex _logMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _logMutex;
 
     // Test result storage
-    mutable std::recursive_mutex _resultMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _resultMutex;
     std::unordered_map<std::string, std::vector<TestResult>> _scenarioHistory;
 
     // Constants

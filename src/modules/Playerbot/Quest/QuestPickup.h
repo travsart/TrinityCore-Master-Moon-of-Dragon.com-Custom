@@ -10,12 +10,14 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "SharedDefines.h"
 #include "Player.h"
 #include "QuestDef.h"
 #include "Creature.h"
 #include "GameObject.h"
 #include "Position.h"
+#include "../Core/DI/Interfaces/IQuestPickup.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -144,51 +146,51 @@ struct QuestPickupFilter
         , requireQuestText(false) {}
 };
 
-class TC_GAME_API QuestPickup
+class TC_GAME_API QuestPickup final : public IQuestPickup
 {
 public:
     static QuestPickup* instance();
 
     // Core quest pickup functionality
-    bool PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid = 0);
-    bool PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId = 0);
-    void PickupAvailableQuests(Player* bot);
-    void PickupQuestsInArea(Player* bot, float radius = 50.0f);
+    bool PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid = 0) override;
+    bool PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId = 0) override;
+    void PickupAvailableQuests(Player* bot) override;
+    void PickupQuestsInArea(Player* bot, float radius = 50.0f) override;
 
     // Quest discovery and scanning
-    std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f);
-    std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f);
-    std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot);
+    std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) override;
+    std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) override;
+    std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) override;
     bool HasAvailableQuests(uint32 questGiverGuid, Player* bot);
 
     // Quest eligibility and validation
-    QuestEligibility CheckQuestEligibility(uint32 questId, Player* bot);
-    bool CanAcceptQuest(uint32 questId, Player* bot);
-    bool MeetsQuestRequirements(uint32 questId, Player* bot);
+    QuestEligibility CheckQuestEligibility(uint32 questId, Player* bot) override;
+    bool CanAcceptQuest(uint32 questId, Player* bot) override;
+    bool MeetsQuestRequirements(uint32 questId, Player* bot) override;
     std::vector<std::string> GetEligibilityIssues(uint32 questId, Player* bot);
 
     // Quest filtering and prioritization
-    std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter);
-    std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy);
+    std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) override;
+    std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) override;
     uint32 GetNextQuestToPick(Player* bot);
-    bool ShouldAcceptQuest(uint32 questId, Player* bot);
+    bool ShouldAcceptQuest(uint32 questId, Player* bot) override;
 
     // Quest giver interaction
     bool MoveToQuestGiver(Player* bot, uint32 questGiverGuid);
-    bool InteractWithQuestGiver(Player* bot, uint32 questGiverGuid);
+    bool InteractWithQuestGiver(Player* bot, uint32 questGiverGuid) override;
     bool IsInRangeOfQuestGiver(Player* bot, uint32 questGiverGuid);
-    Position GetQuestGiverLocation(uint32 questGiverGuid);
+    Position GetQuestGiverLocation(uint32 questGiverGuid) override;
 
     // Group quest coordination
-    void CoordinateGroupQuestPickup(Group* group, uint32 questId);
-    bool ShareQuestPickup(Group* group, uint32 questId, Player* initiator);
+    void CoordinateGroupQuestPickup(Group* group, uint32 questId) override;
+    bool ShareQuestPickup(Group* group, uint32 questId, Player* initiator) override;
     void SynchronizeGroupQuestProgress(Group* group);
     std::vector<uint32> GetGroupCompatibleQuests(Group* group);
 
     // Automated quest pickup strategies
-    void ExecuteStrategy(Player* bot, QuestAcceptanceStrategy strategy);
-    void ProcessQuestPickupQueue(Player* bot);
-    void ScheduleQuestPickup(const QuestPickupRequest& request);
+    void ExecuteStrategy(Player* bot, QuestAcceptanceStrategy strategy) override;
+    void ProcessQuestPickupQueue(Player* bot) override;
+    void ScheduleQuestPickup(const QuestPickupRequest& request) override;
     void CancelQuestPickup(uint32 questId, uint32 botGuid);
 
     // Quest chain management
@@ -279,26 +281,26 @@ public:
         }
     };
 
-    QuestPickupMetrics GetBotPickupMetrics(uint32 botGuid);
-    QuestPickupMetrics GetGlobalPickupMetrics();
+    QuestPickupMetrics GetBotPickupMetrics(uint32 botGuid) override;
+    QuestPickupMetrics GetGlobalPickupMetrics() override;
 
     // Configuration and settings
-    void SetQuestAcceptanceStrategy(uint32 botGuid, QuestAcceptanceStrategy strategy);
-    QuestAcceptanceStrategy GetQuestAcceptanceStrategy(uint32 botGuid);
-    void SetQuestPickupFilter(uint32 botGuid, const QuestPickupFilter& filter);
+    void SetQuestAcceptanceStrategy(uint32 botGuid, QuestAcceptanceStrategy strategy) override;
+    QuestAcceptanceStrategy GetQuestAcceptanceStrategy(uint32 botGuid) override;
+    void SetQuestPickupFilter(uint32 botGuid, const QuestPickupFilter& filter) override;
     QuestPickupFilter GetQuestPickupFilter(uint32 botGuid);
     void EnableAutoQuestPickup(uint32 botGuid, bool enable);
 
     // Quest database integration
-    void LoadQuestGiverData();
+    void LoadQuestGiverData() override;
     void UpdateQuestGiverAvailability();
     void CacheQuestInformation();
     void RefreshQuestData();
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void ProcessPickupQueue();
-    void CleanupExpiredRequests();
+    void Update(uint32 diff) override;
+    void ProcessPickupQueue() override;
+    void CleanupExpiredRequests() override;
     void ValidateQuestStates();
 
     // Performance optimization
@@ -330,13 +332,13 @@ private:
     std::unordered_map<uint32, QuestAcceptanceStrategy> _botStrategies;
     std::unordered_map<uint32, QuestPickupFilter> _botFilters;
     std::unordered_map<uint32, QuestPickupMetrics> _botMetrics;
-    mutable std::recursive_mutex _pickupMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _pickupMutex;
 
     // Quest giver database
     std::unordered_map<uint32, QuestGiverInfo> _questGivers; // giverGuid -> info
     std::unordered_map<uint32, std::vector<uint32>> _questToGivers; // questId -> giverGuids
     std::unordered_map<uint32, std::vector<uint32>> _zoneQuestGivers; // zoneId -> giverGuids
-    mutable std::recursive_mutex _giverMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _giverMutex;
 
     // Quest chain data
     std::unordered_map<uint32, std::vector<uint32>> _questChains; // chainId -> questIds

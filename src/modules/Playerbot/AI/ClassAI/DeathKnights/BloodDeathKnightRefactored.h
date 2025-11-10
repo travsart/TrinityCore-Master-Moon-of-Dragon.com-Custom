@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Blood Death Knight Refactored - Template-Based Implementation
  *
@@ -9,12 +9,20 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+#include "../../Services/ThreatAssistant.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -190,12 +198,12 @@ public:
 
         // Sync with actual aura
         if (Aura* aura = bot->GetAura(BONE_SHIELD))
-            _boneShieldStacks = aura->GetStackAmount();
-        else
+            _boneShieldStacks = aura->GetStackAmount();        else
             _boneShieldStacks = 0;
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _boneShieldStacks;
     uint32 _lastMarrowrendTime;
 };
@@ -212,25 +220,20 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit BloodDeathKnightRefactored(Player* bot)
-        : TankSpecialization<RuneRunicPowerResource>(bot)
+    explicit BloodDeathKnightRefactored(Player* bot)        : TankSpecialization<RuneRunicPowerResource>(bot)
         
         , _boneShieldTracker()
         , _deathsAndDecayActive(false)
         , _deathsAndDecayEndTime(0)
         , _crimsonScourgeProc(false)
         , _lastDeathStrikeTime(0)
-    {
-        // Initialize runes/runic power resources
+    {        // Initialize runes/runic power resources
         this->_resource.Initialize(bot);
-
-        InitializeCooldowns();
-
         TC_LOG_DEBUG("playerbot", "BloodDeathKnightRefactored initialized for {}", bot->GetName());
+        InitializeBloodMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -260,6 +263,22 @@ public:
 
         // Emergency defensives
         HandleEmergencyDefensives();
+    }
+
+    // Phase 5C: Threat management using ThreatAssistant service
+    void ManageThreat(::Unit* target) override
+    {
+        if (!target)
+            return;
+
+        // Use ThreatAssistant to determine best taunt target and execute
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanCastSpell(DARK_COMMAND, tauntTarget))
+        {
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, DARK_COMMAND);
+            _lastTaunt = getMSTime();
+            TC_LOG_DEBUG("playerbot", "Blood DK: Dark Command taunt via ThreatAssistant on {}", tauntTarget->GetName());
+        }
     }
 
 
@@ -409,7 +428,27 @@ protected:
         if (healthPct < 80.0f && this->CanCastSpell(ANTI_MAGIC_SHELL, bot))
         {
             this->CastSpell(bot, ANTI_MAGIC_SHELL);
-            TC_LOG_DEBUG("playerbot", "Blood: Anti-Magic Shell");
+            
+
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {MARROWREND, 0, 1},
+            {HEART_STRIKE, 0, 1},
+            {BLOOD_BOIL, 0, 1},
+            {DEATH_STRIKE, 0, 1},
+            {DARK_COMMAND, CooldownPresets::DISPEL, 1},
+            {VAMPIRIC_BLOOD, 90000, 1},
+            {DANCING_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {ICEBOUND_FORTITUDE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {ANTI_MAGIC_SHELL, CooldownPresets::OFFENSIVE_60, 1},
+            {RUNE_TAP, 25000, 1},
+            {DEATH_GRIP, 25000, 1},
+            {DEATHS_ADVANCE, 90000, 1},
+            {GOREFIENDS_GRASP, CooldownPresets::MINOR_OFFENSIVE, 1},
+            {ARMY_OF_THE_DEAD, 480000, 1},
+        });
+
+        TC_LOG_DEBUG("playerbot", "Blood: Anti-Magic Shell");
             return;
         }
 
@@ -514,22 +553,45 @@ private:
         this->_resource.Consume(count);
     }
 
-    void InitializeCooldowns()
+    void InitializeBloodMechanics()
     {
-        RegisterCooldown(MARROWREND, 0);                // No CD, rune-gated
-        RegisterCooldown(HEART_STRIKE, 0);              // No CD, rune-gated
-        RegisterCooldown(BLOOD_BOIL, 0);                // No CD, rune-gated
-        RegisterCooldown(DEATH_STRIKE, 0);              // No CD, RP-gated
-        RegisterCooldown(DARK_COMMAND, 8000);           // 8 sec CD (taunt)
-        RegisterCooldown(VAMPIRIC_BLOOD, 90000);        // 1.5 min CD
-        RegisterCooldown(DANCING_RUNE_WEAPON, 120000);  // 2 min CD
-        RegisterCooldown(ICEBOUND_FORTITUDE, 180000);   // 3 min CD
-        RegisterCooldown(ANTI_MAGIC_SHELL, 60000);      // 1 min CD
-        RegisterCooldown(RUNE_TAP, 25000);              // 25 sec CD
-        RegisterCooldown(DEATH_GRIP, 25000);            // 25 sec CD
-        RegisterCooldown(DEATHS_ADVANCE, 90000);        // 1.5 min CD
-        RegisterCooldown(GOREFIENDS_GRASP, 120000);     // 2 min CD
-        RegisterCooldown(ARMY_OF_THE_DEAD, 480000);     // 8 min CD
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue) {
+            queue->RegisterSpell(BLOOD_VAMPIRIC_BLOOD, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(BLOOD_VAMPIRIC_BLOOD, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(BLOOD_DEATH_STRIKE, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(BLOOD_DEATH_STRIKE, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 70.0f; }, "Heal HP < 70%");
+
+            queue->RegisterSpell(BLOOD_MARROWREND, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(BLOOD_MARROWREND, [this](Player*, Unit* target) { return target && this->_boneShieldTracker.GetStacks() < 5; }, "< 5 Bone Shield");
+
+            queue->RegisterSpell(BLOOD_HEART_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(BLOOD_HEART_STRIKE, [](Player*, Unit* target) { return target != nullptr; }, "Builder");
+
+            queue->RegisterSpell(BLOOD_BLOOD_BOIL, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(BLOOD_BLOOD_BOIL, [this](Player*, Unit*) { return this->GetEnemiesInRange(10.0f) >= 2; }, "AoE 2+");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree) {
+            auto root = Selector("Blood DK Tank", {
+                Sequence("Emergency", { Condition("HP < 40%", [](Player* bot) { return bot && bot->GetHealthPct() < 40.0f; }),
+                    Action("Vampiric Blood", [this](Player* bot) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(bot, BLOOD_VAMPIRIC_BLOOD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot) { return bot && bot->GetHealthPct() < 70.0f; }),
+                    Action("Death Strike", [this](Player* bot) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(bot, BLOOD_DEATH_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Bone Shield", { Condition("< 5 stacks", [this](Player*) { return this->_boneShieldTracker.GetStacks() < 5; }),
+                    Action("Marrowrend", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(t, BLOOD_MARROWREND); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Threat", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("Heart Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(t, BLOOD_HEART_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
     }
 
 private:
@@ -538,6 +600,7 @@ private:
     uint32 _deathsAndDecayEndTime;
     bool _crimsonScourgeProc;
     uint32 _lastDeathStrikeTime;
+    uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
 };
 
 } // namespace Playerbot

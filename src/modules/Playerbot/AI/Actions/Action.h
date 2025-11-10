@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "../../Core/DI/Interfaces/IActionFactory.h"
 #include "G3D/Vector3.h"
 #include <memory>
 #include <string>
@@ -184,7 +185,7 @@ protected:
 };
 
 // Action factory
-class TC_GAME_API ActionFactory
+class TC_GAME_API ActionFactory final : public IActionFactory
 {
     ActionFactory() = default;
     ~ActionFactory() = default;
@@ -196,17 +197,17 @@ public:
 
     // Action registration
     void RegisterAction(std::string const& name,
-                       std::function<std::shared_ptr<Action>()> creator);
+                       std::function<std::shared_ptr<Action>()> creator) override;
 
     // Action creation
-    std::shared_ptr<Action> CreateAction(std::string const& name);
-    std::vector<std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec);
-    std::vector<std::shared_ptr<Action>> CreateCombatActions(uint8 classId);
-    std::vector<std::shared_ptr<Action>> CreateMovementActions();
+    std::shared_ptr<Action> CreateAction(std::string const& name) override;
+    std::vector<std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) override;
+    std::vector<std::shared_ptr<Action>> CreateCombatActions(uint8 classId) override;
+    std::vector<std::shared_ptr<Action>> CreateMovementActions() override;
 
     // Available actions
-    std::vector<std::string> GetAvailableActions() const;
-    bool HasAction(std::string const& name) const;
+    std::vector<std::string> GetAvailableActions() const override;
+    bool HasAction(std::string const& name) const override;
 
 private:
     std::unordered_map<std::string, std::function<std::shared_ptr<Action>()>> _creators;

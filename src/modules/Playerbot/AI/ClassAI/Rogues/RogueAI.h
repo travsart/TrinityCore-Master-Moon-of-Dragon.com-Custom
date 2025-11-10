@@ -55,8 +55,7 @@ public:
         if (!target || !_bot)
             return false;
 
-        float targetFacing = target->GetOrientation();
-        float angleToMe = target->GetAbsoluteAngle(_bot);
+        float targetFacing = target->GetOrientation();        float angleToMe = target->GetAbsoluteAngle(_bot);
         float diff = std::abs(targetFacing - angleToMe);
 
         if (diff > M_PI)

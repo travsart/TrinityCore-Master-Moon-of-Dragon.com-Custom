@@ -51,8 +51,7 @@ PositionStrategyBase::PositionStrategyBase(Map* map)
 }
 
 // Core position calculation with intelligent caching
-Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange)
-{
+Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange){
     if (!bot || !target)
         return bot ? bot->GetPosition() : Position();
 
@@ -76,23 +75,17 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     std::vector<Position> candidates;
     candidates.reserve(16);
 
-    float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target
-    for (int ring = 0; ring < 2; ++ring)
+    float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target    for (int ring = 0; ring < 2; ++ring)
     {
         float range = preferredRange + (ring * 3.0f);
         for (int i = 0; i < 8; ++i)
         {
             float angle = i * angleStep;
-            float x = target->GetPositionX() + cos(angle) * range;
-            float y = target->GetPositionY() + sin(angle) * range;
-            float z = target->GetPositionZ();
-
-            // Validate height
+            float x = target->GetPositionX() + cos(angle) * range;            float y = target->GetPositionY() + sin(angle) * range;            float z = target->GetPositionZ();            // Validate height
             _map->GetHeight(bot->GetPhaseShift(), x, y, z);
 
             Position candidate(x, y, z, angle);
-            if (ValidatePosition(candidate, bot))
-            {
+            if (ValidatePosition(candidate, bot))            {
                 candidates.push_back(candidate);
             }
         }
@@ -112,8 +105,7 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     // If no valid position found, use current position
     if (bestScore == -std::numeric_limits<float>::max())
     {
-        optimalPos = bot->GetPosition();
-    }
+        optimalPos = bot->GetPosition();    }
 
     // Cache the result
     CachePosition(bot, target, optimalPos, bestScore);
@@ -177,9 +169,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
         // Sequential processing for smaller batches
         for (auto* req : sortedRequests)
         {
-            Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
-
-            // Check for collision with already assigned positions
+            Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);            // Check for collision with already assigned positions
             auto gridCoords = WorldToGrid(pos);
             if (occupiedCells.count(gridCoords) > 0)
             {
@@ -199,8 +189,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
 }
 
 // Position validation with comprehensive checks
-bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) const
-{
+bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) const{
     if (!bot || !_map)
         return false;
 
@@ -219,9 +208,7 @@ bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) co
 
     // Check danger zones
     if (_enableDangerAvoidance && !IsPositionSafe(pos))
-        return false;
-
-    // Check collision with other bots
+        return false;    // Check collision with other bots
     if (_enableCollisionAvoidance && CheckCollisionWithOtherBots(pos, bot))
         return false;
 
@@ -234,17 +221,12 @@ float PositionStrategyBase::EvaluatePositionScore(const Position& pos, Player* b
     float score = 100.0f;
 
     // Distance score (prefer optimal range)
-    float optimalRange = (bot->GetClass() == CLASS_WARRIOR || bot->GetClass() == CLASS_ROGUE) ?
-        GetOptimalMeleeRange() : GetOptimalRangedRange();
-    score += CalculateDistanceScore(pos, target, optimalRange);
-
-    // Safety score (avoid danger zones)
+    float optimalRange = (bot->GetClass() == CLASS_WARRIOR || bot->GetClass() == CLASS_ROGUE) ?        GetOptimalMeleeRange() : GetOptimalRangedRange();
+    score += CalculateDistanceScore(pos, target, optimalRange);    // Safety score (avoid danger zones)
     score += CalculateSafetyScore(pos) * 2.0f;  // Double weight for safety
 
     // Terrain score (prefer flat, accessible terrain)
-    score += CalculateTerrainScore(pos);
-
-    // Group cohesion score (stay near allies but not too close)
+    score += CalculateTerrainScore(pos);    // Group cohesion score (stay near allies but not too close)
     score += CalculateGroupCohesionScore(pos, bot);
 
     // Line of sight bonus
@@ -266,8 +248,7 @@ std::pair<uint32, uint32> PositionStrategyBase::WorldToGrid(const Position& pos)
     float x = pos.GetPositionX() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
     float y = pos.GetPositionY() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
 
-    uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);
-    uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
+    uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);    uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
 
     // Clamp to grid bounds
     gridX = std::min(gridX, GRID_SIZE - 1);
@@ -284,9 +265,7 @@ void PositionStrategyBase::RegisterPosition(Player* bot, const Position& pos)
 
     std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
-    uint64 guid = bot->GetGUID().GetRawValue();
-
-    // Unregister old position
+    uint64 guid = bot->GetGUID().GetRawValue();    // Unregister old position
     auto oldIt = _botPositions.find(guid);
     if (oldIt != _botPositions.end())
     {
@@ -307,8 +286,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
 
     std::lock_guard<std::recursive_mutex> lock(_positionMutex);
 
-    uint64 guid = bot->GetGUID().GetRawValue();
-    auto it = _botPositions.find(guid);
+    uint64 guid = bot->GetGUID().GetRawValue();    auto it = _botPositions.find(guid);
     if (it != _botPositions.end())
     {
         auto grid = WorldToGrid(it->second);
@@ -512,18 +490,14 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
                     continue;
 
                 Position neighborPos = GridToWorld(nx, ny);
-                float z = neighborPos.GetPositionZ();
-                _map->GetHeight(nullptr, neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
+                float z = neighborPos.GetPositionZ();                _map->GetHeight(nullptr, neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
                 neighborPos.Relocate(neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
 
                 // Check if position is valid
                 if (!ValidatePosition(neighborPos, nullptr))
                     continue;
 
-                // Calculate costs
-                float moveCost = current->pos.GetExactDist(&neighborPos);
-
-                // Add danger cost if avoiding danger
+                // Calculate costs                float moveCost = current->pos.GetExactDist(&neighborPos);                // Add danger cost if avoiding danger
                 if (avoidDanger)
                 {
                     float dangerLevel = GetDangerLevel(neighborPos);
@@ -547,15 +521,10 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
         }
     }
 
-    // No path found, return direct path
-    return {start, end};
-}
-
-// Formation calculations
+    // No path found, return direct path    return {start, end};}// Formation calculations
 std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     std::vector<Player*> bots,
-    Unit* target,
-    float spacing)
+    Unit* target,    float spacing)
 {
     std::vector<Position> positions;
     positions.reserve(bots.size());
@@ -564,6 +533,14 @@ std::vector<Position> PositionStrategyBase::CalculateLineFormation(
         return positions;
 
     float angle = target->GetOrientation();
+    if (!target)
+    {
+        if (!excludeBot)
+        {
+            return nullptr;
+        }
+        return;
+    }
     float perpAngle = angle + M_PI / 2.0f;
 
     int32 halfCount = bots.size() / 2;
@@ -571,11 +548,7 @@ std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     for (size_t i = 0; i < bots.size(); ++i)
     {
         int32 offset = static_cast<int32>(i) - halfCount;
-        float x = target->GetPositionX() + cos(perpAngle) * offset * spacing;
-        float y = target->GetPositionY() + sin(perpAngle) * offset * spacing;
-        float z = target->GetPositionZ();
-
-        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(perpAngle) * offset * spacing;        float y = target->GetPositionY() + sin(perpAngle) * offset * spacing;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
         positions.emplace_back(x, y, z, angle);
     }
 
@@ -595,18 +568,12 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 
     float angleStep = 2.0f * M_PI / bots.size();
 
-    for (size_t i = 0; i < bots.size(); ++i)
-    {
+    for (size_t i = 0; i < bots.size(); ++i)    {
         float angle = i * angleStep;
-        float x = target->GetPositionX() + cos(angle) * radius;
-        float y = target->GetPositionY() + sin(angle) * radius;
-        float z = target->GetPositionZ();
-
-        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(angle) * radius;        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
 
         // Face the target
-        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);
-        positions.emplace_back(x, y, z, facing);
+        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);        positions.emplace_back(x, y, z, facing);
     }
 
     return positions;
@@ -615,9 +582,11 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 // Collision detection
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
-
-    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
+    std::lock_guard<std::recursive_mutex> lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
+    if (!excludeBot)
+    {
+        return;
+    }
 
     for (const auto& [guid, botPos] : _botPositions)
     {
@@ -629,9 +598,7 @@ bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Play
     }
 
     return false;
-}
-
-// Score calculation helpers
+}// Score calculation helpers
 float PositionStrategyBase::CalculateDistanceScore(const Position& pos, Unit* target, float optimalRange) const
 {
     float distance = pos.GetExactDist(target);
@@ -672,8 +639,7 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 
     for (const auto& [guid, allyPos] : _botPositions)
     {
-        if (guid == bot->GetGUID().GetRawValue())
-            continue;
+        if (guid == bot->GetGUID().GetRawValue())            continue;
 
         float distance = pos.GetExactDist(&allyPos);
         if (distance < 40.0f)  // Consider allies within 40 yards
@@ -706,8 +672,7 @@ std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bo
 {
     std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
-    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
-    auto it = _cache.entries.find(key);
+    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    auto it = _cache.entries.find(key);
 
     if (it != _cache.entries.end())
     {
@@ -725,9 +690,7 @@ void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Positi
 {
     std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
 
-    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
-
-    CachedPosition cached;
+    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    CachedPosition cached;
     cached.position = pos;
     cached.calculatedTime = getMSTime();
     cached.score = score;
@@ -872,9 +835,7 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
     }
 
     return totalLength;
-}
-
-Position PositionStrategyBase::FindAlternativePosition(
+}Position PositionStrategyBase::FindAlternativePosition(
     const Position& original,
     Player* bot,
     const std::unordered_set<std::pair<uint32, uint32>, boost::hash<std::pair<uint32, uint32>>>& occupiedCells)
@@ -887,11 +848,7 @@ Position PositionStrategyBase::FindAlternativePosition(
             for (int dy = -radius; dy <= radius; ++dy)
             {
                 if (std::abs(dx) != radius && std::abs(dy) != radius)
-                    continue;  // Only check perimeter
-
-                float x = original.GetPositionX() + dx * GRID_CELL_SIZE;
-                float y = original.GetPositionY() + dy * GRID_CELL_SIZE;
-                float z = original.GetPositionZ();
+                    continue;  // Only check perimeter                float x = original.GetPositionX() + dx * GRID_CELL_SIZE;                float y = original.GetPositionY() + dy * GRID_CELL_SIZE;                float z = original.GetPositionZ();
 
                 _map->GetHeight(bot->GetPhaseShift(), x, y, z);
                 Position candidate(x, y, z, original.GetOrientation());
@@ -919,15 +876,11 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
 
     for (size_t i = 1; i < path.size() - 1; ++i)
     {
-        float x = path[i].GetPositionX() * (1.0f - _pathSmoothingFactor) +
-                  (path[i - 1].GetPositionX() + path[i + 1].GetPositionX()) * 0.5f * _pathSmoothingFactor;
-        float y = path[i].GetPositionY() * (1.0f - _pathSmoothingFactor) +
-                  (path[i - 1].GetPositionY() + path[i + 1].GetPositionY()) * 0.5f * _pathSmoothingFactor;
+        float x = path[i].GetPositionX() * (1.0f - _pathSmoothingFactor) +                  (path[i - 1].GetPositionX() + path[i + 1].GetPositionX()) * 0.5f * _pathSmoothingFactor;        float y = path[i].GetPositionY() * (1.0f - _pathSmoothingFactor) +                  (path[i - 1].GetPositionY() + path[i + 1].GetPositionY()) * 0.5f * _pathSmoothingFactor;
         float z = path[i].GetPositionZ();
 
         _map->GetHeight(nullptr, x, y, z);
-        smoothed.emplace_back(x, y, z, path[i].GetOrientation());
-    }
+        smoothed.emplace_back(x, y, z, path[i].GetOrientation());    }
 
     smoothed.push_back(path.back());
     return smoothed;
@@ -966,8 +919,7 @@ void PositionStrategyBase::UpdateFormationPositions(std::vector<Player*> bots, U
     }
 
     // Apply positions to bots
-    for (size_t i = 0; i < bots.size() && i < positions.size(); ++i)
-    {
+    for (size_t i = 0; i < bots.size() && i < positions.size(); ++i)    {
         RegisterPosition(bots[i], positions[i]);
     }
 }
@@ -983,8 +935,7 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
     if (bots.empty() || !target)
         return positions;
 
-    float baseAngle = target->GetOrientation();
-    uint32 rows = static_cast<uint32>(std::sqrt(bots.size())) + 1;
+    float baseAngle = target->GetOrientation();    uint32 rows = static_cast<uint32>(std::sqrt(bots.size())) + 1;
     float rowSpacing = 5.0f;
     float angleRad = angle * M_PI / 180.0f;
 
@@ -999,11 +950,7 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
             float offset = (col - botsInRow / 2.0f) * angleRad / botsInRow;
             float finalAngle = baseAngle + offset;
 
-            float x = target->GetPositionX() + cos(finalAngle) * rowDistance;
-            float y = target->GetPositionY() + sin(finalAngle) * rowDistance;
-            float z = target->GetPositionZ();
-
-            _map->GetHeight(bots[botIndex]->GetPhaseShift(), x, y, z);
+            float x = target->GetPositionX() + cos(finalAngle) * rowDistance;            float y = target->GetPositionY() + sin(finalAngle) * rowDistance;            float z = target->GetPositionZ();            _map->GetHeight(bots[botIndex]->GetPhaseShift(), x, y, z);
             positions.emplace_back(x, y, z, finalAngle);
         }
     }
@@ -1012,8 +959,7 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
 }
 
 std::vector<Position> PositionStrategyBase::CalculateSpreadFormation(
-    std::vector<Player*> bots,
-    Unit* target,
+    std::vector<Player*> bots,    Unit* target,
     float minSpacing)
 {
     std::vector<Position> positions;
@@ -1030,15 +976,10 @@ std::vector<Position> PositionStrategyBase::CalculateSpreadFormation(
         float angle = i * goldenAngle;
         float radius = minSpacing * std::sqrt(i + 1);
 
-        float x = target->GetPositionX() + cos(angle) * radius;
-        float y = target->GetPositionY() + sin(angle) * radius;
-        float z = target->GetPositionZ();
-
-        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(angle) * radius;        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
 
         // Face the target
-        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);
-        positions.emplace_back(x, y, z, facing);
+        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);        positions.emplace_back(x, y, z, facing);
     }
 
     return positions;
@@ -1076,14 +1017,12 @@ bool PositionStrategyBase::CheckCollisionWithObjects(const Position& pos, float 
 
 // Specialized strategy implementations
 
-Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange)
-{
+Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange){
     if (!bot || !target)
         return bot ? bot->GetPosition() : Position();
 
     // Try to get behind target for backstab classes
-    if (bot->GetClass() == CLASS_ROGUE)
-    {
+    if (bot->GetClass() == CLASS_ROGUE)    {
         Position backstab = GetBackstabPosition(target);
         if (ValidatePosition(backstab, bot) && CanReachPosition(bot, backstab, 2.0f))
             return backstab;
@@ -1107,23 +1046,13 @@ Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* targ
 
 Position MeleePositionStrategy::GetBackstabPosition(Unit* target) const
 {
-    float angle = target->GetOrientation() + M_PI;  // Behind target
-    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();
-    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();
-    float z = target->GetPositionZ();
-
-    _map->GetHeight(nullptr, x, y, z);
+    float angle = target->GetOrientation() + M_PI;  // Behind target    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
     return Position(x, y, z, angle - M_PI);  // Face the target
 }
 
 Position MeleePositionStrategy::GetFlankPosition(Unit* target, bool leftSide) const
 {
-    float angle = target->GetOrientation() + (leftSide ? M_PI / 2.0f : -M_PI / 2.0f);
-    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();
-    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();
-    float z = target->GetPositionZ();
-
-    _map->GetHeight(nullptr, x, y, z);
+    float angle = target->GetOrientation() + (leftSide ? M_PI / 2.0f : -M_PI / 2.0f);    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
     return Position(x, y, z, angle + (leftSide ? -M_PI / 2.0f : M_PI / 2.0f));
 }
 
@@ -1145,8 +1074,7 @@ float MeleePositionStrategy::EvaluatePositionScore(const Position& pos, Player* 
         baseScore += 30.0f;
 
     // Penalty for being in front (for non-tanks)
-    if (bot->GetClass() != CLASS_WARRIOR && target->HasInArc(static_cast<float>(M_PI / 4.0f), &pos))
-        baseScore -= 20.0f;
+    if (bot->GetClass() != CLASS_WARRIOR && target->HasInArc(static_cast<float>(M_PI / 4.0f), &pos))        baseScore -= 20.0f;
 
     return baseScore;
 }

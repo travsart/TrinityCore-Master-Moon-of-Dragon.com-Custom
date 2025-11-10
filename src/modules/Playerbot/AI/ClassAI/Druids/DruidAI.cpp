@@ -24,8 +24,7 @@
 namespace Playerbot
 {
 
-DruidAI::DruidAI(Player* bot) : ClassAI(bot),
-    _currentForm(DruidForm::HUMANOID),
+DruidAI::DruidAI(Player* bot) : ClassAI(bot),    _currentForm(DruidForm::HUMANOID),
     _lastFormShift(0),
     _comboPoints(0),
     _energy(100),
@@ -189,8 +188,7 @@ bool DruidAI::HandleDefensives()
     if (!bot)
         return false;
 
-    float healthPercent = bot->GetHealthPct();
-    uint32 currentTime = getMSTime();
+    float healthPercent = bot->GetHealthPct();    uint32 currentTime = getMSTime();
 
     // Survival Instincts - critical health
     if (healthPercent < 30.0f &&
@@ -204,9 +202,7 @@ bool DruidAI::HandleDefensives()
                          bot->GetName(), healthPercent);
             return true;
         }
-    }
-
-    // Barkskin - moderate damage reduction
+    }    // Barkskin - moderate damage reduction
     if (healthPercent < 50.0f &&
         currentTime > _lastBarkskin + 60000 &&
         CanUseAbility(BARKSKIN))
@@ -214,15 +210,13 @@ bool DruidAI::HandleDefensives()
         if (CastSpell(BARKSKIN))
         {
             _lastBarkskin = currentTime;
-            TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Barkskin at {}% health",
-                         bot->GetName(), healthPercent);
+            TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Barkskin at {}% health",                         bot->GetName(), healthPercent);
             return true;
         }
     }
 
     // Frenzied Regeneration - Guardian healing
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&
-        healthPercent < 60.0f &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidGuardian &&        healthPercent < 60.0f &&
         currentTime > _lastFrenziedRegen + 30000 &&
         CanUseAbility(FRENZIED_REGENERATION))
     {
@@ -236,8 +230,7 @@ bool DruidAI::HandleDefensives()
     }
 
     // Ironbark - Restoration defensive for allies
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)
-    {
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration)    {
         Unit* lowestAlly = GetLowestHealthAlly(40.0f);
         if (lowestAlly && lowestAlly->GetHealthPct() < 40.0f &&
             CanUseAbility(IRONBARK))
@@ -251,9 +244,15 @@ bool DruidAI::HandleDefensives()
         }
     }
 
+if (!priorityTarget)
+
+{
+    return nullptr;
+
+}
+
     // Cenarion Ward - preemptive defense
-    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&
-        healthPercent < 70.0f &&
+    if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&        healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
         if (CastSpell(bot, CENARION_WARD))
@@ -274,6 +273,10 @@ bool DruidAI::HandleTargetSwitching(::Unit*& target)
     {
         OnTargetChanged(priorityTarget);
         target = priorityTarget;
+                     if (!priorityTarget)
+                     {
+                         return;
+                     }
         TC_LOG_DEBUG("module.playerbot.ai", "Druid {} switching target to {}",
                      GetBot()->GetName(), priorityTarget->GetName());
         return true;
@@ -887,11 +890,9 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Check form requirements
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    // Check form requirements    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (spellInfo)
-    {
-        // Check if spell requires specific form
+    {        // Check if spell requires specific form
         if (spellInfo->Stances)
         {
             bool canCastInForm = false;
@@ -917,8 +918,7 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void DruidAI::OnCombatStart(::Unit* target)
-{
+void DruidAI::OnCombatStart(::Unit* target){
     if (!target || !GetBot())
         return;
 
@@ -926,8 +926,7 @@ void DruidAI::OnCombatStart(::Unit* target)
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();
-    _combatTime = 0;
+    _currentTarget = target->GetGUID();    _combatTime = 0;
 
     // Update resources
     UpdateResources();
@@ -1067,16 +1066,11 @@ bool DruidAI::ShiftToForm(DruidForm form)
             spellId = MOONKIN_FORM;
             break;
         case DruidForm::TREE_OF_LIFE:
-            spellId = TREE_OF_LIFE;
-            break;
-        case DruidForm::TRAVEL:
-            spellId = TRAVEL_FORM;
-            break;
-        case DruidForm::HUMANOID:
-            // Cancel current form
-            if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-            {
-                bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
+            spellId = TREE_OF_LIFE;            break;
+        case DruidForm::TRAVEL:            spellId = TRAVEL_FORM;
+            break;        case DruidForm::HUMANOID:
+            // Cancel current form            if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+            {                bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);
                 _lastFormShift = currentTime;
                 _currentForm = DruidForm::HUMANOID;
                 return true;
@@ -1094,20 +1088,14 @@ bool DruidAI::ShiftToForm(DruidForm form)
             _currentForm = form;
             return true;
         }
-    }
-
-    return false;
-}
-
-DruidAI::DruidForm DruidAI::GetCurrentForm() const
-{
-    return _currentForm;
+    }    return false;
+}DruidAI::DruidForm DruidAI::GetCurrentForm() const
+{    return _currentForm;
 }
 
 bool DruidAI::CanShiftToForm(DruidForm form) const
 {
-    Player* bot = GetBot();
-    if (!bot)
+    Player* bot = GetBot();    if (!bot)
         return false;
 
     switch (form)
@@ -1141,13 +1129,10 @@ void DruidAI::UpdateResources()
     switch (powerType)
     {
         case POWER_ENERGY:
-            _energy = bot->GetPower(POWER_ENERGY);
-            // Combo points are stored as a separate power type
-            _comboPoints = bot->GetPower(POWER_COMBO_POINTS);
-            break;
+            _energy = bot->GetPower(POWER_ENERGY);            // Combo points are stored as a separate power type
+            _comboPoints = bot->GetPower(POWER_COMBO_POINTS);            break;
         case POWER_RAGE:
-            _rage = bot->GetPower(POWER_RAGE);
-            break;
+            _rage = bot->GetPower(POWER_RAGE);            break;
         case POWER_MANA:
             // Mana is tracked via GetPower directly
             break;

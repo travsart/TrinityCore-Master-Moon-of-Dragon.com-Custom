@@ -765,7 +765,6 @@ void ProfessionManager::InitializeProfessionPairs()
 void ProfessionManager::InitializeRaceBonuses()
 {
     _raceBonuses.clear();
-
     // WoW 11.2 Racial Profession Bonuses
 
     // TAUREN (+15 Herbalism)
@@ -779,10 +778,8 @@ void ProfessionManager::InitializeRaceBonuses()
 
     // WORGEN (+15 Skinning)
     _raceBonuses[RACE_WORGEN][ProfessionType::SKINNING] = 15;
-
     // GOBLIN (+15 Alchemy)
     _raceBonuses[RACE_GOBLIN][ProfessionType::ALCHEMY] = 15;
-
     // PANDAREN (+15 Cooking)
     _raceBonuses[RACE_PANDAREN_NEUTRAL][ProfessionType::COOKING] = 15;
     _raceBonuses[RACE_PANDAREN_ALLIANCE][ProfessionType::COOKING] = 15;
@@ -844,7 +841,6 @@ bool ProfessionManager::LearnRecipe(::Player* player, uint32 recipeId)
     // No lock needed - profession data is per-bot instance data
     _playerMetrics[player->GetGUID().GetCounter()].recipesLearned++;
     _globalMetrics.recipesLearned++;
-
     return true;
 }
 

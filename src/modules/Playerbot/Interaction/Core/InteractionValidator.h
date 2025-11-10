@@ -11,6 +11,7 @@
 #define TRINITYCORE_BOT_INTERACTION_VALIDATOR_H
 
 #include "InteractionTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include "SharedDefines.h"
 #include <unordered_map>
@@ -355,7 +356,7 @@ namespace Playerbot
 
     private:
         // Thread safety
-        mutable std::recursive_mutex m_mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
 
         // Configuration
         bool m_strictMode = false;

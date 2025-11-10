@@ -6,6 +6,8 @@
 #define BOT_DATABASE_POOL_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
+#include "Core/DI/Interfaces/IBotDatabasePool.h"
 #include "DatabaseEnvFwd.h"
 #include "PreparedStatement.h"
 #include "QueryResult.h"
@@ -29,6 +31,8 @@ namespace Playerbot {
 
 /**
  * CRITICAL IMPLEMENTATION REQUIREMENTS:
+ *
+ * Implements IBotDatabasePool for dependency injection compatibility.
  *
  * 1. ISOLATION REQUIREMENTS:
  *    - MUST be completely isolated from TrinityCore's DatabaseWorkerPool
@@ -55,7 +59,7 @@ namespace Playerbot {
  *    - MUST recycle connections to prevent memory leaks
  *    - MUST monitor and limit total memory usage
  */
-class TC_GAME_API BotDatabasePool final
+class TC_GAME_API BotDatabasePool final : public IBotDatabasePool
 {
 public:
     // Singleton with thread-safe initialization
@@ -65,79 +69,68 @@ public:
         return &instance;
     }
 
-    // === INITIALIZATION ===
+    // === IBotDatabasePool interface implementation ===
 
     // Initialize with connection parameters and thread counts
     bool Initialize(std::string const& connectionString,
                    uint8 asyncThreads = 4,
-                   uint8 syncThreads = 2);
-    void Shutdown();
+                   uint8 syncThreads = 2) override;
+    void Shutdown() override;
 
     // === ASYNC QUERY OPERATIONS ===
 
     // Async query execution with callback
     void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
                      std::function<void(PreparedQueryResult)> callback,
-                     uint32 timeoutMs = 30000);
+                     uint32 timeoutMs = 30000) override;
 
     // Fire-and-forget async execution (no result needed)
     void ExecuteAsyncNoResult(CharacterDatabasePreparedStatement* stmt,
-                             uint32 timeoutMs = 30000);
+                             uint32 timeoutMs = 30000) override;
 
     // Async batch operations
     void ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
                           std::function<void(std::vector<PreparedQueryResult>)> callback,
-                          uint32 timeoutMs = 30000);
+                          uint32 timeoutMs = 30000) override;
 
     // === SYNCHRONOUS QUERY OPERATIONS ===
 
     // Synchronous query for immediate results (use sparingly)
     PreparedQueryResult ExecuteSync(CharacterDatabasePreparedStatement* stmt,
-                                   uint32 timeoutMs = 10000);
+                                   uint32 timeoutMs = 10000) override;
 
     // === PREPARED STATEMENT MANAGEMENT ===
 
     // Get prepared statement by ID
-    CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId);
+    CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId) override;
 
     // Cache prepared statement for reuse
-    void CachePreparedStatement(uint32 stmtId, std::string const& sql);
+    void CachePreparedStatement(uint32 stmtId, std::string const& sql) override;
 
     // === CACHING SYSTEM ===
 
     // Cache query result with TTL
     void CacheResult(std::string const& key, PreparedQueryResult const& result,
-                    std::chrono::seconds ttl = std::chrono::seconds(60));
+                    std::chrono::seconds ttl = std::chrono::seconds(60)) override;
 
     // Get cached result
-    PreparedQueryResult GetCachedResult(std::string const& key);
+    PreparedQueryResult GetCachedResult(std::string const& key) override;
 
     // === PERFORMANCE MONITORING ===
 
-    struct DatabaseMetrics {
-        std::atomic<uint64> queriesExecuted{0};
-        std::atomic<uint64> queriesPerSecond{0};
-        std::atomic<uint64> cacheHits{0};
-        std::atomic<uint64> cacheMisses{0};
-        std::atomic<uint32> avgResponseTimeMs{0};
-        std::atomic<uint32> activeConnections{0};
-        std::atomic<uint32> maxResponseTimeMs{0};
-        std::atomic<uint32> timeouts{0};
-        std::atomic<uint32> errors{0};
-        std::atomic<size_t> memoryUsage{0};
-    };
+    using DatabaseMetrics = IBotDatabasePool::DatabaseMetrics;
 
-    DatabaseMetrics const& GetMetrics() const { return _metrics; }
+    DatabaseMetrics const& GetMetrics() const override { return _metrics; }
 
     // Performance queries
-    double GetCacheHitRate() const;
-    uint32 GetAverageResponseTime() const { return _metrics.avgResponseTimeMs.load(); }
-    bool IsHealthy() const;
+    double GetCacheHitRate() const override;
+    uint32 GetAverageResponseTime() const override { return _metrics.avgResponseTimeMs.load(); }
+    bool IsHealthy() const override;
 
     // Configuration
-    void SetQueryTimeout(uint32 timeoutMs) { _defaultTimeoutMs = timeoutMs; }
-    void SetCacheSize(size_t maxSize) { _maxCacheSize = maxSize; }
-    void SetConnectionRecycleInterval(std::chrono::seconds interval) { _recycleInterval = interval; }
+    void SetQueryTimeout(uint32 timeoutMs) override { _defaultTimeoutMs = timeoutMs; }
+    void SetCacheSize(size_t maxSize) override { _maxCacheSize = maxSize; }
+    void SetConnectionRecycleInterval(std::chrono::seconds interval) override { _recycleInterval = interval; }
 
 private:
     BotDatabasePool() = default;
@@ -174,7 +167,7 @@ private:
     // Connection pool
     std::vector<std::unique_ptr<ConnectionInfo>> _connections;
     boost::lockfree::queue<size_t> _availableConnections{16};
-    mutable std::recursive_mutex _connectionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::DATABASE_POOL> _connectionMutex;
 
     // Connection configuration
     std::string _connectionString;

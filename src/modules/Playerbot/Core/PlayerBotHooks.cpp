@@ -103,6 +103,26 @@ void PlayerBotHooks::RegisterHooks()
 
         // Publish event to GroupEventBus
         GroupEvent event = GroupEvent::MemberJoined(group->GetGUID(), player->GetGUID());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
         GroupEventBus::instance()->PublishEvent(event);
 
         TC_LOG_DEBUG("module.playerbot.hooks", "Hook: Member {} joined group {}",
@@ -442,6 +462,16 @@ void PlayerBotHooks::RegisterHooks()
 
     // PLAYER LIFECYCLE HOOKS
     OnPlayerDeath = [](Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
     {
         if (!player)
             return;
@@ -454,6 +484,16 @@ void PlayerBotHooks::RegisterHooks()
 
         // Get bot's AI and call OnDeath
         if (WorldSession* session = player->GetSession())
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+            return nullptr;
+        }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                            return;
+                        }
         {
             if (BotSession* botSession = dynamic_cast<BotSession*>(session))
             {

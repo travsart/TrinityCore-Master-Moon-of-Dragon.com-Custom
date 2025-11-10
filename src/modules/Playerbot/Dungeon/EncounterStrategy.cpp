@@ -85,9 +85,29 @@ void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterI
     AdaptStrategyToGroupComposition(group, encounterId);
 
     // Execute role-specific strategies for each group member
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return nullptr;
+        }
+        return nullptr;
+    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -179,6 +199,21 @@ void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId
 }
 
 void EncounterStrategy::AdaptStrategyToGroupComposition(Group* group, uint32 encounterId)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+        return nullptr;
+    }
+    }
 {
     if (!group)
         return;
@@ -193,6 +228,11 @@ void EncounterStrategy::AdaptStrategyToGroupComposition(Group* group, uint32 enc
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld())
             continue;
 
@@ -329,11 +369,21 @@ void EncounterStrategy::HandleTankSwapMechanic(Group* group, Player* currentTank
 }
 
 void EncounterStrategy::HandleStackingDebuffMechanic(Group* group, Player* affectedPlayer)
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
 {
     if (!group || !affectedPlayer)
         return;
 
     TC_LOG_DEBUG("module.playerbot", "Handling stacking debuff on {}", affectedPlayer->GetName());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return nullptr;
+}
 
     // If player has too many stacks, they should:
     // 1. Use defensive cooldowns
@@ -343,6 +393,11 @@ void EncounterStrategy::HandleStackingDebuffMechanic(Group* group, Player* affec
 }
 
 void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& dangerZone, float radius)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -354,6 +409,21 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -362,11 +432,26 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
         {
             // Calculate safe position away from danger
             float angle = dangerZone.GetAngle(player) + M_PI; // Opposite direction
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
             Position safePos = dangerZone;
             safePos.RelocateOffset({std::cos(angle) * (radius + 5.0f), std::sin(angle) * (radius + 5.0f), 0.0f});
 
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return nullptr;
+                    }
             if (botAI && botAI->GetMovementArbiter())
             {
                 bool accepted = botAI->RequestPointMovement(
@@ -391,6 +476,11 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
                 // FALLBACK: Direct MotionMaster if arbiter not available
                 player->GetMotionMaster()->MovePoint(0, safePos.GetPositionX(),
                     safePos.GetPositionY(), safePos.GetPositionZ());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 TC_LOG_TRACE("module.playerbot", "Player {} moving to avoid AoE", player->GetName());
             }
         }
@@ -453,9 +543,19 @@ EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encoun
     return defaultStrategy;
 }
 
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
 EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
 {
     std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return nullptr;
+}
 
     auto itr = _healerStrategies.find(encounterId);
     if (itr != _healerStrategies.end())
@@ -479,6 +579,11 @@ EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounte
         return itr->second;
 
     // Return default DPS strategy
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     DpsStrategy defaultStrategy;
     defaultStrategy.optimalPosition = CalculateDpsPosition(encounterId, nullptr, false);
     defaultStrategy.threatLimit = 0.8f; // Stay below 80% of tank threat
@@ -492,6 +597,11 @@ EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounte
 // ============================================================================
 
 void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounterId)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -501,6 +611,11 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -512,8 +627,23 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
         {
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                        return nullptr;
+                    }
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                            return;
+                        }
             if (botAI && botAI->GetMovementArbiter())
             {
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 bool accepted = botAI->RequestPointMovement(
                     PlayerBotMovementPriority::DUNGEON_MECHANIC,
                     optimalPos,
@@ -549,6 +679,11 @@ void EncounterStrategy::HandleMovementMechanic(Group* group, uint32 encounterId,
 }
 
 Position EncounterStrategy::CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
 {
     DungeonEncounter encounter = DungeonBehavior::instance()->GetEncounterData(encounterId);
     Position optimalPos = encounter.encounterLocation;
@@ -575,6 +710,11 @@ Position EncounterStrategy::CalculateOptimalPosition(Player* player, uint32 enco
 }
 
 void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Position>& dangerAreas)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group || dangerAreas.empty())
         return;
@@ -582,6 +722,11 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Posit
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -591,12 +736,27 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Posit
             if (distance < 10.0f)
             {
                 // Move away from danger
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return;
+                }
                 float angle = dangerZone.GetAngle(player) + M_PI;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return;
+}
                 Position safePos = dangerZone;
                 safePos.RelocateOffset({std::cos(angle) * 15.0f, std::sin(angle) * 15.0f, 0.0f});
 
                 // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
                 BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                return;
+                            }
                 if (botAI && botAI->GetMovementArbiter())
                 {
                     bool accepted = botAI->RequestPointMovement(
@@ -654,6 +814,11 @@ void EncounterStrategy::PlanCooldownUsage(Group* group, const DungeonEncounter& 
 }
 
 void EncounterStrategy::HandleEmergencyCooldowns(Group* group)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -664,6 +829,11 @@ void EncounterStrategy::HandleEmergencyCooldowns(Group* group)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -826,6 +996,11 @@ EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 
 EncounterStrategy::StrategyMetrics EncounterStrategy::GetGlobalStrategyMetrics()
 {
     return _globalMetrics;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return;
+}
 }
 
 // ============================================================================
@@ -833,6 +1008,11 @@ EncounterStrategy::StrategyMetrics EncounterStrategy::GetGlobalStrategyMetrics()
 // ============================================================================
 
 void EncounterStrategy::InitializeStrategyDatabase()
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
 {
     TC_LOG_INFO("server.loading", "Initializing encounter strategy database...");
 
@@ -841,6 +1021,11 @@ void EncounterStrategy::InitializeStrategyDatabase()
     LoadDpsStrategies();
     LoadEncounterMechanics();
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return nullptr;
+    }
     TC_LOG_INFO("server.loading", "Encounter strategy database initialized");
 }
 
@@ -910,6 +1095,11 @@ void EncounterStrategy::ExecuteRoleStrategy(Player* player, uint32 encounterId, 
         case DungeonRole::TANK:
         {
             TankStrategy strategy = GetTankStrategy(encounterId, player);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
             if (strategy.positioningStrategy)
                 strategy.positioningStrategy(player, player->GetGroup(), DungeonBehavior::instance()->GetEncounterData(encounterId));
             break;
@@ -917,6 +1107,11 @@ void EncounterStrategy::ExecuteRoleStrategy(Player* player, uint32 encounterId, 
         case DungeonRole::HEALER:
         {
             HealerStrategy strategy = GetHealerStrategy(encounterId, player);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
             if (strategy.healingPriorityStrategy)
                 strategy.healingPriorityStrategy(player, player->GetGroup(), DungeonBehavior::instance()->GetEncounterData(encounterId));
             break;
@@ -925,6 +1120,11 @@ void EncounterStrategy::ExecuteRoleStrategy(Player* player, uint32 encounterId, 
         case DungeonRole::RANGED_DPS:
         {
             DpsStrategy strategy = GetDpsStrategy(encounterId, player);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
             if (strategy.damageOptimizationStrategy)
                 strategy.damageOptimizationStrategy(player, player->GetGroup(), DungeonBehavior::instance()->GetEncounterData(encounterId));
             break;
@@ -1047,6 +1247,11 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
     {
         // Low success rate, simplify strategy
         float newComplexity = std::max(0.3f, _strategyComplexity.load() - 0.1f);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         _strategyComplexity = newComplexity;
 
         TC_LOG_INFO("module.playerbot", "Simplified strategy complexity to {} for encounter {} (success rate: {})",
@@ -1124,6 +1329,11 @@ void EncounterStrategy::IdentifyPerformanceBottlenecks(Group* group, uint32 enco
         return;
 
     // Identify specific issues:
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     // - Low DPS
     // - Insufficient healing
     // - Poor threat management
@@ -1143,6 +1353,21 @@ void EncounterStrategy::RecommendStrategyAdjustments(Group* group, uint32 encoun
 }
 
 DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
 {
     if (!player)
         return DungeonRole::MELEE_DPS;
@@ -1159,6 +1384,16 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
         case CLASS_PRIEST:
         case CLASS_SHAMAN:
             return player->GetPrimaryTalentTree() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+        return nullptr;
+    }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return nullptr;
+}
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1210,11 +1445,31 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
     }
     // Medium priority: CC spells
     else if (spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA) &&
+             if (!player)
+             {
+                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                 return nullptr;
+             }
              (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+              if (!player)
+              {
+                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                  return nullptr;
+              }
               spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
+              if (!player)
+              {
+                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                  return nullptr;
+              }
               spellInfo->HasAura(SPELL_AURA_MOD_CHARM)))
     {
         interruptPriority = 50;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return nullptr;
     }
     // Low priority: Buffs
     else
@@ -1224,9 +1479,19 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
 
     // Check if player has interrupt available
     uint32 interruptSpell = 0;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
     switch (player->getClass())
     {
         case CLASS_WARRIOR: interruptSpell = 6552; break;  // Pummel
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         case CLASS_PALADIN: interruptSpell = 96231; break; // Rebuke
         case CLASS_HUNTER: interruptSpell = 187650; break; // Counter Shot
         case CLASS_ROGUE: interruptSpell = 1766; break;    // Kick
@@ -1243,6 +1508,16 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
     }
 
     if (interruptSpell == 0 || player->HasSpellCooldown(interruptSpell))
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+    return nullptr;
+}
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
+            return;
+        }
         return;
 
     // Interrupt if priority is high enough (50+)
@@ -1268,6 +1543,21 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return;
 
@@ -1316,8 +1606,33 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
                 // Move away from ground effect
                 float angle = dynObj->GetAngle(player); // Direction away from effect
                 float x = player->GetPositionX() + 10.0f * std::cos(angle);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                    return;
+                }
                 float y = player->GetPositionY() + 10.0f * std::sin(angle);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                    return;
+                }
                 float z = player->GetPositionZ();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return nullptr;
+                }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                    return;
+                }
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return;
+                    }
                 Position safePos(x, y, z);
 
                 TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericGroundAvoidance - Player {} moving away from spell {}",
@@ -1325,6 +1640,16 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
 
                 // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
                 BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                return;
+                            }
+                            if (!player)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                                return;
+                            }
                 if (botAI && botAI->GetMovementArbiter())
                 {
                     bool accepted = botAI->RequestPointMovement(
@@ -1343,6 +1668,11 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
                 else
                 {
                     // FALLBACK: Direct MotionMaster if arbiter not available
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                        return;
+                    }
                     player->GetMotionMaster()->MovePoint(0, x, y, z);
                 }
                 return;
@@ -1352,6 +1682,11 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
 }
 
 void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* boss)
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return nullptr;
+    }
 {
     if (!player || !boss)
         return;
@@ -1370,9 +1705,19 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
         if (creature == boss || !creature->IsInCombat() || !creature->IsHostileTo(player) || creature->IsDead())
             continue;
 
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         uint32 priority = 50; // Base priority
 
         // Healers get highest priority
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return nullptr;
+        }
         if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
             priority += 100;
 
@@ -1386,6 +1731,21 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
 
         // Closest gets slight bonus
         float distance = player->GetExactDist(creature);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
+            return nullptr;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
         if (distance < 10.0f)
             priority += 10;
 
@@ -1433,11 +1793,21 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
             distance = 5.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
             break;
 
         case DungeonRole::RANGED_DPS:
             // Ranged: 20-30 yards away
             angle = player->GetAngle(boss);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                return nullptr;
+            }
             distance = 25.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
@@ -1446,6 +1816,36 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
         case DungeonRole::HEALER:
             // Healer: 15-20 yards away (safe distance)
             angle = player->GetAngle(boss);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
+                return;
+            }
+        if (!player)
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return nullptr;
+        }
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+            return;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+        return;
+    }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
             distance = 18.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
@@ -1461,8 +1861,23 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericPositioning - Player {} moving to optimal position",
             player->GetGUID().GetCounter());
 
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
         // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return;
+                    }
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
@@ -1488,12 +1903,32 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
 }
 
 void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
 {
     if (!player || !boss)
         return;
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return nullptr;
+}
 
     // Check if player can dispel
     bool canDispelMagic = false;
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+        return nullptr;
+    }
     bool canDispelCurse = false;
     bool canDispelDisease = false;
     bool canDispelPoison = false;
@@ -1512,6 +1947,11 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
             break;
         case CLASS_MAGE:
             canDispelCurse = true;
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
             break;
         default:
             break;
@@ -1522,17 +1962,42 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
 
     // Find group members with dispellable debuffs
     Group* group = player->GetGroup();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
     if (!group)
         return;
 
     for (auto const& member : group->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return;
+        }
         if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
             continue;
 
         // Check for dispellable auras
         Unit::AuraApplicationMap const& appliedAuras = groupMember->GetAppliedAuras();
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return;
+            }
         for (auto const& [spellId, auraApp] : appliedAuras)
         {
             if (!auraApp || !auraApp->GetBase())
@@ -1542,6 +2007,11 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
             if (aura->GetCaster() != boss)
                 continue;
 
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return;
+            }
             SpellInfo const* spellInfo = aura->GetSpellInfo();
             if (!spellInfo)
                 continue;
@@ -1550,9 +2020,19 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
             if (!spellInfo->IsPositive())
             {
                 TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericDispel - Player {} attempting dispel on {}",
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return;
+                    }
                     player->GetGUID().GetCounter(), groupMember->GetGUID().GetCounter());
 
                 // Would cast dispel spell here
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
+                    return;
+                }
                 // player->CastSpell(groupMember, dispelSpellId, false);
                 return;
             }
@@ -1593,6 +2073,11 @@ void EncounterStrategy::HandleGenericMovement(::Player* player, ::Creature* boss
     if (std::abs(currentDistance - optimalDistance) > 5.0f)
     {
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericMovement - Player {} adjusting range (current: {}, optimal: {})",
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
             player->GetGUID().GetCounter(), currentDistance, optimalDistance);
 
         HandleGenericPositioning(player, boss);
@@ -1605,6 +2090,16 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
         return;
 
     Group* group = player->GetGroup();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
     if (!group)
         return;
 
@@ -1613,6 +2108,11 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
         if (!groupMember || groupMember == player || !groupMember->IsInWorld() || groupMember->IsDead())
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return;
+        }
             continue;
 
         float distanceToMember = player->GetExactDist(groupMember);
@@ -1621,8 +2121,28 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
             // Too close, move away
             float angle = groupMember->GetAngle(player); // Direction away from member
             float x = player->GetPositionX() + (distance - distanceToMember) * std::cos(angle);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
+                return;
+            }
             float y = player->GetPositionY() + (distance - distanceToMember) * std::sin(angle);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
+                return;
+            }
             float z = player->GetPositionZ();
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                return;
+            }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
             Position spreadPos(x, y, z);
 
             TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericSpread - Player {} spreading {} yards from {}",
@@ -1630,6 +2150,11 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
 
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                            return;
+                        }
             if (botAI && botAI->GetMovementArbiter())
             {
                 bool accepted = botAI->RequestPointMovement(
@@ -1661,6 +2186,16 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
         return;
 
     Group* group = player->GetGroup();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+        return;
+    }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return;
+    }
     if (!group)
         return;
 
@@ -1669,6 +2204,11 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return;
+        }
         if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
             continue;
 
@@ -1684,6 +2224,11 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
 
     // Stack on tank position
     float distanceToTank = player->GetExactDist(tank);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
     if (distanceToTank > 3.0f)
     {
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericStack - Player {} stacking on tank",
@@ -1693,6 +2238,11 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
 
         // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return;
+                    }
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
@@ -1723,6 +2273,11 @@ void EncounterStrategy::HandleGenericStack(::Player* player, ::Creature* boss)
 
 // Generic mechanic handlers
 void EncounterStrategy::HandleTankSwapGeneric(Group* group)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return;
+    }
 {
     if (!group)
         return;
@@ -1732,6 +2287,11 @@ void EncounterStrategy::HandleTankSwapGeneric(Group* group)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld())
             continue;
 

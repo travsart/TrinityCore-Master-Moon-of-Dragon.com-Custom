@@ -19,6 +19,7 @@
 #define TRINITY_BOT_INVENTORY_MANAGER_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ItemDefines.h"
 #include "ObjectGuid.h"
 #include <chrono>
@@ -578,7 +579,7 @@ private:
     mutable PerformanceMetrics _metrics;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 };
 
 } // namespace Playerbot

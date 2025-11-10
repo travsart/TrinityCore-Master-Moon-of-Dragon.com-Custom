@@ -225,6 +225,26 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                    return nullptr;
+                }
         if (!cellVisitMap)
             return false;
 
@@ -285,6 +305,11 @@ public:
     }
 
     void HandleAddPriority(::Player* player, ::Creature* boss) override
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
     {
         uint32 entry = boss->GetEntry();
 
@@ -298,7 +323,22 @@ public:
                 std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Prioritize adds that are attacking healers
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsPlayer");
+                    return;
+                }
                 Group* group = player->GetGroup();
+                if (!player)
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+                    return nullptr;
+                }
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (group)
                 {
                     for (::Creature* add : adds)
@@ -308,9 +348,19 @@ public:
 
                         // Check if add is targeting healer
                         Unit* target = add->GetVictim();
+                        if (!target)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsPlayer");
+                            return;
+                        }
                         if (target && target->IsPlayer())
                         {
                             Player* targetPlayer = target->ToPlayer();
+                            if (!target)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
+                                return;
+                            }
                             if (GetPlayerRole(targetPlayer) == DungeonRole::HEALER)
                             {
                                 TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Add attacking healer - priority target");
@@ -415,6 +465,11 @@ public:
 
                 float distance = player->GetExactDist(boss);
                 DungeonRole role = GetPlayerRole(player);
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                            return nullptr;
+                        }
 
                 // Reposition based on role after teleport
                 if (role == DungeonRole::TANK || role == DungeonRole::MELEE_DPS)
@@ -426,9 +481,19 @@ public:
                     }
                 }
                 break;
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
             }
 
             default:
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return nullptr;
+                }
                 break;
         }
 
@@ -437,6 +502,11 @@ public:
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+    return nullptr;
+}
     {
         uint32 entry = boss->GetEntry();
 
@@ -448,12 +518,32 @@ public:
                 // Should be dispelled if possible
 
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return;
+                }
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
@@ -472,12 +562,22 @@ public:
             {
                 // Word of Shame causes fear - dispel or wait out
                 Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

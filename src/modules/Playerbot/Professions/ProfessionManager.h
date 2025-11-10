@@ -25,9 +25,11 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
+#include "../Core/DI/Interfaces/IProfessionManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -150,7 +152,7 @@ struct ProfessionAutomationProfile
 /**
  * @brief Complete profession manager for all bot profession operations
  */
-class TC_GAME_API ProfessionManager
+class TC_GAME_API ProfessionManager final : public IProfessionManager
 {
 public:
     static ProfessionManager* instance();
@@ -162,42 +164,42 @@ public:
     /**
      * Initialize profession system on server startup
      */
-    void Initialize();
+    void Initialize() override;
 
     /**
      * Update profession automation for player (called periodically)
      */
-    void Update(::Player* player, uint32 diff);
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Learn profession for player
      */
-    bool LearnProfession(::Player* player, ProfessionType profession);
+    bool LearnProfession(::Player* player, ProfessionType profession) override;
 
     /**
      * Check if player has profession
      */
-    bool HasProfession(::Player* player, ProfessionType profession) const;
+    bool HasProfession(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get profession skill level
      */
-    uint16 GetProfessionSkill(::Player* player, ProfessionType profession) const;
+    uint16 GetProfessionSkill(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get max profession skill
      */
-    uint16 GetMaxProfessionSkill(::Player* player, ProfessionType profession) const;
+    uint16 GetMaxProfessionSkill(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get all professions for player
      */
-    std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const;
+    std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const override;
 
     /**
      * Unlearn profession (for respec)
      */
-    bool UnlearnProfession(::Player* player, ProfessionType profession);
+    bool UnlearnProfession(::Player* player, ProfessionType profession) override;
 
     // ============================================================================
     // AUTO-LEARN SYSTEM
@@ -207,39 +209,39 @@ public:
      * Auto-learn professions based on class
      * Called when bot is created or profession slots are empty
      */
-    void AutoLearnProfessionsForClass(::Player* player);
+    void AutoLearnProfessionsForClass(::Player* player) override;
 
     /**
      * Get recommended professions for class
      */
-    std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const;
+    std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const override;
 
     /**
      * Check if profession is suitable for class
      */
-    bool IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const;
+    bool IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const override;
 
     /**
      * Get profession category
      */
-    ProfessionCategory GetProfessionCategory(ProfessionType profession) const;
+    ProfessionCategory GetProfessionCategory(ProfessionType profession) const override;
 
     /**
      * Get beneficial profession pair for a given profession
      * Example: Mining → Blacksmithing/Engineering/Jewelcrafting
      */
-    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const;
+    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const override;
 
     /**
      * Check if two professions form a beneficial pair
      */
-    bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const;
+    bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const override;
 
     /**
      * Get race-specific profession skill bonus
      * Example: Tauren +15 Herbalism, Blood Elf +10 Enchanting
      */
-    uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const;
+    uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const override;
 
     // ============================================================================
     // RECIPE MANAGEMENT
@@ -248,37 +250,37 @@ public:
     /**
      * Learn recipe for player
      */
-    bool LearnRecipe(::Player* player, uint32 recipeId);
+    bool LearnRecipe(::Player* player, uint32 recipeId) override;
 
     /**
      * Check if player knows recipe
      */
-    bool KnowsRecipe(::Player* player, uint32 recipeId) const;
+    bool KnowsRecipe(::Player* player, uint32 recipeId) const override;
 
     /**
      * Get all recipes for profession
      */
-    std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const;
+    std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const override;
 
     /**
      * Get craftable recipes for player (has skill + reagents)
      */
-    std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const;
+    std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get optimal recipe for leveling (highest skill-up chance)
      */
-    RecipeInfo const* GetOptimalLevelingRecipe(::Player* player, ProfessionType profession) const;
+    RecipeInfo const* GetOptimalLevelingRecipe(::Player* player, ProfessionType profession) const override;
 
     /**
      * Check if player can craft recipe
      */
-    bool CanCraftRecipe(::Player* player, RecipeInfo const& recipe) const;
+    bool CanCraftRecipe(::Player* player, RecipeInfo const& recipe) const override;
 
     /**
      * Get skill-up probability for recipe (0.0-1.0)
      */
-    float GetSkillUpChance(::Player* player, RecipeInfo const& recipe) const;
+    float GetSkillUpChance(::Player* player, RecipeInfo const& recipe) const override;
 
     // ============================================================================
     // CRAFTING AUTOMATION
@@ -287,39 +289,39 @@ public:
     /**
      * Auto-level profession by crafting optimal recipes
      */
-    bool AutoLevelProfession(::Player* player, ProfessionType profession);
+    bool AutoLevelProfession(::Player* player, ProfessionType profession) override;
 
     /**
      * Craft item (single craft)
      */
-    bool CraftItem(::Player* player, RecipeInfo const& recipe, uint32 quantity = 1);
+    bool CraftItem(::Player* player, RecipeInfo const& recipe, uint32 quantity = 1) override;
 
     /**
      * Queue crafting task for automation
      */
-    void QueueCraft(::Player* player, uint32 recipeId, uint32 quantity);
+    void QueueCraft(::Player* player, uint32 recipeId, uint32 quantity) override;
 
     /**
      * Process crafting queue (called in Update)
      */
-    void ProcessCraftingQueue(::Player* player, uint32 diff);
+    void ProcessCraftingQueue(::Player* player, uint32 diff) override;
 
     /**
      * Check if player has materials for recipe
      */
-    bool HasMaterialsForRecipe(::Player* player, RecipeInfo const& recipe) const;
+    bool HasMaterialsForRecipe(::Player* player, RecipeInfo const& recipe) const override;
 
     /**
      * Get missing materials for recipe
      */
-    std::vector<std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const;
+    std::vector<std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const override;
 
     // ============================================================================
     // AUTOMATION PROFILES
     // ============================================================================
 
-    void SetAutomationProfile(uint32 playerGuid, ProfessionAutomationProfile const& profile);
-    ProfessionAutomationProfile GetAutomationProfile(uint32 playerGuid) const;
+    void SetAutomationProfile(uint32 playerGuid, ProfessionAutomationProfile const& profile) override;
+    ProfessionAutomationProfile GetAutomationProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // METRICS
@@ -347,8 +349,8 @@ public:
         }
     };
 
-    ProfessionMetrics const& GetPlayerMetrics(uint32 playerGuid) const;
-    ProfessionMetrics const& GetGlobalMetrics() const;
+    ProfessionMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
+    ProfessionMetrics const& GetGlobalMetrics() const override;
 
 private:
     ProfessionManager();
@@ -430,7 +432,7 @@ private:
     std::unordered_map<uint32, ProfessionMetrics> _playerMetrics;
     ProfessionMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 PROFESSION_UPDATE_INTERVAL = 5000;  // 5 seconds

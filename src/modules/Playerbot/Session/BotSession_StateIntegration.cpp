@@ -6,6 +6,21 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
     try
     {
         ObjectGuid characterGuid = bot ? bot->GetGUID() : ObjectGuid::Empty;
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
         // Ensure we have a valid player
         if (!bot)
@@ -67,19 +82,64 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
             auto botAI = sBotAIFactory->CreateAI(GetPlayer());
             if (botAI)
             {
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 SetAI(botAI.release()); // Transfer ownership to BotSession
                 TC_LOG_INFO("module.playerbot.session", "Successfully created BotAI for character {}", characterGuid.ToString());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
 
                 // ========================================================================
                 // CRITICAL FIX FOR ISSUE #1: Remove old group check
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return;
+                }
                 // ========================================================================
 
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
                 // OLD BROKEN CODE (lines 944-960) - REMOVED:
                 // if (Player* player = GetPlayer())
                 // {
                 //     Group* group = player->GetGroup();
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 //     TC_LOG_ERROR("module.playerbot.session", "Bot {} login group check: player={}, group={}",
                 //                 player->GetName(), (void*)player, (void*)group);
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return nullptr;
+                    }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
                 //
                 //     if (group)
                 //     {
@@ -87,6 +147,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
                 //         if (BotAI* ai = GetAI())
                 //         {
                 //             TC_LOG_ERROR("module.playerbot.session", "About to call OnGroupJoined with group={}", (void*)group);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
                 //             ai->OnGroupJoined(group);  // TOO EARLY! Bot not IsInWorld() yet!
                 //         }
                 //     }
@@ -118,6 +183,11 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
             TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
         }
 

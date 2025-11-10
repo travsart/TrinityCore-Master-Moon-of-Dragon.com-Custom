@@ -26,6 +26,31 @@ void ParseTypedInstanceReset(WorldSession* session, WorldPackets::Instance::Inst
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -37,6 +62,26 @@ void ParseTypedInstanceReset(WorldSession* session, WorldPackets::Instance::Inst
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_RESET (typed): map={}",
+        if (!bot)
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.MapID);
 }
 
@@ -49,6 +94,26 @@ void ParseTypedInstanceResetFailed(WorldSession* session, WorldPackets::Instance
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -61,11 +126,26 @@ void ParseTypedInstanceResetFailed(WorldSession* session, WorldPackets::Instance
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_RESET_FAILED (typed): map={}, reason={}",
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.MapID, packet.ResetFailedReason);
 }
 
 /**
  * @brief SMSG_INSTANCE_ENCOUNTER_ENGAGE_UNIT - Boss encounter frame update
+ if (!session)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+     return nullptr;
+ }
  */
 void ParseTypedInstanceEncounterEngageUnit(WorldSession* session, WorldPackets::Instance::InstanceEncounterEngageUnit const& packet)
 {
@@ -73,6 +153,21 @@ void ParseTypedInstanceEncounterEngageUnit(WorldSession* session, WorldPackets::
         return;
 
     Player* bot = session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -85,6 +180,26 @@ void ParseTypedInstanceEncounterEngageUnit(WorldSession* session, WorldPackets::
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received INSTANCE_ENCOUNTER_ENGAGE_UNIT (typed): unit={}, priority={}",
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return;
+        }
         bot->GetName(), packet.Unit.ToString(), packet.TargetFramePriority);
 }
 
@@ -98,6 +213,26 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
 
     Player* bot = session->GetPlayer();
     if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return nullptr;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
+    if (!bot)
         return;
 
     // Process each instance lock
@@ -110,6 +245,11 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
         {
             if (mask & (1 << i))
                 bossStates.push_back(i);
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
             mask &= ~(1 << i);
         }
 
@@ -118,12 +258,22 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
             lock.MapID,
             static_cast<uint32>(lock.InstanceID),
             std::move(bossStates)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         );
 
         InstanceEventBus::instance()->PublishEvent(event);
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_INFO (typed): {} locks",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.LockList.size());
 }
 
@@ -136,6 +286,16 @@ void ParseTypedRaidGroupOnly(WorldSession* session, WorldPackets::Instance::Raid
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -146,6 +306,11 @@ void ParseTypedRaidGroupOnly(WorldSession* session, WorldPackets::Instance::Raid
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received RAID_GROUP_ONLY (typed): delay={}, reason={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Delay, packet.Reason);
 }
 
@@ -158,11 +323,26 @@ void ParseTypedInstanceSaveCreated(WorldSession* session, WorldPackets::Instance
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
     // Note: This packet doesn't include map/instance IDs, use current map
     uint32 mapId = bot->GetMapId();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
 
     InstanceEvent event = InstanceEvent::InstanceSaveCreated(
         bot->GetGUID(),
@@ -173,6 +353,11 @@ void ParseTypedInstanceSaveCreated(WorldSession* session, WorldPackets::Instance
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_SAVE_CREATED (typed): gm={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Gm);
 }
 

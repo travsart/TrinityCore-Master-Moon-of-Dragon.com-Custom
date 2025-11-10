@@ -63,6 +63,16 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return;
+                }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                return;
+            }
     {
         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: Player {} entered Razorfen Kraul",
             player->GetGUID().GetCounter());
@@ -419,6 +429,11 @@ public:
     }
 
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+            return nullptr;
+        }
     {
         uint32 entry = boss->GetEntry();
 
@@ -428,12 +443,27 @@ public:
             {
                 // Aggem casts curses - MUST dispel
                 Group* group = player->GetGroup();
+                if (!player)
+                if (!groupMember)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                    return nullptr;
+                }
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
+                    return nullptr;
+                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+                    if (!groupMember)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+                        return;
+                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

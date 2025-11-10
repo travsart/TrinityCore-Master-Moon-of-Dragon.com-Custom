@@ -14,6 +14,7 @@
 #define TRINITYCORE_SPATIAL_HOSTILE_CACHE_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include <atomic>
@@ -196,7 +197,7 @@ private:
     void PruneInactiveZones();
 
     // Zone caches with RCU protection
-    mutable std::shared_mutex _zoneCacheMutex;
+    mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::SPATIAL_GRID> _zoneCacheMutex;
     std::unordered_map<uint32, std::unique_ptr<ZoneCache>> _zoneCaches;
 
     // Update queue (lock-free SPSC)

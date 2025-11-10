@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include <vector>
 #include <unordered_map>
@@ -169,7 +170,7 @@ private:
     float _formationDirection;
     float _formationSpacing;
     float _formationRadius;
-    mutable std::recursive_mutex _formationMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _formationMutex;
 
     // Movement tracking
     Position _lastCenterPosition;
@@ -180,7 +181,7 @@ private:
     // Terrain and obstacle data
     std::vector<Position> _knownObstacles;
     std::unordered_map<uint32, Position> _terrainAdjustments;
-    mutable std::recursive_mutex _terrainMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _terrainMutex;
 
     // Performance tracking
     FormationMetrics _metrics;

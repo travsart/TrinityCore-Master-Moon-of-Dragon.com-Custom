@@ -2,6 +2,7 @@
 #define PLAYERBOT_AUCTION_MANAGER_H
 
 #include "Common.h"
+#include "Threading/LockHierarchy.h"
 #include "AI/BehaviorManager.h"
 #include "ObjectGuid.h"
 #include "DatabaseEnv.h"
@@ -242,7 +243,7 @@ namespace Playerbot
         std::atomic<uint32> _activeAuctionCount{0};
 
         // Thread safety
-        mutable std::recursive_mutex _mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _mutex;
 
         // Configuration
         uint32 _maxActiveAuctions;

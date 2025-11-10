@@ -43,9 +43,7 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     // Initialize component managers for class-specific mechanics
     _actionQueue = std::make_unique<ActionPriorityQueue>();
     _cooldownManager = std::make_unique<CooldownManager>();
-    _resourceManager = std::make_unique<ResourceManager>(bot);
-
-    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
+    _resourceManager = std::make_unique<ResourceManager>(bot);    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
                  bot ? bot->GetName() : "null");
 }
 
@@ -106,14 +104,11 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 // COMBAT STATE MANAGEMENT
 // ============================================================================
 
-void ClassAI::OnCombatStart(::Unit* target)
-{
+void ClassAI::OnCombatStart(::Unit* target){
     // Called by BotAI when entering combat
     _inCombat = true;
     _combatTime = 0;
-    _currentCombatTarget = target;
-
-    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
+    _currentCombatTarget = target;    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
 
     // Let BotAI handle base combat start logic
@@ -228,10 +223,19 @@ void ClassAI::UpdateTargeting()
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
+            // CRITICAL FIX: Actually assign the entity pointer!
+            // BUG: Previous code retrieved snapshot but never assigned entity variable
+            entity = ObjectAccessor::GetCreature(*GetBot(), guid);
         }
         if (!entity)
             continue;
-        // Original filtering logic from searcher goes here
+
+        // Apply original filtering logic: check if valid attack target
+        if (!GetBot()->IsValidAttackTarget(entity))
+            continue;
+
+        // Add to targets list for distance sorting
+        targets.push_back(entity);
     }
     // End of spatial grid fix
 
@@ -244,8 +248,7 @@ void ClassAI::UpdateTargeting()
         if (distanceSq < nearestDistanceSq)
         {
             nearestDistanceSq = distanceSq;
-            nearestEnemy = target;
-        }
+            nearestEnemy = target;        }
     }
 
     return nearestEnemy;
@@ -267,8 +270,7 @@ void ClassAI::UpdateTargeting()
     Group* group = GetBot()->GetGroup();
     for (GroupReference* itr : *group)
     {
-        if (Player* member = itr->GetSource())
-        {
+        if (Player* member = itr->GetSource())        {
             if (!member->IsAlive() || !member->IsWithinDistInMap(GetBot(), 40.0f))
                 continue;
 
@@ -415,7 +417,6 @@ bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
     GetBot()->CastSpell(target, spellId, false);
     ConsumeResource(spellId);
     _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
-
     return true;
 }
 
@@ -444,8 +445,7 @@ uint32 ClassAI::GetAuraStacks(uint32 spellId, ::Unit* target)
     if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        return aura->GetStackAmount();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetStackAmount();
 
     return 0;
 }
@@ -456,8 +456,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
     if (!checkTarget)
         return 0;
 
-    if (Aura* aura = checkTarget->GetAura(spellId))
-        return aura->GetDuration();
+    if (Aura* aura = checkTarget->GetAura(spellId))        return aura->GetDuration();
 
     return 0;
 }

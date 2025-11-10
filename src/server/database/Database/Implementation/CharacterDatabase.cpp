@@ -804,6 +804,8 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_DEL_CHARACTER_BANK_TAB_SETTINGS, "DELETE FROM character_bank_tab_settings WHERE characterGuid = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_CHARACTER_BANK_TAB_SETTINGS, "INSERT INTO character_bank_tab_settings (characterGuid, tabId, name, icon, description, depositFlags) VALUES (?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
+    // Playerbot module statements
+    PrepareStatement(CHAR_SEL_BOT_TALENT_LOADOUTS, "SELECT class_id, spec_id, min_level, max_level, talent_string, hero_talent_string, description FROM playerbot_talent_loadouts ORDER BY class_id, spec_id, min_level", CONNECTION_SYNCH);
 }
 
 CharacterDatabaseConnection::CharacterDatabaseConnection(MySQLConnectionInfo& connInfo, ConnectionFlags connectionFlags) : MySQLConnection(connInfo, connectionFlags)

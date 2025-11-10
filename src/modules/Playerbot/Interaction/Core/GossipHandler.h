@@ -11,6 +11,7 @@
 #define TRINITYCORE_BOT_GOSSIP_HANDLER_H
 
 #include "InteractionTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include <unordered_map>
 #include <vector>
@@ -194,7 +195,7 @@ namespace Playerbot
 
     private:
         // Thread safety
-        mutable std::recursive_mutex m_mutex;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
 
         // Gossip path cache: [creatureEntry][interactionType] = path
         std::unordered_map<uint32, std::unordered_map<InteractionType, std::vector<uint32>>> m_gossipPathCache;

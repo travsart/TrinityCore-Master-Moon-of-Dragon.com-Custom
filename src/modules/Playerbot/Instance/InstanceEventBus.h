@@ -11,7 +11,9 @@
 #define PLAYERBOT_INSTANCE_EVENT_BUS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IInstanceEventBus.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -61,23 +63,23 @@ struct InstanceEvent
     std::string ToString() const;
 };
 
-class TC_GAME_API InstanceEventBus
+class TC_GAME_API InstanceEventBus final : public IInstanceEventBus
 {
 public:
     static InstanceEventBus* instance();
-    bool PublishEvent(InstanceEvent const& event);
+    bool PublishEvent(InstanceEvent const& event) override;
 
     using EventHandler = std::function<void(InstanceEvent const&)>;
 
-    void Subscribe(BotAI* subscriber, std::vector<InstanceEventType> const& types);
-    void SubscribeAll(BotAI* subscriber);
-    void Unsubscribe(BotAI* subscriber);
+    void Subscribe(BotAI* subscriber, std::vector<InstanceEventType> const& types) override;
+    void SubscribeAll(BotAI* subscriber) override;
+    void Unsubscribe(BotAI* subscriber) override;
 
-    uint32 SubscribeCallback(EventHandler handler, std::vector<InstanceEventType> const& types);
-    void UnsubscribeCallback(uint32 subscriptionId);
+    uint32 SubscribeCallback(EventHandler handler, std::vector<InstanceEventType> const& types) override;
+    void UnsubscribeCallback(uint32 subscriptionId) override;
 
-    uint64 GetTotalEventsPublished() const { return _totalEventsPublished; }
-    uint64 GetEventCount(InstanceEventType type) const;
+    uint64 GetTotalEventsPublished() const override { return _totalEventsPublished; }
+    uint64 GetEventCount(InstanceEventType type) const override;
 
 private:
     InstanceEventBus() = default;
@@ -98,7 +100,7 @@ private:
     std::unordered_map<InstanceEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
-    mutable std::recursive_mutex _subscriberMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriberMutex;
 };
 
 } // namespace Playerbot

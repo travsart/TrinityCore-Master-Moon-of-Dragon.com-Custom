@@ -26,6 +26,9 @@
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -126,6 +129,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     std::unordered_map<ObjectGuid, uint32> _riptideTargets; // GUID -> expiration time
 };
 
@@ -190,8 +194,7 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit RestorationShamanRefactored(Player* bot)
-        : HealerSpecialization<ManaResource>(bot)
+    explicit RestorationShamanRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
         , ShamanSpecialization(bot)
         , _riptideTracker()
         , _earthShieldTracker()
@@ -203,28 +206,39 @@ public:
         , _lastCloudburstTotemTime(0)
         , _lastEarthenWallTotemTime(0)
         , _lastAncestralProtectionTotemTime(0)
+        , _cooldowns()
     {
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {RESTO_SHAMAN_HEALING_TIDE_TOTEM, 180000, 1},
+            {RESTO_SHAMAN_SPIRIT_LINK_TOTEM, 180000, 1},
+            {RESTO_SHAMAN_ASCENDANCE, 180000, 1},
+            {RESTO_SHAMAN_CLOUDBURST_TOTEM, 30000, 1}
+        });
+
         // Resource initialization handled by base class CombatSpecializationTemplate
-        InitializeCooldowns();
+
+        // Phase 5: Initialize decision systems
+        InitializeRestorationShamanMechanics();
+
         TC_LOG_DEBUG("playerbot", "RestorationShamanRefactored initialized for {}", bot->GetName());
     }
 
     void UpdateRotation(::Unit* target) override
     {
-        Player* bot = this->GetBot();
-        if (!target || !bot)
+        Player* bot = this->GetBot();        if (!target || !bot)
             return;
 
         UpdateRestorationState();
 
         // Restoration is a healer - check group health first
         if (Group* group = bot->GetGroup())
+        
         {
             std::vector<Unit*> groupMembers;
             for (GroupReference const& ref : group->GetMembers())
             {
-                if (Player* member = ref.GetSource())
-                {
+                if (Player* member = ref.GetSource())                {
                     if (member->IsAlive() && bot->IsInMap(member))
                         groupMembers.push_back(member);
                 }
@@ -291,15 +305,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastAscendanceTime = 0;
-        _lastHealingTideTotemTime = 0;
-        _lastSpiritLinkTotemTime = 0;
-        _lastCloudburstTotemTime = 0;
-        _lastEarthenWallTotemTime = 0;
-        _lastAncestralProtectionTotemTime = 0;
-    }
+    
 
     void UpdateRestorationState()
     {
@@ -311,9 +317,7 @@ private:
         _riptideTracker.Update(bot);
         _earthShieldTracker.Update(bot);
         UpdateCooldownStates();
-    }
-
-    void UpdateCooldownStates()
+    }    void UpdateCooldownStates()
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -327,8 +331,7 @@ private:
         {
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(REST_ASCENDANCE))
-                _ascendanceEndTime = getMSTime() + aura->GetDuration();
-        }
+                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
@@ -347,15 +350,12 @@ private:
 
         // Direct healing
         if (HandleDirectHealing(group))
-            return true;
-
-        return false;
+            return true;        return false;
     }
 
     bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
     {
-        Player* bot = this->GetBot();
-        if (!bot)
+        Player* bot = this->GetBot();        if (!bot)
             return false;
 
         // Ancestral Protection Totem (resurrect on death)
@@ -398,8 +398,7 @@ private:
         }
 
         // Spirit Link Totem (equalize health)
-        if (lowHealthCount >= 3 && (getMSTime() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD
-        {
+        if (lowHealthCount >= 3 && (getMSTime() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD        {
             if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot))
             {
                 this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
@@ -423,15 +422,22 @@ private:
 
         // Earthen Wall Totem (shield wall)
         if (lowHealthCount >= 3 && (getMSTime() - _lastEarthenWallTotemTime) >= 60000) // 60 sec CD
-        {
-            if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
+        {            if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
             {
                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
+                if (!tankTarget)
+                {
+                    return nullptr;
+                }
                 {
                     this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
                     _lastEarthenWallTotemTime = getMSTime();
                     return true;
                 }
+            if (!tankTarget)
+            {
+                return;
+            }
             }
         }
 
@@ -442,17 +448,22 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
-            return false;
-
-        uint32 activeRiptides = _riptideTracker.GetActiveRiptideCount();
+            return false;        uint32 activeRiptides = _riptideTracker.GetActiveRiptideCount();
 
         // Earth Shield on tank
         Unit* tankTarget = nullptr;
-        for (Unit* member : group)
-        {
+        for (Unit* member : group)        {
             if (member && IsTankRole(member))
             {
                 tankTarget = member;
+                if (!tankTarget)
+                {
+                    return;
+                }
+                if (!tankTarget)
+                {
+                    return;
+                }
                 break;
             }
         }
@@ -470,8 +481,7 @@ private:
         // Riptide on injured allies
         if (activeRiptides < group.size())
         {
-            for (Unit* member : group)
-            {
+            for (Unit* member : group)            {
                 if (member && member->GetHealthPct() < 90.0f)
                 {
                     if (_riptideTracker.NeedsRiptideRefresh(member->GetGUID()))
@@ -481,8 +491,7 @@ private:
                             this->CastSpell(member, REST_RIPTIDE);
                             _riptideTracker.ApplyRiptide(member->GetGUID(), 18000);
                             return true;
-                        }
-                    }
+                        }                    }
                 }
             }
         }
@@ -517,8 +526,7 @@ private:
                     stackedAlliesCount = nearbyCount;
                     stackedTarget = member;
                 }
-            }
-        }
+            }        }
 
         if (stackedAlliesCount >= 3 && stackedTarget)
         {
@@ -531,8 +539,7 @@ private:
 
         // Wellspring (instant AoE heal)
         if (stackedAlliesCount >= 4 && stackedTarget)
-        {
-            if (bot->HasSpell(REST_WELLSPRING))
+        {            if (bot->HasSpell(REST_WELLSPRING))
             {
                 if (this->CanCastSpell(REST_WELLSPRING, stackedTarget))
                 {
@@ -567,8 +574,7 @@ private:
 
         // Cloudburst Totem (store healing and release)
         if (injuredCount >= 3 && (getMSTime() - _lastCloudburstTotemTime) >= 30000) // 30 sec CD
-        {
-            if (bot->HasSpell(REST_CLOUDBURST_TOTEM))
+        {            if (bot->HasSpell(REST_CLOUDBURST_TOTEM))
             {
                 if (this->CanCastSpell(REST_CLOUDBURST_TOTEM, bot))
                 {
@@ -607,8 +613,7 @@ private:
                     this->CastSpell(member, REST_HEALING_WAVE);
                     return true;
                 }
-            }
-        }
+            }        }
 
         return false;
     }
@@ -668,8 +673,7 @@ private:
         {
             // Check if player has tank role based on class
             // Protection Paladin, Protection Warrior, Blood DK, Guardian Druid, Brewmaster Monk, Vengeance DH
-            uint8 playerClass = player->GetClass();
-            return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
+            uint8 playerClass = player->GetClass();            return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
                     playerClass == CLASS_DEATH_KNIGHT || playerClass == CLASS_DRUID ||
                     playerClass == CLASS_MONK || playerClass == CLASS_DEMON_HUNTER);
         }
@@ -690,6 +694,433 @@ private:
     uint32 _lastCloudburstTotemTime;
     uint32 _lastEarthenWallTotemTime;
     uint32 _lastAncestralProtectionTotemTime;
+    CooldownManager _cooldowns;
+
+    // ========================================================================
+    // PHASE 5: DECISION SYSTEM INTEGRATION
+    // ========================================================================
+
+    void InitializeRestorationShamanMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Raid-wide emergency healing
+            queue->RegisterSpell(REST_HEALING_TIDE_TOTEM, SpellPriority::EMERGENCY, SpellCategory::HEALING);
+            queue->AddCondition(REST_HEALING_TIDE_TOTEM, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                uint32 low = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) low++;
+                return low >= 4;
+            }, "4+ allies < 60% HP (totem, 3min CD)");
+
+            queue->RegisterSpell(REST_ANCESTRAL_PROTECTION_TOTEM, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(REST_ANCESTRAL_PROTECTION_TOTEM, [this](Player* bot, Unit*) {
+                if (!bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM)) return false;
+                auto group = this->GetGroupMembers();
+                uint32 critical = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 20.0f) critical++;
+                return critical >= 2;
+            }, "2+ allies < 20% HP (resurrect totem, 5min CD)");
+
+            // CRITICAL: Major healing cooldowns
+            queue->RegisterSpell(REST_ASCENDANCE, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(REST_ASCENDANCE, [this](Player*, Unit*) {
+                if (this->_ascendanceActive) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 60% HP (15s burst, 3min CD)");
+
+            queue->RegisterSpell(REST_SPIRIT_LINK_TOTEM, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(REST_SPIRIT_LINK_TOTEM, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 60% HP (equalize health, 3min CD)");
+
+            queue->RegisterSpell(REST_EARTHEN_WALL_TOTEM, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(REST_EARTHEN_WALL_TOTEM, [this](Player* bot, Unit*) {
+                if (!bot->HasSpell(REST_EARTHEN_WALL_TOTEM)) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 60% HP (shield wall, 60s CD)");
+
+            // HIGH: Core HoT and shield maintenance
+            queue->RegisterSpell(REST_EARTH_SHIELD, SpellPriority::HIGH, SpellCategory::DEFENSIVE);
+            queue->AddCondition(REST_EARTH_SHIELD, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) {
+                    if (m && this->IsTankRole(m) && !this->_earthShieldTracker.HasEarthShield(m->GetGUID()))
+                        return true;
+                }
+                return false;
+            }, "Tank needs Earth Shield (10min)");
+
+            queue->RegisterSpell(REST_RIPTIDE, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->AddCondition(REST_RIPTIDE, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) {
+                    if (m && m->GetHealthPct() < 90.0f && this->_riptideTracker.NeedsRiptideRefresh(m->GetGUID()))
+                        return true;
+                }
+                return false;
+            }, "Ally < 90% HP needs Riptide (18s HoT)");
+
+            // MEDIUM: AoE healing
+            queue->RegisterSpell(REST_HEALING_RAIN, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(REST_HEALING_RAIN, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* anchor : group) {
+                    if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
+                    uint32 nearby = 0;
+                    for (auto* m : group)
+                        if (m && anchor->GetDistance(m) <= 10.0f && m->GetHealthPct() < 80.0f)
+                            nearby++;
+                    if (nearby >= 3) return true;
+                }
+                return false;
+            }, "3+ stacked allies < 80% HP (ground AoE)");
+
+            queue->RegisterSpell(REST_WELLSPRING, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(REST_WELLSPRING, [this](Player* bot, Unit*) {
+                if (!bot->HasSpell(REST_WELLSPRING)) return false;
+                auto group = this->GetGroupMembers();
+                for (auto* anchor : group) {
+                    if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
+                    uint32 nearby = 0;
+                    for (auto* m : group)
+                        if (m && anchor->GetDistance(m) <= 10.0f && m->GetHealthPct() < 80.0f)
+                            nearby++;
+                    if (nearby >= 4) return true;
+                }
+                return false;
+            }, "4+ stacked allies < 80% HP (instant AoE)");
+
+            queue->RegisterSpell(REST_CHAIN_HEAL, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(REST_CHAIN_HEAL, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
+                return injured >= 2;
+            }, "2+ allies < 80% HP (bouncing heal)");
+
+            queue->RegisterSpell(REST_CLOUDBURST_TOTEM, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(REST_CLOUDBURST_TOTEM, [this](Player* bot, Unit*) {
+                if (!bot->HasSpell(REST_CLOUDBURST_TOTEM)) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 80% HP (store + release heal, 30s CD)");
+
+            // LOW: Direct single-target healing
+            queue->RegisterSpell(REST_HEALING_SURGE, SpellPriority::LOW, SpellCategory::HEALING);
+            queue->AddCondition(REST_HEALING_SURGE, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) return true;
+                return false;
+            }, "Ally < 50% HP (fast emergency heal)");
+
+            queue->RegisterSpell(REST_HEALING_WAVE, SpellPriority::LOW, SpellCategory::HEALING);
+            queue->AddCondition(REST_HEALING_WAVE, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) return true;
+                return false;
+            }, "Ally < 80% HP (efficient heal)");
+
+            // UTILITY: Defensive and buffs
+            queue->RegisterSpell(REST_ASTRAL_SHIFT, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(REST_ASTRAL_SHIFT, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "HP < 40% (40% dmg reduction)");
+
+            queue->RegisterSpell(REST_SPIRITWALKERS_GRACE, SpellPriority::HIGH, SpellCategory::UTILITY);
+            queue->AddCondition(REST_SPIRITWALKERS_GRACE, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 60.0f && bot->HasUnitMovementFlag(MOVEMENTFLAG_FORWARD);
+            }, "HP < 60% while moving (heal while moving)");
+
+            queue->RegisterSpell(REST_WATER_SHIELD, SpellPriority::LOW, SpellCategory::UTILITY);
+            queue->AddCondition(REST_WATER_SHIELD, [](Player* bot, Unit*) {
+                return bot && !bot->HasAura(REST_WATER_SHIELD);
+            }, "No Water Shield (mana regen)");
+
+            queue->RegisterSpell(REST_WIND_SHEAR, SpellPriority::HIGH, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(REST_WIND_SHEAR, [](Player*, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            queue->RegisterSpell(REST_PURIFY_SPIRIT, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(REST_PURIFY_SPIRIT, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) {
+                    if (m && (m->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE) ||
+                               m->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED)))
+                        return true;
+                }
+                return false;
+            }, "Ally has curse/magic/poison (dispel)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Restoration Shaman Healing", {
+                // Tier 1: Emergency Raid Healing
+                Sequence("Emergency Totems", {
+                    Condition("4+ low HP", [this](Player*) {
+                        auto group = this->GetGroupMembers();
+                        uint32 low = 0;
+                        for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) low++;
+                        return low >= 4;
+                    }),
+                    Selector("Use emergency", {
+                        Sequence("Healing Tide Totem", {
+                            Action("Cast HTT", [this](Player* bot) {
+                                if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
+                                    this->CastSpell(bot, REST_HEALING_TIDE_TOTEM);
+                                    this->_lastHealingTideTotemTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Ancestral Protection", {
+                            Condition("2+ critical", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                uint32 critical = 0;
+                                for (auto* m : group) if (m && m->GetHealthPct() < 20.0f) critical++;
+                                return critical >= 2;
+                            }),
+                            Condition("Has spell", [this](Player* bot) {
+                                return bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM);
+                            }),
+                            Action("Cast APT", [this](Player* bot) {
+                                if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
+                                    this->CastSpell(bot, REST_ANCESTRAL_PROTECTION_TOTEM);
+                                    this->_lastAncestralProtectionTotemTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Major Healing Cooldowns
+                Sequence("Major Cooldowns", {
+                    Condition("3+ injured", [this](Player*) {
+                        auto group = this->GetGroupMembers();
+                        uint32 injured = 0;
+                        for (auto* m : group) if (m && m->GetHealthPct() < 60.0f) injured++;
+                        return injured >= 3;
+                    }),
+                    Selector("Use cooldowns", {
+                        Sequence("Ascendance", {
+                            Condition("Not active", [this](Player*) {
+                                return !this->_ascendanceActive;
+                            }),
+                            Action("Cast Ascendance", [this](Player* bot) {
+                                if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
+                                    this->CastSpell(bot, REST_ASCENDANCE);
+                                    this->_ascendanceActive = true;
+                                    this->_ascendanceEndTime = getMSTime() + 15000;
+                                    this->_lastAscendanceTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Spirit Link Totem", {
+                            Action("Cast SLT", [this](Player* bot) {
+                                if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
+                                    this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
+                                    this->_lastSpiritLinkTotemTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Earthen Wall Totem", {
+                            Condition("Has spell", [this](Player* bot) {
+                                return bot->HasSpell(REST_EARTHEN_WALL_TOTEM);
+                            }),
+                            Action("Cast EWT", [this](Player* bot) {
+                                if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
+                                    this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
+                                    this->_lastEarthenWallTotemTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: HoT and Shield Maintenance
+                Sequence("Maintain HoTs", {
+                    Selector("Apply HoTs", {
+                        Sequence("Earth Shield Tank", {
+                            Action("Cast Earth Shield", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && this->IsTankRole(m) && !this->_earthShieldTracker.HasEarthShield(m->GetGUID())) {
+                                        if (this->CanCastSpell(REST_EARTH_SHIELD, m)) {
+                                            this->CastSpell(m, REST_EARTH_SHIELD);
+                                            this->_earthShieldTracker.ApplyEarthShield(m->GetGUID(), 600000);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Riptide Spread", {
+                            Action("Cast Riptide", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 90.0f && this->_riptideTracker.NeedsRiptideRefresh(m->GetGUID())) {
+                                        if (this->CanCastSpell(REST_RIPTIDE, m)) {
+                                            this->CastSpell(m, REST_RIPTIDE);
+                                            this->_riptideTracker.ApplyRiptide(m->GetGUID(), 18000);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: AoE Healing
+                Sequence("AoE Healing", {
+                    Condition("2+ injured", [this](Player*) {
+                        auto group = this->GetGroupMembers();
+                        uint32 injured = 0;
+                        for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
+                        return injured >= 2;
+                    }),
+                    Selector("Cast AoE", {
+                        Sequence("Healing Rain", {
+                            Condition("3+ stacked", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* anchor : group) {
+                                    if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
+                                    uint32 nearby = 0;
+                                    for (auto* m : group)
+                                        if (m && anchor->GetDistance(m) <= 10.0f && m->GetHealthPct() < 80.0f)
+                                            nearby++;
+                                    if (nearby >= 3) return true;
+                                }
+                                return false;
+                            }),
+                            Action("Cast Healing Rain", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* anchor : group) {
+                                    if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
+                                    uint32 nearby = 0;
+                                    for (auto* m : group)
+                                        if (m && anchor->GetDistance(m) <= 10.0f && m->GetHealthPct() < 80.0f)
+                                            nearby++;
+                                    if (nearby >= 3 && this->CanCastSpell(REST_HEALING_RAIN, anchor)) {
+                                        this->CastSpell(anchor, REST_HEALING_RAIN);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Chain Heal", {
+                            Action("Cast Chain Heal", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 75.0f) {
+                                        if (this->CanCastSpell(REST_CHAIN_HEAL, m)) {
+                                            this->CastSpell(m, REST_CHAIN_HEAL);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 5: Direct Healing
+                Sequence("Direct Healing", {
+                    Selector("Cast heals", {
+                        Sequence("Healing Surge", {
+                            Condition("Ally < 50%", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) return true;
+                                return false;
+                            }),
+                            Action("Cast Healing Surge", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 50.0f) {
+                                        if (this->CanCastSpell(REST_HEALING_SURGE, m)) {
+                                            this->CastSpell(m, REST_HEALING_SURGE);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Healing Wave", {
+                            Action("Cast Healing Wave", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 80.0f) {
+                                        if (this->CanCastSpell(REST_HEALING_WAVE, m)) {
+                                            this->CastSpell(m, REST_HEALING_WAVE);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
+
+    [[nodiscard]] std::vector<Unit*> GetGroupMembers() const
+    {
+        std::vector<Unit*> members;
+        Player* bot = this->GetBot();
+        if (!bot) return members;
+
+        Group* group = bot->GetGroup();
+        if (!group) return members;
+
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            if (Player* member = ref.GetSource())
+            {
+                if (member->IsAlive() && bot->IsInMap(member))
+                    members.push_back(member);
+            }
+        }
+        return members;
+    }
 };
 
 } // namespace Playerbot

@@ -10,6 +10,8 @@
 #pragma once
 
 #include "Define.h"
+#include "Core/DI/Interfaces/IMountManager.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
@@ -104,7 +106,7 @@ struct MountAutomationProfile
  * - Zone-based mount selection
  * - Performance optimized
  */
-class TC_GAME_API MountManager
+class TC_GAME_API MountManager final : public IMountManager
 {
 public:
     static MountManager* instance();
@@ -116,32 +118,32 @@ public:
     /**
      * Initialize mount system on server startup
      */
-    void Initialize();
+    void Initialize() override;
 
     /**
      * Update mount automation for player (called periodically)
      */
-    void Update(::Player* player, uint32 diff);
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Mount player with best available mount
      */
-    bool MountPlayer(::Player* player);
+    bool MountPlayer(::Player* player) override;
 
     /**
      * Dismount player
      */
-    bool DismountPlayer(::Player* player);
+    bool DismountPlayer(::Player* player) override;
 
     /**
      * Check if player is mounted
      */
-    bool IsMounted(::Player* player) const;
+    bool IsMounted(::Player* player) const override;
 
     /**
      * Check if player should auto-mount (distance check)
      */
-    bool ShouldAutoMount(::Player* player, Position const& destination) const;
+    bool ShouldAutoMount(::Player* player, Position const& destination) const override;
 
     // ============================================================================
     // MOUNT SELECTION
@@ -150,42 +152,42 @@ public:
     /**
      * Get best mount for current zone and player state
      */
-    MountInfo const* GetBestMount(::Player* player) const;
+    MountInfo const* GetBestMount(::Player* player) const override;
 
     /**
      * Get flying mount if zone allows flying
      */
-    MountInfo const* GetFlyingMount(::Player* player) const;
+    MountInfo const* GetFlyingMount(::Player* player) const override;
 
     /**
      * Get ground mount
      */
-    MountInfo const* GetGroundMount(::Player* player) const;
+    MountInfo const* GetGroundMount(::Player* player) const override;
 
     /**
      * Get aquatic mount for underwater travel
      */
-    MountInfo const* GetAquaticMount(::Player* player) const;
+    MountInfo const* GetAquaticMount(::Player* player) const override;
 
     /**
      * Get dragonriding mount
      */
-    MountInfo const* GetDragonridingMount(::Player* player) const;
+    MountInfo const* GetDragonridingMount(::Player* player) const override;
 
     /**
      * Check if player can use flying mount in current zone
      */
-    bool CanUseFlyingMount(::Player* player) const;
+    bool CanUseFlyingMount(::Player* player) const override;
 
     /**
      * Check if player is underwater
      */
-    bool IsPlayerUnderwater(::Player* player) const;
+    bool IsPlayerUnderwater(::Player* player) const override;
 
     /**
      * Check if zone allows dragonriding
      */
-    bool CanUseDragonriding(::Player* player) const;
+    bool CanUseDragonriding(::Player* player) const override;
 
     // ============================================================================
     // MOUNT COLLECTION
@@ -194,27 +196,27 @@ public:
     /**
      * Get all mounts player knows
      */
-    std::vector<MountInfo> GetPlayerMounts(::Player* player) const;
+    std::vector<MountInfo> GetPlayerMounts(::Player* player) const override;
 
     /**
      * Check if player knows mount
      */
-    bool KnowsMount(::Player* player, uint32 spellId) const;
+    bool KnowsMount(::Player* player, uint32 spellId) const override;
 
     /**
      * Learn mount spell
      */
-    bool LearnMount(::Player* player, uint32 spellId);
+    bool LearnMount(::Player* player, uint32 spellId) override;
 
     /**
      * Get mount count for player
      */
-    uint32 GetMountCount(::Player* player) const;
+    uint32 GetMountCount(::Player* player) const override;
 
     /**
      * Check if mount is usable by player (level, skill, class restrictions)
      */
-    bool CanUseMount(::Player* player, MountInfo const& mount) const;
+    bool CanUseMount(::Player* player, MountInfo const& mount) const override;
 
     // ============================================================================
     // RIDING SKILL
@@ -223,22 +225,22 @@ public:
     /**
      * Get player riding skill level
      */
-    uint32 GetRidingSkill(::Player* player) const;
+    uint32 GetRidingSkill(::Player* player) const override;
 
     /**
      * Check if player has riding skill
      */
-    bool HasRidingSkill(::Player* player) const;
+    bool HasRidingSkill(::Player* player) const override;
 
     /**
      * Learn riding skill (apprentice, journeyman, expert, artisan, master)
      */
-    bool LearnRidingSkill(::Player* player, uint32 skillLevel);
+    bool LearnRidingSkill(::Player* player, uint32 skillLevel) override;
 
     /**
      * Get max mount speed based on riding skill
      */
-    MountSpeed GetMaxMountSpeed(::Player* player) const;
+    MountSpeed GetMaxMountSpeed(::Player* player) const override;
 
     // ============================================================================
     // MULTI-PASSENGER MOUNTS
@@ -247,29 +249,29 @@ public:
     /**
      * Check if mount is multi-passenger
      */
-    bool IsMultiPassengerMount(MountInfo const& mount) const;
+    bool IsMultiPassengerMount(MountInfo const& mount) const override;
 
     /**
      * Get available passenger seats
      */
-    uint32 GetAvailablePassengerSeats(::Player* player) const;
+    uint32 GetAvailablePassengerSeats(::Player* player) const override;
 
     /**
      * Add passenger to mount
      */
-    bool AddPassenger(::Player* mountedPlayer, ::Player* passenger);
+    bool AddPassenger(::Player* mountedPlayer, ::Player* passenger) override;
 
     /**
      * Remove passenger from mount
      */
-    bool RemovePassenger(::Player* passenger);
+    bool RemovePassenger(::Player* passenger) override;
 
     // ============================================================================
     // AUTOMATION PROFILES
     // ============================================================================
 
-    void SetAutomationProfile(uint32 playerGuid, MountAutomationProfile const& profile);
-    MountAutomationProfile GetAutomationProfile(uint32 playerGuid) const;
+    void SetAutomationProfile(uint32 playerGuid, MountAutomationProfile const& profile) override;
+    MountAutomationProfile GetAutomationProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // METRICS
@@ -306,17 +308,17 @@ private:
     // INITIALIZATION HELPERS
     // ============================================================================
 
-    void LoadMountDatabase();
-    void InitializeVanillaMounts();
-    void InitializeTBCMounts();
-    void InitializeWrathMounts();
-    void InitializeCataclysmMounts();
-    void InitializePandariaMounts();
-    void InitializeDraenorMounts();
-    void InitializeLegionMounts();
-    void InitializeBfAMounts();
-    void InitializeShadowlandsMounts();
-    void InitializeDragonflightMounts();
+    void LoadMountDatabase() override;
+    void InitializeVanillaMounts() override;
+    void InitializeTBCMounts() override;
+    void InitializeWrathMounts() override;
+    void InitializeCataclysmMounts() override;
+    void InitializePandariaMounts() override;
+    void InitializeDraenorMounts() override;
+    void InitializeLegionMounts() override;
+    void InitializeBfAMounts() override;
+    void InitializeShadowlandsMounts() override;
+    void InitializeDragonflightMounts() override;
     void InitializeWarWithinMounts();
 
     // ============================================================================
@@ -368,7 +370,7 @@ private:
     std::unordered_map<uint32, MountMetrics> _playerMetrics;
     MountMetrics _globalMetrics;
 
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 MOUNT_UPDATE_INTERVAL = 5000;  // 5 seconds

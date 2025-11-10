@@ -10,8 +10,10 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
+#include "../Core/DI/Interfaces/IRoleAssignment.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -122,46 +124,46 @@ struct GroupComposition
     }
 };
 
-class TC_GAME_API RoleAssignment
+class TC_GAME_API RoleAssignment final : public IRoleAssignment
 {
 public:
     static RoleAssignment* instance();
 
     // Core role assignment
-    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL);
-    bool AssignRole(uint32 playerGuid, GroupRole role, Group* group);
-    bool SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* group);
-    void OptimizeRoleDistribution(Group* group);
+    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL) override;
+    bool AssignRole(uint32 playerGuid, GroupRole role, Group* group) override;
+    bool SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* group) override;
+    void OptimizeRoleDistribution(Group* group) override;
 
     // Role analysis and scoring
-    PlayerRoleProfile AnalyzePlayerCapabilities(Player* player);
-    std::vector<RoleScore> CalculateRoleScores(Player* player, Group* group);
-    GroupRole RecommendRole(Player* player, Group* group);
-    float CalculateRoleSynergy(Player* player, GroupRole role, Group* group);
+    PlayerRoleProfile AnalyzePlayerCapabilities(Player* player) override;
+    std::vector<RoleScore> CalculateRoleScores(Player* player, Group* group) override;
+    GroupRole RecommendRole(Player* player, Group* group) override;
+    float CalculateRoleSynergy(Player* player, GroupRole role, Group* group) override;
 
     // Group composition analysis
-    GroupComposition AnalyzeGroupComposition(Group* group);
-    bool IsCompositionViable(const GroupComposition& composition);
-    std::vector<GroupRole> GetMissingRoles(Group* group);
-    std::vector<uint32> FindPlayersForRole(GroupRole role, const std::vector<Player*>& candidates);
+    GroupComposition AnalyzeGroupComposition(Group* group) override;
+    bool IsCompositionViable(const GroupComposition& composition) override;
+    std::vector<GroupRole> GetMissingRoles(Group* group) override;
+    std::vector<uint32> FindPlayersForRole(GroupRole role, const std::vector<Player*>& candidates) override;
 
     // Dynamic role adjustment
-    void HandleRoleConflict(Group* group, GroupRole conflictedRole);
-    void RebalanceRoles(Group* group);
-    void AdaptToGroupChanges(Group* group, Player* newMember = nullptr, Player* leavingMember = nullptr);
-    bool CanPlayerSwitchRole(Player* player, GroupRole newRole, Group* group);
+    void HandleRoleConflict(Group* group, GroupRole conflictedRole) override;
+    void RebalanceRoles(Group* group) override;
+    void AdaptToGroupChanges(Group* group, Player* newMember = nullptr, Player* leavingMember = nullptr) override;
+    bool CanPlayerSwitchRole(Player* player, GroupRole newRole, Group* group) override;
 
     // Content-specific role optimization
-    void OptimizeForDungeon(Group* group, uint32 dungeonId);
-    void OptimizeForRaid(Group* group, uint32 raidId);
-    void OptimizeForPvP(Group* group, uint32 battlegroundId);
-    void OptimizeForQuesting(Group* group, uint32 questId);
+    void OptimizeForDungeon(Group* group, uint32 dungeonId) override;
+    void OptimizeForRaid(Group* group, uint32 raidId) override;
+    void OptimizeForPvP(Group* group, uint32 battlegroundId) override;
+    void OptimizeForQuesting(Group* group, uint32 questId) override;
 
     // Role preferences and constraints
-    void SetPlayerRolePreference(uint32 playerGuid, GroupRole preferredRole);
-    GroupRole GetPlayerRolePreference(uint32 playerGuid);
-    void SetRoleFlexibility(uint32 playerGuid, bool isFlexible);
-    void AddRoleConstraint(uint32 playerGuid, GroupRole role, RoleCapability capability);
+    void SetPlayerRolePreference(uint32 playerGuid, GroupRole preferredRole) override;
+    GroupRole GetPlayerRolePreference(uint32 playerGuid) override;
+    void SetRoleFlexibility(uint32 playerGuid, bool isFlexible) override;
+    void AddRoleConstraint(uint32 playerGuid, GroupRole role, RoleCapability capability) override;
 
     // Role performance tracking
     struct RolePerformance
@@ -191,18 +193,18 @@ public:
         }
     };
 
-    RolePerformance GetPlayerRolePerformance(uint32 playerGuid, GroupRole role);
-    void UpdateRolePerformance(uint32 playerGuid, GroupRole role, bool wasSuccessful, float effectiveness);
+    RolePerformance GetPlayerRolePerformance(uint32 playerGuid, GroupRole role) override;
+    void UpdateRolePerformance(uint32 playerGuid, GroupRole role, bool wasSuccessful, float effectiveness) override;
 
     // Role assignment validation
-    bool ValidateRoleAssignment(Group* group);
-    std::vector<std::string> GetRoleAssignmentIssues(Group* group);
-    bool CanGroupFunction(Group* group);
+    bool ValidateRoleAssignment(Group* group) override;
+    std::vector<std::string> GetRoleAssignmentIssues(Group* group) override;
+    bool CanGroupFunction(Group* group) override;
 
     // Emergency role filling
-    bool FillEmergencyRole(Group* group, GroupRole urgentRole);
-    std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel);
-    void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid);
+    bool FillEmergencyRole(Group* group, GroupRole urgentRole) override;
+    std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel) override;
+    void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid) override;
 
     // Role statistics and monitoring
     struct RoleStatistics
@@ -228,18 +230,18 @@ public:
         }
     };
 
-    RoleStatistics GetGlobalRoleStatistics();
-    void UpdateRoleStatistics();
+    RoleStatistics GetGlobalRoleStatistics() override;
+    void UpdateRoleStatistics() override;
 
     // Configuration and settings
-    void SetRoleAssignmentStrategy(Group* group, RoleAssignmentStrategy strategy);
-    void SetContentTypeRequirements(uint32 contentId, const std::unordered_map<GroupRole, uint32>& requirements);
+    void SetRoleAssignmentStrategy(Group* group, RoleAssignmentStrategy strategy) override;
+    void SetContentTypeRequirements(uint32 contentId, const std::unordered_map<GroupRole, uint32>& requirements) override;
     void EnableAutoRoleAssignment(bool enable) { _autoAssignmentEnabled = enable; }
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void RefreshPlayerProfiles();
-    void CleanupInactiveProfiles();
+    void Update(uint32 diff) override;
+    void RefreshPlayerProfiles() override;
+    void CleanupInactiveProfiles() override;
 
 private:
     RoleAssignment();
@@ -249,11 +251,11 @@ private:
     std::unordered_map<uint32, PlayerRoleProfile> _playerProfiles; // playerGuid -> profile
     std::unordered_map<uint32, GroupComposition> _groupCompositions; // groupId -> composition
     std::unordered_map<uint32, RoleAssignmentStrategy> _groupStrategies; // groupId -> strategy
-    mutable std::recursive_mutex _assignmentMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _assignmentMutex;
 
     // Role performance tracking
     std::unordered_map<uint32, std::unordered_map<GroupRole, RolePerformance>> _rolePerformance; // playerGuid -> role -> performance
-    mutable std::recursive_mutex _performanceMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _performanceMutex;
 
     // Content-specific requirements
     std::unordered_map<uint32, std::unordered_map<GroupRole, uint32>> _contentRequirements; // contentId -> role requirements

@@ -11,6 +11,7 @@
 #define PLAYERBOT_GROUP_SCRIPT_H
 
 #include "ScriptMgr.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include <array>
@@ -168,7 +169,7 @@ private:
 
     // State cache: GroupGUID → GroupState
     static inline std::unordered_map<ObjectGuid, GroupState> _groupStates;
-    static inline std::recursive_mutex _groupStatesMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupStatesMutex;
 
     // Polling helper functions
     static void CheckLootMethodChange(Group* group, GroupState& state);
@@ -201,7 +202,7 @@ private:
     };
 
     static inline PollStatistics _pollStats;
-    static inline std::recursive_mutex _pollStatsMutex;
+    static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _pollStatsMutex;
 };
 
 /**

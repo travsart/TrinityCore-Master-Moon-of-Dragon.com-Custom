@@ -71,6 +71,11 @@ void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std:
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+                    return;
+                }
             {
                 IssueCommand(member->GetGUID().GetCounter(), command, targets);
             }
@@ -191,12 +196,22 @@ Position GroupCoordination::GetFormationPosition(uint32 memberGuid) const
 }
 
 bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return nullptr;
+}
 {
     Position assignedPos = GetFormationPosition(memberGuid);
 
     if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(memberGuid)))
     {
         float distance = assignedPos.GetExactDist(player->GetPosition());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
         return distance <= tolerance;
     }
 
@@ -214,6 +229,11 @@ void GroupCoordination::MoveToPosition(const Position& destination, bool maintai
     MovementWaypoint waypoint(destination, 0.0f, true, "Group movement destination");
 
     // Clear current path and add new destination
+    if (!leader)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
+        return nullptr;
+    }
     while (!_movementPath.empty())
         _movementPath.pop();
 
@@ -225,6 +245,11 @@ void GroupCoordination::FollowLeader(uint32 leaderGuid, float distance)
     if (Player* leader = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(leaderGuid)))
     {
         Position leaderPos = leader->GetPosition();
+        if (!leader)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
+            return;
+        }
         UpdateFormation(leaderPos);
     }
 }
@@ -384,6 +409,11 @@ void GroupCoordination::ProcessCommandQueue()
 
         if (ValidateCommand(command))
         {
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+                return nullptr;
+            }
             ExecuteCommandInternal(command);
             _metrics.commandsExecuted.fetch_add(1);
         }
@@ -400,6 +430,11 @@ void GroupCoordination::UpdateTargetAssessment()
         if (Unit* unit = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTarget), guid))
         {
             target.lastKnownPosition = unit->GetPosition();
+            if (!unit)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+                return nullptr;
+            }
             target.lastSeen = getMSTime();
         }
     }
@@ -565,26 +600,681 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
 
 void GroupCoordination::HandleTankThreatManagement()
 {
-    // TODO: Implement tank-specific threat management
-    // This would coordinate taunt rotations, threat transfers, etc.
+    Group* group = sGroupMgr->GetGroupByGUID(_groupId);
+    if (!group)
+        return;
+
+    // Identify all tanks in the group
+    std::vector<Player*> tanks;
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        if (Player* member = itr.GetSource())
+        {
+            ChrSpecialization spec = member->GetPrimarySpecialization();
+            uint32 specId = static_cast<uint32>(spec);
+
+            // Check if tank spec
+            if (specId == 66 ||   // Protection Paladin
+                specId == 73 ||   // Protection Warrior
+                specId == 104 ||  // Guardian Druid
+                specId == 250 ||  // Blood Death Knight
+                specId == 268 ||  // Brewmaster Monk
+                specId == 581)    // Vengeance Demon Hunter
+            {
+                tanks.push_back(member);
+            }
+        }
+    }
+
+    if (tanks.empty())
+        return;
+
+    // Get primary target
+    Unit* primaryTarget = nullptr;
+    if (!_primaryTarget.IsEmpty())
+        primaryTarget = ObjectAccessor::GetUnit(*tanks[0], _primaryTarget);
+
+    if (!primaryTarget || !primaryTarget->IsAlive())
+        return;
+
+    // Analyze threat levels for each tank
+    std::unordered_map<Player*, float> tankThreat;
+    Player* currentTank = nullptr;
+    float highestThreat = 0.0f;
+
+    for (Player* tank : tanks)
+    {
+        float threat = primaryTarget->GetThreatManager().GetThreat(tank);
+        tankThreat[tank] = threat;
+
+        if (threat > highestThreat)
+        {
+            highestThreat = threat;
+            currentTank = tank;
+        }
+    }
+
+    // Implement taunt rotation for multi-tank encounters
+    if (tanks.size() >= 2)
+    {
+        // Check if current tank needs help (low health or high stacks of debuff)
+        if (currentTank && currentTank->GetHealthPct() < 40.0f)
+        {
+            // Find best backup tank
+            Player* backupTank = nullptr;
+            for (Player* tank : tanks)
+            {
+                if (tank != currentTank && tank->GetHealthPct() > 60.0f && !tank->HasUnitState(UNIT_STATE_CASTING))
+                {
+                    backupTank = tank;
+                    break;
+                }
+            }
+
+            // Coordinate taunt swap
+            if (backupTank)
+            {
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Coordinating tank swap from {} to {}",
+                             currentTank->GetName(), backupTank->GetName());
+
+                // Issue taunt command to backup tank
+                std::vector<uint32> targets;
+                targets.push_back(_primaryTarget.GetCounter());
+                IssueCommand(backupTank->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
+
+                // Tell current tank to use defensive cooldowns
+                IssueCommand(currentTank->GetGUID().GetCounter(), CoordinationCommand::DEFENSIVE_MODE, {});
+            }
+        }
+
+        // Balance threat among tanks to prepare for tank swaps
+        for (Player* tank : tanks)
+        {
+            if (tank == currentTank)
+                continue;
+
+            // Maintain threat on backup tanks (should be second in threat)
+            float backupThreatTarget = highestThreat * 0.7f; // 70% of main tank threat
+            if (tankThreat[tank] < backupThreatTarget * 0.5f) // If below 35% of main tank threat
+            {
+                // Tell backup tank to build threat
+                std::vector<uint32> targets;
+                targets.push_back(_primaryTarget.GetCounter());
+                IssueCommand(tank->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
+            }
+        }
+    }
+
+    // Monitor threat transfer and ensure smooth handoffs
+    HandleThreatRedirection(currentTank ? currentTank->GetGUID().GetCounter() : 0, 0);
+
+    TC_LOG_DEBUG("playerbot", "GroupCoordination: Tank threat management updated for group {}", _groupId);
 }
 
 void GroupCoordination::HandleHealerPriorities()
 {
-    // TODO: Implement healer coordination
-    // This would prioritize healing targets, coordinate dispelling, etc.
+    Group* group = sGroupMgr->GetGroupByGUID(_groupId);
+    if (!group)
+        return;
+
+    // Identify all healers in the group
+    std::vector<Player*> healers;
+    std::vector<Player*> groupMembers;
+
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        if (Player* member = itr.GetSource())
+        {
+            groupMembers.push_back(member);
+
+            ChrSpecialization spec = member->GetPrimarySpecialization();
+            uint32 specId = static_cast<uint32>(spec);
+
+            // Check if healer spec
+            if (specId == 65 ||    // Holy Paladin
+                specId == 256 ||   // Discipline Priest
+                specId == 257 ||   // Holy Priest
+                specId == 264 ||   // Restoration Shaman
+                specId == 270 ||   // Mistweaver Monk
+                specId == 105 ||   // Restoration Druid
+                specId == 1468)    // Preservation Evoker
+            {
+                healers.push_back(member);
+            }
+        }
+    }
+
+    if (healers.empty() || groupMembers.empty())
+        return;
+
+    // Build priority healing list based on health and role
+    struct HealingTarget
+    {
+        Player* player;
+        float healthPct;
+        uint32 priority;
+        bool hasDebuff;
+        bool isTank;
+
+        bool operator<(const HealingTarget& other) const
+        {
+            // Lower health = higher priority (higher numeric value)
+            if (priority != other.priority)
+                return priority > other.priority;
+            return healthPct < other.healthPct;
+        }
+    };
+
+    std::vector<HealingTarget> healingTargets;
+
+    for (Player* member : groupMembers)
+    {
+        if (!member || !member->IsAlive())
+            continue;
+
+        HealingTarget target;
+        target.player = member;
+        target.healthPct = member->GetHealthPct();
+        target.hasDebuff = false; // TODO: Check for removable debuffs
+        target.priority = 100;
+
+        // Determine role-based priority
+        ChrSpecialization spec = member->GetPrimarySpecialization();
+        uint32 specId = static_cast<uint32>(spec);
+
+        // Tanks get highest priority
+        if (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581)
+        {
+            target.isTank = true;
+            target.priority += 300;
+        }
+        // Healers get second priority
+        else if (specId == 65 || specId == 256 || specId == 257 || specId == 264 || specId == 270 || specId == 105 || specId == 1468)
+        {
+            target.isTank = false;
+            target.priority += 150;
+        }
+        // DPS get normal priority
+        else
+        {
+            target.isTank = false;
+            target.priority += 50;
+        }
+
+        // Health-based priority boost
+        if (target.healthPct < 20.0f)
+            target.priority += 1000; // Critical
+        else if (target.healthPct < 40.0f)
+            target.priority += 500; // High
+        else if (target.healthPct < 60.0f)
+            target.priority += 200; // Medium
+        else if (target.healthPct < 80.0f)
+            target.priority += 100; // Low
+
+        healingTargets.push_back(target);
+    }
+
+    // Sort by priority (highest first)
+    std::sort(healingTargets.begin(), healingTargets.end());
+
+    // Assign healing targets to healers
+    if (healers.size() == 1)
+    {
+        // Single healer: Focus on highest priority targets
+        Player* healer = healers[0];
+        for (const HealingTarget& target : healingTargets)
+        {
+            if (target.healthPct < 100.0f)
+            {
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Healer {} assigned to heal {} (priority: {}, HP: {:.1f}%)",
+                             healer->GetName(), target.player->GetName(), target.priority, target.healthPct);
+
+                // Only assign the top 2 priority targets to prevent spam
+                static uint32 assignCount = 0;
+                if (++assignCount >= 2)
+                    break;
+            }
+        }
+    }
+    else
+    {
+        // Multiple healers: Distribute healing assignments
+        uint32 healerIndex = 0;
+        for (const HealingTarget& target : healingTargets)
+        {
+            if (target.healthPct < 85.0f) // Only assign if healing is needed
+            {
+                Player* assignedHealer = healers[healerIndex % healers.size()];
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Healer {} assigned to heal {} (priority: {}, HP: {:.1f}%)",
+                             assignedHealer->GetName(), target.player->GetName(), target.priority, target.healthPct);
+
+                healerIndex++;
+
+                // Distribute among all healers
+                if (healerIndex >= healers.size() * 2) // Each healer gets max 2 assignments
+                    break;
+            }
+        }
+    }
+
+    // Coordinate dispelling (remove debuffs)
+    for (Player* healer : healers)
+    {
+        // Check if healer can dispel
+        bool canDispelMagic = false;
+        bool canDispelDisease = false;
+        bool canDispelPoison = false;
+        bool canDispelCurse = false;
+
+        ChrSpecialization spec = healer->GetPrimarySpecialization();
+        uint32 specId = static_cast<uint32>(spec);
+
+        // Priest (Magic, Disease)
+        if (specId == 256 || specId == 257)
+        {
+            canDispelMagic = true;
+            canDispelDisease = true;
+        }
+        // Paladin (Magic, Poison, Disease)
+        else if (specId == 65)
+        {
+            canDispelMagic = true;
+            canDispelPoison = true;
+            canDispelDisease = true;
+        }
+        // Shaman (Magic, Curse)
+        else if (specId == 264)
+        {
+            canDispelMagic = true;
+            canDispelCurse = true;
+        }
+        // Druid (Magic, Curse, Poison)
+        else if (specId == 105)
+        {
+            canDispelMagic = true;
+            canDispelCurse = true;
+            canDispelPoison = true;
+        }
+        // Monk (Magic, Poison, Disease)
+        else if (specId == 270)
+        {
+            canDispelMagic = true;
+            canDispelPoison = true;
+            canDispelDisease = true;
+        }
+        // Evoker (Magic, Poison, Curse, Disease, Bleed)
+        else if (specId == 1468)
+        {
+            canDispelMagic = true;
+            canDispelPoison = true;
+            canDispelCurse = true;
+            canDispelDisease = true;
+        }
+
+        // Find group members with dispellable debuffs
+        if (canDispelMagic || canDispelDisease || canDispelPoison || canDispelCurse)
+        {
+            for (Player* member : groupMembers)
+            {
+                if (!member || !member->IsAlive())
+                    continue;
+
+                // Check for debuffs that can be dispelled
+                // Note: Actual debuff checking would require iterating through auras
+                // This is a simplified check
+                TC_LOG_TRACE("playerbot", "GroupCoordination: Checking {} for dispellable debuffs", member->GetName());
+            }
+        }
+    }
+
+    // Coordinate mana management among healers
+    for (Player* healer : healers)
+    {
+        float manaPct = healer->GetPowerPct(POWER_MANA);
+        if (manaPct < 30.0f)
+        {
+            TC_LOG_DEBUG("playerbot", "GroupCoordination: Healer {} has low mana ({:.1f}%), requesting support",
+                         healer->GetName(), manaPct);
+
+            // Tell healer to use mana regeneration abilities
+            IssueCommand(healer->GetGUID().GetCounter(), CoordinationCommand::SAVE_COOLDOWNS, {});
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot", "GroupCoordination: Healer priorities updated for group {}", _groupId);
 }
 
 void GroupCoordination::HandleDPSTargeting()
 {
-    // TODO: Implement DPS coordination
-    // This would manage target switching, interrupt rotations, etc.
+    Group* group = sGroupMgr->GetGroupByGUID(_groupId);
+    if (!group)
+        return;
+
+    // Identify all DPS players in the group
+    std::vector<Player*> dpsPlayers;
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        if (Player* member = itr.GetSource())
+        {
+            ChrSpecialization spec = member->GetPrimarySpecialization();
+            uint32 specId = static_cast<uint32>(spec);
+
+            // Skip tanks and healers, rest are DPS
+            bool isTank = (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581);
+            bool isHealer = (specId == 65 || specId == 256 || specId == 257 || specId == 264 || specId == 270 || specId == 105 || specId == 1468);
+
+            if (!isTank && !isHealer)
+            {
+                dpsPlayers.push_back(member);
+            }
+        }
+    }
+
+    if (dpsPlayers.empty())
+        return;
+
+    // Get primary and secondary targets
+    std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
+    if (targetPriority.empty())
+        return;
+
+    // Assign DPS to primary target (focus fire)
+    ObjectGuid primaryTarget = GetPrimaryTarget();
+    if (!primaryTarget.IsEmpty())
+    {
+        // Issue focus fire command to all DPS
+        std::vector<uint32> targets;
+        targets.push_back(primaryTarget.GetCounter());
+        for (Player* dps : dpsPlayers)
+        {
+            IssueCommand(dps->GetGUID().GetCounter(), CoordinationCommand::FOCUS_FIRE, targets);
+            TC_LOG_DEBUG("playerbot", "GroupCoordination: DPS {} assigned to focus fire on primary target",
+                         dps->GetName());
+        }
+    }
+
+    // Coordinate interrupts among DPS
+    if (!primaryTarget.IsEmpty())
+    {
+        Unit* target = ObjectAccessor::GetUnit(*dpsPlayers[0], primaryTarget);
+        if (target && target->HasUnitState(UNIT_STATE_CASTING))
+        {
+            // Find first available DPS with interrupt capability
+            Player* interrupter = nullptr;
+            for (Player* dps : dpsPlayers)
+            {
+                // Check if DPS can interrupt (class-based)
+                uint8 classId = dps->getClass();
+                bool canInterrupt = false;
+
+                switch (classId)
+                {
+                    case CLASS_WARRIOR:     // Pummel
+                    case CLASS_ROGUE:       // Kick
+                    case CLASS_HUNTER:      // Counter Shot
+                    case CLASS_SHAMAN:      // Wind Shear
+                    case CLASS_MAGE:        // Counterspell
+                    case CLASS_WARLOCK:     // Spell Lock (pet)
+                    case CLASS_MONK:        // Spear Hand Strike
+                    case CLASS_DEMON_HUNTER:// Disrupt
+                    case CLASS_DEATH_KNIGHT:// Mind Freeze
+                    case CLASS_EVOKER:      // Quell
+                        canInterrupt = true;
+                        break;
+                    default:
+                        canInterrupt = false;
+                        break;
+                }
+
+                if (canInterrupt && !dps->HasUnitState(UNIT_STATE_CASTING))
+                {
+                    interrupter = dps;
+                    break;
+                }
+            }
+
+            if (interrupter)
+            {
+                std::vector<uint32> targets;
+                targets.push_back(primaryTarget.GetCounter());
+                IssueCommand(interrupter->GetGUID().GetCounter(), CoordinationCommand::INTERRUPT_CAST, targets);
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Assigned {} to interrupt cast on primary target",
+                             interrupter->GetName());
+            }
+        }
+    }
+
+    // Manage target switching for high-priority adds
+    if (targetPriority.size() > 1)
+    {
+        // Check if secondary targets need attention
+        for (size_t i = 1; i < targetPriority.size() && i < 4; ++i)
+        {
+            ObjectGuid secondaryGuid = targetPriority[i];
+            Unit* secondaryTarget = ObjectAccessor::GetUnit(*dpsPlayers[0], secondaryGuid);
+
+            if (!secondaryTarget || !secondaryTarget->IsAlive())
+                continue;
+
+            // Assign one DPS to handle secondary target if it's high threat
+            auto it = _targets.find(secondaryGuid);
+            if (it != _targets.end() && it->second.threatLevel >= ThreatLevel::HIGH)
+            {
+                // Find melee or ranged DPS closest to the target
+                Player* assignedDPS = nullptr;
+                float closestDistance = 100.0f;
+
+                for (Player* dps : dpsPlayers)
+                {
+                    float distance = dps->GetDistance(secondaryTarget);
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        assignedDPS = dps;
+                    }
+                }
+
+                if (assignedDPS)
+                {
+                    std::vector<uint32> targets;
+                    targets.push_back(secondaryGuid.GetCounter());
+                    IssueCommand(assignedDPS->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
+                    TC_LOG_DEBUG("playerbot", "GroupCoordination: DPS {} assigned to secondary target (threat: HIGH)",
+                                 assignedDPS->GetName());
+                }
+            }
+        }
+    }
+
+    // Coordinate cooldown usage during burn phase
+    if (_currentPhase == EncounterPhase::BURN)
+    {
+        for (Player* dps : dpsPlayers)
+        {
+            IssueCommand(dps->GetGUID().GetCounter(), CoordinationCommand::USE_COOLDOWNS, {});
+            TC_LOG_DEBUG("playerbot", "GroupCoordination: DPS {} instructed to use cooldowns for burn phase",
+                         dps->GetName());
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot", "GroupCoordination: DPS targeting updated for group {}", _groupId);
 }
 
 void GroupCoordination::HandleSupportActions()
 {
-    // TODO: Implement support coordination
-    // This would coordinate buffs, utility abilities, etc.
+    Group* group = sGroupMgr->GetGroupByGUID(_groupId);
+    if (!group)
+        return;
+
+    std::vector<Player*> groupMembers;
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        if (Player* member = itr.GetSource())
+            groupMembers.push_back(member);
+    }
+
+    if (groupMembers.empty())
+        return;
+
+    // Coordinate raid-wide buffs
+    struct BuffProvider
+    {
+        Player* player;
+        uint8 classId;
+        std::vector<uint32> providedBuffs;
+    };
+
+    std::vector<BuffProvider> buffProviders;
+
+    for (Player* member : groupMembers)
+    {
+        BuffProvider provider;
+        provider.player = member;
+        provider.classId = member->getClass();
+
+        // Identify what buffs this player can provide
+        switch (provider.classId)
+        {
+            case CLASS_WARRIOR:
+                provider.providedBuffs.push_back(6673); // Battle Shout
+                break;
+            case CLASS_PALADIN:
+                provider.providedBuffs.push_back(465); // Devotion Aura
+                provider.providedBuffs.push_back(183435); // Retribution Aura
+                break;
+            case CLASS_HUNTER:
+                provider.providedBuffs.push_back(13159); // Aspect of the Pack
+                break;
+            case CLASS_MAGE:
+                provider.providedBuffs.push_back(1459); // Arcane Intellect
+                break;
+            case CLASS_PRIEST:
+                provider.providedBuffs.push_back(21562); // Power Word: Fortitude
+                break;
+            case CLASS_WARLOCK:
+                provider.providedBuffs.push_back(20707); // Soulstone
+                break;
+            case CLASS_SHAMAN:
+                provider.providedBuffs.push_back(192077); // Wind Rush Totem
+                break;
+            case CLASS_MONK:
+                provider.providedBuffs.push_back(116841); // Legacy of the White Tiger
+                break;
+            case CLASS_DRUID:
+                provider.providedBuffs.push_back(1126); // Mark of the Wild
+                break;
+            case CLASS_DEMON_HUNTER:
+                provider.providedBuffs.push_back(203981); // Chaos Brand
+                break;
+            case CLASS_DEATH_KNIGHT:
+                provider.providedBuffs.push_back(57330); // Horn of Winter
+                break;
+            case CLASS_EVOKER:
+                provider.providedBuffs.push_back(364342); // Blessing of the Bronze
+                break;
+            default:
+                break;
+        }
+
+        if (!provider.providedBuffs.empty())
+            buffProviders.push_back(provider);
+    }
+
+    // Apply missing buffs
+    for (const BuffProvider& provider : buffProviders)
+    {
+        for (uint32 buffSpellId : provider.providedBuffs)
+        {
+            // Check if any group member is missing this buff
+            bool needsBuff = false;
+            for (Player* member : groupMembers)
+            {
+                if (!member->HasAura(buffSpellId))
+                {
+                    needsBuff = true;
+                    break;
+                }
+            }
+
+            if (needsBuff)
+            {
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Requesting {} to apply buff {}",
+                             provider.player->GetName(), buffSpellId);
+                // Note: Actual buff casting would be handled by individual bot AI
+            }
+        }
+    }
+
+    // Coordinate crowd control assignments
+    std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
+    if (targetPriority.size() > 2) // If multiple targets, coordinate CC
+    {
+        std::vector<Player*> ccCapablePlayers;
+        for (Player* member : groupMembers)
+        {
+            uint8 classId = member->getClass();
+            bool canCC = (classId == CLASS_MAGE || classId == CLASS_HUNTER || classId == CLASS_ROGUE ||
+                          classId == CLASS_WARLOCK || classId == CLASS_DRUID || classId == CLASS_SHAMAN ||
+                          classId == CLASS_PRIEST || classId == CLASS_MONK);
+
+            if (canCC)
+                ccCapablePlayers.push_back(member);
+        }
+
+        // Assign CC to lowest priority targets
+        size_t ccIndex = 0;
+        for (size_t i = targetPriority.size() - 1; i >= 2 && ccIndex < ccCapablePlayers.size(); --i)
+        {
+            ObjectGuid ccTarget = targetPriority[i];
+            Player* ccPlayer = ccCapablePlayers[ccIndex];
+
+            std::vector<uint32> targets;
+            targets.push_back(ccTarget.GetCounter());
+            IssueCommand(ccPlayer->GetGUID().GetCounter(), CoordinationCommand::CROWD_CONTROL, targets);
+
+            TC_LOG_DEBUG("playerbot", "GroupCoordination: Assigned {} to crowd control target {}",
+                         ccPlayer->GetName(), ccTarget.ToString());
+
+            ccIndex++;
+        }
+    }
+
+    // Coordinate utility abilities for encounter mechanics
+    if (_currentPhase == EncounterPhase::TRANSITION)
+    {
+        // During transitions, coordinate movement abilities
+        for (Player* member : groupMembers)
+        {
+            TC_LOG_DEBUG("playerbot", "GroupCoordination: Preparing {} for encounter transition",
+                         member->GetName());
+        }
+    }
+
+    // Coordinate defensive cooldowns during high threat
+    if (_overallThreat >= ThreatLevel::HIGH)
+    {
+        for (Player* member : groupMembers)
+        {
+            uint8 classId = member->getClass();
+
+            // Each class has raid-wide defensive cooldowns
+            bool hasRaidCooldown = (classId == CLASS_PRIEST ||      // Divine Hymn, Power Word: Barrier
+                                     classId == CLASS_PALADIN ||    // Aura Mastery, Divine Shield
+                                     classId == CLASS_SHAMAN ||     // Spirit Link Totem, Healing Tide Totem
+                                     classId == CLASS_MONK ||       // Revival
+                                     classId == CLASS_DRUID ||      // Tranquility
+                                     classId == CLASS_DEMON_HUNTER);// Darkness
+
+            if (hasRaidCooldown && member->GetHealthPct() > 50.0f) // Only if player is healthy enough
+            {
+                IssueCommand(member->GetGUID().GetCounter(), CoordinationCommand::USE_COOLDOWNS, {});
+                TC_LOG_DEBUG("playerbot", "GroupCoordination: Requesting {} to use raid defensive cooldown (threat: HIGH)",
+                             member->GetName());
+            }
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot", "GroupCoordination: Support actions updated for group {}", _groupId);
 }
 
 } // namespace Playerbot

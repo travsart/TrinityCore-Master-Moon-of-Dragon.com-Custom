@@ -323,8 +323,7 @@ float ActionPriorityHelper::CalculateDamageScore(::Unit* target, uint32 spellId)
     return score;
 }
 
-float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId)
-{
+float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId){
     if (!target)
         return 0.0f;
 
@@ -346,10 +345,66 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
 
     float score = 80.0f; // Base interrupt score
 
-    // TODO: Could analyze enemy spell to determine interrupt priority
-    // For now, all interrupts are high priority
+    // Analyze enemy spell to determine interrupt priority
+    if (enemySpellId != 0)
+    {
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(enemySpellId, DIFFICULTY_NONE);
+        if (spellInfo)
+        {
+            // HIGH PRIORITY: Healing spells (prevent enemy healing)
+            if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
+                spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT))
+            {
+                score += 40.0f; // Total: 120
+            }
 
-    return score;
+            // HIGH PRIORITY: Crowd control spells (prevent CC on our team)
+            if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+                spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
+                spellInfo->HasAura(SPELL_AURA_MOD_CHARM) ||
+                spellInfo->HasAura(SPELL_AURA_MOD_CONFUSE) ||
+                spellInfo->HasAura(SPELL_AURA_MOD_PACIFY))
+            {
+                score += 35.0f; // Total: 115
+            }
+
+            // MEDIUM-HIGH PRIORITY: Long cast time spells (usually powerful)
+            uint32 castTime = spellInfo->CalcCastTime();
+            if (castTime >= 3000) // 3+ seconds
+                score += 25.0f; // Total: 105
+            else if (castTime >= 2000) // 2+ seconds
+                score += 15.0f; // Total: 95
+
+            // MEDIUM PRIORITY: AoE damage spells
+            if (spellInfo->HasAttribute(SPELL_ATTR1_IS_AOE_SPELL))
+                score += 20.0f; // Total: 100+
+
+            // MEDIUM PRIORITY: DoT spells (less urgent than direct damage)
+            if (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
+                spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT))
+                score += 10.0f; // Total: 90
+
+            // LOWER PRIORITY: Buffs (less critical to interrupt)
+            if (spellInfo->IsPositive())
+                score -= 20.0f; // Total: 60
+
+            // LOWER PRIORITY: Instant cast (harder to interrupt, less impact)
+            if (castTime == 0)
+                score -= 30.0f; // Total: 50
+
+            // BONUS: Elite/Boss mobs have more dangerous spells
+            if (Creature const* creature = target->ToCreature())
+            {
+                if (creature->IsWorldBoss() || creature->IsDungeonBoss())
+                    score += 30.0f; // Boss spells are high priority
+                else if (creature->IsElite())
+                    score += 15.0f; // Elite spells are medium-high priority
+            }
+        }
+    }
+
+    // Ensure score stays in reasonable range
+    return std::max(0.0f, std::min(score, 200.0f));
 }
 
 float ActionPriorityHelper::GetHealthPriorityMultiplier(float healthPct)
@@ -371,8 +426,131 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
     if (!unit)
         return 1.0f;
 
-    // TODO: Implement threat calculation based on unit's role and current threat
-    return 1.0f;
+    // Calculate priority multiplier based on unit's role and current threat situation
+    float multiplier = 1.0f;
+
+    Player* player = unit->ToPlayer();
+    if (player)
+    {
+        // Get player's role based on spec
+        ChrSpecialization spec = player->GetPrimarySpecialization();
+        bool isTank = false;
+        bool isHealer = false;
+
+        // Determine role from specialization
+        switch (player->getClass())
+        {
+            case CLASS_WARRIOR:
+                isTank = (spec == ChrSpecialization::WarriorProtection);
+                break;
+            case CLASS_PALADIN:
+                isTank = (spec == ChrSpecialization::PaladinProtection);
+                isHealer = (spec == ChrSpecialization::PaladinHoly);
+                break;
+            case CLASS_DEATH_KNIGHT:
+                isTank = (spec == ChrSpecialization::DeathKnightBlood);
+                break;
+            case CLASS_DRUID:
+                isTank = (spec == ChrSpecialization::DruidGuardian);
+                isHealer = (spec == ChrSpecialization::DruidRestoration);
+                break;
+            case CLASS_MONK:
+                isTank = (spec == ChrSpecialization::MonkBrewmaster);
+                isHealer = (spec == ChrSpecialization::MonkMistweaver);
+                break;
+            case CLASS_DEMON_HUNTER:
+                isTank = (spec == ChrSpecialization::DemonHunterVengeance);
+                break;
+            case CLASS_PRIEST:
+            case CLASS_SHAMAN:
+                isHealer = (spec == ChrSpecialization::PriestDiscipline ||
+                           spec == ChrSpecialization::PriestHoly ||
+                           spec == ChrSpecialization::ShamanRestoration);
+                break;
+            default:
+                break;
+        }
+
+        // TANK PRIORITY: Tanks should have higher priority for threat generation
+        // Multiply by threat level to determine urgency
+        if (isTank)
+        {
+            // Check if tank is currently tanking (has aggro)
+            if (ThreatManager* threatMgr = unit->GetThreatManager())
+            {
+                if (threatMgr->GetCurrentVictim())
+                {
+                    // Tank is actively tanking - high threat priority
+                    multiplier = 2.5f;
+                }
+                else
+                {
+                    // Tank needs to establish threat
+                    multiplier = 2.0f;
+                }
+            }
+            else
+            {
+                multiplier = 1.8f; // Tank role baseline
+            }
+        }
+        // HEALER PRIORITY: Healers should avoid threat
+        else if (isHealer)
+        {
+            // Healers should have reduced threat priority (avoid pulling aggro)
+            multiplier = 0.5f;
+        }
+        // DPS PRIORITY: Standard threat management
+        else
+        {
+            // DPS should be aware of threat but not prioritize it heavily
+            multiplier = 1.0f;
+
+            // Check if DPS is about to pull aggro (threat too high)
+            if (ThreatManager* threatMgr = unit->GetThreatManager())
+            {
+                // If threat is approaching tank's threat, reduce priority
+                // (to avoid accidental pulls)
+                Unit* victim = threatMgr->GetCurrentVictim();
+                if (victim && victim != unit)
+                {
+                    float myThreat = threatMgr->GetThreat(unit);
+                    float tankThreat = threatMgr->GetThreat(victim);
+
+                    if (tankThreat > 0.0f)
+                    {
+                        float threatPercent = (myThreat / tankThreat) * 100.0f;
+                        if (threatPercent > 90.0f)
+                        {
+                            // About to pull aggro - reduce priority
+                            multiplier = 0.7f;
+                        }
+                        else if (threatPercent > 110.0f)
+                        {
+                            // Already pulled aggro - very low priority
+                            multiplier = 0.3f;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (Creature const* creature = unit->ToCreature())
+    {
+        // Pets and guardians should follow similar rules to their owners
+        if (creature->IsPet() || creature->IsGuardian())
+        {
+            Unit* owner = creature->GetOwner();
+            if (owner)
+            {
+                // Recursively calculate owner's threat priority
+                return GetThreatPriorityMultiplier(owner);
+            }
+        }
+    }
+
+    // Clamp multiplier to reasonable range
+    return std::max(0.1f, std::min(multiplier, 5.0f));
 }
 
 float ActionPriorityHelper::GetDistancePriorityMultiplier(float distance)

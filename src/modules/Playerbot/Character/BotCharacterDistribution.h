@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Core/DI/Interfaces/IBotCharacterDistribution.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -67,33 +68,35 @@ struct ClassPopularity
  * - Cumulative distribution for O(log n) random selection
  * - Hot-reload capability for dynamic updates
  */
-class TC_GAME_API BotCharacterDistribution
+class TC_GAME_API BotCharacterDistribution final : public IBotCharacterDistribution
 {
 public:
     static BotCharacterDistribution* instance();
 
+    // IBotCharacterDistribution interface implementation
+
     // Initialisierung - lädt alle Daten aus der Datenbank
-    bool LoadFromDatabase();
-    void ReloadDistributions();
+    bool LoadFromDatabase() override;
+    void ReloadDistributions() override;
 
     // Getter für Verteilungsdaten
-    std::pair<uint8, uint8> GetRandomRaceClassByDistribution();
-    uint8 GetRandomGenderForRace(uint8 race);
-    uint8 GetRandomGenderForRaceClass(uint8 race, uint8 classId);
+    std::pair<uint8, uint8> GetRandomRaceClassByDistribution() override;
+    uint8 GetRandomGenderForRace(uint8 race) override;
+    uint8 GetRandomGenderForRaceClass(uint8 race, uint8 classId) override;
 
     // Statistik-Abfragen
-    float GetRaceClassPercentage(uint8 race, uint8 classId) const;
-    float GetClassPopularity(uint8 classId) const;
-    uint8 GetMalePercentageForRace(uint8 race) const;
+    float GetRaceClassPercentage(uint8 race, uint8 classId) const override;
+    float GetClassPopularity(uint8 classId) const override;
+    uint8 GetMalePercentageForRace(uint8 race) const override;
 
     // Top-Kombinationen
-    std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const;
-    std::vector<RaceClassCombination> GetPopularCombinations() const;
+    std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const override;
+    std::vector<RaceClassCombination> GetPopularCombinations() const override;
 
     // Statistiken
-    uint32 GetTotalCombinations() const { return m_raceClassCombinations.size(); }
-    uint32 GetPopularCombinationsCount() const;
-    bool IsLoaded() const { return m_loaded; }
+    uint32 GetTotalCombinations() const override { return m_raceClassCombinations.size(); }
+    uint32 GetPopularCombinationsCount() const override;
+    bool IsLoaded() const override { return m_loaded; }
 
 private:
     BotCharacterDistribution() = default;

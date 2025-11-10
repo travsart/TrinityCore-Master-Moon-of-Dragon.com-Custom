@@ -11,6 +11,7 @@
 #define TRINITY_PLAYERBOT_MOVEMENT_VALIDATOR_H
 
 #include "MovementTypes.h"
+#include "Threading/LockHierarchy.h"
 #include "Define.h"
 #include <unordered_map>
 #include <shared_mutex>
@@ -248,7 +249,7 @@ namespace Playerbot
         };
 
         // Member variables
-        mutable std::recursive_mutex _dataLock;
+        mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _dataLock;
         std::unordered_map<ObjectGuid, StuckData> _stuckData;
 
         // Configuration

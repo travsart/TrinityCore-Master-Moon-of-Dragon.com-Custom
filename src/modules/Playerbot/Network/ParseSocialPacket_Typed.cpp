@@ -28,6 +28,31 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -45,6 +70,26 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received CHAT (typed): from={}, type={}, msg={}",
+            if (!bot)
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return nullptr;
+            }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.SenderName, packet.SlashCmd, packet.ChatText.substr(0, 50));
 }
 
@@ -57,6 +102,26 @@ void ParseTypedEmote(WorldSession* session, WorldPackets::Chat::Emote const& pac
         return;
 
     Player* bot = session->GetPlayer();
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -69,11 +134,26 @@ void ParseTypedEmote(WorldSession* session, WorldPackets::Chat::Emote const& pac
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received EMOTE (typed): from={}, emote={}",
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.Guid.ToString(), packet.EmoteID);
 }
 
 /**
  * @brief SMSG_TEXT_EMOTE - Text emote received
+ if (!session)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+     return nullptr;
+ }
  */
 void ParseTypedTextEmote(WorldSession* session, WorldPackets::Chat::STextEmote const& packet)
 {
@@ -81,6 +161,26 @@ void ParseTypedTextEmote(WorldSession* session, WorldPackets::Chat::STextEmote c
         return;
 
     Player* bot = session->GetPlayer();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -92,7 +192,27 @@ void ParseTypedTextEmote(WorldSession* session, WorldPackets::Chat::STextEmote c
 
     SocialEventBus::instance()->PublishEvent(event);
 
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return nullptr;
+    }
     TC_LOG_TRACE("playerbot.packets", "Bot {} received TEXT_EMOTE (typed): from={}, emote={}",
+     if (!bot)
+     {
+         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuild");
+         return nullptr;
+     }
+ if (!bot)
+ {
+     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+     return nullptr;
+ }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), packet.SourceGUID.ToString(), packet.EmoteID);
 }
 
@@ -105,6 +225,21 @@ void ParseTypedGuildInvite(WorldSession* session, WorldPackets::Guild::GuildInvi
         return;
 
     Player* bot = session->GetPlayer();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!bot)
         return;
 
@@ -121,6 +256,11 @@ void ParseTypedGuildInvite(WorldSession* session, WorldPackets::Guild::GuildInvi
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received GUILD_INVITE (typed): inviter={}, guild={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), inviterName, packet.GuildGUID.ToString());
 }
 
@@ -133,10 +273,25 @@ void ParseTypedGuildEvent(WorldSession* session, WorldPackets::Guild::GuildEvent
         return;
 
     Player* bot = session->GetPlayer();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     if (!bot)
         return;
 
     Guild* guild = bot->GetGuild();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGuild");
+        return;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
     if (!guild)
         return;
 
@@ -151,6 +306,11 @@ void ParseTypedGuildEvent(WorldSession* session, WorldPackets::Guild::GuildEvent
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GUILD_EVENT (typed): guild={}, msg={}",
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), guild->GetId(), message);
 }
 

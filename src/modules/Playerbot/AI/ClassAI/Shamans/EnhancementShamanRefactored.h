@@ -25,6 +25,10 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
+// Phase 5 Integration
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -83,9 +87,7 @@ public:
         // Check if Maelstrom Weapon buff is active
         if (Aura* aura = bot->GetAura(187880)) // Maelstrom Weapon buff ID
         {
-            _maelstromStacks = aura->GetStackAmount();
-            _maelstromEndTime = getMSTime() + aura->GetDuration();
-        }
+            _maelstromStacks = aura->GetStackAmount();            _maelstromEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _maelstromStacks = 0;
@@ -97,6 +99,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     uint32 _maelstromStacks;
     uint32 _maelstromEndTime;
 };
@@ -133,8 +136,7 @@ public:
         {
             _stormbringerActive = true;
             if (Aura* aura = bot->GetAura(201846))
-                _stormbringerEndTime = getMSTime() + aura->GetDuration();
-        }
+                _stormbringerEndTime = getMSTime() + aura->GetDuration();        }
         else
         {
             _stormbringerActive = false;
@@ -158,20 +160,26 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit EnhancementShamanRefactored(Player* bot)
-        : MeleeDpsSpecialization<ManaResource>(bot)
+    explicit EnhancementShamanRefactored(Player* bot)        : MeleeDpsSpecialization<ManaResource>(bot)
         , ShamanSpecialization(bot)
         , _maelstromWeaponTracker()
         , _stormbringerTracker()
         , _ascendanceActive(false)
         , _ascendanceEndTime(0)
-        , _lastAscendanceTime(0)
-        , _lastFeralSpiritTime(0)
+        
         , _lastSunderingTime(0)
+        , _cooldowns()
     {
-        // Resource initialization handled by base class CombatSpecializationTemplate
-        InitializeCooldowns();
-        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
+        // Register cooldowns for major abilities
+        _cooldowns.RegisterBatch({
+            {ENHANCEMENT_FERAL_SPIRIT, 120000, 1},
+            {ENHANCEMENT_DOOM_WINDS, 60000, 1},
+            {ENHANCEMENT_ASCENDANCE, 180000, 1},
+            {ENHANCEMENT_STORMSTRIKE, 9000, 2}
+        });
+
+        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
+        InitializeEnhancementMechanics();
     }
 
     void UpdateRotation(::Unit* target) override
@@ -239,12 +247,7 @@ public:
     }
 
 private:
-    void InitializeCooldowns()
-    {
-        _lastAscendanceTime = 0;
-        _lastFeralSpiritTime = 0;
-        _lastSunderingTime = 0;
-    }
+    
 
     void UpdateEnhancementState()
     {
@@ -263,9 +266,7 @@ private:
         if (bot->HasAura(ENH_ASCENDANCE))
         {
             _ascendanceActive = true;
-            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))
-                _ascendanceEndTime = getMSTime() + aura->GetDuration();
-        }
+            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -285,8 +286,7 @@ private:
 
         // Ascendance (burst mode - Stormstrike becomes Windstrike)
         if ((getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
-        {
-            if (bot->HasSpell(ENH_ASCENDANCE))
+        {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
@@ -294,8 +294,7 @@ private:
                     _ascendanceActive = true;
                     _ascendanceEndTime = getMSTime() + 15000;
                     _lastAscendanceTime = getMSTime();
-                    return;
-                }
+                    return;                }
             }
         }
 
@@ -317,14 +316,14 @@ private:
             {
                 this->CastSpell(target, ENH_STORMSTRIKE);
                 _stormbringerTracker.ConsumeProc();
-                _maelstromWeaponTracker.AddStack(1);
-                return;
+                _maelstromWeaponTracker.AddStack(1);                return;
             }
         }
 
         // Lava Burst at 5 Maelstrom Weapon stacks (instant cast, high damage)
         if (_maelstromWeaponTracker.IsMaxStacks())
         {
+            
             if (bot->HasSpell(ENH_LAVA_BURST))
             {
                 if (this->CanCastSpell(ENH_LAVA_BURST, target))
@@ -333,8 +332,7 @@ private:
                     _maelstromWeaponTracker.ConsumeStacks();
                     return;
                 }
-            }
-        }
+            }        }
 
         // Lightning Bolt at 5+ Maelstrom Weapon stacks (instant cast)
         if (maelstromStacks >= 5)
@@ -348,8 +346,7 @@ private:
         }
 
         // Elemental Blast at 5 stacks (talent)
-        if (maelstromStacks >= 5 && bot->HasSpell(ENH_ELEMENTAL_BLAST))
-        {
+        if (maelstromStacks >= 5 && bot->HasSpell(ENH_ELEMENTAL_BLAST))        {
             if (this->CanCastSpell(ENH_ELEMENTAL_BLAST, target))
             {
                 this->CastSpell(target, ENH_ELEMENTAL_BLAST);
@@ -358,8 +355,7 @@ private:
             }
         }
 
-        // Flame Shock (maintain DoT)
-        if (!target->HasAura(ENH_FLAME_SHOCK))
+        // Flame Shock (maintain DoT)        if (!target->HasAura(ENH_FLAME_SHOCK))
         {
             if (this->CanCastSpell(ENH_FLAME_SHOCK, target))
             {
@@ -368,15 +364,13 @@ private:
             }
         }
 
-        // Ice Strike (talent - high damage, generates Maelstrom Weapon)
-        if (bot->HasSpell(ENH_ICE_STRIKE))
+        // Ice Strike (talent - high damage, generates Maelstrom Weapon)        if (bot->HasSpell(ENH_ICE_STRIKE))
         {
             if (this->CanCastSpell(ENH_ICE_STRIKE, target))
             {
                 this->CastSpell(target, ENH_ICE_STRIKE);
                 _maelstromWeaponTracker.AddStack(1);
-                return;
-            }
+                return;            }
         }
 
         // Stormstrike (main melee attack)
@@ -389,8 +383,7 @@ private:
             if (rand() % 100 < 10) // 10% chance (simplified)
                 _stormbringerTracker.ActivateProc();
 
-            return;
-        }
+            return;        }
 
         // Lava Lash (filler - consumes Flame Shock for extra damage)
         if (this->CanCastSpell(ENH_LAVA_LASH, target))
@@ -403,13 +396,10 @@ private:
         // Rockbiter (builder - low priority)
         if (this->CanCastSpell(ENH_ROCKBITER, target))
         {
-            this->CastSpell(target, ENH_ROCKBITER);
-            return;
-        }
-    }
+            this->CastSpell(target, ENH_ROCKBITER);            return;
+        }    }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
-    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 
         // Feral Spirit for AoE burst
@@ -425,8 +415,7 @@ private:
 
         // Ascendance for AoE burst
         if ((getMSTime() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
-        {
-            if (bot->HasSpell(ENH_ASCENDANCE))
+        {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
@@ -440,8 +429,7 @@ private:
         }
 
         // Sundering (AoE damage + debuff)
-        if (bot->HasSpell(ENH_SUNDERING) && enemyCount >= 3)
-        {
+        if (bot->HasSpell(ENH_SUNDERING) && enemyCount >= 3)        {
             if ((getMSTime() - _lastSunderingTime) >= 40000) // 40 sec CD
             {
                 if (this->CanCastSpell(ENH_SUNDERING, target))
@@ -454,9 +442,7 @@ private:
         }
 
         // Fire Nova (AoE explosion from Flame Shock targets)
-        if (bot->HasSpell(ENH_FIRE_NOVA) && enemyCount >= 3)
-        {
-            if (target->HasAura(ENH_FLAME_SHOCK))
+        if (bot->HasSpell(ENH_FIRE_NOVA) && enemyCount >= 3)        {            if (target->HasAura(ENH_FLAME_SHOCK))
             {
                 if (this->CanCastSpell(ENH_FIRE_NOVA, bot))
                 {
@@ -466,8 +452,7 @@ private:
             }
         }
 
-        // Flame Shock on priority target
-        if (!target->HasAura(ENH_FLAME_SHOCK))
+        // Flame Shock on priority target        if (!target->HasAura(ENH_FLAME_SHOCK))
         {
             if (this->CanCastSpell(ENH_FLAME_SHOCK, target))
             {
@@ -550,6 +535,58 @@ private:
         return std::min(count, 10u);
     }
 
+    void InitializeEnhancementMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            queue->RegisterSpell(ENH_ASTRAL_SHIFT, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(ENH_ASTRAL_SHIFT, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(ENH_FERAL_SPIRIT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ENH_FERAL_SPIRIT, [this](Player*, Unit*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }, "5 MW stacks");
+
+            queue->RegisterSpell(ENH_ASCENDANCE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ENH_ASCENDANCE, [this](Player* bot, Unit*) { return bot->HasSpell(ENH_ASCENDANCE) && !this->_ascendanceActive; }, "Ascendance burst");
+
+            queue->RegisterSpell(ENH_WINDSTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_WINDSTRIKE, [this](Player*, Unit* target) { return target && this->_ascendanceActive; }, "Ascendance active");
+
+            queue->RegisterSpell(ENH_LIGHTNING_BOLT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_LIGHTNING_BOLT, [this](Player*, Unit* target) { return target && this->_maelstromWeaponTracker.GetStacks() >= 5; }, "5 MW instant");
+
+            queue->RegisterSpell(ENH_STORMSTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_STORMSTRIKE, [this](Player*, Unit* target) { return target && this->_stormbringerActive; }, "Stormbringer proc");
+
+            queue->RegisterSpell(ENH_LAVA_LASH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_LAVA_LASH, [](Player*, Unit* target) { return target != nullptr; }, "Builder");
+
+            queue->RegisterSpell(ENH_CRASH_LIGHTNING, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(ENH_CRASH_LIGHTNING, [this](Player*, Unit*) { return this->GetEnemiesInRange(8.0f) >= 2; }, "AoE 2+");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree)
+        {
+            auto root = Selector("Enhancement Shaman", {
+                Sequence("Burst", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                    Action("Feral Spirit/Ascendance", [this](Player* bot) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(bot, ENH_FERAL_SPIRIT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("MW Spender", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                    Action("Lightning Bolt", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(t, ENH_LIGHTNING_BOLT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("SS", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(t, ENH_STORMSTRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Builder", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("Lava Lash", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(t, ENH_LAVA_LASH); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
+    }
+
     // Member variables
     MaelstromWeaponTracker _maelstromWeaponTracker;
     StormbringerTracker _stormbringerTracker;
@@ -557,9 +594,7 @@ private:
     bool _ascendanceActive;
     uint32 _ascendanceEndTime;
 
-    uint32 _lastAscendanceTime;
-    uint32 _lastFeralSpiritTime;
-    uint32 _lastSunderingTime;
+    uint32 _lastAscendanceTime;    uint32 _lastSunderingTime;
 };
 
 } // namespace Playerbot

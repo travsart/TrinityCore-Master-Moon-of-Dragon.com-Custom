@@ -626,12 +626,52 @@ void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
 }
 
 bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& dungeons)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
 {
     if (!bot)
         return false;
 
     if (bot->GetGroup())
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_WARN("module.playerbot", "LFGBotManager::QueueBot - Bot {} is already in a group", bot->GetName());
         return false;
     }
@@ -639,13 +679,53 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
     // Check if bot has deserter debuff
     if (bot->HasAura(lfg::LFG_SPELL_DUNGEON_DESERTER))
     {
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
         TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} has deserter debuff", bot->GetName());
         return false;
     }
 
     // Check if bot is already queued via LFGMgr
     lfg::LfgState botState = sLFGMgr->GetState(bot->GetGUID());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
     if (botState == lfg::LFG_STATE_QUEUED || botState == lfg::LFG_STATE_PROPOSAL || botState == lfg::LFG_STATE_ROLECHECK)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return;
+    }
+                     if (!bot)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                         return nullptr;
+                     }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+                 if (!bot)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                     return;
+                 }
     {
         TC_LOG_DEBUG("module.playerbot", "LFGBotManager::QueueBot - Bot {} is already queued (state: {})", bot->GetName(), botState);
         return false;
@@ -672,6 +752,16 @@ bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& 
 }
 
 void LFGBotManager::RemoveBotFromQueue(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 {
     if (!bot)
         return;

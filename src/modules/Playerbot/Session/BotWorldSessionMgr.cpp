@@ -118,10 +118,60 @@ void BotWorldSessionMgr::Shutdown()
     // Clean logout all bot sessions
     for (auto& [guid, session] : _botSessions)
     {
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            if (!session)
+            {
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+                    return nullptr;
+                }
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
         if (session && session->GetPlayer())
         {
             // MEMORY SAFETY: Protect against use-after-free when accessing Player name
             Player* player = session->GetPlayer();
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                return nullptr;
+            }
+            if (!session)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+                return;
+            }
             try {
                 TC_LOG_INFO("module.playerbot.session", "?? Logging out bot: {}", player->GetName());
             }
@@ -133,6 +183,11 @@ void BotWorldSessionMgr::Shutdown()
     }
 
     _botSessions.clear();
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     _botsLoading.clear();
 
     // Destroy all spatial grids and stop worker threads
@@ -148,6 +203,11 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     {
         TC_LOG_ERROR("module.playerbot.session", "?? BotWorldSessionMgr not enabled or initialized");
         return false;
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return false;
+    }
     }
 
     std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
@@ -160,10 +220,25 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     }
 
     // FIX #22: CRITICAL - Eliminate ObjectAccessor call to prevent deadlock
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return nullptr;
+    }
     // Check if bot is already added by scanning existing sessions (avoids ObjectAccessor lock)
     for (auto const& [guid, session] : _botSessions)
     {
         if (guid == playerGuid && session && session->GetPlayer())
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+        return;
+    }
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
         {
             TC_LOG_DEBUG("module.playerbot.session", "?? Bot {} already in world (found in _botSessions)", playerGuid.ToString());
             return false;
@@ -196,6 +271,11 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     for (auto const& [guid, session] : _botSessions)
     {
         if (session && session->GetAccountId() == accountId)
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+            return nullptr;
+        }
         {
             TC_LOG_WARN("module.playerbot.session", "?? DUPLICATE SESSION PREVENTION: Account {} already has an active bot session with character {}, rejecting new character {}",
                 accountId, guid.ToString(), playerGuid.ToString());
@@ -218,9 +298,19 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // ROOT CAUSE OF SERVER HANG: "ENTERPRISE FIX V2" removed all throttling, causing:
     // - 296 bots spawning immediately at server startup
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     // - 296 � 66 async queries = 19,536 database queries flooding connection pool
     // - ProcessQueryCallbacks() overwhelmed, world thread hangs 60+ seconds
     //
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return nullptr;
+    }
     // NEW SOLUTION: Queue-based rate-limited spawning
     // - AddPlayerBot() adds to _pendingSpawns queue (no immediate spawn)
     // - UpdateSessions() processes N spawns per tick (configurable, default 10)
@@ -229,6 +319,16 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // Performance: MaxBotsPerUpdate config controls rate (10/tick = 10/50ms = 200 bots/sec)
     // Full 100-bot spawn completes in 500ms instead of overloading database instantly
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method KickPlayer");
+
+    return nullptr;
+
+}
 
     TC_LOG_INFO("module.playerbot.session",
         "?? Queueing bot {} for rate-limited spawn (queue position: {}, accountId: {})",
@@ -244,8 +344,23 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     return true; // Queued successfully
 }
 
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+
+    return;
+
+}
+
 void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
 {
+    if (!session)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+        return;
+    }
     // CRITICAL FIX (Map.cpp:686 crash): Do NOT call LogoutPlayer() synchronously!
     // Problem: RemovePlayerBot() can be called from commands while Map::Update() is running
     // If we call LogoutPlayer() here, it removes player from map IMMEDIATELY (WorldSession.cpp:715)
@@ -254,6 +369,16 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     // Solution: Use async disconnection queue (same pattern as worker thread disconnects)
     // The session will be cleaned up in next UpdateSessions() call on main thread
     // when Map::Update() is NOT iterating over players
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method KickPlayer");
+
+    return;
+
+}
 
     std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
 
@@ -265,6 +390,16 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     }
 
     std::shared_ptr<BotSession> session = it->second;
+                    if (!session)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                        return nullptr;
+                    }
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                    return nullptr;
+                }
     if (session)
     {
         // Log removal (safely handle name access)
@@ -554,7 +689,17 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // Rationale:
         // - 100 task threshold scales with worker count (3-6 tasks per worker)
         // - 80% busy threshold ensures enough free workers to handle new batch quickly
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+            return nullptr;
+        }
         // - Prevents scenario where new tasks queue behind long-running tasks
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+            return nullptr;
+        }
         // - Priority system spreads bots across ticks, so actual per-tick load is manageable
         uint32 busyThreshold = (workerCount * 4) / 5;  // 80% of workers
 
@@ -563,6 +708,21 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         if (busyThreshold < 3)
             busyThreshold = 3;
 
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+
+    return nullptr;
+
+}
+
+        if (!session)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+            return nullptr;
+        }
         if (queuedTasks > 100 || activeWorkers > busyThreshold)
         {
             TC_LOG_WARN("module.playerbot.session",
@@ -572,6 +732,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
     }
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return nullptr;
+    }
     for (auto& [guid, botSession] : sessionsToUpdate)
     {
         // Validate session before submitting task
@@ -584,13 +749,53 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         // OPTION 5: Capture weak_ptr for session lifetime detection
         std::weak_ptr<BotSession> weakSession = botSession;
 
+    if (!bot)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+
+        return nullptr;
+
+    }
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+
+    return;
+
+}
+
         // Define the update logic (will be used in both parallel and sequential paths)
         auto updateLogic = [guid, weakSession, diff, currentTime, enterpriseMode, tickCounter, this]()
             {
                 TC_LOG_TRACE("playerbot.session.task", "?? TASK START for bot {}", guid.ToString());
 
+                if (!session)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                    return nullptr;
+                }
                 // OPTION 5: Check if session still exists (thread-safe with weak_ptr)
                 auto session = weakSession.lock();
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+
+    return;
+
+}
+                    if (!session)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+                        return;
+                    }
                 if (!session)
                 {
                     TC_LOG_WARN("module.playerbot.session", "?? Bot session destroyed during update: {}", guid.ToString());
@@ -627,9 +832,44 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     // IMPROVEMENT #1: ADAPTIVE AutoAdjustPriority frequency based on bot activity
                     // Active bots (combat/group) = more frequent checks (250ms)
                     // Idle bots (high health, not moving) = less frequent checks (2.5s)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                        return nullptr;
+                    }
                     if (enterpriseMode && session->IsLoginComplete())
                     {
                         Player* bot = session->GetPlayer();
+                        if (!session)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                            return nullptr;
+                        }
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+                                return;
+                            }
+                            if (!session)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+                                return nullptr;
+                            }
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
+
+    return nullptr;
+
+}
+                        if (!bot)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                            return nullptr;
+                        }
                         if (!bot || !bot->IsInWorld())
                         {
                             TC_LOG_WARN("module.playerbot.session", "?? Bot disconnected: {}", guid.ToString());
@@ -651,6 +891,11 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                             adjustInterval = 5;  // Active bots: 250ms (more responsive)
                         else if (!bot->isMoving() && bot->GetHealthPct() > 80.0f)
                             adjustInterval = 50; // Idle healthy bots: 2.5s (save CPU)
+                            if (!bot)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+                                return nullptr;
+                            }
 
                         // Call AutoAdjustPriority at adaptive interval
                         if (tickCounter % adjustInterval == 0)
@@ -769,6 +1014,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     // - Deferred packets execute on main thread, synchronized with Map::Update()
     //
     // Performance:
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return 0;
+    }
     // - Processes all deferred packets across all bot sessions
     // - Each session limited to 50 packets/update (MAX_DEFERRED_PACKETS_PER_UPDATE)
     // - Expected load: 300-400 packets/sec with 5000 bots
@@ -789,6 +1039,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
                 sessionsToProcess.push_back(session);
             }
         }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return 0;
+    }
     } // Release mutex before processing
 
     // Process deferred packets for each session
@@ -813,6 +1068,11 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     {
         TC_LOG_DEBUG("playerbot.packets.deferred",
             "ProcessAllDeferredPackets: {} total packets processed from {} bot sessions",
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+                return;
+            }
             totalProcessed, sessionsToProcess.size());
     }
 
@@ -834,6 +1094,11 @@ void BotWorldSessionMgr::TriggerCharacterLoginForAllSessions()
     // The native login approach doesn't need this trigger mechanism
     // But we can use it to spawn new bots if needed
     TC_LOG_INFO("module.playerbot.session", "?? Using native login - no manual triggering needed");
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return;
+}
 }
 
 bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
@@ -842,7 +1107,7 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     // CRITICAL FIX: Use synchronous prepared statement for character lookup
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_DATA_FOR_GUILD);
-    stmt->setUInt64(0, playerGuid.GetCounter());
+    stmt->SetData(0, playerGuid.GetCounter());
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
     if (!result)
@@ -854,6 +1119,16 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
     Field* fields = result->Fetch();
     std::string dbName = fields[0].GetString();       // name is first field
     uint32 dbAccountId = fields[6].GetUInt32();      // account is 7th field (0-indexed: field 6)
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+
+    return 0;
+
+}
 
     // Get current cache data
     std::string cacheName = "<unknown>";
@@ -878,6 +1153,11 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     TC_LOG_DEBUG("module.playerbot.session", "?? Character cache synchronized for {}", playerGuid.ToString());
     return true;
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return;
+}
 }
 
 // ============================================================================
@@ -900,6 +1180,11 @@ std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId
 
         // Check if this bot belongs to the specified account
         if (bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+            return nullptr;
+        }
             bots.push_back(bot);
     }
 
@@ -949,6 +1234,11 @@ uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
 
         Player* bot = session->GetPlayer();
         if (bot && bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+            return;
+        }
             ++count;
     }
 

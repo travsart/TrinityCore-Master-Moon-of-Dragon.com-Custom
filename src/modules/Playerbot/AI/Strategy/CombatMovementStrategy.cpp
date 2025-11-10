@@ -87,6 +87,16 @@ namespace Playerbot
 
         // Determine role on activation
         _currentRole = DetermineRole(player);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
 
         // Reset state
         _lastPositionUpdate = 0;
@@ -106,6 +116,16 @@ namespace Playerbot
 
         Player* player = ai->GetBot();
         if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
+        if (!player)
             return;
 
         // Stop any ongoing movement
@@ -123,12 +143,27 @@ namespace Playerbot
             player->GetName().c_str());
     }
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+        return;
+    }
     bool CombatMovementStrategy::IsActive(BotAI* ai) const
     {
         if (!ai)
             return false;
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+    return nullptr;
+}
 
         Player* player = ai->GetBot();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+            return nullptr;
+        }
         if (!player)
             return false;
 
@@ -137,6 +172,16 @@ namespace Playerbot
             return false;
 
         Unit* target = player->GetSelectedUnit();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return;
+        }
         if (!target || !target->IsAlive() || !player->IsValidAttackTarget(target))
             return false;
 
@@ -155,6 +200,21 @@ namespace Playerbot
             return;
 
         Unit* target = player->GetSelectedUnit();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
+            return nullptr;
+        }
 
         if (!target || !target->IsAlive())
         {
@@ -181,7 +241,17 @@ namespace Playerbot
         if (IsStandingInDanger(player))
         {
             Position safePos = FindSafePosition(player, player->GetPosition(), DANGER_CHECK_RADIUS);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return;
+            }
             if (safePos != player->GetPosition())
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return;
+            }
             {
                 LogPositionUpdate(player, safePos, "Avoiding danger zone");
                 MoveToPosition(player, safePos);
@@ -204,10 +274,20 @@ namespace Playerbot
                 break;
             case ROLE_HEALER:
                 targetPosition = CalculateHealerPosition(player, target);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
                 break;
             default:
                 // Default to ranged position for unknown roles
                 targetPosition = CalculateRangedPosition(player, target);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                    return nullptr;
+                }
                 break;
         }
 
@@ -226,6 +306,11 @@ namespace Playerbot
         if (!IsPositionSafe(targetPosition, player))
         {
             targetPosition = FindSafePosition(player, targetPosition, 5.0f);
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
         }
 
         // Move to position if needed
@@ -253,6 +338,11 @@ namespace Playerbot
         // Simplified role determination based on class
         // In a real implementation, this would check talents/spec
         uint8 playerClass = player->GetClass();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
 
         // For now, use class-based defaults
         // TODO: Implement talent/spec detection when API is available
@@ -278,9 +368,19 @@ namespace Playerbot
                 return ROLE_HEALER;
             case CLASS_MAGE:
                 return ROLE_RANGED_DPS;
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             case CLASS_WARLOCK:
                 return ROLE_RANGED_DPS;
             case CLASS_DRUID:
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return nullptr;
+                }
                 // Druids can do everything, default to healer
                 return ROLE_HEALER;
             default:
@@ -292,12 +392,27 @@ namespace Playerbot
     {
         // TODO: Implement when talent tree API is available
         // For now, this is handled in DetermineRole() using class-based defaults
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
         return false;
     }
 
+    if (!target)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+        return;
+    }
     bool CombatMovementStrategy::IsHealerSpec(uint32 /*talentTree*/) const
     {
         // TODO: Implement when talent tree API is available
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
         // For now, this is handled in DetermineRole() using class-based defaults
         return false;
     }
@@ -307,12 +422,22 @@ namespace Playerbot
         switch (classId)
         {
             case CLASS_WARRIOR:
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             case CLASS_PALADIN:
             case CLASS_ROGUE:
             case CLASS_DEATH_KNIGHT:
                 return true;
             case CLASS_DRUID: // Feral is melee, Balance is ranged
             case CLASS_SHAMAN: // Enhancement is melee, Elemental is ranged
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                    return nullptr;
+                }
                 // These require spec checking, defaulting to ranged for simplicity
                 return false;
             default:
@@ -321,44 +446,104 @@ namespace Playerbot
     }
 
     Position CombatMovementStrategy::CalculateTankPosition(Player* player, Unit* target) const
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
     {
         if (!player || !target)
             return player ? player->GetPosition() : Position();
 
         // Tank should be in front of the target, facing it away from group
         float angle = target->GetOrientation();
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return;
+        }
 
         // Position slightly to the side to avoid frontal cone attacks
         angle += 0.2f; // Slight offset
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+    return;
+}
 
         return GetPositionAtDistanceAngle(target, TANK_DISTANCE, angle);
     }
 
     Position CombatMovementStrategy::CalculateMeleePosition(Player* player, Unit* target) const
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+        return nullptr;
+    }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
     {
         if (!player || !target)
             return player ? player->GetPosition() : Position();
 
         // Melee DPS should be behind the target
         float angle = target->GetOrientation() + M_PI; // 180 degrees behind
+        if (!target)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+            return;
+        }
 
         // Slight offset to avoid stacking
         float offsetAngle = (player->GetGUID().GetCounter() % 3 - 1) * 0.3f;
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
         angle += offsetAngle;
 
         return GetPositionAtDistanceAngle(target, MELEE_DISTANCE, angle);
     }
 
     Position CombatMovementStrategy::CalculateRangedPosition(Player* player, Unit* target) const
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
     {
         if (!player || !target)
             return player ? player->GetPosition() : Position();
 
         // Find optimal ranged position
         float baseAngle = player->GetAbsoluteAngle(target);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
 
         // Spread ranged DPS around the target
         float offsetAngle = (player->GetGUID().GetCounter() % 5 - 2) * 0.4f;
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
         float angle = baseAngle + offsetAngle;
 
         // Adjust distance based on spell range
@@ -383,6 +568,21 @@ namespace Playerbot
     }
 
     Position CombatMovementStrategy::CalculateHealerPosition(Player* player, Unit* target) const
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+    return nullptr;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
     {
         if (!player || !target)
             return player ? player->GetPosition() : Position();
@@ -396,6 +596,21 @@ namespace Playerbot
         // DEADLOCK FIX: Use spatial grid to find friendly players
         // Healers try to position where they can see most allies
         Map* map = player->GetMap();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                        return nullptr;
+                    }
         if (map)
         {
             DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -405,6 +620,11 @@ namespace Playerbot
                 spatialGrid = sSpatialGridManager.GetGrid(map);
             }
 
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
             if (spatialGrid)
             {
                 // Query nearby players (lock-free!)
@@ -417,6 +637,16 @@ namespace Playerbot
                 {
                     // Only include friendly players (same faction or in group)
                     if (snapshot.guid != player->GetGUID()) // Exclude self
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+                        return nullptr;
+                    }
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                        return nullptr;
+                    }
                         allyGuids.push_back(snapshot.guid);
                 }
 
@@ -433,6 +663,11 @@ namespace Playerbot
                     for (auto const& snapshot : nearbyPlayers)
                     {
                         if (snapshot.guid == player->GetGUID())
+                        if (!player)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+                            return nullptr;
+                        }
                             continue; // Skip self
 
                         // Check LOS using snapshot position
@@ -459,15 +694,35 @@ namespace Playerbot
         }
 
         return pos;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+        return nullptr;
+    }
     }
 
     bool CombatMovementStrategy::MoveToPosition(Player* player, Position const& position)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
     {
         if (!player)
             return false;
 
         // Validate position is on valid terrain
         float groundZ = player->GetMap()->GetHeight(player->GetPhaseShift(), position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return;
+        }
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return nullptr;
+                }
         if (std::abs(position.GetPositionZ() - groundZ) > 10.0f)
         {
             TC_LOG_DEBUG("module.playerbot", "CombatMovementStrategy::MoveToPosition: Invalid Z coordinate for %s",
@@ -477,6 +732,11 @@ namespace Playerbot
 
         // PHASE 5 MIGRATION: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return;
+                    }
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
@@ -500,6 +760,11 @@ namespace Playerbot
                 // Arbiter rejected - higher priority movement active (likely emergency or positioning)
                 TC_LOG_TRACE("playerbot.movement.arbiter",
                     "CombatMovementStrategy: Movement rejected for bot {} - higher priority active",
+                    if (!player)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                        return;
+                    }
                     player->GetName());
                 return false;
             }
@@ -507,9 +772,24 @@ namespace Playerbot
         else
         {
             // FALLBACK: Direct MotionMaster call if arbiter not available
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+                return nullptr;
+            }
             TC_LOG_TRACE("playerbot.movement.arbiter",
                 "CombatMovementStrategy: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                    return;
+                }
                 player->GetName());
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                return;
+            }
             player->GetMotionMaster()->Clear();
             player->GetMotionMaster()->MovePoint(1, position);
             _isMoving = true;
@@ -528,6 +808,16 @@ namespace Playerbot
 
         // Consider Z axis difference
         float zDiff = std::abs(player->GetPositionZ() - targetPosition.GetPositionZ());
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+    return;
+}
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
+            return;
+        }
         if (zDiff > 5.0f)
             return false;
 
@@ -565,6 +855,11 @@ namespace Playerbot
 
         // Get spatial grid for lock-free queries
         auto spatialGrid = sSpatialGridManager.GetGrid(player->GetMapId());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+            return;
+        }
         if (!spatialGrid)
         {
             _lastDangerResult = false;
@@ -600,6 +895,11 @@ namespace Playerbot
         // Check for DynamicObjects (AoE spell effects like Blizzard, Rain of Fire)
         std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> nearbyDynamicObjects =
             spatialGrid->QueryNearbyDynamicObjects(playerPos, 20.0f);
+if (!target)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+    return nullptr;
+}
 
         for (auto const& dynObj : nearbyDynamicObjects)
         {
@@ -641,6 +941,11 @@ namespace Playerbot
                 float x = preferredPosition.GetPositionX() + cos(angle) * dist;
                 float y = preferredPosition.GetPositionY() + sin(angle) * dist;
                 float z = player->GetMap()->GetHeight(player->GetPhaseShift(), x, y, preferredPosition.GetPositionZ());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+                    return;
+                }
 
                 Position testPos(x, y, z);
 
@@ -666,6 +971,11 @@ namespace Playerbot
 
         // Get spatial grid for lock-free queries
         auto spatialGrid = sSpatialGridManager.GetGrid(player->GetMapId());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
+            return;
+        }
         if (!spatialGrid)
             return true; // If no spatial grid, assume safe
 
@@ -728,6 +1038,11 @@ namespace Playerbot
     }
 
     float CombatMovementStrategy::GetOptimalAngle(Player* player, Unit* target, FormationRole role) const
+                if (!target)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
+                    return;
+                }
     {
         if (!player || !target)
             return 0.0f;

@@ -20,6 +20,7 @@
 #include "ObjectAccessor.h"
 #include "GridNotifiers.h"
 #include "CellImpl.h"
+#include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
 #include <ranges>
 #include <span>
 
@@ -90,49 +91,9 @@ protected:
 
     Unit* SelectHealingTarget()
     {
-        Unit* lowestHealth = nullptr;
-        float lowestPct = 100.0f;
-
-        // Priority: Self > Tank > Other healers > DPS
-        if (this->GetBot()->GetHealthPct() < 50.0f)
-            return this->GetBot();
-
-        if (Group* group = this->GetBot()->GetGroup())
-        {
-            // First pass: Find tanks under 60%
-            for (GroupReference* ref : *group)
-            {
-                if (Player* member = ref->GetSource())
-                {
-                    if (member->IsAlive() && IsTank(member) && member->GetHealthPct() < 60.0f)
-                    {
-                        if (member->GetHealthPct() < lowestPct)
-                        {
-                            lowestPct = member->GetHealthPct();
-                            lowestHealth = member;
-                        }
-                    }
-                }
-            }
-
-            if (lowestHealth)
-                return lowestHealth;
-
-            // Second pass: Anyone critically injured
-            for (GroupReference* ref : *group)
-            {
-                if (Player* member = ref->GetSource())
-                {
-                    if (member->IsAlive() && member->GetHealthPct() < lowestPct)
-                    {
-                        lowestPct = member->GetHealthPct();
-                        lowestHealth = member;
-                    }
-                }
-            }
-        }
-
-        return lowestHealth;
+        // Use unified HealingTargetSelector service (Phase 5B integration)
+        // Eliminates 40+ lines of duplicated healing target logic
+        return bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
     }
 
     Unit* SelectDamageTarget()
@@ -160,9 +121,7 @@ protected:
         }
 
         return bestTarget;
-    }
-
-    uint32 CountInjuredAllies(float threshold) const
+    }    uint32 CountInjuredAllies(float threshold) const
     {
         uint32 count = 0;
 
@@ -172,8 +131,7 @@ protected:
             {
                 if (Player* member = ref->GetSource())
                 {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
-                        count++;
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        count++;
                 }
             }
         }
@@ -185,12 +143,8 @@ protected:
     {
         if (Group* group = this->GetBot()->GetGroup())
         {
-            for (GroupReference* ref : *group)
-            {
-                if (Player* member = ref->GetSource())
-                {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
-                        return true;
+            for (GroupReference* ref : *group)            {                if (Player* member = ref->GetSource())                {
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        return true;
                 }
             }
         }
@@ -201,10 +155,7 @@ protected:
     bool IsTank(Player* player) const
     {
         // Simple check - could be enhanced with role detection
-        return player->GetClass() == CLASS_WARRIOR ||
-               player->GetClass() == CLASS_PALADIN ||
-               player->GetClass() == CLASS_DEATH_KNIGHT;
-    }
+        return player->GetClass() == CLASS_WARRIOR ||               player->GetClass() == CLASS_PALADIN ||               player->GetClass() == CLASS_DEATH_KNIGHT;    }
 
 protected:
     bool _healingMode;
@@ -344,8 +295,7 @@ protected:
         });
 
         // Apply DoTs to targets
-        for (Unit* target : targets)
-        {
+        for (Unit* target : targets)        {
             if (GetMissingDotCount(target) > 0)
             {
                 ApplyMissingDoTs(target);
@@ -359,9 +309,7 @@ protected:
 
     std::list<Unit*> GetValidDotTargets() const
     {
-        std::list<Unit*> targets;
-
-        std::list<Unit*> hostileUnits;
+        std::list<Unit*> targets;        std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this->GetBot(), this->GetBot(), 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_search(this->GetBot(), hostileUnits, u_check);
         this->GetBot()->VisitNearbyObject(40.0f, u_search);
@@ -382,9 +330,7 @@ protected:
     uint32 GetMissingDotCount(Unit* target) const
     {
         uint32 missingCount = 0;
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
-
-        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
         {
             return _maxDotsPerTarget; // No DoTs applied
         }
@@ -403,8 +349,7 @@ protected:
 
     void RefreshExpiringDoTs(Unit* target)
     {
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
-        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
             return;
 
         for (auto& [spellId, duration] : it->second)
@@ -563,9 +508,7 @@ public:
             }
         }
         return 0;
-    }
-
-    void UpdatePriority(uint32 spellId, float newPriority)
+    }    void UpdatePriority(uint32 spellId, float newPriority)
     {
         auto it = std::find_if(_abilities.begin(), _abilities.end(),
             [spellId](const AbilityPriority& a) { return a.spellId == spellId; });
@@ -592,8 +535,7 @@ private:
 /**
  * Snapshot system for DoT/HoT calculations
  */
-class SnapshotManager
-{
+class SnapshotManager{
 public:
     struct Snapshot
     {
@@ -609,8 +551,7 @@ public:
     {
         Snapshot snap;
         snap.spellId = spellId;
-        snap.targetGuid = target->GetGUID().GetCounter();
-        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        snap.targetGuid = target->GetGUID().GetCounter();        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
         snap.critChance = caster->GetUnitCriticalChanceAgainst(BASE_ATTACK, target);
         snap.haste = caster->GetRatingBonusValue(CR_HASTE_MELEE);
         snap.timestamp = getMSTime();
@@ -636,8 +577,7 @@ public:
     }
 
 private:
-    uint64 GetKey(uint32 spellId, Unit* target) const
-    {
+    uint64 GetKey(uint32 spellId, Unit* target) const    {
         return (static_cast<uint64>(spellId) << 32) | target->GetGUID().GetCounter();
     }
 

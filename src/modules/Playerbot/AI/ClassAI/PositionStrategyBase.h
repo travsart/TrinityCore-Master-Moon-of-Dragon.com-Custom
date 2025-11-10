@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Position.h"
 #include <vector>
 #include <array>
@@ -217,7 +218,7 @@ protected:
 
     // Position tracking
     std::unordered_map<uint64_t, Position> _botPositions;  // Bot GUID -> Position
-    mutable std::recursive_mutex _positionMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _positionMutex;
 
     // Danger zones
     struct DangerZone
@@ -228,7 +229,7 @@ protected:
         uint32 expirationTime;
     };
     std::vector<DangerZone> _dangerZones;
-    mutable std::recursive_mutex _dangerMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _dangerMutex;
 
     // Position cache for performance
     struct PositionCache
@@ -237,7 +238,7 @@ protected:
         uint32 lastCleanup;
     };
     mutable PositionCache _cache;
-    mutable std::recursive_mutex _cacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cacheMutex;
 
     // Performance statistics
     mutable PerformanceStats _stats;

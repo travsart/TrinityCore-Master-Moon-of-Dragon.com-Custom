@@ -6,6 +6,8 @@
 #define BOT_WORLD_SESSION_MGR_H
 
 #include "Define.h"
+#include "../../Core/DI/Interfaces/IBotWorldSessionMgr.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "QueryHolder.h"
 #include "DatabaseEnvFwd.h"
@@ -30,7 +32,7 @@ namespace Playerbot {
  * Clean implementation using TrinityCore's native login pattern
  * Based on mod-playerbots' proven approach with modern enhancements
  */
-class TC_GAME_API BotWorldSessionMgr final
+class TC_GAME_API BotWorldSessionMgr final : public IBotWorldSessionMgr
 {
 public:
     // Thread-safe singleton
@@ -41,33 +43,33 @@ public:
     }
 
     // Basic lifecycle
-    bool Initialize();
-    void Shutdown();
+    bool Initialize() override;
+    void Shutdown() override;
 
     // Bot management using TrinityCore's native login
-    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0);
-    void RemovePlayerBot(ObjectGuid playerGuid);
+    bool AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId = 0) override;
+    void RemovePlayerBot(ObjectGuid playerGuid) override;
     Player* GetPlayerBot(ObjectGuid playerGuid) const;
 
     // Session updates
-    void UpdateSessions(uint32 diff);
+    void UpdateSessions(uint32 diff) override;
 
     // Deferred packet processing (main thread only!)
     // Processes packets queued by worker threads that require serialization with Map::Update()
-    uint32 ProcessAllDeferredPackets();
+    uint32 ProcessAllDeferredPackets() override;
 
     // Administrative
-    uint32 GetBotCount() const;
-    bool IsEnabled() const { return _enabled.load(); }
-    void SetEnabled(bool enabled) { _enabled.store(enabled); }
+    uint32 GetBotCount() const override;
+    bool IsEnabled() const override { return _enabled.load(); }
+    void SetEnabled(bool enabled) override { _enabled.store(enabled); }
 
     // Character login trigger (compatibility with existing system)
-    void TriggerCharacterLoginForAllSessions();
+    void TriggerCharacterLoginForAllSessions() override;
 
     // Chat command support - NEW APIs for command system
-    std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const;
-    void RemoveAllPlayerBots(uint32 accountId);
-    uint32 GetBotCountByAccount(uint32 accountId) const;
+    std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const override;
+    void RemoveAllPlayerBots(uint32 accountId) override;
+    uint32 GetBotCountByAccount(uint32 accountId) const override;
 
 private:
     BotWorldSessionMgr() = default;
@@ -92,7 +94,7 @@ private:
     uint32 _maxSpawnsPerTick{10};  // From Playerbot.LevelManager.MaxBotsPerUpdate config
 
     // Thread safety
-    mutable std::recursive_mutex _sessionsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _sessionsMutex;
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _enabled{false};
 

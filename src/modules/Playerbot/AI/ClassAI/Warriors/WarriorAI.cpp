@@ -25,8 +25,7 @@
 namespace Playerbot
 {
 
-WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
-{
+WarriorAI::WarriorAI(Player* bot) : ClassAI(bot){
     _lastStanceChange = 0;
     _lastBattleShout = 0;
     _lastCommandingShout = 0;
@@ -71,6 +70,14 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+                                 if (!interruptTarget)
+                                 {
+                                     return 0;
+                                 }
+                             if (!interruptTarget)
+                             {
+                                 return;
+                             }
         if (interruptTarget && CanUseAbility(PUMMEL))
         {
             // Cast Pummel on the interrupt target
@@ -408,8 +415,7 @@ Position WarriorAI::CalculateOptimalChargePosition(::Unit* target)
     return GetBot()->GetPosition();
 }
 
-void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
-{
+void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     if (!target || !GetBot())
         return;
 
@@ -427,8 +433,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
     }
 
     // Apply Rend for bleed damage
-    if (CanUseAbility(REND))
-    {
+    if (CanUseAbility(REND))    {
         if (!target->HasAura(REND, GetBot()->GetGUID()))
         {
             if (CastSpell(target, REND))
@@ -607,8 +612,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         if (snapshot_entity)
         {
 
-        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
- entity = nullptr;
+        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid); entity = nullptr;
  if (snapshot_entity)
  {
  }
@@ -627,8 +631,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     return count;
 }
 
-bool WarriorAI::IsValidTarget(::Unit* target)
-{
+bool WarriorAI::IsValidTarget(::Unit* target){
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 

@@ -31,6 +31,26 @@ CorpsePreventionManager::~CorpsePreventionManager()
 }
 
 void CorpsePreventionManager::OnBotBeforeDeath(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return nullptr;
+        }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return nullptr;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
 {
     if (!bot || !s_enabled)
         return;
@@ -55,6 +75,26 @@ void CorpsePreventionManager::OnBotBeforeDeath(Player* bot)
 }
 
 void CorpsePreventionManager::OnBotAfterDeath(Player* bot)
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return;
+}
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return nullptr;
+            }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                return;
+            }
 {
     if (!bot || !s_enabled)
         return;
@@ -82,6 +122,11 @@ void CorpsePreventionManager::OnBotAfterDeath(Player* bot)
 }
 
 bool CorpsePreventionManager::PreventCorpseAndResurrect(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+        return nullptr;
+    }
 {
     if (!bot)
         return false;
@@ -101,6 +146,11 @@ bool CorpsePreventionManager::PreventCorpseAndResurrect(Player* bot)
 
     // Get BotAI to handle the fake death recovery
     if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+    return nullptr;
+}
     {
         if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
         {
@@ -110,6 +160,16 @@ bool CorpsePreventionManager::PreventCorpseAndResurrect(Player* bot)
     }
 
     TC_LOG_DEBUG("playerbot.corpse", "Bot {} resurrection without corpse: IsAlive={}, IsGhost={}, Health={}",
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+    return;
+}
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+            return;
+        }
         bot->GetName(), bot->IsAlive(), bot->HasPlayerFlag(PLAYER_FLAGS_GHOST), bot->GetHealth());
 
     return true;
@@ -122,6 +182,11 @@ void CorpsePreventionManager::CacheDeathLocation(Player* bot)
 
     // Store death location in DeathRecoveryManager BEFORE death
     if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                    return;
+                }
     {
         if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
         {
@@ -134,6 +199,11 @@ void CorpsePreventionManager::CacheDeathLocation(Player* bot)
 }
 
 bool CorpsePreventionManager::ShouldPreventCorpse(Player* bot)
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+        return nullptr;
+    }
 {
     if (!bot || !s_enabled)
         return false;

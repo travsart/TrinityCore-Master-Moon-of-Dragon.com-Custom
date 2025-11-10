@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "EnumFlag.h"
 #include "ObjectGuid.h"
 #include "Position.h"
@@ -398,7 +399,7 @@ private:
     mutable MechanicMetrics _metrics;
 
     // Thread safety
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 
     // Constants
     static constexpr float DEFAULT_AOE_RADIUS = 8.0f;
@@ -442,7 +443,7 @@ private:
     };
 
     std::unordered_map<uint32, SpellMechanicData> _spellMechanics;
-    mutable std::recursive_mutex _mutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 };
 
 } // namespace Playerbot

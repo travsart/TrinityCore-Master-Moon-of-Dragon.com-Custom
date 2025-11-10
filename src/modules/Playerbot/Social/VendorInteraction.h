@@ -10,11 +10,13 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "TradeSystem.h"
 #include "Player.h"
 #include "Creature.h"
 #include "CreatureData.h"
 #include "ObjectMgr.h"
+#include "../Core/DI/Interfaces/IVendorInteraction.h"
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -29,27 +31,27 @@ namespace Playerbot
  * This system directly integrates with TrinityCore's creature_template, npc_vendor,
  * and gossip systems to provide intelligent vendor interactions for playerbots.
  */
-class TC_GAME_API VendorInteraction
+class TC_GAME_API VendorInteraction final : public IVendorInteraction
 {
 public:
     static VendorInteraction* instance();
 
     // Core vendor discovery using TrinityCore data
-    void LoadVendorDataFromDatabase();
-    std::vector<VendorInfo> QueryVendorsByZone(uint32 zoneId);
-    std::vector<VendorInfo> QueryVendorsByType(VendorType type);
-    VendorInfo GetVendorFromCreature(const Creature* creature);
+    void LoadVendorDataFromDatabase() override;
+    std::vector<VendorInfo> QueryVendorsByZone(uint32 zoneId) override;
+    std::vector<VendorInfo> QueryVendorsByType(VendorType type) override;
+    VendorInfo GetVendorFromCreature(const Creature* creature) override;
 
     // Intelligent vendor selection
-    uint32 FindOptimalVendor(Player* player, VendorType preferredType, float maxDistance = 200.0f);
-    std::vector<uint32> FindVendorsWithItem(uint32 itemId, uint32 playerZone);
-    uint32 FindCheapestVendor(uint32 itemId, const std::vector<uint32>& vendorGuids);
-    uint32 FindNearestRepairVendor(Player* player);
+    uint32 FindOptimalVendor(Player* player, VendorType preferredType, float maxDistance = 200.0f) override;
+    std::vector<uint32> FindVendorsWithItem(uint32 itemId, uint32 playerZone) override;
+    uint32 FindCheapestVendor(uint32 itemId, const std::vector<uint32>& vendorGuids) override;
+    uint32 FindNearestRepairVendor(Player* player) override;
 
     // Vendor interaction optimization
-    void OptimizeVendorRoute(Player* player, const std::vector<std::pair<VendorType, uint32>>& needs);
-    void PlanVendorTrip(Player* player, const std::vector<uint32>& itemsToBuy, const std::vector<uint32>& itemsToSell);
-    bool ShouldTravelToVendor(Player* player, uint32 vendorGuid, float expectedValue);
+    void OptimizeVendorRoute(Player* player, const std::vector<std::pair<VendorType, uint32>>& needs) override;
+    void PlanVendorTrip(Player* player, const std::vector<uint32>& itemsToBuy, const std::vector<uint32>& itemsToSell) override;
+    bool ShouldTravelToVendor(Player* player, uint32 vendorGuid, float expectedValue) override;
 
     // Advanced vendor analysis using TrinityCore vendor data
     struct VendorAnalysis
@@ -71,15 +73,15 @@ public:
             , reputationRequirement(0), isAlwaysAvailable(true), respawnTimer(0) {}
     };
 
-    VendorAnalysis AnalyzeVendor(uint32 vendorGuid);
-    void UpdateVendorAnalysis(uint32 vendorGuid);
-    bool CanPlayerUseVendor(Player* player, uint32 vendorGuid);
+    VendorAnalysis AnalyzeVendor(uint32 vendorGuid) override;
+    void UpdateVendorAnalysis(uint32 vendorGuid) override;
+    bool CanPlayerUseVendor(Player* player, uint32 vendorGuid) override;
 
     // Dynamic vendor inventory management
-    void TrackVendorInventory(uint32 vendorGuid);
-    void UpdateVendorStock(uint32 vendorGuid, uint32 itemId, int32 stockChange);
-    uint32 GetVendorStock(uint32 vendorGuid, uint32 itemId);
-    void PredictVendorRestocking(uint32 vendorGuid);
+    void TrackVendorInventory(uint32 vendorGuid) override;
+    void UpdateVendorStock(uint32 vendorGuid, uint32 itemId, int32 stockChange) override;
+    uint32 GetVendorStock(uint32 vendorGuid, uint32 itemId) override;
+    void PredictVendorRestocking(uint32 vendorGuid) override;
 
     // Automated buying strategies
     struct BuyingStrategy
@@ -98,10 +100,10 @@ public:
             , considerItemLevel(true), priceThreshold(1.5f) {}
     };
 
-    void ExecuteBuyingStrategy(Player* player, uint32 vendorGuid, const BuyingStrategy& strategy);
-    void AutoBuyConsumables(Player* player, uint32 vendorGuid);
-    void AutoBuyReagents(Player* player, uint32 vendorGuid);
-    void BuyBestAvailableGear(Player* player, uint32 vendorGuid);
+    void ExecuteBuyingStrategy(Player* player, uint32 vendorGuid, const BuyingStrategy& strategy) override;
+    void AutoBuyConsumables(Player* player, uint32 vendorGuid) override;
+    void AutoBuyReagents(Player* player, uint32 vendorGuid) override;
+    void BuyBestAvailableGear(Player* player, uint32 vendorGuid) override;
 
     // Automated selling strategies
     struct SellingStrategy
@@ -120,22 +122,22 @@ public:
             , sellOutdatedGear(true), keepSetItems(true) {}
     };
 
-    void ExecuteSellingStrategy(Player* player, uint32 vendorGuid, const SellingStrategy& strategy);
-    void AutoSellJunkItems(Player* player, uint32 vendorGuid);
-    void SellOutdatedEquipment(Player* player, uint32 vendorGuid);
-    uint32 CalculateSellingValue(Player* player, const std::vector<uint32>& itemGuids);
+    void ExecuteSellingStrategy(Player* player, uint32 vendorGuid, const SellingStrategy& strategy) override;
+    void AutoSellJunkItems(Player* player, uint32 vendorGuid) override;
+    void SellOutdatedEquipment(Player* player, uint32 vendorGuid) override;
+    uint32 CalculateSellingValue(Player* player, const std::vector<uint32>& itemGuids) override;
 
     // Reputation and faction vendor handling
-    void HandleFactionVendors(Player* player);
-    std::vector<uint32> GetAccessibleFactionVendors(Player* player);
-    bool MeetsReputationRequirement(Player* player, uint32 vendorGuid);
-    void OptimizeReputationGains(Player* player);
+    void HandleFactionVendors(Player* player) override;
+    std::vector<uint32> GetAccessibleFactionVendors(Player* player) override;
+    bool MeetsReputationRequirement(Player* player, uint32 vendorGuid) override;
+    void OptimizeReputationGains(Player* player) override;
 
     // Vendor service coordination
-    void CoordinateRepairServices(Player* player);
-    void HandleInnkeeperServices(Player* player, uint32 innkeeperGuid);
-    void ManageFlightPathServices(Player* player, uint32 flightMasterGuid);
-    void ProcessTrainerServices(Player* player, uint32 trainerGuid);
+    void CoordinateRepairServices(Player* player) override;
+    void HandleInnkeeperServices(Player* player, uint32 innkeeperGuid) override;
+    void ManageFlightPathServices(Player* player, uint32 flightMasterGuid) override;
+    void ProcessTrainerServices(Player* player, uint32 trainerGuid) override;
 
     // Performance monitoring
     struct VendorMetrics
@@ -156,19 +158,19 @@ public:
         }
     };
 
-    VendorMetrics GetPlayerVendorMetrics(uint32 playerGuid);
-    VendorMetrics GetGlobalVendorMetrics();
+    VendorMetrics GetPlayerVendorMetrics(uint32 playerGuid) override;
+    VendorMetrics GetGlobalVendorMetrics() override;
 
     // Configuration and optimization
-    void SetBuyingStrategy(uint32 playerGuid, const BuyingStrategy& strategy);
-    void SetSellingStrategy(uint32 playerGuid, const SellingStrategy& strategy);
-    BuyingStrategy GetBuyingStrategy(uint32 playerGuid);
-    SellingStrategy GetSellingStrategy(uint32 playerGuid);
+    void SetBuyingStrategy(uint32 playerGuid, const BuyingStrategy& strategy) override;
+    void SetSellingStrategy(uint32 playerGuid, const SellingStrategy& strategy) override;
+    BuyingStrategy GetBuyingStrategy(uint32 playerGuid) override;
+    SellingStrategy GetSellingStrategy(uint32 playerGuid) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void RefreshVendorDatabase();
-    void ValidateVendorData();
+    void Update(uint32 diff) override;
+    void RefreshVendorDatabase() override;
+    void ValidateVendorData() override;
 
 private:
     VendorInteraction();
@@ -179,7 +181,7 @@ private:
     std::unordered_map<uint32, std::vector<uint32>> _zoneVendorCache; // zoneId -> vendorGuids
     std::unordered_map<VendorType, std::vector<uint32>> _typeVendorCache; // type -> vendorGuids
     std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _vendorInventoryCache; // vendorGuid -> itemId -> stock
-    mutable std::recursive_mutex _vendorCacheMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> _vendorCacheMutex;
 
     // Player strategies
     std::unordered_map<uint32, BuyingStrategy> _playerBuyingStrategies; // playerGuid -> strategy

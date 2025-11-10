@@ -21,6 +21,7 @@
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
 #include "../Group/RoleDefinitions.h"
+#include "Core/DI/Interfaces/IBotTalentManager.h"
 #include <atomic>
 #include <vector>
 #include <map>
@@ -114,7 +115,7 @@ struct SpecChoice
  * 5. Main Thread: (If dual-spec) ActivateSpecialization(spec2) + ApplyTalentLoadout()
  * 6. Main Thread: ActivateSpecialization(spec1) - Return to primary spec
  */
-class TC_GAME_API BotTalentManager
+class TC_GAME_API BotTalentManager final : public IBotTalentManager
 {
 public:
     static BotTalentManager* instance();
@@ -128,17 +129,17 @@ public:
      * MUST be called before any talent operations
      * Single-threaded execution required
      */
-    bool LoadLoadouts();
+    bool LoadLoadouts() override;
 
     /**
      * Reload loadouts (for hot-reload during development)
      */
-    void ReloadLoadouts();
+    void ReloadLoadouts() override;
 
     /**
      * Check if loadouts are ready
      */
-    bool IsReady() const
+    bool IsReady() const override
     {
         return _initialized.load(std::memory_order_acquire);
     }
@@ -161,7 +162,7 @@ public:
      * @param level     Bot level (affects availability)
      * @return          SpecChoice with selected spec
      */
-    SpecChoice SelectSpecialization(uint8 cls, TeamId faction, uint32 level);
+    SpecChoice SelectSpecialization(uint8 cls, TeamId faction, uint32 level) override;
 
     /**
      * Select secondary specialization for dual-spec
@@ -174,12 +175,12 @@ public:
      * @param primarySpec Already selected primary spec
      * @return          SpecChoice for secondary spec
      */
-    SpecChoice SelectSecondarySpecialization(uint8 cls, TeamId faction, uint32 level, uint8 primarySpec);
+    SpecChoice SelectSecondarySpecialization(uint8 cls, TeamId faction, uint32 level, uint8 primarySpec) override;
 
     /**
      * Get all available specs for a class
      */
-    std::vector<uint8> GetAvailableSpecs(uint8 cls) const;
+    std::vector<uint8> GetAvailableSpecs(uint8 cls) const override;
 
     // ====================================================================
     // TALENT LOADOUT QUERIES (Thread-safe, lock-free cache access)
@@ -194,13 +195,13 @@ public:
      * @param level     Bot level
      * @return          Pointer to loadout, or nullptr if not found
      */
-    TalentLoadout const* GetTalentLoadout(uint8 cls, uint8 specId, uint32 level) const;
+    TalentLoadout const* GetTalentLoadout(uint8 cls, uint8 specId, uint32 level) const override;
 
     /**
      * Get all loadouts for a class/spec combination
      * Useful for debugging and validation
      */
-    std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const;
+    std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const override;
 
     // ====================================================================
     // TALENT APPLICATION (MAIN THREAD ONLY - Player API)
@@ -220,7 +221,7 @@ public:
      * @param specId    Specialization to apply
      * @return          True if successful
      */
-    bool ApplySpecialization(Player* bot, uint8 specId);
+    bool ApplySpecialization(Player* bot, uint8 specId) override;
 
     /**
      * Apply talent loadout to bot
@@ -238,7 +239,7 @@ public:
      * @param level     Bot level
      * @return          True if successful
      */
-    bool ApplyTalentLoadout(Player* bot, uint8 specId, uint32 level);
+    bool ApplyTalentLoadout(Player* bot, uint8 specId, uint32 level) override;
 
     /**
      * Activate specialization (switch active spec)
@@ -248,7 +249,7 @@ public:
      * @param specIndex Spec index (0 = primary, 1 = secondary)
      * @return          True if successful
      */
-    bool ActivateSpecialization(Player* bot, uint8 specIndex);
+    bool ActivateSpecialization(Player* bot, uint8 specIndex) override;
 
     /**
      * Complete workflow: Apply spec + talents in one call
@@ -259,7 +260,7 @@ public:
      * @param level     Bot level
      * @return          True if successful
      */
-    bool SetupBotTalents(Player* bot, uint8 specId, uint32 level);
+    bool SetupBotTalents(Player* bot, uint8 specId, uint32 level) override;
 
     // ====================================================================
     // DUAL-SPEC SUPPORT (WoW 11.2 Feature)
@@ -269,7 +270,7 @@ public:
      * Check if level supports dual-spec
      * WoW 11.2: Dual-spec unlocks at level 10
      */
-    bool SupportsDualSpec(uint32 level) const
+    bool SupportsDualSpec(uint32 level) const override
     {
         return level >= 10;
     }
@@ -281,7 +282,7 @@ public:
      * @param bot       Bot player object
      * @return          True if successful
      */
-    bool EnableDualSpec(Player* bot);
+    bool EnableDualSpec(Player* bot) override;
 
     /**
      * Setup dual-spec with both talent loadouts
@@ -293,7 +294,7 @@ public:
      * @param level     Bot level
      * @return          True if successful
      */
-    bool SetupDualSpec(Player* bot, uint8 spec1, uint8 spec2, uint32 level);
+    bool SetupDualSpec(Player* bot, uint8 spec1, uint8 spec2, uint32 level) override;
 
     // ====================================================================
     // HERO TALENTS (WoW 11.2 Feature, Levels 71-80)
@@ -303,7 +304,7 @@ public:
      * Check if level supports hero talents
      * WoW 11.2: Hero talents unlock at level 71
      */
-    bool SupportsHeroTalents(uint32 level) const
+    bool SupportsHeroTalents(uint32 level) const override
     {
         return level >= 71;
     }
@@ -317,26 +318,18 @@ public:
      * @param level     Bot level (71-80)
      * @return          True if successful
      */
-    bool ApplyHeroTalents(Player* bot, uint8 specId, uint32 level);
+    bool ApplyHeroTalents(Player* bot, uint8 specId, uint32 level) override;
 
     // ====================================================================
     // STATISTICS & DEBUGGING
     // ====================================================================
 
-    struct TalentStats
-    {
-        uint32 totalLoadouts{0};
-        uint32 loadoutsPerClass[MAX_CLASSES]{};
-        uint32 loadoutsWithHeroTalents{0};
-        uint32 averageTalentsPerLoadout{0};
-        uint32 specsApplied{0};
-        uint32 loadoutsApplied{0};
-        uint32 dualSpecsSetup{0};
-    };
+    // IBotTalentManager interface implementation
+    using TalentStats = Playerbot::TalentStats;
 
-    TalentStats GetStats() const { return _stats; }
-    void PrintLoadoutReport() const;
-    std::string GetLoadoutSummary() const;
+    TalentStats GetStats() const override { return _stats; }
+    void PrintLoadoutReport() const override;
+    std::string GetLoadoutSummary() const override;
 
 private:
     BotTalentManager() = default;

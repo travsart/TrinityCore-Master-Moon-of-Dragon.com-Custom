@@ -20,6 +20,7 @@
 #define PLAYERBOT_MEMORYPOOL_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
@@ -110,7 +111,7 @@ private:
     alignas(64) std::atomic<size_t> _peakUsage{0};
 
     Configuration _config;
-    std::recursive_mutex _chunkMutex;
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _chunkMutex;
 
     // Thread-local cache
     static thread_local ThreadCache _threadCache;
@@ -163,7 +164,7 @@ private:
     };
 
     std::unordered_map<ObjectGuid, BotMemoryUsage> _botMemoryUsage;
-    mutable std::recursive_mutex _usageMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _usageMutex;
 
     std::atomic<size_t> _totalAllocated{0};
     std::atomic<size_t> _maxMemory{1ULL << 30}; // 1GB default

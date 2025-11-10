@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 #include "SharedDefines.h"
@@ -267,7 +268,7 @@ private:
 
     // Active spell tracking
     std::unordered_map<ObjectGuid, std::vector<DetectedSpellCast>> _activeCasts; // casterGuid -> casts
-    mutable std::recursive_mutex _castMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _castMutex;
 
     // Update tracking
     std::chrono::steady_clock::time_point _lastUpdate;
@@ -277,19 +278,19 @@ private:
     // Performance metrics
     mutable DetectionMetrics _metrics;
     // DEADLOCK FIX: Changed to recursive_mutex
-    mutable std::recursive_mutex _metricsMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _metricsMutex;
 
     // Integration components
     std::weak_ptr<InterruptCoordinator> _coordinator;
     std::vector<std::function<void(DetectedSpellCast const&)>> _spellCastCallbacks;
     std::vector<std::function<void(ObjectGuid, uint32, bool)>> _spellCompleteCallbacks;
     // DEADLOCK FIX: Changed to recursive_mutex
-    mutable std::recursive_mutex _callbackMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _callbackMutex;
 
     // Priority scanning
     std::unordered_map<CreatureType, uint32> _creatureTypePriorities;
     std::unordered_map<uint32, uint32> _npcPriorities; // npcId -> priority
-    mutable std::recursive_mutex _priorityMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _priorityMutex;
 
     // Pattern recognition
     bool _enablePatterns = false;
@@ -301,7 +302,7 @@ private:
         uint32 currentIndex = 0;
     };
     std::unordered_map<uint32, SpellPattern> _spellPatterns; // npcId -> pattern
-    mutable std::recursive_mutex _patternMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _patternMutex;
 
     // Performance optimization
     static constexpr uint32 MAX_SCAN_UNITS = 50;        // Maximum units to scan per update
@@ -310,7 +311,7 @@ private:
     static constexpr uint32 MAX_ACTIVE_CASTS = 100;     // Maximum tracked active casts
 
     // Thread safety
-    mutable std::recursive_mutex _observerMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _observerMutex;
 
     // Deleted operations
     InterruptAwareness(InterruptAwareness const&) = delete;

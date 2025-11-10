@@ -25,8 +25,7 @@
 namespace Playerbot
 {
 
-PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
-{
+PaladinAI::PaladinAI(Player* bot) : ClassAI(bot){
     _lastBlessingTime = 0;
     _lastAuraChange = 0;
     _lastConsecration = 0;
@@ -122,9 +121,17 @@ void PaladinAI::UpdateRotation(::Unit* target)
     {
         Unit* priorityTarget = behaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
+        if (!priorityTarget)
+        {
+            return;
+        }
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
+                         if (!priorityTarget)
+                         {
+                             return;
+                         }
             TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -228,22 +235,18 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
         return false;
 
     // Check Holy Power requirements for specific abilities
-    if (!HasHolyPowerFor(spellId))
-        return false;
+    if (!HasHolyPowerFor(spellId))        return false;
 
-    return true;
-}
+    return true;}
 
-void PaladinAI::OnCombatStart(::Unit* target)
-{
+void PaladinAI::OnCombatStart(::Unit* target){
     _paladinMetrics.combatStartTime = std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();
-    _combatTime = 0;
+    _currentTarget = target->GetGUID();    _combatTime = 0;
 }
 
 void PaladinAI::OnCombatEnd()
@@ -494,8 +497,7 @@ void PaladinAI::UseDefensiveCooldowns()
                 RecordAbilityUsage(GUARDIAN_OF_ANCIENT_KINGS);
                 TC_LOG_DEBUG("module.playerbot.ai", "Protection Paladin {} activated Guardian of Ancient Kings",
                              GetBot()->GetName());
-                return;
-            }
+                return;            }
         }
     }
 
@@ -509,8 +511,7 @@ void PaladinAI::UseDefensiveCooldowns()
             for (GroupReference const& itr : group->GetMembers())
             {
                 Player* member = itr.GetSource();
-                if (member && member != GetBot() && member->GetHealthPct() < 30.0f)
-                {
+                if (member && member != GetBot() && member->GetHealthPct() < 30.0f)                {
                     if (CastSpell(member, BLESSING_OF_PROTECTION))
                     {
                         RecordAbilityUsage(BLESSING_OF_PROTECTION);
@@ -544,8 +545,7 @@ void PaladinAI::UseOffensiveCooldowns()
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinRetribution && CanUseAbility(CRUSADE))
     {
         if (CastSpell(CRUSADE))
-        {
-            RecordAbilityUsage(CRUSADE);
+        {            RecordAbilityUsage(CRUSADE);
             TC_LOG_DEBUG("module.playerbot.ai", "Retribution Paladin {} activated Crusade",
                          GetBot()->GetName());
         }
@@ -563,8 +563,7 @@ void PaladinAI::UseOffensiveCooldowns()
     }
 
     // Execution Sentence on primary target
-    Unit* target = GetBot()->GetSelectedUnit();
-    if (target && CanUseAbility(EXECUTION_SENTENCE))
+    Unit* target = GetBot()->GetSelectedUnit();    if (target && CanUseAbility(EXECUTION_SENTENCE))
     {
         if (CastSpell(target, EXECUTION_SENTENCE))
         {
@@ -1031,21 +1030,14 @@ bool PaladinAI::IsAllyInDanger() const
     return false;
 }
 
-bool PaladinAI::ShouldUseLayOnHands() const
-{
-    if (!GetBot())
-        return false;
-
-    // Use on self if critical
-    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
-        return true;
+bool PaladinAI::ShouldUseLayOnHands() const{
+    if (!GetBot())        return false;    // Use on self if critical    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
 
     // Use on tank if critical
     Group* group = GetBot()->GetGroup();
     if (group)
     {
-        for (GroupReference const& itr : group->GetMembers())
-        {
+        for (GroupReference const& itr : group->GetMembers())        {
             Player* member = itr.GetSource();
             // TODO: Check if member is tank
             if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
@@ -1062,19 +1054,11 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
         return Position();
 
     // Get behind target for Retribution DPS
-    float angle = target->GetOrientation() + M_PI;  // Behind target
-    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
-        angle = target->GetOrientation();  // Face target for tanking
-
-    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;
-    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;
-    float z = target->GetPositionZ();
-
-    return Position(x, y, z, angle);
+    float angle = target->GetOrientation() + M_PI;  // Behind target    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
+        angle = target->GetOrientation();  // Face target for tanking    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;    float z = target->GetPositionZ();    return Position(x, y, z, angle);
 }
 
-bool PaladinAI::IsValidTarget(::Unit* target)
-{
+bool PaladinAI::IsValidTarget(::Unit* target){
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 

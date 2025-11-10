@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "RoleAssignment.h"
 #include "RoleDefinitions.h"
 #include "Player.h"
@@ -249,7 +250,7 @@ private:
     };
 
     static OptimizationMetrics _metrics;
-    static std::recursive_mutex _metricsMutex;
+    static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _metricsMutex;
 
     // Constants for optimization algorithms
     static constexpr uint32 GA_POPULATION_SIZE = 50;

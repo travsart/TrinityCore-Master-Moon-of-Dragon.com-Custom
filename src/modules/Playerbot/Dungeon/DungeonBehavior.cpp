@@ -446,6 +446,16 @@ void DungeonBehavior::CoordinateTankBehavior(Player* tank, const DungeonEncounte
 
     // Get tank strategy from encounter system
     auto tankStrategy = EncounterStrategy::instance()->GetTankStrategy(encounter.encounterId, tank);
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGroup");
+            return;
+        }
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGroup");
+            return nullptr;
+        }
 
     // Execute positioning strategy
     if (tankStrategy.positioningStrategy)
@@ -459,6 +469,16 @@ void DungeonBehavior::CoordinateTankBehavior(Player* tank, const DungeonEncounte
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
         BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+            return;
+        }
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
+            return;
+        }
         if (botAI && botAI->GetMovementArbiter())
         {
             botAI->RequestPointMovement(
@@ -556,6 +576,11 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
         {
             // FALLBACK: Direct MotionMaster if arbiter not available
             dps->GetMotionMaster()->MovePoint(0, optimalPos.GetPositionX(),
+                if (!cc)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+                    return;
+                }
                 optimalPos.GetPositionY(), optimalPos.GetPositionZ());
         }
     }
@@ -563,19 +588,54 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
     TC_LOG_TRACE("module.playerbot", "Coordinating DPS {} behavior for encounter {}",
         dps->GetName(), encounter.encounterName);
 }
+if (!cc)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+    return;
+}
 
 void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEncounter& encounter)
+    if (!cc)
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+        return;
+    }
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+        return nullptr;
+    }
 {
     if (!cc || !cc->GetGroup())
         return;
 
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetMap");
+        return nullptr;
+    }
     // Identify targets requiring crowd control
     std::vector<Unit*> ccTargets;
+    if (!cc)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+        return nullptr;
+    }
 
     // Scan for adds or specific mechanic targets
     for (auto const& member : cc->GetGroup()->GetMemberSlots())
     {
         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
+            if (!groupMember)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetPosition");
+                return nullptr;
+            }
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
+            return;
+        }
         if (!groupMember || !groupMember->IsInWorld())
             continue;
 
@@ -585,16 +645,36 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
         Trinity::CreatureListSearcher searcher(groupMember, nearbyCreatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = groupMember->GetMap();
+    if (!groupMember)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetMap");
+        return;
+    }
+        if (!groupMember)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return; // Adjust return value as needed
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
     {
+        if (!cc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+            return;
+        }
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
             return; // Adjust return value as needed
+    if (!cc)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetName");
+        return;
+    }
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -605,6 +685,11 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
     for (ObjectGuid guid : nearbyGuids)
     {
         auto* entity = ObjectAccessor::GetCreature(*groupMember, guid);
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return nullptr;
+}
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -618,18 +703,38 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
 
             // Check if this creature should be CC'd
             if (encounter.mechanics.empty())
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                    return nullptr;
+                }
                 continue;
 
             ccTargets.push_back(creature);
         }
     }
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     if (!ccTargets.empty())
     {
+        if (!cc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+            return nullptr;
+        }
         CoordinateCrowdControl(cc->GetGroup(), ccTargets);
     }
 
     TC_LOG_TRACE("module.playerbot", "Coordinating CC behavior for {} ({} targets)",
+        if (!cc)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetName");
+            return;
+        }
         cc->GetName(), ccTargets.size());
 }
 
@@ -638,6 +743,11 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
 // ============================================================================
 
 void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounter& encounter)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -653,6 +763,16 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -712,6 +832,11 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
 void DungeonBehavior::HandleSpecialPositioning(Group* group, uint32 encounterId)
 {
     if (!group)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
         return;
 
     DungeonEncounter encounter = GetEncounterData(encounterId);
@@ -736,6 +861,11 @@ void DungeonBehavior::HandleSpecialPositioning(Group* group, uint32 encounterId)
 }
 
 Position DungeonBehavior::GetOptimalPosition(Player* player, DungeonRole role, const DungeonEncounter& encounter)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
 {
     Position optimalPos = encounter.encounterLocation;
 
@@ -765,14 +895,34 @@ Position DungeonBehavior::GetOptimalPosition(Player* player, DungeonRole role, c
     }
 
     return optimalPos;
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
 }
 
 void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return nullptr;
+}
 {
     if (!player || dangerousAreas.empty())
         return;
 
     Position currentPos = player->GetPosition();
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+        return nullptr;
+    }
     bool inDanger = false;
     Position nearestSafeSpot = currentPos;
 
@@ -794,6 +944,11 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return nullptr;
+        }
         if (botAI && botAI->GetMovementArbiter())
         {
             botAI->RequestPointMovement(
@@ -818,6 +973,11 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
 // ============================================================================
 
 void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& trashMobIds)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group || trashMobIds.empty())
         return;
@@ -828,14 +988,49 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld())
             continue;
 
         std::list<Creature*> nearbyCreatures;
         Trinity::AnyUnitInObjectRangeCheck checker(player, 50.0f, true, true);
         Trinity::CreatureListSearcher searcher(player, nearbyCreatures, checker);
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = player->GetMap();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+        return nullptr;
+    }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+        return;
+    }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+            return nullptr;
+        }
     if (!map)
         return; // Adjust return value as needed
 
@@ -904,7 +1099,27 @@ void DungeonBehavior::PullTrashGroup(Group* group, const std::vector<Unit*>& tra
 }
 
 void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs)
+if (!group)
 {
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
+    if (!group)
+    {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return nullptr;
+        }
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
+{
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     if (!group || trashMobs.empty())
         return;
 
@@ -912,12 +1127,27 @@ void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>&
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
         // Tank gets first target
         if (player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
             player->GetClass() == CLASS_DEATH_KNIGHT)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return nullptr;
+            }
         {
             if (player->GetPrimaryTalentTree() == 0) // Protection/Blood/Prot
             {
@@ -939,15 +1169,35 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const std::vector<Unit*
     // Get group strategy
     uint32 groupId = group->GetGUID().GetCounter();
     EncounterStrategy strategy = GetEncounterStrategy(groupId);
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 
     switch (strategy)
     {
         case EncounterStrategy::CONSERVATIVE:
             // Pull one at a time, CC rest
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return nullptr;
+            }
             if (trashMobs.size() > 1)
             {
                 std::vector<Unit*> ccTargets(trashMobs.begin() + 1, trashMobs.end());
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                    return;
+                }
                 CoordinateCrowdControl(group, ccTargets);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return nullptr;
+            }
             }
             break;
 
@@ -975,6 +1225,11 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const std::vector<Unit*
 // ============================================================================
 
 void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& encounter)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -991,6 +1246,16 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
@@ -1029,6 +1294,11 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
 }
 
 void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, const std::string& mechanic)
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
 {
     if (!group)
         return;
@@ -1047,18 +1317,68 @@ void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, cons
         Player* otherTank = nullptr;
 
         for (auto const& member : group->GetMemberSlots())
+        if (!group)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+            return nullptr;
+        }
         {
             Player* player = ObjectAccessor::FindPlayer(member.guid);
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return nullptr;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+                return;
+            }
             if (!player || !player->IsInWorld() || !player->IsAlive())
                 continue;
 
             if ((player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
+            if (!player)
+            {
+                if (!group)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                    return nullptr;
+                }
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return nullptr;
+            }
+                 if (!tank)
+                 {
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method IsInWorld");
+                     return;
+                 }
                  player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimaryTalentTree() == 0)
+                 if (!player)
+                 {
+                     if (!tank)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetClass");
+                         return nullptr;
+                     }
+                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                     if (!tank)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetClass");
+                         return nullptr;
+                     }
+                     return nullptr;
+                 }
             {
                 if (!currentTank)
                     currentTank = player;
                 else if (!otherTank)
                     otherTank = player;
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
             }
         }
 
@@ -1078,9 +1398,19 @@ void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, cons
         // DPS should switch to adds
         CoordinateGroupDamage(group, GetEncounterData(encounterId));
     }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
 }
 
 void DungeonBehavior::AdaptToEncounterPhase(Group* group, uint32 encounterId, uint32 phase)
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return;
+}
 {
     if (!group)
         return;
@@ -1097,13 +1427,28 @@ void DungeonBehavior::AdaptToEncounterPhase(Group* group, uint32 encounterId, ui
 }
 
 void DungeonBehavior::HandleEnrageTimer(Group* group, const DungeonEncounter& encounter)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return;
+}
 {
     if (!group || !encounter.hasEnrageTimer)
         return;
 
     uint32 elapsedTime = getMSTime() - _encounterStartTime[group->GetGUID().GetCounter()];
     uint32 remainingTime = (encounter.enrageTimeSeconds * 1000) - elapsedTime;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     if (remainingTime < (encounter.enrageTimeSeconds * 1000 * ENRAGE_WARNING_THRESHOLD))
     {
         TC_LOG_WARN("module.playerbot", "Group {} approaching enrage timer ({} seconds remaining)",
@@ -1148,28 +1493,73 @@ void DungeonBehavior::ManageGroupThreat(Group* group, const DungeonEncounter& en
         case ThreatManagement::OFF_TANK:
             // Off-tank handles adds
             break;
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
     }
 }
 
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return;
+}
 void DungeonBehavior::HandleTankSwap(Group* group, Player* currentTank, Player* newTank)
 {
     if (!group || !currentTank || !newTank)
         return;
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     TC_LOG_DEBUG("module.playerbot", "Executing tank swap: {} -> {}",
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
         currentTank->GetName(), newTank->GetName());
 
     // Coordinate the swap through encounter strategy
     EncounterStrategy::instance()->HandleTankSwapMechanic(group, currentTank, newTank);
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+    return;
+}
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+        return nullptr;
+    }
     LogDungeonEvent(group->GetGUID().GetCounter(), "TANK_SWAP",
         Trinity::StringFormat("{} -> {}", currentTank->GetName(), newTank->GetName()));
 }
 
 void DungeonBehavior::ManageThreatMeters(Group* group)
+if (!group)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+    return nullptr;
+}
+            if (!group)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+                return nullptr;
+            }
 {
     if (!group)
         return;
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+    return nullptr;
+}
 
     // Monitor threat levels and warn DPS if needed
     for (auto const& member : group->GetMemberSlots())
@@ -1188,11 +1578,26 @@ void DungeonBehavior::ManageThreatMeters(Group* group)
             for (auto const& tankMember : group->GetMemberSlots())
             {
                 Player* tank = ObjectAccessor::FindPlayer(tankMember.guid);
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method IsInWorld");
+                    return;
+                }
                 if (!tank || !tank->IsInWorld() || !tank->IsAlive())
                     continue;
 
                 if ((tank->GetClass() == CLASS_WARRIOR || tank->GetClass() == CLASS_PALADIN ||
+                if (!tank)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetClass");
+                    return nullptr;
+                }
                      tank->GetClass() == CLASS_DEATH_KNIGHT) && tank->GetPrimaryTalentTree() == 0)
+                     if (!tank)
+                     {
+                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetClass");
+                         return nullptr;
+                     }
                 {
                     tankThreat = victim->GetThreatManager().GetThreat(tank);
                     break;
@@ -1208,6 +1613,16 @@ void DungeonBehavior::ManageThreatMeters(Group* group)
 }
 
 void DungeonBehavior::HandleThreatEmergency(Group* group, Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return nullptr;
+    }
 {
     if (!group || !player)
         return;
@@ -1233,10 +1648,20 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
     // Find healers in group
     std::vector<Player*> healers;
     std::vector<Player*> groupMembers;
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld())
             continue;
 
@@ -1244,7 +1669,17 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
 
         // Identify healers
         if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
             player->GetClass() == CLASS_PALADIN || player->GetClass() == CLASS_DRUID)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                return nullptr;
+            }
         {
             if (player->GetPrimaryTalentTree() == 2) // Holy/Resto/Holy
             {
@@ -1281,6 +1716,11 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
 }
 
 void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter& encounter)
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+        return nullptr;
+    }
 {
     if (!group)
         return;
@@ -1291,18 +1731,43 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+            return;
+        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
         // Exclude tanks and healers
         bool isTankOrHealer = false;
         if ((player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return;
+        }
              player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimaryTalentTree() == 0)
+             if (!player)
+             {
+                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                 return;
+             }
         {
             isTankOrHealer = true;
         }
         else if ((player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+            return nullptr;
+        }
                   player->GetClass() == CLASS_DRUID) && player->GetPrimaryTalentTree() == 2)
+                  if (!player)
+                  {
+                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+                      return nullptr;
+                  }
         {
             isTankOrHealer = true;
         }

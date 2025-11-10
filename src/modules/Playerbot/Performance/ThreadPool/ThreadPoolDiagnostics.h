@@ -20,6 +20,7 @@
 #define PLAYERBOT_THREADPOOL_DIAGNOSTICS_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include <atomic>
 #include <chrono>
 #include <string>
@@ -254,7 +255,7 @@ struct WorkerDiagnostics
 
     // Current wait location (if waiting)
     std::optional<WaitLocationInfo> currentWait;
-    std::mutex waitMutex;  // Protects currentWait
+    Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> waitMutex;  // Protects currentWait
 
     // State history (ring buffer)
     static constexpr size_t STATE_HISTORY_SIZE = 100;

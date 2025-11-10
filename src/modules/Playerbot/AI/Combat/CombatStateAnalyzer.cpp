@@ -87,6 +87,16 @@ void CombatStateAnalyzer::Update(uint32 diff)
 
             if (_detailedLogging)
                 TC_LOG_DEBUG("bot.playerbot", "Combat situation changed from {} to {} for bot {}",
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+                        return;
+                    }
                     static_cast<uint32>(_previousSituation), static_cast<uint32>(_currentSituation), _bot->GetName());
         }
         else
@@ -109,11 +119,21 @@ void CombatStateAnalyzer::Update(uint32 diff)
 
     // Prune old data periodically
     if (_updateCount % 100 == 0)
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+            return nullptr;
+        }
         PruneOldData();
 }
 
 void CombatStateAnalyzer::UpdateMetrics(uint32 diff)
 {
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+        return;
+    }
     if (!_bot || !_bot->IsInCombat())
     {
         _currentMetrics.Reset();
@@ -135,6 +155,11 @@ void CombatStateAnalyzer::UpdateMetrics(uint32 diff)
     _currentMetrics.isStunned = _bot->HasUnitState(UNIT_STATE_STUNNED);
     _currentMetrics.isSilenced = _bot->IsSilenced(SPELL_SCHOOL_MASK_MAGIC);
     _currentMetrics.isRooted = _bot->HasUnitState(UNIT_STATE_ROOT);
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
 
     // Update group metrics
     UpdateGroupMetrics();
@@ -161,9 +186,19 @@ void CombatStateAnalyzer::UpdateMetrics(uint32 diff)
 void CombatStateAnalyzer::UpdateGroupMetrics()
 {
     Group* group = _bot->GetGroup();
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     if (!group)
     {
         _currentMetrics.averageGroupHealth = _currentMetrics.personalHealthPercent;
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         _currentMetrics.lowestGroupHealth = _currentMetrics.personalHealthPercent;
         _currentMetrics.tankAlive = true;
         _currentMetrics.healerAlive = true;
@@ -173,12 +208,22 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
     float totalHealth = 0.0f;
     float lowestHealth = 100.0f;
     uint32 memberCount = 0;
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+        return;
+    }
     bool hasTank = false;
     bool hasHealer = false;
 
     for (GroupReference const& groupRef : group->GetMembers())
     {
         Player* member = groupRef.GetSource();
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return;
+        }
         if (!member || !member->IsAlive())
             continue;
 
@@ -189,6 +234,11 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
 
         // Simple role detection based on class
         Classes memberClass = static_cast<Classes>(member->GetClass());
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+            return;
+        }
         switch (memberClass)
         {
             case CLASS_WARRIOR:
@@ -213,6 +263,11 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
     {
         _currentMetrics.averageGroupHealth = totalHealth / memberCount;
         _currentMetrics.lowestGroupHealth = lowestHealth;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+        return nullptr;
+    }
     }
 
     _currentMetrics.tankAlive = hasTank;
@@ -225,6 +280,16 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
 void CombatStateAnalyzer::UpdateEnemyMetrics()
 {
     _currentMetrics.enemyCount = 0;
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                return nullptr;
+            }
+            return nullptr;
+        }
     _currentMetrics.eliteCount = 0;
     _currentMetrics.bossCount = 0;
     _currentMetrics.nearestEnemyDistance = 100.0f;
@@ -236,17 +301,52 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
     {
         _enemyCache.clear();
         _enemyCacheTime = getMSTime();
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+                return nullptr;
+            }
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+            return;
+        }
 
         // Lock-free spatial grid query
         Map* map = _bot->GetMap();
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+            return;
+        }
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+                        return nullptr;
+                    }
         if (map)
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+            return nullptr;
+        }
         {
             DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
             if (!spatialGrid)
             {
                 // Create grid on demand
                 sSpatialGridManager.CreateGrid(map);
                 spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsInCombatWith");
+                return;
+            }
             }
 
             if (spatialGrid)
@@ -259,6 +359,16 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                 for (ObjectGuid guid : nearbyGuids)
                 {
                     /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
+                    if (!enemy)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                        return;
+                    }
+                    if (!enemy)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                        return;
+                    }
                     if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
                         continue;
 
@@ -273,8 +383,43 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                     _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
 
                     if (enemy->GetTypeId() == TYPEID_UNIT)
+                    if (!enemy)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+                        return nullptr;
+                    }
                     {
                         Creature* creature = enemy->ToCreature();
+                            if (!enemy)
+                            {
+                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                                return nullptr;
+                            }
+                        if (!enemy)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                            return nullptr;
+                        }
+                        if (!creature)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+                            return;
+                        }
+                        if (!creature)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                            return nullptr;
+                        }
+                    if (!enemy)
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                        return nullptr;
+                    }
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsInCombatWith");
+                        return nullptr;
+                    }
                         if (creature->IsElite())
                             _currentMetrics.eliteCount++;
                         if (creature->IsDungeonBoss())
@@ -293,6 +438,11 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
         // Use cached data
         _currentMetrics.enemyCount = _enemyCache.size();
         for (Unit* enemy : _enemyCache)
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                return nullptr;
+            }
         {
             if (!enemy || !enemy->IsAlive())
                 continue;
@@ -332,11 +482,21 @@ void CombatStateAnalyzer::UpdateThreatData()
 
     // Check threat on all enemies
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         if (enemy->GetTarget() == _bot->GetGUID())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         {
             _currentMetrics.hasAggro = true;
             break;
@@ -359,6 +519,11 @@ void CombatStateAnalyzer::UpdateBossTimers(uint32 diff)
     // Simple enrage timer estimation (would need actual boss data)
     if (_currentMetrics.bossCount > 0 && _currentMetrics.combatDuration > 0)
     {
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return;
+        }
         // Assume 10 minute enrage timer for bosses
         uint32 typicalEnrageTime = 10 * 60 * 1000; // 10 minutes in ms
         if (_currentMetrics.combatDuration < typicalEnrageTime)
@@ -375,12 +540,32 @@ void CombatStateAnalyzer::DetectBossMechanics()
 }
 
 void CombatStateAnalyzer::AnalyzeCombatTrends()
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+    return nullptr;
+}
 {
     // Analyze health trend over last 5 seconds
     if (_historyIndex < 5)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+            return;
+        }
         return; // Not enough data
 
+    if (!enemy)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+        return;
+    }
     float healthTrend = 0.0f;
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+        return;
+    }
     float dpsTrend = 0.0f;
 
     for (uint32 i = 0; i < 5; ++i)
@@ -433,6 +618,11 @@ CombatSituation CombatStateAnalyzer::DetermineSituation() const
 bool CombatStateAnalyzer::CheckForAOESituation() const
 {
     // AOE situation if 4+ enemies or 3+ in melee range
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return false;
+    }
     if (_currentMetrics.enemyCount >= 4)
         return true;
 
@@ -440,6 +630,11 @@ bool CombatStateAnalyzer::CheckForAOESituation() const
     for (Unit* enemy : _enemyCache)
     {
         if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= (8.0f * 8.0f)) // 64.0f
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
             meleeCount++;
     }
 
@@ -454,13 +649,48 @@ bool CombatStateAnalyzer::CheckForBurstNeed() const
 
     // Need burst if boss is below 30% (execute phase)
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         if (enemy->GetTypeId() == TYPEID_UNIT)
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+                return nullptr;
+            }
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                return nullptr;
+            }
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+            return nullptr;
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+            return nullptr;
+        }
+        }
         {
             Creature* creature = enemy->ToCreature();
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                return nullptr;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
             if (creature->IsDungeonBoss() && creature->GetHealthPct() < 30.0f)
                 return true;
         }
@@ -514,8 +744,23 @@ bool CombatStateAnalyzer::CheckForKiteNeed() const
 {
     // Kite if we have aggro and shouldn't tank
     Classes botClass = static_cast<Classes>(_bot->GetClass());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     bool canTank = (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
                     botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DRUID);
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+    return nullptr;
+}
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 
     if (!canTank && _currentMetrics.hasAggro && _currentMetrics.enemyCount > 0)
         return true;
@@ -542,8 +787,18 @@ bool CombatStateAnalyzer::CheckForHealerDeath() const
 bool CombatStateAnalyzer::CheckForWipe() const
 {
     // Wipe imminent if most of group is dead or about to die
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+        return false;
+    }
     if (_currentMetrics.averageGroupHealth < 20.0f)
         return true;
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPosition");
+    return false;
+}
 
     // Wipe if tank dead and boss still has high health
     if (!_currentMetrics.tankAlive && _currentMetrics.bossCount > 0)
@@ -551,12 +806,47 @@ bool CombatStateAnalyzer::CheckForWipe() const
         for (Unit* enemy : _enemyCache)
         {
             if (enemy && enemy->GetTypeId() == TYPEID_UNIT)
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+                return nullptr;
+            }
             {
                 Creature* creature = enemy->ToCreature();
+                if (!enemy)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                    if (!bot)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
+                        return nullptr;
+                    }
+                    return nullptr;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+                    return;
+                }
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                    return;
+                }
+                if (!creature)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                    return;
+                }
                 if (creature->IsDungeonBoss() && creature->GetHealthPct() > 50.0f)
                     return true;
             }
         }
+    if (!tank)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPositionZ");
+        return nullptr;
+    }
     }
 
     return false;
@@ -592,13 +882,33 @@ bool CombatStateAnalyzer::ShouldRetreat() const
            (_currentMetrics.personalHealthPercent < 20.0f && !_currentMetrics.healerAlive);
 }
 
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+    return;
+}
 bool CombatStateAnalyzer::ShouldUseConsumables() const
 {
     // Use consumables in critical situations or boss fights
     return IsWipeImminent() || NeedsBurst() ||
+           if (!enemy)
+           {
+               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+               return false;
+           }
            (_currentMetrics.bossCount > 0 && _currentMetrics.averageGroupHealth < 50.0f);
 }
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+    return;
+}
 
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+    return;
+}
 bool CombatStateAnalyzer::NeedsToSpread() const
 {
     return _currentSituation == CombatSituation::SPREAD;
@@ -612,6 +922,11 @@ bool CombatStateAnalyzer::NeedsToStack() const
 bool CombatStateAnalyzer::NeedsToKite() const
 {
     return _currentSituation == CombatSituation::KITE;
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+    return;
+}
 }
 
 bool CombatStateAnalyzer::NeedsToMoveOut() const
@@ -625,25 +940,65 @@ float CombatStateAnalyzer::GetSafeDistance() const
     if (NeedsToSpread())
         return 10.0f; // Spread distance
 
+    if (!enemy)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+        return nullptr;
+    }
     if (NeedsToStack())
         return 3.0f; // Stack distance
 
     if (NeedsToKite())
         return 20.0f; // Kite distance
 
+    if (!enemy)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+        return nullptr;
+    }
     return 5.0f; // Default safe distance
 }
+if (!enemy)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+    return;
+}
 
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+    return;
+}
 Position CombatStateAnalyzer::GetSafePosition() const
 {
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+        return nullptr;
+    }
     // Calculate safe position based on situation
     Position pos;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
+        return;
+    }
     pos.Relocate(_bot->GetPositionX(), _bot->GetPositionY(), _bot->GetPositionZ(), _bot->GetOrientation());
 
     if (NeedsToSpread())
     {
         // Move away from group center
         if (Group* group = _bot->GetGroup())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+            return nullptr;
+        }
         {
             float centerX = 0, centerY = 0, centerZ = 0;
             uint32 count = 0;
@@ -653,15 +1008,35 @@ Position CombatStateAnalyzer::GetSafePosition() const
                 if (Player* member = groupRef.GetSource())
                 {
                     if (member != _bot && member->IsAlive())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
                     {
                         Position memberPos = member->GetPosition();
+                        if (!member)
+                        {
+                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPosition");
+                            return nullptr;
+                        }
                         centerX += memberPos.GetPositionX();
                         centerY += memberPos.GetPositionY();
                         centerZ += memberPos.GetPositionZ();
+                if (!member)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                    return;
+                }
                         count++;
                     }
                 }
             }
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return nullptr;
+}
 
             if (count > 0)
             {
@@ -672,7 +1047,27 @@ Position CombatStateAnalyzer::GetSafePosition() const
                 // Move away from center
                 float angle = _bot->GetRelativeAngle(centerX, centerY);
                 float newX = _bot->GetPositionX() + cos(angle + M_PI) * 10.0f;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
+                    return 0;
+                }
                 float newY = _bot->GetPositionY() + sin(angle + M_PI) * 10.0f;
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return nullptr;
+            }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionY");
+                    return 0;
+                }
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
+                    return;
+                }
                 pos.Relocate(newX, newY, _bot->GetPositionZ());
             }
         }
@@ -681,9 +1076,24 @@ Position CombatStateAnalyzer::GetSafePosition() const
     {
         // Move to tank position
         if (Player* tank = GetMainTank())
+            if (!tank)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetPositionZ");
+                return nullptr;
+            }
+        if (!member)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+            return nullptr;
+        }
         {
             pos.Relocate(tank->GetPositionX(), tank->GetPositionY(), tank->GetPositionZ());
         }
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+        return nullptr;
+    }
     }
 
     return pos;
@@ -706,24 +1116,69 @@ bool CombatStateAnalyzer::IsMetricDeclining(std::function<float(const CombatMetr
     return trend < -threshold;
 }
 
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+    return;
+}
 bool CombatStateAnalyzer::IsMetricImproving(std::function<float(const CombatMetrics&)> selector, float threshold) const
 {
     float trend = GetMetricTrend(selector);
     return trend > threshold;
 }
+if (!member)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+    return;
+}
 
 uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
 {
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+        return false;
+    }
     uint32 count = 0;
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         // Priority targets are elites, bosses, or low health enemies
         if (enemy->GetTypeId() == TYPEID_UNIT)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = enemy->ToCreature();
+            if (!enemy)
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+                return;
+            }
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                return nullptr;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return;
+            }
+            }
             if (creature->IsElite() || creature->IsDungeonBoss() || creature->GetHealthPct() < 30.0f)
                 count++;
         }
@@ -738,6 +1193,11 @@ std::vector<Unit*> CombatStateAnalyzer::GetNearbyEnemies(float range) const
     for (Unit* enemy : _enemyCache)
     {
         if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= rangeSq)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
             result.push_back(enemy);
     }
     return result;
@@ -749,6 +1209,11 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
     float highestDanger = 0.0f;
 
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
@@ -757,8 +1222,43 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
 
         // Bosses are most dangerous
         if (enemy->GetTypeId() == TYPEID_UNIT)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+            return nullptr;
+        }
         {
             Creature* creature = enemy->ToCreature();
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+                return;
+            }
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
+                return;
+            }
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+                return nullptr;
+            }
+            if (!bot)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                return;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+                return;
+            }
+            if (!creature)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+                return nullptr;
+            }
             if (creature->IsDungeonBoss())
                 danger *= 10.0f;
             else if (creature->IsElite())
@@ -767,10 +1267,25 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
 
         // Enemies targeting us are dangerous
         if (enemy->GetTarget() == _bot->GetGUID())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+            return nullptr;
+        }
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
             danger *= 3.0f;
 
         // Close enemies are dangerous
         float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+if (!bot)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+}
         if (distance < 5.0f)
             danger *= 2.0f;
 
@@ -795,6 +1310,11 @@ bool CombatStateAnalyzer::HasCleaveTargets() const
     for (Unit* enemy : _enemyCache)
     {
         if (enemy && enemy->IsAlive() && _bot->GetExactDistSq(enemy) <= (8.0f * 8.0f)) // 64.0f
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
             cleaveCount++;
     }
     return cleaveCount >= 2;
@@ -813,10 +1333,20 @@ Player* CombatStateAnalyzer::GetLowestHealthAlly() const
     float lowestHealth = _bot->GetHealthPct();
 
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     {
         for (GroupReference const& groupRef : group->GetMembers())
         {
             Player* member = groupRef.GetSource();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return;
+            }
             if (!member || !member->IsAlive())
                 continue;
 
@@ -842,14 +1372,29 @@ Player* CombatStateAnalyzer::GetMainTank() const
     _roleCacheTime = getMSTime();
 
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return nullptr;
+    }
     {
         for (GroupReference const& groupRef : group->GetMembers())
         {
             Player* member = groupRef.GetSource();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return;
+            }
             if (!member || !member->IsAlive())
                 continue;
 
             Classes memberClass = static_cast<Classes>(member->GetClass());
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return;
+            }
             if (memberClass == CLASS_WARRIOR || memberClass == CLASS_PALADIN ||
                 memberClass == CLASS_DEATH_KNIGHT)
             {
@@ -872,19 +1417,49 @@ Player* CombatStateAnalyzer::GetMainHealer() const
     _mainHealerCache = nullptr;
 
     if (Group* group = _bot->GetGroup())
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
+        return nullptr;
+    }
     {
         for (GroupReference const& groupRef : group->GetMembers())
         {
             Player* member = groupRef.GetSource();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return;
+            }
             if (!member || !member->IsAlive())
                 continue;
 
             Classes memberClass = static_cast<Classes>(member->GetClass());
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetClass");
+                return;
+            }
             if (memberClass == CLASS_PRIEST || memberClass == CLASS_DRUID ||
                 memberClass == CLASS_SHAMAN || memberClass == CLASS_PALADIN)
             {
                 // Simple healer detection - would need role assignment in production
                 _mainHealerCache = member;
+                if (!bot)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+                    return nullptr;
+                }
                 break;
             }
         }
@@ -901,6 +1476,11 @@ bool CombatStateAnalyzer::IsGroupHealthCritical() const
 bool CombatStateAnalyzer::IsGroupManaLow() const
 {
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return false;
+    }
     {
         uint32 lowManaCount = 0;
         uint32 manaUsers = 0;
@@ -908,6 +1488,11 @@ bool CombatStateAnalyzer::IsGroupManaLow() const
         for (GroupReference const& groupRef : group->GetMembers())
         {
             Player* member = groupRef.GetSource();
+            if (!member)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                return;
+            }
             if (!member || !member->IsAlive())
                 continue;
 
@@ -916,10 +1501,25 @@ bool CombatStateAnalyzer::IsGroupManaLow() const
                 manaUsers++;
                 if (member->GetPowerPct(POWER_MANA) < 30.0f)
                     lowManaCount++;
+            if (!enemy)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+                return nullptr;
+            }
             }
         }
 
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+            return nullptr;
+        }
         return manaUsers > 0 && lowManaCount >= manaUsers / 2;
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+        return false;
+    }
     }
 
     return _currentMetrics.manaPercent < 30.0f;
@@ -938,6 +1538,11 @@ float CombatStateAnalyzer::GetGroupSurvivabilityScore() const
     if (!_currentMetrics.healerAlive)
         score *= 0.6f;
 
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return;
+    }
     // Enemy danger factor
     if (_currentMetrics.bossCount > 0)
         score *= 0.8f;
@@ -945,9 +1550,19 @@ float CombatStateAnalyzer::GetGroupSurvivabilityScore() const
         score *= 0.7f;
 
     // Positioning factor
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+        return nullptr;
+    }
     if (!_currentMetrics.isPositioningSafe)
         score *= 0.9f;
 
+    if (!member)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionZ");
+        return;
+    }
     return std::max(0.0f, score);
 }
 
@@ -958,13 +1573,28 @@ std::vector<ThreatData> CombatStateAnalyzer::GetThreatList() const
     // Would need actual threat API access here
     // This is a simplified version
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         ThreatData data;
         data.targetGuid = enemy->GetGUID();
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
+            return;
+        }
         data.isTanking = (enemy->GetTarget() == _bot->GetGUID());
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return;
+        }
         data.threatValue = data.isTanking ? 100.0f : 0.0f;
         data.position = data.isTanking ? 1 : 2;
 
@@ -984,8 +1614,28 @@ bool CombatStateAnalyzer::ShouldDropThreat() const
 {
     // Drop threat if we're not a tank and have aggro on dangerous enemies
     Classes botClass = static_cast<Classes>(_bot->GetClass());
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+        return;
+    }
     bool canTank = (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
                     botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DRUID);
+if (!bot)
+{
+    if (!creature)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+        return nullptr;
+    }
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+    return nullptr;
+if (!creature)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+    return;
+}
+}
 
     return !canTank && _currentMetrics.hasAggro &&
            (_currentMetrics.eliteCount > 0 || _currentMetrics.bossCount > 0);
@@ -998,6 +1648,11 @@ float CombatStateAnalyzer::GetThreatPercentage(Unit* target) const
 
     // Would need actual threat API
     return target->GetTarget() == _bot->GetGUID() ? 100.0f : 50.0f;
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return;
+    }
 }
 
 void CombatStateAnalyzer::RegisterBossMechanic(const BossMechanic& mechanic)
@@ -1129,11 +1784,21 @@ bool CombatStateAnalyzer::IsBeingKited() const
         return false;
 
     for (Unit* enemy : _enemyCache)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
+            return nullptr;
+        }
     {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         if (enemy->GetTarget() == _bot->GetGUID())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
         {
             float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
             if (distance > 15.0f && distance < 40.0f)
@@ -1151,6 +1816,11 @@ bool CombatStateAnalyzer::IsBeingFocused() const
     for (Unit* enemy : _enemyCache)
     {
         if (enemy && enemy->IsAlive() && enemy->GetTarget() == _bot->GetGUID())
+        if (!bot)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+            return nullptr;
+        }
             targetingUs++;
     }
 
@@ -1192,9 +1862,24 @@ bool CombatStateAnalyzer::IsPhaseTransition() const
     for (Unit* enemy : _enemyCache)
     {
         if (!enemy || enemy->GetTypeId() != TYPEID_UNIT)
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
+            return false;
+        }
             continue;
 
         Creature* creature = enemy->ToCreature();
+        if (!enemy)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+            return;
+        }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+            return;
+        }
         if (creature->IsDungeonBoss())
         {
             // Common phase transition health percentages
@@ -1214,11 +1899,26 @@ bool CombatStateAnalyzer::IsPhaseTransition() const
 float CombatStateAnalyzer::CalculateGroupSpread() const
 {
     if (Group* group = _bot->GetGroup())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+        return 0;
+    }
     {
         std::vector<Position> positions;
         for (GroupReference const& groupRef : group->GetMembers())
         {
             if (Player* member = groupRef.GetSource())
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+                        return nullptr;
+                    }
+                    if (!member)
+                    {
+                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPositionZ");
+                        return;
+                    }
             {
                 if (member->IsAlive())
                 {
@@ -1283,6 +1983,16 @@ bool CombatStateAnalyzer::IsUnitDangerous(Unit* unit) const
     if (unit->GetTypeId() == TYPEID_UNIT)
     {
         Creature* creature = unit->ToCreature();
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+            return;
+        }
+        if (!creature)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+            return;
+        }
         if (creature->IsDungeonBoss())
             return true;
         if (creature->IsElite())
@@ -1291,6 +2001,11 @@ bool CombatStateAnalyzer::IsUnitDangerous(Unit* unit) const
 
     // Unit is dangerous if it can kill us quickly
     if (unit->GetTarget() == _bot->GetGUID())
+    if (!bot)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+        return nullptr;
+    }
         return true;
 
     return false;

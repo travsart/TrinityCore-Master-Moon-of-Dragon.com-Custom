@@ -19,6 +19,7 @@
 #define PLAYERBOT_MANAGERREGISTRY_H
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "IManagerBase.h"
 #include <unordered_map>
 #include <vector>
@@ -290,7 +291,7 @@ private:
     /**
      * @brief Mutex protecting the manager map
      */
-    mutable std::recursive_mutex _managerMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _managerMutex;
 
     /**
      * @brief Flag indicating whether InitializeAll() has been called

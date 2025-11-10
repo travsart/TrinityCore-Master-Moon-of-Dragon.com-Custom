@@ -10,11 +10,13 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
 #include "Map.h"
 #include "InstanceScript.h"
 #include "Position.h"
+#include "../Core/DI/Interfaces/IDungeonBehavior.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -151,70 +153,70 @@ struct GroupDungeonState
         , isStuck(false), stuckTime(0), activeStrategy(EncounterStrategy::BALANCED) {}
 };
 
-class TC_GAME_API DungeonBehavior
+class TC_GAME_API DungeonBehavior final : public IDungeonBehavior
 {
 public:
     static DungeonBehavior* instance();
 
     // Core dungeon management
-    bool EnterDungeon(Group* group, uint32 dungeonId);
-    void UpdateDungeonProgress(Group* group);
-    void HandleDungeonCompletion(Group* group);
-    void HandleDungeonWipe(Group* group);
+    bool EnterDungeon(Group* group, uint32 dungeonId) override;
+    void UpdateDungeonProgress(Group* group) override;
+    void HandleDungeonCompletion(Group* group) override;
+    void HandleDungeonWipe(Group* group) override;
 
     // Encounter management
-    void StartEncounter(Group* group, uint32 encounterId);
-    void UpdateEncounter(Group* group, uint32 encounterId);
-    void CompleteEncounter(Group* group, uint32 encounterId);
-    void HandleEncounterWipe(Group* group, uint32 encounterId);
+    void StartEncounter(Group* group, uint32 encounterId) override;
+    void UpdateEncounter(Group* group, uint32 encounterId) override;
+    void CompleteEncounter(Group* group, uint32 encounterId) override;
+    void HandleEncounterWipe(Group* group, uint32 encounterId) override;
 
     // Role-specific behavior coordination
-    void CoordinateTankBehavior(Player* tank, const DungeonEncounter& encounter);
-    void CoordinateHealerBehavior(Player* healer, const DungeonEncounter& encounter);
-    void CoordinateDpsBehavior(Player* dps, const DungeonEncounter& encounter);
-    void CoordinateCrowdControlBehavior(Player* cc, const DungeonEncounter& encounter);
+    void CoordinateTankBehavior(Player* tank, const DungeonEncounter& encounter) override;
+    void CoordinateHealerBehavior(Player* healer, const DungeonEncounter& encounter) override;
+    void CoordinateDpsBehavior(Player* dps, const DungeonEncounter& encounter) override;
+    void CoordinateCrowdControlBehavior(Player* cc, const DungeonEncounter& encounter) override;
 
     // Movement and positioning
-    void UpdateGroupPositioning(Group* group, const DungeonEncounter& encounter);
-    void HandleSpecialPositioning(Group* group, uint32 encounterId);
-    Position GetOptimalPosition(Player* player, DungeonRole role, const DungeonEncounter& encounter);
-    void AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas);
+    void UpdateGroupPositioning(Group* group, const DungeonEncounter& encounter) override;
+    void HandleSpecialPositioning(Group* group, uint32 encounterId) override;
+    Position GetOptimalPosition(Player* player, DungeonRole role, const DungeonEncounter& encounter) override;
+    void AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas) override;
 
     // Trash mob handling
-    void HandleTrashMobs(Group* group, const std::vector<uint32>& trashMobIds);
-    void PullTrashGroup(Group* group, const std::vector<Unit*>& trashMobs);
-    void AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs);
-    void ExecuteTrashStrategy(Group* group, const std::vector<Unit*>& trashMobs);
+    void HandleTrashMobs(Group* group, const std::vector<uint32>& trashMobIds) override;
+    void PullTrashGroup(Group* group, const std::vector<Unit*>& trashMobs) override;
+    void AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs) override;
+    void ExecuteTrashStrategy(Group* group, const std::vector<Unit*>& trashMobs) override;
 
     // Boss encounter strategies
-    void ExecuteBossStrategy(Group* group, const DungeonEncounter& encounter);
-    void HandleBossMechanics(Group* group, uint32 encounterId, const std::string& mechanic);
-    void AdaptToEncounterPhase(Group* group, uint32 encounterId, uint32 phase);
-    void HandleEnrageTimer(Group* group, const DungeonEncounter& encounter);
+    void ExecuteBossStrategy(Group* group, const DungeonEncounter& encounter) override;
+    void HandleBossMechanics(Group* group, uint32 encounterId, const std::string& mechanic) override;
+    void AdaptToEncounterPhase(Group* group, uint32 encounterId, uint32 phase) override;
+    void HandleEnrageTimer(Group* group, const DungeonEncounter& encounter) override;
 
     // Threat and aggro management
-    void ManageGroupThreat(Group* group, const DungeonEncounter& encounter);
-    void HandleTankSwap(Group* group, Player* currentTank, Player* newTank);
-    void ManageThreatMeters(Group* group);
-    void HandleThreatEmergency(Group* group, Player* player);
+    void ManageGroupThreat(Group* group, const DungeonEncounter& encounter) override;
+    void HandleTankSwap(Group* group, Player* currentTank, Player* newTank) override;
+    void ManageThreatMeters(Group* group) override;
+    void HandleThreatEmergency(Group* group, Player* player) override;
 
     // Healing and damage coordination
-    void CoordinateGroupHealing(Group* group, const DungeonEncounter& encounter);
-    void CoordinateGroupDamage(Group* group, const DungeonEncounter& encounter);
-    void HandleHealingEmergency(Group* group);
-    void OptimizeDamageOutput(Group* group, const DungeonEncounter& encounter);
+    void CoordinateGroupHealing(Group* group, const DungeonEncounter& encounter) override;
+    void CoordinateGroupDamage(Group* group, const DungeonEncounter& encounter) override;
+    void HandleHealingEmergency(Group* group) override;
+    void OptimizeDamageOutput(Group* group, const DungeonEncounter& encounter) override;
 
     // Crowd control and utility
-    void CoordinateCrowdControl(Group* group, const std::vector<Unit*>& targets);
-    void HandleCrowdControlBreaks(Group* group, Unit* target);
-    void ManageGroupUtilities(Group* group, const DungeonEncounter& encounter);
-    void HandleSpecialAbilities(Group* group, uint32 encounterId);
+    void CoordinateCrowdControl(Group* group, const std::vector<Unit*>& targets) override;
+    void HandleCrowdControlBreaks(Group* group, Unit* target) override;
+    void ManageGroupUtilities(Group* group, const DungeonEncounter& encounter) override;
+    void HandleSpecialAbilities(Group* group, uint32 encounterId) override;
 
     // Loot and rewards management
-    void HandleEncounterLoot(Group* group, uint32 encounterId);
-    void DistributeLoot(Group* group, const std::vector<uint32>& lootItems);
-    void HandleNeedGreedPass(Group* group, uint32 itemId, Player* player);
-    void OptimizeLootDistribution(Group* group);
+    void HandleEncounterLoot(Group* group, uint32 encounterId) override;
+    void DistributeLoot(Group* group, const std::vector<uint32>& lootItems) override;
+    void HandleNeedGreedPass(Group* group, uint32 itemId, Player* player) override;
+    void OptimizeLootDistribution(Group* group) override;
 
     // Performance monitoring and adaptation
     struct DungeonMetrics
@@ -244,31 +246,31 @@ public:
         }
     };
 
-    DungeonMetrics GetGroupDungeonMetrics(uint32 groupId);
-    DungeonMetrics GetGlobalDungeonMetrics();
+    DungeonMetrics GetGroupDungeonMetrics(uint32 groupId) override;
+    DungeonMetrics GetGlobalDungeonMetrics() override;
 
     // Dungeon-specific strategies
-    void LoadDungeonData();
-    DungeonData GetDungeonData(uint32 dungeonId);
-    DungeonEncounter GetEncounterData(uint32 encounterId);
-    void UpdateDungeonStrategy(Group* group, EncounterStrategy strategy);
+    void LoadDungeonData() override;
+    DungeonData GetDungeonData(uint32 dungeonId) override;
+    DungeonEncounter GetEncounterData(uint32 encounterId) override;
+    void UpdateDungeonStrategy(Group* group, EncounterStrategy strategy) override;
 
     // Error handling and recovery
-    void HandleDungeonError(Group* group, const std::string& error);
-    void RecoverFromWipe(Group* group);
-    void HandlePlayerDisconnection(Group* group, Player* disconnectedPlayer);
-    void HandleGroupDisbandInDungeon(Group* group);
+    void HandleDungeonError(Group* group, const std::string& error) override;
+    void RecoverFromWipe(Group* group) override;
+    void HandlePlayerDisconnection(Group* group, Player* disconnectedPlayer) override;
+    void HandleGroupDisbandInDungeon(Group* group) override;
 
     // Configuration and settings
-    void SetEncounterStrategy(uint32 groupId, EncounterStrategy strategy);
-    EncounterStrategy GetEncounterStrategy(uint32 groupId);
-    void SetThreatManagement(uint32 groupId, ThreatManagement management);
-    void EnableAdaptiveBehavior(uint32 groupId, bool enable);
+    void SetEncounterStrategy(uint32 groupId, EncounterStrategy strategy) override;
+    EncounterStrategy GetEncounterStrategy(uint32 groupId) override;
+    void SetThreatManagement(uint32 groupId, ThreatManagement management) override;
+    void EnableAdaptiveBehavior(uint32 groupId, bool enable) override;
 
     // Update and maintenance
-    void Update(uint32 diff);
-    void UpdateGroupDungeon(Group* group, uint32 diff);
-    void CleanupInactiveDungeons();
+    void Update(uint32 diff) override;
+    void UpdateGroupDungeon(Group* group, uint32 diff) override;
+    void CleanupInactiveDungeons() override;
 
 private:
     DungeonBehavior();
@@ -278,7 +280,7 @@ private:
     std::unordered_map<uint32, DungeonData> _dungeonDatabase; // dungeonId -> data
     std::unordered_map<uint32, GroupDungeonState> _groupDungeonStates; // groupId -> state
     std::unordered_map<uint32, DungeonMetrics> _groupMetrics;
-    mutable std::recursive_mutex _dungeonMutex;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _dungeonMutex;
 
     // Encounter tracking
     std::unordered_map<uint32, std::vector<DungeonEncounter>> _dungeonEncounters; // dungeonId -> encounters

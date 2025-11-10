@@ -20,6 +20,16 @@ namespace Playerbot
 bool DeathHookIntegration::s_enabled = true;
 
 void DeathHookIntegration::OnPlayerPreDeath(Player* player)
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
 {
     if (!player || !player->GetSession()->IsBot())
         return;
@@ -36,6 +46,11 @@ void DeathHookIntegration::OnPlayerPreDeath(Player* player)
 
     // Always cache death location before corpse creation
     if (BotAI* ai = dynamic_cast<BotAI*>(player->GetAI()))
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+        return nullptr;
+    }
     {
         if (DeathRecoveryManager* drm = ai->GetDeathRecoveryManager())
         {
@@ -46,6 +61,31 @@ void DeathHookIntegration::OnPlayerPreDeath(Player* player)
 }
 
 void DeathHookIntegration::OnPlayerCorpseCreated(Player* player, Corpse* corpse)
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+    return nullptr;
+}
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return nullptr;
+}
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return;
+            }
 {
     if (!player || !corpse || !player->GetSession()->IsBot())
         return;
@@ -68,13 +108,28 @@ void DeathHookIntegration::OnPlayerCorpseCreated(Player* player, Corpse* corpse)
 bool DeathHookIntegration::OnCorpsePreRemove(Corpse* corpse)
 {
     if (!corpse)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+            return nullptr;
+        }
         return true; // Allow removal
 
     ObjectGuid corpseGuid = corpse->GetGUID();
 
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+        return;
+    }
     // Check if this corpse is safe to remove
     if (!SafeCorpseManager::Instance().IsCorpseSafeToDelete(corpseGuid))
     {
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+            return;
+        }
         TC_LOG_DEBUG("playerbot.death.hook",
             "OnCorpsePreRemove: Delaying corpse {} removal - Map update in progress",
             corpseGuid.ToString());
@@ -84,9 +139,34 @@ bool DeathHookIntegration::OnCorpsePreRemove(Corpse* corpse)
     TC_LOG_TRACE("playerbot.death.hook", "OnCorpsePreRemove: Corpse {} safe to remove",
         corpseGuid.ToString());
     return true; // Allow removal
+if (!player)
+{
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+    return;
+}
 }
 
 void DeathHookIntegration::OnPlayerPreResurrection(Player* player)
+                if (!player)
+                {
+                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+                    return nullptr;
+                }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+            return;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
 {
     if (!player || !player->GetSession()->IsBot())
         return;
@@ -96,6 +176,16 @@ void DeathHookIntegration::OnPlayerPreResurrection(Player* player)
 
     // Mark any corpse as safe for deletion
     ObjectGuid playerGuid = player->GetGUID();
+    if (!player)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+        return;
+    }
+            if (!player)
+            {
+                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+                return nullptr;
+            }
     float x, y, z;
     uint32 mapId;
 
@@ -109,6 +199,16 @@ void DeathHookIntegration::OnPlayerPreResurrection(Player* player)
 }
 
 void DeathHookIntegration::OnPlayerPostResurrection(Player* player)
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+            return nullptr;
+        }
+        if (!player)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+            return;
+        }
 {
     if (!player || !player->GetSession()->IsBot())
         return;

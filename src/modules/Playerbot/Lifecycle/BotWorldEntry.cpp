@@ -26,6 +26,19 @@
 #include "CharacterPackets.h"
 #include "MiscPackets.h"
 #include <thread>
+#include <fstream>
+
+// Platform-specific includes for memory tracking
+#ifdef _WIN32
+    #include <windows.h>
+    #include <psapi.h>
+#elif defined(__linux__)
+    #include <unistd.h>
+    #include <fstream>
+#elif defined(__APPLE__)
+    #include <mach/mach.h>
+    #include <mach/task.h>
+#endif
 
 namespace Playerbot {
 
@@ -38,7 +51,57 @@ BotWorldEntry::BotWorldEntry(std::shared_ptr<BotSession> session, ObjectGuid cha
     , _retryCount(0)
 {
     _metrics.startTime = std::chrono::steady_clock::now();
-    _metrics.memoryBeforeEntry = 0; // TODO: Implement memory tracking
+
+    // ========================================================================
+    // HIGH PRIORITY TODO FIXED: Implement memory tracking
+    // ========================================================================
+    // Platform-specific memory tracking implementation
+    _metrics.memoryBeforeEntry = GetCurrentMemoryUsage();
+}
+
+// Helper function to get current process memory usage (in bytes)
+size_t BotWorldEntry::GetCurrentMemoryUsage() const
+{
+#ifdef _WIN32
+    // Windows: Use GetProcessMemoryInfo
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+    {
+        return static_cast<size_t>(pmc.WorkingSetSize); // Physical memory usage
+    }
+    return 0;
+#elif defined(__linux__)
+    // Linux: Read /proc/self/statm
+    // Fields: size resident shared text lib data dt
+    // We want resident set size (RSS) in bytes
+    std::ifstream statm("/proc/self/statm");
+    if (statm.is_open())
+    {
+        unsigned long size = 0;
+        unsigned long resident = 0;
+        statm >> size >> resident;
+        statm.close();
+
+        // Convert pages to bytes (typically 4096 bytes per page)
+        long pageSize = sysconf(_SC_PAGESIZE);
+        if (pageSize > 0)
+            return static_cast<size_t>(resident * pageSize);
+    }
+    return 0;
+#elif defined(__APPLE__)
+    // macOS: Use task_info
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+    if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count) == KERN_SUCCESS)
+    {
+        return static_cast<size_t>(t_info.resident_size);
+    }
+    return 0;
+#else
+    // Unsupported platform
+    return 0;
+#endif
 }
 
 BotWorldEntry::~BotWorldEntry()
@@ -494,6 +557,26 @@ bool BotWorldEntry::InitializeAI()
 
     // CRITICAL FIX: If bot is already in a group at server startup, activate follow behavior
     Group* group = _player->GetGroup();
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return;
+    }
+                   if (!group)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                       return nullptr;
+                   }
+    if (!group)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+        return;
+    }
+                   if (!group)
+                   {
+                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+                       return;
+                   }
     if (group)
     {
         TC_LOG_INFO("module.playerbot.worldentry",
@@ -582,6 +665,23 @@ bool BotWorldEntry::FinalizeBotActivation()
             botAI->OnGroupJoined(group);
         }
     }
+
+    // Record memory usage after successful world entry
+    _metrics.memoryAfterEntry = GetCurrentMemoryUsage();
+
+    // Calculate total time
+    _metrics.endTime = std::chrono::steady_clock::now();
+    _metrics.totalTime = static_cast<uint32>(
+        std::chrono::duration_cast<std::chrono::microseconds>(
+            _metrics.endTime - _metrics.startTime
+        ).count()
+    );
+
+    TC_LOG_DEBUG("module.playerbot.worldentry",
+                "Bot {} world entry complete: Total time: {} ms, Memory delta: {} KB",
+                _player->GetName(),
+                _metrics.totalTime / 1000,
+                (_metrics.memoryAfterEntry - _metrics.memoryBeforeEntry) / 1024);
 
     TransitionToState(BotWorldEntryState::FULLY_ACTIVE);
     return true;

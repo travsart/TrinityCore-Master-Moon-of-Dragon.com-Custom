@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Beast Mastery Hunter Specialization - REFACTORED
  *
@@ -12,6 +12,10 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "../CombatSpecializationTemplates.h"
@@ -21,6 +25,11 @@
 #include "CharmInfo.h"
 #include <unordered_map>
 #include <queue>
+
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -72,8 +81,7 @@ enum BeastMasterySpells
 class BeastMasteryPetManager
 {
 public:
-    explicit BeastMasteryPetManager(Player* bot)
-        : _bot(bot)
+    explicit BeastMasteryPetManager(Player* bot)        : _bot(bot)
         , _lastMendPet(0)
         , _lastPetCommand(0)
         , _petFrenzyStacks(0)
@@ -151,8 +159,7 @@ public:
         if (!HasActivePet())
             return false;
 
-        Pet* pet = _bot->GetPet();
-        return pet && pet->GetHealthPct() < 70.0f;
+        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 70.0f;
     }
 
     void MendPet()
@@ -164,8 +171,7 @@ public:
         if (!HasActivePet() || !IsPetHealthLow())
             return;
 
-        Pet* pet = _bot->GetPet();
-        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
+        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
             _bot->CastSpell(pet, SPELL_MEND_PET, false);
             _lastMendPet = currentTime;
@@ -193,8 +199,7 @@ public:
 
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
 
-    void EnsurePetActive(Unit* target)
-    {
+    void EnsurePetActive(Unit* target)    {
         if (!HasActivePet())
         {
             SummonPet();
@@ -211,6 +216,7 @@ public:
     }
 
 private:
+    CooldownManager _cooldowns;
     Player* _bot;
     uint32 _lastMendPet;
     uint32 _lastPetCommand;
@@ -247,22 +253,22 @@ public:
         , _bestialWrathActive(false)
         , _bestialWrathEndTime(0)
         , _aspectOfTheWildActive(false)
-        , _aspectEndTime(0)
-        , _wildCallProc(false)
+        , _aspectEndTime(0)        , _wildCallProc(false)
         , _lastKillCommand(0)
         , _lastCobraShot(0)
     {
         // Focus regeneration is handled by template system
         // Setup BM-specific cooldown tracking
-        InitializeCooldowns();
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeBeastMasteryMechanics();
     }
 
     // ========================================================================
     // CORE ROTATION - Beast Mastery specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -275,8 +281,7 @@ public:
         // Check for AoE situation
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
         if (enemyCount >= 3)
-        {
-            ExecuteAoERotation(target);
+        {            ExecuteAoERotation(target);
             return;
         }
 
@@ -287,6 +292,7 @@ public:
     void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
+        
 
         // Ensure pet is summoned
         if (!_petManager.HasActivePet())
@@ -308,8 +314,7 @@ public:
         }
 
         // Apply Hunter's Mark to current target
-        if (Unit* target = bot->GetVictim())
-        {
+        if (Unit* target = bot->GetVictim())        {
             if (!target->HasAura(SPELL_HUNTERS_MARK) && this->CanUseAbility(SPELL_HUNTERS_MARK))
             {
                 this->CastSpell(target, SPELL_HUNTERS_MARK);
@@ -480,8 +485,7 @@ private:
         // Recharge Barbed Shot charges (12 second recharge)
         if (_barbedShotCharges < 2)
         {
-            if (currentTime - _lastBarbedShotRecharge > 12000)
-            {
+            if (currentTime - _lastBarbedShotRecharge > 12000)            {
                 _barbedShotCharges++;
                 _lastBarbedShotRecharge = currentTime;
             }
@@ -504,8 +508,7 @@ private:
         return _barbedShotCharges > 0 || _wildCallProc;
     }
 
-    bool ShouldUseBestialWrath(Unit* target) const
-    {
+    bool ShouldUseBestialWrath(Unit* target) const    {
         if (!target)
             return false;
 
@@ -530,16 +533,7 @@ private:
         }
     }
 
-    void InitializeCooldowns()
-    {
-        // Register Beast Mastery specific cooldowns
-        RegisterCooldown(SPELL_BESTIAL_WRATH, 90000);      // 90 second CD
-        RegisterCooldown(SPELL_ASPECT_OF_THE_WILD, 120000); // 2 minute CD
-        RegisterCooldown(SPELL_KILL_COMMAND, 7500);         // 7.5 second CD
-        RegisterCooldown(SPELL_DIRE_BEAST, 20000);          // 20 second CD
-        RegisterCooldown(SPELL_EXHILARATION, 120000);       // 2 minute CD
-        RegisterCooldown(SPELL_COUNTER_SHOT, 24000);        // 24 second CD
-    }
+    
 
 private:
     // ========================================================================
@@ -587,6 +581,251 @@ private:
     // Positioning interface - ranged DPS positioning
     // Note: GetOptimalRange is final in RangedDpsSpecialization (returns 25-40 yards)
     Position GetOptimalPosition(::Unit* /*target*/) override { return Position(); /* Handled by base class */ }
+
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeBeastMasteryMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🏹 BEAST MASTERY HUNTER: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Beast Mastery Hunter spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Survival (HP < 40%)
+            queue->RegisterSpell(SPELL_EXHILARATION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_EXHILARATION, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "Bot HP < 40% (heal self + pet)");
+
+            // CRITICAL: Major burst cooldowns
+            queue->RegisterSpell(SPELL_BESTIAL_WRATH, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_BESTIAL_WRATH, [this](Player* bot, Unit* target) {
+                return target && this->_resource > 60 && !this->_bestialWrathActive;
+            }, "60+ Focus and BW not active (major burst)");
+
+            queue->RegisterSpell(SPELL_ASPECT_OF_THE_WILD, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_ASPECT_OF_THE_WILD, [this](Player* bot, Unit* target) {
+                return target && this->_bestialWrathActive && !this->_aspectOfTheWildActive;
+            }, "During Bestial Wrath (stack cooldowns)");
+
+            // HIGH: Core rotation abilities
+            queue->RegisterSpell(SPELL_KILL_COMMAND, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_KILL_COMMAND, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 30 && this->_petManager.HasActivePet();
+            }, "30+ Focus and pet alive (core pet ability)");
+
+            queue->RegisterSpell(SPELL_BARBED_SHOT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_BARBED_SHOT, [this](Player* bot, Unit* target) {
+                return target && this->HasBarbedShotCharge() &&
+                       (this->_petManager.GetPetFrenzyStacks() < 3 || this->_barbedShotCharges == 2);
+            }, "Has charge and (Pet Frenzy < 3 stacks or 2 charges)");
+
+            // MEDIUM: Talent abilities and utility
+            queue->RegisterSpell(SPELL_DIRE_BEAST, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_DIRE_BEAST, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SPELL_DIRE_BEAST) &&
+                       target && this->_resource >= 25;
+            }, "Has talent, 25+ Focus (summon additional beast)");
+
+            queue->RegisterSpell(SPELL_COUNTER_SHOT, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_COUNTER_SHOT, [this](Player* bot, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            queue->RegisterSpell(SPELL_TRANQUILIZING_SHOT, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_TRANQUILIZING_SHOT, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 10 && target->HasAuraType(SPELL_AURA_MOD_INCREASE_SPEED);
+            }, "Target has enrage/buff (dispel, 10 Focus)");
+
+            // LOW: Filler abilities
+            queue->RegisterSpell(SPELL_COBRA_SHOT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_COBRA_SHOT, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 35 && this->GetEnemiesInRange(40.0f) < 3;
+            }, "35+ Focus, < 3 enemies (single target filler)");
+
+            queue->RegisterSpell(SPELL_MULTISHOT, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_MULTISHOT, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 40 && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "40+ Focus, 3+ enemies (AoE filler + Beast Cleave)");
+
+            TC_LOG_INFO("module.playerbot", "🏹 BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Beast Mastery Hunter DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Beast Mastery Hunter DPS", {
+                // Tier 1: Burst Window (Bestial Wrath → Aspect of the Wild)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Use Burst Cooldowns", {
+                        // Bestial Wrath (major cooldown)
+                        Sequence("Cast Bestial Wrath", {
+                            Condition("Should use BW", [this](Player* bot, Unit* target) {
+                                return this->_resource > 60 && !this->_bestialWrathActive &&
+                                       this->ShouldUseBestialWrath(target);
+                            }),
+                            Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_BESTIAL_WRATH))
+                                {
+                                    this->CastSpell(bot, SPELL_BESTIAL_WRATH);
+                                    this->_bestialWrathActive = true;
+                                    this->_bestialWrathEndTime = getMSTime() + 15000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Aspect of the Wild (during Bestial Wrath)
+                        Sequence("Cast Aspect of the Wild", {
+                            Condition("During Bestial Wrath", [this](Player* bot, Unit* target) {
+                                return this->_bestialWrathActive && !this->_aspectOfTheWildActive;
+                            }),
+                            Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
+                                {
+                                    this->CastSpell(bot, SPELL_ASPECT_OF_THE_WILD);
+                                    this->_aspectOfTheWildActive = true;
+                                    this->_aspectEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Core Rotation (Kill Command priority)
+                Sequence("Core Rotation", {
+                    Condition("Target exists and pet alive", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_petManager.HasActivePet();
+                    }),
+                    Selector("Cast Core Abilities", {
+                        // Kill Command (highest priority DPS ability)
+                        Sequence("Cast Kill Command", {
+                            Condition("30+ Focus", [this](Player* bot, Unit* target) {
+                                return this->_resource >= 30;
+                            }),
+                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_KILL_COMMAND))
+                                {
+                                    this->CastSpell(target, SPELL_KILL_COMMAND);
+                                    this->_lastKillCommand = getMSTime();
+                                    this->ConsumeResource(30);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Dire Beast (talent - additional damage source)
+                        Sequence("Cast Dire Beast", {
+                            Condition("Has talent and 25+ Focus", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(SPELL_DIRE_BEAST) &&
+                                       this->_resource >= 25;
+                            }),
+                            Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanUseAbility(SPELL_DIRE_BEAST))
+                                {
+                                    this->CastSpell(target, SPELL_DIRE_BEAST);
+                                    this->ConsumeResource(25);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Focus Management (Barbed Shot for generation + Pet Frenzy)
+                Sequence("Focus Management", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Generate Focus", {
+                        // Barbed Shot (generates 20 Focus, maintains Pet Frenzy)
+                        Sequence("Cast Barbed Shot", {
+                            Condition("Should use Barbed Shot", [this](Player* bot, Unit* target) {
+                                return this->HasBarbedShotCharge() &&
+                                       (this->_petManager.GetPetFrenzyStacks() < 3 ||
+                                        this->_barbedShotCharges == 2 ||
+                                        this->_wildCallProc);
+                            }),
+                            Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->HasBarbedShotCharge())
+                                {
+                                    this->CastSpell(target, SPELL_BARBED_SHOT);
+                                    this->_petManager.ApplyBarbedShot();
+                                    this->_barbedShotCharges--;
+                                    this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Filler Rotation (Cobra Shot single target, Multishot AoE)
+                Sequence("Filler Rotation", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Choose Filler", {
+                        // AoE filler (3+ enemies)
+                        Sequence("AoE Filler", {
+                            Condition("3+ enemies and 40+ Focus", [this](Player* bot, Unit* target) {
+                                return this->GetEnemiesInRange(40.0f) >= 3 && this->_resource >= 40;
+                            }),
+                            Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->_resource >= 40)
+                                {
+                                    this->CastSpell(target, SPELL_MULTISHOT);
+                                    this->ConsumeResource(40);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Single target filler
+                        Sequence("Single Target Filler", {
+                            Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                                return this->_resource >= 35;
+                            }),
+                            Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->_resource >= 35)
+                                {
+                                    this->CastSpell(target, SPELL_COBRA_SHOT);
+                                    this->_lastCobraShot = getMSTime();
+                                    this->ConsumeResource(35);
+                                    this->_resource = std::min<uint32>(this->_resource + 5, 100);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+        }
+    }
 
 private:
     BeastMasteryPetManager _petManager;

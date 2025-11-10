@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * Protection Warrior Specialization - REFACTORED
  *
@@ -12,13 +12,23 @@
 
 #pragma once
 
+
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
 #include "Item.h"
 #include "ItemDefines.h"
+#include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
 #include <unordered_map>
 #include <queue>
+
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
 
 namespace Playerbot
 {
@@ -67,8 +77,7 @@ public:
     // CORE ROTATION - Only Protection-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override
-    {
+    void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -180,13 +189,10 @@ protected:
     // TANK-SPECIFIC OVERRIDES
     // ========================================================================
 
-    bool ShouldUseTaunt(::Unit* target)
-    {
-        if (!target)
-            return false;
-
-        // Taunt if we don't have aggro
-        return target->GetVictim() != this->GetBot();
+    bool ShouldUseTaunt(::Unit* target)    {
+        // Use unified ThreatAssistant service (Phase 5C integration)
+        // Eliminates duplicated taunt logic
+        return !bot::ai::ThreatAssistant::IsTargetOnTank(this->GetBot(), target);
     }
 
     void ManageThreat(::Unit* target) override
@@ -194,10 +200,11 @@ protected:
         if (!target)
             return;
 
-        // Taunt if we don't have aggro on target
-        if (ShouldUseTaunt(target) && this->CanUseAbility(SPELL_TAUNT))
+        // Use unified ThreatAssistant service (Phase 5C integration)
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
-            this->CastSpell(target, SPELL_TAUNT);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
             _lastTaunt = getMSTime();
         }
     }
@@ -310,9 +317,7 @@ protected:
 
         // Update defensive cooldown tracking
         _lastStandActive = bot->HasAura(SPELL_LAST_STAND);
-        _shieldWallActive = bot->HasAura(SPELL_SHIELD_WALL);
-
-        // Check shield equipment periodically
+        _shieldWallActive = bot->HasAura(SPELL_SHIELD_WALL);        // Check shield equipment periodically
         if (currentTime % 5000 == 0) // Every 5 seconds
         {
             CheckShieldStatus();
@@ -333,8 +338,7 @@ protected:
     {
         Player* bot = this->GetBot();
 
-        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-        _hasShieldEquipped = offHand &&
+        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasShieldEquipped = offHand &&
                            offHand->GetTemplate() &&
                            offHand->GetTemplate()->GetClass() == ITEM_CLASS_ARMOR &&
                            offHand->GetTemplate()->GetSubClass() == ITEM_SUBCLASS_ARMOR_SHIELD;
@@ -354,17 +358,12 @@ protected:
             // For now, rely on rotation priority for multi-target scenarios
         }
 
-        // Handle highest priority threat target
-        if (!_threatPriority.empty())
+        // Handle highest priority threat target using ThreatAssistant (Phase 5C)
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
-            ThreatTarget topPriority = _threatPriority.top();
-            _threatPriority.pop();
-
-            if (ShouldUseTaunt(topPriority.target))
-            {
-                this->CastSpell(topPriority.target, SPELL_TAUNT);
-                _lastTaunt = getMSTime();
-            }
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
+            _lastTaunt = getMSTime();
         }
     }
 
@@ -374,8 +373,7 @@ protected:
             return;
 
         // Track sunder stacks (max 5)
-        _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);
-    }
+        _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);    }
 
     // ========================================================================
     // CONDITION CHECKS
@@ -393,8 +391,7 @@ protected:
         if (!target)
             return false;
 
-        auto it = _sunderStacks.find(target->GetGUID());
-        return it != _sunderStacks.end() && it->second >= 5;
+        auto it = _sunderStacks.find(target->GetGUID());        return it != _sunderStacks.end() && it->second >= 5;
     }
 
     bool ShouldUseAvatar() const
@@ -476,15 +473,410 @@ protected:
     }
 
 private:
+    CooldownManager _cooldowns;
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
 
     void InitializeProtectionMechanics()
     {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
         // Initialize Protection-specific systems
         CheckShieldStatus();
         _sunderStacks.clear();
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue (Tank Focus)
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // ====================================================================
+            // EMERGENCY TIER - Life-saving defensives
+            // ====================================================================
+            queue->RegisterSpell(SPELL_SHIELD_WALL,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_SHIELD_WALL,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 30.0f;
+                },
+                "HP < 30% (Shield Wall emergency)");
+
+            queue->RegisterSpell(SPELL_LAST_STAND,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_LAST_STAND,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 20.0f;
+                },
+                "HP < 20% (Last Stand emergency)");
+
+            // ====================================================================
+            // CRITICAL TIER - Active mitigation and threat management
+            // ====================================================================
+            queue->RegisterSpell(SPELL_SHIELD_BLOCK,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_SHIELD_BLOCK,
+                [this](Player* bot, Unit*) {
+                    // Use Shield Block when shield equipped and charges < 2
+                    return this->_hasShieldEquipped && this->_shieldBlockCharges < 2;
+                },
+                "Shield equipped and charges < 2");
+
+            queue->RegisterSpell(SPELL_TAUNT,
+                SpellPriority::CRITICAL,
+                SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_TAUNT,
+                [](Player* bot, Unit* target) {
+                    // Taunt when target not on tank
+                    return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                },
+                "Target not on tank (taunt required)");
+
+            queue->RegisterSpell(SPELL_IGNORE_PAIN,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_IGNORE_PAIN,
+                [](Player* bot, Unit*) {
+                    // Use Ignore Pain when we have enough rage and taking damage
+                    return bot->GetHealthPct() < 80.0f;
+                },
+                "HP < 80% (absorb shield needed)");
+
+            // ====================================================================
+            // HIGH TIER - Core tank rotation (threat generation)
+            // ====================================================================
+            queue->RegisterSpell(SPELL_SHIELD_SLAM,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_SHIELD_SLAM,
+                [this](Player* bot, Unit*) {
+                    return this->_hasShieldEquipped;
+                },
+                "Shield equipped (Shield Slam ready)");
+
+            queue->RegisterSpell(SPELL_REVENGE,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_REVENGE,
+                [](Player* bot, Unit*) {
+                    return bot->HasAura(SPELL_REVENGE_PROC);
+                },
+                "Revenge proc active");
+
+            queue->RegisterSpell(SPELL_THUNDER_CLAP,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_THUNDER_CLAP,
+                [](Player* bot, Unit* target) {
+                    // Use Thunder Clap for AoE threat (2+ enemies)
+                    return bot->GetAttackersCount() >= 2;
+                },
+                "2+ enemies (AoE threat)");
+
+            // ====================================================================
+            // MEDIUM TIER - Situational abilities
+            // ====================================================================
+            queue->RegisterSpell(SPELL_DEVASTATE,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_DEVASTATE,
+                [](Player* bot, Unit* target) {
+                    // Always available filler
+                    return target != nullptr;
+                },
+                "Filler ability");
+
+            queue->RegisterSpell(SPELL_DEMORALIZING_SHOUT,
+                SpellPriority::MEDIUM,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_DEMORALIZING_SHOUT,
+                [](Player* bot, Unit*) {
+                    // Damage reduction for incoming attacks
+                    return bot->GetHealthPct() < 70.0f;
+                },
+                "HP < 70% (reduce incoming damage)");
+
+            queue->RegisterSpell(SPELL_AVATAR,
+                SpellPriority::MEDIUM,
+                SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_AVATAR,
+                [](Player* bot, Unit* target) {
+                    // Use Avatar for threat burst or when tanking multiple enemies
+                    return bot->GetAttackersCount() >= 3 ||
+                           (target && target->GetMaxHealth() > 500000);
+                },
+                "3+ enemies or boss (threat burst)");
+
+            queue->RegisterSpell(SPELL_SPELL_REFLECTION,
+                SpellPriority::MEDIUM,
+                SpellCategory::DEFENSIVE);
+
+            queue->RegisterSpell(SPELL_RALLYING_CRY,
+                SpellPriority::MEDIUM,
+                SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_RALLYING_CRY,
+                [](Player* bot, Unit*) {
+                    // Group emergency heal
+                    return bot->GetHealthPct() < 50.0f;
+                },
+                "HP < 50% (group emergency)");
+
+            // ====================================================================
+            // LOW TIER - Rage dumps and fillers
+            // ====================================================================
+            queue->RegisterSpell(SPELL_HEROIC_STRIKE,
+                SpellPriority::LOW,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_HEROIC_STRIKE,
+                [](Player* bot, Unit*) {
+                    // Rage dump when > 80 rage
+                    return bot->GetPower(POWER_RAGE) >= 80;
+                },
+                "Rage > 80 (rage dump)");
+
+            queue->RegisterSpell(SPELL_SUNDER_ARMOR,
+                SpellPriority::LOW,
+                SpellCategory::DAMAGE_SINGLE);
+
+            TC_LOG_INFO("module.playerbot", "🛡️  PROTECTION WARRIOR: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree (Tank Flow)
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Protection Warrior Tank", {
+                // ================================================================
+                // TIER 1: EMERGENCY DEFENSIVES (HP < 30%)
+                // ================================================================
+                Sequence("Emergency Defensives", {
+                    Condition("Critical HP < 30%", [](Player* bot, Unit*) {
+                        return bot->GetHealthPct() < 30.0f;
+                    }),
+                    Selector("Emergency Response", {
+                        Action("Cast Shield Wall", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_SHIELD_WALL))
+                            {
+                                this->CastSpell(bot, SPELL_SHIELD_WALL);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Last Stand", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_LAST_STAND))
+                            {
+                                this->CastSpell(bot, SPELL_LAST_STAND);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Rallying Cry", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_RALLYING_CRY))
+                            {
+                                this->CastSpell(bot, SPELL_RALLYING_CRY);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_IGNORE_PAIN))
+                            {
+                                this->CastSpell(bot, SPELL_IGNORE_PAIN);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 2: THREAT MANAGEMENT
+                // ================================================================
+                Sequence("Threat Management", {
+                    Condition("Target not on tank", [](Player* bot, Unit* target) {
+                        return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                    }),
+                    Action("Cast Taunt", [this](Player* bot, Unit* target) {
+                        if (this->CanCastSpell(target, SPELL_TAUNT))
+                        {
+                            bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, SPELL_TAUNT);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // ================================================================
+                // TIER 3: ACTIVE MITIGATION (Shield Block maintenance)
+                // ================================================================
+                Sequence("Active Mitigation", {
+                    Condition("Shield equipped", [this](Player* bot, Unit*) {
+                        return this->_hasShieldEquipped;
+                    }),
+                    Selector("Mitigation Priority", {
+                        // Shield Block for physical damage reduction
+                        Sequence("Shield Block", {
+                            Condition("Charges < 2", [this](Player* bot, Unit*) {
+                                return this->_shieldBlockCharges < 2;
+                            }),
+                            Action("Cast Shield Block", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_SHIELD_BLOCK))
+                                {
+                                    this->CastSpell(bot, SPELL_SHIELD_BLOCK);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Ignore Pain for absorb shield
+                        Sequence("Ignore Pain", {
+                            Condition("HP < 80%", [](Player* bot, Unit*) {
+                                return bot->GetHealthPct() < 80.0f;
+                            }),
+                            Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_IGNORE_PAIN))
+                                {
+                                    this->CastSpell(bot, SPELL_IGNORE_PAIN);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Spell Reflection against casters
+                        Action("Cast Spell Reflection", [this](Player* bot, Unit* target) {
+                            if (this->ShouldUseSpellReflection() &&
+                                this->CanCastSpell(bot, SPELL_SPELL_REFLECTION))
+                            {
+                                this->CastSpell(bot, SPELL_SPELL_REFLECTION);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 4: TANK ROTATION (Threat generation and damage)
+                // ================================================================
+                Sequence("Standard Tank Rotation", {
+                    // Cooldown usage for threat burst
+                    Selector("Cooldown Usage", {
+                        Sequence("Avatar Burst", {
+                            Condition("Should use Avatar", [this](Player* bot, Unit* target) {
+                                return this->ShouldUseAvatar();
+                            }),
+                            Action("Cast Avatar", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_AVATAR))
+                                {
+                                    this->CastSpell(bot, SPELL_AVATAR);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    }),
+
+                    // Core rotation abilities
+                    Selector("Core Rotation", {
+                        // Shield Slam (highest priority)
+                        Action("Cast Shield Slam", [this](Player* bot, Unit* target) {
+                            if (this->_hasShieldEquipped &&
+                                this->CanCastSpell(target, SPELL_SHIELD_SLAM))
+                            {
+                                this->CastSpell(target, SPELL_SHIELD_SLAM);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+
+                        // Revenge on proc
+                        Sequence("Revenge on Proc", {
+                            Condition("Has Revenge proc", [this](Player* bot, Unit*) {
+                                return this->HasRevengeProc();
+                            }),
+                            Action("Cast Revenge", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_REVENGE))
+                                {
+                                    this->CastSpell(target, SPELL_REVENGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Thunder Clap for AoE threat
+                        Sequence("Thunder Clap AoE", {
+                            Condition("2+ enemies", [](Player* bot, Unit*) {
+                                return bot->GetAttackersCount() >= 2;
+                            }),
+                            Action("Cast Thunder Clap", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_THUNDER_CLAP))
+                                {
+                                    this->CastSpell(bot, SPELL_THUNDER_CLAP);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Devastate filler
+                        Action("Cast Devastate", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_DEVASTATE))
+                            {
+                                this->CastSpell(target, SPELL_DEVASTATE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+
+                        // Demoralizing Shout for damage reduction
+                        Sequence("Demoralizing Shout", {
+                            Condition("HP < 70%", [](Player* bot, Unit*) {
+                                return bot->GetHealthPct() < 70.0f;
+                            }),
+                            Action("Cast Demoralizing Shout", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_DEMORALIZING_SHOUT))
+                                {
+                                    this->CastSpell(bot, SPELL_DEMORALIZING_SHOUT);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Heroic Strike as rage dump
+                        Sequence("Heroic Strike Dump", {
+                            Condition("Rage > 80", [](Player* bot, Unit*) {
+                                return bot->GetPower(POWER_RAGE) >= 80;
+                            }),
+                            Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                                {
+                                    this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 PROTECTION WARRIOR: BehaviorTree initialized with tank flow");
+        }
     }
 
     // ========================================================================

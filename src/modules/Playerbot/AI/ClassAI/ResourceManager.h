@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include <unordered_map>
 #include <memory>
@@ -278,7 +279,7 @@ private:
     };
 
     std::unordered_map<uint32, std::unordered_map<ResourceType, ResourceUsageData>> _botResourceData;
-    std::recursive_mutex _dataMutex;
+    Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _dataMutex;
 };
 
 } // namespace Playerbot
