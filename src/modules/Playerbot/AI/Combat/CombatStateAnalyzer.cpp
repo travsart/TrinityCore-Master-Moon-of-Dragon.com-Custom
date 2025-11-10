@@ -224,8 +224,6 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
 void CombatStateAnalyzer::UpdateEnemyMetrics()
 {
     _currentMetrics.enemyCount = 0;
-                    return false;
-        }
     _currentMetrics.eliteCount = 0;
     _currentMetrics.bossCount = 0;
     _currentMetrics.nearestEnemyDistance = 100.0f;

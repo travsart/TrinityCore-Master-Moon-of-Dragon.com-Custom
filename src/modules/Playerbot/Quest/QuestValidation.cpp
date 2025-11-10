@@ -18,6 +18,7 @@
 #include "Spell.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "GameTime.h"
 #include "ReputationMgr.h"
 #include <sstream>
 #include <iomanip>
