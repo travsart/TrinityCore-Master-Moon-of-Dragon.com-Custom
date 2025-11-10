@@ -26,6 +26,11 @@
 #include <unordered_map>
 #include "../CombatSpecializationTemplates.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -162,6 +167,9 @@ public:
             {MIRROR_IMAGE, 120000, 1},  // 2 min defensive decoy
             {TIME_WARP, 600000, 1}  // 10 min Heroism/Bloodlust
         });
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeArcaneMechanics();
 
         TC_LOG_DEBUG("playerbot", "ArcaneMageRefactored initialized for {}", bot->GetName());
     }
@@ -454,6 +462,216 @@ private:
                 this->CastSpell(bot, EVOCATION);
                 return;
             }
+        }
+    }
+
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeArcaneMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🔮 ARCANE MAGE: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(ICE_BLOCK, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(ICE_BLOCK, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 20.0f;
+            }, "Bot HP < 20% (immunity)");
+
+            queue->RegisterSpell(MIRROR_IMAGE, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(MIRROR_IMAGE, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "Bot HP < 40% (decoy)");
+
+            // CRITICAL: Major burst cooldown
+            queue->RegisterSpell(ARCANE_SURGE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ARCANE_SURGE, [this](Player* bot, Unit* target) {
+                return target && this->_chargeTracker.GetCharges() >= 4 &&
+                       bot->GetPowerPct(POWER_MANA) >= 70 && !this->_arcaneSurgeActive;
+            }, "4 charges, 70%+ mana, not active (15s burst)");
+
+            queue->RegisterSpell(TOUCH_OF_MAGE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(TOUCH_OF_MAGE, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(TOUCH_OF_MAGE) &&
+                       target && this->_chargeTracker.GetCharges() >= 4;
+            }, "Has talent, 4 charges (damage amplification)");
+
+            // HIGH: Arcane Missiles with Clearcasting
+            queue->RegisterSpell(ARCANE_MISSILES, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ARCANE_MISSILES, [this](Player* bot, Unit* target) {
+                return target && this->_clearcastingTracker.IsActive();
+            }, "Clearcasting active (free cast, 3 charges)");
+
+            queue->RegisterSpell(ARCANE_BARRAGE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ARCANE_BARRAGE, [this](Player* bot, Unit* target) {
+                return target && (this->_chargeTracker.GetCharges() >= 4 ||
+                       (this->_chargeTracker.GetCharges() >= 2 && bot->GetPowerPct(POWER_MANA) < 30));
+            }, "4 charges OR (2+ charges and mana < 30%)");
+
+            // MEDIUM: Charge builders and mana regen
+            queue->RegisterSpell(PRESENCE_OF_MIND, SpellPriority::MEDIUM, SpellCategory::OFFENSIVE);
+            queue->AddCondition(PRESENCE_OF_MIND, [this](Player* bot, Unit* target) {
+                return target && this->_chargeTracker.GetCharges() < 4;
+            }, "< 4 charges (instant Arcane Blast)");
+
+            queue->RegisterSpell(ARCANE_ORB, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(ARCANE_ORB, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(ARCANE_ORB) &&
+                       target && this->_chargeTracker.GetCharges() < 4;
+            }, "Has talent, < 4 charges (AoE builder)");
+
+            queue->RegisterSpell(ARCANE_BLAST, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ARCANE_BLAST, [this](Player* bot, Unit* target) {
+                return target && (bot->GetPowerPct(POWER_MANA) > 20 ||
+                       this->_chargeTracker.GetCharges() < 4);
+            }, "Mana > 20% OR < 4 charges (builder)");
+
+            // LOW: Mana recovery
+            queue->RegisterSpell(EVOCATION, SpellPriority::LOW, SpellCategory::UTILITY);
+            queue->AddCondition(EVOCATION, [this](Player* bot, Unit* target) {
+                return bot && bot->GetPowerPct(POWER_MANA) < 20;
+            }, "Mana < 20% (channel mana regen)");
+
+            TC_LOG_INFO("module.playerbot", "🔮 ARCANE MAGE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Arcane Mage DPS", {
+                // Tier 1: Burst Cooldowns (Arcane Surge, Touch of the Magi)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists and 4 charges", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_chargeTracker.GetCharges() >= 4;
+                    }),
+                    Selector("Use Burst", {
+                        Sequence("Cast Arcane Surge", {
+                            Condition("70%+ mana, not active", [this](Player* bot, Unit* target) {
+                                return bot && bot->GetPowerPct(POWER_MANA) >= 70 &&
+                                       !this->_arcaneSurgeActive;
+                            }),
+                            Action("Cast Arcane Surge", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(ARCANE_SURGE, bot))
+                                {
+                                    this->CastSpell(bot, ARCANE_SURGE);
+                                    this->_arcaneSurgeActive = true;
+                                    this->_arcaneSurgeEndTime = getMSTime() + 15000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Cast Touch of the Magi", {
+                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(TOUCH_OF_MAGE);
+                            }),
+                            Action("Cast Touch of the Magi", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(TOUCH_OF_MAGE, target))
+                                {
+                                    this->CastSpell(target, TOUCH_OF_MAGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Clearcasting Proc (Arcane Missiles)
+                Sequence("Clearcasting Proc", {
+                    Condition("Target exists and has proc", [this](Player* bot, Unit* target) {
+                        return target != nullptr && this->_clearcastingTracker.IsActive();
+                    }),
+                    Action("Cast Arcane Missiles", [this](Player* bot, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(ARCANE_MISSILES, target))
+                        {
+                            this->CastSpell(target, ARCANE_MISSILES);
+                            this->_clearcastingTracker.ConsumeProc();
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 3: Charge Management (Arcane Barrage to spend)
+                Sequence("Charge Management", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Spend or Build", {
+                        // Spend at 4 charges or low mana
+                        Sequence("Spend Charges", {
+                            Condition("4 charges OR (2+ charges and low mana)", [this](Player* bot, Unit* target) {
+                                return this->_chargeTracker.GetCharges() >= 4 ||
+                                       (this->_chargeTracker.GetCharges() >= 2 &&
+                                        bot->GetPowerPct(POWER_MANA) < 30);
+                            }),
+                            Action("Cast Arcane Barrage", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(ARCANE_BARRAGE, target))
+                                {
+                                    this->CastSpell(target, ARCANE_BARRAGE);
+                                    this->_chargeTracker.ClearCharges();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Build with Presence of Mind
+                        Sequence("Use Presence of Mind", {
+                            Condition("< 4 charges", [this](Player* bot, Unit* target) {
+                                return this->_chargeTracker.GetCharges() < 4;
+                            }),
+                            Action("Cast Presence of Mind", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(PRESENCE_OF_MIND, bot))
+                                {
+                                    this->CastSpell(bot, PRESENCE_OF_MIND);
+                                    // Follow with instant Arcane Blast
+                                    if (this->CanCastSpell(ARCANE_BLAST, target))
+                                    {
+                                        this->CastSpell(target, ARCANE_BLAST);
+                                        this->_chargeTracker.AddCharge();
+                                    }
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Charge Builder (Arcane Blast)
+                Sequence("Charge Builder", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               (bot->GetPowerPct(POWER_MANA) > 20 ||
+                                this->_chargeTracker.GetCharges() < 4);
+                    }),
+                    Action("Cast Arcane Blast", [this](Player* bot, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(ARCANE_BLAST, target))
+                        {
+                            this->CastSpell(target, ARCANE_BLAST);
+                            this->_chargeTracker.AddCharge();
+                            // Chance to proc Clearcasting
+                            if (rand() % 100 < 10)
+                                this->_clearcastingTracker.ActivateProc();
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 ARCANE MAGE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 
