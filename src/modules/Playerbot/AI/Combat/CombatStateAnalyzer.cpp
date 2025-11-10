@@ -714,17 +714,16 @@ bool CombatStateAnalyzer::IsMetricImproving(std::function<float(const CombatMetr
 
 uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
 {
-        uint32 count = 0;
+    uint32 count = 0;
     for (Unit* enemy : _enemyCache)
-            {
+    {
         if (!enemy || !enemy->IsAlive())
             continue;
 
         // Priority targets are elites, bosses, or low health enemies
         if (enemy->GetTypeId() == TYPEID_UNIT)
-                {
+        {
             Creature* creature = enemy->ToCreature();
-            }
             if (creature->IsElite() || creature->IsDungeonBoss() || creature->GetHealthPct() < 30.0f)
                 count++;
         }
@@ -874,13 +873,11 @@ Player* CombatStateAnalyzer::GetMainHealer() const
     _mainHealerCache = nullptr;
 
     if (Group* group = _bot->GetGroup())
-                            return false;
-    }
     {
         for (GroupReference const& groupRef : group->GetMembers())
         {
             Player* member = groupRef.GetSource();
-                        if (!member || !member->IsAlive())
+            if (!member || !member->IsAlive())
                 continue;
 
             Classes memberClass = static_cast<Classes>(member->GetClass());
