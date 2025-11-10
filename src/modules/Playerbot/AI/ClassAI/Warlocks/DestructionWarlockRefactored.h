@@ -20,6 +20,10 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -249,6 +253,9 @@ public:
     {        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
         TC_LOG_DEBUG("playerbot", "DestructionWarlockRefactored initialized for {}", bot->GetName());
+
+        // Phase 5: Initialize decision systems
+        InitializeDestructionMechanics();
     }
 
     void UpdateRotation(::Unit* target) override    {
@@ -575,7 +582,253 @@ private:
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
     }
 
-    
+    void InitializeDestructionMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(UNENDING_RESOLVE_DESTRO, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(UNENDING_RESOLVE_DESTRO, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "HP < 40% (damage reduction)");
+
+            // CRITICAL: Major burst cooldown - Summon Infernal
+            queue->RegisterSpell(SUMMON_INFERNAL, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SUMMON_INFERNAL, [this](Player*, Unit*) {
+                return this->_resource.soulShards >= 2;
+            }, "Major CD (3min, Infernal)");
+
+            // CRITICAL: Dark Soul: Instability
+            queue->RegisterSpell(DARK_SOUL_INSTABILITY, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(DARK_SOUL_INSTABILITY, [this](Player* bot, Unit*) {
+                return bot->HasSpell(DARK_SOUL_INSTABILITY);
+            }, "Burst CD (2min, crit buff)");
+
+            // HIGH: Maintain Immolate
+            queue->RegisterSpell(IMMOLATE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(IMMOLATE, [this](Player*, Unit* target) {
+                return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
+            }, "Refresh Immolate (enables Conflagrate)");
+
+            // HIGH: Conflagrate (shard generation + Backdraft)
+            queue->RegisterSpell(CONFLAGRATE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(CONFLAGRATE, [](Player*, Unit* target) {
+                return target != nullptr;
+            }, "Shard gen + Backdraft (2 stacks)");
+
+            // HIGH: Soul Fire (talent, strong damage)
+            queue->RegisterSpell(SOUL_FIRE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SOUL_FIRE, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(SOUL_FIRE);
+            }, "Strong direct damage (20s CD, talent)");
+
+            // MEDIUM: Chaos Bolt (shard spender)
+            queue->RegisterSpell(CHAOS_BOLT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(CHAOS_BOLT, [this](Player*, Unit* target) {
+                return target && this->_resource.soulShards >= 2;
+            }, "2 shards (heavy damage)");
+
+            // MEDIUM: Rain of Fire (AoE shard spender)
+            queue->RegisterSpell(RAIN_OF_FIRE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(RAIN_OF_FIRE, [this](Player*, Unit*) {
+                return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "3 shards, 3+ enemies (AoE)");
+
+            // MEDIUM: Havoc (cleave on 2nd target)
+            queue->RegisterSpell(HAVOC, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(HAVOC, [this](Player*, Unit* target) {
+                return target && !this->_havocTracker.IsActive() && this->GetEnemiesInRange(40.0f) >= 2;
+            }, "2+ enemies (cleave to 2nd target)");
+
+            // MEDIUM: Cataclysm (AoE + applies Immolate)
+            queue->RegisterSpell(CATACLYSM, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(CATACLYSM, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(CATACLYSM) && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "3+ enemies (AoE + Immolate, 30s CD)");
+
+            // MEDIUM: Channel Demonfire (requires Immolate)
+            queue->RegisterSpell(CHANNEL_DEMONFIRE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(CHANNEL_DEMONFIRE, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(CHANNEL_DEMONFIRE) &&
+                       this->_immolateTracker.HasImmolate(target->GetGUID());
+            }, "Requires Immolate (channeled, talent)");
+
+            // MEDIUM: Shadowburn (execute)
+            queue->RegisterSpell(SHADOWBURN, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOWBURN, [this](Player* bot, Unit* target) {
+                return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
+            }, "Execute < 20% (generates shard)");
+
+            // LOW: Incinerate (filler + shard generator)
+            queue->RegisterSpell(INCINERATE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(INCINERATE, [this](Player*, Unit* target) {
+                return target && this->_resource.soulShards < 5;
+            }, "Filler (generates shards, Backdraft)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Destruction Warlock DPS", {
+                // Tier 1: Burst Cooldowns (Summon Infernal, Dark Soul)
+                Sequence("Burst Cooldowns", {
+                    Condition("Has shards and target", [this](Player* bot) {
+                        return bot && bot->GetVictim() && this->_resource.soulShards >= 2;
+                    }),
+                    Selector("Use burst cooldowns", {
+                        Sequence("Summon Infernal", {
+                            Condition("Can summon Infernal", [this](Player* bot) {
+                                return this->CanCastSpell(SUMMON_INFERNAL, bot);
+                            }),
+                            Action("Cast Summon Infernal", [this](Player* bot) {
+                                this->CastSpell(bot, SUMMON_INFERNAL);
+                                return NodeStatus::SUCCESS;
+                            })
+                        }),
+                        Sequence("Dark Soul: Instability", {
+                            Condition("Has Dark Soul talent", [this](Player* bot) {
+                                return bot->HasSpell(DARK_SOUL_INSTABILITY);
+                            }),
+                            Action("Cast Dark Soul", [this](Player* bot) {
+                                if (this->CanCastSpell(DARK_SOUL_INSTABILITY, bot))
+                                {
+                                    this->CastSpell(bot, DARK_SOUL_INSTABILITY);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: DoT Maintenance & Shard Generation (Immolate, Conflagrate)
+                Sequence("DoT & Shard Gen", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Maintain DoT and generate shards", {
+                        Sequence("Immolate", {
+                            Condition("Needs Immolate", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
+                            }),
+                            Action("Cast Immolate", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(IMMOLATE, target))
+                                {
+                                    this->CastSpell(target, IMMOLATE);
+                                    this->_immolateTracker.ApplyImmolate(target->GetGUID(), 18000);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Conflagrate", {
+                            Condition("Can cast Conflagrate", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && this->CanCastSpell(CONFLAGRATE, target);
+                            }),
+                            Action("Cast Conflagrate", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                this->CastSpell(target, CONFLAGRATE);
+                                this->GenerateSoulShard(1);
+                                this->_backdraftStacks = std::min(this->_backdraftStacks + 2, 4u);
+                                return NodeStatus::SUCCESS;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Shard Spender (Chaos Bolt, Rain of Fire)
+                Sequence("Shard Spender", {
+                    Condition("Has 2+ shards and target", [this](Player* bot) {
+                        return bot && bot->GetVictim() && this->_resource.soulShards >= 2;
+                    }),
+                    Selector("Spend shards", {
+                        Sequence("Rain of Fire (AoE)", {
+                            Condition("3+ enemies and 3+ shards", [this](Player*) {
+                                return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
+                            }),
+                            Action("Cast Rain of Fire", [this](Player* bot) {
+                                if (this->CanCastSpell(RAIN_OF_FIRE, bot))
+                                {
+                                    this->CastSpell(bot, RAIN_OF_FIRE);
+                                    this->ConsumeSoulShard(3);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Chaos Bolt (single target)", {
+                            Condition("2+ shards", [this](Player*) {
+                                return this->_resource.soulShards >= 2;
+                            }),
+                            Action("Cast Chaos Bolt", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(CHAOS_BOLT, target))
+                                {
+                                    this->CastSpell(target, CHAOS_BOLT);
+                                    this->ConsumeSoulShard(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Shard Generator (Incinerate filler)
+                Sequence("Shard Generator", {
+                    Condition("Has target and < 5 shards", [this](Player* bot) {
+                        return bot && bot->GetVictim() && this->_resource.soulShards < 5;
+                    }),
+                    Selector("Generate shards", {
+                        Sequence("Shadowburn (execute)", {
+                            Condition("Target < 20% HP and has spell", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
+                            }),
+                            Action("Cast Shadowburn", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SHADOWBURN, target))
+                                {
+                                    this->CastSpell(target, SHADOWBURN);
+                                    this->GenerateSoulShard(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Incinerate (filler)", {
+                            Action("Cast Incinerate", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(INCINERATE, target))
+                                {
+                                    this->CastSpell(target, INCINERATE);
+                                    this->GenerateSoulShard(1);
+                                    if (this->_backdraftStacks > 0)
+                                        this->_backdraftStacks--;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
+
+
 
 private:
     DestructionImmolateTracker _immolateTracker;
