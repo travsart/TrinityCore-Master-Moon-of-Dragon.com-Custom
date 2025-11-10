@@ -22,6 +22,7 @@
 #include "Object.h"
 #include "ObjectAccessor.h"
 #include "Timer.h"
+#include "GameTime.h"
 #include "Log.h"
 #include <atomic>
 #include <memory>

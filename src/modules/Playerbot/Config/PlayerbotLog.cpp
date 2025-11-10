@@ -20,6 +20,7 @@
 #include "PlayerbotLog.h"
 #include "PlayerbotConfig.h"
 #include "Timer.h"
+#include "GameTime.h"
 
 PlayerbotPerformanceLogger::PlayerbotPerformanceLogger(std::string const& operation)
     : m_operation(operation), m_startTime(GameTime::GetGameTimeMS())

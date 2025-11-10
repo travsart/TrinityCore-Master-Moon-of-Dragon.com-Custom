@@ -27,6 +27,37 @@ class Quest;
 namespace Playerbot
 {
 
+// Quest validation data structures
+struct ValidationContext
+{
+    Player* bot;
+    uint32 questId;
+    const Quest* quest;
+    uint32 validationTime;
+    bool strictValidation;
+    bool checkOptionalRequirements;
+    bool validateFutureRequirements;
+    std::vector<std::string> warnings;
+    std::vector<std::string> errors;
+
+    ValidationContext(Player* p, uint32 qId) : bot(p), questId(qId), quest(nullptr)
+        , validationTime(0), strictValidation(true)
+        , checkOptionalRequirements(true), validateFutureRequirements(false) {}
+};
+
+struct ValidationResult
+{
+    bool isValid;
+    QuestEligibility eligibility;
+    std::vector<std::string> errors;
+    std::vector<std::string> warnings;
+    uint32 validationTime;
+    uint32 cacheExpiry;
+
+    ValidationResult() : isValid(false), eligibility(QuestEligibility::NOT_AVAILABLE)
+        , validationTime(0), cacheExpiry(60000) {} // 1 minute cache
+};
+
 /**
  * @brief Comprehensive quest validation system for playerbot quest acceptance
  *
@@ -96,42 +127,12 @@ public:
     bool CanGroupMemberShareQuest(uint32 questId, Player* sharer, Player* receiver) override;
 
     // Advanced validation
-    struct ValidationContext
-    {
-        Player* bot;
-        uint32 questId;
-        const Quest* quest;
-        uint32 validationTime;
-        bool strictValidation;
-        bool checkOptionalRequirements;
-        bool validateFutureRequirements;
-        std::vector<std::string> warnings;
-        std::vector<std::string> errors;
-
-        ValidationContext(Player* p, uint32 qId) : bot(p), questId(qId), quest(nullptr)
-            , validationTime(GameTime::GetGameTimeMS()), strictValidation(true)
-            , checkOptionalRequirements(true), validateFutureRequirements(false) {}
-    };
-
     bool ValidateWithContext(ValidationContext& context) override;
     bool ValidateQuestObjectives(uint32 questId, Player* bot) override;
     bool ValidateQuestRewards(uint32 questId, Player* bot) override;
     bool ValidateQuestDifficulty(uint32 questId, Player* bot) override;
 
     // Validation caching and optimization
-    struct ValidationResult
-    {
-        bool isValid;
-        QuestEligibility eligibility;
-        std::vector<std::string> errors;
-        std::vector<std::string> warnings;
-        uint32 validationTime;
-        uint32 cacheExpiry;
-
-        ValidationResult() : isValid(false), eligibility(QuestEligibility::NOT_AVAILABLE)
-            , validationTime(GameTime::GetGameTimeMS()), cacheExpiry(GameTime::GetGameTimeMS() + 60000) {} // 1 minute cache
-    };
-
     ValidationResult GetCachedValidation(uint32 questId, uint32 botGuid) override;
     void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result) override;
     void InvalidateValidationCache(uint32 botGuid) override;

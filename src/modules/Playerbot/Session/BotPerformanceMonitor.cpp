@@ -6,6 +6,7 @@
 #include "BotPriorityManager.h"
 #include "Log.h"
 #include "Timer.h"
+#include "GameTime.h"
 #include <algorithm>
 #include <numeric>
 

@@ -16,6 +16,7 @@
 #include "SpellAuras.h"
 #include "SpellAuraEffects.h"
 #include "Timer.h"
+#include "GameTime.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -635,10 +636,8 @@ float CombatStateAnalyzer::GetSafeDistance() const
 
 Position CombatStateAnalyzer::GetSafePosition() const
 {
-        // Calculate safe position based on situation
+    // Calculate safe position based on situation
     Position pos;
-            return;
-    }
     pos.Relocate(_bot->GetPositionX(), _bot->GetPositionY(), _bot->GetPositionZ(), _bot->GetOrientation());
 
     if (NeedsToSpread())
