@@ -187,16 +187,6 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle updates (500ms for BG responsiveness)
@@ -267,17 +257,6 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 // ============================================================================
 
 void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-
 if (!player)
 
 {
@@ -294,21 +273,10 @@ if (!player)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     BGRole role = BGRole::ATTACKER; // Default
 
     // Assign role based on class and BG type
     uint8 playerClass = player->getClass();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
-
     switch (bgType)
     {
         case BGType::WARSONG_GULCH:
@@ -336,11 +304,6 @@ if (!player)
         case BGType::ALTERAC_VALLEY:
             // Assign varied roles
             if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
                 role = BGRole::SIEGE_OPERATOR;
             else
                 role = BGRole::ATTACKER;
@@ -358,16 +321,6 @@ if (!player)
 }
 
 BGRole BattlegroundAI::GetPlayerRole(::Player* player) const
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return BGRole::ATTACKER;
@@ -375,16 +328,6 @@ if (!player)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (_playerRoles.count(playerGuid))
         return _playerRoles.at(playerGuid);
 
@@ -399,16 +342,6 @@ bool BattlegroundAI::SwitchRole(::Player* player, BGRole newRole)
     std::lock_guard lock(_mutex);
 
     BGStrategyProfile profile = GetStrategyProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     if (!profile.allowRoleSwitch)
         return false;
 
@@ -416,11 +349,6 @@ bool BattlegroundAI::SwitchRole(::Player* player, BGRole newRole)
         return false;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerRoles[playerGuid] = newRole;
 
     TC_LOG_INFO("playerbot", "BattlegroundAI: Switched player {} to role {}",
@@ -435,12 +363,6 @@ bool BattlegroundAI::IsRoleAppropriate(::Player* player, BGRole role) const
         return false;
 
     uint8 playerClass = player->getClass();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
-
     switch (role)
     {
         case BGRole::FLAG_CARRIER:
@@ -458,17 +380,6 @@ bool BattlegroundAI::IsRoleAppropriate(::Player* player, BGRole role) const
             // Melee classes are good for siege weapons
             return playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT ||
                    playerClass == CLASS_PALADIN;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-
         default:
             return true; // All other roles are flexible
     }
@@ -486,11 +397,6 @@ std::vector<BGObjective> BattlegroundAI::GetActiveObjectives(::Player* player) c
     std::lock_guard lock(_mutex);
 
     ::Battleground* bg = GetPlayerBattleground(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (!bg)
         return {};
 
@@ -509,16 +415,6 @@ BGObjective BattlegroundAI::GetPlayerObjective(::Player* player) const
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (_playerObjectives.count(playerGuid))
         return _playerObjectives.at(playerGuid);
 
@@ -544,11 +440,6 @@ bool BattlegroundAI::AssignObjective(::Player* player, BGObjective const& object
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerObjectives[playerGuid] = objective;
 
     TC_LOG_DEBUG("playerbot", "BattlegroundAI: Assigned objective type {} to player {}",
@@ -565,12 +456,6 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     // Update metrics based on objective type
     switch (objective.type)
     {
@@ -605,17 +490,6 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
 
     TC_LOG_INFO("playerbot", "BattlegroundAI: Player {} completed objective type {}",
         playerGuid, static_cast<uint32>(objective.type));
-
-if (!enemyFC)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemyFC in method GetGUID");
-
-    return;
-
-}
-
     return true;
 }
 
@@ -637,16 +511,6 @@ void BattlegroundAI::ExecuteWSGStrategy(::Player* player)
 
     BGRole role = GetPlayerRole(player);
     BGType bgType = GetBattlegroundType(player);
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     switch (role)
@@ -669,17 +533,6 @@ void BattlegroundAI::ExecuteWSGStrategy(::Player* player)
             {
                 ::Player* friendlyFC = FindFriendlyFlagCarrier(player);
                 ::Player* enemyFC = FindEnemyFlagCarrier(player);
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-                    if (!enemyFC)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemyFC in method GetGUID");
-                        return nullptr;
-                    }
-
                 if (friendlyFC && strategy.escortFlagCarrier)
                     EscortFlagCarrier(player, friendlyFC);
                 else if (enemyFC && strategy.killEnemyFC)
@@ -705,21 +558,6 @@ bool BattlegroundAI::PickupFlag(::Player* player)
 
     // Move to enemy flag location
     float distance = std::sqrt(player->GetExactDistSq(strategy.enemyFlagSpawn)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Use PathGenerator to move to flag
@@ -737,21 +575,6 @@ bool BattlegroundAI::PickupFlag(::Player* player)
 }
 
 bool BattlegroundAI::ReturnFlag(::Player* player)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -798,11 +621,6 @@ bool BattlegroundAI::EscortFlagCarrier(::Player* player, ::Player* fc)
 
     // Follow flag carrier
     float distance = std::sqrt(player->GetExactDistSq(fc)); // Calculate once from squared distance
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
     if (distance > 15.0f)
     {
         // Full implementation: Move closer to FC
@@ -822,30 +640,10 @@ bool BattlegroundAI::DefendFlagRoom(::Player* player)
         return false;
 
     BGType bgType = GetBattlegroundType(player);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     // Move to friendly flag room
     float distance = std::sqrt(player->GetExactDistSq(strategy.friendlyFlagSpawn)); // Calculate once from squared distance
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
     if (distance > strategy.friendlyFlagSpawn.GetExactDist(player))
     {
         // Full implementation: Move to flag room
@@ -919,16 +717,6 @@ bool BattlegroundAI::CaptureBase(::Player* player, Position const& baseLocation)
 
     // Move to base
     float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Move to base
@@ -952,21 +740,6 @@ bool BattlegroundAI::DefendBase(::Player* player, Position const& baseLocation)
 
     // Move to base
     float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
     if (distance > 30.0f)
     {
         // Full implementation: Move to base
@@ -986,16 +759,6 @@ Position BattlegroundAI::FindBestBaseToCapture(::Player* player) const
         return Position();
 
     BGType bgType = GetBattlegroundType(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     if (!_baseStrategies.count(bgType))
         return Position();
 
@@ -1079,21 +842,11 @@ void BattlegroundAI::ExecuteAVStrategy(::Player* player)
 }
 
 bool BattlegroundAI::CaptureGraveyard(::Player* player)
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
 if (!player)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
     return nullptr;
 }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -1106,11 +859,6 @@ if (!player)
 }
 
 bool BattlegroundAI::CaptureTower(::Player* player)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -1123,11 +871,6 @@ bool BattlegroundAI::CaptureTower(::Player* player)
 }
 
 bool BattlegroundAI::KillBoss(::Player* player)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -1158,22 +901,11 @@ void BattlegroundAI::ExecuteEOTSStrategy(::Player* player)
         return;
 
     BGRole role = GetPlayerRole(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     BGType bgType = BGType::EYE_OF_THE_STORM;
     EOTSStrategy strategy = _eotsStrategies[bgType];
 
     // Check if team is winning
     bool isWinning = IsTeamWinning(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
 if (!player)
 
 {
@@ -1224,21 +956,6 @@ bool BattlegroundAI::CaptureFlagEOTS(::Player* player)
 
     // Move to flag location
     float distance = std::sqrt(player->GetExactDistSq(strategy.flagLocation)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (distance > OBJECTIVE_RANGE)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to EOTS flag",
@@ -1308,11 +1025,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
     return nullptr;
 }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1325,21 +1037,6 @@ if (!player)
 }
 
 bool BattlegroundAI::AttackGate(::Player* player)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1352,16 +1049,6 @@ if (!player)
 }
 
 bool BattlegroundAI::DefendGate(::Player* player)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1393,11 +1080,6 @@ if (!player)
 }
 
 bool BattlegroundAI::PickupOrb(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1428,16 +1110,6 @@ if (!player)
 // ============================================================================
 
 void BattlegroundAI::ExecuteSilvershardStrategy(::Player* player)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
 {
     if (!player)
         return;
@@ -1448,11 +1120,6 @@ if (!player)
 }
 
 bool BattlegroundAI::CaptureCart(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1488,11 +1155,6 @@ void BattlegroundAI::ExecuteDeepwindStrategy(::Player* player)
 }
 
 bool BattlegroundAI::CaptureMine(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1518,16 +1180,6 @@ bool BattlegroundAI::DefendMine(::Player* player)
 // ============================================================================
 
 bool BattlegroundAI::GroupUpForObjective(::Player* player, BGObjective const& objective)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return false;
@@ -1538,11 +1190,6 @@ if (!player)
 
     // Check if enough players at objective
     uint32 playersAtObjective = CountPlayersAtObjective(objective.location, 20.0f);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
     if (playersAtObjective < profile.minPlayersForAttack)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} waiting for group at objective",
@@ -1565,16 +1212,6 @@ std::vector<::Player*> BattlegroundAI::GetNearbyTeammates(::Player* player, floa
 }
 
 bool BattlegroundAI::CallForBackup(::Player* player, Position const& location)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return false;
@@ -1597,11 +1234,6 @@ bool BattlegroundAI::RespondToBackupCall(::Player* player, Position const& locat
 
     // Move to backup location
     float distance = std::sqrt(player->GetExactDistSq(location)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (distance > 5.0f)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} responding to backup call",
@@ -1622,11 +1254,6 @@ bool BattlegroundAI::MoveToObjective(::Player* player, BGObjective const& object
         return false;
 
     float distance = std::sqrt(player->GetExactDistSq(objective.location)); // Calculate once from squared distance
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (distance <= OBJECTIVE_RANGE)
         return true;
 

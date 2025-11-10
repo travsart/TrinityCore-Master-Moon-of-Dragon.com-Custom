@@ -30,16 +30,6 @@ namespace Playerbot::StateMachine
 // ========================================================================
 
 BotInitStateMachine::BotInitStateMachine(Player* bot)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
     : BotStateMachine(bot, BotInitState::CREATED, TransitionPolicy::STRICT)
     , m_startTime(std::chrono::steady_clock::now())
 {
@@ -385,22 +375,6 @@ void BotInitStateMachine::OnUpdate(uint32 diff)
 bool BotInitStateMachine::HandleLoadingCharacter()
 {
     Player* bot = GetBot();
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-
 if (!bot)
 
 {
@@ -410,16 +384,6 @@ if (!bot)
     return;
 
 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.statemachine",
@@ -444,57 +408,16 @@ if (!bot)
         "Character data loaded for bot {}",
         if (!bot)
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-                return nullptr;
-            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return;
         }
         bot->GetName());
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-
     return true; // Ready to proceed to IN_WORLD
 }
 
 bool BotInitStateMachine::HandleInWorld()
 {
     Player* bot = GetBot();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-                return nullptr;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-            return;
-        }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.statemachine",
@@ -505,69 +428,23 @@ bool BotInitStateMachine::HandleInWorld()
 
     // THIS IS THE KEY CHECK: Bot must be IsInWorld() before we proceed
     if (!bot->IsInWorld())
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
     {
         TC_LOG_DEBUG("module.playerbot.statemachine",
             "Bot {} waiting to be added to world...",
             bot->GetName());
         return false; // Not in world yet
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return nullptr;
-    }
     }
 
     m_addedToWorld = true;
     TC_LOG_INFO("module.playerbot.statemachine",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         "Bot {} is now in world (IsInWorld() = true)",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName());
-
-if (!leader)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
-
-    return;
-
-}
-
     return true; // Ready to proceed to CHECKING_GROUP
 }
 
 bool BotInitStateMachine::HandleCheckingGroup()
 {
     Player* bot = GetBot();
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
     if (!bot || !bot->IsInWorld())
     {
         // This should NEVER happen due to state machine preconditions
@@ -581,27 +458,6 @@ bool BotInitStateMachine::HandleCheckingGroup()
     // NOW IT'S SAFE: Bot is guaranteed to be IsInWorld()
     // This is THE FIX for Issue #1
     Group* group = bot->GetGroup();
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
-            if (!group)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-
     if (group)
     {
         m_wasInGroupAtLogin = true;
@@ -610,25 +466,9 @@ bool BotInitStateMachine::HandleCheckingGroup()
         TC_LOG_INFO("module.playerbot.statemachine",
             "Bot {} is already in group at login (leader: {})",
             bot->GetName(), m_groupLeaderGuid.ToString());
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         // Additional validation
         if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
-                if (!leader)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
-                    return;
-                }
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_DEBUG("module.playerbot.statemachine",
                 "Group leader {} is online",
                 leader->GetName());
@@ -640,27 +480,12 @@ bool BotInitStateMachine::HandleCheckingGroup()
                 m_groupLeaderGuid.ToString());
         }
     }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     else
     {
         m_wasInGroupAtLogin = false;
         TC_LOG_DEBUG("module.playerbot.statemachine",
             "Bot {} is not in a group",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             bot->GetName());
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     }
 
     m_groupChecked = true;
@@ -670,11 +495,6 @@ bool BotInitStateMachine::HandleCheckingGroup()
 bool BotInitStateMachine::HandleActivatingStrategies()
 {
     Player* bot = GetBot();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     BotAI* ai = GetBotAI();
 
     if (!bot || !ai)
@@ -694,11 +514,6 @@ bool BotInitStateMachine::HandleActivatingStrategies()
         {
             TC_LOG_INFO("module.playerbot.statemachine",
                 "Activating group strategies for bot {} (FIX FOR ISSUE #1)",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 bot->GetName());
 
             // This is the proper timing - bot is fully initialized
@@ -708,16 +523,6 @@ bool BotInitStateMachine::HandleActivatingStrategies()
             if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
             {
                 if (leader != bot)
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return nullptr;
-                    }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 {
                     TC_LOG_DEBUG("module.playerbot.statemachine",
                         "Bot {} should now be following leader {}",
@@ -740,11 +545,6 @@ bool BotInitStateMachine::HandleActivatingStrategies()
 
     TC_LOG_INFO("module.playerbot.statemachine",
         "All strategies activated for bot {}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName());
 
     return true; // Ready to transition to READY
@@ -754,16 +554,6 @@ bool BotInitStateMachine::HandleFailed()
 {
     // Log detailed failure information
     Player* bot = GetBot();
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
     TC_LOG_ERROR("module.playerbot.statemachine",
         "Bot {} initialization failed at state {}: {}",
         bot ? bot->GetName() : "NULL",

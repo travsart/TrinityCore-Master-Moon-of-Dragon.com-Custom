@@ -253,53 +253,17 @@ void InstanceCoordination::HandleFormationBreaks(Group* group)
 
     auto formationItr = _groupFormations.find(groupId);
     if (formationItr == _groupFormations.end())
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-            return nullptr;
-        }
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
         return;
 
     FormationData const& formation = formationItr->second;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-
-    return nullptr;
-
-}
-
     // Check each member's distance from formation center
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return nullptr;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-            return;
-        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
         float distance = player->GetExactDist(&formation.centerPoint);
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
         if (distance > formation.formationRadius + FORMATION_TOLERANCE)
         {
             // Member too far from formation - log break
@@ -515,11 +479,6 @@ if (!group)
 }
 {
     if (!group)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-            return nullptr;
-        }
         return;
 
     uint32 groupId = group->GetGUID().GetCounter();
@@ -529,31 +488,9 @@ if (!group)
 if (!group)
 
 {
-
-    if (!player)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPower");
-
-        return nullptr;
-
-    }
-
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
 
     return;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
 }
     if (resourceItr == _resourceCoordination.end())
         return;
@@ -566,11 +503,6 @@ if (!player)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-            return nullptr;
-        }
         if (!player || !player->IsInWorld())
             continue;
 
@@ -578,12 +510,6 @@ if (!player)
         if (player->GetMaxPower(POWER_MANA) > 0)
         {
             float manaPercent = player->GetMaxPower(POWER_MANA) > 0 ?
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPower");
-                return nullptr;
-            }
-
 if (!player)
 
 {
@@ -725,27 +651,11 @@ void InstanceCoordination::CoordinateGroupActions(Group* group, const std::strin
 }
 
 void InstanceCoordination::HandleGroupDecisionMaking(Group* group, const std::string& decision)
-
-if (!group)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-
-    return nullptr;
-
-}
 {
     if (!group || decision.empty())
         return;
 
     uint32 groupId = group->GetGUID().GetCounter();
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return;
-    }
     auto stateItr = _coordinationStates.find(groupId);
     if (stateItr == _coordinationStates.end())
         return;
@@ -775,28 +685,12 @@ void InstanceCoordination::SynchronizeGroupStates(Group* group)
         return;
 
     uint32 groupId = group->GetGUID().GetCounter();
-
-if (!group)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-
-    return;
-
-}
-
     // Ensure all members are in sync
     bool allReady = true;
 
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-            return nullptr;
-        }
         if (!player || !player->IsInWorld() || !player->IsAlive())
         {
             allReady = false;
@@ -1051,36 +945,15 @@ void InstanceCoordination::UpdateNavigationRoute(Group* group, const Position& c
 }
 
 void InstanceCoordination::HandleNavigationObstacles(Group* group, const std::vector<Position>& obstacles)
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group || obstacles.empty())
         return;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return;
-    }
     uint32 groupId = group->GetGUID().GetCounter();
 
     TC_LOG_DEBUG("module.playerbot", "InstanceCoordination::HandleNavigationObstacles - Group {} handling {} obstacles",
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-            return;
-        }
         groupId, obstacles.size());
 
     // Recalculate route to avoid obstacles
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-        return;
-    }
     auto routeItr = _groupRoutes.find(groupId);
     if (routeItr != _groupRoutes.end() && !routeItr->second.empty())
     {
@@ -1115,34 +988,12 @@ void InstanceCoordination::MonitorGroupSafety(Group* group)
         return;
 
     uint32 groupId = group->GetGUID().GetCounter();
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return;
-    }
-
     // Check group health status
     float totalHealth = 0.0f;
     uint32 aliveMembers = 0;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsAlive");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-            return nullptr;
-        }
         if (!player || !player->IsInWorld())
             continue;
 
@@ -1634,25 +1485,9 @@ void InstanceCoordination::CleanupInactiveCoordinations()
         uint32 timeSinceStart = GameTime::GetGameTimeMS() - progress.startTime;
 
         // Consider coordination inactive if no update for 1 hour
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-            return nullptr;
-        }
         if (timeSinceStart > 3600000)
             inactiveGroups.push_back(groupId);
     }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-
-    return nullptr;
-
-}
-
     // Clean up inactive coordination data
     for (uint32 groupId : inactiveGroups)
     {
@@ -1673,20 +1508,9 @@ if (!player)
 // ============================================================================
 
 void InstanceCoordination::UpdateGroupFormation(Group* group)
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group)
         return;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return;
-    }
     uint32 groupId = group->GetGUID().GetCounter();
 
     auto formationItr = _groupFormations.find(groupId);
@@ -1694,17 +1518,6 @@ void InstanceCoordination::UpdateGroupFormation(Group* group)
         return;
 
     FormationData& formation = formationItr->second;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
-
     // Calculate formation positions for each member
     // This would integrate with GroupFormation system in a full implementation
 
@@ -1732,21 +1545,11 @@ void InstanceCoordination::CalculateOptimalFormation(Group* group, const Positio
 }
 
 void InstanceCoordination::SynchronizeGroupMovement(Group* group, const Position& destination)
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-            return nullptr;
-        }
 {
     if (!group)
         return;
 
     // Move all group members to destination in formation
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
@@ -1767,21 +1570,11 @@ void InstanceCoordination::HandleMovementLaggers(Group* group)
 
     auto formationItr = _groupFormations.find(groupId);
     if (formationItr == _groupFormations.end())
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return;
-    }
         return;
 
     FormationData const& formation = formationItr->second;
 
     // Find lagging members and help them catch up
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
@@ -1789,11 +1582,6 @@ void InstanceCoordination::HandleMovementLaggers(Group* group)
             continue;
 
         float distance = player->GetExactDist(&formation.centerPoint);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
         if (distance > formation.formationRadius + FORMATION_TOLERANCE * 2.0f)
         {
             TC_LOG_DEBUG("module.playerbot", "InstanceCoordination::HandleMovementLaggers - Player {} lagging (distance: {:.2f})",
@@ -1809,36 +1597,14 @@ void InstanceCoordination::HandleMovementLaggers(Group* group)
 // ============================================================================
 
 void InstanceCoordination::ProcessPendingActions(Group* group)
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group)
         return;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     std::lock_guard lock(_coordinationMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-        return;
-    }
     auto stateItr = _coordinationStates.find(groupId);
     if (stateItr == _coordinationStates.end())
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
         return;
 
     CoordinationState& state = stateItr->second;
@@ -1911,11 +1677,6 @@ void InstanceCoordination::CheckGroupResources(Group* group)
     uint32 groupId = group->GetGUID().GetCounter();
 
     auto resourceItr = _resourceCoordination.find(groupId);
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
     if (resourceItr == _resourceCoordination.end())
         return;
 
@@ -1927,29 +1688,13 @@ void InstanceCoordination::CheckGroupResources(Group* group)
     // Check health
     float totalHealth = 0.0f;
     uint32 memberCount = 0;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-                return;
-            }
         if (!player || !player->IsInWorld() || !player->IsAlive())
             continue;
 
         float healthPercent = player->GetMaxHealth() > 0 ?
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
             static_cast<float>(player->GetHealth()) / player->GetMaxHealth() : 0.0f;
 
         resources.memberHealth[player->GetGUID().GetCounter()] = healthPercent;
@@ -2004,29 +1749,13 @@ bool InstanceCoordination::ShouldTakeRestBreak(Group* group)
     uint32 groupId = group->GetGUID().GetCounter();
 
     auto resourceItr = _resourceCoordination.find(groupId);
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return;
-    }
     if (resourceItr == _resourceCoordination.end())
         return false;
 
     ResourceCoordination const& resources = resourceItr->second;
 
     // Take rest break if group readiness below 60%
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return;
-    }
     return resources.groupReadiness < 60;
-}
-
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
-    return;
 }
 // ============================================================================
 if (!player)
@@ -2138,52 +1867,20 @@ void InstanceCoordination::HandleRouteDeviations(Group* group)
 }
 
 Position InstanceCoordination::CalculateGroupCenterPoint(Group* group)
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group)
         return Position();
 
     float totalX = 0.0f, totalY = 0.0f, totalZ = 0.0f;
     uint32 memberCount = 0;
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
-
-    return;
-
-}
-
 if (!player)
 
 {
 
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
-
-    return;
-
-}
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
 
     return;
 

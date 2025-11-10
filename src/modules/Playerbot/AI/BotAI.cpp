@@ -577,11 +577,6 @@ void BotAI::UpdateAI(uint32 diff)
                     continue;// Member is safe to cache
                 members.push_back(member);
                 if (member->GetGUID() == group->GetLeaderGUID())
-                if (!group)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                    return;
-                }
                     leader = member;}
             catch (...)
             {
@@ -753,12 +748,6 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         _performanceMetrics.averageUpdateTime = updateTime;
     else
         _performanceMetrics.averageUpdateTime = (_performanceMetrics.averageUpdateTime + updateTime) / 2;
-
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-        return nullptr;
-    }
     if (updateTime > _performanceMetrics.maxUpdateTime)
         _performanceMetrics.maxUpdateTime = updateTime;
 
@@ -909,11 +898,6 @@ void BotAI::UpdateMovement(uint32 diff)
     // CRITICAL: Movement is controlled by strategies (especially follow)
     // This method just ensures movement commands are processed
     // Must run every frame for smooth movementif (!_bot || !_bot->IsAlive())
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
         return;
 
     // Movement is primarily handled by strategies (follow, combat positioning, etc.)// This is just for ensuring movement updates are processed
@@ -1161,12 +1145,6 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
 void BotAI::OnCombatStart(::Unit* target)
 {
     _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-
     TC_LOG_DEBUG("playerbot", "Bot {} entering combat with {}",_bot->GetName(), target ? target->GetName() : "unknown");
 
     // Strategies don't have OnCombatStart - combat is handled by ClassAI

@@ -62,16 +62,6 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle updates (100ms for PvP responsiveness)
@@ -83,23 +73,11 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
     }
 
     _lastUpdateTimes[playerGuid] = currentTime;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-        return nullptr;
-    }
-
     std::lock_guard lock(_mutex);
 
     // Get combat profile
     PvPCombatProfile profile = GetCombatProfile(playerGuid);
     PvPCombatState state = GetCombatState(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-        return nullptr;
-    }
-
     // Not in combat - idle state
     if (!player->IsInCombat())
     {
@@ -144,17 +122,6 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
         if (allyNeedingPeel)
             PeelForAlly(player, allyNeedingPeel);
     }
-
-if (!newTarget)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetGUID");
-
-    return nullptr;
-
-}
-
     // Target selection and offensive actions
     ::Unit* currentTarget = player->GetSelectedUnit();
 
@@ -163,11 +130,6 @@ if (!newTarget)
     {
         ::Unit* newTarget = SelectBestTarget(player);
         if (newTarget && newTarget != currentTarget)
-            if (!newTarget)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetGUID");
-                return;
-            }
         {
             player->SetSelection(newTarget->GetGUID());
             currentTarget = newTarget;
@@ -207,11 +169,6 @@ if (!newTarget)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return nullptr;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     }
 
     // Assess threat for all enemies
@@ -230,32 +187,11 @@ if (!newTarget)
 }
 
 ThreatAssessment PvPCombatAI::AssessThreat(::Player* player, ::Unit* target) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-        return;
-    }
 {
     ThreatAssessment assessment;
     assessment.targetGuid = target->GetGUID();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     assessment.healthPercent = target->GetHealthPct();
     assessment.distanceToPlayer = static_cast<uint32>(std::sqrt(player->GetExactDistSq(target))); // Calculate once from squared distance
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-
-    return nullptr;
-
-}
-
     // Check if healer
     assessment.isHealer = IsHealer(target);
 
@@ -275,16 +211,6 @@ if (!player)
 }
 
 std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-        return nullptr;
-    }
 {
     std::vector<::Unit*> enemies;
 
@@ -296,27 +222,12 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(player, enemies, checker);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-            return;
-        }
         Map* cellVisitMap = player->GetMap();
         if (!player)
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsDead");
-            return;
-        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
             return;
         }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-                    return nullptr;
-                }
         if (!cellVisitMap)
             return std::vector<ObjectGuid>();
 
@@ -334,11 +245,6 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
 
             for (ObjectGuid guid : nearbyGuids)
             {
-                if (!currentTarget)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTarget in method IsDead");
-                    return nullptr;
-                }
                 Creature* creature = ObjectAccessor::GetCreature(*player, guid);
                 if (creature)
                 {
@@ -351,16 +257,6 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
     // Filter to only hostile players
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
         [player](::Unit* unit) {
-                   if (!unit)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-                       return nullptr;
-                   }
-                   if (!unit)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsDead");
-                       return;
-                   }
             return !unit->IsPlayer() ||
                    !player->IsHostileTo(unit) ||
                    unit->IsDead();
@@ -394,41 +290,14 @@ bool PvPCombatAI::ShouldSwitchTarget(::Player* player) const
         return false;
 
     ::Unit* currentTarget = player->GetSelectedUnit();
-
 if (!player)
 
 {
 
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    if (!target)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-
-        return nullptr;
-
-    }
-
     return nullptr;
 
 }
-    if (!currentTarget)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentTarget in method IsDead");
-        return;
-    }
     if (!currentTarget || currentTarget->IsDead())
         return true;
 
@@ -460,31 +329,11 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
     std::lock_guard lock(_mutex);
 
     PvPCombatProfile profile = GetCombatProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     if (!profile.autoCCChain)
         return false;
 
     // Get next CC ability
     uint32 ccSpellId = GetNextCCAbility(player, target);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return 0;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (ccSpellId == 0)
         return false;
 
@@ -503,11 +352,6 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
 
     // Track CC usage
     ObjectGuid targetGuid = target->GetGUID();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     if (!_ccChains.count(targetGuid))
         _ccChains[targetGuid] = CCChain();
 
@@ -516,11 +360,6 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].ccChainsExecuted++;
     _globalMetrics.ccChainsExecuted++;
 
@@ -565,11 +404,6 @@ uint32 PvPCombatAI::GetDiminishingReturnsLevel(::Unit* target, CCType ccType) co
         return 0;
 
     ObjectGuid targetGuid = target->GetGUID();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     if (!_ccChains.count(targetGuid))
         return 0;
 
@@ -593,11 +427,6 @@ if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
         return;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
     }
     if (!_ccChains.count(targetGuid))
         _ccChains[targetGuid] = CCChain();
@@ -642,16 +471,6 @@ bool PvPCombatAI::UseDefensiveCooldown(::Player* player)
         return false;
 
     uint32 cdSpellId = GetBestDefensiveCooldown(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (cdSpellId == 0)
         return false;
 
@@ -665,11 +484,6 @@ bool PvPCombatAI::UseDefensiveCooldown(::Player* player)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].defensivesUsed++;
     _globalMetrics.defensivesUsed++;
 
@@ -677,27 +491,11 @@ bool PvPCombatAI::UseDefensiveCooldown(::Player* player)
 }
 
 uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return 0;
 
     uint32 healthPct = player->GetHealthPct();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-
 if (!player)
 
 {
@@ -707,12 +505,6 @@ if (!player)
     return;
 
 }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
-
     // Use immunity if very low health
     if (healthPct < 20 && ShouldUseImmunity(player))
     {
@@ -737,11 +529,6 @@ if (!player)
         case CLASS_PRIEST: defensives = GetPriestDefensiveCooldowns(player); break;
         case CLASS_DEATH_KNIGHT: defensives = GetDeathKnightDefensiveCooldowns(player); break;
         case CLASS_SHAMAN: defensives = GetShamanDefensiveCooldowns(player); break;
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
         case CLASS_MAGE: defensives = GetMageDefensiveCooldowns(player); break;
         case CLASS_WARLOCK: defensives = GetWarlockDefensiveCooldowns(player); break;
         case CLASS_MONK: defensives = GetMonkDefensiveCooldowns(player); break;
@@ -783,16 +570,6 @@ bool PvPCombatAI::ShouldUseImmunity(::Player* player) const
 }
 
 bool PvPCombatAI::UseTrinket(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -816,11 +593,6 @@ if (!player)
 // ============================================================================
 
 bool PvPCombatAI::ExecuteOffensiveBurst(::Player* player, ::Unit* target)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player || !target)
         return false;
@@ -836,16 +608,6 @@ bool PvPCombatAI::ExecuteOffensiveBurst(::Player* player, ::Unit* target)
     if (success)
     {
         uint32 playerGuid = player->GetGUID().GetCounter();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                return nullptr;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         _playerMetrics[playerGuid].burstsExecuted++;
         _globalMetrics.burstsExecuted++;
     }
@@ -859,12 +621,6 @@ bool PvPCombatAI::ShouldBurstTarget(::Player* player, ::Unit* target) const
         return false;
 
     PvPCombatProfile profile = GetCombatProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
     // Burst if target below threshold
     if (target->GetHealthPct() < profile.burstHealthThreshold)
         return true;
@@ -877,26 +633,6 @@ bool PvPCombatAI::ShouldBurstTarget(::Player* player, ::Unit* target) const
 }
 
 std::vector<uint32> PvPCombatAI::GetOffensiveCooldowns(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
 {
     if (!player)
         return {};
@@ -919,28 +655,12 @@ std::vector<uint32> PvPCombatAI::GetOffensiveCooldowns(::Player* player) const
         default: return {};
     }
 }
-
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-    return;
-}
 bool PvPCombatAI::StackOffensiveCooldowns(::Player* player)
 {
     if (!player)
         return false;
 
     std::vector<uint32> cooldowns = GetOffensiveCooldowns(player);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-
-    return;
-
-}
     bool usedAny = false;
 
     for (uint32 spellId : cooldowns)
@@ -966,11 +686,6 @@ bool PvPCombatAI::InterruptCast(::Player* player, ::Unit* target)
         return false;
 
     uint32 interruptSpell = GetInterruptSpell(player);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (interruptSpell == 0)
         return false;
 
@@ -984,7 +699,6 @@ bool PvPCombatAI::InterruptCast(::Player* player, ::Unit* target)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-
 if (!player)
 
 {
@@ -994,21 +708,6 @@ if (!player)
     return;
 
 }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].interruptsLanded++;
     _globalMetrics.interruptsLanded++;
 
@@ -1030,11 +729,6 @@ bool PvPCombatAI::ShouldInterrupt(::Player* player, ::Unit* target) const
 }
 
 uint32 PvPCombatAI::GetInterruptSpell(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
 {
     if (!player)
         return 0;
@@ -1069,25 +763,10 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
 
     uint32 peelSpell = GetPeelAbility(player);
     if (!player)
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-        return nullptr;
-    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
         return;
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-        return;
     }
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (peelSpell == 0)
         return false;
 
@@ -1098,11 +777,6 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     _playerMetrics[playerGuid].peelsPerformed++;
     _globalMetrics.peelsPerformed++;
 
@@ -1112,29 +786,9 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
 ::Unit* PvPCombatAI::FindAllyNeedingPeel(::Player* player) const
 {
     if (!player)
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-            return nullptr;
-        }
         return nullptr;
 
     Group* group = player->GetGroup();
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-        return;
-    }
     if (!group)
         return nullptr;
 
@@ -1146,11 +800,6 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
     {
         ::Player* member = ref->GetSource();
         if (!member || member == player || !member->IsInWorld())
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-            return;
-        }
             continue;
 
         if (member->GetHealthPct() < lowestHealth &&
@@ -1165,11 +814,6 @@ bool PvPCombatAI::PeelForAlly(::Player* player, ::Unit* ally)
 }
 
 uint32 PvPCombatAI::GetPeelAbility(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
 {
     if (!player)
         return 0;
@@ -1205,11 +849,6 @@ void PvPCombatAI::SetCombatState(::Player* player, PvPCombatState state)
 
     std::lock_guard lock(_mutex);
     _combatStates[player->GetGUID().GetCounter()] = state;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
 }
 
 PvPCombatState PvPCombatAI::GetCombatState(::Player* player) const
@@ -1225,11 +864,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
     return;
 }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (_combatStates.count(playerGuid))
         return _combatStates.at(playerGuid);
 
@@ -1277,44 +911,17 @@ PvPCombatAI::PvPMetrics const& PvPCombatAI::GetGlobalMetrics() const
 {
     return _globalMetrics;
 }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-
-    return;
-
-}
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 bool PvPCombatAI::IsHealer(::Unit* unit) const
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-        return nullptr;
-    }
 {
     if (!unit || !unit->IsPlayer())
         return false;
 
     ::Player* player = unit->ToPlayer();
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-        return;
-    }
     uint32 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
-
     // Check if player is in healing spec
     switch (player->getClass())
     {
@@ -1327,56 +934,20 @@ bool PvPCombatAI::IsHealer(::Unit* unit) const
         case CLASS_DRUID:
             return spec == TALENT_TREE_DRUID_RESTORATION;
         case CLASS_MONK:
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-                return nullptr;
-            }
             return spec == TALENT_TREE_MONK_MISTWEAVER;
-        if (!targetVictim)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: targetVictim in method IsPlayer");
-            return nullptr;
-        }
         case CLASS_EVOKER:
             return spec == TALENT_TREE_EVOKER_PRESERVATION;
         default:
             return false;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-        return nullptr;
-    }
     }
 }
 
 bool PvPCombatAI::IsCaster(::Unit* unit) const
-    if (!targetVictim)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: targetVictim in method GetGUID");
-        return nullptr;
-    }
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsPlayer");
-        return nullptr;
-    }
 {
     if (!unit || !unit->IsPlayer())
         return false;
 
     ::Player* player = unit->ToPlayer();
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
-
     switch (player->getClass())
     {
         case CLASS_MAGE:
@@ -1467,11 +1038,6 @@ bool PvPCombatAI::HasCCAvailable(::Player* player, CCType ccType) const
 }
 
 uint32 PvPCombatAI::GetCCSpellId(::Player* player, CCType ccType) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
 {
     if (!player)
         return 0;
@@ -1515,11 +1081,6 @@ bool PvPCombatAI::IsCCOnCooldown(::Player* player, CCType ccType) const
 }
 
 std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return nullptr;
-    }
 {
     std::vector<CCType> ccTypes;
 
@@ -1563,16 +1124,6 @@ std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const
 }
 
 bool PvPCombatAI::IsTargetAttackingAlly(::Unit* target, ::Player* player) const
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-        return;
-    }
 if (!targetVictim)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: targetVictim in method IsPlayer");
@@ -1583,11 +1134,6 @@ if (!targetVictim)
         return false;
 
     ::Unit* targetVictim = target->GetVictim();
-    if (!targetVictim)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: targetVictim in method GetGUID");
-        return;
-    }
     if (!targetVictim || !targetVictim->IsPlayer())
         return false;
 

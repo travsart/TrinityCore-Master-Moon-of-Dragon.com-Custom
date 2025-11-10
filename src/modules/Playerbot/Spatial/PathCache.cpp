@@ -20,11 +20,6 @@ if (!map)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
     return nullptr;
 }
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
     : _map(map)
 {
     ASSERT(map, "PathCache requires valid Map pointer");
@@ -217,21 +212,11 @@ void PathCache::Clear()
 
     uint32 clearedCount = _cache.size();
     _cache.clear();
-    if (!map)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-        return;
-    }
     _lruQueue.clear();
     _stats.evictions += clearedCount;
 
     TC_LOG_INFO("playerbot.spatial",
         "PathCache cleared for map {} ({}), {} paths removed",
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
         _map->GetId(), _map->GetMapName(), clearedCount);
 }
 

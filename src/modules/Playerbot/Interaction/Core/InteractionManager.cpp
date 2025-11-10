@@ -243,36 +243,16 @@ namespace Playerbot
 
         // Check combat state
         if (bot->IsInCombat() && type != InteractionType::SpiritHealer)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-            return nullptr;
-        }
             return InteractionResult::InCombat;
 
         // Auto-detect type if not specified
         if (type == InteractionType::None)
         {
-            if (!go)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
-                return nullptr;
-            }
             if (Creature* creature = target->ToCreature())
                 type = DetectNPCType(creature);
             else if (target->GetTypeId() == TYPEID_GAMEOBJECT)
             {
                 GameObject* go = target->ToGameObject();
-                if (!go)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
-                    return;
-                }
                 switch (go->GetGoType())
                 {
                     case GAMEOBJECT_TYPE_MAILBOX:
@@ -291,17 +271,6 @@ namespace Playerbot
         // Validate interaction requirements
         if (!m_validator->CanInteract(bot, target, type))
             return InteractionResult::RequirementNotMet;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return 0;
-}
-
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return 0;
-        }
         // Check range
         if (!IsInInteractionRange(bot, target))
         {
@@ -312,27 +281,7 @@ namespace Playerbot
         // Create interaction context
         auto context = std::make_unique<InteractionContext>();
         context->botGuid = bot->GetGUID();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
         context->targetGuid = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
         context->type = type;
         context->state = InteractionState::Approaching;
         context->startTime = std::chrono::steady_clock::now();
@@ -348,34 +297,11 @@ namespace Playerbot
                 context->gossipPath = m_gossipHandler->GetGossipPath(creature, type);
             }
         }
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
         // Store context
         m_activeInteractions[bot->GetGUID()] = std::move(context);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-
         // Record metrics
         ++m_totalInteractionsStarted;
         m_lastInteractionTime[bot->GetGUID()] = std::chrono::steady_clock::now();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-
         if (m_config.logInteractions)
         {
             std::string msg = "Starting ";
@@ -388,16 +314,6 @@ namespace Playerbot
     }
 
     void InteractionManager::CancelInteraction(Player* bot, ObjectGuid targetGuid)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
     {
         if (!bot)
             return;
@@ -417,11 +333,6 @@ namespace Playerbot
     }
 
     bool InteractionManager::HasActiveInteraction(Player* bot) const
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
     {
         if (!bot)
             return false;
@@ -431,11 +342,6 @@ namespace Playerbot
     }
 
     InteractionContext* InteractionManager::GetInteractionContext(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
     {
         if (!bot)
             return nullptr;
@@ -443,11 +349,6 @@ namespace Playerbot
         // No lock needed - interaction state is per-bot instance data
 
         auto it = m_activeInteractions.find(bot->GetGUID());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
         if (it != m_activeInteractions.end())
             return it->second.get();
 
@@ -478,11 +379,6 @@ namespace Playerbot
             type = InteractionType::FlightMaster;
         else if (npcFlags & UNIT_NPC_FLAG_INNKEEPER)
             type = InteractionType::Innkeeper;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         else if (npcFlags & UNIT_NPC_FLAG_BANKER)
             type = InteractionType::Bank;
         else if (npcFlags & UNIT_NPC_FLAG_AUCTIONEER)
@@ -507,11 +403,6 @@ namespace Playerbot
     }
 
     Creature* InteractionManager::FindNearestNPC(Player* bot, NPCType type, float maxRange) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return nullptr;
-}
     {
         if (!bot)
             return nullptr;
@@ -524,11 +415,6 @@ namespace Playerbot
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = bot->GetMap();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                return;
-            }
     if (!map)
         return nullptr;
 
@@ -620,11 +506,6 @@ namespace Playerbot
                     nearest = creature;
                 }
             }
-        if (!trainer)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trainer in method IsTrainer");
-            return nullptr;
-        }
         }
 
         return nearest;
@@ -681,23 +562,12 @@ namespace Playerbot
     }
 
     InteractionResult InteractionManager::LearnOptimalSpells(Player* bot, Creature* trainer)
-    if (!trainer)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: trainer in method IsTrainer");
-        return;
-    }
     {
         if (!bot || !trainer)
             return InteractionResult::InvalidTarget;
 
         if (!trainer->IsTrainer())
             return InteractionResult::InvalidTarget;
-if (!go)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
-    return nullptr;
-}
-
         if (!HasActiveInteraction(bot))
         {
             InteractionResult startResult = StartInteraction(bot, trainer, InteractionType::Trainer);
@@ -719,11 +589,6 @@ namespace Playerbot
             return InteractionResult::InvalidTarget;
 
         if (!HasActiveInteraction(bot))
-        if (!mailbox)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
-            return;
-        }
         {
             InteractionResult startResult = StartInteraction(bot, flightMaster, InteractionType::FlightMaster);
             if (startResult != InteractionResult::Pending)
@@ -762,12 +627,6 @@ namespace Playerbot
     {
         if (!bot || !banker)
             return InteractionResult::InvalidTarget;
-if (!go)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGoType");
-    return nullptr;
-}
-
         bool isValidBanker = false;
         if (Creature* creature = banker->ToCreature())
             isValidBanker = (creature->GetNpcFlags() & UNIT_NPC_FLAG_BANKER) != 0;
@@ -790,11 +649,6 @@ namespace Playerbot
     }
 
     InteractionResult InteractionManager::CheckMail(Player* bot, GameObject* mailbox, bool takeAll)
-    if (!mailbox)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
-        return;
-    }
     {
         if (!bot || !mailbox)
             return InteractionResult::InvalidTarget;
@@ -1089,18 +943,7 @@ namespace Playerbot
             default:
                 return InteractionResult::NotAvailable;
         }
-if (!creature)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
-    return nullptr;
-}
-
         return InteractionResult::Failed;
-    if (!creature)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
-        return;
-    }
     }
 
     bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 diff)
@@ -1169,18 +1012,7 @@ namespace Playerbot
 
                 // Set selection
                 bot->SetSelection(target->GetGUID());
-if (!creature)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
-    return;
-}
-
                 // Initiate interaction
-                if (!creature)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
-                    return 0;
-                }
                 if (context.needsGossip)
                 {
                     // For bots, we need to interact with gossip NPCs directly
@@ -1204,11 +1036,6 @@ namespace Playerbot
                 }
 
                 return InteractionResult::Pending;
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             }
 
             case InteractionState::WaitingGossip:
@@ -1287,12 +1114,6 @@ namespace Playerbot
             LogInteraction(bot, "Completed " + std::string(InteractionTypeToString(context->type)) +
                          " interaction with result: " + std::string(InteractionResultToString(result)));
         }
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
     }
     bool InteractionManager::CheckTimeout(const InteractionContext& context) const
     {

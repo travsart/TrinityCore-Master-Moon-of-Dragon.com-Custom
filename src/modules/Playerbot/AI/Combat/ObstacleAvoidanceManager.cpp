@@ -35,11 +35,6 @@ namespace Playerbot
 {
 
 ObstacleAvoidanceManager::ObstacleAvoidanceManager(Player* bot)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     : _bot(bot), _scanRadius(DEFAULT_SCAN_RADIUS), _lookaheadTime(DEFAULT_LOOKAHEAD_TIME),
       _updateInterval(DEFAULT_UPDATE_INTERVAL), _lastUpdate(0),
       _collisionTolerance(DEFAULT_COLLISION_TOLERANCE), _predictiveAvoidance(true),
@@ -91,36 +86,14 @@ void ObstacleAvoidanceManager::UpdateObstacleDetection(const DetectionContext& c
         }
 
         _metrics.obstaclesDetected += static_cast<uint32>(detectedObstacles.size());
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         auto endTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
         TrackPerformance(duration, "UpdateObstacleDetection");
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         TC_LOG_TRACE("playerbot.obstacle", "Bot {} detected {} obstacles in {}μs",
-                   if (!bot)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                       return;
-                   }
                    _bot->GetName(), detectedObstacles.size(), duration.count());
     }
     catch (const std::exception& e)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.obstacle", "Exception in UpdateObstacleDetection for bot {}: {}", _bot->GetName(), e.what());
     }
 }
@@ -185,11 +158,6 @@ std::vector<AvoidanceManeuver> ObstacleAvoidanceManager::GenerateAvoidanceManeuv
         case ObstacleType::PROJECTILE:
             maneuvers.push_back(GenerateDirectAvoidance(collision));
             if (collision.timeToCollision < 1.0f)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-                return;
-            }
             {
                 AvoidanceManeuver emergency;
                 emergency.behavior = AvoidanceBehavior::EMERGENCY_STOP;
@@ -203,12 +171,6 @@ std::vector<AvoidanceManeuver> ObstacleAvoidanceManager::GenerateAvoidanceManeuv
         default:
             maneuvers.push_back(GenerateDirectAvoidance(collision));
             break;
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
     }
     if (!maneuvers.empty() && !_bot->GetGroup())
     {
@@ -234,12 +196,6 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                 ExecuteEmergencyStop();
                 _metrics.emergencyStops++;
                 break;
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             case AvoidanceBehavior::DIRECT_AVOIDANCE:
             case AvoidanceBehavior::CIRCUMNAVIGATE:
             case AvoidanceBehavior::FIND_ALTERNATIVE:
@@ -251,11 +207,6 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
                     if (botAI && botAI->GetMovementArbiter())
                     {
                         bool accepted = botAI->RequestPointMovement(
-                                if (!bot)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                    return;
-                                }
                             PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY,  // Priority 245 - CRITICAL tier
                             targetPos,
                             maneuver.description.c_str(),
@@ -279,17 +230,6 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
             case AvoidanceBehavior::WAIT_AND_PASS:
                 _bot->GetMotionMaster()->Clear();
                 break;
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-
             case AvoidanceBehavior::JUMP_OVER:
                 if (maneuver.requiresJump)
                 {
@@ -309,17 +249,6 @@ if (!bot)
                             "ObstacleAvoidanceManager");
 
                         bool accepted = botAI->GetMovementArbiter()->RequestMovement(req);
-                                if (!bot)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                    return;
-                                }
-                                if (!bot)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                    return;
-                                }
-
                         if (!accepted)
                         {
                             TC_LOG_TRACE("playerbot.movement.arbiter",
@@ -342,24 +271,9 @@ if (!bot)
 
                     // PHASE 3 MIGRATION (MISSED): Use Movement Arbiter with OBSTACLE_AVOIDANCE_EMERGENCY priority (245)
                     BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return;
-                    }
                     if (botAI && botAI->GetMovementArbiter())
                     {
                         bool accepted = botAI->RequestPointMovement(
-                                if (!bot)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                    return false;
-                                }
-                                if (!bot)
-                                {
-                                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                    return;
-                                }
                             PlayerBotMovementPriority::OBSTACLE_AVOIDANCE_EMERGENCY,  // Priority 245 - CRITICAL tier
                             backtrackPos,
                             "Backtracking from obstacle",
@@ -388,41 +302,15 @@ if (!bot)
         _metrics.collisionsPrevented++;
 
         TC_LOG_DEBUG("playerbot.obstacle", "Bot {} executed avoidance maneuver: {}",
-                   if (!bot)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-                       return;
-                   }
-                   if (!bot)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                       return;
-                   }
                    _bot->GetName(), maneuver.description);
 
         return true;
     }
     catch (const std::exception& e)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return;
-        }
         TC_LOG_ERROR("playerbot.obstacle", "Exception executing avoidance maneuver for bot {}: {}", _bot->GetName(), e.what());
         return false;
     }
-}
-
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
 }
 std::vector<ObstacleInfo> ObstacleAvoidanceManager::ScanForObstacles(const DetectionContext& context)
 {
@@ -432,11 +320,6 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::ScanForObstacles(const Detec
         ScanTerrain(context, obstacles);
 
     if (context.flags & DetectionFlags::UNITS)
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-            return nullptr;
-        }
         ScanUnits(context, obstacles);
 
     if (context.flags & DetectionFlags::OBJECTS)
@@ -452,38 +335,17 @@ if (!unit)
     return;
 }
 }
-
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetName");
-    return;
-}
 std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const DetectionContext& context)
 {
     std::vector<ObstacleInfo> unitObstacles;
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetOrientation");
-        return;
-    }
     if (!bot)
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetOrientation");
-        return;
-    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return;
     }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
     if (!map)
         return unitObstacles;
 
@@ -505,20 +367,10 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
     for (auto const& snapshot : creatureSnapshots)
     {
         if (snapshot.guid == _bot->GetGUID() || !snapshot.IsAlive())
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
             continue;
 
         // Get Unit* for complex checks if needed
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* unit = ObjectAccessor::GetUnit(*_bot, snapshot.guid);
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-            return nullptr;
-        }
         if (!unit || !unit->IsInWorld())
             continue;
 
@@ -534,28 +386,13 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
             obstacle.isMoving = unit->IsMoving();
             obstacle.priority = AssessObstaclePriority(obstacle, context);
             obstacle.name = unit->GetName();
-            if (!unit)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetName");
-                return;
-            }
             obstacle.firstDetected = GameTime::GetGameTimeMS();
             obstacle.lastSeen = obstacle.firstDetected;
 
             if (obstacle.isMoving)
             {
                 obstacle.velocity.m_positionX = unit->GetSpeedXY() * std::cos(unit->GetOrientation());
-                if (!unit)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetOrientation");
-                    return nullptr;
-                }
                 obstacle.velocity.m_positionY = unit->GetSpeedXY() * std::sin(unit->GetOrientation());
-                if (!unit)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetOrientation");
-                    return;
-                }
                 obstacle.velocity.m_positionZ = 0.0f;
             }
 
@@ -587,12 +424,6 @@ CollisionPrediction ObstacleAvoidanceManager::PredictCollisionWithObstacle(const
             prediction.willCollide = true;
             prediction.timeToCollision = timeToCollision;
             prediction.collisionPoint = ObstacleUtils::PredictPosition(botPos, botVel, timeToCollision);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                return nullptr;
-            }
-
             if (timeToCollision <= 1.0f)
                 prediction.collisionType = CollisionType::IMMINENT;
             else if (timeToCollision <= 3.0f)
@@ -634,11 +465,6 @@ CollisionPrediction ObstacleAvoidanceManager::PredictCollisionWithObstacle(const
                 direction.m_positionZ /= length;
 
                 float distanceToPath = ObstacleUtils::DistancePointToLine(obstaclePos, botPos, context.targetPosition);
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                        return nullptr;
-                    }
                 if (distanceToPath <= combinedRadius)
                 {
                     prediction.willCollide = true;
@@ -692,11 +518,6 @@ if (!bot)
     float avoidanceRadius = collision.obstacle->avoidanceRadius;
 
     float angle = std::atan2(obstaclePos.GetPositionY() - botPos.GetPositionY(),
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
                            obstaclePos.GetPositionX() - botPos.GetPositionX());
 
     float leftAngle = angle + M_PI/2;
@@ -758,12 +579,6 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateCircumnavigation(const Colli
 
     return maneuver;
 }
-
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 AvoidanceManeuver ObstacleAvoidanceManager::GenerateWaitAndPass(const CollisionPrediction& collision)
 {
     AvoidanceManeuver maneuver;
@@ -771,12 +586,6 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateWaitAndPass(const CollisionP
     maneuver.priority = static_cast<uint32>(collision.obstacle->priority) + 2;
 
     float estimatedClearanceTime = EstimateObstacleClearanceTime(*collision.obstacle);
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
     maneuver.waypoints.push_back(_bot->GetPosition());
     maneuver.executionTime = estimatedClearanceTime;
     maneuver.successProbability = collision.obstacle->isMoving ? 0.7f : 0.3f;
@@ -797,17 +606,6 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateJumpOver(const CollisionPred
         maneuver.successProbability = 0.0f;
         return maneuver;
     }
-
-if (!gameObj)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: gameObj in method GetGoType");
-
-    return nullptr;
-
-}
-
     Position botPos = _bot->GetPosition();
     Position obstaclePos = collision.obstacle->position;
 
@@ -858,12 +656,6 @@ void ObstacleAvoidanceManager::ExecuteEmergencyStop()
 {
     _bot->GetMotionMaster()->Clear();
     _bot->StopMoving();
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     TC_LOG_DEBUG("playerbot.obstacle", "Bot {} executed emergency stop", _bot->GetName());
 }
 
@@ -877,12 +669,6 @@ bool ObstacleAvoidanceManager::CanSafelyProceed(const Position& nextPosition)
         {
             float distance = nextPosition.GetExactDist(&obstacle.position);
             float safeDistance = obstacle.radius + GetBotRadius() + _collisionTolerance;
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             if (distance <= safeDistance)
                 return false;
         }
@@ -901,11 +687,6 @@ ObstacleType ObstacleAvoidanceManager::ClassifyObstacle(WorldObject* object)
         return ObstacleType::UNIT_OBSTACLE;
     }
     else if (GameObject* gameObj = object->ToGameObject())
-        if (!gameObj)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: gameObj in method GetGoType");
-            return nullptr;
-        }
     {
         switch (gameObj->GetGoType())
         {
@@ -978,11 +759,6 @@ void ObstacleAvoidanceManager::RegisterObstacle(const ObstacleInfo& obstacle)
     _obstacles[obstacle.guid] = obstacle;
 
     TC_LOG_TRACE("playerbot.obstacle", "Bot {} registered obstacle {} at ({:.2f}, {:.2f})",
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
                _bot->GetName(), obstacle.name, obstacle.position.GetPositionX(), obstacle.position.GetPositionY());
 }
 
@@ -997,17 +773,6 @@ void ObstacleAvoidanceManager::UpdateObstacle(const ObstacleInfo& obstacle)
         it->second.predictedPosition = PredictObstaclePosition(it->second, _lookaheadTime);
     }
 }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return;
-
-}
-
 void ObstacleAvoidanceManager::CleanupExpiredObstacles()
 {
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -1023,37 +788,16 @@ void ObstacleAvoidanceManager::CleanupExpiredObstacles()
         }
         else if (currentTime - it->second.lastSeen > 10000)
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                return nullptr;
-            }
             it = _obstacles.erase(it);
         }
         else
         {
             ++it;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
         }
     }
 
     _lastCleanup = currentTime;
 }
-
-if (!obj)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
-
-    return;
-
-}
-
 float ObstacleAvoidanceManager::CalculateTimeToCollision(const ObstacleInfo& obstacle, const DetectionContext& context)
 {
     if (!obstacle.isMoving)
@@ -1072,17 +816,6 @@ float ObstacleAvoidanceManager::CalculateTimeToCollision(const ObstacleInfo& obs
     float a = relativeVel.m_positionX * relativeVel.m_positionX +
               relativeVel.m_positionY * relativeVel.m_positionY +
               relativeVel.m_positionZ * relativeVel.m_positionZ;
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-
-    return;
-
-}
-
     float b = 2.0f * (relativePos.m_positionX * relativeVel.m_positionX +
                       relativePos.m_positionY * relativeVel.m_positionY +
                       relativePos.m_positionZ * relativeVel.m_positionZ);
@@ -1092,12 +825,6 @@ if (!bot)
               relativePos.m_positionY * relativePos.m_positionY +
               relativePos.m_positionZ * relativePos.m_positionZ -
               combinedRadius * combinedRadius;
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return 0;
-    }
     float discriminant = b * b - 4.0f * a * c;
     if (discriminant < 0.0f || a == 0.0f)
         return -1.0f;
@@ -1143,16 +870,6 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
 {
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
     if (!map)
         return;
 
@@ -1174,31 +891,11 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
     for (ObjectGuid guid : nearbyGuids)
     {
         GameObject* obj = _bot->GetMap()->GetGameObject(guid);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return 0;
-        }
         if (!obj || !obj->IsInWorld())
             continue;
 
         ObstacleInfo obstacle;
         obstacle.guid = obj->GetGUID();
-        if (!obj)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
-            return;
-        }
         obstacle.object = obj;
         obstacle.position = obj->GetPosition();
         obstacle.type = ClassifyObstacle(obj);
@@ -1210,68 +907,29 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
     if (!obj)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         return;
     }
         obstacle.firstDetected = GameTime::GetGameTimeMS();
         obstacle.lastSeen = obstacle.firstDetected;
         obstacle.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(obstacle.radius, GetBotRadius());
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return;
-
-}
-
         obstacles.push_back(obstacle);
     }
 }
 
 void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-        return;
-    }
     if (!_bot || !_bot->IsInWorld())
         return;
 
     // Scan for area triggers and persistent area auras (fire, poison, etc.)
-    
-
-    if (!obj)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoInfo");
-        return nullptr;
-    }
     // TODO: DEADLOCK RISK - DynamicObjects not yet supported by SpatialGridManager
     // This is low-risk as DynamicObjects are rare and short-lived
     // Future: Add QueryNearbyDynamicObjects() to SpatialGridManager
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = _bot->GetMap();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
         if (!cellVisitMap)
             return;
-
-        if (!obj)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
-            return;
-        }
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         if (!spatialGrid)
         {
@@ -1291,11 +949,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                     continue;
 
                 DynamicObject* dynObj = ObjectAccessor::GetDynamicObject(*_bot, snapshot->guid);
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 if (dynObj)
                 {
                     // Add to dynamicObjects collection for further processing
@@ -1354,11 +1007,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
         obstacles.push_back(hazard);
 
         TC_LOG_DEBUG("playerbot.obstacle", "Bot {} detected environmental hazard: {} (radius: {:.1f}y) at ({:.1f}, {:.1f})",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      _bot->GetName(), hazard.name, hazard.radius,
                      hazard.position.GetPositionX(), hazard.position.GetPositionY());
     }
@@ -1366,16 +1014,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
     // Also scan for GameObject hazards (fires, traps, etc.)
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return nullptr;
-    }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                    return nullptr;
-                }
     if (map)
     {
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1396,16 +1034,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
             for (ObjectGuid guid : nearbyGuids)
             {
                 GameObject* obj = _bot->GetMap()->GetGameObject(guid);
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-                    return 0;
-                }
-                if (!obj)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
-                    return;
-                }
                 if (!obj || !obj->IsInWorld())
                     continue;
 
@@ -1419,11 +1047,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                     case GAMEOBJECT_TYPE_SPELL_FOCUS:
                         // Some spell focus objects create damaging zones
                         isHazard = obj->GetGoInfo()->spellFocus.focusId != 0;
-                        if (!obj)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoInfo");
-                            return;
-                        }
                         break;
                     case GAMEOBJECT_TYPE_AURA_GENERATOR:
                         isHazard = true;  // Aura generators often create harmful effects
@@ -1438,11 +1061,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                 // Create hazard obstacle for GameObject
                 ObstacleInfo hazard;
                 hazard.guid = obj->GetGUID();
-                if (!obj)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
-                    return;
-                }
                 hazard.object = obj;
                 hazard.position = obj->GetPosition();
                 hazard.type = ObstacleType::TEMPORARY_HAZARD;
@@ -1460,11 +1078,6 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                 obstacles.push_back(hazard);
 
                 TC_LOG_DEBUG("playerbot.obstacle", "Bot {} detected GameObject hazard: {} (type: {}, radius: {:.1f}y) at ({:.1f}, {:.1f})",
-                             if (!bot)
-                             {
-                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                 return nullptr;
-                             }
                              _bot->GetName(), hazard.name, uint32(obj->GetGoType()), hazard.radius,
                              hazard.position.GetPositionX(), hazard.position.GetPositionY());
             }

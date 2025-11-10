@@ -143,16 +143,6 @@ void ArenaAI::Update(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle updates (100ms for arena responsiveness)
@@ -202,11 +192,6 @@ void ArenaAI::Update(::Player* player, uint32 diff)
 }
 
 void ArenaAI::OnMatchStart(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return;
@@ -214,22 +199,10 @@ void ArenaAI::OnMatchStart(::Player* player)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     // Initialize match state
     ArenaMatchState state;
     state.matchStartTime = GameTime::GetGameTimeMS();
     _matchStates[playerGuid] = state;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
     // Analyze compositions
     AnalyzeTeamComposition(player);
 
@@ -244,12 +217,6 @@ void ArenaAI::OnMatchEnd(::Player* player, bool won)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     // Update metrics
     if (won)
     {
@@ -264,11 +231,6 @@ void ArenaAI::OnMatchEnd(::Player* player, bool won)
         uint32 currentRating = _playerMetrics[playerGuid].rating.load();
         if (currentRating > 15)
             _playerMetrics[playerGuid].rating -= 15;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     }
 
     TC_LOG_INFO("playerbot", "ArenaAI: Match ended for player {} - {} (Rating: {})",
@@ -293,12 +255,6 @@ void ArenaAI::AnalyzeTeamComposition(::Player* player)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     TeamComposition teamComp = GetTeamComposition(player);
     TeamComposition enemyComp = GetEnemyTeamComposition(player);
 
@@ -308,11 +264,6 @@ void ArenaAI::AnalyzeTeamComposition(::Player* player)
     // Select strategy based on compositions
     ArenaStrategy strategy = GetStrategyForComposition(teamComp, enemyComp);
     ArenaProfile profile = GetArenaProfile(playerGuid);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     profile.strategy = strategy;
     SetArenaProfile(playerGuid, profile);
 
@@ -349,23 +300,12 @@ void ArenaAI::AdaptStrategy(::Player* player)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     ArenaProfile profile = GetArenaProfile(playerGuid);
 
     if (profile.strategy != ArenaStrategy::ADAPTIVE)
         return;
 
     ArenaMatchState state = GetMatchState(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
     // If team is losing, switch to aggressive
     if (!state.isWinning)
     {
@@ -395,11 +335,6 @@ if (!enemyPlayer)
         return nullptr;
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     std::vector<::Unit*> enemies = GetEnemyTeam(player);
 
     if (enemies.empty())
@@ -417,11 +352,6 @@ if (!enemyPlayer)
                     ::Player* enemyPlayer = enemy->ToPlayer();
                     // Check if healer (simplified)
                     uint8 enemyClass = enemyPlayer->getClass();
-                    if (!enemyPlayer)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemyPlayer in method GetClass");
-                        return nullptr;
-                    }
                     if (enemyClass == CLASS_PRIEST || enemyClass == CLASS_PALADIN ||
                         enemyClass == CLASS_SHAMAN || enemyClass == CLASS_DRUID ||
                         enemyClass == CLASS_MONK || enemyClass == CLASS_EVOKER)
@@ -440,11 +370,6 @@ if (!enemyPlayer)
             for (::Unit* enemy : enemies)
             {
                 uint32 healthPct = enemy->GetHealthPct();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return;
-                }
                 if (healthPct < lowestHealth)
                 {
                     lowestHealth = healthPct;
@@ -458,24 +383,9 @@ if (!enemyPlayer)
         case ArenaStrategy::TRAIN_ONE_TARGET:
         {
             // Keep attacking same target
-            if (!newTarget)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method IsPlayer");
-                return;
-            }
             uint32 playerGuid = player->GetGUID().GetCounter();
             if (!player)
-            if (!newTarget)
             {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method ToPlayer");
-                return;
-            }
-            {
-                if (!newPlayer)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newPlayer in method GetClass");
-                    return nullptr;
-                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                 return;
             }
@@ -501,21 +411,6 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
         return true;
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-        if (!a)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: a in method IsPlayer");
-            return nullptr;
-        }
-    if (!a)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: a in method ToPlayer");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     if (!profile.autoSwitch)
         return false;
 
@@ -526,34 +421,12 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
     // Switch if better target is available (e.g., healer in LoS)
     ::Unit* newTarget = SelectFocusTarget(player);
     if (newTarget && newTarget != currentTarget)
-        if (!newTarget)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method IsPlayer");
-            return nullptr;
-        }
     {
         // Switch if new target is healer and in LoS
         if (newTarget->IsPlayer())
         {
             ::Player* newPlayer = newTarget->ToPlayer();
-            if (!newTarget)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method ToPlayer");
-                return nullptr;
-            }
             uint8 newClass = newPlayer->getClass();
-            if (!newPlayer)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newPlayer in method GetClass");
-                return;
-            }
-            if ((newClass == CLASS_PRIEST || newClass == CLASS_PALADIN ||
-                 newClass == CLASS_SHAMAN || newClass == CLASS_DRUID ||
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                     return;
-                 }
                  newClass == CLASS_MONK || newClass == CLASS_EVOKER) &&
                 IsInLineOfSight(player, newTarget))
             {
@@ -573,30 +446,13 @@ std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
         return priorities;
 
     std::vector<::Unit*> enemies = GetEnemyTeam(player);
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-                        return nullptr;
-                    }
-
     // Sort by priority: Healers > Low health > DPS
     std::sort(enemies.begin(), enemies.end(),
         [](::Unit* a, ::Unit* b) {
             bool aIsHealer = false, bIsHealer = false;
-            if (!a)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: a in method IsPlayer");
-                return nullptr;
-            }
-
             if (a->IsPlayer())
             {
                 uint8 aClass = a->ToPlayer()->getClass();
-                if (!a)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: a in method ToPlayer");
-                    return nullptr;
-                }
                 aIsHealer = (aClass == CLASS_PRIEST || aClass == CLASS_PALADIN ||
                             aClass == CLASS_SHAMAN || aClass == CLASS_DRUID ||
                             aClass == CLASS_MONK || aClass == CLASS_EVOKER);
@@ -630,17 +486,6 @@ void ArenaAI::ExecutePositioning(::Player* player)
         return;
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
     switch (profile.positioning)
     {
         case PositioningStrategy::AGGRESSIVE:
@@ -676,16 +521,6 @@ ArenaPillar const* ArenaAI::FindBestPillar(::Player* player) const
         return nullptr;
 
     uint32 mapId = player->GetMapId();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-        return;
-    }
     if (!_arenaPillars.count(mapId))
         return nullptr;
 
@@ -703,11 +538,6 @@ ArenaPillar const* ArenaAI::FindBestPillar(::Player* player) const
             continue;
 
         float distanceSq = player->GetExactDistSq(pillar.position);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
         if (distanceSq < closestDistanceSq)
         {
             closestDistanceSq = distanceSq;
@@ -724,16 +554,6 @@ bool ArenaAI::MoveToPillar(::Player* player, ArenaPillar const& pillar)
         return false;
 
     float distance = std::sqrt(player->GetExactDistSq(pillar.position)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     if (distance < 5.0f)
         return true;
 
@@ -771,16 +591,6 @@ bool ArenaAI::MaintainOptimalDistance(::Player* player)
     for (::Unit* enemy : enemies)
     {
         float distance = std::sqrt(player->GetExactDistSq(enemy)); // Calculate once from squared distance
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return;
-                }
         if (distance < optimalRange)
         {
             // Too close - kite away
@@ -811,22 +621,11 @@ if (!player)
     // Find teammate position
     Position teammatePos = teammates[0]->GetPosition();
     float distance = std::sqrt(player->GetExactDistSq(teammatePos)); // Calculate once from squared distance
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 if (!player)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
     return;
 }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-
     if (distance > REGROUP_RANGE)
     {
         // Move to teammate
@@ -849,11 +648,6 @@ bool ArenaAI::ShouldPillarKite(::Player* player) const
         return false;
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     if (!profile.usePillars)
         return false;
 
@@ -868,11 +662,6 @@ bool ArenaAI::ShouldPillarKite(::Player* player) const
     for (::Unit* enemy : enemies)
     {
         if (enemy->GetVictim() == player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
             enemiesAttacking++;
     }
 
@@ -894,17 +683,6 @@ bool ArenaAI::ExecutePillarKite(::Player* player)
 
     // Break LoS with enemies
     std::vector<::Unit*> enemies = GetEnemyTeam(player);
-
-    if (!player)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-        return nullptr;
-
-    }
-
 if (!player)
 
 {
@@ -922,11 +700,6 @@ if (!player)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].pillarKites++;
     _globalMetrics.pillarKites++;
 
@@ -939,11 +712,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
     return nullptr;
 }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player || !enemy)
         return false;
@@ -960,16 +728,6 @@ if (!player)
 // ============================================================================
 
 bool ArenaAI::CoordinateOffensiveBurst(::Player* player)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player)
         return false;
@@ -988,21 +746,10 @@ bool ArenaAI::CoordinateOffensiveBurst(::Player* player)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].successfulBursts++;
     _globalMetrics.successfulBursts++;
 
     return true;
-}
-
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
 }
 bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
 {
@@ -1015,16 +762,6 @@ bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
     for (::Player* teammate : teammates)
     {
         float distance = std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
         if (distance > BURST_COORDINATION_RANGE)
             return false;
 
@@ -1040,18 +777,7 @@ void ArenaAI::SignalBurst(::Player* player)
         return;
 
     std::lock_guard lock(_mutex);
-
-    if (!enemyHealer)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemyHealer in method GetGUID");
-        return;
-    }
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _burstReady[playerGuid] = true;
 if (!player)
 {
@@ -1067,11 +793,6 @@ if (!player)
 // ============================================================================
 
 bool ArenaAI::CoordinateCCChain(::Player* player, ::Unit* target)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player || !target)
         return false;
@@ -1085,11 +806,6 @@ bool ArenaAI::CoordinateCCChain(::Player* player, ::Unit* target)
 
     // Update metrics
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     _playerMetrics[playerGuid].coordCCs++;
     _globalMetrics.coordCCs++;
 
@@ -1102,27 +818,11 @@ if (!target)
 }
 
 bool ArenaAI::TeammateHasCCAvailable(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
 
     std::vector<::Player*> teammates = GetTeammates(player);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-
     for (::Player* teammate : teammates)
     {
         // Full implementation: Check if teammate has CC available
@@ -1133,11 +833,6 @@ if (!player)
 }
 
 void ArenaAI::SignalCCTarget(::Player* player, ::Unit* target)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
 {
     if (!player || !target)
         return;
@@ -1158,11 +853,6 @@ void ArenaAI::Execute2v2Strategy(::Player* player)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     TeamComposition comp = _teamCompositions[playerGuid];
 
     switch (comp)
@@ -1187,21 +877,6 @@ void ArenaAI::Execute2v2DoubleDPS(::Player* player)
 
     // Double DPS: Aggressive strategy, burst same target
     ::Unit* target = SelectFocusTarget(player);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
     if (target)
     {
         player->SetSelection(target->GetGUID());
@@ -1221,22 +896,6 @@ if (!player)
 
     // DPS/Healer: Protect healer, pressure enemy healer
     std::vector<::Player*> teammates = GetTeammates(player);
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return;
-                }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return;
-                }
-
     for (::Player* teammate : teammates)
     {
         if (IsTeammateInDanger(teammate))
@@ -1255,11 +914,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
     return;
 }
-        if (!enemyHealer)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemyHealer in method GetGUID");
-            return;
-        }
     if (enemyHealer)
         player->SetSelection(enemyHealer->GetGUID());
 }
@@ -1274,23 +928,7 @@ void ArenaAI::Execute3v3Strategy(::Player* player)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     TeamComposition comp = _teamCompositions[playerGuid];
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
     switch (comp)
     {
         case TeamComposition::TRIPLE_DPS:
@@ -1317,11 +955,6 @@ void ArenaAI::Execute3v3TripleDPS(::Player* player)
 
     // Triple DPS: Train one target until death
     ::Unit* target = SelectFocusTarget(player);
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
     if (target)
     {
         player->SetSelection(target->GetGUID());
@@ -1329,11 +962,6 @@ void ArenaAI::Execute3v3TripleDPS(::Player* player)
         // Save target as focus
         std::lock_guard lock(_mutex);
         _focusTargets[player->GetGUID().GetCounter()] = target->GetGUID();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     }
 }
 
@@ -1344,12 +972,6 @@ void ArenaAI::Execute3v3DoubleDPSHealer(::Player* player)
 
     // Standard comp: Kill enemy healer, protect friendly healer
     TeamComposition enemyComp = _enemyCompositions[player->GetGUID().GetCounter()];
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     if (enemyComp == TeamComposition::DOUBLE_DPS_HEALER)
     {
         // Focus enemy healer
@@ -1421,21 +1043,6 @@ void ArenaAI::CounterRMP(::Player* player)
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
     if (!player)
     {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-    if (!player)
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-        return nullptr;
-    }
-    {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
@@ -1452,16 +1059,6 @@ void ArenaAI::CounterTSG(::Player* player)
     TC_LOG_DEBUG("playerbot", "ArenaAI: Countering TSG composition");
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     profile.positioning = PositioningStrategy::PILLAR_KITE;
     SetArenaProfile(player->GetGUID().GetCounter(), profile);
 }
@@ -1487,11 +1084,6 @@ ArenaMatchState ArenaAI::GetMatchState(::Player* player) const
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (_matchStates.count(playerGuid))
         return _matchStates.at(playerGuid);
 
@@ -1506,11 +1098,6 @@ void ArenaAI::UpdateMatchState(::Player* player)
     std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     if (!_matchStates.count(playerGuid))
         return;
 
@@ -1639,11 +1226,6 @@ std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
         return teammates;
 
     Group* group = player->GetGroup();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-        return;
-    }
     if (!group)
         return teammates;
 
@@ -1651,11 +1233,6 @@ std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
     {
         ::Player* member = ref->GetSource();
         if (member && member != player && member->IsInWorld() && !member->IsDead())
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-            return;
-        }
             teammates.push_back(member);
     }
 

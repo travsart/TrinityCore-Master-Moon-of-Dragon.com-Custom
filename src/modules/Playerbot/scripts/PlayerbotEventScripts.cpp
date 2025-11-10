@@ -85,21 +85,6 @@ static bool IsBot(Player const* player)
 
     // Use WorldSession::IsBot() - BotSession overrides this to return true
     WorldSession* session = player->GetSession();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-        return;
-    }
     return session && session->IsBot();
 }
 
@@ -166,11 +151,6 @@ public:
     }
 
     void OnCreatureKill(Player* killer, Creature* killed) override
-        if (!killer)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: killer in method GetGUID");
-            return;
-        }
     {
         // TODO Phase 6: Implement creature kill tracking
         // For now, combat end is handled by UnitScript hooks
@@ -179,21 +159,6 @@ public:
     }
 
     void OnPlayerKilledByCreature(Creature* killer, Player* killed) override
-                       if (!killer)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: killer in method GetGUID");
-                           return;
-                       }
-                       if (!killer)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: killer in method GetGUID");
-                           return nullptr;
-                       }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     {
         if (!IsBot(killed))
             return;
@@ -203,65 +168,14 @@ public:
                        killer ? killer->GetGUID() : ObjectGuid::Empty,
                        killed->GetGUID());
         event.priority = 255; // Maximum priority
-
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         DispatchToBotEventDispatcher(killed, event);
     }
 
     void OnSpellCast(Player* player, Spell* spell, bool skipCheck) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                           return;
-                       }
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-                           return;
-                       }
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                           return;
-                       }
-                           if (!player)
-                           {
-                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                               return nullptr;
-                           }
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                           return;
-                       }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return nullptr;
-        }
                        if (!player)
                        {
                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                            return nullptr;
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                           return;
-                       }
                        }
     {
         if (!IsBot(player) || !spell)
@@ -275,65 +189,14 @@ public:
         event.priority = 100;
 
         DispatchToBotEventDispatcher(player, event);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
     }
-    }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
     // ========================================================================
     // PROGRESSION EVENTS
     // ========================================================================
 
     void OnLevelChanged(Player* player, uint8 oldLevel) override
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!player)
                       if (!player)
                       {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
-                      {
-                          if (!player)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                              return nullptr;
-                          }
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                           return nullptr;
                       }
@@ -345,71 +208,14 @@ if (!player)
                       player->GetGUID(),
                       player->GetGUID());
         event.eventId = player->GetLevel();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
         event.data = std::to_string(oldLevel);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
         event.priority = 150;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
         DispatchToBotEventDispatcher(player, event);
 
         TC_LOG_DEBUG("module.playerbot.events",
             "Bot {} leveled up: {} -> {}",
             player->GetName(), oldLevel, player->GetLevel());
     }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
-
 if (!player)
 
 {
@@ -421,41 +227,11 @@ if (!player)
 }
 
     void OnFreeTalentPointsChanged(Player* player, uint32 points) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return nullptr;
-    }
                           if (!player)
                           {
-                              if (!receiver)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetSession");
-                                  return nullptr;
-                              }
                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                               return nullptr;
                           }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player))
             return;
@@ -473,33 +249,8 @@ if (!player)
                           if (!player)
                           {
                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                              return;
-                          }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-                          if (!player)
-                          {
-                              if (!receiver)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                                  return nullptr;
-                              }
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                               return nullptr;
                           }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player))
             return;
@@ -507,26 +258,10 @@ if (!player)
         BotEvent event(EventType::TALENTS_RESET,
                       player->GetGUID(),
                       player->GetGUID());
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
-            return nullptr;
-        }
         event.priority = 150;
 
         DispatchToBotEventDispatcher(player, event);
     }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
-
 if (!player)
 
 {
@@ -538,21 +273,6 @@ if (!player)
 }
 
     void OnGiveXP(Player* player, uint32& amount, Unit* victim) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player))
             return;
@@ -560,47 +280,17 @@ if (!player)
         BotEvent event(EventType::XP_GAINED,
                       victim ? victim->GetGUID() : ObjectGuid::Empty,
                       player->GetGUID());
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         event.eventId = amount;
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-            return nullptr;
-        }
         event.priority = 50;
 
         DispatchToBotEventDispatcher(player, event);
     }
 
     void OnReputationChange(Player* player, uint32 factionId,
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
                       if (!player)
-                      if (!receiver)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetSession");
-                          return nullptr;
-                      }
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
                           return;
-                      }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
                       }
                            int32& standing, bool incremental) override
     {
@@ -615,11 +305,6 @@ if (!player)
         event.priority = 80;
 
         DispatchToBotEventDispatcher(player, event);
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     }
 
     // ========================================================================
@@ -627,35 +312,10 @@ if (!player)
     // ========================================================================
 
     void OnMoneyChanged(Player* player, int64& amount) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player1)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
                       if (!receiver)
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                          if (!player1)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-                              return nullptr;
-                          }
                           return;
-                      }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
                       }
     {
         if (!IsBot(player))
@@ -663,11 +323,6 @@ if (!player)
 
         BotEvent event(EventType::GOLD_CHANGED,
                       player->GetGUID(),
-                      if (!winner)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-                          return nullptr;
-                      }
                       player->GetGUID());
         event.data = std::to_string(amount);
         event.priority = 70;
@@ -676,51 +331,16 @@ if (!player)
     }
 
     void OnMoneyLimit(Player* player, int64 amount) override
-            if (!winner)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-                return;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
         if (!player)
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
-            return nullptr;
-        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
             return;
         }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
             return nullptr;
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
         }
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return nullptr;
-            }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return nullptr;
-    }
     {
         if (!IsBot(player))
             return;
@@ -730,22 +350,6 @@ if (!player)
                       player->GetGUID());
         event.data = std::to_string(amount);
         event.priority = 100;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         DispatchToBotEventDispatcher(player, event);
 
         TC_LOG_WARN("module.playerbot.economy",
@@ -761,42 +365,9 @@ if (!player)
 {
 
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    if (!player)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-        return nullptr;
-
-    }
-
     return;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
 }
-
-}
-
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-        return;
-    }
     void OnChat(Player* player, uint32 type, uint32 lang,
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
                std::string& msg, Player* receiver) override
     {
         if (!receiver || !IsBot(receiver))
@@ -804,34 +375,9 @@ if (!player)
 
         // PHASE 4: Process command through BotChatCommandHandler
         WorldSession* botWorldSession = receiver->GetSession();
-        if (!receiver)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetSession");
-            return;
-        }
         Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
 
         TC_LOG_INFO("playerbot.chat", "OnChat WHISPER: from {} to {} - msg: '{}', botSession={}, IsInit={}",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
             player->GetName(), receiver->GetName(), msg,
             botSession != nullptr, Playerbot::BotChatCommandHandler::IsInitialized());
 
@@ -840,21 +386,6 @@ if (!player)
             // Build command context
             Playerbot::CommandContext context;
             context.sender = player;
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-                return nullptr;
-            }
             context.bot = receiver;
             context.botSession = botSession;
             context.message = msg;
@@ -865,17 +396,6 @@ if (!player)
 
             // Process command (this will send response if it's a command)
             Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
-
-if (!target)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-
-    return nullptr;
-
-}
-
             // If message had command prefix, don't dispatch as event (command handler sent response)
             // Only fall through to event system if it's NOT a command at all
             if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
@@ -885,23 +405,8 @@ if (!target)
         }
 
         // Phase 7.3: Direct event dispatch - bot received whisper (not a command)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         BotEvent event(EventType::WHISPER_RECEIVED,
                        if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                           return nullptr;
-                       }
-                       if (!player)
-                       if (!player1)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-                           return nullptr;
-                       }
                        {
                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                            return nullptr;
@@ -910,11 +415,6 @@ if (!target)
                        if (!receiver)
                        {
                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                           if (!player1)
-                           {
-                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-                               return nullptr;
-                           }
                            return nullptr;
                        }
                        receiver->GetGUID());
@@ -925,29 +425,9 @@ if (!target)
     }
 
     void OnChat(Player* player, uint32 type, uint32 lang,
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
                std::string& msg, Group* group) override
     {
         if (!group)
-            if (!winner)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-                return;
-            }
             return;
 
         // Check if any bots in group
@@ -955,62 +435,12 @@ if (!target)
         {
             Player* member = itr.GetSource();
             if (member && IsBot(member) && member != player)
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
             {
-                if (!winner)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-                    return nullptr;
-                }
                 // PHASE 4: Process command through BotChatCommandHandler
                 WorldSession* botWorldSession = member->GetSession();
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
-                    return nullptr;
-                }
                 Playerbot::BotSession* botSession = dynamic_cast<Playerbot::BotSession*>(botWorldSession);
 
                 TC_LOG_INFO("playerbot.chat", "OnChat GROUP: from {} to {} - msg: '{}', botSession={}, IsInit={}",
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                        return;
-                    }
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                        return nullptr;
-                    }
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                        return;
-                    }
-                        if (!player)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                            return nullptr;
-                        }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                        return;
-                    }
                     player->GetName(), member->GetName(), msg,
                     botSession != nullptr, Playerbot::BotChatCommandHandler::IsInitialized());
 
@@ -1019,33 +449,13 @@ if (!target)
                     // Build command context
                     Playerbot::CommandContext context;
                     context.sender = player;
-                        if (!player)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                            return nullptr;
-                        }
                     if (!player)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                        return nullptr;
-                    }
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                        if (!attacker)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method ToPlayer");
-                            return nullptr;
-                        }
                         return nullptr;
                     }
                     context.bot = member;
                     context.botSession = botSession;
-                    if (!attacker)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                        return;
-                    }
                     context.message = msg;
                     context.lang = lang;
                     context.isWhisper = false;  // Group chat
@@ -1060,11 +470,6 @@ if (!target)
                     if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
                     {
                         continue; // Command was processed, skip event dispatch for this bot
-                    if (!attacker)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                        return nullptr;
-                    }
                     }
                 }
 
@@ -1075,11 +480,6 @@ if (!target)
                                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                                   if (!player)
                                   {
-                                      if (!attacker)
-                                      {
-                                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                          return nullptr;
-                                      }
                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                                       return nullptr;
                                   }
@@ -1088,19 +488,9 @@ if (!target)
                               {
                                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                                   return nullptr;
-                              if (!attacker)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                  return;
-                              }
                               }
                               }
                               player->GetGUID(),
-                              if (!member)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                                  return nullptr;
-                              }
                               member->GetGUID());
                 event.data = msg;
                 event.priority = 80;
@@ -1113,51 +503,16 @@ if (!target)
     void OnTextEmote(Player* player, uint32 textEmote, uint32 emoteNum, ObjectGuid guid) override
         if (!player)
         {
-            if (!healer)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method ToPlayer");
-                return;
-            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
             return nullptr;
         }
     {
-        if (!healer)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-            return;
-        }
         // Check if emote target is a bot
-        if (!receiver)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-            return nullptr;
-        }
         if (!guid)
             return;
 
         Unit* target = ObjectAccessor::GetUnit(*player, guid);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-                          if (!healer)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-                              return;
-                          }
                           if (!player)
-                          if (!receiver)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                              return nullptr;
-                          }
                           {
                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                               return nullptr;
@@ -1182,28 +537,8 @@ if (!target)
                       if (!target)
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-                          if (!player)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                              return;
-                          }
-                          if (!group)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                              return;
-                          }
                           return nullptr;
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return;
                       }
-                      }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-        return;
-    }
     {
         if (!IsBot(target))
             return;
@@ -1215,36 +550,10 @@ if (!target)
 
         DispatchToBotEventDispatcher(target, event);
     }
-
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-        return;
-    }
     void OnDuelStart(Player* player1, Player* player2) override
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player1)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-        return;
-    }
                           if (!player1)
                           {
                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player1 in method GetGUID");
-                              if (!member)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-                                  return nullptr;
-                              }
                               return nullptr;
                           }
     {
@@ -1261,11 +570,6 @@ if (!target)
         {
             BotEvent event(EventType::DUEL_STARTED,
                           player1->GetGUID(),
-                          if (!member)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                              return nullptr;
-                          }
                           player2->GetGUID());
             event.priority = 200;
             DispatchToBotEventDispatcher(player2, event);
@@ -1276,35 +580,10 @@ if (!target)
     if (!winner)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
-        return;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-        return;
-    }
-    }
-                          if (!winner)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: winner in method GetGUID");
-                              return nullptr;
-                          }
     {
         if (IsBot(winner))
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
         {
             BotEvent event(EventType::DUEL_WON,
                           loser->GetGUID(),
@@ -1315,22 +594,12 @@ if (!target)
 
         if (IsBot(loser))
         if (!player)
-        if (!passenger)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-            return;
-        }
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
             return;
         }
         {
             if (!player)
-            if (!passenger)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-                return nullptr;
-            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                 return;
@@ -1346,17 +615,6 @@ if (!target)
     // ========================================================================
     // LIFECYCLE EVENTS
     // ========================================================================
-
-if (!passenger)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-
-    return nullptr;
-
-}
-
 if (!player)
 
 {
@@ -1366,39 +624,8 @@ if (!player)
     return;
 
 }
-
-    if (!passenger)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-        return;
-    }
     void OnLogin(Player* player, bool firstLogin) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return nullptr;
-                }
             if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
-            if (!player)
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
                 return nullptr;
@@ -1414,48 +641,17 @@ if (!player)
         event.priority = 200;
 
         DispatchToBotEventDispatcher(player, event);
-
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         TC_LOG_INFO("module.playerbot.lifecycle",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return nullptr;
-            }
             "Bot {} logged in (first: {})", player->GetName(), firstLogin);
     }
 
     void OnLogout(Player* player) override
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return;
-                      }
     if (!player)
     {
-        if (!attacker)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method ToPlayer");
-            return;
-        }
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
                       if (!player)
-                      if (!attacker)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                          return;
-                      }
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                           return nullptr;
@@ -1470,31 +666,11 @@ if (!player)
         event.priority = 200;
 
         DispatchToBotEventDispatcher(player, event);
-    if (!attacker)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-        return;
-    }
     }
 
     void OnPlayerRepop(Player* player) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!seller)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                          return;
-                      }
                       if (!player)
                       {
-                          if (!attacker)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                              return nullptr;
-                          }
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                           return nullptr;
                       }
@@ -1506,11 +682,6 @@ if (!player)
                       if (!attacker)
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                          if (!seller)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                              return nullptr;
-                          }
                           return nullptr;
                       }
                       player->GetGUID(),
@@ -1521,29 +692,14 @@ if (!player)
     }
 
     // ========================================================================
-    if (!seller)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetName");
-        return;
-    }
     // INSTANCE & MAP EVENTS
     // ========================================================================
 
     void OnBindToInstance(Player* player, Difficulty difficulty,
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                           return nullptr;
-                       }
                          uint32 mapId, bool permanent, uint8 extendState) override
     {
         if (!IsBot(player))
             if (!healer)
-            if (!seller)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                return nullptr;
-            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method ToPlayer");
                 return 0;
@@ -1552,17 +708,7 @@ if (!player)
 
         // Phase 7.3: Direct event dispatch - instance entered
         BotEvent event(EventType::INSTANCE_ENTERED,
-                       if (!healer)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-                           return nullptr;
-                       }
                        player->GetGUID(),
-                       if (!receiver)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                           return nullptr;
-                       }
                        ObjectGuid::Empty);
         event.eventId = mapId;
         event.data = "0"; // instanceId placeholder
@@ -1572,22 +718,7 @@ if (!player)
     }
 
     void OnUpdateZone(Player* player, uint32 newZone, uint32 newArea) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!healer)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-                          return;
-                      }
                       if (!player)
-                      if (!receiver)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                          return;
-                      }
                       {
                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                           return nullptr;
@@ -1607,21 +738,6 @@ if (!player)
     }
 
     void OnMapChanged(Player* player) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return nullptr;
-    }
     {
         if (!IsBot(player))
             return;
@@ -1630,11 +746,6 @@ if (!player)
                       player->GetGUID(),
                       player->GetGUID());
         event.eventId = player->GetMapId();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-            return;
-        }
         event.priority = 120;
 
         DispatchToBotEventDispatcher(player, event);
@@ -1646,20 +757,10 @@ if (!player)
 
     void OnQuestStatusChange(Player* player, uint32 questId) override
     if (!player)
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-        return nullptr;
-    }
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player))
             return;
@@ -1669,12 +770,6 @@ if (!player)
                       player->GetGUID());
         event.eventId = questId;
         event.priority = 100;
-
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-            return nullptr;
-        }
         DispatchToBotEventDispatcher(player, event);
     }
 };
@@ -1691,19 +786,9 @@ public:
     void OnQuestStatusChange(Player* player, Quest const* quest, QuestStatus oldStatus, QuestStatus newStatus) override
             if (!player)
             {
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                    return;
-                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                 return;
             }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player) || !quest)
             return;
@@ -1717,11 +802,6 @@ public:
 
         BotEvent event(eventType,
                       player->GetGUID(),
-                      if (!member)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                          return nullptr;
-                      }
                       player->GetGUID());
         event.eventId = quest->GetQuestId();
         event.priority = 150;
@@ -1730,31 +810,11 @@ public:
 
         TC_LOG_DEBUG("module.playerbot.quests",
             "Bot {} quest status changed: {} ({}) - {} -> {}",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return nullptr;
-            }
             player->GetName(), quest->GetQuestId(), quest->GetLogTitle(), uint32(oldStatus), uint32(newStatus));
     }
 
     void OnQuestObjectiveChange(Player* player, Quest const* quest, QuestObjective const& objective, int32 oldAmount, int32 newAmount) override
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
                                   if (!player)
-                                  if (!passenger)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-                                      return;
-                                  }
                                   {
                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
                                       return;
@@ -1763,27 +823,11 @@ if (!player)
 if (!player)
 
 {
-
-    if (!passenger)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-
-        return nullptr;
-
-    }
-
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
 
     return nullptr;
 
 }
-                                  if (!player)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                                      return nullptr;
-                                  }
     {
         if (!IsBot(player) || !quest)
             return;
@@ -1791,22 +835,11 @@ if (!player)
         BotEvent event(EventType::QUEST_OBJECTIVE_PROGRESS,
                       player->GetGUID(),
                       player->GetGUID());
-        if (!passenger)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-            return;
-        }
         event.eventId = quest->GetQuestId();
         event.data = std::to_string(objective.ID) + ":" + std::to_string(newAmount);
         event.priority = 90;
 
         DispatchToBotEventDispatcher(player, event);
-
-        if (!passenger)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-            return nullptr;
-        }
         // Check if objective completed
         if (newAmount >= objective.Amount && oldAmount < objective.Amount)
         {
@@ -1821,11 +854,6 @@ if (!player)
 
             TC_LOG_DEBUG("module.playerbot.quests",
                 "Bot {} completed objective {} of quest {}",
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
                 player->GetName(), objective.ID, quest->GetQuestId());
         }
     }
@@ -1850,22 +878,6 @@ public:
         // Check if bot is involved
         bool attackerIsBot = IsBot(attacker);
         bool victimIsBot = IsBot(victim);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return false;
-
-}
-
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         if (!attackerIsBot && !victimIsBot)
             return;
 
@@ -1873,31 +885,11 @@ if (!player)
         if (attackerIsBot)
         {
             Player* attackerPlayer = attacker->ToPlayer();
-            if (!attacker)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method ToPlayer");
-                return nullptr;
-            }
                                    if (!attacker)
                                    {
                                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                       if (!player)
-                                       {
-                                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                                           return nullptr;
-                                       }
                                        return nullptr;
-                                   if (!player)
-                                   {
-                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                                       return;
                                    }
-                                   }
-                               if (!attacker)
-                               {
-                                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                   return nullptr;
-                               }
             if (attackerPlayer)
             {
                 BotEvent event(EventType::DAMAGE_DEALT,
@@ -1923,18 +915,8 @@ if (!player)
 
                 // Check for critical health thresholds
                 if (victim->GetHealthPct() < 30.0f)
-                if (!seller)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                    return nullptr;
-                }
                 {
                     BotEvent criticalEvent(EventType::HEALTH_CRITICAL,
-                                          if (!attacker)
-                                          {
-                                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                              return nullptr;
-                                          }
                                           attacker ? attacker->GetGUID() : ObjectGuid::Empty,
                                           victim->GetGUID());
                     criticalEvent.priority = 255; // Maximum priority
@@ -1946,11 +928,6 @@ if (!player)
                                   if (!attacker)
                                   {
                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: attacker in method GetGUID");
-                                      if (!seller)
-                                      {
-                                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                                          return nullptr;
-                                      }
                                       return nullptr;
                                   }
                                   attacker ? attacker->GetGUID() : ObjectGuid::Empty,
@@ -1961,54 +938,22 @@ if (!player)
             }
         }
     }
-
-if (!seller)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetName");
-
-    return;
-
-}
-
     void OnHeal(Unit* healer, Unit* receiver, uint32& gain) override
     {
         // Check if bot is involved
         bool healerIsBot = IsBot(healer);
-                                  if (!healer)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method ToPlayer");
-                                      return nullptr;
-                                  }
         if (!healer)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-            if (!seller)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                return nullptr;
-            }
             return nullptr;
         }
         bool receiverIsBot = IsBot(receiver);
-                                  if (!receiver)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                                      return;
-                                  }
-
         if (!healerIsBot && !receiverIsBot)
             return;
 
         if (healerIsBot)
         {
             Player* healerPlayer = healer->ToPlayer();
-                                  if (!healer)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: healer in method GetGUID");
-                                      return nullptr;
-                                  }
             if (healerPlayer)
             {
                 BotEvent event(EventType::HEAL_CAST,
@@ -2024,11 +969,6 @@ if (!seller)
         if (receiverIsBot)
         {
             Player* receiverPlayer = receiver->ToPlayer();
-                              if (!receiver)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: receiver in method GetGUID");
-                                  return nullptr;
-                              }
             if (receiverPlayer)
             {
                 BotEvent event(EventType::HEAL_RECEIVED,
@@ -2053,11 +993,6 @@ public:
     PlayerbotGroupScript() : GroupScript("PlayerbotGroupScript") {}
 
     void OnInviteMember(Group* group, ObjectGuid guid) override
-                      if (!group)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                          return nullptr;
-                      }
     {
         if (!group)
             return;
@@ -2080,11 +1015,6 @@ public:
             return;
 
         Player* member = ObjectAccessor::FindPlayer(guid);
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-                return nullptr;
-            }
         if (!member || !IsBot(member))
             return;
 
@@ -2103,11 +1033,6 @@ public:
                        ObjectGuid kicker, char const* reason) override
     {
         Player* member = ObjectAccessor::FindPlayer(guid);
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetName");
-                return nullptr;
-            }
         if (!member || !IsBot(member))
             return;
 
@@ -2132,11 +1057,6 @@ public:
         for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
-                              if (!member)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                                  return nullptr;
-                              }
             if (member && IsBot(member))
             {
                 BotEvent event(EventType::GROUP_LEADER_CHANGED,
@@ -2158,11 +1078,6 @@ public:
         for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
-                              if (!member)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                                  return nullptr;
-                              }
             if (member && IsBot(member))
             {
                 BotEvent event(EventType::GROUP_DISBANDED,
@@ -2191,16 +1106,6 @@ public:
             return;
 
         Player* passengerPlayer = passenger->ToPlayer();
-        if (!passenger)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-            return;
-        }
-                      if (!passenger)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-                          return nullptr;
-                      }
         if (!passengerPlayer)
             return;
 
@@ -2222,16 +1127,6 @@ public:
             return;
 
         Player* passengerPlayer = passenger->ToPlayer();
-        if (!passenger)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method ToPlayer");
-            return;
-        }
-                      if (!passenger)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: passenger in method GetGUID");
-                          return nullptr;
-                      }
         if (!passengerPlayer)
             return;
 
@@ -2254,11 +1149,6 @@ public:
     PlayerbotItemScript() : ItemScript("PlayerbotItemScript") {}
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& targets, ObjectGuid castId) override
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player) || !item)
             return true; // Allow usage
@@ -2275,16 +1165,6 @@ public:
     }
 
     bool OnExpire(Player* player, ItemTemplate const* proto) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return false;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player) || !proto)
             return true;
@@ -2301,16 +1181,6 @@ public:
     }
 
     bool OnRemove(Player* player, Item* item) override
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return false;
-    }
-                      if (!player)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                          return nullptr;
-                      }
     {
         if (!IsBot(player) || !item)
             return true;
@@ -2344,11 +1214,6 @@ public:
             return;
 
         Player* seller = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(auction->OwnerGUID));
-                      if (!seller)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                          return nullptr;
-                      }
         if (!seller || !IsBot(seller))
             return;
 
@@ -2367,16 +1232,6 @@ public:
             return;
 
         Player* seller = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(auction->OwnerGUID));
-            if (!seller)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                return;
-            }
-            if (!seller)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetName");
-                return;
-            }
         if (!seller || !IsBot(seller))
             return;
 
@@ -2400,11 +1255,6 @@ public:
             return;
 
         Player* seller = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(auction->OwnerGUID));
-                      if (!seller)
-                      {
-                          TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: seller in method GetGUID");
-                          return nullptr;
-                      }
         if (!seller || !IsBot(seller))
             return;
 

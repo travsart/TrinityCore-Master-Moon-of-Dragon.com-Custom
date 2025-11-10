@@ -32,26 +32,6 @@ namespace Playerbot
 {
 
 PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     : _bot(bot), _threatManager(threatManager), _updateInterval(DEFAULT_UPDATE_INTERVAL),
       _lastUpdate(0), _positionTolerance(POSITION_TOLERANCE), _maxCandidates(MAX_CANDIDATES),
       _lastZoneUpdate(0), _lastMovePointTime(0)
@@ -75,17 +55,6 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
 {
     auto startTime = std::chrono::steady_clock::now();
     MovementResult result;
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-
     // No lock needed - position data is per-bot instance data
 
     try
@@ -99,11 +68,6 @@ if (!bot)
                          {
                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                              return;
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                             return;
-                         }
                          }
                          _bot->GetName());
             return result;
@@ -140,11 +104,6 @@ if (!bot)
         MovementResult optimalResult = FindOptimalPosition(context);
         if (optimalResult.success)
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             float movementDistance = currentPos.GetExactDist(&optimalResult.targetPosition);
             if (movementDistance > _positionTolerance)
             {
@@ -160,11 +119,6 @@ if (!bot)
     {
         result.success = false;
         result.failureReason = "Exception during position update: " + std::string(e.what());
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         TC_LOG_ERROR("playerbot.position", "Exception in UpdatePosition for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -178,21 +132,10 @@ if (!bot)
 MovementResult PositionManager::FindOptimalPosition(const MovementContext& context)
 {
     MovementResult result;
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
     std::vector<Position> candidates = GenerateCandidatePositions(context);
     if (candidates.empty())
     {
         result.failureReason = "No candidate positions generated";
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         return result;
     }
 
@@ -210,23 +153,7 @@ MovementResult PositionManager::FindOptimalPosition(const MovementContext& conte
     result.targetPosition = bestPosition.position;
     result.priority = bestPosition.priority;
     result.estimatedTime = EstimateMovementTime(_bot->GetPosition(), bestPosition.position);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
     result.pathDistance = _bot->GetExactDist(&bestPosition.position);
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
-
     TC_LOG_DEBUG("playerbot.position", "Found optimal position for bot {} at ({:.2f}, {:.2f}, {:.2f}) with score {:.2f}",
                _bot->GetName(), bestPosition.position.GetPositionX(), bestPosition.position.GetPositionY(),
                bestPosition.position.GetPositionZ(), bestPosition.score);
@@ -247,11 +174,6 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
     }
 
     Position currentPos = _bot->GetPosition();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     float distance = currentPos.GetExactDist(&targetPos);
 
     if (distance <= _positionTolerance)
@@ -281,11 +203,6 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
     float heightDiff = std::abs(targetPos.GetPositionZ() - currentPos.GetPositionZ());
     if (heightDiff > 3.0f)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         result.requiresJump = true;
     }
 
@@ -299,18 +216,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         // Already moving to same destination - don't re-issue command within 500ms
         result.success = true;
         result.failureReason = "Already moving to target position";
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("playerbot.position", "⏭️ Bot {} - Duplicate movement prevented, already moving to ({:.2f}, {:.2f}, {:.2f})",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      _bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
 
         return result;
@@ -326,11 +232,6 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         // Note: TrinityCore handles speed through auras/spells, not direct modification
         // This is a marker for future sprint ability integration
         TC_LOG_DEBUG("playerbot.position", "🏃 Bot {} - Sprint required for urgent movement (priority: {})",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      _bot->GetName(), static_cast<uint8>(priority));
 
         // Future: Trigger sprint ability here if available
@@ -339,22 +240,12 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
 
     // Update tracking state
     _lastTargetPosition = targetPos;
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return 0;
-    }
     _lastMovePointTime = currentTime;
 
     result.success = true;
     _metrics.movementCommands++;
 
     TC_LOG_DEBUG("playerbot.position", "Bot {} moving to position ({:.2f}, {:.2f}, {:.2f}), distance: {:.2f}",
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
                _bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ(), distance);
 
     return result;
@@ -386,26 +277,10 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     info.score = std::max(0.0f, totalScore);
     info.distanceToTarget = context.target ? pos.GetExactDist(context.target) : 0.0f;
     info.hasLineOfSight = context.target ? _bot->IsWithinLOSInMap(context.target) : true;
-
-if (!target)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-
-    return;
-
-}
     info.isOptimalRange = (info.distanceToTarget >= context.preferredRange * 0.8f &&
                           info.distanceToTarget <= context.preferredRange * 1.2f);
     info.safetyRating = CalculateSafetyScore(pos, context);
     info.movementCost = CalculateMovementCost(_bot->GetPosition(), pos);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     if (info.score >= 90.0f)
         info.priority = MovementPriority::OPTIMIZATION;
     else if (info.score >= 70.0f)
@@ -440,11 +315,6 @@ std::vector<PositionInfo> PositionManager::EvaluatePositions(const std::vector<P
         if (info.score > 0.0f)
         {
             results.push_back(info);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return;
-        }
         }
     }
 
@@ -453,11 +323,6 @@ std::vector<PositionInfo> PositionManager::EvaluatePositions(const std::vector<P
 
 std::vector<Position> PositionManager::GenerateCandidatePositions(const MovementContext& context)
 {
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return nullptr;
-    }
     std::vector<Position> candidates;
 
     if (!context.target)
@@ -466,11 +331,6 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
     }
 
     Position targetPos = context.target->GetPosition();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return nullptr;
-    }
     // Variables for potential position calculations
     (void)context.maxRange; // Silence unused warning
 
@@ -496,24 +356,9 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
                     Position groupCenter = PositionUtils::CalculateGroupCenter(context.groupMembers);
                     candidates = GenerateCircularPositions(groupCenter, 20.0f, 16);
                 }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                    return nullptr;
-                }
                 else
                 {
                     candidates = GenerateCircularPositions(targetPos, 25.0f, 12);
-                    if (!target)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-                        return nullptr;
-                    }
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-                    return nullptr;
-                }
                 }
             }
             break;
@@ -529,11 +374,6 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
         case PositionType::FLANKING:
             {
                 float targetAngle = context.target->GetOrientation();
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-                    return;
-                }
                 float leftFlankAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI/2);
                 float rightFlankAngle = PositionUtils::NormalizeAngle(targetAngle - M_PI/2);
 
@@ -548,19 +388,9 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
                 if (!target)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                        return nullptr;
-                    }
                     return;
                 }
                 float frontAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-                    return;
-                }
                 candidates = GenerateArcPositions(targetPos, 5.0f, frontAngle - M_PI/6, frontAngle + M_PI/6, 6);
             }
             break;
@@ -581,21 +411,10 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
 Position PositionManager::FindMeleePosition(Unit* target, bool preferBehind)
 {
     if (!target)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         return _bot->GetPosition();
 
     Position targetPos = target->GetPosition();
     float targetAngle = target->GetOrientation();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return;
-    }
-
     if (preferBehind)
     {
         float behindAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
@@ -628,21 +447,10 @@ Position PositionManager::FindMeleePosition(Unit* target, bool preferBehind)
 Position PositionManager::FindRangedPosition(Unit* target, float preferredRange)
 {
     if (!target)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         return _bot->GetPosition();
 
     Position targetPos = target->GetPosition();
     std::vector<Position> candidates = GenerateCircularPositions(targetPos, preferredRange, 16);
-
-    if (!enemy)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsHostileTo");
-        return nullptr;
-    }
     MovementContext context;
     context.bot = _bot;
     context.target = target;
@@ -666,11 +474,6 @@ Position PositionManager::FindRangedPosition(Unit* target, float preferredRange)
 Position PositionManager::FindKitingPosition(Unit* threat, float minDistance)
 {
     if (!threat)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         return _bot->GetPosition();
 
     Position currentPos = _bot->GetPosition();
@@ -694,11 +497,6 @@ Position PositionManager::FindKitingPosition(Unit* threat, float minDistance)
 
     MovementContext context;
     context.bot = _bot;
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
     context.target = threat;
     context.desiredType = PositionType::KITING;
     context.preferredRange = minDistance * 1.5f;
@@ -732,22 +530,11 @@ bool PositionManager::IsPositionSafe(const Position& pos, const MovementContext&
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsHostileTo");
             return;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return;
-        }
         }
         if (distance < 5.0f && enemy->IsHostileTo(_bot))
         {
             return false;
         }
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return nullptr;
     }
     return ValidatePosition(pos, PositionValidation::SAFE);
 }
@@ -761,11 +548,6 @@ bool PositionManager::IsInDangerZone(const Position& pos)
         if (zone.IsPositionInDanger(pos, currentTime))
         {
             return true;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
         }
     }
 
@@ -783,17 +565,6 @@ Position PositionManager::FindSafePosition(const Position& fromPos, float minDis
             return pos;
         }
     }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return nullptr;
-
-}
-
     std::vector<Position> farPositions = GenerateCircularPositions(fromPos, minDistance * 2.0f, 16);
     for (const Position& pos : farPositions)
     {
@@ -814,11 +585,6 @@ void PositionManager::RegisterAoEZone(const AoEZone& zone)
     TC_LOG_DEBUG("playerbot.position", "Registered AoE zone for bot {} at ({:.2f}, {:.2f}) radius {:.2f}",
                if (!bot)
                {
-                   if (!bot)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                       return nullptr;
-                   }
                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                    return;
                }
@@ -853,16 +619,6 @@ bool PositionManager::ValidatePosition(const Position& pos, PositionValidation f
     if (static_cast<uint32>(flags) & static_cast<uint32>(PositionValidation::STABLE_GROUND))
     {
         Map* map = _bot->GetMap();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
         if (!map || !PositionUtils::IsPositionOnGround(pos, map))
             return false;
     }
@@ -882,30 +638,10 @@ bool PositionManager::ValidatePosition(const Position& pos, PositionValidation f
 bool PositionManager::IsWalkablePosition(const Position& pos)
 {
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-        return;
-    }
     if (!map)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-            return;
-        }
         return false;
 
     return map->IsInWater(_bot->GetPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()) == false &&
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return nullptr;
-    }
            PositionUtils::IsPositionOnGround(pos, map);
 }
 
@@ -940,11 +676,6 @@ MovementResult PositionManager::HandleEmergencyMovement(const MovementContext& /
 Position PositionManager::FindEmergencyEscapePosition()
 {
     Position currentPos = _bot->GetPosition();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
     std::vector<Position> escapePositions = GenerateCircularPositions(currentPos, EMERGENCY_DISTANCE, 12);
 
     for (const Position& pos : escapePositions)
@@ -1014,11 +745,6 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
     float score = 50.0f;
     Position targetPos = context.target->GetPosition();
     float targetAngle = context.target->GetOrientation();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-        return;
-    }
     float positionAngle = PositionUtils::CalculateAngleBetween(targetPos, pos);
 
     switch (context.desiredType)
@@ -1045,12 +771,6 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
         default:
             score = 50.0f;
             break;
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
     }
     return score;
 }
@@ -1105,22 +825,11 @@ std::vector<Position> PositionManager::GenerateCircularPositions(const Position&
         Position pos = PositionUtils::CalculatePositionAtAngle(center, radius, angle);
         positions.push_back(pos);
     }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
     return positions;
 }
 
 std::vector<Position> PositionManager::GenerateArcPositions(const Position& center, float radius, float startAngle, float endAngle, uint32 count)
 {
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-        return nullptr;
-    }
     std::vector<Position> positions;
     positions.reserve(count);
 
@@ -1192,11 +901,6 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
 
     // Lock-free spatial grid query for nearby enemies
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
     if (map)
     {
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1242,22 +946,11 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
 
     // Check for line of sight to group members (we want to maintain LOS)
     if (Group* group = _bot->GetGroup())
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
     {
         for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
             if (member && member != _bot && member->IsInWorld())
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
-
 if (!bot)
 
 {
@@ -1267,11 +960,6 @@ if (!bot)
     return nullptr;
 
 }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-                return;
-            }
             {
                 if (_bot->IsWithinLOSInMap(member))
                     score += 5.0f;
@@ -1416,19 +1104,9 @@ Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
     predictedPos.SetOrientation(orientation);
 
     // Validate the predicted position (check if walkable)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return nullptr;
-    }
     if (_bot && _bot->GetMap())
     {
         float groundZ = _bot->GetMap()->GetHeight(PhasingHandler::GetEmptyPhaseShift(),
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
                                                  predictedPos.GetPositionX(),
                                                  predictedPos.GetPositionY(),
                                                  predictedPos.GetPositionZ());

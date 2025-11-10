@@ -392,17 +392,6 @@ NpcLocationResult BotNpcLocationService::FindNearestCreatureSpawn(Player* bot, u
         return NpcLocationResult();
 
     uint32 botMapId = bot->GetMapId();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return;
-    }
-
     // Check if we have spawn data for this map
     auto mapIt = _creatureSpawnCache.find(botMapId);
     if (mapIt == _creatureSpawnCache.end())
@@ -427,12 +416,6 @@ if (!bot)
         return NpcLocationResult();
 
     uint32 botMapId = bot->GetMapId();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return;
-    }
-
     // Check if we have spawn data for this map
     auto mapIt = _gameObjectSpawnCache.find(botMapId);
     if (mapIt == _gameObjectSpawnCache.end())
@@ -489,11 +472,6 @@ BotNpcLocationService::CacheStats BotNpcLocationService::GetCacheStats() const
 
 NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     Player* bot,
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return;
-    }
     std::vector<SpawnLocationData> const& locations,
     float maxRange,
     std::string const& sourceName)
@@ -507,11 +485,6 @@ NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     {
         // Filter by bot's map
         if (loc.mapId != bot->GetMapId())
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-            return nullptr;
-        }
             continue;
 
         float distance = bot->GetDistance(loc.position);
@@ -617,12 +590,6 @@ NpcLocationResult BotNpcLocationService::TryFindLiveCreature(Player* bot, uint32
 
     Creature* closest = nullptr;
     float closestDistance = maxRange;
-        if (!closest)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: closest in method GetGUID");
-            return nullptr;
-        }
-
     for (Creature* creature : nearbyCreatures)
     {
         if (!creature || !creature->IsAlive())
@@ -641,11 +608,6 @@ NpcLocationResult BotNpcLocationService::TryFindLiveCreature(Player* bot, uint32
         result.position = closest->GetPosition();
         result.entry = creatureEntry;
         result.guid = closest->GetGUID();
-        if (!closest)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: closest in method GetGUID");
-            return;
-        }
         result.distance = closestDistance;
         result.isValid = true;
         result.isLiveEntity = true;

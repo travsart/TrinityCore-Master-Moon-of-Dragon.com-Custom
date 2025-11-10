@@ -71,11 +71,6 @@ void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std:
         for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                    return;
-                }
             {
                 IssueCommand(member->GetGUID().GetCounter(), command, targets);
             }
@@ -207,11 +202,6 @@ if (!player)
     if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(memberGuid)))
     {
         float distance = assignedPos.GetExactDist(player->GetPosition());
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-            return nullptr;
-        }
         return distance <= tolerance;
     }
 
@@ -229,11 +219,6 @@ void GroupCoordination::MoveToPosition(const Position& destination, bool maintai
     MovementWaypoint waypoint(destination, 0.0f, true, "Group movement destination");
 
     // Clear current path and add new destination
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
-        return nullptr;
-    }
     while (!_movementPath.empty())
         _movementPath.pop();
 
@@ -245,11 +230,6 @@ void GroupCoordination::FollowLeader(uint32 leaderGuid, float distance)
     if (Player* leader = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(leaderGuid)))
     {
         Position leaderPos = leader->GetPosition();
-        if (!leader)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPosition");
-            return;
-        }
         UpdateFormation(leaderPos);
     }
 }
@@ -409,11 +389,6 @@ void GroupCoordination::ProcessCommandQueue()
 
         if (ValidateCommand(command))
         {
-            if (!unit)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
-                return nullptr;
-            }
             ExecuteCommandInternal(command);
             _metrics.commandsExecuted.fetch_add(1);
         }
@@ -430,11 +405,6 @@ void GroupCoordination::UpdateTargetAssessment()
         if (Unit* unit = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(_primaryTarget), guid))
         {
             target.lastKnownPosition = unit->GetPosition();
-            if (!unit)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
-                return nullptr;
-            }
             target.lastSeen = GameTime::GetGameTimeMS();
         }
     }

@@ -52,16 +52,6 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
         {
             PlayerRoleProfile profile = AnalyzePlayerCapabilities(member);
             _playerProfiles[member->GetGUID().GetCounter()] = profile;
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                return;
-            }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                return;
-            }
         }
     }
 
@@ -130,16 +120,6 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
         PlayerRoleProfile profile = AnalyzePlayerCapabilities(player);
         profile.assignedRole = role;
         _playerProfiles[playerGuid] = profile;
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                     return;
-                 }
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                     return nullptr;
-                 }
     }
 
     NotifyRoleAssignment(player, role, group);
@@ -161,11 +141,6 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
     auto it2 = _playerProfiles.find(player2Guid);
 
     if (it1 == _playerProfiles.end() || it2 == _playerProfiles.end())
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                     return nullptr;
-                 }
         return false;
 
     GroupRole role1 = it1->second.assignedRole;
@@ -194,11 +169,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
     return nullptr;
 }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return PlayerRoleProfile(0, 0, 0, 0);
@@ -232,18 +202,8 @@ if (!player)
         RoleScore score(role);
 
         score.effectiveness = CalculateClassRoleEffectiveness(player->getClass(), 0, role);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
         score.gearScore = CalculateGearScore(player, role);
         score.experienceScore = CalculateExperienceScore(player->GetGUID().GetCounter(), role);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         score.synergy = CalculateSynergyScore(player, role, group);
         score.availabilityScore = 1.0f; // Default availability
 
@@ -262,11 +222,6 @@ if (!player)
 
 GroupRole RoleAssignment::RecommendRole(Player* player, Group* group)
 {
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-        return nullptr;
-    }
     if (!player)
         return GroupRole::NONE;
 
@@ -293,11 +248,6 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
         if (Player* member = itr.GetSource())
         {
             uint32 memberGuid = member->GetGUID().GetCounter();
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                return nullptr;
-            }
             auto profileIt = _playerProfiles.find(memberGuid);
 
             if (profileIt != _playerProfiles.end())
@@ -335,17 +285,6 @@ bool RoleAssignment::IsCompositionViable(const GroupComposition& composition)
 
     if (composition.totalMembers < 3 || composition.totalMembers > 25)
         return false;
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-
     return composition.compositionScore >= COMPOSITION_SCORE_THRESHOLD;
 }
 
@@ -376,11 +315,6 @@ bool RoleAssignment::CanPlayerSwitchRole(Player* player, GroupRole newRole, Grou
         return false;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto profileIt = _playerProfiles.find(playerGuid);
 
     if (profileIt == _playerProfiles.end())
@@ -566,17 +500,7 @@ void RoleAssignment::InitializeClassRoleMappings()
         {GroupRole::MELEE_DPS, RoleCapability::SECONDARY}
     };
     _classSpecRoles[CLASS_DRUID][3] = { // Restoration
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
         {GroupRole::HEALER, RoleCapability::PRIMARY},
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return nullptr;
-        }
         {GroupRole::SUPPORT, RoleCapability::SECONDARY}
     };
 
@@ -599,11 +523,6 @@ void RoleAssignment::InitializeClassRoleMappings()
         {GroupRole::SUPPORT, RoleCapability::SECONDARY}
     };
     _classSpecRoles[CLASS_EVOKER][2] = { // Augmentation
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return nullptr;
-        }
         {GroupRole::SUPPORT, RoleCapability::PRIMARY},
         {GroupRole::RANGED_DPS, RoleCapability::SECONDARY}
     };
@@ -617,17 +536,7 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
         return;
 
     profile.playerClass = player->getClass();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
     profile.playerLevel = player->GetLevel();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-        return;
-    }
     profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
     // Set default preferences based on class
@@ -650,12 +559,6 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile, Playe
         return;
 
     uint8 playerClass = player->getClass();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-        return;
-    }
-
     // Get player's active specialization
     uint8 playerSpec = 0;
     if (ChrSpecialization primarySpec = player->GetPrimarySpecialization())
@@ -722,17 +625,6 @@ float RoleAssignment::CalculateClassRoleEffectiveness(uint8 playerClass, uint8 p
             }
         }
     }
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
-
     return 0.0f;
 }
 
@@ -1093,11 +985,6 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
             for (const auto& score : scores)
             {
                 uint32 playerGuid = player->GetGUID().GetCounter();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return nullptr;
-                }
                 auto profileIt = _playerProfiles.find(playerGuid);
                 if (profileIt != _playerProfiles.end())
                 {
@@ -1122,12 +1009,6 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
 float RoleAssignment::CalculateCompositionScore(const GroupComposition& composition)
 {
     float score = 5.0f; // Base score
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
     // Tank requirements
     if (composition.hasMainTank)
         score += 2.0f;
@@ -1167,11 +1048,6 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
 
     for (GroupReference const& itr : group->GetMembers())
     {
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
         if (Player* member = itr.GetSource())
         {
             GroupRole optimalRole = DetermineOptimalRole(member, group, RoleAssignmentStrategy::OPTIMAL);
@@ -1188,11 +1064,6 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
     // Assign roles
     for (const auto& [player, role] : assignments)
     {
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
         AssignRole(player->GetGUID().GetCounter(), role, group);
     }
 }
@@ -1424,11 +1295,6 @@ bool RoleAssignment::ValidateRoleAssignment(Group* group)
 }
 
 void RoleAssignment::NotifyRoleAssignment(Player* player, GroupRole role, Group* group)
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                     return nullptr;
-                 }
 {
     if (!player)
         return;

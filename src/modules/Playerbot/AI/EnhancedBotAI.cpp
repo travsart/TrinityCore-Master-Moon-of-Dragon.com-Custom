@@ -61,17 +61,6 @@ EnhancedBotAI::EnhancedBotAI(Player* bot) :
     LoadConfiguration();
 
     _lastUpdateTime = std::chrono::high_resolution_clock::now();
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     TC_LOG_DEBUG("bot.ai.enhanced", "EnhancedBotAI initialized for bot {}", bot->GetName());
 }
 
@@ -251,16 +240,6 @@ void EnhancedBotAI::OnCombatStart(Unit* target)
 
     _inCombat = true;
     _primaryTarget = target;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-        return nullptr;
-    }
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-            return;
-        }
     _combatStartTime = GameTime::GetGameTimeMS();
 
     TransitionToState(BotAIState::COMBAT);
@@ -312,28 +291,7 @@ void EnhancedBotAI::OnCombatEnd()
 void EnhancedBotAI::OnTargetChanged(Unit* newTarget)
 {
     Unit* oldTarget = _primaryTarget;
-        if (!oldTarget)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: oldTarget in method GetName");
-            return;
-        }
-        if (!oldTarget)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: oldTarget in method GetName");
-            return nullptr;
-        }
     _primaryTarget = newTarget;
-    if (!newTarget)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
-        return;
-    }
-        if (!newTarget)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
-            return;
-        }
-
     if (_combatIntegrator)
     {
         _combatIntegrator->OnTargetChanged(newTarget);
@@ -533,19 +491,8 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
     if (_currentState == BotAIState::FOLLOWING && _followTarget)
     {
         // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
-        if (!leader)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
-            return nullptr;
-        }
         auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _followTarget);
         Player* leader = nullptr;
-        if (!leader)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetOrientation");
-            return nullptr;
-        }
-
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow movement (validated via snapshot first)
@@ -554,17 +501,6 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
         if (leader)
         {
             float distance = GetBot()->GetExactDist2d(leader);
-                if (!leader)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
-                    return;
-                }
-                    if (!leader)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetOrientation");
-                        return nullptr;
-                    }
-
             if (distance < 5.0f)
             {
                 GetBot()->GetMotionMaster()->Clear();
@@ -581,17 +517,6 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
 
     _lastMovementUpdate = 0;
 }
-
-if (!leader)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
-
-    return;
-
-}
-
 void EnhancedBotAI::UpdateGroupCoordination(uint32 diff)
 {
     _lastGroupUpdate += diff;
@@ -622,11 +547,6 @@ void EnhancedBotAI::UpdateGroupCoordination(uint32 diff)
         if (leader && leader != GetBot())
         {
             _followTarget = leader->GetGUID();
-            if (!leader)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
-                return nullptr;
-            }
         }
     }
 
@@ -857,11 +777,6 @@ void EnhancedBotAI::HandleStateTransition(BotAIState oldState, BotAIState newSta
 
         default:
             break;
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-        return nullptr;
-    }
     }
 }
 
@@ -898,11 +813,6 @@ void EnhancedBotAI::CleanupExpiredData()
     _threatList.erase(
         std::remove_if(_threatList.begin(), _threatList.end(),
             [](Unit* unit) { return !unit || !unit->IsAlive(); }),
-            if (!unit)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-                return;
-            }
         _threatList.end()
     );
 }

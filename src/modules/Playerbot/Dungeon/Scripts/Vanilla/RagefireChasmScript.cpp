@@ -59,16 +59,6 @@ public:
     // ============================================================================
 
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                    return;
-                }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
     {
         TC_LOG_DEBUG("module.playerbot", "RagefireChasmScript: Player {} entered Ragefire Chasm",
             player->GetGUID().GetCounter());
@@ -154,11 +144,6 @@ public:
     }
 
     void HandleGroundAvoidance(::Player* player, ::Creature* boss) override
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-                    return nullptr;
-                }
     {
         uint32 entry = boss->GetEntry();
 
@@ -176,21 +161,6 @@ public:
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
     {
         Map* cellVisitMap = player->GetMap();
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-                        return nullptr;
-                    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-            return;
-        }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-                    return nullptr;
-                }
         if (!cellVisitMap)
             return false;
 
@@ -322,12 +292,6 @@ public:
             default:
                 break;
         }
-
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-            return nullptr;
-        }
         // Default spread distance
         DungeonScript::HandleSpreadMechanic(player, boss);
     }
@@ -335,12 +299,6 @@ public:
     void HandleDispelMechanic(::Player* player, ::Creature* boss) override
     {
         uint32 entry = boss->GetEntry();
-
-        if (!groupMember)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
-            return nullptr;
-        }
         switch (entry)
         {
             case 11518: // Jergosh the Invoker
@@ -349,11 +307,6 @@ public:
                 // Priority dispel for healers
 
                 Group* group = player->GetGroup();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                    return nullptr;
-                }
                 if (!group)
                     break;
 
@@ -361,11 +314,6 @@ public:
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
-                        return;
-                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

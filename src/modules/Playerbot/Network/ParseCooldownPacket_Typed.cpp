@@ -19,16 +19,6 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         return;
 
     Player* bot = session->GetPlayer();
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
     if (!bot)
         return;
 
@@ -43,12 +33,6 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         event.cooldownMs = cooldownEntry.ForcedCooldown;
         event.modRateMs = static_cast<int32>(cooldownEntry.ModRate);
         event.timestamp = std::chrono::steady_clock::now();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
-
         CooldownEventBus::instance()->PublishEvent(event);
     }
 
@@ -56,11 +40,6 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            if (!session)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-                return nullptr;
-            }
             return;
         }
         bot->GetName(), packet.SpellCooldowns.size());
@@ -78,36 +57,11 @@ if (!bot)
 
     Player* bot = session->GetPlayer();
     if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-        if (!session)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-            return nullptr;
-        }
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
-    if (!bot)
         return;
 
     CooldownEvent event;
     event.type = CooldownEventType::SPELL_COOLDOWN_START;
     event.casterGuid = bot->GetGUID();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
     event.spellId = packet.SpellID;
     event.itemId = 0;
     event.category = 0;
@@ -118,16 +72,6 @@ if (!bot)
     CooldownEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received COOLDOWN_EVENT (typed): spell={}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName(), packet.SpellID);
 }
 
@@ -137,37 +81,21 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
         return;
 
     Player* bot = session->GetPlayer();
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return;
+
+}
     if (!bot)
         return;
 
     CooldownEvent event;
     event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;
     event.casterGuid = bot->GetGUID();  // WoW 11.2: ClearCooldown has no CasterGUID field, use bot GUID
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
     event.spellId = static_cast<uint32>(packet.SpellID);
     event.itemId = 0;
     event.category = 0;
@@ -178,11 +106,6 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
     CooldownEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received CLEAR_COOLDOWN (typed): spell={}, isPet={}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName(), packet.SpellID, packet.IsPet);
 }
 
@@ -192,11 +115,6 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
         return;
 
     Player* bot = session->GetPlayer();
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
     if (!bot)
         return;
 
@@ -205,16 +123,6 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
         CooldownEvent event;
         event.type = CooldownEventType::SPELL_COOLDOWN_CLEAR;
         event.casterGuid = bot->GetGUID();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         event.spellId = static_cast<uint32>(spellId);
         event.itemId = 0;
         event.category = 0;

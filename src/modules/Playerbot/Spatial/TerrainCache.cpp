@@ -19,11 +19,6 @@ if (!map)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
     return nullptr;
 }
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
     : _map(map)
 {
     ASSERT(map, "TerrainCache requires valid Map pointer");
@@ -131,21 +126,11 @@ void TerrainCache::WarmCache(std::vector<Position> const& positions, PhaseShift 
     {
         // Query each position to populate cache
         GetTerrainData(pos, phaseShift);
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return nullptr;
-        }
         ++populated;
     }
 
     TC_LOG_INFO("playerbot.spatial",
         "TerrainCache warmed with {} positions for map {} ({})",
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
         populated, _map->GetId(), _map->GetMapName());
 }
 
@@ -189,11 +174,6 @@ void TerrainCache::Clear()
 
     TC_LOG_INFO("playerbot.spatial",
         "TerrainCache cleared for map {} ({}), {} entries invalidated",
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
         _map->GetId(), _map->GetMapName(), invalidated);
 }
 

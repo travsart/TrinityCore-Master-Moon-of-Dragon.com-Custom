@@ -37,16 +37,6 @@ namespace Playerbot
 
     FlightResult FlightMasterManager::FlyToPosition(
         Player* player,
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
         Position const& destination,
         FlightPathStrategy strategy)
     {
@@ -68,21 +58,6 @@ namespace Playerbot
 
         // Find nearest flight master to player
         auto flightMasterOpt = FindNearestFlightMaster(player);
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-                return nullptr;
-            }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
         if (!flightMasterOpt.has_value())
         {
             TC_LOG_WARN("playerbot.flight",
@@ -96,26 +71,6 @@ namespace Playerbot
 
         // Find nearest taxi node to destination
         uint32 destinationNode = FindNearestTaxiNode(destination, player->GetMapId());
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-            return 0;
-        }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
         if (destinationNode == 0)
         {
             TC_LOG_ERROR("playerbot.flight",
@@ -137,11 +92,6 @@ namespace Playerbot
 
         TC_LOG_DEBUG("playerbot.flight",
             "FlightMasterManager: Player {} flying from node {} to node {} (strategy: {})",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
             player->GetName(), sourceNode, destinationNode, static_cast<int>(strategy));
 
         // Activate flight to destination node

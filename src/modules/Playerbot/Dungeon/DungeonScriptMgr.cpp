@@ -197,17 +197,6 @@ void DungeonScriptMgr::ExecuteBossMechanic(::Player* player, ::Creature* boss,
     // Step 2: If no boss script, try map script
     if (!script)
         script = GetScriptForMap(player->GetMapId());
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-            return nullptr;
-        }
-
     if (script)
     {
         // Script exists - delegate to it
@@ -256,21 +245,11 @@ void DungeonScriptMgr::ExecuteBossMechanic(::Player* player, ::Creature* boss,
                 break;
         }
     }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-        return nullptr;
-    }
     else
     {
         // Step 3: No script found - use generic fallback DIRECTLY
         TC_LOG_DEBUG("playerbot",
             "DungeonScriptMgr: No script for boss {} (map {}) - using generic mechanics",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMapId");
-                return;
-            }
             boss->GetEntry(), player->GetMapId());
 
         switch (mechanic)

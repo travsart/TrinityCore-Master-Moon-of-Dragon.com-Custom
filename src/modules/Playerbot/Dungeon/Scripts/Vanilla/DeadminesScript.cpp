@@ -94,21 +94,15 @@ public:
      * OVERRIDE REASON: Want to log entry and set up state
      */
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
     {
         // Call base class first (good practice)
         DungeonScript::OnDungeonEnter(player, instance);
@@ -118,25 +112,10 @@ public:
 
         // Example: Could initialize instance-specific data here
         // instanceData[player->GetGUID()] = DeadminesState();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
     }
 
     /**
      * Called when player exits The Deadmines
-         if (!player)
-         {
-             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-             return nullptr;
-         }
-     if (!player)
-     {
-         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-         return nullptr;
-     }
      *
      * USE CASE:
      * - Clean up dungeon-specific state
@@ -146,16 +125,6 @@ public:
      * OVERRIDE REASON: Want to clean up state
      */
     void OnDungeonExit(::Player* player) override
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
     {
         DungeonScript::OnDungeonExit(player);
 
@@ -231,11 +200,6 @@ public:
             default:
                 TC_LOG_WARN("playerbot", "DeadminesScript: Unknown boss entry {}",
                     boss->GetEntry());
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                    return;
-                }
                 break;
         }
     }
@@ -251,11 +215,6 @@ public:
      * OVERRIDE REASON: Want to log boss kills
      */
     void OnBossKill(::Player* player, ::Creature* boss) override
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
     {
         if (!boss)
             return;
@@ -359,11 +318,6 @@ public:
 
     /**
      * Handle add kill priority
-     if (!shredder)
-     {
-         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: shredder in method GetGUID");
-         return nullptr;
-     }
      *
      * USE CASE:
      * - Define which adds to kill first
@@ -374,11 +328,6 @@ public:
      *
      * IMPORTANT: Sneed emerges from shredder when it dies - MUST kill shredder first
      */
-    if (!sneed)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sneed in method GetGUID");
-        return nullptr;
-    }
     void HandleAddPriority(::Player* player, ::Creature* boss) override
     {
         if (!player || !boss)
@@ -392,11 +341,6 @@ public:
                 // CRITICAL: Shredder spawns Sneed when killed
                 // Always prioritize shredder until it's dead
                 ::Creature* shredder = FindCreatureNearby(player, 642, 50.0f);
-                    if (!shredder)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: shredder in method GetGUID");
-                        return;
-                    }
                 if (shredder && shredder->IsAlive())
                 {
                     player->SetSelection(shredder->GetGUID());
@@ -407,11 +351,6 @@ public:
 
                 // After shredder dies, Sneed himself spawns (Entry 643)
                 ::Creature* sneed = FindCreatureNearby(player, 643, 50.0f);
-                    if (!sneed)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: sneed in method GetGUID");
-                        return;
-                    }
                 if (sneed && sneed->IsAlive())
                 {
                     player->SetSelection(sneed->GetGUID());

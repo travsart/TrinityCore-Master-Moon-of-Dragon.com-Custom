@@ -17,16 +17,6 @@ namespace Playerbot
 // ===== PRIVATE HELPER =====
 
 DoubleBufferedSpatialGrid* SpatialGridQueryHelpers::GetSpatialGrid(Player* bot)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-        return;
-    }
 {
     if (!bot)
         return nullptr;
@@ -40,11 +30,6 @@ DoubleBufferedSpatialGrid::CreatureSnapshot const*
 SpatialGridQueryHelpers::FindCreatureByGuid(Player* bot, ObjectGuid guid, float searchRadius)
 {
     auto spatialGrid = GetSpatialGrid(bot);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
     if (!spatialGrid || guid.IsEmpty())
         return nullptr;
 
@@ -55,12 +40,6 @@ if (!bot)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
     return;
 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Find snapshot matching GUID
     for (auto const& snapshot : creatureSnapshots)
     {
@@ -82,12 +61,6 @@ SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, b
 
     // Query nearby creatures (lock-free)
     auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(bot->GetPosition(), range);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Filter for hostile creatures
     for (auto const& snapshot : creatureSnapshots)
     {
@@ -114,11 +87,6 @@ bool SpatialGridQueryHelpers::ValidateCreature(Player* bot, ObjectGuid guid,
     bool requireAlive, bool requireHostile)
 {
     auto snapshot = FindCreatureByGuid(bot, guid);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
     if (!snapshot)
         return false;
 
@@ -142,22 +110,6 @@ SpatialGridQueryHelpers::FindPlayerByGuid(Player* bot, ObjectGuid guid, float se
 
     // Query nearby players from spatial grid (lock-free)
     auto playerSnapshots = spatialGrid->QueryNearbyPlayers(bot->GetPosition(), searchRadius);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Find snapshot matching GUID
     for (auto const& snapshot : playerSnapshots)
     {
@@ -179,27 +131,11 @@ SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
 
     // Get bot's group
     Group* group = bot->GetGroup();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
     if (!group)
         return result;
 
     // Query nearby players (lock-free)
     auto playerSnapshots = spatialGrid->QueryNearbyPlayers(bot->GetPosition(), range);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Filter for group members
     for (auto const& snapshot : playerSnapshots)
     {
@@ -234,12 +170,6 @@ SpatialGridQueryHelpers::FindGameObjectByGuid(Player* bot, ObjectGuid guid, floa
 
     // Query nearby GameObjects from spatial grid (lock-free)
     auto gameObjectSnapshots = spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), searchRadius);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Find snapshot matching GUID
     for (auto const& snapshot : gameObjectSnapshots)
     {
@@ -256,22 +186,11 @@ SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
     std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
     if (!spatialGrid)
         return result;
 
     // Query nearby GameObjects (lock-free)
     auto gameObjectSnapshots = spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), range);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Filter for quest objects
     for (auto const& snapshot : gameObjectSnapshots)
     {
@@ -281,11 +200,6 @@ SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
 
         // Check distance
         float distance = bot->GetDistance(snapshot.position);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                return;
-            }
         if (distance > range)
             continue;
 
@@ -306,17 +220,6 @@ SpatialGridQueryHelpers::FindDynamicObjectByGuid(Player* bot, ObjectGuid guid, f
 
     // Query nearby DynamicObjects from spatial grid (lock-free)
     auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(bot->GetPosition(), searchRadius);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Find snapshot matching GUID
     for (auto const& snapshot : dynamicObjectSnapshots)
     {
@@ -338,17 +241,6 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
 
     // Query nearby DynamicObjects (lock-free)
     auto dynamicObjectSnapshots = spatialGrid->QueryNearbyDynamicObjects(bot->GetPosition(), range);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Filter for dangerous objects (hostile faction)
     for (auto const& snapshot : dynamicObjectSnapshots)
     {
@@ -379,17 +271,6 @@ SpatialGridQueryHelpers::FindAreaTriggerByGuid(Player* bot, ObjectGuid guid, flo
 
     // Query nearby AreaTriggers from spatial grid (lock-free)
     auto areaTriggerSnapshots = spatialGrid->QueryNearbyAreaTriggers(bot->GetPosition(), searchRadius);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Find snapshot matching GUID
     for (auto const& snapshot : areaTriggerSnapshots)
     {
@@ -411,12 +292,6 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
 
     // Query nearby AreaTriggers (lock-free)
     auto areaTriggerSnapshots = spatialGrid->QueryNearbyAreaTriggers(bot->GetPosition(), range);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-
     // Filter for dangerous triggers (hostile spells/effects)
     for (auto const& snapshot : areaTriggerSnapshots)
     {
@@ -460,11 +335,6 @@ float SpatialGridQueryHelpers::GetDistanceToEntity(Player* bot, ObjectGuid guid)
     // Try creatures first (most common)
     {
         auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(botPos, 100.0f);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         for (auto const& snapshot : creatureSnapshots)
         {
             if (snapshot.guid == guid)
@@ -555,11 +425,6 @@ bool SpatialGridQueryHelpers::GetEntityPosition(Player* bot, ObjectGuid guid, Po
     // Try GameObjects
     {
         auto gameObjectSnapshots = spatialGrid->QueryNearbyGameObjects(botPos, 100.0f);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return;
-        }
         for (auto const& snapshot : gameObjectSnapshots)
         {
             if (snapshot.guid == guid)

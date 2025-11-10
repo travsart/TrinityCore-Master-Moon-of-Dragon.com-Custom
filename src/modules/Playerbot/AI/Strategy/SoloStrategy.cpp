@@ -104,16 +104,6 @@ void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     {
         TC_LOG_DEBUG("module.playerbot",
             "SoloStrategy: Bot {} - Questing:{} Gathering:{} Trading:{} Auctions:{} Busy:{}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             bot->GetName(), isQuesting, isGathering, isTrading, hasAuctions, isBusy);
         activityLogTimer = 0;
     }
@@ -131,21 +121,11 @@ void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastWanderTime > _wanderInterval)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
     {
         // TODO: Implement proper wandering with pathfinding
         // For now, just log that the bot is truly in solo mode with no active tasks
         TC_LOG_TRACE("module.playerbot",
             "SoloStrategy: Bot {} is in solo mode (no active managers), considering wandering",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             bot->GetName());
 
         _lastWanderTime = currentTime;

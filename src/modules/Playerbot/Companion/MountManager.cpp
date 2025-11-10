@@ -59,17 +59,6 @@ void MountManager::Update(::Player* player, uint32 diff)
         return;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     // Throttle updates
     auto lastUpdateItr = _lastUpdateTimes.find(playerGuid);
     if (lastUpdateItr != _lastUpdateTimes.end())
@@ -100,11 +89,6 @@ void MountManager::Update(::Player* player, uint32 diff)
         {
             uint64 mountedTime = GameTime::GetGameTimeMS() - timestampItr->second;
             _playerMetrics[playerGuid].totalMountedTime += diff;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
             _globalMetrics.totalMountedTime += diff;
         }
     }
@@ -121,16 +105,6 @@ void MountManager::Update(::Player* player, uint32 diff)
 }
 
 bool MountManager::MountPlayer(::Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
 {
     if (!player || !player->IsInWorld())
         return false;
@@ -142,16 +116,6 @@ bool MountManager::MountPlayer(::Player* player)
         return false;
 
     MountInfo const* mount = GetBestMount(player);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                return;
-            }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
     if (!mount)
     {
         TC_LOG_DEBUG("module.playerbot", "MountManager::MountPlayer - No suitable mount found for player {}",
@@ -163,36 +127,9 @@ bool MountManager::MountPlayer(::Player* player)
         return false;
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     // Track mount usage
     _activeMounts[playerGuid] = mount->spellId;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return;
-    }
     _mountTimestamps[playerGuid] = GameTime::GetGameTimeMS();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
-
     // Update metrics
     _playerMetrics[playerGuid].timesMounted++;
     _globalMetrics.timesMounted++;
@@ -211,36 +148,10 @@ bool MountManager::MountPlayer(::Player* player)
 
     TC_LOG_DEBUG("module.playerbot", "MountManager::MountPlayer - Player {} mounted on {} (spell {})",
         player->GetName(), mount->name, mount->spellId);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
-
     return true;
 }
 
 bool MountManager::DismountPlayer(::Player* player)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-        return nullptr;
-    }
 {
     if (!player || !player->IsInWorld())
         return false;
@@ -251,17 +162,6 @@ if (!player)
     player->RemoveAurasByType(SPELL_AURA_MOUNTED);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
-
     // Update metrics
     _playerMetrics[playerGuid].timesDismounted++;
     _globalMetrics.timesDismounted++;
@@ -271,11 +171,6 @@ if (!player)
     _mountTimestamps.erase(playerGuid);
 
     TC_LOG_DEBUG("module.playerbot", "MountManager::DismountPlayer - Player {} dismounted",
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return;
-        }
         player->GetName());
 
     return true;
@@ -295,12 +190,6 @@ bool MountManager::ShouldAutoMount(::Player* player, Position const& destination
         return false;
 
     MountAutomationProfile profile = GetAutomationProfile(player->GetGUID().GetCounter());
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-
     if (!profile.autoMount)
         return false;
 
@@ -315,11 +204,6 @@ bool MountManager::ShouldAutoMount(::Player* player, Position const& destination
 // ============================================================================
 
 MountInfo const* MountManager::GetBestMount(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
 {
     if (!player)
         return nullptr;
@@ -327,11 +211,6 @@ MountInfo const* MountManager::GetBestMount(::Player* player) const
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
 
     if (playerMountsItr == _playerMounts.end() || playerMountsItr->second.empty())
@@ -359,16 +238,6 @@ MountInfo const* MountManager::GetBestMount(::Player* player) const
     if (IsPlayerUnderwater(player))
     {
         MountInfo const* aquaticMount = GetAquaticMount(player);
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
         if (aquaticMount)
             return aquaticMount;
     }
@@ -385,11 +254,6 @@ MountInfo const* MountManager::GetFlyingMount(::Player* player) const
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
 
     if (playerMountsItr == _playerMounts.end())
@@ -432,18 +296,7 @@ MountInfo const* MountManager::GetGroundMount(::Player* player) const
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     if (playerMountsItr == _playerMounts.end())
         return nullptr;
 
@@ -462,11 +315,6 @@ MountInfo const* MountManager::GetGroundMount(::Player* player) const
                 {
                     MountInfo const& mount = mountItr->second;
                     if (mount.type == MountType::GROUND && CanUseMount(player, mount))
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
                         return &mount;
                 }
             }
@@ -508,11 +356,6 @@ MountInfo const* MountManager::GetAquaticMount(::Player* player) const
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
 
     if (playerMountsItr == _playerMounts.end())
@@ -544,18 +387,7 @@ MountInfo const* MountManager::GetDragonridingMount(::Player* player) const
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-
     if (playerMountsItr == _playerMounts.end())
 if (!player)
 {
@@ -600,16 +432,6 @@ bool MountManager::CanUseFlyingMount(::Player* player) const
 }
 
 bool MountManager::IsPlayerUnderwater(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return;
-    }
 {
     if (!player)
         return false;
@@ -646,16 +468,6 @@ if (!player)
 // ============================================================================
 
 std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 {
     std::vector<MountInfo> mounts;
 
@@ -665,19 +477,9 @@ if (!player)
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
 
     if (playerMountsItr == _playerMounts.end())
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return;
-        }
         return mounts;
 
     for (uint32 spellId : playerMountsItr->second)
@@ -691,11 +493,6 @@ if (!player)
 }
 
 bool MountManager::KnowsMount(::Player* player, uint32 spellId) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return;
-    }
 {
     if (!player)
         return false;
@@ -704,21 +501,6 @@ bool MountManager::KnowsMount(::Player* player, uint32 spellId) const
 }
 
 bool MountManager::LearnMount(::Player* player, uint32 spellId)
-
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-
-    return;
-
-}
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
 {
     if (!player)
         return false;
@@ -733,58 +515,16 @@ if (!player)
     }
 
     if (!CanUseMount(player, mountItr->second))
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
-    }
     {
         TC_LOG_DEBUG("module.playerbot", "MountManager::LearnMount - Player {} cannot use mount {}",
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-                return;
-            }
             player->GetName(), spellId);
         return false;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
-    }
-    }
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
-    }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
     }
     if (player->HasSpell(spellId))
         return true; // Already knows
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method LearnSpell");
-        return;
-    }
     player->LearnSpell(spellId, false);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
     _playerMounts[playerGuid].insert(spellId);
 
     _playerMetrics[playerGuid].mountsLearned++;
@@ -802,17 +542,6 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
     return;
 }
-
-    if (!player)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method LearnSpell");
-
-        return nullptr;
-
-    }
-
 if (!player)
 
 {
@@ -829,11 +558,6 @@ if (!player)
     // No lock needed - mount data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return;
-    }
     auto playerMountsItr = _playerMounts.find(playerGuid);
 
     if (playerMountsItr == _playerMounts.end())
@@ -843,11 +567,6 @@ if (!player)
 }
 
 bool MountManager::CanUseMount(::Player* player, MountInfo const& mount) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -886,31 +605,6 @@ bool MountManager::CanUseMount(::Player* player, MountInfo const& mount) const
 // ============================================================================
 
 uint32 MountManager::GetRidingSkill(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return;
-    }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-                return nullptr;
-            }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return;
-    }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-            return nullptr;
-        }
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return;
-    }
 {
     if (!player)
         return 0;
@@ -960,28 +654,11 @@ bool MountManager::LearnRidingSkill(::Player* player, uint32 skillLevel)
             TC_LOG_ERROR("module.playerbot", "MountManager::LearnRidingSkill - Invalid skill level {}", skillLevel);
             return false;
     }
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
-    }
     if (player->HasSpell(spellId))
         return true; // Already knows
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method LearnSpell");
-        return;
-    }
     player->LearnSpell(spellId, false);
 
     TC_LOG_INFO("module.playerbot", "MountManager::LearnRidingSkill - Player {} learned riding skill {}",
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return;
-        }
         player->GetName(), skillLevel);
 
     return true;
@@ -1149,22 +826,10 @@ void MountManager::LoadMountDatabase()
 
     TC_LOG_INFO("server.loading", "MountManager::LoadMountDatabase - Loaded {} mount entries", _mountDatabase.size());
 }
-
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
 void MountManager::InitializeVanillaMounts()
 {
     // Classic WoW ground mounts (60% and 100% speed)
     // This is a stub implementation - full mount database would load from DBC/DB2
-
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-        return;
-    }
     // Example: Brown Horse (Human racial mount)
     {
         MountInfo mount;
@@ -1178,11 +843,6 @@ void MountManager::InitializeVanillaMounts()
         mount.isFlyingMount = false;
         mount.isAquaticMount = false;
         _mountDatabase[mount.spellId] = mount;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-        return;
-    }
     }
 
     // Add more vanilla mounts here (60+ mounts in vanilla)
@@ -1280,11 +940,6 @@ if (!player)
 // ============================================================================
 
 bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
-        return;
-    }
 {
     if (!player)
         return false;
@@ -1308,11 +963,6 @@ bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
 }
 
 bool MountManager::CanCastMountSpell(::Player* player, uint32 spellId) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-        return nullptr;
-    }
 {
     if (!player)
         return false;
@@ -1333,16 +983,6 @@ bool MountManager::CanCastMountSpell(::Player* player, uint32 spellId) const
 }
 
 void MountManager::HandleMountCastResult(::Player* player, uint32 spellId, bool success)
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-            return nullptr;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
 {
     if (!player)
         return;
@@ -1369,11 +1009,6 @@ bool MountManager::IsInNoFlyZone(::Player* player) const
         return true;
 
     Map* map = player->GetMap();
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-        return;
-    }
     if (!map)
         return true;
 
@@ -1416,11 +1051,6 @@ bool MountManager::IsInAquaticZone(::Player* player) const
 }
 
 uint32 MountManager::GetCurrentZoneId(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetZoneId");
-        return;
-    }
 {
     if (!player)
         return 0;
@@ -1454,11 +1084,6 @@ bool MountManager::ValidateMountUsage(::Player* player) const
 }
 
 bool MountManager::IsInCombat(::Player* player) const
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-        return;
-    }
 {
     if (!player)
         return false;

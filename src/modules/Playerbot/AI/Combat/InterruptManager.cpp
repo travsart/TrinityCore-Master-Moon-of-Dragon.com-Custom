@@ -35,16 +35,6 @@ namespace Playerbot
 {
 
 InterruptManager::InterruptManager(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
     : _bot(bot), _isInterrupting(false), _currentTarget(nullptr),
       _reactionTime(DEFAULT_REACTION_TIME), _maxInterruptRange(DEFAULT_MAX_RANGE),
       _scanInterval(DEFAULT_SCAN_INTERVAL), _predictiveInterrupts(true), _emergencyMode(false),
@@ -84,27 +74,12 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
             if (_predictiveInterrupts)
             {
                 HandleMultipleInterruptTargets();
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-                return nullptr;
-            }
             }
         }
 
         if (currentTime - _lastCoordinationUpdate >= COORDINATION_UPDATE_INTERVAL)
         {
             if (Group* group = _bot->GetGroup())
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-                return nullptr;
-            }
             {
                 std::vector<Player*> groupMembers;
                 for (GroupReference const& ref : group->GetMembers())
@@ -127,17 +102,7 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
         }
     }
     catch (const std::exception& e)
-    if (!bot)
     {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
-    {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.interrupt", "Exception in UpdateInterruptSystem for bot {}: {}", _bot->GetName(), e.what());
     }
 }
@@ -148,48 +113,17 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
 
     // Lock-free spatial grid query
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
     if (!map)
         return targets;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
     {
-        if (!currentSpell)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
-            return nullptr;
-        }
         // Create grid on demand
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
             return targets;
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetGUID");
-        return;
-    }
-    }
-
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
-        return nullptr;
     }
     // Query nearby creature GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
@@ -198,11 +132,6 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
     // Resolve GUIDs to Unit pointers and apply filtering logic
     for (ObjectGuid guid : nearbyGuids)
     {
-        if (!currentSpell)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetCastTime");
-            return 0;
-        }
         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* unit = ObjectAccessor::GetUnit(*_bot, guid);
         if (!IsValidInterruptTarget(unit))
             continue;
@@ -211,49 +140,24 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
             continue;
 
         Spell* currentSpell = unit->GetCurrentSpell(CURRENT_GENERIC_SPELL);
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetName");
-            return;
-        }
         if (!currentSpell)
             continue;
 
         const SpellInfo* spellInfo = currentSpell->GetSpellInfo();
-        if (!currentSpell)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
-            return;
-        }
         if (!spellInfo || !IsSpellInterruptWorthy(spellInfo->Id, unit))
             continue;
 
         InterruptTarget target;
         target.guid = unit->GetGUID();
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetGUID");
-            return;
-        }
         target.unit = unit;
         target.position = unit->GetPosition();
         target.currentSpell = currentSpell;
         target.spellInfo = spellInfo;
         target.spellId = spellInfo->Id;
         target.priority = AssessInterruptPriority(spellInfo, unit);
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-            return;
-        }
         target.type = ClassifyInterruptType(spellInfo);
         target.totalCastTime = static_cast<float>(spellInfo->CalcCastTime());
         target.remainingCastTime = static_cast<float>(currentSpell->GetCastTime() - currentSpell->GetTimer());
-        if (!currentSpell)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetCastTime");
-            return;
-        }
         target.castProgress = (target.totalCastTime - target.remainingCastTime) / target.totalCastTime;
         target.detectedTime = GameTime::GetGameTimeMS();
         target.isChanneled = spellInfo->IsChanneled();
@@ -261,12 +165,6 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
         target.requiresLoS = true; // Default to requiring LoS
         target.spellName = spellInfo->SpellName->Str[0];
         target.targetName = unit->GetName();
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetName");
-            return;
-        }
-
         if (target.isInterruptible && target.priority != InterruptPriority::IGNORE)
         {
             targets.push_back(target);
@@ -293,21 +191,10 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
 
     try
     {
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-            return 0;
-        }
         if (!target.unit || !target.unit->IsAlive())
         {
             result.failureReason = "Target is no longer valid";
             return result;
-        }
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
         }
         if (!target.unit->HasUnitState(UNIT_STATE_CASTING))
         {
@@ -316,11 +203,6 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
         }
 
         InterruptCapability* capability = GetBestInterruptForTarget(target);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         if (!capability || !capability->isAvailable)
         {
             result.failureReason = "No available interrupt capability";
@@ -364,11 +246,6 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
         UpdateTimingAccuracy(result);
 
         TC_LOG_DEBUG("playerbot.interrupt", "Bot {} attempted interrupt on {} ({}): {}",
-                   if (!bot)
-                   {
-                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                       return;
-                   }
                    _bot->GetName(), target.targetName, target.spellName,
                    result.success ? "SUCCESS" : result.failureReason);
     }
@@ -376,11 +253,6 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
     {
         result.success = false;
         result.failureReason = std::string("Exception during interrupt: ") + e.what();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         TC_LOG_ERROR("playerbot.interrupt", "Exception in AttemptInterrupt for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -437,12 +309,6 @@ InterruptPriority InterruptManager::AssessInterruptPriority(const SpellInfo* spe
 
     if (ShouldInterruptCrowdControl(spellInfo, caster))
         return AssessCrowdControlPriority(spellInfo, caster);
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
     if (ShouldInterruptDamage(spellInfo, caster))
         return AssessDamagePriority(spellInfo, caster);
 
@@ -496,11 +362,6 @@ bool InterruptManager::IsSpellInterruptWorthy(uint32 spellId, Unit* caster)
     //     return false;
 
     InterruptPriority priority = AssessInterruptPriority(spellInfo, caster);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     return priority != InterruptPriority::IGNORE;
 }
 
@@ -509,23 +370,7 @@ void InterruptManager::InitializeInterruptCapabilities()
     _interruptCapabilities.clear();
 
     uint8 botClass = _bot->GetClass();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return;
-    }
     std::vector<uint32> classInterrupts = InterruptUtils::GetClassInterruptSpells(botClass);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-        return nullptr;
-    }
-
     for (uint32 spellId : classInterrupts)
     {
         const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -576,11 +421,6 @@ void InterruptManager::InitializeInterruptCapabilities()
     }
 
     TC_LOG_DEBUG("playerbot.interrupt", "Initialized {} interrupt capabilities for bot {}",
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
                _interruptCapabilities.size(), _bot->GetName());
 }
 
@@ -590,11 +430,6 @@ void InterruptManager::UpdateInterruptCapabilities()
     {
         uint32 currentTime = GameTime::GetGameTimeMS();
         capability.isAvailable = _bot->HasSpell(capability.spellId) &&
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-            return;
-        }
                                 !_bot->GetSpellHistory()->HasCooldown(capability.spellId) &&
                                 (currentTime - capability.lastUsed >= static_cast<uint32>(capability.cooldown));
 
@@ -602,11 +437,6 @@ void InterruptManager::UpdateInterruptCapabilities()
         {
             capability.isAvailable = capability.isAvailable &&
                                    _bot->GetPower(POWER_MANA) >= static_cast<int32>(capability.manaCost);
-                                   if (!bot)
-                                   {
-                                       TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                                       return nullptr;
-                                   }
         }
     }
 }
@@ -685,11 +515,6 @@ std::vector<InterruptPlan> InterruptManager::GenerateInterruptPlans(const std::v
     plans.reserve(targets.size());
 
     for (const InterruptTarget& target : targets)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     {
         InterruptPlan plan = CreateInterruptPlan(target);
         if (plan.successProbability > 0.0f)
@@ -770,11 +595,6 @@ bool InterruptManager::ExecuteInterruptPlan(const InterruptPlan& plan)
     }
     catch (const std::exception& e)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.interrupt", "Exception executing interrupt plan for bot {}: {}", _bot->GetName(), e.what());
         _isInterrupting = false;
         _currentTarget = nullptr;
@@ -797,13 +617,6 @@ bool InterruptManager::ShouldInterruptCrowdControl(const SpellInfo* spellInfo, U
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-        if (effect.ApplyAuraName == SPELL_AURA_MOD_STUN ||
-            effect.ApplyAuraName == SPELL_AURA_MOD_FEAR ||
-            if (!unit)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-                return;
-            }
             effect.ApplyAuraName == SPELL_AURA_MOD_CHARM ||
             effect.ApplyAuraName == SPELL_AURA_MOD_CONFUSE)
         {
@@ -821,13 +634,6 @@ bool InterruptManager::ShouldInterruptDamage(const SpellInfo* spellInfo, Unit* c
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-        if (effect.Effect == SPELL_EFFECT_SCHOOL_DAMAGE ||
-            effect.Effect == SPELL_EFFECT_WEAPON_DAMAGE ||
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-                return;
-            }
             effect.Effect == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)
         {
             return effect.CalcValue() > 1000;
@@ -848,11 +654,6 @@ float InterruptManager::CalculateInterruptUrgency(const InterruptTarget& target)
             break;
         case InterruptPriority::HIGH:
             urgency += 0.8f;
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-                return;
-            }
             break;
         case InterruptPriority::MODERATE:
             urgency += 0.6f;
@@ -864,17 +665,6 @@ float InterruptManager::CalculateInterruptUrgency(const InterruptTarget& target)
             urgency = 0.0f;
             break;
     }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-
-    return nullptr;
-
-}
-
     float timeUrgency = 1.0f - (target.remainingCastTime / target.totalCastTime);
     urgency += timeUrgency * 0.5f;
 
@@ -913,21 +703,6 @@ if (!unit)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
     return;
 }
-
-if (!unit)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
-
-    return nullptr;
-
-}
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-        return nullptr;
-    }
 {
     if (!unit || !unit->IsAlive())
         return false;
@@ -945,17 +720,6 @@ if (!unit)
 
     return true;
 }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-
-    return nullptr;
-
-}
-
 bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
 if (!target)
 {
@@ -963,16 +727,6 @@ if (!target)
     return;
 }
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-        return nullptr;
-    }
     if (!target || !_bot->HasSpell(spellId))
         return false;
 
@@ -984,11 +738,6 @@ if (!target)
         return false;
 
     auto powerCosts = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-        return;
-    }
     uint32 manaCost = 0;
     for (auto const& cost : powerCosts)
     {
@@ -1008,12 +757,6 @@ if (!target)
     float maxRangeSq = maxRange * maxRange;
     if (_bot->GetExactDistSq(target) > maxRangeSq)
         return false;
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-        return;
-    }
     _bot->CastSpell(target, spellId, false);
     return true;
 }
@@ -1047,11 +790,6 @@ float InterruptManager::CalculateExecutionTime(InterruptMethod method)
 
 void InterruptManager::UpdateTargetInformation(InterruptTarget& target)
 {
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-        return;
-    }
     if (!target.unit || !target.unit->IsAlive())
         return;
 
@@ -1075,11 +813,6 @@ bool InterruptManager::HasLineOfSightToTarget(Unit* target)
 Position InterruptManager::CalculateOptimalInterruptPosition(Unit* target)
 {
     if (!target)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         return _bot->GetPosition();
 
     Position targetPos = target->GetPosition();
@@ -1252,11 +985,6 @@ float InterruptManager::CalculateInterruptEffectiveness(const InterruptCapabilit
     float effectiveness = 1.0f;
 
     // Higher effectiveness for more critical targets
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
     switch (target.priority)
     {
         case InterruptPriority::CRITICAL:
@@ -1341,22 +1069,6 @@ InterruptPriority InterruptManager::AssessBuffPriority(const SpellInfo* spellInf
 {
     if (!spellInfo || !caster)
         return InterruptPriority::IGNORE;
-
-if (!target)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-
-    return nullptr;
-
-}
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
     // Moderate priority for buffs
     if (spellInfo->IsPositive())
         return InterruptPriority::MODERATE;
@@ -1388,11 +1100,6 @@ void InterruptManager::RegisterInterruptAttempt(const InterruptTarget& target)
 
     // Record the attempt in group data if in group
     if (Group* group = _bot->GetGroup())
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
     {
         _groupInterruptClaims[target.guid] = GameTime::GetGameTimeMS() + 5000; // 5 second claim
     }

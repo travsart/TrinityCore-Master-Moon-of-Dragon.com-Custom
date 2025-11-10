@@ -455,36 +455,11 @@ std::vector<TalentLoadout const*> BotTalentManager::GetAllLoadouts(uint8 cls, ui
 // ====================================================================
 
 bool BotTalentManager::ApplySpecialization(Player* bot, uint8 specId)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
     return nullptr;
 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
 {
     if (!bot)
         return false;
@@ -495,57 +470,13 @@ if (!bot)
     // Set active specialization
     // NOTE: This must be called BEFORE GiveLevel() for proper spell learning
     bot->SetPrimarySpecialization(specId);
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
-
     // Learn specialization spells
     bot->LearnSpecializationSpells();
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-
-    return;
-
-}
-
     TC_LOG_INFO("playerbot", "BotTalentManager: Applied spec {} to bot {}", specId, bot->GetName());
 
     ++_stats.specsApplied;
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-
-    return nullptr;
-
-}
-
     return true;
 }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-
 bool BotTalentManager::ApplyTalentLoadout(Player* bot, uint8 specId, uint32 level)
 if (!bot)
 {
@@ -557,11 +488,6 @@ if (!bot)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
     return nullptr;
 }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
 {
     if (!bot)
         return false;
@@ -571,17 +497,6 @@ if (!bot)
 
     // Get loadout from cache
     TalentLoadout const* loadout = GetTalentLoadout(bot->GetClass(), specId, level);
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
-
 if (!bot)
 
 {
@@ -591,16 +506,6 @@ if (!bot)
     return;
 
 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-                return;
-            }
     if (!loadout)
     {
         TC_LOG_WARN("playerbot", "BotTalentManager: No loadout found for class {} spec {} level {}",
@@ -612,11 +517,6 @@ if (!bot)
     uint32 talentsLearned = 0;
     for (uint32 talentEntry : loadout->talentEntries)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return 0;
-        }
         if (LearnTalent(bot, talentEntry))
             ++talentsLearned;
     }
@@ -624,11 +524,6 @@ if (!bot)
     // Learn hero talents if level 71+
     if (!bot)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return nullptr;
     }
@@ -647,17 +542,6 @@ if (!bot)
 
     return talentsLearned > 0;
 }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-
 if (!bot)
 
 {
@@ -669,36 +553,6 @@ if (!bot)
 }
 
 bool BotTalentManager::ActivateSpecialization(Player* bot, uint8 specIndex)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
 {
     if (!bot)
         return false;
@@ -707,11 +561,6 @@ bool BotTalentManager::ActivateSpecialization(Player* bot, uint8 specIndex)
         specIndex, bot->GetName());
 
     // TODO: Implement spec switching via TrinityCore ActivateTalentGroup()
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     // Requires ChrSpecializationEntry lookup from specIndex
     TC_LOG_WARN("playerbot", "BotTalentManager: ActivateSpecialization not yet fully implemented");
 
@@ -719,41 +568,6 @@ bool BotTalentManager::ActivateSpecialization(Player* bot, uint8 specIndex)
 }
 
 bool BotTalentManager::SetupBotTalents(Player* bot, uint8 specId, uint32 level)
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
 {
     if (!bot)
         return false;
@@ -761,33 +575,13 @@ bool BotTalentManager::SetupBotTalents(Player* bot, uint8 specId, uint32 level)
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         return nullptr;
     }
     TC_LOG_INFO("playerbot", "BotTalentManager: Setting up talents for bot {} (spec {}, level {})",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return;
-        }
         bot->GetName(), specId, level);
 
     // Apply specialization
     if (!ApplySpecialization(bot, specId))
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     {
         TC_LOG_ERROR("playerbot", "BotTalentManager: Failed to apply spec {} to bot {}", specId, bot->GetName());
         return false;
@@ -795,16 +589,6 @@ bool BotTalentManager::SetupBotTalents(Player* bot, uint8 specId, uint32 level)
 
     // Apply talent loadout
     if (!ApplyTalentLoadout(bot, specId, level))
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     {
         TC_LOG_WARN("playerbot", "BotTalentManager: Failed to apply talents for bot {}", bot->GetName());
         return false;
@@ -820,17 +604,6 @@ if (!bot)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
 
     return;
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-
-    return;
-
-}
-
 }
 
 // ====================================================================
@@ -838,36 +611,6 @@ if (!bot)
 // ====================================================================
 
 bool BotTalentManager::EnableDualSpec(Player* bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
 {
     if (!bot)
         return false;
@@ -880,17 +623,6 @@ bool BotTalentManager::EnableDualSpec(Player* bot)
 }
 
 bool BotTalentManager::SetupDualSpec(Player* bot, uint8 spec1, uint8 spec2, uint32 level)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return;
-        }
-
 if (!bot)
 
 {
@@ -900,21 +632,6 @@ if (!bot)
     return nullptr;
 
 }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
 {
     if (!bot || !SupportsDualSpec(level))
         return false;
@@ -930,11 +647,6 @@ if (!bot)
     }
 
     // Setup spec 1 (primary)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     if (!SetupBotTalents(bot, spec1, level))
     {
         TC_LOG_ERROR("playerbot", "BotTalentManager: Failed to setup primary spec {} for bot {}", spec1, bot->GetName());
@@ -944,35 +656,15 @@ if (!bot)
     // Activate spec 2
     if (!ActivateSpecialization(bot, 1))
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot", "BotTalentManager: Failed to activate secondary spec for bot {}", bot->GetName());
         return false;
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-        return nullptr;
-    }
     }
 
     // Setup spec 2 (secondary)
     if (!SetupBotTalents(bot, spec2, level))
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot", "BotTalentManager: Failed to setup secondary spec {} for bot {}", spec2, bot->GetName());
         return false;
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-        return nullptr;
-    }
     }
 
     // Return to spec 1
@@ -981,23 +673,12 @@ if (!bot)
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             return nullptr;
         }
         TC_LOG_WARN("playerbot", "BotTalentManager: Failed to return to primary spec for bot {}", bot->GetName());
     }
 
     ++_stats.dualSpecsSetup;
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     TC_LOG_INFO("playerbot", "BotTalentManager: Successfully setup dual-spec for bot {}", bot->GetName());
 
     return true;
@@ -1008,11 +689,6 @@ if (!bot)
 // ====================================================================
 
 bool BotTalentManager::ApplyHeroTalents(Player* bot, uint8 specId, uint32 level)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
 {
     if (!bot || !SupportsHeroTalents(level))
         return false;
@@ -1022,21 +698,6 @@ bool BotTalentManager::ApplyHeroTalents(Player* bot, uint8 specId, uint32 level)
 
     // Get loadout
     TalentLoadout const* loadout = GetTalentLoadout(bot->GetClass(), specId, level);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     if (!loadout || !loadout->HasHeroTalents())
     {
         TC_LOG_DEBUG("playerbot", "BotTalentManager: No hero talents found for class {} spec {} level {}",
@@ -1062,11 +723,6 @@ bool BotTalentManager::ApplyHeroTalents(Player* bot, uint8 specId, uint32 level)
 // ====================================================================
 
 bool BotTalentManager::LearnTalent(Player* bot, uint32 talentEntry)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-        return;
-    }
 {
     if (!bot)
         return false;
@@ -1079,11 +735,6 @@ bool BotTalentManager::LearnTalent(Player* bot, uint32 talentEntry)
 }
 
 bool BotTalentManager::LearnHeroTalent(Player* bot, uint32 heroTalentEntry)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-        return;
-    }
 {
     if (!bot)
         return false;
@@ -1096,11 +747,6 @@ bool BotTalentManager::LearnHeroTalent(Player* bot, uint32 heroTalentEntry)
 }
 
 void BotTalentManager::LogTalentApplication(Player* bot, uint8 specId, uint32 talentCount)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
 {
     TC_LOG_INFO("playerbot", "BotTalentManager: Applied {} talents to bot {} (class {}, spec {})",
         talentCount, bot->GetName(), bot->GetClass(), specId);

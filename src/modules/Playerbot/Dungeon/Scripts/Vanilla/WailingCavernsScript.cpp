@@ -245,28 +245,8 @@ public:
             {
                 // These bosses cast Sleep - need immediate dispel/wakeup
                 Group* group = player->GetGroup();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                    return nullptr;
-                }
                 if (!group)
                 {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-                    return;
-                }
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                    return nullptr;
-                }
-                if (!group)
-                {
-                    if (!groupMember)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
-                        return nullptr;
-                    }
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
                     return nullptr;
                 }
@@ -280,17 +260,7 @@ public:
                     if (!groupMember)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
-                        return nullptr;
-                    }
-                    if (!groupMember)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
                         return;
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                        return;
-                    }
                     }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
@@ -312,22 +282,12 @@ public:
             {
                 // Cobrahn applies poison (744) - should be cleansed
                 Group* group = player->GetGroup();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                    return nullptr;
-                }
                 if (!group)
                     break;
 
                 for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
-                    if (!groupMember)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: groupMember in method IsInWorld");
-                        return;
-                    }
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 

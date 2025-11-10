@@ -139,11 +139,6 @@ if (!bot)
 
             TC_LOG_DEBUG("playerbot.quest",
                 "QuestCompletion: Bot %s moving to quest target, distance %.1f",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
                 bot->GetName().c_str(), minDistance);
         }
     }

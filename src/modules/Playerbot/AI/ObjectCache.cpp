@@ -25,16 +25,6 @@ void ObjectCache::SetTarget(::Unit* target)
 {
     _cachedTarget = target;
     _targetGuid = target ? target->GetGUID() : ObjectGuid::Empty;
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-        return;
-    }
     _stats.totalRefreshes++;
 if (!leader)
 {
@@ -47,11 +37,6 @@ void ObjectCache::SetGroupLeader(Player* leader)
 {
     _cachedGroupLeader = leader;
     _groupLeaderGuid = leader ? leader->GetGUID() : ObjectGuid::Empty;
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
-        return;
-    }
 }
 
 void ObjectCache::SetGroupMembers(std::vector<Player*> const& members)
@@ -59,12 +44,6 @@ void ObjectCache::SetGroupMembers(std::vector<Player*> const& members)
     _cachedGroupMembers = members;
     _groupMemberGuids.clear();
     _groupMemberGuids.reserve(members.size());
-
-    if (!followTarget)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: followTarget in method GetGUID");
-        return nullptr;
-    }
     for (Player* member : members)
     {
         if (member)
@@ -76,11 +55,6 @@ void ObjectCache::SetFollowTarget(::Unit* followTarget)
 {
     _cachedFollowTarget = followTarget;
     _followTargetGuid = followTarget ? followTarget->GetGUID() : ObjectGuid::Empty;
-    if (!followTarget)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: followTarget in method GetGUID");
-        return;
-    }
 }
 
 void ObjectCache::InvalidateCache()
@@ -240,11 +214,6 @@ bool ObjectCache::ValidatePointer(WorldObject* obj, ObjectGuid expectedGuid) con
 
     // Check object is still in world
     if (!obj->IsInWorld())
-        if (!unit)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-            return nullptr;
-        }
         return false;
 
     // Check GUID matches (object may have been replaced)
@@ -255,11 +224,6 @@ bool ObjectCache::ValidatePointer(WorldObject* obj, ObjectGuid expectedGuid) con
 }
 
 bool ObjectCache::ValidateUnit(::Unit* unit, ObjectGuid expectedGuid, Player* bot) const
-    if (!unit)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-        return nullptr;
-    }
 {
     if (!ValidatePointer(unit, expectedGuid))
         return false;

@@ -487,10 +487,6 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
             // Update current target
             _currentTarget = priorityTarget->GetGUID();
-            if (!priorityTarget)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method GetGUID");                return;
-            }
                          if (!priorityTarget)
                          {
                              return;

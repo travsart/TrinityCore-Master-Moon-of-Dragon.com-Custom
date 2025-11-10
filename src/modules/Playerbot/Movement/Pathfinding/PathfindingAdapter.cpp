@@ -54,16 +54,6 @@ namespace Playerbot
     }
 
     bool PathfindingAdapter::CalculatePath(Player* bot, Position const& destination,
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-                return nullptr;
-            }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
                                           MovementPath& path, bool forceDirect)
     {
         if (!bot || !bot->GetMap())
@@ -80,11 +70,6 @@ namespace Playerbot
                 return true;
             }
             _cacheMisses.fetch_add(1);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-            return nullptr;
-        }
         }
 
         // Clear existing path
@@ -112,17 +97,6 @@ namespace Playerbot
                 generator.SetUseStraightPath(true);
 
             bool result = InternalCalculatePath(generator, start, destination, bot);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return false;
-            }
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return nullptr;
-                    }
-
             if (!result)
             {
                 TC_LOG_DEBUG("playerbot.movement", "Path generation failed for bot %s to (%.2f, %.2f, %.2f)",
@@ -191,11 +165,6 @@ namespace Playerbot
     }
 
     bool PathfindingAdapter::CalculateFormationPath(Player* bot, Unit* leader,
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-                return nullptr;
-            }
                                                Position const& offset, MovementPath& path)
     {
         if (!bot || !leader)
@@ -219,16 +188,6 @@ namespace Playerbot
     }
 
     bool PathfindingAdapter::CalculateFleePath(Player* bot, Unit* threat,
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return nullptr;
-        }
                                               float distance, MovementPath& path)
     {
         if (!bot || !threat || !bot->GetMap())
@@ -240,21 +199,6 @@ namespace Playerbot
 
         // Try to find a valid flee position
         Map* map = bot->GetMap();
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-            return;
-        }
         Position fleePos;
         bool found = false;
 
@@ -265,17 +209,6 @@ if (!bot)
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
             fleePos = bot->GetNearPosition(distance, tryAngle);
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                    return;
-                }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
-
             // Check if position is valid
             if (IsWalkablePosition(map, fleePos))
             {
@@ -295,27 +228,11 @@ if (!bot)
     }
 
     bool PathfindingAdapter::HasCachedPath(Player* bot, Position const& destination) const
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
     {
         if (!bot || !_enableCaching)
             return false;
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return 0;
-        }
-
         std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
@@ -333,23 +250,12 @@ if (!bot)
     }
 
     bool PathfindingAdapter::GetCachedPath(Player* bot, Position const& destination,
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
                                           MovementPath& path) const
     {
         if (!HasCachedPath(bot, destination))
             return false;
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return 0;
-        }
-
         std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
@@ -377,11 +283,6 @@ if (!bot)
             // Extract bot GUID from key (first 64 bits)
             ObjectGuid guid = ObjectGuid::Create<HighGuid::Player>(it->first >> 32);
             if (guid == bot->GetGUID())
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return;
-            }
             {
                 it = _pathCache.erase(it);
             }

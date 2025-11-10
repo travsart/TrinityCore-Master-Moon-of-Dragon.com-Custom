@@ -188,17 +188,6 @@ namespace Playerbot
             return {};
 
         uint32 entry = creature->GetEntry();
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-            return;
-        }
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-            return;
-        }
-
         // Check cached paths first
         std::vector<uint32> cachedPath = GetCachedPath(entry, type);
         if (!cachedPath.empty())
@@ -216,17 +205,6 @@ namespace Playerbot
     }
 
     int32 GossipHandler::ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType)
-
-    if (!bot)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-        return nullptr;
-
-    }
-
 if (!bot)
 
 {
@@ -244,49 +222,14 @@ if (!bot)
 
         // Get or create session
         GossipSession& session = m_activeSessions[bot->GetGUID()];
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
         session.botGuid = bot->GetGUID();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
         session.npcGuid = target->GetGUID();
         session.menuId = menuId;
         session.targetService = desiredType;
 
         // Parse menu options
         session.options = ParseGossipMenu(bot, menuId);
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
             if (!bot)
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                return nullptr;
-            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return;
@@ -310,19 +253,9 @@ if (!bot)
         if (bestOption >= 0)
         {
             // Cache successful navigation
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
             if (Creature* creature = target->ToCreature())
             {
                 uint32 entry = creature->GetEntry();
-                if (!creature)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                    return nullptr;
-                }
                 std::vector<uint32> currentPath;
                 currentPath.push_back(static_cast<uint32>(bestOption));
                 CacheGossipPath(entry, desiredType, currentPath);
@@ -346,11 +279,6 @@ if (!bot)
         std::lock_guard lock(m_mutex);
 
         auto it = m_activeSessions.find(bot->GetGUID());
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
         if (it != m_activeSessions.end())
         {
             // Update session with new menu data
@@ -453,11 +381,6 @@ if (!bot)
             return InteractionType::None;
 
         std::string lowerText = ToLowerCase(text);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-            return "";
-        }
         InteractionType bestMatch = InteractionType::None;
         int bestMatchCount = 0;
 
@@ -494,11 +417,6 @@ if (!bot)
             {
                 // Send coded response
                 if (WorldSession* session = bot->GetSession())
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-                    return nullptr;
-                }
                 {
                     // This would send the code through gossip
                     // session->HandleGossipSelectOptionOpcode with code
@@ -546,11 +464,6 @@ if (!bot)
                 }
             }
             m_lastCacheCleanup = now;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
-            return;
-        }
         }
     }
 
@@ -570,28 +483,12 @@ if (!bot)
     }
 
     void GossipHandler::ClearCache()
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
     {
         std::lock_guard lock(m_mutex);
         m_gossipPathCache.clear();
         m_pathStatistics.clear();
         m_activeSessions.clear();
     }
-
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-
-    return;
-
-}
-
     GossipSelectType GossipHandler::GetIconType(uint8 icon) const
     {
         auto it = m_iconMappings.find(icon);
@@ -607,19 +504,9 @@ if (!bot)
             return false;
 
         return bot->GetMoney() >= option.boxMoney;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
-            return;
-        }
     }
 
     std::string GossipHandler::GenerateResponse(::Player* bot, const std::string& boxText) const
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
     {
         if (!bot || boxText.empty())
             return "";
@@ -641,11 +528,6 @@ if (!bot)
             return bot->GetGuildName();
 
         if (lowerText.find("level") != std::string::npos)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-                return nullptr;
-            }
             return std::to_string(bot->GetLevel());
 
         // No suitable response

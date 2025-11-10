@@ -89,21 +89,6 @@ void AsyncBotInitializer::Shutdown()
 // ============================================================================
 
 bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
 {
     if (!bot || !callback)
     {
@@ -128,31 +113,15 @@ bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
 
     // Queue the task
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         std::lock_guard lock(_pendingMutex);
         _pendingTasks.emplace(bot, std::move(callback));
         _pendingCount.fetch_add(1, std::memory_order_relaxed);
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
     }
     // Wake up a worker thread
     _pendingCV.notify_one();
 
     TC_LOG_DEBUG("module.playerbot.async",
                  "Bot {} queued for async initialization (queue depth: {})",
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
                  bot->GetName(), _pendingCount.load());
 
     return true;
@@ -170,11 +139,6 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
 
     while (!_completedResults.empty() && processed < maxToProcess)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         InitResult result = std::move(_completedResults.front());
         _completedResults.pop();
         _completedCount.fetch_sub(1, std::memory_order_relaxed);
@@ -185,11 +149,6 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
             if (result.callback)
             {
                 result.callback(result.ai);  // Transfer ownership
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
                 ++processed;
 
                 std::lock_guard metricsLock(_metricsMutex);
@@ -200,11 +159,6 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
         {
             TC_LOG_ERROR("module.playerbot.async",
                          "Exception in initialization callback for {}: {}",
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
                          result.bot ? result.bot->GetName() : "Unknown",
                          e.what());
 
@@ -238,12 +192,6 @@ void AsyncBotInitializer::WorkerThreadMain(size_t workerId)
 
         if (_pendingTasks.empty())
             continue;
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         // Get task
         InitTask task = std::move(_pendingTasks.front());
         _pendingTasks.pop();
@@ -260,11 +208,6 @@ void AsyncBotInitializer::WorkerThreadMain(size_t workerId)
         // Queue result for main thread callback
         {
             if (!bot)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return nullptr;
@@ -285,11 +228,6 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     TC_LOG_DEBUG("module.playerbot.async",
                  "Worker processing initialization for {} (queued for {}ms)",
                  if (!bot)
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
-                 }
                  {
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                      return;
@@ -304,16 +242,6 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     try
     {
         ai = CreateBotAI(task.bot);
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
         success = (ai != nullptr);
     }
     catch (std::exception const& e)
@@ -337,12 +265,6 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
             ++_metrics.successfulInits;
         else
             ++_metrics.failedInits;
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         _metrics.totalTime += duration;
 
         if (_metrics.totalInits == 1)
@@ -368,11 +290,6 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
     TC_LOG_INFO("module.playerbot.async",
                 "{} Bot {} initialization in {}ms",
                 success ? "✅" : "❌",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 task.bot->GetName(),
                 duration.count());
 

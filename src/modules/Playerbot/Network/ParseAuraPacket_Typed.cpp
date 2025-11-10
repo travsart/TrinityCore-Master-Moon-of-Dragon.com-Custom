@@ -18,16 +18,6 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
         return;
 
     Player* bot = session->GetPlayer();
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
     if (!bot)
         return;
 
@@ -44,12 +34,6 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
         event.auraSlot = auraInfo.Slot;
         event.stackCount = auraInfo.AuraData.has_value() ? auraInfo.AuraData->Applications : 0;
         event.timestamp = std::chrono::steady_clock::now();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
-
         AuraEventBus::instance()->PublishEvent(event);
     }
 
@@ -57,11 +41,6 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            if (!session)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-                return nullptr;
-            }
             return;
         }
         bot->GetName(), packet.Auras.size());
@@ -70,29 +49,9 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
 void ParseTypedSetFlatSpellModifier(WorldSession* session, WorldPackets::Spells::SetSpellModifier const& packet)
 {
     if (!session)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
         return;
 
     Player* bot = session->GetPlayer();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-            if (!session)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-                return nullptr;
-            }
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
     if (!bot)
         return;
 
@@ -101,21 +60,6 @@ void ParseTypedSetFlatSpellModifier(WorldSession* session, WorldPackets::Spells:
         AuraEvent event;
         event.type = AuraEventType::SPELL_MODIFIER_CHANGED;
         event.targetGuid = bot->GetGUID();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         event.spellId = 0;
         event.auraSlot = static_cast<uint32>(modData.ModIndex);
         event.stackCount = 0;
@@ -139,11 +83,6 @@ void ParseTypedSetPctSpellModifier(WorldSession* session, WorldPackets::Spells::
         return;
 
     Player* bot = session->GetPlayer();
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-        return;
-    }
     if (!bot)
         return;
 
@@ -152,16 +91,6 @@ void ParseTypedSetPctSpellModifier(WorldSession* session, WorldPackets::Spells::
         AuraEvent event;
         event.type = AuraEventType::SPELL_MODIFIER_CHANGED;
         event.targetGuid = bot->GetGUID();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return;
-        }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         event.spellId = 0;
         event.auraSlot = static_cast<uint32>(modData.ModIndex);
         event.stackCount = 0;

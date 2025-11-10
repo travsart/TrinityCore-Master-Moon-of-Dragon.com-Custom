@@ -306,30 +306,10 @@ void DefensiveBehaviorManager::UpdateState()
 
                 // Check tank status
                 if (GetPlayerRole(member) == BOT_ROLE_TANK && !member->IsAlive())
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                    return nullptr;
-                }
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                        return nullptr;
-                    }
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                    return nullptr;
-                }
                     _currentState.tankDead = true;
 
                 // Check healer mana
                 if (GetPlayerRole(member) == BOT_ROLE_HEALER && member->IsAlive())
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-                    return nullptr;
-                }
                 {
                     if (member->GetPowerPct(POWER_MANA) < 20.0f)
                         _currentState.healerOOM = true;
@@ -656,22 +636,11 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
 
     // Check if we can provide external defensive
     ObjectGuid targetGuid = GetExternalDefensiveTarget();
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-        return nullptr;
-    }
     if (!targetGuid.IsEmpty())
     {
         // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
         auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, targetGuid);
         Unit* target = nullptr;
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
-
         if (snapshot && snapshot->IsAlive())
         {
             // Get Unit* for spell casting (main thread operation)
@@ -685,11 +654,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
             {
                 case CLASS_PALADIN:
                     if (!_bot->GetSpellHistory()->HasCooldown(HAND_OF_PROTECTION))
-                    if (!target)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                        return nullptr;
-                    }
                     {
                         // MIGRATION COMPLETE (2025-10-30): Packet-based emergency save
                         SpellPacketBuilder::BuildOptions options;
@@ -701,16 +665,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                         options.logFailures = true;
 
                         auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, HAND_OF_PROTECTION, target, options);
-                                         if (!target)
-                                         {
-                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                             return;
-                                         }
-                                         if (!target)
-                                         {
-                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                             return;
-                                         }
                         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
                         {
                             TC_LOG_DEBUG("playerbot.defensive.save",
@@ -731,16 +685,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                         options.logFailures = true;
 
                         auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, HAND_OF_SACRIFICE, target, options);
-                            if (!target)
-                            {
-                                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                return nullptr;
-                            }
-                                         if (!target)
-                                         {
-                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                             return;
-                                         }
                         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
                         {
                             TC_LOG_DEBUG("playerbot.defensive.save",
@@ -764,16 +708,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                         options.logFailures = true;
 
                         auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, PAIN_SUPPRESSION, target, options);
-                        if (!target)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                            return;
-                        }
-                                         if (!target)
-                                         {
-                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                             return;
-                                         }
                         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
                         {
                             TC_LOG_DEBUG("playerbot.defensive.save",
@@ -794,11 +728,6 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                         options.logFailures = true;
 
                         auto result = SpellPacketBuilder::BuildCastSpellPacket(_bot, GUARDIAN_SPIRIT, target, options);
-                                         if (!target)
-                                         {
-                                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                                             return;
-                                         }
                         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
                         {
                             TC_LOG_DEBUG("playerbot.defensive.save",

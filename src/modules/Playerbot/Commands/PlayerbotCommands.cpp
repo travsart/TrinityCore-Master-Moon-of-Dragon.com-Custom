@@ -224,11 +224,6 @@ namespace Playerbot
             return false;
 
         Player* bot = FindBotByName(name);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
-                return;
-            }
         if (!bot)
         {
             handler->PSendSysMessage("Bot '%s' not found.", name.c_str());

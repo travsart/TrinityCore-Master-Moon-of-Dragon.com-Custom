@@ -317,16 +317,6 @@ void PlayerbotGroupScript::CheckReadyCheckState(Group* group, GroupState& state)
 }
 
 void PlayerbotGroupScript::CheckSubgroupChanges(Group* group, GroupState& state)
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-            return nullptr;
-        }
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     bool anyChanged = false;
 

@@ -36,22 +36,6 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
-
-    if (!bot)
-
-    {
-
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-
-        return nullptr;
-
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
-
 if (!bot)
 
 {
@@ -61,17 +45,6 @@ if (!bot)
     return;
 
 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-        return;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
-
     // Debug logging
     static uint32 lastLog = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -80,11 +53,6 @@ if (!bot)
     // First check if bot is already in combat
     if (bot->IsInCombat())
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         if (shouldLog)
             TC_LOG_DEBUG("module.playerbot.combat", "GroupCombatTrigger::Check - {} already in combat, skipping", bot->GetName());
         return false; // Already handled by normal combat
@@ -92,21 +60,6 @@ if (!bot)
 
     // Check if bot is in a group
     Group* group = bot->GetGroup();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
     if (!group)
     {
         if (shouldLog)
@@ -116,22 +69,6 @@ if (!bot)
 
     // Check if group is in combat and bot should engage
     bool shouldEngage = ShouldEngageCombat(bot, group);
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return false;
-    }
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-                        return nullptr;
-                    }
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return;
-                    }
-
     if (shouldLog || shouldEngage)
     {
         TC_LOG_INFO("module.playerbot.combat", "GroupCombatTrigger::Check - {} in group {}, should engage: {}",
@@ -151,37 +88,11 @@ TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
 
     Player* bot = ai->GetBot();
     Group* group = bot->GetGroup();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-        return nullptr;
-    }
-
     if (!group || bot->IsInCombat())
         return result;
 
     // Check if we should engage
     if (!ShouldEngageCombat(bot, group))
-        if (!leader)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInCombat");
-            return nullptr;
-        }
         return result;
 
     // Get the best target to assist
@@ -200,17 +111,6 @@ TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
 
     return result;
 }
-
-if (!member)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-
-    return;
-
-}
-
 float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
 {
     if (!ai || !ai->GetBot())
@@ -218,12 +118,6 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
 
     Player* bot = ai->GetBot();
     Group* group = bot->GetGroup();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
-
     if (!group)
         return 0.0f;
 
@@ -232,28 +126,13 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
 
     // Increase urgency if leader is in combat
     Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return;
-    }
     if (leader && leader != bot && leader->IsInCombat())
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInCombat");
-        return;
-    }
     {
         urgency += 0.2f;
 
         // Even higher if leader is low health
         if (leader->GetHealthPct() < 50.0f)
             urgency = 0.95f;
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-        return nullptr;
-    }
     }
 
     // Check how many members are in combat
@@ -263,32 +142,17 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return;
-            }
         {
             ++totalMembers;
             if (member->IsInCombat())
                 ++membersInCombat;
         }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-        return nullptr;
-    }
     }
 
     // Increase urgency based on percentage of group in combat
     if (totalMembers > 0)
     {
         float combatRatio = static_cast<float>(membersInCombat) / totalMembers;
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         urgency = std::min(1.0f, urgency + (combatRatio * 0.2f));
     }
 
@@ -318,16 +182,6 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-        return nullptr;
-    }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
         {
             if (member->IsInCombat())
             {
@@ -345,27 +199,11 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
 
     return inCombat;
 }
-
-if (!victim)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
-    return;
-}
 bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
                  if (!bot)
                  {
-                     if (!member)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                         return nullptr;
-                     }
                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
                      return nullptr;
-                 }
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                     return;
                  }
 {
     if (!bot || !group || bot->IsInCombat())
@@ -384,11 +222,6 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
     {
         std::lock_guard lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-            return;
-        }
         if (it != _combatCache.end())
         {
             auto elapsed = std::chrono::steady_clock::now() - it->second.combatStartTime;
@@ -399,24 +232,8 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
 
     // Check if we have a valid target
     Unit* target = GetAssistTarget(bot, group);
-
-if (!group)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-
-    return;
-
-}
     if (!target)
         return false;
-
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInCombat");
-        return;
-    }
     // Check if target is in range
     if (!IsInEngagementRange(bot, target))
         return false;
@@ -440,36 +257,16 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
         {
             if (!member->IsInCombat())
                 continue;
 
             if (Unit* victim = member->GetVictim())
-                if (!victim)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetGUID");
-                    return nullptr;
-                }
             {
                 targetCounts[victim->GetGUID()]++;
 
                 // Track leader's target specifically
                 if (member->GetGUID() == group->GetLeaderGUID())
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                    return nullptr;
-                }
                     leaderTarget = victim;
             }
         }
@@ -495,16 +292,6 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     if (!bestTargetGuid.IsEmpty())
     {
         if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
-        if (!group)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-            return nullptr;
-        }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return;
-            }
             return ObjectAccessor::GetUnit(*leader, bestTargetGuid);
     }
 
@@ -522,16 +309,6 @@ Unit* GroupCombatTrigger::GetLeaderTarget(Group* group) const
         return nullptr;
 
     Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID());
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return;
-    }
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInCombat");
-        return;
-    }
     if (!leader || !leader->IsInCombat())
         return nullptr;
 
@@ -539,21 +316,6 @@ Unit* GroupCombatTrigger::GetLeaderTarget(Group* group) const
 }
 
 Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return nullptr;
-        }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
 {
     if (!bot || !group)
         return nullptr;
@@ -577,11 +339,6 @@ Unit* GroupCombatTrigger::GetAssistTarget(Player* bot, Group* group) const
         if (Player* member = itr.GetSource())
         {
             if (member == bot || !member->IsInCombat())
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
                 continue;
 
             if (Unit* victim = member->GetVictim())
@@ -610,12 +367,6 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     std::lock_guard lock(_cacheMutex);
 
     auto& info = _combatCache[group->GetGUID()];
-
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-        return;
-    }
     // Track combat state changes
     if (!info.inCombat && inCombat)
     {
@@ -634,27 +385,12 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
-        if (!member)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-            return nullptr;
-        }
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
         {
             if (member->IsInCombat())
             {
                 info.membersInCombat++;
                 if (Unit* victim = member->GetVictim())
                     info.memberTargets[member->GetGUID()] = victim->GetGUID();
-                    if (!member)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-                        return;
-                    }
             }
         }
     }
@@ -668,16 +404,6 @@ uint32 GroupCombatTrigger::GetCombatDuration(Group* group) const
     std::lock_guard lock(_cacheMutex);
 
     auto it = _combatCache.find(group->GetGUID());
-
-if (!group)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-
-    return;
-
-}
     if (it == _combatCache.end() || !it->second.inCombat)
         return 0;
 
@@ -698,31 +424,11 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
 
     // For melee classes, ensure they can reach the target
     if (bot->GetClass() == CLASS_WARRIOR || bot->GetClass() == CLASS_ROGUE ||
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return nullptr;
-    }
         bot->GetClass() == CLASS_DEATH_KNIGHT || bot->GetClass() == CLASS_DEMON_HUNTER ||
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return nullptr;
-        }
         bot->GetClass() == CLASS_PALADIN || bot->GetClass() == CLASS_MONK)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-            return nullptr;
-        }
     {
         // Allow slightly more range for melee to account for movement
         return distance <= std::max(10.0f, MIN_ENGAGEMENT_RANGE * 2);
-    if (!member)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-        return nullptr;
-    }
     }
 
     // Ranged classes can engage from further
@@ -767,11 +473,6 @@ bool GroupCombatTrigger::IsTargetEngaged(Group* group, Unit* target) const
         if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat() && member->GetVictim() == target)
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
                 return true;
         }
     }
@@ -793,11 +494,6 @@ bool GroupCombatTrigger::UpdateCombatCache(Group* group) const
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
         {
             if (member->IsInCombat())
             {
@@ -837,11 +533,6 @@ float GroupCombatTrigger::CalculateTargetPriority(Group* group, Unit* target) co
 
     // Leader's target gets bonus priority
     if (Player* leader = ObjectAccessor::FindPlayer(group->GetLeaderGUID()))
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return nullptr;
-    }
     {
         if (leader->GetVictim() == target)
             priority += 20.0f;
@@ -869,11 +560,6 @@ uint32 GroupCombatTrigger::CountMembersOnTarget(Group* group, Unit* target) cons
         if (Player* member = itr.GetSource())
         {
             if (member->IsInCombat() && member->GetVictim() == target)
-            if (!member)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-                return nullptr;
-            }
                 ++count;
         }
     }

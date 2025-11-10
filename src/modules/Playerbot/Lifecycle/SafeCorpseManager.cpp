@@ -20,17 +20,6 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
 
     ObjectGuid corpseGuid = corpse->GetGUID();
     ObjectGuid ownerGuid = bot->GetGUID();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return;
-    }
-
     std::unique_lock<std::shared_mutex> lock(_mutex);
 
     // Create tracker
@@ -44,21 +33,10 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
     tracker->creationTime = std::chrono::steady_clock::now();
     tracker->safeToDelete = false; // NOT safe until Map update completes
     tracker->referenceCount = 1;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
-
     _trackedCorpses[corpseGuid] = std::move(tracker);
     _ownerToCorpse[ownerGuid] = corpseGuid;
 
     TC_LOG_DEBUG("playerbot.corpse", "Registered corpse {} for bot {} at ({:.2f}, {:.2f}, {:.2f})",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         corpseGuid.ToString(), bot->GetName(), tracker->x, tracker->y, tracker->z);
 }
 

@@ -21,11 +21,6 @@ if (!map)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
     return nullptr;
 }
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
     : _map(map)
 {
     ASSERT(map, "LOSCache requires valid Map pointer");
@@ -216,22 +211,11 @@ void LOSCache::InvalidateRegion(Position const& center, float radius)
 void LOSCache::Clear()
 {
     std::unique_lock<std::shared_mutex> lock(_mutex);
-
-    if (!map)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-        return;
-    }
     uint32 clearedCount = _cache.size();
     _cache.clear();
 
     TC_LOG_INFO("playerbot.spatial",
         "LOSCache cleared for map {} ({}), {} entries removed",
-        if (!map)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-            return;
-        }
         _map->GetId(), _map->GetMapName(), clearedCount);
 }
 

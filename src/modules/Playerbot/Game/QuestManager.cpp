@@ -67,16 +67,6 @@ namespace Playerbot
                 // Basic scoring - just level and XP
                 score = 50.0f;
                 if (bot->GetQuestLevel(quest) == bot->GetLevel())
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-                    return;
-                }
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-                    return;
-                }
                     score += 50.0f;
                 break;
 
@@ -430,19 +420,9 @@ namespace Playerbot
                 }
 
                 if (!obj)
-                    if (!creature)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                        return nullptr;
-                    }
                     continue;
 
                 if (Creature* creature = obj->ToCreature())
-                    if (!creature)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                        return nullptr;
-                    }
                 {
                     // Check if this creature is involved in the quest
                     for (uint32 involvedQuestId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
@@ -585,73 +565,23 @@ namespace Playerbot
         {
             // Get Creature* for quest giver detection (validated via snapshot first)
             entity = ObjectAccessor::GetCreature(*GetBot(), guid);
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsQuestGiver");
-            return nullptr;
-        }
         }
 
         if (!entity)
             continue;
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
-            return nullptr;
-        }
         // Original filtering logic from searcher goes here
-    if (!creature)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-        return nullptr;
-    }
     }
     // End of spatial grid fix
 
         for (Creature* creature : creatures)
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                return nullptr;
-            }
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsQuestGiver");
-                return nullptr;
-            }
         {
             if (!creature || !creature->IsQuestGiver())
                 continue;
 
             QuestGiverInfo info;
             info.guid = creature->GetGUID();
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                return;
-            }
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetGUID");
-                return;
-            }
             info.entry = creature->GetEntry();
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                return;
-            }
             info.distance = GetBot()->GetDistance(creature);
-                if (!creature)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                    return nullptr;
-                }
-            if (!creature)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-                return nullptr;
-            }
             info.lastCheckTime = GameTime::GetGameTimeMS();
 
             // Check available quests
