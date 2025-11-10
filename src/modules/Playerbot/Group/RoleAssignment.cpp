@@ -650,7 +650,19 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile, Playe
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
         return;
     }
-    uint8 playerSpec = 0; // TODO: Get actual spec when available
+
+    // Get player's active specialization
+    uint8 playerSpec = 0;
+    if (ChrSpecialization primarySpec = player->GetPrimarySpecialization())
+    {
+        playerSpec = static_cast<uint8>(primarySpec);
+    }
+    else
+    {
+        // Fallback: try to determine spec from talents if primary spec not set
+        // This handles low-level characters or edge cases
+        playerSpec = 0; // Default to first spec
+    }
 
     auto classIt = _classSpecRoles.find(playerClass);
     if (classIt != _classSpecRoles.end())

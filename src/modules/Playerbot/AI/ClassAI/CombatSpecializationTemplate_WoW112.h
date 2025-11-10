@@ -240,7 +240,28 @@ private:
     typename std::enable_if<std::is_same<T, RuneResource>::value, void>::type
     RegenerateResourceInternal(uint32 diff)
     {
-        float hasteModifier = 1.0f; // TODO: Get from player stats
+        // Get haste modifier from player stats (affects rune regeneration)
+        // Rune regeneration is affected by melee haste in WoW
+        float hasteModifier = 1.0f;
+
+        Player* player = dynamic_cast<Player*>(_bot);
+        if (player)
+        {
+            // Get melee haste from gear rating
+            float hastePct = player->GetRatingBonusValue(CR_HASTE_MELEE);
+
+            // Add haste from auras (buffs, talents, etc.)
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_HASTE);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_HASTE_2);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_RANGED_HASTE);
+
+            // Convert percentage to multiplier (e.g., 20% haste = 1.20 multiplier)
+            hasteModifier = 1.0f + (hastePct / 100.0f);
+
+            // Clamp to reasonable bounds (prevent negative or excessive values)
+            hasteModifier = std::max(0.1f, std::min(hasteModifier, 3.0f));
+        }
+
         _resource.Update(diff, _inCombat, hasteModifier);
     }
 

@@ -20,6 +20,7 @@
 #include "BattlenetAccountMgr.h"
 #include "Config/PlayerbotConfig.h"
 #include "DatabaseEnv.h"
+#include "Database/PlayerbotDatabase.h"
 #include "Log.h"
 #include "Util.h"
 #include "Random.h"
@@ -716,11 +717,51 @@ std::string BotAccountMgr::GenerateSecurePassword()
 
 void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 {
-    // TODO: Implement database storage when BotDatabasePool is available
-    // For now, log the metadata
-    TC_LOG_DEBUG("module.playerbot.account",
-        "Storing metadata for account {}: email={}, characters={}",
-        info.bnetAccountId, info.email, info.characterCount);
+    // Store bot account metadata in playerbots database
+    // NOTE: This uses direct SQL execution. Should be converted to prepared statements
+    // when PlayerbotDatabase prepared statement infrastructure is fully implemented.
+
+    try
+    {
+        std::ostringstream ss;
+        ss << "INSERT INTO bot_account_metadata "
+           << "(account_id, bnet_account_id, email, character_count, expansion, locale, last_ip, join_date, total_time_played, notes) "
+           << "VALUES ("
+           << info.accountId << ", "
+           << info.bnetAccountId << ", "
+           << "'" << info.email << "', "
+           << info.characterCount << ", "
+           << "0, "  // expansion (default 0)
+           << "'enUS', "  // locale (default enUS)
+           << "NULL, "  // last_ip
+           << "NOW(), "  // join_date
+           << "0, "  // total_time_played
+           << "NULL"  // notes
+           << ") "
+           << "ON DUPLICATE KEY UPDATE "
+           << "email = VALUES(email), "
+           << "character_count = VALUES(character_count), "
+           << "updated_at = NOW()";
+
+        if (sPlayerbotDatabase->Execute(ss.str()))
+        {
+            TC_LOG_DEBUG("module.playerbot.account",
+                "Stored metadata for account {}: email={}, characters={}",
+                info.bnetAccountId, info.email, info.characterCount);
+        }
+        else
+        {
+            TC_LOG_ERROR("module.playerbot.account",
+                "Failed to store metadata for account {}: database execution failed",
+                info.bnetAccountId);
+        }
+    }
+    catch (std::exception const& e)
+    {
+        TC_LOG_ERROR("module.playerbot.account",
+            "Exception while storing account metadata for account {}: {}",
+            info.bnetAccountId, e.what());
+    }
 }
 
 void BotAccountMgr::LoadAccountMetadata()

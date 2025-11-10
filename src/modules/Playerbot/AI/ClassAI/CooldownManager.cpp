@@ -700,9 +700,62 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
     if (!spellInfo)
         return 1500;
 
-    // Most spells use the standard GCD
-    // TODO: Apply haste calculations and spell-specific GCD modifications
-    return 1500;
+    // Base GCD is 1500ms (1.5 seconds) for most spells
+    uint32 baseGCD = 1500;
+
+    // Some spells have custom GCDs (e.g., some DoTs have no GCD, some abilities have 1.0s GCD)
+    // Check spell attributes for GCD exceptions
+    if (spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
+        return 0; // No GCD
+
+    if (spellInfo->HasAttribute(SPELL_ATTR5_HASTE_AFFECTS_DURATION))
+        ; // GCD is affected by haste (default behavior)
+
+    // Apply haste to GCD
+    // WoW GCD formula: GCD = base_GCD / (1 + haste_percent / 100)
+    // Minimum GCD is 750ms (0.75 seconds) for most classes
+    uint32 minGCD = 750;
+
+    Player* player = dynamic_cast<Player*>(caster);
+    if (player)
+    {
+        // Determine which haste rating to use based on spell school
+        float hastePct = 0.0f;
+
+        // Use spell haste for magic spells, melee haste for physical abilities
+        if (spellInfo->IsRangedWeaponSpell())
+        {
+            hastePct = player->GetRatingBonusValue(CR_HASTE_RANGED);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_RANGED_HASTE);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_RANGED_HASTE);
+        }
+        else if (spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE || spellInfo->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
+        {
+            hastePct = player->GetRatingBonusValue(CR_HASTE_MELEE);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_HASTE);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_HASTE_2);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_RANGED_HASTE);
+        }
+        else // Magic spells
+        {
+            hastePct = player->GetRatingBonusValue(CR_HASTE_SPELL);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_CASTING_SPEED);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_SPELL_HASTE);
+        }
+
+        // Apply haste to GCD
+        float hasteMultiplier = 1.0f + (hastePct / 100.0f);
+        uint32 modifiedGCD = static_cast<uint32>(baseGCD / hasteMultiplier);
+
+        // Enforce minimum GCD (750ms for most classes, some specs have 500ms)
+        // Death Knights, Shamans, and some other specs have different minimums
+        if (player->GetClass() == CLASS_DEATH_KNIGHT || player->GetClass() == CLASS_SHAMAN)
+            minGCD = 500; // These classes can reach 0.5s GCD
+
+        return std::max(minGCD, modifiedGCD);
+    }
+
+    return baseGCD;
 }
 
 bool CooldownCalculator::TriggersGCD(uint32 spellId)
@@ -750,9 +803,23 @@ uint32 CooldownCalculator::GetSpellCharges(uint32 spellId)
     if (!spellInfo)
         return 1;
 
-    // Most spells have 1 charge, specific spells may have more
-    // TODO: Implement charge detection from spell data
-    return 1;
+    // Get the spell category (charge category)
+    uint32 categoryId = spellInfo->GetCategory();
+    if (categoryId == 0)
+        return 1; // No category means single charge
+
+    // Look up the category entry from DB2
+    SpellCategoryEntry const* categoryEntry = sSpellCategoryStore.LookupEntry(categoryId);
+    if (!categoryEntry)
+        return 1;
+
+    // Return max charges from category data
+    // MaxCharges of 0 or 1 means single charge, 2+ means multiple charges
+    int32 maxCharges = categoryEntry->MaxCharges;
+    if (maxCharges <= 0)
+        return 1;
+
+    return static_cast<uint32>(maxCharges);
 }
 
 uint32 CooldownCalculator::ApplyHaste(uint32 cooldownMs, float hastePercent)
@@ -766,15 +833,73 @@ uint32 CooldownCalculator::ApplyHaste(uint32 cooldownMs, float hastePercent)
 
 uint32 CooldownCalculator::ApplyCooldownReduction(uint32 cooldownMs, Player* caster, uint32 spellId)
 {
-    if (!caster || !spellId)
+    if (!caster || !spellId || cooldownMs == 0)
         return cooldownMs;
 
-    // TODO: Apply various cooldown reduction effects
-    // - Talents that reduce cooldowns
-    // - Gear effects
-    // - Temporary buffs
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    if (!spellInfo)
+        return cooldownMs;
 
-    return cooldownMs;
+    float modifiedCooldown = static_cast<float>(cooldownMs);
+
+    // 1. Apply spell mod for cooldown reduction (from talents, auras, etc.)
+    // SPELLMOD_COOLDOWN reduces cooldown by a percentage or flat amount
+    caster->ApplySpellMod(spellInfo, SpellModOp::Cooldown, modifiedCooldown);
+
+    // 2. Apply aura modifiers that reduce cooldowns
+    // SPELL_AURA_MOD_COOLDOWN reduces cooldown by flat amount (in milliseconds)
+    float flatReduction = caster->GetTotalAuraModifier(SPELL_AURA_MOD_COOLDOWN);
+    modifiedCooldown -= flatReduction;
+
+    // 3. Apply haste to cooldowns if spell is affected by haste
+    // Some spells (like many Death Knight abilities) have cooldowns affected by haste
+    if (spellInfo->HasAttribute(SPELL_ATTR11_SCALES_WITH_ITEM_LEVEL) ||
+        spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
+    {
+        // Check for haste affecting cooldown
+        float hastePct = 0.0f;
+
+        if (spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE ||
+            spellInfo->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
+        {
+            hastePct = caster->GetRatingBonusValue(CR_HASTE_MELEE);
+            hastePct += caster->GetTotalAuraModifier(SPELL_AURA_MOD_MELEE_HASTE);
+        }
+        else
+        {
+            hastePct = caster->GetRatingBonusValue(CR_HASTE_SPELL);
+            hastePct += caster->GetTotalAuraModifier(SPELL_AURA_MOD_SPELL_HASTE);
+        }
+
+        if (hastePct > 0.0f)
+        {
+            float hasteMultiplier = 1.0f + (hastePct / 100.0f);
+            modifiedCooldown /= hasteMultiplier;
+        }
+    }
+
+    // 4. Apply category-specific cooldown modifiers
+    uint32 categoryId = spellInfo->GetCategory();
+    if (categoryId != 0)
+    {
+        // Some auras reduce cooldown for specific spell categories
+        // SPELL_AURA_MOD_SPELL_CATEGORY_COOLDOWN
+        Unit::AuraEffectList const& categoryCooldownMods =
+            caster->GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CATEGORY_COOLDOWN);
+
+        for (AuraEffect const* aurEff : categoryCooldownMods)
+        {
+            if (aurEff->GetMiscValue() == static_cast<int32>(categoryId))
+            {
+                modifiedCooldown += aurEff->GetAmount(); // Can be negative to reduce
+            }
+        }
+    }
+
+    // 5. Ensure cooldown doesn't go below 0
+    modifiedCooldown = std::max(0.0f, modifiedCooldown);
+
+    return static_cast<uint32>(modifiedCooldown);
 }
 
 void CooldownCalculator::CacheSpellData(uint32 spellId)
