@@ -88,6 +88,7 @@ class ManagerRegistry;
 // Phase 5E: Decision Fusion System forward declarations
 namespace bot { namespace ai {
     class DecisionFusionSystem;
+    class ActionPriorityQueue;
 }}
 
 // TriggerResult comparator for priority queue
@@ -434,6 +435,32 @@ public:
     bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _decisionFusion.get(); }
     bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _decisionFusion.get(); }
 
+    /**
+     * @brief Get Action Priority Queue for spell priority management
+     *
+     * The ActionPriorityQueue manages spell priorities dynamically based on
+     * cooldowns, resources, combat situations, and custom conditions.
+     *
+     * @return Pointer to ActionPriorityQueue, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto queue = GetActionPriorityQueue())
+     * {
+     *     queue->RegisterSpell(FIREBALL, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+     *     queue->AddCondition(PYROBLAST, [](Player* bot, Unit*) {
+     *         return bot->HasAura(HOT_STREAK);
+     *     }, "Hot Streak proc");
+     *
+     *     uint32 bestSpell = queue->GetHighestPrioritySpell(GetBot(), target, context);
+     *     if (bestSpell)
+     *         CastSpell(target, bestSpell);
+     * }
+     * @endcode
+     */
+    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _actionPriorityQueue.get(); }
+    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _actionPriorityQueue.get(); }
+
     // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
     // ========================================================================
@@ -740,6 +767,9 @@ protected:
 
     // Phase 5E: Decision fusion system - Unified arbitration for all decision-making
     std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
+
+    // Phase 5 Enhancement: Action priority queue - Spell priority management
+    std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

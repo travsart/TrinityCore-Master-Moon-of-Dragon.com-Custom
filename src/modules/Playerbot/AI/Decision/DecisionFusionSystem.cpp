@@ -7,6 +7,7 @@
 #include "DecisionFusionSystem.h"
 #include "BotAI.h"
 #include "BehaviorPriorityManager.h"
+#include "ActionPriorityQueue.h"
 #include "Common/ActionScoringEngine.h"
 #include "Combat/AdaptiveBehaviorManager.h"
 #include "Log.h"
@@ -135,11 +136,19 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     }
 
     // ========================================================================
-    // 2. ACTION PRIORITY QUEUE - Spell priority (currently not implemented)
+    // 2. ACTION PRIORITY QUEUE - Spell priority management
     // ========================================================================
-    // Note: ActionPriorityQueue is not yet implemented in the codebase
-    // When implemented, it should provide the highest priority spell
-    // based on cooldown availability, resource cost, and combat situation
+    if (auto priorityQueue = ai->GetActionPriorityQueue())
+    {
+        DecisionVote vote = priorityQueue->GetVote(bot, ai->GetCurrentTarget(), context);
+        if (vote.actionId != 0)
+        {
+            votes.push_back(vote);
+
+            if (_debugLogging)
+                LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::ACTION_PRIORITY)]));
+        }
+    }
 
     // ========================================================================
     // 3. BEHAVIOR TREE - Hierarchical decisions (currently not implemented)

@@ -39,6 +39,7 @@
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
 #include "Decision/DecisionFusionSystem.h"
+#include "Decision/ActionPriorityQueue.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/Arbiter/MovementArbiter.h"
 #include "Movement/Arbiter/MovementRequest.h"
@@ -131,6 +132,12 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _decisionFusion = std::make_unique<bot::ai::DecisionFusionSystem>();
 
     TC_LOG_INFO("module.playerbot", "🎯 DECISION FUSION SYSTEM: {} - Phase 5E unified arbitration ready",
+                _bot->GetName());
+
+    // Phase 5 Enhancement: Initialize action priority queue for spell priority management
+    _actionPriorityQueue = std::make_unique<bot::ai::ActionPriorityQueue>();
+
+    TC_LOG_INFO("module.playerbot", "📋 ACTION PRIORITY QUEUE: {} - Phase 5 spell priority system ready",
                 _bot->GetName());
 
     // Phase 7.3: Legacy Phase 6 observer system removed (dead code)
