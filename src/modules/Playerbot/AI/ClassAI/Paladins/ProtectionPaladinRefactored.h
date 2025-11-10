@@ -21,6 +21,11 @@
 #include "Log.h"
 #include "../../Services/ThreatAssistant.h"  // Phase 5C: Unified threat service
 
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -200,6 +205,10 @@ public:
     {
         // Initialize mana/holy power resources
         this->_resource.Initialize(bot);
+
+        // Initialize Phase 5 systems
+        InitializeProtectionPaladinMechanics();
+
         TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored initialized for {}", bot->GetName());
     }
 
@@ -483,7 +492,442 @@ private:
         this->_resource.holyPower = (this->_resource.holyPower > amount) ? this->_resource.holyPower - amount : 0;
     }
 
-    
+    void InitializeProtectionPaladinMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue (Tank + Holy Power Focus)
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // ====================================================================
+            // EMERGENCY TIER - Life-saving defensives
+            // ====================================================================
+            queue->RegisterSpell(LAY_ON_HANDS_PROT,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(LAY_ON_HANDS_PROT,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 20.0f;
+                },
+                "Self HP < 20% (Lay on Hands)");
+
+            queue->RegisterSpell(DIVINE_SHIELD_PROT,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DIVINE_SHIELD_PROT,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 15.0f;
+                },
+                "Self HP < 15% (Divine Shield)");
+
+            // ====================================================================
+            // CRITICAL TIER - Active mitigation and major defensives
+            // ====================================================================
+            queue->RegisterSpell(SHIELD_OF_THE_RIGHTEOUS,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(SHIELD_OF_THE_RIGHTEOUS,
+                [this](Player* bot, Unit*) {
+                    // Use SotR when we have 3+ HP and shield needs refresh
+                    return this->_resource.holyPower >= 3 &&
+                           this->_shieldTracker.NeedsRefresh();
+                },
+                "3+ HP and shield needs refresh");
+
+            queue->RegisterSpell(GUARDIAN_OF_ANCIENT_KINGS,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(GUARDIAN_OF_ANCIENT_KINGS,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 35.0f;
+                },
+                "HP < 35% (Guardian)");
+
+            queue->RegisterSpell(ARDENT_DEFENDER,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(ARDENT_DEFENDER,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 50.0f;
+                },
+                "HP < 50% (Ardent Defender)");
+
+            queue->RegisterSpell(HAND_OF_RECKONING,
+                SpellPriority::CRITICAL,
+                SpellCategory::UTILITY);
+            queue->AddCondition(HAND_OF_RECKONING,
+                [](Player* bot, Unit* target) {
+                    // Taunt when target not on tank
+                    return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                },
+                "Target not on tank (taunt)");
+
+            // ====================================================================
+            // HIGH TIER - Threat generation and Holy Power builders
+            // ====================================================================
+            queue->RegisterSpell(AVENGERS_SHIELD,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(AVENGERS_SHIELD,
+                [](Player* bot, Unit*) {
+                    // Always use on cooldown for threat
+                    return true;
+                },
+                "High threat generation");
+
+            queue->RegisterSpell(JUDGMENT_PROT,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(JUDGMENT_PROT,
+                [this](Player* bot, Unit*) {
+                    // Generate HP when below max
+                    return this->_resource.holyPower < 5;
+                },
+                "HP < 5 (HP generation)");
+
+            queue->RegisterSpell(HAMMER_OF_WRATH_PROT,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(HAMMER_OF_WRATH_PROT,
+                [this](Player* bot, Unit* target) {
+                    // Execute phase HP generation
+                    return target && target->GetHealthPct() < 20.0f &&
+                           this->_resource.holyPower < 5;
+                },
+                "Target < 20% and HP < 5");
+
+            queue->RegisterSpell(BLESSED_HAMMER,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(BLESSED_HAMMER,
+                [this](Player* bot, Unit*) {
+                    // Talented HP generator
+                    return this->_resource.holyPower < 5;
+                },
+                "HP < 5 (talented)");
+
+            // ====================================================================
+            // MEDIUM TIER - Core rotation and utility
+            // ====================================================================
+            queue->RegisterSpell(CONSECRATION,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(CONSECRATION,
+                [this](Player* bot, Unit*) {
+                    return !this->_consecrationActive;
+                },
+                "Consecration not active");
+
+            queue->RegisterSpell(HAMMER_OF_THE_RIGHTEOUS,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_AOE);
+
+            queue->RegisterSpell(DIVINE_PROTECTION_PROT,
+                SpellPriority::MEDIUM,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DIVINE_PROTECTION_PROT,
+                [](Player* bot, Unit*) {
+                    // Magic damage reduction
+                    return bot->GetHealthPct() < 60.0f;
+                },
+                "HP < 60% (magic reduction)");
+
+            queue->RegisterSpell(AVENGING_WRATH_PROT,
+                SpellPriority::MEDIUM,
+                SpellCategory::OFFENSIVE);
+            queue->AddCondition(AVENGING_WRATH_PROT,
+                [](Player* bot, Unit* target) {
+                    // Threat burst on bosses or packs
+                    return (target && target->GetMaxHealth() > 500000) ||
+                           bot->GetAttackersCount() >= 3;
+                },
+                "Boss or 3+ enemies (threat burst)");
+
+            // ====================================================================
+            // LOW TIER - Self-healing and utility
+            // ====================================================================
+            queue->RegisterSpell(WORD_OF_GLORY_PROT,
+                SpellPriority::LOW,
+                SpellCategory::HEALING);
+            queue->AddCondition(WORD_OF_GLORY_PROT,
+                [this](Player* bot, Unit*) {
+                    // Self-heal when HP moderate and we have 3 HP
+                    return bot->GetHealthPct() < 70.0f &&
+                           this->_resource.holyPower >= 3;
+                },
+                "HP < 70% and 3+ HP");
+
+            queue->RegisterSpell(CLEANSE_TOXINS,
+                SpellPriority::LOW,
+                SpellCategory::UTILITY);
+
+            queue->RegisterSpell(BLESSING_OF_FREEDOM_PROT,
+                SpellPriority::LOW,
+                SpellCategory::UTILITY);
+
+            queue->RegisterSpell(BLESSING_OF_PROTECTION_PROT,
+                SpellPriority::LOW,
+                SpellCategory::DEFENSIVE);
+
+            TC_LOG_INFO("module.playerbot", "🛡️  PROTECTION PALADIN: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree (Tank + Holy Power Flow)
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Protection Paladin Tank", {
+                // ================================================================
+                // TIER 1: EMERGENCY DEFENSIVES (HP < 35%)
+                // ================================================================
+                Sequence("Emergency Defensives", {
+                    Condition("Critical HP < 35%", [](Player* bot, Unit*) {
+                        return bot->GetHealthPct() < 35.0f;
+                    }),
+                    Selector("Emergency Response", {
+                        // Divine Shield at critical HP
+                        Action("Cast Divine Shield", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 15.0f &&
+                                this->CanCastSpell(DIVINE_SHIELD_PROT, bot))
+                            {
+                                this->CastSpell(bot, DIVINE_SHIELD_PROT);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Lay on Hands
+                        Action("Cast Lay on Hands", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 20.0f &&
+                                this->CanCastSpell(LAY_ON_HANDS_PROT, bot))
+                            {
+                                this->CastSpell(bot, LAY_ON_HANDS_PROT);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Guardian of Ancient Kings
+                        Action("Cast Guardian", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 35.0f &&
+                                this->CanCastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot))
+                            {
+                                this->CastSpell(bot, GUARDIAN_OF_ANCIENT_KINGS);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Ardent Defender
+                        Action("Cast Ardent Defender", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 50.0f &&
+                                this->CanCastSpell(ARDENT_DEFENDER, bot))
+                            {
+                                this->CastSpell(bot, ARDENT_DEFENDER);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Word of Glory emergency heal
+                        Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                            if (this->_resource.holyPower >= 3 &&
+                                bot->GetHealthPct() < 60.0f &&
+                                this->CanCastSpell(WORD_OF_GLORY_PROT, bot))
+                            {
+                                this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                this->ConsumeHolyPower(3);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 2: ACTIVE MITIGATION (Shield of the Righteous)
+                // ================================================================
+                Sequence("Active Mitigation", {
+                    Condition("Shield needs refresh", [this](Player* bot, Unit*) {
+                        return this->_shieldTracker.NeedsRefresh();
+                    }),
+                    Condition("Has 3+ Holy Power", [this](Player* bot, Unit*) {
+                        return this->_resource.holyPower >= 3;
+                    }),
+                    Action("Cast Shield of the Righteous", [this](Player* bot, Unit* target) {
+                        if (this->CanCastSpell(SHIELD_OF_THE_RIGHTEOUS, bot))
+                        {
+                            this->CastSpell(bot, SHIELD_OF_THE_RIGHTEOUS);
+                            this->_shieldTracker.ApplyShield();
+                            this->ConsumeHolyPower(3);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // ================================================================
+                // TIER 3: THREAT MANAGEMENT
+                // ================================================================
+                Sequence("Threat Management", {
+                    Condition("Target not on tank", [](Player* bot, Unit* target) {
+                        return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                    }),
+                    Action("Cast Hand of Reckoning", [this](Player* bot, Unit* target) {
+                        if (this->CanCastSpell(HAND_OF_RECKONING, target))
+                        {
+                            bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, HAND_OF_RECKONING);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // ================================================================
+                // TIER 4: HOLY POWER MANAGEMENT
+                // ================================================================
+                Sequence("Holy Power Management", {
+                    Selector("HP Generation and Spending", {
+                        // Spend HP at max (if shield doesn't need refresh)
+                        Sequence("Spend at Max HP", {
+                            Condition("HP = 5", [this](Player* bot, Unit*) {
+                                return this->_resource.holyPower >= 5;
+                            }),
+                            Condition("Shield active", [this](Player* bot, Unit*) {
+                                return this->_shieldTracker.IsActive();
+                            }),
+                            Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                                if (bot->GetHealthPct() < 90.0f &&
+                                    this->CanCastSpell(WORD_OF_GLORY_PROT, bot))
+                                {
+                                    this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                    this->ConsumeHolyPower(3);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Generate HP
+                        Sequence("Generate Holy Power", {
+                            Condition("HP < 5", [this](Player* bot, Unit*) {
+                                return this->_resource.holyPower < 5;
+                            }),
+                            Selector("HP Generator Priority", {
+                                // Avenger's Shield (high threat)
+                                Action("Cast Avenger's Shield", [this](Player* bot, Unit* target) {
+                                    if (this->CanCastSpell(AVENGERS_SHIELD, target))
+                                    {
+                                        this->CastSpell(target, AVENGERS_SHIELD);
+                                        this->_lastAvengersShieldTime = getMSTime();
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                }),
+                                // Judgment
+                                Action("Cast Judgment", [this](Player* bot, Unit* target) {
+                                    if (this->CanCastSpell(JUDGMENT_PROT, target))
+                                    {
+                                        this->CastSpell(target, JUDGMENT_PROT);
+                                        this->_lastJudgmentTime = getMSTime();
+                                        this->GenerateHolyPower(1);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                }),
+                                // Hammer of Wrath (execute)
+                                Sequence("Hammer of Wrath", {
+                                    Condition("Target < 20%", [](Player* bot, Unit* target) {
+                                        return target && target->GetHealthPct() < 20.0f;
+                                    }),
+                                    Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
+                                        if (this->CanCastSpell(HAMMER_OF_WRATH_PROT, target))
+                                        {
+                                            this->CastSpell(target, HAMMER_OF_WRATH_PROT);
+                                            this->GenerateHolyPower(1);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                }),
+                                // Blessed Hammer (talent)
+                                Action("Cast Blessed Hammer", [this](Player* bot, Unit* target) {
+                                    if (this->CanCastSpell(BLESSED_HAMMER, bot))
+                                    {
+                                        this->CastSpell(bot, BLESSED_HAMMER);
+                                        this->GenerateHolyPower(1);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            })
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 5: TANK ROTATION (Threat and damage)
+                // ================================================================
+                Sequence("Standard Tank Rotation", {
+                    Selector("Rotation Priority", {
+                        // Maintain Consecration
+                        Sequence("Consecration", {
+                            Condition("Not active", [this](Player* bot, Unit*) {
+                                return !this->_consecrationActive;
+                            }),
+                            Action("Cast Consecration", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(CONSECRATION, bot))
+                                {
+                                    this->CastSpell(bot, CONSECRATION);
+                                    this->_consecrationActive = true;
+                                    this->_consecrationEndTime = getMSTime() + 12000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Cooldown usage
+                        Sequence("Avenging Wrath", {
+                            Condition("Boss or pack", [](Player* bot, Unit* target) {
+                                return (target && target->GetMaxHealth() > 500000) ||
+                                       bot->GetAttackersCount() >= 3;
+                            }),
+                            Action("Cast Avenging Wrath", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(AVENGING_WRATH_PROT, bot))
+                                {
+                                    this->CastSpell(bot, AVENGING_WRATH_PROT);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+
+                        // Hammer of the Righteous filler
+                        Action("Cast Hammer of the Righteous", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
+                            {
+                                this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 PROTECTION PALADIN: BehaviorTree initialized with tank flow");
+        }
+    }
+
+
 
 private:
     ProtectionShieldTracker _shieldTracker;
