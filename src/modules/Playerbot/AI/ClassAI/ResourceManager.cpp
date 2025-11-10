@@ -48,7 +48,7 @@ void ResourceManager::Update(uint32 diff)
     }
 
     // Performance monitoring
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastPerformanceCheck > PERFORMANCE_CHECK_INTERVAL)
     {
         _lastPerformanceCheck = currentTime;
@@ -540,7 +540,7 @@ ResourceInfo ResourceManager::GetResourceInfo(ResourceType type)
     uint32 regenInt = static_cast<uint32>(regenAmount);    if (regenInt > 0)
     {
         resource.Add(regenInt);
-        resource.lastUpdate = getMSTime();
+        resource.lastUpdate = GameTime::GetGameTimeMS();
     }}void ResourceManager::UpdateRunes(uint32 diff)
 {
     for (uint32 i = 0; i < MAX_RUNES; ++i)
@@ -809,7 +809,7 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
     if (!spellId || !caster)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+    std::lock_guard lock(GetCacheMutex());
     auto it = GetManaCostCache().find(spellId);
     if (it != GetManaCostCache().end())
         return it->second;
@@ -979,7 +979,7 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+    std::lock_guard lock(GetCacheMutex());
 
     // Cache costs for each power type the spell uses
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
@@ -1014,26 +1014,26 @@ ResourceMonitor& ResourceMonitor::Instance()
 
 void ResourceMonitor::RecordResourceUsage(uint32 botGuid, ResourceType type, uint32 amount)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].totalUsed += amount;
     _botResourceData[botGuid][type].sampleCount++;
 }
 
 void ResourceMonitor::RecordResourceWaste(uint32 botGuid, ResourceType type, uint32 amount)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].totalWasted += amount;
 }
 
 void ResourceMonitor::RecordResourceStarvation(uint32 botGuid, ResourceType type, uint32 duration)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].starvationTime += duration;
 }
 
 float ResourceMonitor::GetAverageResourceUsage(ResourceType type)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
 
     uint32 totalUsed = 0;
     uint32 totalSamples = 0;
@@ -1053,7 +1053,7 @@ float ResourceMonitor::GetAverageResourceUsage(ResourceType type)
 
 float ResourceMonitor::GetResourceWasteRate(ResourceType type)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
 
     uint32 totalUsed = 0;
     uint32 totalWasted = 0;
@@ -1074,7 +1074,7 @@ float ResourceMonitor::GetResourceWasteRate(ResourceType type)
 
 uint32 ResourceMonitor::GetResourceStarvationTime(ResourceType type)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
 
     uint32 totalStarvation = 0;
     for (const auto& botPair : _botResourceData)
@@ -1093,7 +1093,7 @@ std::vector<std::string> ResourceMonitor::GetResourceOptimizationSuggestions(uin
 {
     std::vector<std::string> suggestions;
 
-    std::lock_guard<std::recursive_mutex> lock(_dataMutex);
+    std::lock_guard lock(_dataMutex);
     auto botIt = _botResourceData.find(botGuid);
     if (botIt == _botResourceData.end())
         return suggestions;

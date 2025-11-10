@@ -59,7 +59,7 @@ struct GuildBankItem
 
     GuildBankItem() : itemId(0), itemGuid(0), stackCount(0), tabId(0), slotId(0)
         , itemType(GuildBankItemType::CONSUMABLES), estimatedValue(0)
-        , lastUpdated(getMSTime()), isReserved(false), reservedFor(0) {}
+        , lastUpdated(GameTime::GetGameTimeMS()), isReserved(false), reservedFor(0) {}
 };
 
 /**
@@ -130,7 +130,7 @@ public:
         uint32 lastAnalysisTime;
 
         BankAnalysis(uint32 gId) : guildId(gId), utilizationRate(0.0f)
-            , organizationLevel(0.5f), lastAnalysisTime(getMSTime()) {}
+            , organizationLevel(0.5f), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
     BankAnalysis AnalyzeGuildBank(Player* player);
@@ -173,7 +173,7 @@ public:
         float trustLevel;
 
         MemberBankProfile(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
-            , totalDeposits(0), totalWithdrawals(0), lastBankAccess(getMSTime())
+            , totalDeposits(0), totalWithdrawals(0), lastBankAccess(GameTime::GetGameTimeMS())
             , contributionScore(0.5f), trustLevel(0.8f) {}
     };
 
@@ -249,7 +249,7 @@ private:
         uint32 lastOrganization;
 
         BankConfiguration(uint32 gId) : guildId(gId), autoOrganizationEnabled(true)
-            , organizationFrequency(86400000), lastOrganization(getMSTime()) {}
+            , organizationFrequency(86400000), lastOrganization(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, BankConfiguration> _guildConfigurations; // guildId -> config

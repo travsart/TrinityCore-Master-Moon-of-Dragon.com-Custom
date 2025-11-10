@@ -41,7 +41,7 @@ namespace Playerbot
     {
         // Reset state
         state.Reset();
-        state.lastUpdateTime = getMSTime();
+        state.lastUpdateTime = GameTime::GetGameTimeMS();
 
         // Validate player
         if (!player)
@@ -250,7 +250,7 @@ namespace Playerbot
     {
         // Reset state
         state.Reset();
-        state.lastUpdateTime = getMSTime();
+        state.lastUpdateTime = GameTime::GetGameTimeMS();
         state.targetHubId = hubId;
 
         // Validate player
@@ -366,7 +366,7 @@ namespace Playerbot
     {
         // Reset state
         state.Reset();
-        state.lastUpdateTime = getMSTime();
+        state.lastUpdateTime = GameTime::GetGameTimeMS();
         state.targetCreatureGuid = creatureGuid;
 
         // Validate player
@@ -467,7 +467,7 @@ namespace Playerbot
         );
 
         state.movementInitiated = true;
-        state.lastUpdateTime = getMSTime();
+        state.lastUpdateTime = GameTime::GetGameTimeMS();
 
         TC_LOG_DEBUG("playerbot.pathfinding",
             "QuestPathfinder: Initiated movement for player {} to ({:.1f}, {:.1f}, {:.1f}) - {:.1f} yard path",

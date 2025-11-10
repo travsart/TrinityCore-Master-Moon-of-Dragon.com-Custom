@@ -100,7 +100,7 @@ public:
 
     void ApplyFlameShock(ObjectGuid guid, uint32 duration = 18000)
     {
-        _flameShockTargets[guid] = getMSTime() + duration;
+        _flameShockTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveFlameShock(ObjectGuid guid)
@@ -113,7 +113,7 @@ public:
         auto it = _flameShockTargets.find(guid);
         if (it == _flameShockTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetFlameShockTimeRemaining(ObjectGuid guid) const
@@ -122,7 +122,7 @@ public:
         if (it == _flameShockTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -138,7 +138,7 @@ public:
     [[nodiscard]] uint32 GetActiveFlameShockCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _flameShockTargets)
         {
             if (now < pair.second)
@@ -153,7 +153,7 @@ public:
             return;
 
         // Clean up expired Flame Shocks
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _flameShockTargets.begin(); it != _flameShockTargets.end();)
         {
             if (now >= it->second)
@@ -176,7 +176,7 @@ public:
     void ActivateProc()
     {
         _lavaSurgeActive = true;
-        _lavaSurgeEndTime = getMSTime() + 15000; // 15 sec duration
+        _lavaSurgeEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeProc()
@@ -186,7 +186,7 @@ public:
 
     [[nodiscard]] bool IsActive() const
     {
-        return _lavaSurgeActive && getMSTime() < _lavaSurgeEndTime;
+        return _lavaSurgeActive && GameTime::GetGameTimeMS() < _lavaSurgeEndTime;
     }
 
     void Update(Player* bot)
@@ -199,14 +199,14 @@ public:
         {
             _lavaSurgeActive = true;
             if (Aura* aura = bot->GetAura(77762))
-                _lavaSurgeEndTime = getMSTime() + aura->GetDuration();        }
+                _lavaSurgeEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _lavaSurgeActive = false;
         }
 
         // Expire if time is up
-        if (_lavaSurgeActive && getMSTime() >= _lavaSurgeEndTime)
+        if (_lavaSurgeActive && GameTime::GetGameTimeMS() >= _lavaSurgeEndTime)
             _lavaSurgeActive = false;
     }
 
@@ -224,7 +224,7 @@ public:
     void ActivateProc(uint32 stacks = 2)
     {
         _stormkeeperStacks = stacks;
-        _stormkeeperEndTime = getMSTime() + 15000; // 15 sec duration
+        _stormkeeperEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeStack()
@@ -235,7 +235,7 @@ public:
 
     [[nodiscard]] bool HasStack() const
     {
-        return _stormkeeperStacks > 0 && getMSTime() < _stormkeeperEndTime;
+        return _stormkeeperStacks > 0 && GameTime::GetGameTimeMS() < _stormkeeperEndTime;
     }
 
     [[nodiscard]] uint32 GetStacks() const { return _stormkeeperStacks; }
@@ -248,14 +248,14 @@ public:
         // Check if Stormkeeper buff is active
         if (Aura* aura = bot->GetAura(ELEM_STORMKEEPER))
         {
-            _stormkeeperStacks = aura->GetStackAmount();            _stormkeeperEndTime = getMSTime() + aura->GetDuration();        }
+            _stormkeeperStacks = aura->GetStackAmount();            _stormkeeperEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _stormkeeperStacks = 0;
         }
 
         // Expire if time is up
-        if (_stormkeeperStacks > 0 && getMSTime() >= _stormkeeperEndTime)
+        if (_stormkeeperStacks > 0 && GameTime::GetGameTimeMS() >= _stormkeeperEndTime)
             _stormkeeperStacks = 0;
     }
 
@@ -384,13 +384,13 @@ private:
             return;
 
         // Ascendance state
-        if (_ascendanceActive && getMSTime() >= _ascendanceEndTime)
+        if (_ascendanceActive && GameTime::GetGameTimeMS() >= _ascendanceEndTime)
             _ascendanceActive = false;
 
         if (bot->HasAura(ELEM_ASCENDANCE))
         {
             _ascendanceActive = true;
-            if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
+            if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))                _ascendanceEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -402,18 +402,18 @@ private:
         uint32 maelstrom = _maelstromTracker.GetCurrent();
 
         // Fire Elemental (major DPS cooldown)
-        if ((getMSTime() - _lastFireElementalTime) >= 150000) // 2.5 min CD
+        if ((GameTime::GetGameTimeMS() - _lastFireElementalTime) >= 150000) // 2.5 min CD
         {
             if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
             {
                 this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
-                _lastFireElementalTime = getMSTime();
+                _lastFireElementalTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Ascendance (burst mode)
-        if (maelstrom >= 60 && (getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
+        if (maelstrom >= 60 && (GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000) // 3 min CD
         {
             
             if (bot->HasSpell(ELEM_ASCENDANCE))
@@ -422,28 +422,28 @@ private:
                 {
                     this->CastSpell(bot, ELEM_ASCENDANCE);
                     _ascendanceActive = true;
-                    _ascendanceEndTime = getMSTime() + 15000;
-                    _lastAscendanceTime = getMSTime();
+                    _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastAscendanceTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }        }        // Stormkeeper (instant Lightning Bolts)
-        if ((getMSTime() - _lastStormkeeperTime) >= 60000) // 60 sec CD
+        if ((GameTime::GetGameTimeMS() - _lastStormkeeperTime) >= 60000) // 60 sec CD
         {
             if (this->CanCastSpell(ELEM_STORMKEEPER, bot))            {
                 this->CastSpell(bot, ELEM_STORMKEEPER);
                 _stormkeeperTracker.ActivateProc(2);
-                _lastStormkeeperTime = getMSTime();
+                _lastStormkeeperTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Primordial Wave (buff + Flame Shock application)
-        if ((getMSTime() - _lastPrimordialWaveTime) >= 45000) // 45 sec CD
+        if ((GameTime::GetGameTimeMS() - _lastPrimordialWaveTime) >= 45000) // 45 sec CD
         {            if (bot->HasSpell(ELEM_PRIMORDIAL_WAVE))
             {
                 if (this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))                {
                     this->CastSpell(target, ELEM_PRIMORDIAL_WAVE);                    _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
-                    _lastPrimordialWaveTime = getMSTime();
+                    _lastPrimordialWaveTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
@@ -528,12 +528,12 @@ private:
         }
 
         // Echoing Shock (duplicates next spell)
-        if ((getMSTime() - _lastEchoingShockTime) >= 30000) // 30 sec CD
+        if ((GameTime::GetGameTimeMS() - _lastEchoingShockTime) >= 30000) // 30 sec CD
         {            if (bot->HasSpell(ELEM_ECHOING_SHOCK))
             {
                 if (this->CanCastSpell(ELEM_ECHOING_SHOCK, bot))
                 {
-                    this->CastSpell(bot, ELEM_ECHOING_SHOCK);                    _lastEchoingShockTime = getMSTime();
+                    this->CastSpell(bot, ELEM_ECHOING_SHOCK);                    _lastEchoingShockTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
@@ -555,26 +555,26 @@ private:
         uint32 maelstrom = _maelstromTracker.GetCurrent();
 
         // Fire Elemental for AoE burst
-        if ((getMSTime() - _lastFireElementalTime) >= 150000 && enemyCount >= 4)
+        if ((GameTime::GetGameTimeMS() - _lastFireElementalTime) >= 150000 && enemyCount >= 4)
         {
             if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
             {
                 this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
-                _lastFireElementalTime = getMSTime();
+                _lastFireElementalTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Ascendance for AoE burst
-        if (maelstrom >= 60 && (getMSTime() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
+        if (maelstrom >= 60 && (GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
         {            if (bot->HasSpell(ELEM_ASCENDANCE))
             {
                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                 {
                     this->CastSpell(bot, ELEM_ASCENDANCE);
                     _ascendanceActive = true;
-                    _ascendanceEndTime = getMSTime() + 15000;
-                    _lastAscendanceTime = getMSTime();
+                    _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastAscendanceTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
@@ -590,13 +590,13 @@ private:
         }
 
         // Stormkeeper for AoE (empowered Chain Lightning)
-        if ((getMSTime() - _lastStormkeeperTime) >= 60000 && enemyCount >= 3)
+        if ((GameTime::GetGameTimeMS() - _lastStormkeeperTime) >= 60000 && enemyCount >= 3)
         {
             if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
             {
                 this->CastSpell(bot, ELEM_STORMKEEPER);
                 _stormkeeperTracker.ActivateProc(2);
-                _lastStormkeeperTime = getMSTime();
+                _lastStormkeeperTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -792,7 +792,7 @@ private:
                                 {
                                     this->CastSpell(bot, ELEM_ASCENDANCE);
                                     this->_ascendanceActive = true;
-                                    this->_ascendanceEndTime = getMSTime() + 15000;
+                                    this->_ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

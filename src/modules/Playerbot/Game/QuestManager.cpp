@@ -161,7 +161,7 @@ namespace Playerbot
             CachedQuest cached;
             cached.status = status;
             cached.progress = 0.0f;  // Calculate actual progress
-            cached.updateTime = getMSTime();
+            cached.updateTime = GameTime::GetGameTimeMS();
 
             m_questCache[questId] = cached;
 
@@ -172,7 +172,7 @@ namespace Playerbot
                 m_completableQuests.push_back(questId);
         }
 
-        m_lastUpdateTime = getMSTime();
+        m_lastUpdateTime = GameTime::GetGameTimeMS();
         m_isDirty = false;
     }
 
@@ -257,7 +257,7 @@ namespace Playerbot
         // elapsed is the time since last OnUpdate call
 
         // Update quest cache periodically
-        if (getMSTime() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
+        if (GameTime::GetGameTimeMS() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
             UpdateQuestCache();
 
         // Update quest phase state machine
@@ -267,10 +267,10 @@ namespace Playerbot
         UpdateQuestProgress();
 
         // Scan for quest givers periodically
-        if (getMSTime() - m_lastQuestGiverScan > m_questGiverScanInterval)
+        if (GameTime::GetGameTimeMS() - m_lastQuestGiverScan > m_questGiverScanInterval)
         {
             ScanForQuests();
-            m_lastQuestGiverScan = getMSTime();
+            m_lastQuestGiverScan = GameTime::GetGameTimeMS();
         }
 
         // Update atomic state flags for strategies
@@ -372,8 +372,8 @@ namespace Playerbot
         // Initialize quest progress tracking
         QuestProgress progress;
         progress.questId = questId;
-        progress.startTime = getMSTime();
-        progress.lastUpdateTime = getMSTime();
+        progress.startTime = GameTime::GetGameTimeMS();
+        progress.lastUpdateTime = GameTime::GetGameTimeMS();
         m_questProgress[questId] = progress;
 
         // Update statistics
@@ -485,7 +485,7 @@ namespace Playerbot
         // Update progress tracking
         if (auto it = m_questProgress.find(questId); it != m_questProgress.end())
         {
-            uint32 timeSpent = getMSTime() - it->second.startTime;
+            uint32 timeSpent = GameTime::GetGameTimeMS() - it->second.startTime;
             RecordQuestTime(questId, timeSpent);
             m_questProgress.erase(it);
         }
@@ -652,7 +652,7 @@ namespace Playerbot
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
                 return nullptr;
             }
-            info.lastCheckTime = getMSTime();
+            info.lastCheckTime = GameTime::GetGameTimeMS();
 
             // Check available quests
             for (uint32 questId : sObjectMgr->GetCreatureQuestRelations(creature->GetEntry()))
@@ -727,7 +727,7 @@ namespace Playerbot
             info.guid = object->GetGUID();
             info.entry = object->GetEntry();
             info.distance = GetBot()->GetDistance(object);
-            info.lastCheckTime = getMSTime();
+            info.lastCheckTime = GameTime::GetGameTimeMS();
 
             // Check available quests
             for (uint32 questId : sObjectMgr->GetGOQuestRelations(object->GetEntry()))
@@ -1211,7 +1211,7 @@ namespace Playerbot
         if (totalObjectives > 0)
             progress.completionPercent = (totalProgress / totalObjectives) * 100.0f;
 
-        progress.lastUpdateTime = getMSTime();
+        progress.lastUpdateTime = GameTime::GetGameTimeMS();
     }
 
     bool QuestManager::IsQuestComplete(uint32 questId) const
@@ -1585,7 +1585,7 @@ namespace Playerbot
         // Check if quest has taken too long
         if (it != m_questProgress.end())
         {
-            uint32 timeSpent = getMSTime() - it->second.startTime;
+            uint32 timeSpent = GameTime::GetGameTimeMS() - it->second.startTime;
             if (timeSpent > 30 * MINUTE * IN_MILLISECONDS)  // 30 minutes
                 return true;
         }

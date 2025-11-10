@@ -188,7 +188,7 @@ private:
         uint32 correctPredictions;
         uint32 lastLearningUpdate;
 
-        PlayerLearningData() : totalDecisions(0), correctPredictions(0), lastLearningUpdate(getMSTime()) {}
+        PlayerLearningData() : totalDecisions(0), correctPredictions(0), lastLearningUpdate(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, PlayerLearningData> _playerLearningData; // playerGuid -> learning data

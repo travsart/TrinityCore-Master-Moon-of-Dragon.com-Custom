@@ -60,7 +60,7 @@ public:
     void ActivateProc(uint32 stacks = 1)
     {
         _fofStacks = std::min(_fofStacks + stacks, 2u); // Max 2 stacks
-        _fofEndTime = getMSTime() + 15000; // 15 sec duration
+        _fofEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeProc()
@@ -71,7 +71,7 @@ public:
 
     [[nodiscard]] bool IsActive() const
     {
-        return _fofStacks > 0 && getMSTime() < _fofEndTime;
+        return _fofStacks > 0 && GameTime::GetGameTimeMS() < _fofEndTime;
     }
 
     [[nodiscard]] uint32 GetStacks() const { return _fofStacks; }
@@ -83,7 +83,7 @@ public:
 
         if (Aura* aura = bot->GetAura(44544)) // Fingers of Frost buff ID
         {
-            _fofStacks = aura->GetStackAmount();            _fofEndTime = getMSTime() + aura->GetDuration();        }
+            _fofStacks = aura->GetStackAmount();            _fofEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _fofStacks = 0;
@@ -105,7 +105,7 @@ public:
     void ActivateProc()
     {
         _brainFreezeActive = true;
-        _brainFreezeEndTime = getMSTime() + 15000; // 15 sec duration
+        _brainFreezeEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeProc()
@@ -115,7 +115,7 @@ public:
 
     [[nodiscard]] bool IsActive() const
     {
-        return _brainFreezeActive && getMSTime() < _brainFreezeEndTime;
+        return _brainFreezeActive && GameTime::GetGameTimeMS() < _brainFreezeEndTime;
     }    void Update(Player* bot)
     {
         if (!bot)
@@ -125,7 +125,7 @@ public:
         {
             _brainFreezeActive = true;
             if (Aura* aura = bot->GetAura(190446))
-                _brainFreezeEndTime = getMSTime() + aura->GetDuration();        }
+                _brainFreezeEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _brainFreezeActive = false;
@@ -292,14 +292,14 @@ private:
     {
         Player* bot = this->GetBot();
         // Icy Veins state
-        if (_icyVeinsActive && getMSTime() >= _icyVeinsEndTime)
+        if (_icyVeinsActive && GameTime::GetGameTimeMS() >= _icyVeinsEndTime)
             _icyVeinsActive = false;
 
         if (bot->HasAura(FROST_ICY_VEINS))
         {
             _icyVeinsActive = true;
             if (Aura* aura = bot->GetAura(FROST_ICY_VEINS))
-                _icyVeinsEndTime = getMSTime() + aura->GetDuration();        }
+                _icyVeinsEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -311,19 +311,19 @@ private:
             {
                 this->CastSpell(bot, FROST_ICY_VEINS);
                 _icyVeinsActive = true;
-                _icyVeinsEndTime = getMSTime() + 20000; // 20 sec
-                _lastIcyVeinsTime = getMSTime();
+                _icyVeinsEndTime = GameTime::GetGameTimeMS() + 20000; // 20 sec
+                _lastIcyVeinsTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Frozen Orb (generates Fingers of Frost procs)
-        if ((getMSTime() - _lastFrozenOrbTime) >= 60000) // 60 sec CD
+        if ((GameTime::GetGameTimeMS() - _lastFrozenOrbTime) >= 60000) // 60 sec CD
         {
             if (this->CanCastSpell(FROST_FROZEN_ORB, target))
             {
                 this->CastSpell(target, FROST_FROZEN_ORB);
-                _lastFrozenOrbTime = getMSTime();
+                _lastFrozenOrbTime = GameTime::GetGameTimeMS();
                 _fofTracker.ActivateProc(2); // Generate 2 FoF procs
                 return;
             }
@@ -406,19 +406,19 @@ private:
             {
                 this->CastSpell(bot, FROST_ICY_VEINS);
                 _icyVeinsActive = true;
-                _icyVeinsEndTime = getMSTime() + 20000;
-                _lastIcyVeinsTime = getMSTime();
+                _icyVeinsEndTime = GameTime::GetGameTimeMS() + 20000;
+                _lastIcyVeinsTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Frozen Orb (AoE damage and FoF procs)
-        if ((getMSTime() - _lastFrozenOrbTime) >= 60000)
+        if ((GameTime::GetGameTimeMS() - _lastFrozenOrbTime) >= 60000)
         {
             if (this->CanCastSpell(FROST_FROZEN_ORB, target))
             {
                 this->CastSpell(target, FROST_FROZEN_ORB);
-                _lastFrozenOrbTime = getMSTime();
+                _lastFrozenOrbTime = GameTime::GetGameTimeMS();
                 _fofTracker.ActivateProc(2);
                 return;
             }

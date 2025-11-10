@@ -175,11 +175,16 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -222,7 +227,7 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
 
 void AdaptiveBehaviorManager::Update(uint32 diff, const CombatMetrics& metrics, CombatSituation situation)
 {
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     _updateTimer += diff;
 
@@ -246,7 +251,7 @@ void AdaptiveBehaviorManager::Update(uint32 diff, const CombatMetrics& metrics, 
     }
 
     // Track performance
-    _lastUpdateTime = getMSTime() - startTime;
+    _lastUpdateTime = GameTime::GetGameTimeMS() - startTime;
     _totalUpdateTime += _lastUpdateTime;
     _updateCount++;
 }
@@ -270,7 +275,7 @@ void AdaptiveBehaviorManager::UpdateBehavior(const CombatMetrics& metrics, Comba
     if (newStrategies != _activeStrategies)
     {
         _strategySwitchCount++;
-        _lastStrategyUpdate = getMSTime();
+        _lastStrategyUpdate = GameTime::GetGameTimeMS();
     }
 }
 
@@ -301,7 +306,7 @@ void AdaptiveBehaviorManager::UpdateProfiles(uint32 diff, const CombatMetrics& m
         // Check cooldown
         if (profile.lastActivated > 0 && profile.cooldown > 0)
         {
-            if (getMSTime() - profile.lastActivated < profile.cooldown)
+            if (GameTime::GetGameTimeMS() - profile.lastActivated < profile.cooldown)
                 continue;
         }
 
@@ -327,7 +332,7 @@ void AdaptiveBehaviorManager::UpdateProfiles(uint32 diff, const CombatMetrics& m
 
         ApplyProfile(*highestPriorityProfile);
         _activeProfile = highestPriorityProfile;
-        _lastProfileSwitch = getMSTime();
+        _lastProfileSwitch = GameTime::GetGameTimeMS();
         _profileSwitchCount++;
     }
 }
@@ -349,7 +354,7 @@ void AdaptiveBehaviorManager::EvaluateProfileActivation(BehaviorProfile& profile
         // Check cooldown
         if (profile.lastActivated > 0 && profile.cooldown > 0)
         {
-            if (getMSTime() - profile.lastActivated < profile.cooldown)
+            if (GameTime::GetGameTimeMS() - profile.lastActivated < profile.cooldown)
                 return;
         }
 
@@ -372,7 +377,7 @@ void AdaptiveBehaviorManager::ApplyProfile(BehaviorProfile& profile)
         profile.applyFunction(_bot, profile.strategyFlags);
 
     profile.isActive = true;
-    profile.lastActivated = getMSTime();
+    profile.lastActivated = GameTime::GetGameTimeMS();
     profile.activeTime = 0;
 
     if (!bot)
@@ -400,10 +405,10 @@ void AdaptiveBehaviorManager::RemoveProfile(BehaviorProfile& profile)
 void AdaptiveBehaviorManager::AdaptToComposition()
 {
     // Update composition if cache is old
-    if (getMSTime() - _compositionCacheTime > 5000)
+    if (GameTime::GetGameTimeMS() - _compositionCacheTime > 5000)
     {
         UpdateGroupComposition();
-        _compositionCacheTime = getMSTime();
+        _compositionCacheTime = GameTime::GetGameTimeMS();
     }
 
     // Adapt behavior based on composition
@@ -446,7 +451,7 @@ void AdaptiveBehaviorManager::AssignRoles()
     _roleAssignment.secondaryRole = secondary;
     _roleAssignment.roleEffectiveness = CalculateRoleScore(primary);
     _roleAssignment.rolePriority = GetRolePriority(primary);
-    _roleAssignment.assignedTime = getMSTime();
+    _roleAssignment.assignedTime = GameTime::GetGameTimeMS();
     _roleAssignment.isTemporary = false;
 
     TC_LOG_DEBUG("bot.playerbot", "Bot {} assigned roles - Primary: {}, Secondary: {}",
@@ -473,7 +478,7 @@ void AdaptiveBehaviorManager::ActivateStrategy(uint32 flags)
             uint32 flag = 1 << i;
             if ((flags & flag) && !(oldStrategies & flag))
             {
-                _strategyActiveTimes[flag] = getMSTime();
+                _strategyActiveTimes[flag] = GameTime::GetGameTimeMS();
             }
         }
     }
@@ -607,7 +612,7 @@ void AdaptiveBehaviorManager::ForceRole(BotRole role, bool temporary)
 {
     _roleAssignment.primaryRole = role;
     _roleAssignment.isTemporary = temporary;
-    _roleAssignment.assignedTime = getMSTime();
+    _roleAssignment.assignedTime = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("bot.playerbot", "Bot {} forced to role: {} (temporary: {})",
         _bot->GetName(), GetRoleName(role), temporary);
@@ -812,7 +817,7 @@ void AdaptiveBehaviorManager::AdjustBehaviorWeights()
 
 void AdaptiveBehaviorManager::UpdateRoleAssignment()
 {
-    if (getMSTime() - _roleAssignment.assignedTime < 30000)
+    if (GameTime::GetGameTimeMS() - _roleAssignment.assignedTime < 30000)
         return; // Don't switch roles too frequently
 
     if (NeedsRoleSwitch())

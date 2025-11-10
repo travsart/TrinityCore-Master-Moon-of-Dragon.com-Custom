@@ -290,7 +290,7 @@ MovementResult UnifiedMovementCoordinator::UpdatePosition(MovementContext const&
 void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, MovementContext const& context)
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
-    auto startTime = getMSTime();
+    auto startTime = GameTime::GetGameTimeMS();
     _totalOperations++;
 
     // 1. Position evaluation (Position module)
@@ -331,7 +331,7 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
     
     _arbiter->RequestMovement(req);
 
-    auto endTime = getMSTime();
+    auto endTime = GameTime::GetGameTimeMS();
     _totalProcessingTimeMs += (endTime - startTime);
 }
 
@@ -382,8 +382,8 @@ void UnifiedMovementCoordinator::OptimizeBotMovement(Player* bot)
     _pathfinding->ClearCache(bot);
 
     // Update AoE zones
-    _position->UpdateAoEZones(getMSTime());
-    _position->ClearExpiredZones(getMSTime());
+    _position->UpdateAoEZones(GameTime::GetGameTimeMS());
+    _position->ClearExpiredZones(GameTime::GetGameTimeMS());
 }
 
 std::string UnifiedMovementCoordinator::GetMovementStatistics() const

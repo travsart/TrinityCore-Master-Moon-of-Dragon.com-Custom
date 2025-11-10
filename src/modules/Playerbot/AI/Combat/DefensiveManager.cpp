@@ -103,7 +103,7 @@ uint32 DefensiveManager::UseEmergencyDefensive()
     // Use best emergency defensive
     DefensiveCooldown* best = emergencies.front();
     best->MarkUsed();
-    _cooldownTracker[best->spellId] = getMSTime();
+    _cooldownTracker[best->spellId] = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("playerbot", "DefensiveManager: {} using EMERGENCY defensive {}",
         _bot->GetName(), best->spellId);
@@ -123,7 +123,7 @@ void DefensiveManager::UseDefensiveCooldown(uint32 spellId)
         return;
 
     defensive->MarkUsed();
-    _cooldownTracker[spellId] = getMSTime();
+    _cooldownTracker[spellId] = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("playerbot", "DefensiveManager: {} used defensive {}",
         _bot ? _bot->GetName() : "unknown", spellId);
@@ -194,7 +194,7 @@ bool DefensiveManager::IsOnCooldown(uint32 spellId) const
     if (!defensive)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return (now - it->second) < defensive->cooldown;
 }
 
@@ -208,7 +208,7 @@ uint32 DefensiveManager::GetRemainingCooldown(uint32 spellId) const
     if (!defensive)
         return 0;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     uint32 elapsed = now - it->second;
 
     if (elapsed >= defensive->cooldown)

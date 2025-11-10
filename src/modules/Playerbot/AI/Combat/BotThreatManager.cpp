@@ -229,7 +229,7 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
         return;
     }
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // No lock needed - threat data is per-bot instance data
 
@@ -317,7 +317,7 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
     {
         it->second.threatValue *= modifier;
         it->second.threatPercent = CalculateThreatPercent(target);
-        it->second.lastUpdate = getMSTime();
+        it->second.lastUpdate = GameTime::GetGameTimeMS();
 
         if (modifier < 1.0f)
             it->second.threatReduced += it->second.threatValue * (1.0f - modifier);
@@ -330,7 +330,7 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check if cached analysis is still valid
     if (!_analysisDirty && (now - _analysisTimestamp) < ANALYSIS_CACHE_DURATION)
@@ -415,11 +415,16 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
     const_cast<BotThreatManager*>(this)->TrackPerformance(duration, "AnalyzeThreatSituation");
 
     _metrics.targetAnalyses++;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     return analysis;
 }
@@ -464,7 +469,7 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
     auto& info = _threatMap[targetGuid];
     info.targetGuid = targetGuid;
     info.priority = priority;
-    info.lastUpdate = getMSTime();
+    info.lastUpdate = GameTime::GetGameTimeMS();
 
     _analysisDirty = true;
     _metrics.priorityUpdates++;
@@ -521,11 +526,16 @@ void BotThreatManager::UpdateTargetPriorities()
             continue;
 
         ThreatPriority newPriority = ThreatCalculator::DetermineThreatPriority(target);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+
+    return;
+
+}
         if (newPriority != info.priority)
         {
             info.priority = newPriority;
@@ -868,11 +878,16 @@ if (!victim)
     return;
 }
 }
-if (!victim)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
-    return;
-}
+
+if (!victim)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
+
+    return;
+
+}
 
 if (!victim)
 {
@@ -1129,7 +1144,7 @@ if (!target)
 
 void BotThreatManager::UpdateThreatTable(uint32 diff)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto& [guid, info] : _threatMap)
     {
@@ -1166,7 +1181,7 @@ void BotThreatManager::UpdateThreatTable(uint32 diff)
 
 void BotThreatManager::CleanupStaleEntries()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     const uint32 STALE_THRESHOLD = 30000; // 30 seconds
 
     auto it = _threatMap.begin();

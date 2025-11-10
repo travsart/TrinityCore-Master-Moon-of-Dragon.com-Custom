@@ -133,7 +133,7 @@ public:
         if (_charges >= _maxCharges)
             return;
 
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastRecharge > _rechargeTime)
         {
             _charges++;
@@ -189,7 +189,7 @@ public:
 
     void OnMongooseBiteCast()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Start or extend window
         if (_stacks == 0 || currentTime > _windowEndTime)
@@ -212,7 +212,7 @@ public:
 
     uint32 GetStacks() const
     {
-        if (getMSTime() > _windowEndTime)
+        if (GameTime::GetGameTimeMS() > _windowEndTime)
             return 0;
         return _stacks;
     }
@@ -222,7 +222,7 @@ public:
         if (_charges >= _maxCharges)
             return;
 
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastRecharge > 12000) // 12 second recharge
         {
             _charges++;
@@ -232,7 +232,7 @@ public:
 
     bool IsWindowActive() const
     {
-        return getMSTime() < _windowEndTime;
+        return GameTime::GetGameTimeMS() < _windowEndTime;
     }
 
     void Reset()
@@ -308,7 +308,7 @@ private:
 
     void MendPet()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastMendPet < 10000)
             return;
 
@@ -488,14 +488,14 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_COORDINATED_ASSAULT);
             _coordinatedAssaultActive = true;
-            _coordinatedAssaultEndTime = getMSTime() + 20000;
+            _coordinatedAssaultEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
         // Priority 2: Maintain Serpent Sting
         if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)        {
             this->CastSpell(target, SPELL_SERPENT_STING);
-            _lastSerpentSting = getMSTime();
+            _lastSerpentSting = GameTime::GetGameTimeMS();
             this->ConsumeResource(20);
             return;
         }
@@ -519,7 +519,7 @@ protected:
         if (currentFocus < 50 && this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
         {
             this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
-            _lastKillCommand = getMSTime();
+            _lastKillCommand = GameTime::GetGameTimeMS();
             this->_resource = std::min<uint32>(this->_resource + 15, 100);
             return;
         }
@@ -549,7 +549,7 @@ protected:
         if (currentFocus >= 30)
         {
             this->CastSpell(target, SPELL_RAPTOR_STRIKE);
-            _lastRaptorStrike = getMSTime();
+            _lastRaptorStrike = GameTime::GetGameTimeMS();
             this->ConsumeResource(30);
             return;
         }
@@ -611,7 +611,7 @@ private:
 
     void UpdateSurvivalState()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Update bomb recharge
         _bombManager.UpdateRecharge();
@@ -894,7 +894,7 @@ private:
                                 {
                                     this->CastSpell(bot, SPELL_COORDINATED_ASSAULT);
                                     this->_coordinatedAssaultActive = true;
-                                    this->_coordinatedAssaultEndTime = getMSTime() + 20000;
+                                    this->_coordinatedAssaultEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -932,7 +932,7 @@ private:
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
                                 {
                                     this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
-                                    this->_lastKillCommand = getMSTime();
+                                    this->_lastKillCommand = GameTime::GetGameTimeMS();
                                     this->_resource = std::min<uint32>(this->_resource + 15, 100);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -948,7 +948,7 @@ private:
                                 if (this->_resource >= 20)
                                 {
                                     this->CastSpell(target, SPELL_SERPENT_STING);
-                                    this->_lastSerpentSting = getMSTime();
+                                    this->_lastSerpentSting = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(20);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -1051,7 +1051,7 @@ private:
                                 if (this->_resource >= 30)
                                 {
                                     this->CastSpell(target, SPELL_RAPTOR_STRIKE);
-                                    this->_lastRaptorStrike = getMSTime();
+                                    this->_lastRaptorStrike = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(30);
                                     return NodeStatus::SUCCESS;
                                 }

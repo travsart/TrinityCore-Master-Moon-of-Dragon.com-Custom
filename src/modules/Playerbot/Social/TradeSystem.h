@@ -111,7 +111,7 @@ struct TradeSession
     TradeSession(uint32 id, uint32 init, uint32 target, TradeType type)
         : sessionId(id), initiatorGuid(init), targetGuid(target), tradeType(type)
         , initiatorGold(0), targetGold(0), initiatorAccepted(false), targetAccepted(false)
-        , sessionStartTime(getMSTime()), sessionTimeout(getMSTime() + 120000) // 2 minutes
+        , sessionStartTime(GameTime::GetGameTimeMS()), sessionTimeout(GameTime::GetGameTimeMS() + 120000) // 2 minutes
         , isActive(true) {}
 };
 

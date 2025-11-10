@@ -52,7 +52,7 @@ LFGBotManager* LFGBotManager::instance()
 
 void LFGBotManager::Initialize()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (_initialized)
     {
@@ -79,7 +79,7 @@ void LFGBotManager::Initialize()
 
 void LFGBotManager::Shutdown()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (!_initialized)
         return;
@@ -190,7 +190,7 @@ void LFGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)
     if (!_enabled || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Check if this is a human player with assigned bots
     auto humanItr = _humanPlayers.find(playerGuid);
@@ -241,7 +241,7 @@ void LFGBotManager::OnProposalReceived(uint32 proposalId, lfg::LfgProposal const
     if (!_enabled || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Find all bots in this proposal
     std::unordered_set<ObjectGuid> botsInProposal;
@@ -278,7 +278,7 @@ void LFGBotManager::OnRoleCheckReceived(ObjectGuid groupGuid, ObjectGuid botGuid
     if (!_enabled || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // If specific bot GUID provided, handle just that bot
     if (!botGuid.IsEmpty())
@@ -316,7 +316,7 @@ void LFGBotManager::OnGroupFormed(ObjectGuid groupGuid)
     if (!_enabled || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     TC_LOG_DEBUG("module.playerbot", "LFGBotManager::OnGroupFormed - Group {} formed successfully", groupGuid.ToString());
 
@@ -373,7 +373,7 @@ void LFGBotManager::OnProposalFailed(uint32 proposalId)
     if (!_enabled || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto itr = _proposalBots.find(proposalId);
     if (itr == _proposalBots.end())
@@ -401,7 +401,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     if (dungeons.empty())
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 dungeonId = *dungeons.begin();
     uint8 minLevel = 0, maxLevel = 0;
@@ -482,13 +482,13 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
 
 bool LFGBotManager::IsBotQueued(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     return _queuedBots.find(botGuid) != _queuedBots.end();
 }
 
 void LFGBotManager::GetStatistics(uint32& totalQueued, uint32& totalAssignments) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     totalQueued = static_cast<uint32>(_queuedBots.size());
     totalAssignments = static_cast<uint32>(_humanPlayers.size());
 }
@@ -501,7 +501,7 @@ void LFGBotManager::SetEnabled(bool enable)
     if (!enable)
     {
         // Remove all bots from queues when disabled
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         for (auto const& [botGuid, queueInfo] : _queuedBots)
         {
             if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
@@ -517,7 +517,7 @@ void LFGBotManager::SetEnabled(bool enable)
 
 void LFGBotManager::CleanupStaleAssignments()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     time_t currentTime = time(nullptr);
     std::vector<ObjectGuid> staleHumans;
@@ -626,26 +626,41 @@ void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
 }
 
 bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& dungeons)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return nullptr;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return nullptr;
+
+}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");

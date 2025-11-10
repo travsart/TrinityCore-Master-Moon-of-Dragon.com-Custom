@@ -19,12 +19,14 @@
 #define TRINITYCORE_BEHAVIOR_TREE_H
 
 #include "Define.h"
+#include "Log.h"
 #include <vector>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <any>
 #include <functional>
+#include <algorithm>
 
 namespace Playerbot
 {

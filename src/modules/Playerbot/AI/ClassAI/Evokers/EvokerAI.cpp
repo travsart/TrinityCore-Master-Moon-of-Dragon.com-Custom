@@ -703,7 +703,7 @@ void EvokerAI::StartEmpoweredSpell(uint32 spellId, EmpowermentLevel targetLevel,
 
     _currentEmpoweredSpell = EmpoweredSpell(spellId, targetLevel, target);
     _isChannelingEmpowered = true;
-    _lastEmpoweredSpell = getMSTime();
+    _lastEmpoweredSpell = GameTime::GetGameTimeMS();
 }
 
 void EvokerAI::UpdateEmpoweredChanneling()
@@ -1018,7 +1018,7 @@ void EvokerAI::CastDisintegrate(::Unit* target)
         return;
 
     _bot->CastSpell(target, DISINTEGRATE, false);
-    _lastDisintegrate = getMSTime();
+    _lastDisintegrate = GameTime::GetGameTimeMS();
     ConsumeResource(DISINTEGRATE);
 }
 
@@ -1091,7 +1091,7 @@ void EvokerAI::CastVerdantEmbrace(::Unit* target)
         return;
 
     _bot->CastSpell(target, VERDANT_EMBRACE, false);
-    _lastVerdantEmbrace = getMSTime();
+    _lastVerdantEmbrace = GameTime::GetGameTimeMS();
     ConsumeResource(VERDANT_EMBRACE);
 }
 
@@ -1129,7 +1129,7 @@ void EvokerAI::CastEbonMight(::Unit* target)
         return;
 
     _bot->CastSpell(target, EBON_MIGHT, false);
-    _lastEbon = getMSTime();
+    _lastEbon = GameTime::GetGameTimeMS();
     ConsumeResource(EBON_MIGHT);
 }
 

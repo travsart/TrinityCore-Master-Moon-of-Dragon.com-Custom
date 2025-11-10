@@ -151,13 +151,13 @@ public:
     void EnterSolarEclipse()
     {
         _currentEclipse = SOLAR;
-        _eclipseEndTime = getMSTime() + 15000; // 15 sec duration
+        _eclipseEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void EnterLunarEclipse()
     {
         _currentEclipse = LUNAR;
-        _eclipseEndTime = getMSTime() + 15000;
+        _eclipseEndTime = GameTime::GetGameTimeMS() + 15000;
     }
 
     EclipseState GetCurrentEclipse() const { return _currentEclipse; }
@@ -170,7 +170,7 @@ public:
         if (!bot)
             return;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Check eclipse buffs
         if (bot->HasAura(ECLIPSE_SOLAR))
@@ -208,7 +208,7 @@ public:
 
     void ApplyDoT(ObjectGuid guid, uint32 spellId, uint32 duration)
     {
-        _trackedDoTs[guid][spellId] = getMSTime() + duration;
+        _trackedDoTs[guid][spellId] = GameTime::GetGameTimeMS() + duration;
     }
 
     bool HasDoT(ObjectGuid guid, uint32 spellId) const
@@ -221,7 +221,7 @@ public:
         if (dotIt == it->second.end())
             return false;
 
-        return getMSTime() < dotIt->second;
+        return GameTime::GetGameTimeMS() < dotIt->second;
     }
 
     uint32 GetTimeRemaining(ObjectGuid guid, uint32 spellId) const
@@ -234,7 +234,7 @@ public:
         if (dotIt == it->second.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return (dotIt->second > now) ? (dotIt->second - now) : 0;
     }
 
@@ -245,7 +245,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto targetIt = _trackedDoTs.begin(); targetIt != _trackedDoTs.end();)
         {
             for (auto dotIt = targetIt->second.begin(); dotIt != targetIt->second.end();)
@@ -429,7 +429,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), STARFALL);
             _starfallActive = true;
-            _starfallEndTime = getMSTime() + 8000;
+            _starfallEndTime = GameTime::GetGameTimeMS() + 8000;
             ConsumeAstralPower(50);
             return;
         }
@@ -575,7 +575,7 @@ private:
         _dotTracker.Update();
 
         // Update Starfall
-        if (_starfallActive && getMSTime() >= _starfallEndTime)
+        if (_starfallActive && GameTime::GetGameTimeMS() >= _starfallEndTime)
         {
             _starfallActive = false;
             _starfallEndTime = 0;
@@ -803,7 +803,7 @@ private:
                                 {
                                     this->CastSpell(bot, STARFALL);
                                     this->_starfallActive = true;
-                                    this->_starfallEndTime = getMSTime() + 8000;
+                                    this->_starfallEndTime = GameTime::GetGameTimeMS() + 8000;
                                     this->ConsumeAstralPower(50);
                                     return NodeStatus::SUCCESS;
                                 }

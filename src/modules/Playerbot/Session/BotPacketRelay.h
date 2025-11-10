@@ -373,7 +373,7 @@ private:
     {
         BotSession* botSession;
         std::unique_ptr<WorldPacket> packet;
-        uint32 timestamp; // getMSTime() when queued
+        uint32 timestamp; // GameTime::GetGameTimeMS() when queued
     };
     static inline std::queue<DeferredPacket> _deferredPackets;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredMutex;

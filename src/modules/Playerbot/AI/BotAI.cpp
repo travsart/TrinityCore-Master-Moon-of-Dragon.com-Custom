@@ -467,7 +467,7 @@ void BotAI::UpdateAI(uint32 diff)
     // DIAGNOSTIC: Log UpdateAI entry for first bot only, once per 10 seconds
     static uint32 lastUpdateLog = 0;
     static bool loggedFirstBot = false;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     if (!loggedFirstBot || (now - lastUpdateLog > 10000))
     {
@@ -685,7 +685,7 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
 
     // DIAGNOSTIC: Log why UpdateSoloBehaviors might not be running
     static uint32 lastSoloBehaviorLog = 0;
-    uint32 soloCheckTime = getMSTime();
+    uint32 soloCheckTime = GameTime::GetGameTimeMS();
     if (soloCheckTime - lastSoloBehaviorLog > 5000) // Every 5 seconds
     {
         TC_LOG_ERROR("module.playerbot", "🔍 UpdateSoloBehaviors check: Bot {} - IsInCombat()={}, IsFollowing()={}, _aiState={}, InGroup={}",_bot->GetName(),
@@ -800,7 +800,7 @@ if (!target)
 
     std::vector<Strategy*> strategiesToCheck;
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // DEBUG LOGGING THROTTLE: Use shouldLogStrategy from above (already throttled)
         if (shouldLogStrategy)
@@ -931,7 +931,7 @@ void BotAI::UpdateCombatState(uint32 diff){
     bool wasInCombat = IsInCombat();
     bool isInCombat = _bot && _bot->IsInCombat();// DIAGNOSTIC: Log combat state every 2 seconds
     static uint32 lastCombatStateLog = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - lastCombatStateLog > 2000)
     {
         TC_LOG_ERROR("module.playerbot", "🔍 UpdateCombatState: Bot {} - wasInCombat={}, isInCombat={}, AIState={}, HasVictim={}",_bot ? _bot->GetName() : "null",
@@ -1082,7 +1082,7 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
     // Only run solo behaviors when in solo play mode (not grouped/following)if (IsInCombat() || IsFollowing())
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // ========================================================================
     // AUTONOMOUS TARGET SCANNING - Find enemies when solo
@@ -1279,7 +1279,7 @@ void BotAI::OnGroupJoined(Group* group)
 
     // PHASE 1: Check strategy existence and activate - ALL UNDER ONE LOCK
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Check if follow strategy existsif (_strategies.find("follow") == _strategies.end())
         {
@@ -1385,7 +1385,7 @@ void BotAI::OnGroupLeft()
     std::vector<Strategy*> strategiesToDeactivate;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Deactivate follow strategy
         auto followIt = _strategies.find("follow");
@@ -1459,7 +1459,7 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
     if (!strategy)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     std::string const& name = strategy->GetName();
     Strategy* strategyPtr = strategy.get();
     _strategies[name] = std::move(strategy);
@@ -1519,7 +1519,7 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
 
 void BotAI::RemoveStrategy(std::string const& name)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Unregister from priority manager before removing
     auto it = _strategies.find(name);
@@ -1538,7 +1538,7 @@ void BotAI::RemoveStrategy(std::string const& name)
 
 Strategy* BotAI::GetStrategy(std::string const& name) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _strategies.find(name);
     return it != _strategies.end() ? it->second.get() : nullptr;
 }
@@ -1552,7 +1552,7 @@ std::vector<Strategy*> BotAI::GetActiveStrategies() const
     // and the calling code then tried to call GetStrategy(), DEADLOCK!
     std::vector<Strategy*> result;
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Access _strategies directly to avoid recursive mutex acquisition
         for (auto const& name : _activeStrategies)
@@ -1575,7 +1575,7 @@ void BotAI::ActivateStrategy(std::string const& name)
     Strategy* strategy = nullptr;
     bool needsOnActivate = false;
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Check if strategy exists
         auto it = _strategies.find(name);
@@ -1621,7 +1621,7 @@ void BotAI::DeactivateStrategy(std::string const& name)
     // which tries to acquire another shared_lock will deadlock due to writer-preference
     Strategy* strategy = nullptr;
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Find the strategy
         auto it = _strategies.find(name);

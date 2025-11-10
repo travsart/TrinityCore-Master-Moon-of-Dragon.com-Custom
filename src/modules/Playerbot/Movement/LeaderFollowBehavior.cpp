@@ -269,11 +269,16 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return;
     }
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+
+    return;
+
+}
 
     Group* group = bot->GetGroup();
     if (!bot)
@@ -431,11 +436,16 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
     _groupPosition = memberIndex;
 
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Bot {} will follow leader {}, formationRole={}, groupPosition={} ===",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -614,7 +624,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
         if (GetTimeSince(_lastTeleport) > _config.teleportDelay)
         {
             TeleportToLeader(bot, leader);
-            _lastTeleport = getMSTime();
+            _lastTeleport = GameTime::GetGameTimeMS();
             _metrics.teleportCount++;
         }
     }
@@ -675,11 +685,16 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
         return nullptr;
     }
     }
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetOrientation");
-    return nullptr;
-}
+
+if (!leader)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetOrientation");
+
+    return nullptr;
+
+}
 
     // Track performance
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -723,7 +738,7 @@ bool LeaderFollowBehavior::SetFollowTarget(Player* leader)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
         return nullptr;
     }
-    _followTarget.lastSeen = getMSTime();
+    _followTarget.lastSeen = GameTime::GetGameTimeMS();
 
     SetFollowState(FollowState::FOLLOWING);
 
@@ -856,11 +871,16 @@ Position LeaderFollowBehavior::CalculateFormationPosition(Player* leader, uint32
         return;
     }
     pos.SetOrientation(leader->GetOrientation());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     // Adjust Z coordinate for terrain
     if (Map* map = leader->GetMap())
@@ -976,7 +996,7 @@ bool LeaderFollowBehavior::TeleportToLeader(Player* bot, Player* leader)
                         teleportPos.GetPositionZ(), teleportPos.GetOrientation());
 
     SetFollowState(FollowState::POSITIONING);
-    _lastTeleport = getMSTime();
+    _lastTeleport = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("module.playerbot", "Bot {} teleported to leader {}",
         bot->GetName(), leader->GetName());
@@ -1024,11 +1044,16 @@ if (!bot)
         case CLASS_DEATH_KNIGHT:
             // Check for tank presence (blood presence)
             return FormationRole::TANK;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1163,7 +1188,7 @@ void LeaderFollowBehavior::UpdateFollowTarget(Player* bot, Player* leader)
 
     if (_followTarget.inLineOfSight)
     {
-        _followTarget.lastSeen = getMSTime();
+        _followTarget.lastSeen = GameTime::GetGameTimeMS();
         _followTarget.lostDuration = 0;
     }
     else
@@ -1487,7 +1512,7 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetOrientation");
             return nullptr;
         }
-        _lastPathGeneration = getMSTime();
+        _lastPathGeneration = GameTime::GetGameTimeMS();
         _metrics.pathRecalculations++;
 
         // Optimize the path
@@ -1497,11 +1522,16 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
             return nullptr;
         }
         OptimizePath(_currentPath);
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
-    return nullptr;
-}
+
+if (!leader)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
+
+    return nullptr;
+
+}
 
         if (!leader)
         {
@@ -2132,7 +2162,7 @@ bool LeaderFollowBehavior::IsWithinRange(float distance, float min, float max)
 
 uint32 LeaderFollowBehavior::GetTimeSince(uint32 timestamp)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return (now >= timestamp) ? (now - timestamp) : 0;
 }
 

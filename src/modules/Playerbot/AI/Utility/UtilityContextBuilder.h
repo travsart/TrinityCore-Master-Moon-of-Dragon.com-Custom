@@ -79,7 +79,7 @@ public:
 
         // Timing
         context.timeSinceCombatStart = GetTimeSinceCombatStart(ai);
-        context.lastDecisionTime = getMSTime();
+        context.lastDecisionTime = GameTime::GetGameTimeMS();
 
         return context;
     }

@@ -140,7 +140,7 @@ bool TargetManager::ShouldSwitchTarget(float switchThreshold)
         return false;
 
     // Don't switch too frequently
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - _lastSwitchTime < MIN_SWITCH_INTERVAL)
         return false;
 
@@ -276,7 +276,7 @@ void TargetManager::SetCurrentTarget(Unit* target)
 
     if (newGuid != _currentTarget)
     {
-        _lastSwitchTime = getMSTime();
+        _lastSwitchTime = GameTime::GetGameTimeMS();
         _currentTarget = newGuid;
 
         TC_LOG_DEBUG("playerbot", "TargetManager: Bot {} switched to target {}",

@@ -76,7 +76,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // This is where we actually check for group combat and attack!
 
     static uint32 lastDiagLog = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastDiagLog > 2000); // Every 2 seconds
 
     if (!ai || !ai->GetBot())
@@ -515,11 +515,16 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
                         return nullptr;
                     }
                     continue;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return nullptr;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
+
+    return nullptr;
+
+}
 
                 Unit* target = member->GetSelectedUnit();
                 if (target && target->IsAlive())
@@ -575,7 +580,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 
     // DIAGNOSTIC: Log which members we're checking
     static uint32 lastLog = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     bool shouldLog = (now - lastLog > 2000);
 
     if (shouldLog)

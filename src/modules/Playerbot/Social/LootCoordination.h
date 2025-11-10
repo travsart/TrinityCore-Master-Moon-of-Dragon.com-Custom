@@ -71,7 +71,7 @@ public:
         uint32 totalItemValue;
 
         LootSession(uint32 id, uint32 gId) : sessionId(id), groupId(gId)
-            , sessionStartTime(getMSTime()), sessionTimeout(getMSTime() + 300000) // 5 minutes
+            , sessionStartTime(GameTime::GetGameTimeMS()), sessionTimeout(GameTime::GetGameTimeMS() + 300000) // 5 minutes
             , isActive(true), requiresCoordination(false), itemsDistributed(0)
             , totalItemValue(0) {}
     };
@@ -181,7 +181,7 @@ private:
 
         GroupCoordinationState(uint32 gId) : groupId(gId), coordinationStyle("democratic")
             , conflictResolutionMethod("vote"), advancedCoordinationEnabled(true)
-            , coordinationTimeout(300000), lastCoordinationTime(getMSTime()) {}
+            , coordinationTimeout(300000), lastCoordinationTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, GroupCoordinationState> _groupStates; // groupId -> state
@@ -196,7 +196,7 @@ private:
         uint32 totalConflicts;
         uint32 lastAnalysisTime;
 
-        LootDecisionTracker() : totalDecisions(0), totalConflicts(0), lastAnalysisTime(getMSTime()) {}
+        LootDecisionTracker() : totalDecisions(0), totalConflicts(0), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, LootDecisionTracker> _groupDecisionTracking; // groupId -> tracker

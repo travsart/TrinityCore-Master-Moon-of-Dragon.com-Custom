@@ -47,7 +47,7 @@ namespace Playerbot
 
     void PathfindingAdapter::Shutdown()
     {
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -240,11 +240,16 @@ namespace Playerbot
 
         // Try to find a valid flee position
         Map* map = bot->GetMap();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
@@ -290,11 +295,16 @@ namespace Playerbot
     }
 
     bool PathfindingAdapter::HasCachedPath(Player* bot, Position const& destination) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
     {
         if (!bot || !_enableCaching)
             return false;
@@ -306,7 +316,7 @@ namespace Playerbot
             return 0;
         }
 
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end() && it->second.isValid)
@@ -340,7 +350,7 @@ namespace Playerbot
             return 0;
         }
 
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end())
@@ -358,7 +368,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
 
         // Remove all cache entries for this bot
         auto it = _pathCache.begin();
@@ -384,7 +394,7 @@ namespace Playerbot
 
     void PathfindingAdapter::ClearAllCache()
     {
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -641,7 +651,7 @@ namespace Playerbot
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
 
-        std::lock_guard<std::recursive_mutex> lock(_cacheLock);
+        std::lock_guard lock(_cacheLock);
 
         // Check cache size limit
         if (_pathCache.size() >= _maxCacheSize)

@@ -111,10 +111,10 @@ namespace Playerbot
         StartPerformanceTimer();
 
         // Update NPC cache periodically
-        if (getMSTime() - m_lastNPCScan > m_npcScanInterval)
+        if (GameTime::GetGameTimeMS() - m_lastNPCScan > m_npcScanInterval)
         {
             UpdateNPCCache();
-            m_lastNPCScan = getMSTime();
+            m_lastNPCScan = GameTime::GetGameTimeMS();
         }
 
         // Update interaction phase
@@ -299,11 +299,16 @@ namespace Playerbot
         // Repair if needed
         if (m_autoRepair && RepairAtVendor(vendor))
             success = true;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         // Restock reagents if enabled
         if (m_autoRestockReagents && RestockReagents(vendor))
@@ -483,11 +488,16 @@ namespace Playerbot
 
         if (!StartInteraction(trainer))
             return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+
+    return nullptr;
+
+}
 
         bool success = LearnAvailableSpells(trainer);
 
@@ -555,11 +565,16 @@ namespace Playerbot
 
         return learnedAny;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     bool NPCInteractionManager::CanAffordTraining() const
     {
@@ -635,11 +650,16 @@ namespace Playerbot
 
         return true;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     bool NPCInteractionManager::InteractWithFlightMaster(Creature* flightMaster)
     {
@@ -931,11 +951,16 @@ namespace Playerbot
             {
                 // PHASE 5D: Thread-safe spatial grid validation
                 auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, npcInfo.guid);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+
+    return nullptr;
+
+}
                 Creature* creature = nullptr;
 
                 if (snapshot)
@@ -975,11 +1000,16 @@ namespace Playerbot
                 {
                     // Get Creature* for return (validated via snapshot first)
                     creature = ObjectAccessor::GetCreature(*m_bot, npcInfo.guid);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+
+    return nullptr;
+
+}
                 }
 
                 if (creature)
@@ -1037,7 +1067,7 @@ namespace Playerbot
         }
         if (it != m_lastInteractionTime.end())
         {
-            if (getMSTime() - it->second < m_interactionCooldown)
+            if (GameTime::GetGameTimeMS() - it->second < m_interactionCooldown)
                 return false;
         }
 
@@ -1576,9 +1606,9 @@ namespace Playerbot
             return;
         }
         m_currentInteraction.type = DetermineNPCType(npc);
-        m_currentInteraction.startTime = getMSTime();
+        m_currentInteraction.startTime = GameTime::GetGameTimeMS();
 
-        m_lastInteractionTime[npc->GetGUID()] = getMSTime();
+        m_lastInteractionTime[npc->GetGUID()] = GameTime::GetGameTimeMS();
         if (!npc)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: npc in method GetGUID");

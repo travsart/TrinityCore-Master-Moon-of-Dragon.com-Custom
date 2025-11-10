@@ -73,7 +73,7 @@ struct GroupMemberInfo
     GroupMemberInfo(uint32 guid, GroupRole r, uint32 lvl, uint8 cls, uint8 spec)
         : playerGuid(guid), role(r), level(lvl), classId(cls), specId(spec)
         , groupContribution(1.0f), isOnline(true), isBot(false)
-        , lastUpdateTime(getMSTime()) {}
+        , lastUpdateTime(GameTime::GetGameTimeMS()) {}
 };
 
 struct GroupFormationData
@@ -127,7 +127,7 @@ struct GroupObjective
 
     GroupObjective(Type t, uint32 id = 0, Position pos = Position(), float radius = 5.0f)
         : type(t), targetId(id), targetLocation(pos), completionRadius(radius)
-        , timeLimit(0), priority(100), isCompleted(false), assignedTime(getMSTime()) {}
+        , timeLimit(0), priority(100), isCompleted(false), assignedTime(GameTime::GetGameTimeMS()) {}
 };
 
 class TC_GAME_API PlayerbotGroupManager final : public IPlayerbotGroupManager
@@ -231,7 +231,7 @@ private:
             : groupId(id), leaderGuid(leader->GetGUID()), coreGroup(nullptr)
             , formationType(type), coordinationMode(GroupCoordinationMode::LEADER_FOLLOW)
             , currentObjective(GroupObjective::REACH_LOCATION)
-            , creationTime(getMSTime()), lastActivityTime(getMSTime())
+            , creationTime(GameTime::GetGameTimeMS()), lastActivityTime(GameTime::GetGameTimeMS())
             , isActive(true), inCombat(false) {}
     };
 
@@ -253,7 +253,7 @@ private:
 
         GroupFormationRequest(uint32 guid, GroupRole role, GroupFormationType type, uint32 minLvl, uint32 maxLvl)
             : playerGuid(guid), preferredRole(role), formationType(type)
-            , minLevel(minLvl), maxLevel(maxLvl), requestTime(getMSTime()) {}
+            , minLevel(minLvl), maxLevel(maxLvl), requestTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::queue<GroupFormationRequest> _formationQueue;

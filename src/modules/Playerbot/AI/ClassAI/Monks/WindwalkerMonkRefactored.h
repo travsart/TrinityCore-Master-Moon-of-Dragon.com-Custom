@@ -184,7 +184,7 @@ public:
     void Activate()
     {
         _sefActive = true;
-        _sefEndTime = getMSTime() + 15000; // 15 sec duration
+        _sefEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     bool IsActive() const { return _sefActive; }
@@ -194,13 +194,13 @@ public:
         if (!_sefActive)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _sefEndTime > now ? _sefEndTime - now : 0;
     }
 
     void Update()
     {
-        if (_sefActive && getMSTime() >= _sefEndTime)
+        if (_sefActive && GameTime::GetGameTimeMS() >= _sefEndTime)
         {
             _sefActive = false;
             _sefEndTime = 0;
@@ -308,7 +308,7 @@ protected:
         if (chi >= 2 && this->CanCastSpell(RISING_SUN_KICK, target))
         {
             this->CastSpell(target, RISING_SUN_KICK);
-            _lastRisingSunKickTime = getMSTime();
+            _lastRisingSunKickTime = GameTime::GetGameTimeMS();
             _hitComboTracker.RecordSpell(RISING_SUN_KICK);
             ConsumeChi(2);
             return;

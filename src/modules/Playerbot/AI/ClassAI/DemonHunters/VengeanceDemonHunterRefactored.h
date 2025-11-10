@@ -101,7 +101,7 @@ public:
     void GenerateFragments(uint32 count)
     {
         _fragmentCount = std::min(_fragmentCount + count, _maxFragments);
-        _lastFragmentTime = getMSTime();
+        _lastFragmentTime = GameTime::GetGameTimeMS();
     }
 
     bool ConsumeFragments(uint32 count)
@@ -131,7 +131,7 @@ public:
     void Update()
     {
         // Soul fragments expire after 20 seconds if not consumed
-        if (_fragmentCount > 0 && getMSTime() - _lastFragmentTime > 20000)
+        if (_fragmentCount > 0 && GameTime::GetGameTimeMS() - _lastFragmentTime > 20000)
         {
             _fragmentCount = 0;
         }
@@ -169,7 +169,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Check if Demon Spikes buff expired
         if (_active && now >= _endTime)
@@ -203,7 +203,7 @@ public:
         if (!_active)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _endTime > now ? _endTime - now : 0;
     }
 
@@ -212,7 +212,7 @@ public:
         if (_charges > 0)
         {
             _charges--;
-            _lastUseTime = getMSTime();
+            _lastUseTime = GameTime::GetGameTimeMS();
             _active = true;
             _endTime = _lastUseTime + _duration;
 
@@ -378,7 +378,7 @@ protected:
     void ExecuteSingleTargetThreatRotation(::Unit* target)
     {
         uint32 currentPain = _resource;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Priority 1: Sigil of Flame for threat and damage
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
@@ -498,7 +498,7 @@ protected:
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
         {
             this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
-            _lastSigilOfFlameTime = getMSTime();
+            _lastSigilOfFlameTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame AoE");
             return;
         }
@@ -520,7 +520,7 @@ protected:
         if (currentPain >= 30)
         {
             this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
-            _lastSoulCleaveTime = getMSTime();
+            _lastSoulCleaveTime = GameTime::GetGameTimeMS();
             this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
             _soulFragments.ConsumeFragments(2);
             TC_LOG_DEBUG("playerbot", "Vengeance: Soul Cleave AoE");
@@ -558,7 +558,7 @@ private:
 
     void UpdateVengeanceState()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Soul Fragments
         _soulFragments.Update();
@@ -622,7 +622,7 @@ private:
         {
             this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
             _metamorphosisActive = true;
-            _metamorphosisEndTime = getMSTime() + 15000;
+            _metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
             TC_LOG_DEBUG("playerbot", "Vengeance: Metamorphosis emergency defensive");
         }
     }
@@ -639,7 +639,7 @@ private:
             {
                 this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
                 _metamorphosisActive = true;
-                _metamorphosisEndTime = getMSTime() + 15000;
+                _metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
                 TC_LOG_DEBUG("playerbot", "Vengeance: Emergency Metamorphosis");
             }
         }
@@ -874,7 +874,7 @@ private:
                                 if (this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot)) {
                                     this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
                                     this->_metamorphosisActive = true;
-                                    this->_metamorphosisEndTime = getMSTime() + 15000;
+                                    this->_metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -930,7 +930,7 @@ private:
                                 if (target && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target)) {
                                     this->CastSpell(target, DemonHunterSpells::FIERY_BRAND);
                                     this->_fieryBrandActive = true;
-                                    this->_fieryBrandEndTime = getMSTime() + 8000;
+                                    this->_fieryBrandEndTime = GameTime::GetGameTimeMS() + 8000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

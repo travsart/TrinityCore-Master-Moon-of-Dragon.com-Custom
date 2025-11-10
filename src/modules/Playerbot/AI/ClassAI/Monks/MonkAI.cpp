@@ -351,7 +351,7 @@ void MonkAI::UpdateBuffs()
 
     if (legacyBuff != 0 && !bot->HasAura(legacyBuff))
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastLegacyBuff > 300000) // 5 minute buff duration, recast check
         {
             if (CastSpell(bot, legacyBuff))
@@ -500,7 +500,7 @@ void MonkAI::UpdateCooldowns(uint32 diff)
     ManageEnergyRegeneration(diff);
 
     // Update ability cooldown tracking
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Track form management cooldown
     if (_formManager.lastFormChange.load() > 0)
@@ -1101,7 +1101,7 @@ void MonkAI::HandleMobilityAbilities(::Unit* target, const Position& optimalPos)
         Position rollDest = CalculateRollDestination(target);
         if (CastSpell(ROLL))
         {
-            _lastMobilityUse = getMSTime();
+            _lastMobilityUse = GameTime::GetGameTimeMS();
             RecordAbilityUsage(ROLL);
             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} used Roll for positioning",
                          GetBot()->GetName());
@@ -1116,7 +1116,7 @@ void MonkAI::HandleMobilityAbilities(::Unit* target, const Position& optimalPos)
         {
             if (CastSpell(target, FLYING_SERPENT_KICK))
             {
-                _lastMobilityUse = getMSTime();
+                _lastMobilityUse = GameTime::GetGameTimeMS();
                 RecordAbilityUsage(FLYING_SERPENT_KICK);
                 TC_LOG_DEBUG("module.playerbot.ai", "Monk {} used Flying Serpent Kick",
                              GetBot()->GetName());

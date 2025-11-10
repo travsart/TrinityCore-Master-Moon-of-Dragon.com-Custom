@@ -19,6 +19,7 @@
 #define TRINITYCORE_UTILITY_SYSTEM_H
 
 #include "Define.h"
+#include "GameTime.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -181,7 +182,7 @@ public:
         }
 
         _cachedScore = score;
-        _lastEvalTime = getMSTime();
+        _lastEvalTime = GameTime::GetGameTimeMS();
 
         return score;
     }
@@ -199,7 +200,7 @@ public:
     /**
      * @brief Get time since last evaluation
      */
-    uint32 GetTimeSinceEval() const { return getMSTime() - _lastEvalTime; }
+    uint32 GetTimeSinceEval() const { return GameTime::GetGameTimeMS() - _lastEvalTime; }
 
     /**
      * @brief Get all evaluators

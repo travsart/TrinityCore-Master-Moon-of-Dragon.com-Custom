@@ -135,11 +135,16 @@ namespace Playerbot
 
         // Perform one-time setup
         LogDebug("Initialized successfully for bot {} (Level {})", bot->GetName(), bot->GetLevel());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+
+    return nullptr;
+
+}
 
         // Add an initial idle task
         Task idleTask(Task::TASK_IDLE, 0, 2000);
@@ -166,7 +171,7 @@ namespace Playerbot
     void ExampleManager::OnUpdate(uint32 elapsed)
     {
         // Performance: This method aims to complete within 5-10ms
-        uint32 updateStartTime = getMSTime();
+        uint32 updateStartTime = GameTime::GetGameTimeMS();
         m_tasksProcessedThisUpdate = 0;
 
         Player* bot = GetBot();
@@ -235,7 +240,7 @@ namespace Playerbot
                !m_currentTask)
         {
             // Check update time budget (target: 5-10ms)
-            uint32 updateElapsed = getMSTimeDiff(updateStartTime, getMSTime());
+            uint32 updateElapsed = getMSTimeDiff(updateStartTime, GameTime::GetGameTimeMS());
             if (updateElapsed > 8) // Leave 2ms buffer
             {
                 LogDebug("Update time budget exceeded ({}ms), deferring {} tasks",
@@ -273,7 +278,7 @@ namespace Playerbot
         }
 
         // Final time check
-        uint32 totalUpdateTime = getMSTimeDiff(updateStartTime, getMSTime());
+        uint32 totalUpdateTime = getMSTimeDiff(updateStartTime, GameTime::GetGameTimeMS());
         if (totalUpdateTime > 10)
         {
             LogDebug("Update took {}ms (processed {} tasks)", totalUpdateTime, m_tasksProcessedThisUpdate);

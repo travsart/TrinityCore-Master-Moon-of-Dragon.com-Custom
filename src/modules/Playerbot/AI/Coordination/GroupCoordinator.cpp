@@ -33,7 +33,7 @@ namespace Coordination
 
 bool TacticalAssignment::IsExpired() const
 {
-    return getMSTime() > expirationTime;
+    return GameTime::GetGameTimeMS() > expirationTime;
 }
 
 bool TacticalAssignment::IsValid() const
@@ -57,7 +57,7 @@ GroupCoordinator::GroupCoordinator(Group* group)
     TC_LOG_DEBUG("playerbot.coordination", "GroupCoordinator created for group {}", _group->GetGUID().ToString());
 
     // Initialize tactical state
-    _tacticalState.lastUpdateTime = getMSTime();
+    _tacticalState.lastUpdateTime = GameTime::GetGameTimeMS();
 }
 
 void GroupCoordinator::Update(uint32 diff)
@@ -76,7 +76,7 @@ void GroupCoordinator::Update(uint32 diff)
     _totalUpdates++;
 
     // Update tactical state timestamp
-    _tacticalState.lastUpdateTime = getMSTime();
+    _tacticalState.lastUpdateTime = GameTime::GetGameTimeMS();
 
     // Update role assignments
     UpdateRoleAssignments();
@@ -98,7 +98,7 @@ void GroupCoordinator::Update(uint32 diff)
     // Track combat start
     if (_tacticalState.inCombat && !wasInCombat)
     {
-        _tacticalState.combatStartTime = getMSTime();
+        _tacticalState.combatStartTime = GameTime::GetGameTimeMS();
         TC_LOG_DEBUG("playerbot.coordination", "Group {} entered combat", _group->GetGUID().ToString());
     }
 
@@ -163,11 +163,11 @@ ObjectGuid GroupCoordinator::AssignInterrupt(ObjectGuid targetGuid)
         assignment.targetGuid = targetGuid;
         assignment.priority = 90; // High priority
         assignment.taskType = "interrupt";
-        assignment.timestamp = getMSTime();
+        assignment.timestamp = GameTime::GetGameTimeMS();
         assignment.expirationTime = assignment.timestamp + 5000; // 5 second window
 
         _assignments[interrupter] = assignment;
-        _tacticalState.interruptQueue[interrupter] = getMSTime() + 20000; // 20s CD
+        _tacticalState.interruptQueue[interrupter] = GameTime::GetGameTimeMS() + 20000; // 20s CD
 
         TC_LOG_DEBUG("playerbot.coordination", "Assigned interrupt to {} for target {}",
             interrupter.ToString(), targetGuid.ToString());
@@ -193,7 +193,7 @@ ObjectGuid GroupCoordinator::AssignDispel(ObjectGuid targetGuid)
         assignment.targetGuid = targetGuid;
         assignment.priority = 80;
         assignment.taskType = "dispel";
-        assignment.timestamp = getMSTime();
+        assignment.timestamp = GameTime::GetGameTimeMS();
         assignment.expirationTime = assignment.timestamp + 3000; // 3 second window
 
         _assignments[healerGuid] = assignment;
@@ -214,12 +214,12 @@ bool GroupCoordinator::IsGroupCooldownAvailable(std::string const& cooldownName)
     if (it == _tacticalState.groupCooldowns.end())
         return true;
 
-    return getMSTime() > it->second;
+    return GameTime::GetGameTimeMS() > it->second;
 }
 
 void GroupCoordinator::UseGroupCooldown(std::string const& cooldownName, uint32 durationMs)
 {
-    _tacticalState.groupCooldowns[cooldownName] = getMSTime() + durationMs;
+    _tacticalState.groupCooldowns[cooldownName] = GameTime::GetGameTimeMS() + durationMs;
 
     TC_LOG_DEBUG("playerbot.coordination", "Group {} used cooldown: {} ({}ms)",
         _group->GetGUID().ToString(), cooldownName, durationMs);
@@ -256,7 +256,7 @@ uint32 GroupCoordinator::GetCombatDuration() const
     if (!_tacticalState.inCombat || _tacticalState.combatStartTime == 0)
         return 0;
 
-    return getMSTimeDiff(_tacticalState.combatStartTime, getMSTime());
+    return getMSTimeDiff(_tacticalState.combatStartTime, GameTime::GetGameTimeMS());
 }
 
 void GroupCoordinator::UpdateRoleAssignments()
@@ -295,7 +295,7 @@ void GroupCoordinator::UpdateFocusTarget()
 void GroupCoordinator::UpdateInterruptRotation()
 {
     // Clean up expired interrupt CDs
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto it = _tacticalState.interruptQueue.begin(); it != _tacticalState.interruptQueue.end();)
     {
@@ -326,7 +326,7 @@ void GroupCoordinator::UpdateDispelAssignments()
 
 void GroupCoordinator::CleanupExpiredData()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Clean up expired assignments
     for (auto it = _assignments.begin(); it != _assignments.end();)
@@ -438,7 +438,7 @@ ObjectGuid GroupCoordinator::FindBestFocusTarget() const
 
 ObjectGuid GroupCoordinator::GetNextInterrupter() const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Find bot with interrupt ready
     std::vector<ObjectGuid> mdps = GetBotsByRole(GroupRole::MELEE_DPS);

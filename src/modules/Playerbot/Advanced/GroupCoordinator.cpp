@@ -102,10 +102,10 @@ namespace Playerbot
         StartPerformanceTimer();
 
         // Update group state
-        if (getMSTime() - m_lastGroupUpdate > GROUP_UPDATE_INTERVAL)
+        if (GameTime::GetGameTimeMS() - m_lastGroupUpdate > GROUP_UPDATE_INTERVAL)
         {
             UpdateGroupState(diff);
-            m_lastGroupUpdate = getMSTime();
+            m_lastGroupUpdate = GameTime::GetGameTimeMS();
         }
 
         // Process pending invites
@@ -116,10 +116,10 @@ namespace Playerbot
             ProcessReadyCheck(diff);
 
         // Update group target
-        if (IsInGroup() && getMSTime() - m_targetUpdateTime > TARGET_UPDATE_INTERVAL)
+        if (IsInGroup() && GameTime::GetGameTimeMS() - m_targetUpdateTime > TARGET_UPDATE_INTERVAL)
         {
             UpdateGroupTarget();
-            m_targetUpdateTime = getMSTime();
+            m_targetUpdateTime = GameTime::GetGameTimeMS();
         }
 
         // Update queue status
@@ -153,11 +153,16 @@ namespace Playerbot
     {
         if (!group || !m_bot)
             return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         m_currentGroup = group;
         m_currentState = GroupState::ACTIVE;
@@ -440,11 +445,16 @@ namespace Playerbot
         if (botClass == CLASS_PRIEST || botClass == CLASS_PALADIN ||
             botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
             botClass == CLASS_MONK || botClass == CLASS_EVOKER)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
         {
             if (HasHealingAbilities())
                 return GroupRole::HEALER;
@@ -601,7 +611,7 @@ namespace Playerbot
     bool GroupCoordinator::RollForLoot(uint32 itemId, LootDecision decision)
     {
         m_lootDecisions[itemId] = decision;
-        m_lastLootRoll = getMSTime();
+        m_lastLootRoll = GameTime::GetGameTimeMS();
         RecordLootRoll(itemId, decision);
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s rolled %u for item %u",
@@ -767,11 +777,16 @@ namespace Playerbot
             Player* member = ref.GetSource();
             if (!member)
                 continue;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
             comp.total++;
 
@@ -854,11 +869,16 @@ namespace Playerbot
                 return;
             }
             return members;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
         for (GroupReference const& ref : group->GetMembers())
         {
@@ -876,7 +896,7 @@ namespace Playerbot
             return false;
 
         m_readyCheckActive = true;
-        m_readyCheckTime = getMSTime();
+        m_readyCheckTime = GameTime::GetGameTimeMS();
         m_readyMembers.clear();
 
         if (!bot)
@@ -892,11 +912,16 @@ namespace Playerbot
         TC_LOG_DEBUG("bot.playerbot", "Bot %s initiated ready check", m_bot->GetName().c_str());
         return true;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     bool GroupCoordinator::RespondToReadyCheck(bool ready)
     {
@@ -973,7 +998,7 @@ namespace Playerbot
     bool GroupCoordinator::QueueForDungeon(uint32 dungeonId)
     {
         m_queueInfo.dungeonId = dungeonId;
-        m_queueInfo.queueTime = getMSTime();
+        m_queueInfo.queueTime = GameTime::GetGameTimeMS();
         m_queueInfo.isQueued = true;
 
         if (!bot)
@@ -1000,13 +1025,18 @@ namespace Playerbot
     bool GroupCoordinator::QueueForRaid(uint32 raidId)
     {
         m_queueInfo.dungeonId = raidId;
-        m_queueInfo.queueTime = getMSTime();
+        m_queueInfo.queueTime = GameTime::GetGameTimeMS();
         m_queueInfo.isQueued = true;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         TC_LOG_DEBUG("bot.playerbot", "Bot %s queued for raid %u",
             if (!bot)
@@ -1533,7 +1563,7 @@ namespace Playerbot
         if (!m_queueInfo.isQueued)
             return;
 
-        uint32 timeInQueue = getMSTime() - m_queueInfo.queueTime;
+        uint32 timeInQueue = GameTime::GetGameTimeMS() - m_queueInfo.queueTime;
         m_queueInfo.estimatedWait = 300000; // 5 minutes estimate
     }
 
@@ -1547,7 +1577,7 @@ namespace Playerbot
                 continue;
             }
 
-            if (getMSTime() - it->second.inviteTime > m_inviteResponseDelay)
+            if (GameTime::GetGameTimeMS() - it->second.inviteTime > m_inviteResponseDelay)
             {
                 // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::FindPlayer)
                 auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(m_bot, it->first);
@@ -1615,7 +1645,7 @@ namespace Playerbot
 
     void GroupCoordinator::ProcessReadyCheck(uint32 diff)
     {
-        if (getMSTime() - m_readyCheckTime > READY_CHECK_TIMEOUT)
+        if (GameTime::GetGameTimeMS() - m_readyCheckTime > READY_CHECK_TIMEOUT)
         {
             m_readyCheckActive = false;
             m_readyMembers.clear();

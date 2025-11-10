@@ -184,7 +184,7 @@ public:
         }
 
         m_accessCount.fetch_add(1, std::memory_order_relaxed);
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Check cache validity
         if (m_cachedObject && (now - m_lastCheckTime) < CACHE_DURATION_MS) {
@@ -214,7 +214,7 @@ public:
         if (object) {
             m_guid = object->GetGUID();
             m_cachedObject = object;
-            m_lastCheckTime = getMSTime();
+            m_lastCheckTime = GameTime::GetGameTimeMS();
         } else {
             Clear();
         }
@@ -280,7 +280,7 @@ public:
      * @return true if cached pointer is fresh
      */
     bool IsCacheValid() const {
-        return m_cachedObject && (getMSTime() - m_lastCheckTime) < CACHE_DURATION_MS;
+        return m_cachedObject && (GameTime::GetGameTimeMS() - m_lastCheckTime) < CACHE_DURATION_MS;
     }
 
     // ========================================================================

@@ -64,7 +64,7 @@ public:
 
     void ApplyAtonement(ObjectGuid guid, uint32 duration = 15000)
     {
-        _atonementTargets[guid] = getMSTime() + duration;
+        _atonementTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveAtonement(ObjectGuid guid)
@@ -77,7 +77,7 @@ public:
         auto it = _atonementTargets.find(guid);
         if (it == _atonementTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetAtonementTimeRemaining(ObjectGuid guid) const
@@ -86,7 +86,7 @@ public:
         if (it == _atonementTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -102,7 +102,7 @@ public:
     [[nodiscard]] uint32 GetActiveAtonementCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _atonementTargets)
         {
             if (now < pair.second)
@@ -117,7 +117,7 @@ public:
             return;
 
         // Clean up expired Atonements
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _atonementTargets.begin(); it != _atonementTargets.end();)
         {
             if (now >= it->second)
@@ -140,7 +140,7 @@ public:
 
     void ApplyShield(ObjectGuid guid, uint32 duration = 15000)
     {
-        _shieldTargets[guid] = getMSTime() + duration;
+        _shieldTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveShield(ObjectGuid guid)
@@ -153,7 +153,7 @@ public:
         auto it = _shieldTargets.find(guid);
         if (it == _shieldTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     void Update(Player* bot)
@@ -162,7 +162,7 @@ public:
             return;
 
         // Clean up expired shields
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _shieldTargets.begin(); it != _shieldTargets.end();)
         {
             if (now >= it->second)
@@ -316,14 +316,14 @@ private:
             return;
 
         // Rapture state (free shields)
-        if (_raptureActive && getMSTime() >= _raptureEndTime)
+        if (_raptureActive && GameTime::GetGameTimeMS() >= _raptureEndTime)
             _raptureActive = false;
 
         if (bot->HasAura(DISC_RAPTURE))
         {
             _raptureActive = true;
             if (Aura* aura = bot->GetAura(DISC_RAPTURE))
-                _raptureEndTime = getMSTime() + aura->GetDuration();        }
+                _raptureEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
@@ -358,12 +358,12 @@ private:
         {
             if (member && member->GetHealthPct() < 20.0f && IsTankRole(member))
             {
-                if ((getMSTime() - _lastPainSuppressionTime) >= 180000) // 3 min CD
+                if ((GameTime::GetGameTimeMS() - _lastPainSuppressionTime) >= 180000) // 3 min CD
                 {
                     if (this->CanCastSpell(DISC_PAIN_SUPPRESSION, member))
                     {
                         this->CastSpell(member, DISC_PAIN_SUPPRESSION);
-                        _lastPainSuppressionTime = getMSTime();
+                        _lastPainSuppressionTime = GameTime::GetGameTimeMS();
                         return true;
                     }
                 }
@@ -378,23 +378,23 @@ private:
                 ++lowHealthCount;
         }
 
-        if (lowHealthCount >= 3 && (getMSTime() - _lastBarrierTime) >= 180000) // 3 min CD
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastBarrierTime) >= 180000) // 3 min CD
         {
             if (this->CanCastSpell(DISC_BARRIER, bot))
             {
                 this->CastSpell(bot, DISC_BARRIER); // Ground-targeted AoE
-                _lastBarrierTime = getMSTime();
+                _lastBarrierTime = GameTime::GetGameTimeMS();
                 return true;            }
         }
 
         // Rapture (spam shields for heavy damage)
-        if (lowHealthCount >= 4 && (getMSTime() - _lastRaptureTime) >= 90000) // 90 sec CD
+        if (lowHealthCount >= 4 && (GameTime::GetGameTimeMS() - _lastRaptureTime) >= 90000) // 90 sec CD
         {
             if (this->CanCastSpell(DISC_RAPTURE, bot))
             {
                 this->CastSpell(bot, DISC_RAPTURE);
-                _raptureActive = true;                _raptureEndTime = getMSTime() + 8000; // 8 sec duration
-                _lastRaptureTime = getMSTime();                return true;            }
+                _raptureActive = true;                _raptureEndTime = GameTime::GetGameTimeMS() + 8000; // 8 sec duration
+                _lastRaptureTime = GameTime::GetGameTimeMS();                return true;            }
         }
 
         return false;
@@ -407,14 +407,14 @@ private:
 
         uint32 activeAtonements = _atonementTracker.GetActiveAtonementCount();
 
-        // Evangelism (extend all Atonements by 6 sec)        if (activeAtonements >= 4 && (getMSTime() - _lastEvangelismTime) >= 90000) // 90 sec CD
+        // Evangelism (extend all Atonements by 6 sec)        if (activeAtonements >= 4 && (GameTime::GetGameTimeMS() - _lastEvangelismTime) >= 90000) // 90 sec CD
         {
             if (bot->HasSpell(DISC_EVANGELISM))
             {
                 if (this->CanCastSpell(DISC_EVANGELISM, bot))
                 {
                     this->CastSpell(bot, DISC_EVANGELISM);
-                    _lastEvangelismTime = getMSTime();
+                    _lastEvangelismTime = GameTime::GetGameTimeMS();
 
                     // Extend all current Atonements
                     for (Unit* member : group)                    {

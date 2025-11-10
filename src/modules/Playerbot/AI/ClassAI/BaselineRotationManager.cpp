@@ -216,7 +216,7 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];    auto cdIt = botCooldowns.find(ability.spellId);
-    if (cdIt != botCooldowns.end() && cdIt->second > getMSTime())        return false; // On cooldown
+    if (cdIt != botCooldowns.end() && cdIt->second > GameTime::GetGameTimeMS())        return false; // On cooldown
 if (!castTarget)
 {
     return nullptr;
@@ -258,7 +258,7 @@ if (!castTarget)
         // Packet successfully queued to main thread
 
         // Optimistic cooldown recording (packet will be processed)
-        botCooldowns[ability.spellId] = getMSTime() + ability.cooldown;        TC_LOG_DEBUG("playerbot.baseline.packets",
+        botCooldowns[ability.spellId] = GameTime::GetGameTimeMS() + ability.cooldown;        TC_LOG_DEBUG("playerbot.baseline.packets",
                      "Bot {} queued CMSG_CAST_SPELL for baseline spell {} (target: {})",
                      bot->GetName(), ability.spellId,
                      castTarget ? castTarget->GetName() : "self");

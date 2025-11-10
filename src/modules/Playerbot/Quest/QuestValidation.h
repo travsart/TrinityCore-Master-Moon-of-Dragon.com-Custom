@@ -109,7 +109,7 @@ public:
         std::vector<std::string> errors;
 
         ValidationContext(Player* p, uint32 qId) : bot(p), questId(qId), quest(nullptr)
-            , validationTime(getMSTime()), strictValidation(true)
+            , validationTime(GameTime::GetGameTimeMS()), strictValidation(true)
             , checkOptionalRequirements(true), validateFutureRequirements(false) {}
     };
 
@@ -129,7 +129,7 @@ public:
         uint32 cacheExpiry;
 
         ValidationResult() : isValid(false), eligibility(QuestEligibility::NOT_AVAILABLE)
-            , validationTime(getMSTime()), cacheExpiry(getMSTime() + 60000) {} // 1 minute cache
+            , validationTime(GameTime::GetGameTimeMS()), cacheExpiry(GameTime::GetGameTimeMS() + 60000) {} // 1 minute cache
     };
 
     ValidationResult GetCachedValidation(uint32 questId, uint32 botGuid) override;

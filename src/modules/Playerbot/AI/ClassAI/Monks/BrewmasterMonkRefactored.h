@@ -143,7 +143,7 @@ public:
         if (!bot)
             return;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastStaggerCheck < 100) // Throttle checks
             return;
 
@@ -202,7 +202,7 @@ public:
     void ApplyShuffle()
     {
         _shuffleActive = true;
-        _shuffleEndTime = getMSTime() + 5000; // 5 sec base duration
+        _shuffleEndTime = GameTime::GetGameTimeMS() + 5000; // 5 sec base duration
     }
 
     void ExtendShuffle(uint32 durationMs)
@@ -212,7 +212,7 @@ public:
         else
         {
             _shuffleActive = true;
-            _shuffleEndTime = getMSTime() + durationMs;
+            _shuffleEndTime = GameTime::GetGameTimeMS() + durationMs;
         }
     }
 
@@ -223,7 +223,7 @@ public:
         if (!_shuffleActive)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _shuffleEndTime > now ? _shuffleEndTime - now : 0;
     }
 
@@ -235,7 +235,7 @@ public:
 
     void Update()
     {
-        if (_shuffleActive && getMSTime() >= _shuffleEndTime)
+        if (_shuffleActive && GameTime::GetGameTimeMS() >= _shuffleEndTime)
         {
             _shuffleActive = false;
             _shuffleEndTime = 0;
@@ -343,13 +343,13 @@ protected:
         if (energy >= 40 && chi < 5 && this->CanCastSpell(KEG_SMASH, target))
         {
             this->CastSpell(target, KEG_SMASH);
-            _lastKegSmashTime = getMSTime();
+            _lastKegSmashTime = GameTime::GetGameTimeMS();
             GenerateChi(2);
             return;
         }
 
         // Priority 3: Breath of Fire (after Keg Smash for ignite)
-        if (chi >= 2 && getMSTime() - _lastKegSmashTime < 2000)
+        if (chi >= 2 && GameTime::GetGameTimeMS() - _lastKegSmashTime < 2000)
         {
             if (this->CanCastSpell(BREATH_OF_FIRE, target))
             {
@@ -417,7 +417,7 @@ protected:
         if (energy >= 40 && chi < 5 && this->CanCastSpell(KEG_SMASH, target))
         {
             this->CastSpell(target, KEG_SMASH);
-            _lastKegSmashTime = getMSTime();
+            _lastKegSmashTime = GameTime::GetGameTimeMS();
             GenerateChi(2);
             return;
         }
@@ -471,7 +471,7 @@ protected:
             {
                 this->CastSpell(bot, IRONSKIN_BREW);
                 _ironskinBrewActive = true;
-                _ironskinEndTime = getMSTime() + 7000; // 7 sec duration
+                _ironskinEndTime = GameTime::GetGameTimeMS() + 7000; // 7 sec duration
                 
 
         // Register cooldowns using CooldownManager
@@ -542,7 +542,7 @@ private:
         _shuffleTracker.Update();
 
         // Update Ironskin Brew
-        if (_ironskinBrewActive && getMSTime() >= _ironskinEndTime)
+        if (_ironskinBrewActive && GameTime::GetGameTimeMS() >= _ironskinEndTime)
         {
             _ironskinBrewActive = false;
             _ironskinEndTime = 0;
@@ -574,7 +574,7 @@ private:
         if (!_ironskinBrewActive)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _ironskinEndTime > now ? _ironskinEndTime - now : 0;
     }
 
@@ -649,7 +649,7 @@ private:
             // MEDIUM: Chi spenders and threat
             queue->RegisterSpell(BREATH_OF_FIRE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(BREATH_OF_FIRE, [this](Player*, Unit* target) {
-                return target && this->_resource.chi >= 2 && (getMSTime() - this->_lastKegSmashTime) < 2000;
+                return target && this->_resource.chi >= 2 && (GameTime::GetGameTimeMS() - this->_lastKegSmashTime) < 2000;
             }, "2 chi, after Keg Smash (cone + DoT)");
 
             queue->RegisterSpell(SPINNING_CRANE_KICK_BREW, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
@@ -759,7 +759,7 @@ private:
                                 if (this->CanCastSpell(IRONSKIN_BREW, bot)) {
                                     this->CastSpell(bot, IRONSKIN_BREW);
                                     this->_ironskinBrewActive = true;
-                                    this->_ironskinEndTime = getMSTime() + 7000;
+                                    this->_ironskinEndTime = GameTime::GetGameTimeMS() + 7000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -808,7 +808,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(KEG_SMASH, target)) {
                                     this->CastSpell(target, KEG_SMASH);
-                                    this->_lastKegSmashTime = getMSTime();
+                                    this->_lastKegSmashTime = GameTime::GetGameTimeMS();
                                     this->GenerateChi(2);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -856,7 +856,7 @@ private:
                     Selector("Spend", {
                         Sequence("Breath of Fire", {
                             Condition("After Keg Smash", [this](Player*) {
-                                return (getMSTime() - this->_lastKegSmashTime) < 2000;
+                                return (GameTime::GetGameTimeMS() - this->_lastKegSmashTime) < 2000;
                             }),
                             Action("Cast BoF", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();

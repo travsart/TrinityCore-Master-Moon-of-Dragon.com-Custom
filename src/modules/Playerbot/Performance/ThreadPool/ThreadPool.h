@@ -434,7 +434,7 @@ private:
 
         T* Acquire()
         {
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            std::lock_guard lock(_mutex);
             if (_available.empty())
             {
                 auto obj = std::make_unique<T>();
@@ -450,7 +450,7 @@ private:
 
         void Release(T* obj)
         {
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            std::lock_guard lock(_mutex);
             _available.push(obj);
         }
     };

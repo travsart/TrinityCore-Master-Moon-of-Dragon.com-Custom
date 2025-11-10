@@ -62,7 +62,7 @@ bool DungeonBehavior::EnterDungeon(Group* group, uint32 dungeonId)
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     // Check if dungeon data exists
     auto dungeonItr = _dungeonDatabase.find(dungeonId);
@@ -122,20 +122,20 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
         return;
 
     GroupDungeonState& state = stateItr->second;
-    state.lastProgressTime = getMSTime();
+    state.lastProgressTime = GameTime::GetGameTimeMS();
 
     // Check for stuck detection
     Position currentPos = CalculateGroupCenterPoint(group);
     if (state.lastGroupPosition.GetExactDist(&currentPos) < 1.0f)
     {
-        state.stuckTime += (getMSTime() - state.lastProgressTime);
+        state.stuckTime += (GameTime::GetGameTimeMS() - state.lastProgressTime);
         if (state.stuckTime > STUCK_DETECTION_TIME)
         {
             state.isStuck = true;
@@ -156,7 +156,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     {
         case DungeonPhase::ENTERING:
             // Transition to clearing trash after entry
-            if (getMSTime() - state.startTime > 30000) // 30 seconds after entering
+            if (GameTime::GetGameTimeMS() - state.startTime > 30000) // 30 seconds after entering
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
                 TC_LOG_DEBUG("module.playerbot", "Group {} transitioned to CLEARING_TRASH phase", group->GetGUID().GetCounter());
@@ -197,7 +197,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::LOOTING:
             // Transition back to clearing trash after looting
-            if (!group->IsInCombat() && getMSTime() - state.lastProgressTime > 15000)
+            if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 15000)
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
             }
@@ -205,7 +205,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::RESTING:
             // Transition back to clearing after rest break
-            if (!group->IsInCombat() && getMSTime() - state.lastProgressTime > 30000)
+            if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 30000)
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
             }
@@ -217,7 +217,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::WIPED:
             // Handle wipe recovery
-            if (getMSTime() - state.lastProgressTime > WIPE_RECOVERY_TIME)
+            if (GameTime::GetGameTimeMS() - state.lastProgressTime > WIPE_RECOVERY_TIME)
             {
                 RecoverFromWipe(group);
             }
@@ -233,7 +233,7 @@ void DungeonBehavior::HandleDungeonCompletion(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -242,7 +242,7 @@ void DungeonBehavior::HandleDungeonCompletion(Group* group)
     GroupDungeonState& state = stateItr->second;
     state.currentPhase = DungeonPhase::COMPLETED;
 
-    uint32 completionTime = getMSTime() - state.startTime;
+    uint32 completionTime = GameTime::GetGameTimeMS() - state.startTime;
 
     // Update metrics
     _groupMetrics[group->GetGUID().GetCounter()].dungeonsCompleted++;
@@ -273,7 +273,7 @@ void DungeonBehavior::HandleDungeonWipe(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -314,7 +314,7 @@ void DungeonBehavior::StartEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -325,7 +325,7 @@ void DungeonBehavior::StartEncounter(Group* group, uint32 encounterId)
     state.currentEncounterId = encounterId;
 
     _encounterProgress[group->GetGUID().GetCounter()] = encounterId;
-    _encounterStartTime[group->GetGUID().GetCounter()] = getMSTime();
+    _encounterStartTime[group->GetGUID().GetCounter()] = GameTime::GetGameTimeMS();
 
     DungeonEncounter encounter = GetEncounterData(encounterId);
 
@@ -377,7 +377,7 @@ void DungeonBehavior::CompleteEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -389,7 +389,7 @@ void DungeonBehavior::CompleteEncounter(Group* group, uint32 encounterId)
     state.currentPhase = DungeonPhase::LOOTING;
 
     DungeonEncounter encounter = GetEncounterData(encounterId);
-    uint32 encounterDuration = getMSTime() - _encounterStartTime[group->GetGUID().GetCounter()];
+    uint32 encounterDuration = GameTime::GetGameTimeMS() - _encounterStartTime[group->GetGUID().GetCounter()];
 
     // Update metrics
     _groupMetrics[group->GetGUID().GetCounter()].encountersCompleted++;
@@ -419,7 +419,7 @@ void DungeonBehavior::HandleEncounterWipe(Group* group, uint32 encounterId)
         group->GetGUID().GetCounter(), encounter.encounterName);
 
     // Record failed encounter
-    std::lock_guard<std::recursive_mutex> lock(_dungeonMutex);
+    std::lock_guard lock(_dungeonMutex);
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr != _groupDungeonStates.end())
     {
@@ -588,11 +588,16 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
     TC_LOG_TRACE("module.playerbot", "Coordinating DPS {} behavior for encounter {}",
         dps->GetName(), encounter.encounterName);
 }
-if (!cc)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
-    return;
-}
+
+if (!cc)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
+
+    return;
+
+}
 
 void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEncounter& encounter)
     if (!cc)
@@ -685,11 +690,16 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
     for (ObjectGuid guid : nearbyGuids)
     {
         auto* entity = ObjectAccessor::GetCreature(*groupMember, guid);
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return nullptr;
-}
+
+if (!group)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+
+    return nullptr;
+
+}
         if (!entity)
             continue;
         // Original filtering logic goes here
@@ -1436,13 +1446,18 @@ if (!player)
     if (!group || !encounter.hasEnrageTimer)
         return;
 
-    uint32 elapsedTime = getMSTime() - _encounterStartTime[group->GetGUID().GetCounter()];
+    uint32 elapsedTime = GameTime::GetGameTimeMS() - _encounterStartTime[group->GetGUID().GetCounter()];
     uint32 remainingTime = (encounter.enrageTimeSeconds * 1000) - elapsedTime;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+
+    return;
+
+}
 
     if (!player)
     {
@@ -1526,11 +1541,16 @@ void DungeonBehavior::HandleTankSwap(Group* group, Player* currentTank, Player* 
 
     // Coordinate the swap through encounter strategy
     EncounterStrategy::instance()->HandleTankSwapMechanic(group, currentTank, newTank);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+
+    return;
+
+}
 
     if (!player)
     {
@@ -1555,11 +1575,16 @@ if (!group)
 {
     if (!group)
         return;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+
+    return nullptr;
+
+}
 
     // Monitor threat levels and warn DPS if needed
     for (auto const& member : group->GetMemberSlots())

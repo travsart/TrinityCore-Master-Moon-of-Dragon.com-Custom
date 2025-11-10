@@ -65,7 +65,7 @@ void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterI
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     TC_LOG_INFO("module.playerbot", "Executing encounter strategy for encounter {} (group {})",
         encounterId, group->GetGUID().GetCounter());
@@ -149,7 +149,7 @@ void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     TC_LOG_DEBUG("module.playerbot", "Handling mechanic '{}' for encounter {}", mechanic, encounterId);
 
@@ -379,11 +379,16 @@ void EncounterStrategy::HandleStackingDebuffMechanic(Group* group, Player* affec
         return;
 
     TC_LOG_DEBUG("module.playerbot", "Handling stacking debuff on {}", affectedPlayer->GetName());
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+
+    return nullptr;
+
+}
 
     // If player has too many stacks, they should:
     // 1. Use defensive cooldowns
@@ -442,11 +447,16 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
 
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+
+    return nullptr;
+
+}
                     if (!player)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -528,7 +538,7 @@ void EncounterStrategy::HandleEnrageMechanic(Group* group, Unit* boss, uint32 ti
 
 EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encounterId, Player* tank)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto itr = _tankStrategies.find(encounterId);
     if (itr != _tankStrategies.end())
@@ -550,12 +560,17 @@ if (!group)
 }
 EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return nullptr;
-}
+    std::lock_guard lock(_strategyMutex);
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+
+    return nullptr;
+
+}
 
     auto itr = _healerStrategies.find(encounterId);
     if (itr != _healerStrategies.end())
@@ -572,7 +587,7 @@ EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 en
 
 EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounterId, Player* dps)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto itr = _dpsStrategies.find(encounterId);
     if (itr != _dpsStrategies.end())
@@ -742,11 +757,16 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Posit
                     return;
                 }
                 float angle = dangerZone.GetAngle(player) + M_PI;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
+
+    return;
+
+}
                 Position safePos = dangerZone;
                 safePos.RelocateOffset({std::cos(angle) * 15.0f, std::sin(angle) * 15.0f, 0.0f});
 
@@ -871,7 +891,7 @@ void EncounterStrategy::AdaptStrategyBasedOnFailures(Group* group, uint32 encoun
     if (!group || !_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -895,7 +915,7 @@ void EncounterStrategy::LearnFromSuccessfulEncounters(Group* group, uint32 encou
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -906,7 +926,7 @@ void EncounterStrategy::LearnFromSuccessfulEncounters(Group* group, uint32 encou
 
     StrategyLearningData& learning = learningItr->second;
     learning.totalEncountersSuccessful++;
-    learning.lastLearningUpdate = getMSTime();
+    learning.lastLearningUpdate = GameTime::GetGameTimeMS();
 
     TC_LOG_INFO("module.playerbot", "Learning from successful encounter {} (success rate: {}/{})",
         encounterId, learning.totalEncountersSuccessful, learning.totalEncountersAttempted);
@@ -984,7 +1004,7 @@ void EncounterStrategy::ExecuteRazorfenKraulStrategies(Group* group, uint32 enco
 
 EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 encounterId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto itr = _encounterMetrics.find(encounterId);
     if (itr != _encounterMetrics.end())
@@ -1208,7 +1228,7 @@ void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string
     if (!_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     if (_learningData.find(encounterId) == _learningData.end())
     {
@@ -1227,12 +1247,12 @@ void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string
         learning.mechanicFailures[mechanicHash]++;
     }
 
-    learning.lastLearningUpdate = getMSTime();
+    learning.lastLearningUpdate = GameTime::GetGameTimeMS();
 }
 
 void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -1270,7 +1290,7 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 
 void EncounterStrategy::OptimizeStrategyBasedOnLearning(uint32 encounterId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_strategyMutex);
+    std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -1384,16 +1404,26 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
         case CLASS_PRIEST:
         case CLASS_SHAMAN:
             return player->GetPrimaryTalentTree() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
-        return nullptr;
-    }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-    return nullptr;
-}
+
+    if (!player)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMap");
+
+        return nullptr;
+
+    }
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+
+    return nullptr;
+
+}
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1508,11 +1538,16 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
     }
 
     if (interruptSpell == 0 || player->HasSpellCooldown(interruptSpell))
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
@@ -1916,11 +1951,16 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
 {
     if (!player || !boss)
         return;
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return nullptr;
-}
+
+if (!group)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+
+    return nullptr;
+
+}
 
     // Check if player can dispel
     bool canDispelMagic = false;

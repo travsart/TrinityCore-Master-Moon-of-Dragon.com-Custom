@@ -59,7 +59,7 @@ struct ResourceInfo
 
     ResourceInfo(ResourceType t, uint32 cur, uint32 max, float regen = 0.0f)
         : type(t), current(cur), maximum(max), regenRate(regen),
-          lastUpdate(getMSTime()), isRegenerated(regen > 0.0f) {}
+          lastUpdate(GameTime::GetGameTimeMS()), isRegenerated(regen > 0.0f) {}
 
     // Get resource as percentage (0.0 to 1.0)
     float GetPercent() const

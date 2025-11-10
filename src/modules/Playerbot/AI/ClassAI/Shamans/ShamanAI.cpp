@@ -325,7 +325,7 @@ bool ShamanAI::HandleInterrupts(::Unit* target)
         // Wind Shear is our primary interrupt
         if (CanUseAbility(SPELL_WIND_SHEAR))
         {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastWindShear > 12000) // 12 sec cooldown
             {
                 if (interruptTarget->IsNonMeleeSpellCast(false))
@@ -398,7 +398,7 @@ bool ShamanAI::HandleDefensives()
         // Earth Elemental Totem for tanking
         if (CanUseAbility(SPELL_EARTH_ELEMENTAL_TOTEM))
         {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastEarthElemental > 300000) // 5 min cooldown
             {
                 if (DeployTotem(SPELL_EARTH_ELEMENTAL_TOTEM, TotemType::EARTH))
@@ -418,7 +418,7 @@ bool ShamanAI::HandleDefensives()
         // Shamanistic Rage for Enhancement
         if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 263 && CanUseAbility(SPELL_SHAMANISTIC_RAGE)) // 263 = Enhancement
         {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastShamanisticRage > 60000) // 1 min cooldown
             {
                 if (CastSpell(SPELL_SHAMANISTIC_RAGE))
@@ -437,7 +437,7 @@ bool ShamanAI::HandleDefensives()
         {
             if (DeployTotem(SPELL_HEALING_STREAM_TOTEM, TotemType::WATER))
             {
-                _healingStreamTotemTime = getMSTime();
+                _healingStreamTotemTime = GameTime::GetGameTimeMS();
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Healing Stream Totem",
                              GetBot()->GetName());
                 return true;
@@ -461,7 +461,7 @@ bool ShamanAI::HandleDefensives()
     {
         if (CanUseAbility(SPELL_SPIRIT_WALK))
         {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastSpiritWalk > 120000) // 2 min cooldown
             {
                 if (CastSpell(SPELL_SPIRIT_WALK))
@@ -578,7 +578,7 @@ bool ShamanAI::HandleTotemManagement(::Unit* target)
     if (!target)
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Only update totems periodically
     if (currentTime - _lastTotemUpdate < TOTEM_UPDATE_INTERVAL)
@@ -913,7 +913,7 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
     if (!behaviors->ShouldUseCooldowns())
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Bloodlust/Heroism - raid-wide haste
     if (ShouldUseBloodlust())
@@ -1285,11 +1285,11 @@ bool ShamanAI::HandleFlameShock(::Unit* target)
 
     // Check if Flame Shock needs refresh
     if (!HasFlameShockOnTarget(target) ||
-        (getMSTime() - _flameshockExpiry < 9000)) // Refresh at <9 seconds
+        (GameTime::GetGameTimeMS() - _flameshockExpiry < 9000)) // Refresh at <9 seconds
     {
         if (CastSpell(target, SPELL_FLAME_SHOCK))
         {
-            _flameshockTarget = target->GetGUID().GetCounter();            _flameshockExpiry = getMSTime() + FLAME_SHOCK_DURATION;
+            _flameshockTarget = target->GetGUID().GetCounter();            _flameshockExpiry = GameTime::GetGameTimeMS() + FLAME_SHOCK_DURATION;
             _hasFlameShockUp = true;
             _elementalMaelstrom += 20;
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} applying Flame Shock to {}",
@@ -1584,7 +1584,7 @@ bool ShamanAI::NeedsTotemRefresh(TotemType type) const
         return true;
 
     // Totem expired (most totems last 2 minutes)
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - totem.deployTime > 120000)
         return true;
 
@@ -1698,7 +1698,7 @@ bool ShamanAI::DeployTotem(uint32 spellId, TotemType type)
     {
         TotemInfo& totem = _activeTotems[static_cast<size_t>(type)];
         totem.spellId = spellId;
-        totem.deployTime = getMSTime();
+        totem.deployTime = GameTime::GetGameTimeMS();
         totem.position = GetBot()->GetPosition();
         // totemUnit will be set when the totem is summoned
 
@@ -2120,7 +2120,7 @@ bool ShamanAI::HandleHealingStreamTotem()
     {
         if (DeployTotem(SPELL_HEALING_STREAM_TOTEM, TotemType::WATER))
         {
-            _healingStreamTotemTime = getMSTime();
+            _healingStreamTotemTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Healing Stream Totem",
                          GetBot()->GetName());
             return true;
@@ -2325,13 +2325,13 @@ void ShamanAI::ConsumeResource(uint32 spellId)
     }
 
     // Track ability usage
-    _abilityUsage[spellId] = getMSTime();
+    _abilityUsage[spellId] = GameTime::GetGameTimeMS();
 
     // Track specific spell categories
     if (IsShockSpell(spellId))
     {
         _shocksUsed++;
-        _lastShockTime = getMSTime();
+        _lastShockTime = GameTime::GetGameTimeMS();
     }
     else if (IsTotemSpell(spellId))
     {
@@ -2426,7 +2426,7 @@ void ShamanAI::UpdateTotemCheck()
         return;
 
     static uint32 lastTotemCheck = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     if (currentTime - lastTotemCheck < TOTEM_UPDATE_INTERVAL)
         return;

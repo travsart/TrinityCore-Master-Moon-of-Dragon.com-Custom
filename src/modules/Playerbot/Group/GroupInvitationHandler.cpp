@@ -66,7 +66,7 @@ GroupInvitationHandler::~GroupInvitationHandler()
 
 bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite const& packet)
 {
-    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
+    std::lock_guard lock(_invitationMutex);
 
     // Extract invitation details
     if (!bot)
@@ -212,16 +212,26 @@ bool GroupInvitationHandler::ShouldAcceptInvitation(ObjectGuid inviterGuid) cons
     }
     // Get inviter
     Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
-if (!inviter)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return 0;
-}
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
-    return nullptr;
-}
+
+if (!inviter)
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return 0;
+
+}
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
+
+    return nullptr;
+
+}
     if (!inviter)
         return false;
 
@@ -512,11 +522,16 @@ bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
         // Already locked by caller (ProcessNextInvitation), proceed without locking
         return AcceptInvitationInternal(inviterGuid);
     }
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-    return;
-}
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
+
+    return;
+
+}
 
     if (!bot)
     {
@@ -543,7 +558,7 @@ void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::stri
 
 bool GroupInvitationHandler::HasPendingInvitation() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
+    std::lock_guard lock(_invitationMutex);
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -564,7 +579,7 @@ if (!bot)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroupInvite");
         return nullptr;
     }
-    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
+    std::lock_guard lock(_invitationMutex);
 
     if (!_currentInviter.IsEmpty())
         return _currentInviter;
@@ -597,12 +612,17 @@ if (!bot)
     return nullptr;
 }
 {
-    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
+    std::lock_guard lock(_invitationMutex);
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return;
+
+}
 
     if (!botGroup)
     {
@@ -611,11 +631,16 @@ if (!bot)
     }
     while (!_pendingInvitations.empty())
         _pendingInvitations.pop();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     _currentInviter = ObjectGuid::Empty;
     _recentInviters.clear();
@@ -672,21 +697,31 @@ bool GroupInvitationHandler::SendAcceptPacket()
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return false;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
         return nullptr;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -772,11 +807,16 @@ bool GroupInvitationHandler::SendAcceptPacket()
 
     // Create properly formatted packet data
     WorldPacket packet(CMSG_PARTY_INVITE_RESPONSE);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     // Write packet data according to PartyInviteResponse::Read() format:
     // 1. Optional PartyIndex (we don't specify one for normal groups)
@@ -1114,11 +1154,16 @@ if (!bot)
         }
         _bot->GetName(), reason);
 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return;
+
+}
 
 bool GroupInvitationHandler::ValidateNoInvitationLoop(ObjectGuid inviterGuid) const
 if (!bot)
@@ -1432,7 +1477,7 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
 void GroupInvitationHandler::CleanupExpiredInvitations()
 {
-    std::lock_guard<std::recursive_mutex> lock(_invitationMutex);
+    std::lock_guard lock(_invitationMutex);
 
     // Clean up expired invitations from queue
     std::queue<PendingInvitation> validInvitations;
@@ -1591,21 +1636,31 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return;
                 }
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
+
+    if (!bot)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+        return nullptr;
+
+    }
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                     return nullptr;
                 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");

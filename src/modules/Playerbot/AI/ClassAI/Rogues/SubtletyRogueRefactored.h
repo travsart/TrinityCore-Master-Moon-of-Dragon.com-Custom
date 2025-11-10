@@ -93,7 +93,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Check if Shadow Dance expired
         if (_active && now >= _endTime)
@@ -127,7 +127,7 @@ public:
         if (!_active)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _endTime > now ? _endTime - now : 0;
     }
 
@@ -136,7 +136,7 @@ public:
         if (_charges > 0)
         {
             _charges--;
-            _lastUseTime = getMSTime();
+            _lastUseTime = GameTime::GetGameTimeMS();
             _active = true;
             _endTime = _lastUseTime + _duration;
 
@@ -273,7 +273,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
-            _symbolsOfDeathEndTime = getMSTime() + 10000;
+            _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
         }
 
@@ -282,7 +282,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), RogueAI::SHADOW_BLADES);
             _shadowBladesActive = true;
-            _shadowBladesEndTime = getMSTime() + 20000;
+            _shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
@@ -304,7 +304,7 @@ protected:
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
                 this->CastSpell(target, SHADOWSTRIKE_SUB);
-                _lastShadowstrikeTime = getMSTime();
+                _lastShadowstrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
                 // Shadow Blades makes all attacks give CP
@@ -332,7 +332,7 @@ protected:
             if (this->CanCastSpell(EVISCERATE_SUB, target))
             {
                 this->CastSpell(target, EVISCERATE_SUB);
-                _lastEviscerateTime = getMSTime();
+                _lastEviscerateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -357,7 +357,7 @@ protected:
             if (this->IsBehindTarget(target) && this->CanCastSpell(RogueAI::BACKSTAB, target))
             {
                 this->CastSpell(target, RogueAI::BACKSTAB);
-                _lastBackstabTime = getMSTime();
+                _lastBackstabTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 GenerateComboPoints(1);
                 if (_shadowBladesActive)
@@ -397,7 +397,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
             _symbolsOfDeathActive = true;
-            _symbolsOfDeathEndTime = getMSTime() + 10000;
+            _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
         }
 
@@ -444,7 +444,7 @@ protected:
 private:
     void UpdateSubtletyState()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Shadow Dance tracker
         _shadowDanceTracker.Update();
@@ -631,7 +631,7 @@ private:
                                 {
                                     this->CastSpell(bot, RogueAI::SYMBOLS_OF_DEATH);
                                     this->_symbolsOfDeathActive = true;
-                                    this->_symbolsOfDeathEndTime = getMSTime() + 10000;
+                                    this->_symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -647,7 +647,7 @@ private:
                                 {
                                     this->CastSpell(bot, RogueAI::SHADOW_BLADES);
                                     this->_shadowBladesActive = true;
-                                    this->_shadowBladesEndTime = getMSTime() + 20000;
+                                    this->_shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -726,7 +726,7 @@ private:
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
                                     this->CastSpell(target, EVISCERATE_SUB);
-                                    this->_lastEviscerateTime = getMSTime();
+                                    this->_lastEviscerateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -753,7 +753,7 @@ private:
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
                                     this->CastSpell(target, SHADOWSTRIKE_SUB);
-                                    this->_lastShadowstrikeTime = getMSTime();
+                                    this->_lastShadowstrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
                                     if (this->_shadowBladesActive)
@@ -772,7 +772,7 @@ private:
                                 if (this->CanCastSpell(RogueAI::BACKSTAB, target))
                                 {
                                     this->CastSpell(target, RogueAI::BACKSTAB);
-                                    this->_lastBackstabTime = getMSTime();
+                                    this->_lastBackstabTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->GenerateComboPoints(1);
                                     if (this->_shadowBladesActive)

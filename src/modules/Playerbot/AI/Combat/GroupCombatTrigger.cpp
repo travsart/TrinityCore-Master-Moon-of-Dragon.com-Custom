@@ -36,21 +36,31 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-        return nullptr;
-    }
+
+    if (!bot)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+
+        return nullptr;
+
+    }
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
             }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -64,7 +74,7 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
 
     // Debug logging
     static uint32 lastLog = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastLog > 5000); // Log every 5 seconds
 
     // First check if bot is already in combat
@@ -190,11 +200,16 @@ TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
 
     return result;
 }
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
-    return;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInCombat");
+
+    return;
+
+}
 
 float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
 {
@@ -288,7 +303,7 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     // Check cache first if enabled
     if (_cachingEnabled)
     {
-        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+        std::lock_guard lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (it != _combatCache.end() && IsCacheValid(group))
         {
@@ -367,7 +382,7 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
     // Check engagement delay
     if (_engagementDelayMs > 0)
     {
-        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+        std::lock_guard lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (!group)
         {
@@ -384,11 +399,16 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
 
     // Check if we have a valid target
     Unit* target = GetAssistTarget(bot, group);
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-    return;
-}
+
+if (!group)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+
+    return;
+
+}
     if (!target)
         return false;
 
@@ -587,7 +607,7 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     auto& info = _combatCache[group->GetGUID()];
 
@@ -645,14 +665,19 @@ uint32 GroupCombatTrigger::GetCombatDuration(Group* group) const
     if (!group)
         return 0;
 
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     auto it = _combatCache.find(group->GetGUID());
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-    return;
-}
+
+if (!group)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
+
+    return;
+
+}
     if (it == _combatCache.end() || !it->second.inCombat)
         return 0;
 

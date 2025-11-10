@@ -66,7 +66,7 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
 {
     // No lock needed - interrupt tracking is per-bot instance data
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastScan < _scanInterval && !_emergencyMode)
         return;
 
@@ -255,7 +255,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
             return;
         }
         target.castProgress = (target.totalCastTime - target.remainingCastTime) / target.totalCastTime;
-        target.detectedTime = getMSTime();
+        target.detectedTime = GameTime::GetGameTimeMS();
         target.isChanneled = spellInfo->IsChanneled();
         target.isInterruptible = true; // Default to interruptible
         target.requiresLoS = true; // Default to requiring LoS
@@ -588,7 +588,7 @@ void InterruptManager::UpdateInterruptCapabilities()
 {
     for (InterruptCapability& capability : _interruptCapabilities)
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         capability.isAvailable = _bot->HasSpell(capability.spellId) &&
         if (!bot)
         {
@@ -759,8 +759,8 @@ bool InterruptManager::ExecuteInterruptPlan(const InterruptPlan& plan)
 
         if (success)
         {
-            plan.capability->lastUsed = getMSTime();
-            _lastInterruptAttempt = getMSTime();
+            plan.capability->lastUsed = GameTime::GetGameTimeMS();
+            _lastInterruptAttempt = GameTime::GetGameTimeMS();
         }
 
         _isInterrupting = false;
@@ -864,11 +864,16 @@ float InterruptManager::CalculateInterruptUrgency(const InterruptTarget& target)
             urgency = 0.0f;
             break;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+
+    return nullptr;
+
+}
 
     float timeUrgency = 1.0f - (target.remainingCastTime / target.totalCastTime);
     urgency += timeUrgency * 0.5f;
@@ -891,7 +896,7 @@ void InterruptManager::ScanNearbyUnitsForCasts()
         {
             auto& firstDetected = _targetFirstDetected[newTarget.guid];
             if (firstDetected == 0)
-                firstDetected = getMSTime();
+                firstDetected = GameTime::GetGameTimeMS();
 
             _trackedTargets.push_back(newTarget);
         }
@@ -908,11 +913,16 @@ if (!unit)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
     return;
 }
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
-    return nullptr;
-}
+
+if (!unit)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetPosition");
+
+    return nullptr;
+
+}
     if (!unit)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
@@ -935,11 +945,16 @@ if (!unit)
 
     return true;
 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return nullptr;
+
+}
 
 bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
 if (!target)
@@ -1326,11 +1341,16 @@ InterruptPriority InterruptManager::AssessBuffPriority(const SpellInfo* spellInf
 {
     if (!spellInfo || !caster)
         return InterruptPriority::IGNORE;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return nullptr;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+
+    return nullptr;
+
+}
 
     if (!bot)
     {
@@ -1364,7 +1384,7 @@ void InterruptManager::HandleMultipleInterruptTargets()
 
 void InterruptManager::RegisterInterruptAttempt(const InterruptTarget& target)
 {
-    _lastInterruptAttempt = getMSTime();
+    _lastInterruptAttempt = GameTime::GetGameTimeMS();
 
     // Record the attempt in group data if in group
     if (Group* group = _bot->GetGroup())
@@ -1374,7 +1394,7 @@ void InterruptManager::RegisterInterruptAttempt(const InterruptTarget& target)
         return nullptr;
     }
     {
-        _groupInterruptClaims[target.guid] = getMSTime() + 5000; // 5 second claim
+        _groupInterruptClaims[target.guid] = GameTime::GetGameTimeMS() + 5000; // 5 second claim
     }
 }
 
@@ -1384,7 +1404,7 @@ bool InterruptManager::ShouldLetOthersInterrupt(const InterruptTarget& target)
     auto it = _groupInterruptClaims.find(target.guid);
     if (it != _groupInterruptClaims.end())
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime < it->second)
         {
             return true; // Someone else is handling it
@@ -1412,7 +1432,7 @@ void InterruptManager::CoordinateInterruptsWithGroup(const std::vector<Player*>&
 
     // Store coordination data
     _groupData.rotationIndex = myIndex;
-    _groupData.lastRotationUpdate = getMSTime();
+    _groupData.lastRotationUpdate = GameTime::GetGameTimeMS();
 }
 
 bool InterruptManager::ShouldInterruptBuff(const SpellInfo* spellInfo, Unit* caster)

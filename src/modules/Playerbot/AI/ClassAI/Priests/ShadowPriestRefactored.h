@@ -97,7 +97,7 @@ public:
     {
         _voidformActive = true;
         _voidformStacks = 1;
-        _voidformEndTime = getMSTime() + 15000; // Base duration
+        _voidformEndTime = GameTime::GetGameTimeMS() + 15000; // Base duration
     }
 
     void DeactivateVoidform()
@@ -112,13 +112,13 @@ public:
         {
             _voidformStacks++;
             // Each stack increases drain rate, but also extends slightly
-            _voidformEndTime = getMSTime() + 1000; // 1 sec extension per stack
+            _voidformEndTime = GameTime::GetGameTimeMS() + 1000; // 1 sec extension per stack
         }
     }
 
     [[nodiscard]] bool IsActive() const
     {
-        return _voidformActive && getMSTime() < _voidformEndTime;
+        return _voidformActive && GameTime::GetGameTimeMS() < _voidformEndTime;
     }
 
     [[nodiscard]] uint32 GetStacks() const { return _voidformStacks; }
@@ -141,7 +141,7 @@ public:
         }
 
         // Voidform expires over time
-        if (_voidformActive && getMSTime() >= _voidformEndTime)
+        if (_voidformActive && GameTime::GetGameTimeMS() >= _voidformEndTime)
             DeactivateVoidform();
     }
 
@@ -159,12 +159,12 @@ public:
 
     void ApplyVampiricTouch(ObjectGuid guid, uint32 duration = 21000)
     {
-        _vampiricTouchTargets[guid] = getMSTime() + duration;
+        _vampiricTouchTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyShadowWordPain(ObjectGuid guid, uint32 duration = 16000)
     {
-        _shadowWordPainTargets[guid] = getMSTime() + duration;
+        _shadowWordPainTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     [[nodiscard]] bool HasVampiricTouch(ObjectGuid guid) const
@@ -172,7 +172,7 @@ public:
         auto it = _vampiricTouchTargets.find(guid);
         if (it == _vampiricTouchTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasShadowWordPain(ObjectGuid guid) const
@@ -180,7 +180,7 @@ public:
         auto it = _shadowWordPainTargets.find(guid);
         if (it == _shadowWordPainTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetVampiricTouchTimeRemaining(ObjectGuid guid) const
@@ -189,7 +189,7 @@ public:
         if (it == _vampiricTouchTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -202,7 +202,7 @@ public:
         if (it == _shadowWordPainTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -227,7 +227,7 @@ public:
             return;
 
         // Clean up expired DoTs
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _vampiricTouchTargets.begin(); it != _vampiricTouchTargets.end();)
         {
             if (now >= it->second)
@@ -326,13 +326,13 @@ public:
             }        }
 
         // Vampiric Embrace (healing for group)
-        if ((getMSTime() - _lastVampiricEmbraceTime) >= 120000) // 2 min CD
+        if ((GameTime::GetGameTimeMS() - _lastVampiricEmbraceTime) >= 120000) // 2 min CD
         {            if (bot->GetHealthPct() < 70.0f || (bot->GetGroup() && bot->GetGroup()->GetMembersCount() > 1))
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_EMBRACE, bot))
                 {
                     this->CastSpell(bot, SHADOW_VAMPIRIC_EMBRACE);
-                    _lastVampiricEmbraceTime = getMSTime();
+                    _lastVampiricEmbraceTime = GameTime::GetGameTimeMS();
                 }
             }
         }
@@ -391,13 +391,13 @@ private:
         if (!bot)            return;
 
         // Dark Ascension state (alternative to Void Eruption)
-        if (_darkAscensionActive && getMSTime() >= _darkAscensionEndTime)
+        if (_darkAscensionActive && GameTime::GetGameTimeMS() >= _darkAscensionEndTime)
             _darkAscensionActive = false;
 
         if (bot->HasAura(SHADOW_DARK_ASCENSION))
         {
             _darkAscensionActive = true;
-            if (Aura* aura = bot->GetAura(SHADOW_DARK_ASCENSION))                _darkAscensionEndTime = getMSTime() + aura->GetDuration();        }
+            if (Aura* aura = bot->GetAura(SHADOW_DARK_ASCENSION))                _darkAscensionEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -412,11 +412,11 @@ private:
         if (insanity >= 60 && !_voidformTracker.IsActive())
         {
             // Dark Ascension (alternative to Void Eruption)
-            if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (getMSTime() - _lastDarkAscensionTime) >= 60000)            {
+            if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (GameTime::GetGameTimeMS() - _lastDarkAscensionTime) >= 60000)            {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                 {                    this->CastSpell(bot, SHADOW_DARK_ASCENSION);                    _darkAscensionActive = true;
-                    _darkAscensionEndTime = getMSTime() + 15000;
-                    _lastDarkAscensionTime = getMSTime();
+                    _darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastDarkAscensionTime = GameTime::GetGameTimeMS();
                     _insanityTracker.SpendInsanity(50);
                     return;                }
             }
@@ -470,11 +470,11 @@ private:
         }
 
         // Mindgames (cooldown ability)
-        if (bot->HasSpell(SHADOW_MINDGAMES) && (getMSTime() - _lastMindgamesTime) >= 45000)        {
+        if (bot->HasSpell(SHADOW_MINDGAMES) && (GameTime::GetGameTimeMS() - _lastMindgamesTime) >= 45000)        {
             if (this->CanCastSpell(SHADOW_MINDGAMES, target))
             {
                 this->CastSpell(target, SHADOW_MINDGAMES);
-                _lastMindgamesTime = getMSTime();
+                _lastMindgamesTime = GameTime::GetGameTimeMS();
                 _insanityTracker.GenerateInsanity(10);
                 return;
             }
@@ -500,12 +500,12 @@ private:
         }
 
         // Void Torrent (channeled damage)
-        if (bot->HasSpell(SHADOW_VOID_TORRENT) && (getMSTime() - _lastVoidTorrentTime) >= 30000)
+        if (bot->HasSpell(SHADOW_VOID_TORRENT) && (GameTime::GetGameTimeMS() - _lastVoidTorrentTime) >= 30000)
         
         {
             if (this->CanCastSpell(SHADOW_VOID_TORRENT, target))            {
                 this->CastSpell(target, SHADOW_VOID_TORRENT);
-                _lastVoidTorrentTime = getMSTime();
+                _lastVoidTorrentTime = GameTime::GetGameTimeMS();
                 _insanityTracker.GenerateInsanity(15);
                 return;
             }
@@ -531,14 +531,14 @@ private:
         // Enter Voidform for AoE burst
         if (insanity >= 60 && !_voidformTracker.IsActive() && enemyCount >= 4)
         {
-            if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (getMSTime() - _lastDarkAscensionTime) >= 60000)
+            if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (GameTime::GetGameTimeMS() - _lastDarkAscensionTime) >= 60000)
             {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                 {
                     this->CastSpell(bot, SHADOW_DARK_ASCENSION);
                     _darkAscensionActive = true;
-                    _darkAscensionEndTime = getMSTime() + 15000;
-                    _lastDarkAscensionTime = getMSTime();
+                    _darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastDarkAscensionTime = GameTime::GetGameTimeMS();
                     _insanityTracker.SpendInsanity(50);
                     return;
                 }
@@ -657,7 +657,7 @@ private:
             queue->AddCondition(SHADOW_DARK_ASCENSION, [this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
                        this->_insanityTracker.GetInsanity() >= 60 &&
-                       (getMSTime() - this->_lastDarkAscensionTime) >= 60000;
+                       (GameTime::GetGameTimeMS() - this->_lastDarkAscensionTime) >= 60000;
             }, "60+ Insanity and Dark Ascension off CD (alternative burst)");
 
             queue->RegisterSpell(SHADOW_DEVOURING_PLAGUE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_SINGLE);
@@ -703,13 +703,13 @@ private:
             queue->RegisterSpell(SHADOW_MINDGAMES, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SHADOW_MINDGAMES, [this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(SHADOW_MINDGAMES) &&
-                       target && (getMSTime() - this->_lastMindgamesTime) >= 45000;
+                       target && (GameTime::GetGameTimeMS() - this->_lastMindgamesTime) >= 45000;
             }, "Mindgames off CD (damage + Insanity gen)");
 
             queue->RegisterSpell(SHADOW_VOID_TORRENT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SHADOW_VOID_TORRENT, [this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(SHADOW_VOID_TORRENT) &&
-                       target && (getMSTime() - this->_lastVoidTorrentTime) >= 30000;
+                       target && (GameTime::GetGameTimeMS() - this->_lastVoidTorrentTime) >= 30000;
             }, "Void Torrent off CD (channeled damage + Insanity)");
 
             // LOW: Filler spells
@@ -743,15 +743,15 @@ private:
                         Sequence("Cast Dark Ascension", {
                             Condition("Has Dark Ascension talent", [this](Player* bot, Unit* target) {
                                 return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
-                                       (getMSTime() - this->_lastDarkAscensionTime) >= 60000;
+                                       (GameTime::GetGameTimeMS() - this->_lastDarkAscensionTime) >= 60000;
                             }),
                             Action("Cast Dark Ascension", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                                 {
                                     this->CastSpell(bot, SHADOW_DARK_ASCENSION);
                                     this->_darkAscensionActive = true;
-                                    this->_darkAscensionEndTime = getMSTime() + 15000;
-                                    this->_lastDarkAscensionTime = getMSTime();
+                                    this->_darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
+                                    this->_lastDarkAscensionTime = GameTime::GetGameTimeMS();
                                     this->_insanityTracker.SpendInsanity(50);
                                     return NodeStatus::SUCCESS;
                                 }

@@ -113,7 +113,7 @@ void BotWorldSessionMgr::Shutdown()
     sBotPerformanceMon->Shutdown();
     sBotPriorityMgr->Shutdown();
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     // Clean logout all bot sessions
     for (auto& [guid, session] : _botSessions)
@@ -210,7 +210,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     }
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     // Check if bot is already loading
     if (_botsLoading.find(playerGuid) != _botsLoading.end())
@@ -380,7 +380,7 @@ if (!session)
 
 }
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -426,7 +426,7 @@ if (!session)
 
 Player* BotWorldSessionMgr::GetPlayerBot(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -454,7 +454,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     //
     // Total per-tick load: 5 + 45 + 40 + 91 = 181 bots @ 0.8ms = 145ms target
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     _tickCounter++;
 
     // PHASE 0: Enterprise monitoring - Begin tick measurement
@@ -464,7 +464,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // PHASE 0.5: CRITICAL FIX - Process pending spawns at controlled rate
     // Prevents database overload by rate-limiting async login submissions
     {
-        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        std::lock_guard lock(_sessionsMutex);
 
         _spawnsProcessedThisTick = 0;
 
@@ -540,7 +540,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
     // PHASE 1: Priority-based session collection (minimal lock time)
     {
-        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        std::lock_guard lock(_sessionsMutex);
 
         if (_botSessions.empty() && _pendingSpawns.empty())
         {
@@ -972,7 +972,7 @@ if (!session)
     // PHASE 3: Cleanup disconnected sessions
     if (!disconnectedSessions.empty())
     {
-        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        std::lock_guard lock(_sessionsMutex);
         for (ObjectGuid const& guid : disconnectedSessions)
         {
             _botSessions.erase(guid);
@@ -1029,7 +1029,7 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     // Collect sessions that need deferred packet processing
     std::vector<std::shared_ptr<BotSession>> sessionsToProcess;
     {
-        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        std::lock_guard lock(_sessionsMutex);
         sessionsToProcess.reserve(_botSessions.size());
 
         for (auto const& [guid, session] : _botSessions)
@@ -1081,7 +1081,7 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
 
 uint32 BotWorldSessionMgr::GetBotCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
     return static_cast<uint32>(_botSessions.size());
 }
 
@@ -1167,7 +1167,7 @@ if (!bot)
 std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId) const
 {
     std::vector<Player*> bots;
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {
@@ -1197,7 +1197,7 @@ void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 
     // Collect GUIDs to remove (avoid modifying map while iterating)
     {
-        std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+        std::lock_guard lock(_sessionsMutex);
         for (auto const& [guid, session] : _botSessions)
         {
             if (!session)
@@ -1225,7 +1225,7 @@ void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
 {
     uint32 count = 0;
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {

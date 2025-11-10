@@ -102,7 +102,7 @@ struct TC_GAME_API CommandContext
     uint32 lang;                 // Language ID
     bool isWhisper;              // True if whisper, false if group chat
     bool isNaturalLanguage;      // True if processed via LLM
-    uint32 timestamp;            // Command timestamp (getMSTime())
+    uint32 timestamp;            // Command timestamp (GameTime::GetGameTimeMS())
 
     CommandContext()
         : sender(nullptr), bot(nullptr), botSession(nullptr)

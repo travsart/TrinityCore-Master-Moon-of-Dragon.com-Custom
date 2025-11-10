@@ -58,7 +58,7 @@ struct MarketSnapshot
     float standardDeviation;
     uint32 salesVelocity; // Items sold per hour
 
-    MarketSnapshot() : timestamp(getMSTime()), itemId(0), activeListings(0)
+    MarketSnapshot() : timestamp(GameTime::GetGameTimeMS()), itemId(0), activeListings(0)
         , totalVolume(0), averagePrice(0.0f), medianPrice(0.0f)
         , minPrice(0.0f), maxPrice(0.0f), standardDeviation(0.0f)
         , salesVelocity(0) {}
@@ -100,7 +100,7 @@ public:
 
         MarketMetrics() : liquidity(0.5f), efficiency(0.8f), competitiveness(0.6f)
             , seasonality(0.0f), momentum(0.0f), currentTrend(MarketTrend::STABLE)
-            , lastAnalysisTime(getMSTime()) {}
+            , lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
     MarketMetrics GetMarketMetrics(uint32 itemId) override;
@@ -243,7 +243,7 @@ private:
         uint32 lastTraining;
 
         PredictionModel() : bias(0.0f), accuracy(0.5f), trainingSamples(0)
-            , lastTraining(getMSTime()) {}
+            , lastTraining(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, PredictionModel> _predictionModels; // itemId -> model

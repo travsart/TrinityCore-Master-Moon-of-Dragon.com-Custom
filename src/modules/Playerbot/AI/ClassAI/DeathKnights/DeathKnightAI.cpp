@@ -658,7 +658,7 @@ void DeathKnightAI::UpdateBuffs()
     if (!GetBot())
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Maintain presence
     if (currentTime - _lastPresence > 5000) // Check every 5 seconds
@@ -1160,7 +1160,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
         {
             if (CastSpell(priorityTarget, DEATH_GRIP))
             {
-                _lastDeathGrip = getMSTime();
+                _lastDeathGrip = GameTime::GetGameTimeMS();
                 RecordAbilityUsage(DEATH_GRIP);
                 _metrics->deathGripsUsed++;
                 return true;
@@ -1175,7 +1175,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
         {
             if (CastSpell(priorityTarget, DARK_COMMAND))
             {
-                _lastDarkCommand = getMSTime();
+                _lastDarkCommand = GameTime::GetGameTimeMS();
                 RecordAbilityUsage(DARK_COMMAND);
                 return true;
             }
@@ -1431,7 +1431,7 @@ if (!currentVictim)
 
 void DeathKnightAI::UpdatePresenceIfNeeded()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastPresence < PRESENCE_CHECK_INTERVAL)
         return;
 
@@ -1487,7 +1487,7 @@ bool DeathKnightAI::ShouldUseDeathGrip(Unit* target) const
     if (!target || !GetBot())
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastDeathGrip < DEATH_GRIP_COOLDOWN)
         return false;
 
@@ -1521,7 +1521,7 @@ bool DeathKnightAI::ShouldUseDarkCommand(Unit* target) const
     if (_detectedSpec != DeathKnightSpec::BLOOD)
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastDarkCommand < DARK_COMMAND_COOLDOWN)
         return false;
 

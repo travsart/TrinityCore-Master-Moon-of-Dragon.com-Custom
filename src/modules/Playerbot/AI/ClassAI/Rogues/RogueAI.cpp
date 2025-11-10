@@ -662,7 +662,7 @@ void RogueAI::UseDefensiveCooldowns()
         if (CastSpell(VANISH))
         {
             RecordAbilityUsage(VANISH);
-            _lastVanish = getMSTime();
+            _lastVanish = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used Vanish (emergency escape)",
                          GetBot()->GetName());
             return;
@@ -987,7 +987,7 @@ void RogueAI::UpdateBuffs()
         return;
     }
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Apply poisons (check every 30 seconds)
     if (currentTime - _lastPoison > 30000)

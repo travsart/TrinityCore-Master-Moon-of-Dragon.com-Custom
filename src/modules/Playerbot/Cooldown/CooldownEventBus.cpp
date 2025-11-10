@@ -127,7 +127,7 @@ bool CooldownEventBus::PublishEvent(CooldownEvent const& event)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             TC_LOG_WARN("module.playerbot.cooldown", "CooldownEventBus: Event queue full ({} events), dropping event: {}",
@@ -159,7 +159,7 @@ bool CooldownEventBus::Subscribe(BotAI* subscriber, std::vector<CooldownEventTyp
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (CooldownEventType type : types)
     {
@@ -196,7 +196,7 @@ bool CooldownEventBus::SubscribeAll(BotAI* subscriber)
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
     {
@@ -217,7 +217,7 @@ void CooldownEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
@@ -251,7 +251,7 @@ uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<CooldownEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -276,7 +276,7 @@ uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+            std::lock_guard lock(_subscriberMutex);
 
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
@@ -317,7 +317,7 @@ uint32 CooldownEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void CooldownEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<CooldownEvent> remainingEvents;
 
@@ -341,13 +341,13 @@ void CooldownEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 CooldownEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 CooldownEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -385,7 +385,7 @@ bool CooldownEventBus::ValidateEvent(CooldownEvent const& event) const
 
 uint32 CooldownEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<CooldownEvent> validEvents;
@@ -431,7 +431,7 @@ void CooldownEventBus::LogEvent(CooldownEvent const& event, std::string const& a
 
 void CooldownEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     TC_LOG_INFO("module.playerbot.cooldown", "=== CooldownEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.cooldown", "Global subscribers: {}", _globalSubscribers.size());
@@ -445,7 +445,7 @@ void CooldownEventBus::DumpSubscribers() const
 
 void CooldownEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     TC_LOG_INFO("module.playerbot.cooldown", "=== CooldownEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.cooldown", "Queue size: {}", _eventQueue.size());
@@ -453,7 +453,7 @@ void CooldownEventBus::DumpEventQueue() const
 
 std::vector<CooldownEvent> CooldownEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<CooldownEvent> snapshot;
     std::priority_queue<CooldownEvent> tempQueue = _eventQueue;

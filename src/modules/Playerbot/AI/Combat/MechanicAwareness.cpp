@@ -233,11 +233,16 @@ std::vector<MechanicInfo> MechanicAwareness::DetectMechanics(Player* bot, Unit* 
         return nullptr;
     }
     }
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPosition");
-    return nullptr;
-}
+
+if (!caster)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPosition");
+
+    return nullptr;
+
+}
 
     // Check debuff mechanics
     MechanicInfo debuffMechanic = DetectDebuffMechanic(bot);
@@ -304,18 +309,23 @@ MechanicInfo MechanicAwareness::AnalyzeSpellMechanic(uint32 spellId, Unit* caste
         mechanic.response = MechanicResponse::SPREAD_OUT;
     else if (EnumFlag<MechanicType>(mechanic.type).HasFlag(MechanicType::STACK_REQUIRED))
         mechanic.response = MechanicResponse::STACK_UP;
-if (!spell)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: spell in method GetSpellInfo");
-    return nullptr;
-}
+
+if (!spell)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: spell in method GetSpellInfo");
+
+    return nullptr;
+
+}
 
     // Get danger radius
     mechanic.dangerRadius = GetSpellDangerRadius(spellId);
     mechanic.safeDistance = mechanic.dangerRadius + _safeDistanceBuffer;
 
     // Set timing
-    mechanic.triggerTime = getMSTime() + castTime;
+    mechanic.triggerTime = GameTime::GetGameTimeMS() + castTime;
     mechanic.duration = spellInfo->GetDuration();
 
     // Estimate damage
@@ -438,7 +448,7 @@ void MechanicAwareness::HandleCleaveMechanic(Unit* target, float cleaveAngle, fl
     cleave.range = cleaveRange;
     cleave.isActive = true;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _cleaveMechanics[target->GetGUID()] = cleave;
     if (!target)
     {
@@ -458,7 +468,7 @@ void MechanicAwareness::HandleAOEMechanic(const AOEZone& zone, Player* bot)
         return;
 
     // Check if bot is in danger zone
-    if (zone.IsPointInZone(bot->GetPosition(), getMSTime()))
+    if (zone.IsPointInZone(bot->GetPosition(), GameTime::GetGameTimeMS()))
     {
         // Find safe position
         Position safePos = FindSafeSpot(bot, zone);
@@ -638,11 +648,16 @@ std::vector<Position> MechanicAwareness::GenerateSafePositions(const Position& c
             candidate.m_positionX = currentPos.m_positionX + distance * cos(radians);
             candidate.m_positionY = currentPos.m_positionY + distance * sin(radians);
             candidate.m_positionZ = currentPos.m_positionZ;
-if (!spell)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: spell in method GetSpellInfo");
-    return nullptr;
-}
+
+if (!spell)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: spell in method GetSpellInfo");
+
+    return nullptr;
+
+}
 
             positions.push_back(candidate);
         }
@@ -734,7 +749,7 @@ bool MechanicAwareness::ShouldDispel(Unit* target, uint32 spellId)
 
 void MechanicAwareness::RegisterAOEZone(const AOEZone& zone)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _activeAOEZones.push_back(zone);
 
     // Merge overlapping zones
@@ -743,7 +758,7 @@ void MechanicAwareness::RegisterAOEZone(const AOEZone& zone)
 
 void MechanicAwareness::UpdateAOEZones(uint32 currentTime)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Remove expired zones
     _activeAOEZones.erase(
@@ -772,7 +787,7 @@ void MechanicAwareness::RemoveExpiredZones(uint32 currentTime)
 
 std::vector<AOEZone> MechanicAwareness::GetActiveAOEZones() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     return _activeAOEZones;
 }
 
@@ -788,9 +803,9 @@ if (!target)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
         return 0;
     }
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     std::vector<AOEZone> upcoming;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (const AOEZone& zone : _activeAOEZones)
     {
@@ -803,13 +818,13 @@ if (!target)
 
 void MechanicAwareness::TrackProjectile(const ProjectileInfo& projectile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _trackedProjectiles.push_back(projectile);
 }
 
 void MechanicAwareness::UpdateProjectiles(uint32 currentTime)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Remove projectiles that have impacted
     _trackedProjectiles.erase(
@@ -837,13 +852,18 @@ if (!bot)
     if (!target)
         return {};
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     std::vector<ProjectileInfo> incoming;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return nullptr;
+
+}
 
     for (const ProjectileInfo& proj : _trackedProjectiles)
     {
@@ -911,14 +931,14 @@ void MechanicAwareness::RegisterCleaveMechanic(Unit* source, const CleaveMechani
     if (!source)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _cleaveMechanics[source->GetGUID()] = cleave;
 }
 
 void MechanicAwareness::UpdateCleaveMechanics()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    uint32 currentTime = getMSTime();
+    std::lock_guard lock(_mutex);
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Update cleave states
     for (auto& [guid, cleave] : _cleaveMechanics)
@@ -942,7 +962,7 @@ bool MechanicAwareness::IsInCleaveZone(Player* bot, Unit* source)
     if (!bot || !source)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _cleaveMechanics.find(source->GetGUID());
 
     if (it == _cleaveMechanics.end())
@@ -966,7 +986,7 @@ Position MechanicAwareness::GetCleaveAvoidancePosition(Player* bot, Unit* source
     if (!bot || !source)
         return bot ? bot->GetPosition() : Position();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _cleaveMechanics.find(source->GetGUID());
 
     if (it == _cleaveMechanics.end())
@@ -996,7 +1016,7 @@ std::vector<MechanicPrediction> MechanicAwareness::PredictMechanics(Unit* target
     if (!target)
         return predictions;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _mechanicHistory.find(target->GetGUID());
     if (!target)
     {
@@ -1016,7 +1036,7 @@ std::vector<MechanicPrediction> MechanicAwareness::PredictMechanics(Unit* target
 
         if (prediction.confidence > 0.5f)
         {
-            prediction.predictedTime = getMSTime() + timeAhead;
+            prediction.predictedTime = GameTime::GetGameTimeMS() + timeAhead;
             prediction.predictedLocation = target->GetPosition();
             prediction.predictedRadius = historic.dangerRadius;
             prediction.basis = "Pattern analysis";
@@ -1200,7 +1220,7 @@ void MechanicAwareness::RegisterEnvironmentalHazard(const Position& location, fl
     AOEZone hazard;
     hazard.center = location;
     hazard.radius = radius;
-    hazard.startTime = getMSTime();
+    hazard.startTime = GameTime::GetGameTimeMS();
     hazard.duration = duration;
     hazard.type = MechanicType::ENVIRONMENTAL;
     hazard.isPersistent = false;
@@ -1210,8 +1230,8 @@ void MechanicAwareness::RegisterEnvironmentalHazard(const Position& location, fl
 
 bool MechanicAwareness::IsEnvironmentalHazard(const Position& pos)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    uint32 currentTime = getMSTime();
+    std::lock_guard lock(_mutex);
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (const AOEZone& zone : _activeAOEZones)
     {
@@ -1224,7 +1244,7 @@ bool MechanicAwareness::IsEnvironmentalHazard(const Position& pos)
 
 std::vector<Position> MechanicAwareness::GetEnvironmentalHazards() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     std::vector<Position> hazards;
 
     for (const AOEZone& zone : _activeAOEZones)
@@ -1412,7 +1432,7 @@ std::vector<MechanicInfo> MechanicAwareness::ScanForThreats(Player* bot, float s
         return threats;
 
     // Scan for active AOE zones
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     for (const AOEZone& zone : _activeAOEZones)
     {
         if (zone.IsActive(currentTime) && bot->GetExactDistSq(zone.center) <= (scanRadius * scanRadius))
@@ -1665,7 +1685,7 @@ void MechanicAwareness::UpdateMechanicHistory(Unit* target, const MechanicInfo& 
     if (!target)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto& history = _mechanicHistory[target->GetGUID()];
     if (!target)
     {
@@ -1685,7 +1705,7 @@ float MechanicAwareness::AnalyzeMechanicPattern(Unit* target, MechanicType type)
     if (!target)
         return 0.0f;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _mechanicHistory.find(target->GetGUID());
 
     if (it == _mechanicHistory.end())
@@ -1709,7 +1729,7 @@ void MechanicAwareness::CleanupOldData(uint32 currentTime)
     UpdateProjectiles(currentTime);
 
     // Cleanup mechanic history
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     for (auto& [guid, history] : _mechanicHistory)
     {
         history.erase(
@@ -1737,7 +1757,7 @@ MechanicDatabase& MechanicDatabase::Instance()
 
 void MechanicDatabase::RegisterSpellMechanic(uint32 spellId, MechanicType type, float radius, float angle)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     SpellMechanicData& data = _spellMechanics[spellId];
     data.type = type;
     data.radius = radius;
@@ -1746,21 +1766,21 @@ void MechanicDatabase::RegisterSpellMechanic(uint32 spellId, MechanicType type, 
 
 MechanicType MechanicDatabase::GetSpellMechanicType(uint32 spellId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.type : MechanicType::NONE;
 }
 
 float MechanicDatabase::GetSpellRadius(uint32 spellId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.radius : 0.0f;
 }
 
 float MechanicDatabase::GetSpellAngle(uint32 spellId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     auto it = _spellMechanics.find(spellId);
     return it != _spellMechanics.end() ? it->second.angle : 0.0f;
 }

@@ -327,10 +327,10 @@ bool WarlockAI::HandleInterrupt(Unit* target)
         if (pet->GetEntry() == 417 || pet->GetEntry() == 17252) // Felhunter or Fel Guard
         {
             // Command pet to use Spell Lock (19647)
-            if (!_petAbilityCooldowns[SPELL_LOCK] || getMSTime() - _petAbilityCooldowns[SPELL_LOCK] > 24000)
+            if (!_petAbilityCooldowns[SPELL_LOCK] || GameTime::GetGameTimeMS() - _petAbilityCooldowns[SPELL_LOCK] > 24000)
             {
                 pet->CastSpell(target, SPELL_LOCK, false);
-                _petAbilityCooldowns[SPELL_LOCK] = getMSTime();
+                _petAbilityCooldowns[SPELL_LOCK] = GameTime::GetGameTimeMS();
                 return true;
             }
         }
@@ -435,10 +435,10 @@ bool WarlockAI::HandlePetManagement()
         // Consume Shadows (Voidwalker self-heal)
         if (pet->GetEntry() == 1860) // Voidwalker
         {
-            if (!_petAbilityCooldowns[CONSUME_SHADOWS] || getMSTime() - _petAbilityCooldowns[CONSUME_SHADOWS] > 180000)
+            if (!_petAbilityCooldowns[CONSUME_SHADOWS] || GameTime::GetGameTimeMS() - _petAbilityCooldowns[CONSUME_SHADOWS] > 180000)
             {
                 pet->CastSpell(pet, CONSUME_SHADOWS, false);
-                _petAbilityCooldowns[CONSUME_SHADOWS] = getMSTime();
+                _petAbilityCooldowns[CONSUME_SHADOWS] = GameTime::GetGameTimeMS();
             }
         }
     }
@@ -504,7 +504,7 @@ bool WarlockAI::SummonPet()
         uint32 soulShards = bot->GetItemCount(6265);        if (soulShards > 0)
         {
             bot->CastSpell(bot, summonSpell, false);
-            _lastPetSummon = getMSTime();
+            _lastPetSummon = GameTime::GetGameTimeMS();
             _petsSpawned++;
             TC_LOG_DEBUG("playerbot.warlock", "Summoning pet with spell {}", summonSpell);
             return true;
@@ -520,7 +520,7 @@ bool WarlockAI::HandleCrowdControl(Unit* target){    if (!target)
     Player* bot = GetBot();    if (!bot)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Fear - primary CC
     if (bot->HasSpell(FEAR) && (now - _lastFear > 5000))
@@ -759,7 +759,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
 
     // Track DoT application time
     ObjectGuid targetGuid = target->GetGUID();
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Corruption - primary DoT
     if (bot->HasSpell(CORRUPTION) && !target->HasAura(CORRUPTION))
@@ -1317,7 +1317,7 @@ void WarlockAI::ManageLifeTapTiming()
     if (!bot)
         return;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Don't Life Tap too frequently
     if (now - _lastLifeTapTime < 3000)
@@ -1399,7 +1399,7 @@ void WarlockAI::HandlePetSpecialAbilities()
 
     // Use pet abilities based on type and situation
     uint32 petEntry = pet->GetEntry();
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Imp abilities
     if (petEntry == 416) // Imp
@@ -1483,7 +1483,7 @@ void WarlockAI::ManageWarlockCooldowns(){
 void WarlockAI::OptimizeSoulShardUsage()
 {
     // Optimize soul shard usage based on availability and need
-    std::lock_guard<std::recursive_mutex> lock(_soulShardMutex);
+    std::lock_guard lock(_soulShardMutex);
 
     // Determine conservation mode based on shard count
     bool shouldConserve = (_currentSoulShards < 5);

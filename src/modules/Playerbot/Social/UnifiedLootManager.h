@@ -186,8 +186,8 @@ private:
 
             LootSession(uint32 id, uint32 gId)
                 : sessionId(id), groupId(gId)
-                , sessionStartTime(getMSTime())
-                , sessionTimeout(getMSTime() + 300000) // 5 minutes
+                , sessionStartTime(GameTime::GetGameTimeMS())
+                , sessionTimeout(GameTime::GetGameTimeMS() + 300000) // 5 minutes
                 , isActive(true)
             {}
         };

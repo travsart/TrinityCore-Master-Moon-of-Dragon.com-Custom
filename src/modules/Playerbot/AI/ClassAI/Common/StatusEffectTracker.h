@@ -25,7 +25,7 @@ namespace Playerbot
 struct EffectInfo
 {
     uint32 spellId;
-    uint32 endTime;      // getMSTime() when effect expires
+    uint32 endTime;      // GameTime::GetGameTimeMS() when effect expires
     uint32 duration;     // Total duration in ms
     uint32 stacks;       // Stack count (1 for non-stacking effects)
     bool active;
@@ -45,13 +45,13 @@ struct EffectInfo
         if (!active)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return endTime > now ? endTime - now : 0;
     }
 
     [[nodiscard]] bool IsExpired() const
     {
-        return !active || getMSTime() >= endTime;
+        return !active || GameTime::GetGameTimeMS() >= endTime;
     }
 
     [[nodiscard]] bool NeedsRefresh(uint32 pandemicWindow = 5400) const
@@ -96,7 +96,7 @@ public:
         dot.duration = duration;
         dot.stacks = stacks;
         dot.active = true;
-        dot.endTime = getMSTime() + duration;
+        dot.endTime = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveDot(ObjectGuid targetGuid, uint32 spellId)
@@ -174,7 +174,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Clean up expired DoTs
         for (auto targetIt = _activeDots.begin(); targetIt != _activeDots.end();)
@@ -243,7 +243,7 @@ public:
         hot.spellId = spellId;
         hot.duration = duration;
         hot.active = true;
-        hot.endTime = getMSTime() + duration;
+        hot.endTime = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveHot(ObjectGuid targetGuid, uint32 spellId)
@@ -374,7 +374,7 @@ public:
         buff.duration = duration;
         buff.stacks = std::min(stacks, maxStacks);
         buff.active = true;
-        buff.endTime = getMSTime() + duration;
+        buff.endTime = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveBuff(uint32 spellId)
@@ -400,7 +400,7 @@ public:
             ++it->second.stacks;
 
         // Refresh duration
-        it->second.endTime = getMSTime() + it->second.duration;
+        it->second.endTime = GameTime::GetGameTimeMS() + it->second.duration;
     }
 
     [[nodiscard]] bool IsActive(uint32 spellId) const

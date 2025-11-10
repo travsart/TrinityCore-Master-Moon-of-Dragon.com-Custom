@@ -161,11 +161,16 @@ bool SocialManager::SendChatMessage(ChatType type, std::string const& message, O
 {
     if (!m_bot || !m_chatEnabled || message.empty())
         return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return false;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
+
+    return false;
+
+}
 
     std::string sanitized = SanitizeMessage(message);
     if (sanitized.empty() || IsSpam(sanitized))
@@ -294,7 +299,7 @@ bool SocialManager::RespondToChat(Player* sender, std::string const& message, Ch
 
     // Add a small delay for natural conversation
     uint32 delay = urand(m_minChatDelay, m_maxChatDelay);
-    m_nextChatTime = getMSTime() + delay;
+    m_nextChatTime = GameTime::GetGameTimeMS() + delay;
 
     if (!sender)
     {
@@ -373,7 +378,7 @@ std::string SocialManager::GenerateChatResponse(std::string const& message, Chat
             if (!word.responses.empty())
             {
                 uint32 index = urand(0, word.responses.size() - 1);
-                m_responseCooldowns[word.trigger] = getMSTime() + word.cooldown;
+                m_responseCooldowns[word.trigger] = GameTime::GetGameTimeMS() + word.cooldown;
                 return word.responses[index];
             }
         }
@@ -903,7 +908,7 @@ bool SocialManager::SendGuildChat(std::string const& message)
     m_guild->BroadcastPacket(packet.Write());
 
     m_stats.guildChatsSent++;
-    m_lastGuildChatTime = getMSTime();
+    m_lastGuildChatTime = GameTime::GetGameTimeMS();
 
     return true;
 }
@@ -946,7 +951,7 @@ bool SocialManager::RespondToGuildChat(Player* sender, std::string const& messag
         return false;
 
     uint32 delay = urand(m_minChatDelay, m_maxChatDelay);
-    m_nextChatTime = getMSTime() + delay;
+    m_nextChatTime = GameTime::GetGameTimeMS() + delay;
 
     return SendGuildChat(response);
 }
@@ -1068,11 +1073,16 @@ std::vector<SocialManager::SocialReputation> SocialManager::GetTopFriendlyPlayer
 // ============================================================================
 // RESPONSE TEMPLATES
 // ============================================================================
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
 void SocialManager::LoadResponseTemplates()
 if (!player)
@@ -1346,7 +1356,7 @@ bool SocialManager::ShouldRespondToChat(Player* sender, std::string const& messa
         return false;
 
     // Don't respond if on cooldown
-    if (getMSTime() < m_nextChatTime)
+    if (GameTime::GetGameTimeMS() < m_nextChatTime)
         return false;
 
     // Don't respond to spam
@@ -1378,7 +1388,7 @@ bool SocialManager::IsSpam(std::string const& message) const
 {
     // Check for repeated messages
     uint32 count = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto const& recent : m_recentChats)
     {
@@ -1391,7 +1401,7 @@ bool SocialManager::IsSpam(std::string const& message) const
 
 void SocialManager::ScheduleNextChat()
 {
-    m_nextChatTime = getMSTime() + urand(m_minChatDelay, m_maxChatDelay);
+    m_nextChatTime = GameTime::GetGameTimeMS() + urand(m_minChatDelay, m_maxChatDelay);
 }
 
 void SocialManager::ProcessEmoteQueue(uint32 diff)
@@ -1402,7 +1412,7 @@ void SocialManager::ProcessEmoteQueue(uint32 diff)
 
 void SocialManager::ScheduleRandomEmote()
 {
-    m_nextEmoteTime = getMSTime() + m_emoteInterval + urand(0, 30000);
+    m_nextEmoteTime = GameTime::GetGameTimeMS() + m_emoteInterval + urand(0, 30000);
 }
 
 SocialManager::EmoteType SocialManager::SelectRandomEmote() const
@@ -1499,13 +1509,13 @@ bool SocialManager::IsOnCooldown(std::string const& trigger) const
 {
     auto itr = m_responseCooldowns.find(trigger);
     if (itr != m_responseCooldowns.end())
-        return getMSTime() < itr->second;
+        return GameTime::GetGameTimeMS() < itr->second;
     return false;
 }
 
 void SocialManager::UpdateCooldowns(uint32 diff)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto itr = m_responseCooldowns.begin(); itr != m_responseCooldowns.end();)
     {
@@ -1520,7 +1530,7 @@ void SocialManager::TrackChat(std::string const& message)
 {
     RecentChat chat;
     chat.message = message;
-    chat.timestamp = getMSTime();
+    chat.timestamp = GameTime::GetGameTimeMS();
     chat.count = 1;
 
     m_recentChats.push_back(chat);
@@ -1532,7 +1542,7 @@ void SocialManager::TrackChat(std::string const& message)
 
 void SocialManager::CleanupOldChats(uint32 diff)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     m_recentChats.erase(
         std::remove_if(m_recentChats.begin(), m_recentChats.end(),

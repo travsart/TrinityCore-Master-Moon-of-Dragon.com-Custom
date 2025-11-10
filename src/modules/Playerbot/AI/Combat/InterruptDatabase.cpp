@@ -675,7 +675,7 @@ void InterruptOptimizer::RecordInterruptAttempt(uint32 spellId, bool success, fl
     uint32 total = data.successCount + data.failCount;
     data.averageReactionTime = (data.averageReactionTime * (total - 1) + reactionTime) / total;
     data.successRate = static_cast<float>(data.successCount) / total;
-    data.lastUpdated = getMSTime();
+    data.lastUpdated = GameTime::GetGameTimeMS();
     data.spellId = spellId;
 }
 

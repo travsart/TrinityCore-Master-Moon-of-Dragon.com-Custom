@@ -62,7 +62,7 @@ void SharedBlackboard::NotifyChange(std::string const& key, std::any const& oldV
     event.key = key;
     event.oldValue = oldValue;
     event.newValue = newValue;
-    event.timestamp = getMSTime();
+    event.timestamp = GameTime::GetGameTimeMS();
 
     for (auto const& listener : _listeners)
     {

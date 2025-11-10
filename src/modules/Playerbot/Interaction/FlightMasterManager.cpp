@@ -78,11 +78,16 @@ namespace Playerbot
             m_stats.flightFailures++;
             return false;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
         // Check if already known
         if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
@@ -471,11 +476,16 @@ namespace Playerbot
     {
         if (!from || !to)
             return 0;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return nullptr;
+
+}
 
         // Calculate distance-based cost
         float distance = CalculateDistance(from, to);
@@ -610,11 +620,16 @@ namespace Playerbot
 
         return GetRecommendedLevelingZone();
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+
+    return;
+
+}
 
     // Internal Helper Methods
 
@@ -784,7 +799,7 @@ namespace Playerbot
                 m_knownPathsCache.insert(node->ID);
         }
 
-        m_lastCacheUpdate = getMSTime();
+        m_lastCacheUpdate = GameTime::GetGameTimeMS();
     }
 
     size_t FlightMasterManager::GetMemoryUsage() const

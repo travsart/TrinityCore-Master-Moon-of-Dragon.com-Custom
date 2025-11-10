@@ -58,12 +58,12 @@ namespace Playerbot
 
         [[nodiscard]] bool IsActive() const
         {
-            return getMSTime() < expiryTime;
+            return GameTime::GetGameTimeMS() < expiryTime;
         }
 
         [[nodiscard]] uint32 GetRemainingTime() const
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return (now < expiryTime) ? (expiryTime - now) : 0;
         }
     };

@@ -67,7 +67,7 @@ CombatBehaviorIntegration::~CombatBehaviorIntegration() = default;
 
 void CombatBehaviorIntegration::Update(uint32 diff)
 {
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     _updateTimer += diff;
 
@@ -112,14 +112,19 @@ void CombatBehaviorIntegration::Update(uint32 diff)
 
         _updateTimer = 0;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     // Track performance
-    _lastUpdateTime = getMSTime() - startTime;
+    _lastUpdateTime = GameTime::GetGameTimeMS() - startTime;
     _totalUpdateTime += _lastUpdateTime;
     _updateCount++;
 
@@ -178,7 +183,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
         const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     // Clear old actions
-    if (getMSTime() - _lastActionTime > 1000)
+    if (GameTime::GetGameTimeMS() - _lastActionTime > 1000)
     {
         _actionQueue.clear();
     }
@@ -190,7 +195,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
         emergency.type = CombatActionType::EMERGENCY;
         emergency.urgency = ActionUrgency::EMERGENCY;
         emergency.reason = "Emergency mode active";
-        emergency.timestamp = getMSTime();
+        emergency.timestamp = GameTime::GetGameTimeMS();
         _actionQueue.push_back(emergency);
     }
 
@@ -205,7 +210,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
             interrupt.urgency = EvaluateInterruptPriority(target);
             interrupt.target = target;
             interrupt.reason = "Urgent interrupt needed";
-            interrupt.timestamp = getMSTime();
+            interrupt.timestamp = GameTime::GetGameTimeMS();
             _actionQueue.push_back(interrupt);
         }
     }
@@ -218,7 +223,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
         defensive.urgency = EvaluateDefensivePriority();
         defensive.spellId = _defensiveManager->GetRecommendedDefensive();
         defensive.reason = "Defensive ability needed";
-        defensive.timestamp = getMSTime();
+        defensive.timestamp = GameTime::GetGameTimeMS();
         _actionQueue.push_back(defensive);
     }
 
@@ -235,7 +240,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
         movement.urgency = EvaluateMovementPriority();
         movement.position = _movementIntegration->GetTargetPosition();
         movement.reason = "Movement required";
-        movement.timestamp = getMSTime();
+        movement.timestamp = GameTime::GetGameTimeMS();
         _actionQueue.push_back(movement);
     }
 
@@ -256,7 +261,7 @@ void CombatBehaviorIntegration::UpdatePriorities()
             targetSwitch.urgency = EvaluateTargetSwitchPriority();
             targetSwitch.target = newTarget;
             targetSwitch.reason = "Priority target available";
-            targetSwitch.timestamp = getMSTime();
+            targetSwitch.timestamp = GameTime::GetGameTimeMS();
             _actionQueue.push_back(targetSwitch);
         }
     }
@@ -275,7 +280,7 @@ void CombatBehaviorIntegration::GenerateRecommendations()
         consumable.urgency = metrics.personalHealthPercent < 40.0f ?
                               ActionUrgency::HIGH : ActionUrgency::NORMAL;
         consumable.reason = "Consumable usage recommended";
-        consumable.timestamp = getMSTime();
+        consumable.timestamp = GameTime::GetGameTimeMS();
         _actionQueue.push_back(consumable);
     }
 
@@ -287,7 +292,7 @@ void CombatBehaviorIntegration::GenerateRecommendations()
         cooldown.urgency = _stateAnalyzer->NeedsBurst() ?
                             ActionUrgency::HIGH : ActionUrgency::NORMAL;
         cooldown.reason = "Offensive cooldowns recommended";
-        cooldown.timestamp = getMSTime();
+        cooldown.timestamp = GameTime::GetGameTimeMS();
         _actionQueue.push_back(cooldown);
     }
 
@@ -303,7 +308,7 @@ void CombatBehaviorIntegration::GenerateRecommendations()
             cc.target = ccTarget;
             cc.spellId = _crowdControlManager->GetRecommendedSpell(ccTarget);
             cc.reason = "Crowd control opportunity";
-            cc.timestamp = getMSTime();
+            cc.timestamp = GameTime::GetGameTimeMS();
             _actionQueue.push_back(cc);
         }
     }
@@ -609,7 +614,7 @@ RecommendedAction CombatBehaviorIntegration::GetNextAction()
     RecommendedAction action = _actionQueue.front();
     _actionQueue.erase(_actionQueue.begin());
     _currentAction = action;
-    _lastActionTime = getMSTime();
+    _lastActionTime = GameTime::GetGameTimeMS();
 
     return action;
 }
@@ -726,7 +731,7 @@ void CombatBehaviorIntegration::Reset()
 void CombatBehaviorIntegration::OnCombatStart()
 {
     _inCombat = true;
-    _combatStartTime = getMSTime();
+    _combatStartTime = GameTime::GetGameTimeMS();
     _emergencyMode = false;
     _survivalMode = false;
 
@@ -751,7 +756,7 @@ void CombatBehaviorIntegration::OnCombatEnd()
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
-        _bot->GetName(), getMSTime() - _combatStartTime,
+        _bot->GetName(), GameTime::GetGameTimeMS() - _combatStartTime,
         _successfulActions > 0 ? (float)_successfulActions / (_successfulActions + _failedActions) * 100.0f : 0.0f);
 
     // Learn from combat
@@ -791,11 +796,16 @@ ActionUrgency CombatBehaviorIntegration::EvaluateDefensivePriority()
 
     if (metrics.personalHealthPercent < 40.0f)
         return ActionUrgency::CRITICAL;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     if (_defensiveManager->NeedsDefensive())
         return ActionUrgency::HIGH;
@@ -883,7 +893,7 @@ float CombatBehaviorIntegration::CalculateActionScore(const RecommendedAction& a
     }
 
     // Freshness weight (newer actions score higher)
-    uint32 age = getMSTime() - action.timestamp;
+    uint32 age = GameTime::GetGameTimeMS() - action.timestamp;
     if (age > 1000)
         score *= 0.8f;
 

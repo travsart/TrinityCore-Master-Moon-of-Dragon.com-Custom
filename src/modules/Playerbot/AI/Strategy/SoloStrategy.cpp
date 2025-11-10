@@ -129,7 +129,7 @@ void SoloStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // This is the lowest-priority activity
     // ========================================================================
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastWanderTime > _wanderInterval)
     if (!bot)
     {

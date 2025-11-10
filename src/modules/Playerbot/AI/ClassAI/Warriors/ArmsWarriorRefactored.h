@@ -147,7 +147,7 @@ protected:
         {
             this->CastSpell(target, SPELL_COLOSSUS_SMASH);
             _colossusSmashActive = true;
-            _lastColossusSmash = getMSTime();
+            _lastColossusSmash = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -169,7 +169,7 @@ protected:
         if (this->CanUseAbility(SPELL_MORTAL_STRIKE))
         {
             this->CastSpell(target, SPELL_MORTAL_STRIKE);
-            _lastMortalStrike = getMSTime();
+            _lastMortalStrike = GameTime::GetGameTimeMS();
             ApplyDeepWounds(target);
             return;
         }
@@ -199,7 +199,7 @@ protected:
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
         {
             this->CastSpell(target, SPELL_REND);
-            _rendTracking[target->GetGUID()] = getMSTime() + 21000;            return;
+            _rendTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000;            return;
         }
 
         // Priority 9: Heroic Strike as rage dump
@@ -231,7 +231,7 @@ protected:
         {
             this->CastSpell(target, SPELL_COLOSSUS_SMASH);
             _colossusSmashActive = true;
-            _lastColossusSmash = getMSTime();
+            _lastColossusSmash = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -250,7 +250,7 @@ protected:
         if (this->CanUseAbility(SPELL_MORTAL_STRIKE))
         {
             this->CastSpell(target, SPELL_MORTAL_STRIKE);
-            _lastMortalStrike = getMSTime();
+            _lastMortalStrike = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -270,7 +270,7 @@ protected:
     void UpdateArmsState(::Unit* target)
     {
         Player* bot = this->GetBot();
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check for Overpower proc (after dodge/parry)
         _overpowerReady = bot->HasAura(SPELL_OVERPOWER_PROC);
@@ -352,11 +352,11 @@ protected:
             return;
 
         // Deep Wounds is applied by critical strikes
-        _deepWoundsTracking[target->GetGUID()] = getMSTime() + 21000; // 21 second duration    }
+        _deepWoundsTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000; // 21 second duration    }
 
     void CleanupExpiredDeepWounds()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         for (auto it = _deepWoundsTracking.begin(); it != _deepWoundsTracking.end();)
         {
             if (it->second < currentTime)
@@ -397,7 +397,7 @@ protected:
         if (!target)
             return false;
 
-        auto it = _rendTracking.find(target->GetGUID());        return it != _rendTracking.end() && it->second > getMSTime();
+        auto it = _rendTracking.find(target->GetGUID());        return it != _rendTracking.end() && it->second > GameTime::GetGameTimeMS();
     }
 
     bool HasTacticalMastery() const

@@ -340,7 +340,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
             this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
-            _lastRemorselessWinterTime = getMSTime();
+            _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;
         }
@@ -388,7 +388,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
             this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
-            _lastRemorselessWinterTime = getMSTime();
+            _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;
         }
@@ -448,7 +448,7 @@ protected:
         {
             this->CastSpell(bot, PILLAR_OF_FROST);
             _pillarOfFrostActive = true;
-            _pillarEndTime = getMSTime() + 12000; // 12 sec duration
+            _pillarEndTime = GameTime::GetGameTimeMS() + 12000; // 12 sec duration
             
 
         // Register cooldowns using CooldownManager
@@ -537,7 +537,7 @@ private:
         _rimeTracker.Update(this->GetBot());
 
         // Update Pillar of Frost
-        if (_pillarOfFrostActive && getMSTime() >= _pillarEndTime)
+        if (_pillarOfFrostActive && GameTime::GetGameTimeMS() >= _pillarEndTime)
         {
             _pillarOfFrostActive = false;
             _pillarEndTime = 0;
@@ -555,7 +555,7 @@ private:
             this->_resource.runicPower = this->GetBot()->GetPower(POWER_RUNIC_POWER);
 
         // Update runes (simplified)
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         static uint32 lastRuneUpdate = 0;
         if (now - lastRuneUpdate > 10000) // Every 10 seconds
         {
@@ -667,7 +667,7 @@ private:
                                 {
                                     this->CastSpell(bot, FROST_PILLAR_OF_FROST);
                                     this->_pillarOfFrostActive = true;
-                                    this->_pillarEndTime = getMSTime() + 12000;
+                                    this->_pillarEndTime = GameTime::GetGameTimeMS() + 12000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

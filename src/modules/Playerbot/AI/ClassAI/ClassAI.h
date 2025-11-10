@@ -44,13 +44,13 @@ struct BotSpellCastRequest
 {
     uint32 spellId;              // Spell to cast
     ::Unit* target;              // Target unit (can be nullptr for self-cast)
-    uint32 queuedAtTime;         // getMSTime() when queued (for diagnostics)
+    uint32 queuedAtTime;         // GameTime::GetGameTimeMS() when queued (for diagnostics)
     bool isSelfCast;             // True if self-targeted spell
 
     BotSpellCastRequest(uint32 spell, ::Unit* tgt = nullptr)
         : spellId(spell)
         , target(tgt)
-        , queuedAtTime(getMSTime())
+        , queuedAtTime(GameTime::GetGameTimeMS())
         , isSelfCast(tgt == nullptr)
     {}
 };

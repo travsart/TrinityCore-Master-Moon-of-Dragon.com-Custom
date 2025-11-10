@@ -669,7 +669,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Check cache first
     {
-        std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+        std::lock_guard lock(GetCacheMutex());
         auto it = GetCooldownCache().find(spellId);
         if (it != GetCooldownCache().end())
             return it->second;
@@ -684,7 +684,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Cache the result
     {
-        std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+        std::lock_guard lock(GetCacheMutex());
         GetCooldownCache()[spellId] = cooldown;
     }
 
@@ -765,7 +765,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Check cache first
     {
-        std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+        std::lock_guard lock(GetCacheMutex());
         auto it = GetGcdCache().find(spellId);
         if (it != GetGcdCache().end())
             return it->second;
@@ -780,7 +780,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Cache the result
     {
-        std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+        std::lock_guard lock(GetCacheMutex());
         GetGcdCache()[spellId] = triggersGCD;
     }
 
@@ -908,7 +908,7 @@ void CooldownCalculator::CacheSpellData(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(GetCacheMutex());
+    std::lock_guard lock(GetCacheMutex());
     GetCooldownCache()[spellId] = spellInfo->RecoveryTime;
     GetGcdCache()[spellId] = true; // Default assumption
 }

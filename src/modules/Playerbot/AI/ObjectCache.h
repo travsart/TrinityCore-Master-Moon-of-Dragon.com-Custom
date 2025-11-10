@@ -151,21 +151,21 @@ public:
 
     /**
      * Check if cache is valid and up-to-date
-     * @param now Current game time (getMSTime())
+     * @param now Current game time (GameTime::GetGameTimeMS())
      * @return true if cache is fresh (< 100ms old)
      */
     bool IsValid(uint32 now) const;
 
     /**
      * Check if cache needs refresh
-     * @param now Current game time (getMSTime())
+     * @param now Current game time (GameTime::GetGameTimeMS())
      * @return true if cache is stale (>= 100ms old)
      */
     bool NeedsRefresh(uint32 now) const;
 
     /**
      * Get time since last cache refresh
-     * @param now Current game time (getMSTime())
+     * @param now Current game time (GameTime::GetGameTimeMS())
      * @return milliseconds since last RefreshCache() call
      */
     uint32 GetAge(uint32 now) const;

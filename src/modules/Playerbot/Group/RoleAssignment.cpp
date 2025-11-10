@@ -37,7 +37,7 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
     if (!group)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
+    std::lock_guard lock(_assignmentMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
     _groupStrategies[groupId] = strategy;
@@ -112,7 +112,7 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
     if (!group)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
+    std::lock_guard lock(_assignmentMutex);
 
     Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
     if (!player)
@@ -123,7 +123,7 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
     if (it != _playerProfiles.end())
     {
         it->second.assignedRole = role;
-        it->second.lastRoleUpdate = getMSTime();
+        it->second.lastRoleUpdate = GameTime::GetGameTimeMS();
     }
     else
     {
@@ -155,7 +155,7 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
     if (!group)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
+    std::lock_guard lock(_assignmentMutex);
 
     auto it1 = _playerProfiles.find(player1Guid);
     auto it2 = _playerProfiles.find(player2Guid);
@@ -285,7 +285,7 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
     if (!group)
         return composition;
 
-    std::lock_guard<std::recursive_mutex> lock(_assignmentMutex);
+    std::lock_guard lock(_assignmentMutex);
 
     // Count assigned roles
     for (GroupReference const& itr : group->GetMembers())
@@ -335,11 +335,16 @@ bool RoleAssignment::IsCompositionViable(const GroupComposition& composition)
 
     if (composition.totalMembers < 3 || composition.totalMembers > 25)
         return false;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
     return composition.compositionScore >= COMPOSITION_SCORE_THRESHOLD;
 }
@@ -392,7 +397,7 @@ bool RoleAssignment::CanPlayerSwitchRole(Player* player, GroupRole newRole, Grou
 
     // Check if role switch is on cooldown
     uint32 lastUpdate = profileIt->second.lastRoleUpdate;
-    if (getMSTime() - lastUpdate < ROLE_SWITCH_COOLDOWN)
+    if (GameTime::GetGameTimeMS() - lastUpdate < ROLE_SWITCH_COOLDOWN)
         return false;
 
     return true;
@@ -402,14 +407,14 @@ void RoleAssignment::Update(uint32 diff)
 {
     static uint32 lastUpdate = 0;
 
-    if (getMSTime() - lastUpdate < PROFILE_UPDATE_INTERVAL)
+    if (GameTime::GetGameTimeMS() - lastUpdate < PROFILE_UPDATE_INTERVAL)
         return;
 
     RefreshPlayerProfiles();
     CleanupInactiveProfiles();
     UpdateRoleStatistics();
 
-    lastUpdate = getMSTime();
+    lastUpdate = GameTime::GetGameTimeMS();
 }
 
 void RoleAssignment::InitializeClassRoleMappings()
@@ -623,7 +628,7 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
         return;
     }
-    profile.lastRoleUpdate = getMSTime();
+    profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
     // Set default preferences based on class
     profile.preferredRole = DetermineOptimalRole(player, nullptr, RoleAssignmentStrategy::OPTIMAL);
@@ -717,11 +722,16 @@ float RoleAssignment::CalculateClassRoleEffectiveness(uint8 playerClass, uint8 p
             }
         }
     }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
     return 0.0f;
 }
@@ -837,7 +847,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
 float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role)
 {
-    std::lock_guard<std::recursive_mutex> lock(_performanceMutex);
+    std::lock_guard lock(_performanceMutex);
 
     auto playerIt = _rolePerformance.find(playerGuid);
     if (playerIt == _rolePerformance.end())
@@ -1296,7 +1306,7 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
             profile.roleCapabilities[GroupRole::RANGED_DPS] = RoleCapability::EMERGENCY;
     }
 
-    profile.lastRoleUpdate = getMSTime();
+    profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 }
 
 void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* player)
@@ -1304,7 +1314,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_performanceMutex);
+    std::lock_guard lock(_performanceMutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -1401,7 +1411,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
                   return profile.roleScores[a].experienceScore > profile.roleScores[b].experienceScore;
               });
 
-    profile.lastRoleUpdate = getMSTime();
+    profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
     TC_LOG_DEBUG("playerbot", "RoleAssignment: Player {} role experience updated, {} alternative roles available",
                  player->GetName(), profile.alternativeRoles.size());
@@ -1445,7 +1455,7 @@ void RoleAssignment::RefreshPlayerProfiles()
 
 void RoleAssignment::CleanupInactiveProfiles()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     const uint32 CLEANUP_THRESHOLD = 24 * 60 * 60 * 1000; // 24 hours
 
     auto it = _playerProfiles.begin();

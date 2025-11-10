@@ -68,7 +68,7 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
         if (_enableCaching)
         {
             PathCacheEntry* cacheEntry = FindCacheEntry(request.startPos, request.goalPos);
-            if (cacheEntry && !cacheEntry->IsExpired(getMSTime()))
+            if (cacheEntry && !cacheEntry->IsExpired(GameTime::GetGameTimeMS()))
             {
                 _metrics.cacheHits++;
                 result.success = true;
@@ -87,7 +87,7 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
 
         _metrics.cacheMisses++;
 
-        UpdateDangerZones(getMSTime());
+        UpdateDangerZones(GameTime::GetGameTimeMS());
 
         if (IsDirectPathPossible(request.startPos, request.goalPos, request))
         {
@@ -125,16 +125,21 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
                 cacheEntry.goalPos = request.goalPos;
                 cacheEntry.waypoints = result.waypoints;
                 cacheEntry.quality = result.quality;
-                cacheEntry.timestamp = getMSTime();
+                cacheEntry.timestamp = GameTime::GetGameTimeMS();
                 cacheEntry.expirationTime = cacheEntry.timestamp + _cacheDuration;
                 cacheEntry.accessCount = 1;
                 AddCacheEntry(cacheEntry);
             }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
             _metrics.successfulPaths++;
 
@@ -203,11 +208,16 @@ PathResult PathfindingManager::FindPath(const Position& goal, PathFlags flags)
         return;
     }
     request.startPos = _bot->GetPosition();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
@@ -253,11 +263,16 @@ PathResult PathfindingManager::FindPathToUnit(Unit* target, float range, PathFla
             return;
         }
         float currentDistance = botPos.GetExactDist(&goalPos);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return;
+
+}
 
         if (currentDistance > range)
         {
@@ -550,11 +565,16 @@ std::vector<Position> PathfindingManager::SmoothPath(const std::vector<Position>
 
     std::vector<Position> smoothed;
     smoothed.push_back(waypoints[0]);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return;
+
+}
 
     for (size_t i = 1; i < waypoints.size() - 1; ++i)
     {
@@ -652,11 +672,16 @@ float PathfindingManager::GetNodeCost(const Position& from, const Position& to, 
 
     float terrainCost = CalculateTerrainCost(to);
     totalCost += terrainCost;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return 0;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return 0;
+
+}
 
     if (_enableDangerAvoidance && (request.flags & PathFlags::AVOID_AOE))
     {
@@ -753,7 +778,7 @@ void PathfindingManager::ClearExpiredDangerZones(uint32 currentTime)
 float PathfindingManager::GetDangerAtPosition(const Position& pos)
 {
     float maxDanger = 0.0f;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (const DangerZone& zone : _dangerZones)
     {
@@ -872,7 +897,7 @@ void PathfindingManager::ClearExpiredCacheEntries()
 {
     // No lock needed - pathfinding data is per-bot instance data
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastCacheCleanup < CACHE_CLEANUP_INTERVAL)
         return;
 

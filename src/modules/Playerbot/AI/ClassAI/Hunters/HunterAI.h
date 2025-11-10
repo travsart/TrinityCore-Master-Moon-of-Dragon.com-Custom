@@ -46,8 +46,8 @@ struct TrapInfo
     TrapInfo(uint32 spell = 0, uint32 last = 0, Position pos = Position(), uint32 dur = 30000)
         : spellId(spell), lastUsed(last), position(pos), duration(dur) {}
 
-    bool IsReady() const { return (getMSTime() - lastUsed) >= 30000; } // 30sec trap cooldown
-    bool IsActive() const { return (getMSTime() - lastUsed) < duration; }
+    bool IsReady() const { return (GameTime::GetGameTimeMS() - lastUsed) >= 30000; } // 30sec trap cooldown
+    bool IsActive() const { return (GameTime::GetGameTimeMS() - lastUsed) < duration; }
 };
 
 // Pet information tracking

@@ -165,7 +165,7 @@ void AoEDecisionManager::Update(uint32 diff)
         return;
     }
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Update target cache periodically
     if (now - _lastCacheUpdate > CACHE_UPDATE_INTERVAL)
@@ -476,7 +476,7 @@ float AoEDecisionManager::CalculateAoEEfficiency(uint32 targets, float spellRadi
         return 0.0f;
 
     // Cache efficiency calculation
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - _lastEfficiencyCalc < 1000)
         return _cachedEfficiency;
 
@@ -666,7 +666,7 @@ void AoEDecisionManager::UpdateTargetCache()
     if (!_bot)
         return;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Remove stale entries
     for (auto it = _targetCache.begin(); it != _targetCache.end();)
@@ -753,11 +753,16 @@ float AoEDecisionManager::ScoreAoEPosition(Position const& pos, float radius) co
                 targetScore *= 2.0f;
             if (info.healthPercent > 50.0f)
                 targetScore *= 1.5f;
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-    return;
-}
+
+if (!unit)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
+
+    return;
+
+}
 
             score += targetScore;
         }

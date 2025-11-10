@@ -73,7 +73,7 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
     if (!spatialGrid)
         return nodes;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Scan for herb/mining nodes (GameObjects)
     if (HasGatheringSkill(GatheringSkillType::HERBALISM) ||
@@ -438,19 +438,24 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
         action.targetGuid = node.guid;
         action.spellId = spellId;
         action.priority = 5;  // Gathering is medium priority
-        action.queuedTime = getMSTime();
+        action.queuedTime = GameTime::GetGameTimeMS();
 
         BotActionQueue::Instance()->Push(action);
 
         // Update internal state
         _currentNode = node;
         _isGathering = true;
-        _lastGatherTime = getMSTime();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+        _lastGatherTime = GameTime::GetGameTimeMS();
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         TC_LOG_DEBUG("playerbot.gathering",
             "Bot %s queued gathering for %s %s",
@@ -477,7 +482,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
                 return nullptr;
             }
-            bot->GetGUID(), targetPos, getMSTime()
+            bot->GetGUID(), targetPos, GameTime::GetGameTimeMS()
         );
         moveAction.priority = 4;  // Movement for gathering is lower priority
 
@@ -525,14 +530,14 @@ void GatheringManager::Update_LockFree(uint32 diff)
     {
         // Check if gathering completed (based on time)
         uint32 gatherDuration = GetGatheringDuration(_currentNode.nodeType);
-        if (getMSTimeDiff(_lastGatherTime, getMSTime()) > gatherDuration)
+        if (getMSTimeDiff(_lastGatherTime, GameTime::GetGameTimeMS()) > gatherDuration)
         {
             _isGathering = false;
             _gatherCooldown = 1000;  // 1 second cooldown between gathers
 
             // Update statistics
             _statistics.nodesGathered++;
-            _statistics.lastGatherTime = getMSTime();
+            _statistics.lastGatherTime = GameTime::GetGameTimeMS();
 
             TC_LOG_DEBUG("playerbot.gathering",
                 "Bot %s completed gathering node %s",

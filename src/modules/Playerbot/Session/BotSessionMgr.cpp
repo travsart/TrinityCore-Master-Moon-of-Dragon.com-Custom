@@ -37,7 +37,7 @@ void BotSessionMgr::Shutdown()
     _enabled.store(false);
 
     // Clean up all sessions
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
     _sessions.clear();
     _activeSessions.clear();
 
@@ -51,7 +51,7 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
         return nullptr;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
 
     // Check if session already exists
@@ -127,7 +127,7 @@ BotSession* BotSessionMgr::CreateAsyncSession(uint32 bnetAccountId, ObjectGuid c
 
 void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     auto it = _sessions.find(bnetAccountId);
     if (it == _sessions.end()) {
@@ -147,7 +147,7 @@ void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 
 BotSession* BotSessionMgr::GetSession(uint32 bnetAccountId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     auto it = _sessions.find(bnetAccountId);
     return (it != _sessions.end()) ? it->second.get() : nullptr;
@@ -160,7 +160,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
     }
 
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
 
     // Simple sequential update with async login state awareness
@@ -236,7 +236,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
 
 uint32 BotSessionMgr::GetActiveSessionCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
     return static_cast<uint32>(_activeSessions.size());
 }
 
@@ -244,7 +244,7 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
 {
     TC_LOG_INFO("module.playerbot.session", "🚀 TriggerCharacterLoginForAllSessions: Starting character login for sessions without players");
 
-    std::lock_guard<std::recursive_mutex> lock(_sessionsMutex);
+    std::lock_guard lock(_sessionsMutex);
 
     uint32 sessionsFound = 0;
     uint32 loginsTriggered = 0;

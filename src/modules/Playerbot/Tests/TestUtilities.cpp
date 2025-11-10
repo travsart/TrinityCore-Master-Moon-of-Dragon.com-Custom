@@ -45,7 +45,7 @@ bool TestEnvironment::Initialize()
 {
     TC_LOG_INFO("playerbot.test", "Initializing test environment");
 
-    m_currentTime = getMSTime();
+    m_currentTime = GameTime::GetGameTimeMS();
     m_nextBotId = 1;
     m_nextGroupId = 1;
 

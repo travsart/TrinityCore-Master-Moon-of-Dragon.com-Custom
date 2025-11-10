@@ -153,7 +153,7 @@ public:
     void ApplyDoT(ObjectGuid targetGuid, uint32 spellId, uint32 duration, uint32 stacks = 1)
     {
         auto& dotsOnTarget = _trackedDoTs[targetGuid];
-        dotsOnTarget[spellId] = { spellId, getMSTime() + duration, stacks };
+        dotsOnTarget[spellId] = { spellId, GameTime::GetGameTimeMS() + duration, stacks };
     }
 
     void RemoveDoT(ObjectGuid targetGuid, uint32 spellId)
@@ -177,7 +177,7 @@ public:
         if (dotIt == it->second.end())
             return false;
 
-        return getMSTime() < dotIt->second.endTime;
+        return GameTime::GetGameTimeMS() < dotIt->second.endTime;
     }
 
     uint32 GetDoTTimeRemaining(ObjectGuid targetGuid, uint32 spellId) const
@@ -190,7 +190,7 @@ public:
         if (dotIt == it->second.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return (dotIt->second.endTime > now) ? (dotIt->second.endTime - now) : 0;
     }
 
@@ -207,7 +207,7 @@ public:
             return 0;
 
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : it->second)
         {
             if (now < pair.second.endTime)
@@ -218,7 +218,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto targetIt = _trackedDoTs.begin(); targetIt != _trackedDoTs.end();)
         {
             for (auto dotIt = targetIt->second.begin(); dotIt != targetIt->second.end();)
@@ -309,7 +309,7 @@ protected:
             if (this->CanCastSpell(SUMMON_DARKGLARE, this->GetBot()))
             {
                 this->CastSpell(this->GetBot(), SUMMON_DARKGLARE);
-                _lastDarkglareTime = getMSTime();
+                _lastDarkglareTime = GameTime::GetGameTimeMS();
                 
 
         // Register cooldowns using CooldownManager

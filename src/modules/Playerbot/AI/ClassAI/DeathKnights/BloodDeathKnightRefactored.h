@@ -174,7 +174,7 @@ public:
     void ApplyMarrowrend(uint32 stacks)
     {
         _boneShieldStacks = std::min(_boneShieldStacks + stacks, 10u);
-        _lastMarrowrendTime = getMSTime();
+        _lastMarrowrendTime = GameTime::GetGameTimeMS();
     }
 
     void ConsumeStack()
@@ -276,7 +276,7 @@ public:
         if (tauntTarget && this->CanCastSpell(DARK_COMMAND, tauntTarget))
         {
             bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, DARK_COMMAND);
-            _lastTaunt = getMSTime();
+            _lastTaunt = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Blood DK: Dark Command taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }
@@ -307,7 +307,7 @@ protected:
             if (this->CanCastSpell(DEATH_STRIKE, target))
             {
                 this->CastSpell(target, DEATH_STRIKE);
-                _lastDeathStrikeTime = getMSTime();
+                _lastDeathStrikeTime = GameTime::GetGameTimeMS();
                 ConsumeRunicPower(35);
                 return;
             }
@@ -320,7 +320,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), DEATHS_AND_DECAY_BLOOD);
                 _deathsAndDecayActive = true;
-                _deathsAndDecayEndTime = getMSTime() + 10000;
+                _deathsAndDecayEndTime = GameTime::GetGameTimeMS() + 10000;
                 ConsumeRunicPower(30);
                 return;
             }
@@ -383,7 +383,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), DEATHS_AND_DECAY_BLOOD);
                 _deathsAndDecayActive = true;
-                _deathsAndDecayEndTime = getMSTime() + 10000;
+                _deathsAndDecayEndTime = GameTime::GetGameTimeMS() + 10000;
                 ConsumeRunicPower(30);
                 return;
             }
@@ -509,7 +509,7 @@ private:
         _boneShieldTracker.Update(this->GetBot());
 
         // Update Death's and Decay
-        if (_deathsAndDecayActive && getMSTime() >= _deathsAndDecayEndTime)
+        if (_deathsAndDecayActive && GameTime::GetGameTimeMS() >= _deathsAndDecayEndTime)
         {
             _deathsAndDecayActive = false;
             _deathsAndDecayEndTime = 0;
@@ -527,7 +527,7 @@ private:
 
         // Update runes (simplified - in real implementation, track individual runes)
         // For now, assume runes regenerate over time
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         static uint32 lastRuneUpdate = 0;
         if (now - lastRuneUpdate > 10000) // Every 10 seconds
         {

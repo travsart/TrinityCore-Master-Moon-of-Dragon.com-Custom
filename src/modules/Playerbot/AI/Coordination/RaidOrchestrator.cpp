@@ -34,7 +34,7 @@ namespace Coordination
 
 bool RaidDirective::IsActive() const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return now < timestamp + duration;
 }
 
@@ -140,7 +140,7 @@ void RaidOrchestrator::SetFormation(RaidFormation formation)
         RaidDirective directive;
         directive.directiveType = "formation_change";
         directive.priority = 70;
-        directive.timestamp = getMSTime();
+        directive.timestamp = GameTime::GetGameTimeMS();
         directive.duration = 30000; // 30s
         directive.parameters["formation"] = static_cast<float>(formation);
 
@@ -164,7 +164,7 @@ void RaidOrchestrator::SetEncounterPhase(EncounterPhase phase)
 
 bool RaidOrchestrator::RequestBloodlust()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check if on cooldown
     if (now < _bloodlustTime + _bloodlustCooldown)
@@ -203,13 +203,13 @@ bool RaidOrchestrator::IsBloodlustActive() const
     if (!_bloodlustActive)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return now < _bloodlustTime + 40000; // 40s duration
 }
 
 bool RaidOrchestrator::RequestRaidDefensiveCooldown(std::string const& cooldownType)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check if this cooldown is available
     auto it = _raidCooldowns.find(cooldownType);
@@ -256,7 +256,7 @@ uint32 RaidOrchestrator::GetCombatDuration() const
     if (!_inCombat || _combatStartTime == 0)
         return 0;
 
-    return getMSTimeDiff(_combatStartTime, getMSTime());
+    return getMSTimeDiff(_combatStartTime, GameTime::GetGameTimeMS());
 }
 
 void RaidOrchestrator::UpdateGroupCoordinators(uint32 diff)
@@ -385,7 +385,7 @@ void RaidOrchestrator::UpdateCombatState()
     // Combat started
     if (_inCombat && !wasInCombat)
     {
-        _combatStartTime = getMSTime();
+        _combatStartTime = GameTime::GetGameTimeMS();
         _currentPhase = EncounterPhase::NORMAL;
         _bloodlustActive = false;
 
@@ -407,7 +407,7 @@ void RaidOrchestrator::UpdateCombatState()
 
 void RaidOrchestrator::UpdateRaidStats()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now < _lastStatsUpdate + 1000) // Update stats every 1s
         return;
 
@@ -588,7 +588,7 @@ void RaidOrchestrator::UpdateAddPriorities()
         RaidDirective directive;
         directive.directiveType = "focus_adds";
         directive.priority = 85;
-        directive.timestamp = getMSTime();
+        directive.timestamp = GameTime::GetGameTimeMS();
         directive.duration = 10000; // 10s
 
         IssueDirective(directive);

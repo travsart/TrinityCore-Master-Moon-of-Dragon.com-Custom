@@ -190,7 +190,7 @@ void BotLifecycleMgr::ProcessEventQueue()
     // Replace TBB try_pop with std::queue + mutex
     while (processedCount < maxEventsPerCycle)
     {
-        std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
+        std::lock_guard lock(_eventQueueMutex);
         if (_eventQueue.empty())
             break;
 
@@ -617,7 +617,7 @@ void BotLifecycleMgr::RecordEvent(LifecycleEventInfo::Type eventType, uint32 pro
 
 void BotLifecycleMgr::NotifyEventHandlers(LifecycleEventInfo const& eventInfo)
 {
-    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
+    std::lock_guard lock(_handlersMutex);
 
     for (auto const& subscription : _eventHandlers)
     {
@@ -637,7 +637,7 @@ void BotLifecycleMgr::NotifyEventHandlers(LifecycleEventInfo const& eventInfo)
 
 uint32 BotLifecycleMgr::RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler)
 {
-    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
+    std::lock_guard lock(_handlersMutex);
 
     uint32 id = _nextHandlerId++;
     _eventHandlers.push_back({id, eventType, std::move(handler)});
@@ -648,7 +648,7 @@ uint32 BotLifecycleMgr::RegisterEventHandler(LifecycleEventInfo::Type eventType,
 
 void BotLifecycleMgr::UnregisterEventHandler(uint32 handlerId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_handlersMutex);
+    std::lock_guard lock(_handlersMutex);
 
     _eventHandlers.erase(
         std::remove_if(_eventHandlers.begin(), _eventHandlers.end(),
@@ -754,7 +754,7 @@ void BotLifecycleMgr::OptimizePerformance()
     _metrics.failedSpawnsLastHour = 0;
 
     // Clear correlation tracking for old events
-    std::lock_guard<std::recursive_mutex> lock(_correlationMutex);
+    std::lock_guard lock(_correlationMutex);
     _correlatedEvents.clear();
 }
 

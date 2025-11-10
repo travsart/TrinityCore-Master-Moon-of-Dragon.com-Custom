@@ -51,13 +51,13 @@ void BotSessionFactory::Shutdown()
 
     // Clear templates
     {
-        std::lock_guard<std::recursive_mutex> lock(_templateMutex);
+        std::lock_guard lock(_templateMutex);
         _sessionTemplates.clear();
     }
 
     // Clear cache
     {
-        std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+        std::lock_guard lock(_cacheMutex);
         _configCache.classConfigurations.clear();
         _configCache.zoneConfigurations.clear();
         _configCache.isValid = false;
@@ -216,7 +216,7 @@ bool BotSessionFactory::ValidateSession(std::shared_ptr<BotSession> session) con
 
 void BotSessionFactory::RegisterSessionTemplate(std::string const& templateName, SpawnRequest const& templateRequest)
 {
-    std::lock_guard<std::recursive_mutex> lock(_templateMutex);
+    std::lock_guard lock(_templateMutex);
 
     if (_sessionTemplates.size() >= MAX_TEMPLATES)
     {
@@ -296,7 +296,7 @@ void BotSessionFactory::ApplyBaseConfiguration(std::shared_ptr<BotSession> sessi
 void BotSessionFactory::ApplyClassSpecificConfiguration(std::shared_ptr<BotSession> session, uint8 playerClass)
 {
     // Apply class-specific AI and behavior configuration
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     auto it = _configCache.classConfigurations.find(playerClass);
     if (it != _configCache.classConfigurations.end())
@@ -316,7 +316,7 @@ void BotSessionFactory::ApplyLevelConfiguration(std::shared_ptr<BotSession> sess
 void BotSessionFactory::ApplyZoneConfiguration(std::shared_ptr<BotSession> session, uint32 zoneId)
 {
     // Apply zone-specific behavior settings
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     auto it = _configCache.zoneConfigurations.find(zoneId);
     if (it != _configCache.zoneConfigurations.end())
@@ -353,7 +353,7 @@ bool BotSessionFactory::ValidateSessionConfiguration(std::shared_ptr<BotSession>
 
 void BotSessionFactory::LoadDefaultTemplates()
 {
-    std::lock_guard<std::recursive_mutex> lock(_templateMutex);
+    std::lock_guard lock(_templateMutex);
 
     // Create default templates for common bot types
     SpawnRequest defaultRequest;
@@ -373,7 +373,7 @@ void BotSessionFactory::LoadDefaultTemplates()
 
 BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(std::string const& templateName) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_templateMutex);
+    std::lock_guard lock(_templateMutex);
 
     auto it = _sessionTemplates.find(templateName);
     return it != _sessionTemplates.end() ? &it->second : nullptr;
@@ -383,7 +383,7 @@ BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(std::st
 
 void BotSessionFactory::UpdateConfigurationCache()
 {
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     // Update class configurations
     _configCache.classConfigurations.clear();
@@ -404,7 +404,7 @@ void BotSessionFactory::UpdateConfigurationCache()
 
 bool BotSessionFactory::IsCacheValid() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     if (!_configCache.isValid)
         return false;
@@ -439,7 +439,7 @@ void BotSessionFactory::RecordTemplateUsage(std::string const& templateName)
 {
     _stats.templatesUsed.fetch_add(1);
 
-    std::lock_guard<std::recursive_mutex> lock(_templateMutex);
+    std::lock_guard lock(_templateMutex);
     auto it = _sessionTemplates.find(templateName);
     if (it != _sessionTemplates.end())
     {

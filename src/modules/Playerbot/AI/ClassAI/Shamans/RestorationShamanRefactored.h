@@ -65,7 +65,7 @@ public:
 
     void ApplyRiptide(ObjectGuid guid, uint32 duration = 18000)
     {
-        _riptideTargets[guid] = getMSTime() + duration;
+        _riptideTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveRiptide(ObjectGuid guid)
@@ -78,7 +78,7 @@ public:
         auto it = _riptideTargets.find(guid);
         if (it == _riptideTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetRiptideTimeRemaining(ObjectGuid guid) const
@@ -87,7 +87,7 @@ public:
         if (it == _riptideTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -103,7 +103,7 @@ public:
     [[nodiscard]] uint32 GetActiveRiptideCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _riptideTargets)
         {
             if (now < pair.second)
@@ -118,7 +118,7 @@ public:
             return;
 
         // Clean up expired Riptides
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _riptideTargets.begin(); it != _riptideTargets.end();)
         {
             if (now >= it->second)
@@ -142,7 +142,7 @@ public:
     void ApplyEarthShield(ObjectGuid guid, uint32 duration = 600000)
     {
         _earthShieldTarget = guid;
-        _earthShieldEndTime = getMSTime() + duration;
+        _earthShieldEndTime = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveEarthShield()
@@ -152,7 +152,7 @@ public:
 
     [[nodiscard]] bool HasEarthShield(ObjectGuid guid) const
     {
-        return _earthShieldTarget == guid && getMSTime() < _earthShieldEndTime;
+        return _earthShieldTarget == guid && GameTime::GetGameTimeMS() < _earthShieldEndTime;
     }
 
     [[nodiscard]] ObjectGuid GetEarthShieldTarget() const { return _earthShieldTarget; }
@@ -162,7 +162,7 @@ public:
         if (_earthShieldTarget.IsEmpty())
             return true;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= _earthShieldEndTime)
             return true;
 
@@ -175,7 +175,7 @@ public:
             return;
 
         // Check if Earth Shield expired
-        if (!_earthShieldTarget.IsEmpty() && getMSTime() >= _earthShieldEndTime)
+        if (!_earthShieldTarget.IsEmpty() && GameTime::GetGameTimeMS() >= _earthShieldEndTime)
         {
             _earthShieldTarget = ObjectGuid::Empty;
         }
@@ -324,14 +324,14 @@ private:
             return;
 
         // Ascendance state (transform into Water Ascendant)
-        if (_ascendanceActive && getMSTime() >= _ascendanceEndTime)
+        if (_ascendanceActive && GameTime::GetGameTimeMS() >= _ascendanceEndTime)
             _ascendanceActive = false;
 
         if (bot->HasAura(REST_ASCENDANCE))
         {
             _ascendanceActive = true;
             if (Aura* aura = bot->GetAura(REST_ASCENDANCE))
-                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
+                _ascendanceEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
@@ -366,14 +366,14 @@ private:
                 ++criticalHealthCount;
         }
 
-        if (criticalHealthCount >= 2 && (getMSTime() - _lastAncestralProtectionTotemTime) >= 300000) // 5 min CD
+        if (criticalHealthCount >= 2 && (GameTime::GetGameTimeMS() - _lastAncestralProtectionTotemTime) >= 300000) // 5 min CD
         {
             if (bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM))
             {
                 if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot))
                 {
                     this->CastSpell(bot, REST_ANCESTRAL_PROTECTION_TOTEM);
-                    _lastAncestralProtectionTotemTime = getMSTime();
+                    _lastAncestralProtectionTotemTime = GameTime::GetGameTimeMS();
                     return true;
                 }
             }
@@ -387,41 +387,41 @@ private:
                 ++lowHealthCount;
         }
 
-        if (lowHealthCount >= 4 && (getMSTime() - _lastHealingTideTotemTime) >= 180000) // 3 min CD
+        if (lowHealthCount >= 4 && (GameTime::GetGameTimeMS() - _lastHealingTideTotemTime) >= 180000) // 3 min CD
         {
             if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot))
             {
                 this->CastSpell(bot, REST_HEALING_TIDE_TOTEM);
-                _lastHealingTideTotemTime = getMSTime();
+                _lastHealingTideTotemTime = GameTime::GetGameTimeMS();
                 return true;
             }
         }
 
         // Spirit Link Totem (equalize health)
-        if (lowHealthCount >= 3 && (getMSTime() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD        {
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD        {
             if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot))
             {
                 this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
-                _lastSpiritLinkTotemTime = getMSTime();
+                _lastSpiritLinkTotemTime = GameTime::GetGameTimeMS();
                 return true;
             }
         }
 
         // Ascendance (healing burst mode)
-        if (lowHealthCount >= 3 && (getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000) // 3 min CD
         {
             if (this->CanCastSpell(REST_ASCENDANCE, bot))
             {
                 this->CastSpell(bot, REST_ASCENDANCE);
                 _ascendanceActive = true;
-                _ascendanceEndTime = getMSTime() + 15000;
-                _lastAscendanceTime = getMSTime();
+                _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                _lastAscendanceTime = GameTime::GetGameTimeMS();
                 return true;
             }
         }
 
         // Earthen Wall Totem (shield wall)
-        if (lowHealthCount >= 3 && (getMSTime() - _lastEarthenWallTotemTime) >= 60000) // 60 sec CD
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastEarthenWallTotemTime) >= 60000) // 60 sec CD
         {            if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
             {
                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
@@ -431,7 +431,7 @@ private:
                 }
                 {
                     this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
-                    _lastEarthenWallTotemTime = getMSTime();
+                    _lastEarthenWallTotemTime = GameTime::GetGameTimeMS();
                     return true;
                 }
             if (!tankTarget)
@@ -573,13 +573,13 @@ private:
         }
 
         // Cloudburst Totem (store healing and release)
-        if (injuredCount >= 3 && (getMSTime() - _lastCloudburstTotemTime) >= 30000) // 30 sec CD
+        if (injuredCount >= 3 && (GameTime::GetGameTimeMS() - _lastCloudburstTotemTime) >= 30000) // 30 sec CD
         {            if (bot->HasSpell(REST_CLOUDBURST_TOTEM))
             {
                 if (this->CanCastSpell(REST_CLOUDBURST_TOTEM, bot))
                 {
                     this->CastSpell(bot, REST_CLOUDBURST_TOTEM);
-                    _lastCloudburstTotemTime = getMSTime();
+                    _lastCloudburstTotemTime = GameTime::GetGameTimeMS();
                     return true;
                 }
             }
@@ -889,7 +889,7 @@ private:
                             Action("Cast HTT", [this](Player* bot) {
                                 if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
                                     this->CastSpell(bot, REST_HEALING_TIDE_TOTEM);
-                                    this->_lastHealingTideTotemTime = getMSTime();
+                                    this->_lastHealingTideTotemTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -908,7 +908,7 @@ private:
                             Action("Cast APT", [this](Player* bot) {
                                 if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
                                     this->CastSpell(bot, REST_ANCESTRAL_PROTECTION_TOTEM);
-                                    this->_lastAncestralProtectionTotemTime = getMSTime();
+                                    this->_lastAncestralProtectionTotemTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -934,8 +934,8 @@ private:
                                 if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
                                     this->CastSpell(bot, REST_ASCENDANCE);
                                     this->_ascendanceActive = true;
-                                    this->_ascendanceEndTime = getMSTime() + 15000;
-                                    this->_lastAscendanceTime = getMSTime();
+                                    this->_ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                                    this->_lastAscendanceTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -945,7 +945,7 @@ private:
                             Action("Cast SLT", [this](Player* bot) {
                                 if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
                                     this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
-                                    this->_lastSpiritLinkTotemTime = getMSTime();
+                                    this->_lastSpiritLinkTotemTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -958,7 +958,7 @@ private:
                             Action("Cast EWT", [this](Player* bot) {
                                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
                                     this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
-                                    this->_lastEarthenWallTotemTime = getMSTime();
+                                    this->_lastEarthenWallTotemTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

@@ -342,7 +342,7 @@ public:
                 return _status;
             }
 
-            _castStartTime = getMSTime();
+            _castStartTime = GameTime::GetGameTimeMS();
             _status = BTStatus::RUNNING;
             return _status;
         }
@@ -598,7 +598,7 @@ public:
                 return _status;
             }
 
-            _castStartTime = getMSTime();
+            _castStartTime = GameTime::GetGameTimeMS();
             _status = BTStatus::RUNNING;
             return _status;
         }

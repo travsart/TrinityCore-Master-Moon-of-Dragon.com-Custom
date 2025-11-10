@@ -145,7 +145,7 @@ public:
     void ApplyShield()
     {
         _shieldActive = true;
-        _shieldEndTime = getMSTime() + 4500; // 4.5 sec duration
+        _shieldEndTime = GameTime::GetGameTimeMS() + 4500; // 4.5 sec duration
         _shieldStacks = 1;
     }
 
@@ -156,7 +156,7 @@ public:
         if (!_shieldActive)
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _shieldEndTime > now ? _shieldEndTime - now : 0;
     }
 
@@ -168,7 +168,7 @@ public:
 
     void Update()
     {
-        if (_shieldActive && getMSTime() >= _shieldEndTime)
+        if (_shieldActive && GameTime::GetGameTimeMS() >= _shieldEndTime)
         {
             _shieldActive = false;
             _shieldEndTime = 0;
@@ -283,7 +283,7 @@ protected:
             if (this->CanCastSpell(AVENGERS_SHIELD, target))
             {
                 this->CastSpell(target, AVENGERS_SHIELD);
-                _lastAvengersShieldTime = getMSTime();
+                _lastAvengersShieldTime = GameTime::GetGameTimeMS();
                 _grandCrusaderProc = false;
                 return;
             }
@@ -293,7 +293,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(JUDGMENT_PROT, target))
         {
             this->CastSpell(target, JUDGMENT_PROT);
-            _lastJudgmentTime = getMSTime();
+            _lastJudgmentTime = GameTime::GetGameTimeMS();
             GenerateHolyPower(1);
             return;
         }
@@ -313,7 +313,7 @@ protected:
         if (this->CanCastSpell(AVENGERS_SHIELD, target))
         {
             this->CastSpell(target, AVENGERS_SHIELD);
-            _lastAvengersShieldTime = getMSTime();
+            _lastAvengersShieldTime = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -322,7 +322,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), CONSECRATION);
             _consecrationActive = true;
-            _consecrationEndTime = getMSTime() + 12000;
+            _consecrationEndTime = GameTime::GetGameTimeMS() + 12000;
             return;
         }
 
@@ -370,7 +370,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), CONSECRATION);
             _consecrationActive = true;
-            _consecrationEndTime = getMSTime() + 12000;
+            _consecrationEndTime = GameTime::GetGameTimeMS() + 12000;
             return;
         }
 
@@ -459,7 +459,7 @@ protected:
 private:
     void UpdateProtectionState()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Shield of the Righteous
         _shieldTracker.Update();
@@ -825,7 +825,7 @@ private:
                                     if (this->CanCastSpell(AVENGERS_SHIELD, target))
                                     {
                                         this->CastSpell(target, AVENGERS_SHIELD);
-                                        this->_lastAvengersShieldTime = getMSTime();
+                                        this->_lastAvengersShieldTime = GameTime::GetGameTimeMS();
                                         return NodeStatus::SUCCESS;
                                     }
                                     return NodeStatus::FAILURE;
@@ -835,7 +835,7 @@ private:
                                     if (this->CanCastSpell(JUDGMENT_PROT, target))
                                     {
                                         this->CastSpell(target, JUDGMENT_PROT);
-                                        this->_lastJudgmentTime = getMSTime();
+                                        this->_lastJudgmentTime = GameTime::GetGameTimeMS();
                                         this->GenerateHolyPower(1);
                                         return NodeStatus::SUCCESS;
                                     }
@@ -886,7 +886,7 @@ private:
                                 {
                                     this->CastSpell(bot, CONSECRATION);
                                     this->_consecrationActive = true;
-                                    this->_consecrationEndTime = getMSTime() + 12000;
+                                    this->_consecrationEndTime = GameTime::GetGameTimeMS() + 12000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

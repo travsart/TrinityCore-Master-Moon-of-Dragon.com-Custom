@@ -90,18 +90,6 @@ namespace Playerbot
         };
 
         /**
-         * @brief Configuration entry with metadata
-         */
-        struct ConfigEntry
-        {
-            ConfigValue value;
-            std::string description;
-            ConfigValue defaultValue;
-            bool persistent;  // Should be saved to file
-            bool readOnly;    // Cannot be modified at runtime
-        };
-
-        /**
          * @brief Get singleton instance
          */
         static ConfigManager* instance();

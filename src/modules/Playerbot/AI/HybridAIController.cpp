@@ -260,7 +260,7 @@ void HybridAIController::SwitchBehaviorTree(std::string const& behaviorName, std
 
     // Update tracking
     _currentBehaviorName = behaviorName;
-    _lastBehaviorChangeTime = getMSTime();
+    _lastBehaviorChangeTime = GameTime::GetGameTimeMS();
     _lastTreeStatus = BTStatus::INVALID;
 
     TC_LOG_DEBUG("playerbot.ai", "Switched to behavior tree: {}", behaviorName);
@@ -364,7 +364,7 @@ uint32 HybridAIController::GetTimeSinceLastBehaviorChange() const
     if (_lastBehaviorChangeTime == 0)
         return 0;
 
-    return getMSTimeDiff(_lastBehaviorChangeTime, getMSTime());
+    return getMSTimeDiff(_lastBehaviorChangeTime, GameTime::GetGameTimeMS());
 }
 
 } // namespace Playerbot

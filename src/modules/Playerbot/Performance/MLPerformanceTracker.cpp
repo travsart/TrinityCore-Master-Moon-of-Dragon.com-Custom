@@ -71,7 +71,7 @@ void MLPerformanceTracker::StartOperation(uint32_t botGuid, MLOperationType oper
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_operationsMutex);
+    std::lock_guard lock(_operationsMutex);
 
     ActiveOperation op;
     op.type = operation;
@@ -86,7 +86,7 @@ void MLPerformanceTracker::EndOperation(uint32_t botGuid, MLOperationType operat
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_operationsMutex);
+    std::lock_guard lock(_operationsMutex);
 
     auto botIt = _activeOperations.find(botGuid);
     if (botIt == _activeOperations.end())
@@ -126,7 +126,7 @@ void MLPerformanceTracker::RecordSample(const MLPerformanceSample& sample)
 
     // Store sample
     {
-        std::lock_guard<std::recursive_mutex> lock(_samplesMutex);
+        std::lock_guard lock(_samplesMutex);
         _recentSamples.push_back(sample);
 
         // Maintain sample buffer size
@@ -166,7 +166,7 @@ void MLPerformanceTracker::RecordPrediction(uint32_t botGuid, bool correct)
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
 
     _botStatistics[botGuid].totalPredictions++;
     if (correct)
@@ -178,7 +178,7 @@ void MLPerformanceTracker::RecordTrainingStep(uint32_t botGuid, float loss, floa
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
 
     auto& stats = _botStatistics[botGuid];
     stats.totalTrainingSteps++;
@@ -198,7 +198,7 @@ void MLPerformanceTracker::RecordModelUpdate(uint32_t botGuid, uint64_t experien
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
 
     auto& stats = _botStatistics[botGuid];
     stats.modelUpdates++;
@@ -210,7 +210,7 @@ void MLPerformanceTracker::RecordInference(uint32_t botGuid, uint64_t durationUs
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
     _botStatistics[botGuid].totalInferenceTimeUs += durationUs;
 }
 
@@ -219,7 +219,7 @@ void MLPerformanceTracker::RecordTraining(uint32_t botGuid, uint64_t durationUs)
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
     _botStatistics[botGuid].totalTrainingTimeUs += durationUs;
 }
 
@@ -228,7 +228,7 @@ void MLPerformanceTracker::RecordMemoryUsage(uint32_t botGuid, MLOperationType o
     if (!_enabled)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_memoryMutex);
+    std::lock_guard lock(_memoryMutex);
 
     uint64_t oldUsage = _memoryUsage[botGuid][operation];
     _memoryUsage[botGuid][operation] = bytes;
@@ -244,7 +244,7 @@ uint64_t MLPerformanceTracker::GetTotalMLMemoryUsage() const
 
 uint64_t MLPerformanceTracker::GetBotMLMemoryUsage(uint32_t botGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_memoryMutex);
+    std::lock_guard lock(_memoryMutex);
 
     auto it = _memoryUsage.find(botGuid);
     if (it == _memoryUsage.end())
@@ -261,7 +261,7 @@ uint64_t MLPerformanceTracker::GetBotMLMemoryUsage(uint32_t botGuid) const
 
 ModelStatistics MLPerformanceTracker::GetModelStatistics(uint32_t botGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
 
     auto it = _botStatistics.find(botGuid);
     if (it != _botStatistics.end())
@@ -297,7 +297,7 @@ float MLPerformanceTracker::GetOperationThroughput(MLOperationType operation) co
 
 uint32_t MLPerformanceTracker::GetActiveMLBots() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+    std::lock_guard lock(_statsMutex);
     return _botStatistics.size();
 }
 
@@ -428,7 +428,7 @@ void MLPerformanceTracker::GenerateMLPerformanceReport(std::string& report) cons
     float totalAvgReward = 0.0f;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_statsMutex);
+        std::lock_guard lock(_statsMutex);
         for (const auto& [botGuid, stats] : _botStatistics)
         {
             totalBots++;

@@ -237,7 +237,7 @@ public:
 
     T* Allocate()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (_nextFree == SIZE_MAX)
             return nullptr; // Pool exhausted
@@ -256,7 +256,7 @@ public:
         if (!ptr || ptr < _pool || ptr >= _pool + PoolSize)
             return; // Invalid pointer
 
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         size_t index = ptr - _pool;
         *reinterpret_cast<size_t*>(ptr) = _nextFree;
@@ -354,7 +354,7 @@ public:
     template<typename T>
     std::shared_ptr<MemoryPool<T>> GetPool(MemoryCategory category, uint32_t botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_poolsMutex);
+        std::lock_guard lock(_poolsMutex);
 
         auto key = std::make_pair(static_cast<uint8_t>(category), botGuid);
         auto it = _memoryPools.find(key);

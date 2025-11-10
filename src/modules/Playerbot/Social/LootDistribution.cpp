@@ -76,11 +76,16 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
             return nullptr;
         }
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return nullptr;
-}
+
+if (!group)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
+
+    return nullptr;
+
+}
     if (!group)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
@@ -103,11 +108,16 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
     {
         // Quick snapshot check first (fast, lock-free)
         auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, slot.guid);
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
+
+    return;
+
+}
         if (!memberSnapshot)
             continue;
 
@@ -134,9 +144,9 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
 
     // Store the roll
     {
-        std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+        std::lock_guard lock(_lootMutex);
         _activeLootRolls[rollId] = roll;
-        _rollTimeouts[rollId] = getMSTime() + LOOT_ROLL_TIMEOUT;
+        _rollTimeouts[rollId] = GameTime::GetGameTimeMS() + LOOT_ROLL_TIMEOUT;
     }
 
     // Broadcast roll to group members
@@ -156,11 +166,16 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         auto memberSnapshot = SpatialGridQueryHelpers::FindPlayerByGuid(nullptr, guid);
         if (!memberSnapshot)
             continue;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
         // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindConnectedPlayer(guid);
@@ -186,11 +201,16 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         }
     }
 }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
 void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, LootRollType rollType)
         if (!player)
@@ -207,7 +227,7 @@ void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, 
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -265,7 +285,7 @@ void LootDistribution::ProcessPlayerLootDecision(Player* player, uint32 rollId, 
 
 void LootDistribution::CompleteLootRoll(uint32 rollId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -355,11 +375,16 @@ LootPriority LootDistribution::AnalyzeItemPriority(Player* player, const LootIte
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
             return nullptr;
         }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
+
+    return nullptr;
+
+}
 
         if (upgradeValue > 0.3f)
             return LootPriority::CRITICAL_UPGRADE;
@@ -530,7 +555,7 @@ bool LootDistribution::CanPlayerDisenchantItem(Player* player, const LootItem& i
 
 void LootDistribution::ProcessLootRolls(uint32 rollId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -539,7 +564,7 @@ void LootDistribution::ProcessLootRolls(uint32 rollId)
     LootRoll& roll = rollIt->second;
 
     // Check for timeout
-    if (getMSTime() > roll.rollTimeout)
+    if (GameTime::GetGameTimeMS() > roll.rollTimeout)
     {
         HandleLootRollTimeout(rollId);
         return;
@@ -623,7 +648,7 @@ if (!player)
     return nullptr;
 }
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto rollIt = _activeLootRolls.find(rollId);
     if (rollIt == _activeLootRolls.end())
@@ -687,11 +712,16 @@ void LootDistribution::ExecuteClassPriorityStrategy(Player* player, const LootIt
 void LootDistribution::ExecuteUpgradePriorityStrategy(Player* player, const LootItem& item, LootRollType& decision)
 {
     LootPriority priority = AnalyzeItemPriority(player, item);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
     switch (priority)
     {
@@ -785,7 +815,7 @@ void LootDistribution::ExecuteMainSpecPriorityStrategy(Player* player, const Loo
 
 LootDistribution::LootFairnessTracker LootDistribution::GetGroupLootFairness(uint32 groupId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     auto it = _groupFairnessTracking.find(groupId);
     if (it != _groupFairnessTracking.end())
         return it->second;
@@ -795,7 +825,7 @@ LootDistribution::LootFairnessTracker LootDistribution::GetGroupLootFairness(uin
 
 void LootDistribution::UpdateLootFairness(uint32 groupId, uint32 winnerGuid, const LootItem& item)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto& tracker = _groupFairnessTracking[groupId];
 
@@ -832,7 +862,7 @@ float LootDistribution::CalculateFairnessScore(const LootFairnessTracker& tracke
 
 LootDistribution::LootMetrics LootDistribution::GetPlayerLootMetrics(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
         return it->second;
@@ -861,13 +891,13 @@ LootDistribution::LootMetrics LootDistribution::GetGlobalLootMetrics()
 
 void LootDistribution::SetPlayerLootStrategy(uint32 playerGuid, LootDecisionStrategy strategy)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     _playerLootProfiles[playerGuid].strategy = strategy;
 }
 
 LootDecisionStrategy LootDistribution::GetPlayerLootStrategy(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second.strategy;
@@ -877,13 +907,13 @@ LootDecisionStrategy LootDistribution::GetPlayerLootStrategy(uint32 playerGuid)
 
 void LootDistribution::SetPlayerLootPreferences(uint32 playerGuid, const PlayerLootProfile& profile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     _playerLootProfiles[playerGuid] = profile;
 }
 
 PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second;
@@ -1376,7 +1406,7 @@ bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group, Player* pl
 
 void LootDistribution::UpdateLootMetrics(uint32 playerGuid, const LootRoll& roll, bool wasWinner)
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
     auto& metrics = _playerMetrics[playerGuid];
 
@@ -1401,7 +1431,7 @@ void LootDistribution::UpdateLootMetrics(uint32 playerGuid, const LootRoll& roll
 void LootDistribution::Update(uint32 diff)
 {
     static uint32 lastUpdate = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     if (currentTime - lastUpdate < LOOT_UPDATE_INTERVAL)
         return;
@@ -1423,7 +1453,7 @@ void LootDistribution::ProcessActiveLootRolls()
     std::vector<uint32> rollsToProcess;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+        std::lock_guard lock(_lootMutex);
         for (const auto& rollPair : _activeLootRolls)
         {
             rollsToProcess.push_back(rollPair.first);
@@ -1438,9 +1468,9 @@ void LootDistribution::ProcessActiveLootRolls()
 
 void LootDistribution::CleanupExpiredRolls()
 {
-    std::lock_guard<std::recursive_mutex> lock(_lootMutex);
+    std::lock_guard lock(_lootMutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     std::vector<uint32> expiredRolls;
 
     for (const auto& timeoutPair : _rollTimeouts)

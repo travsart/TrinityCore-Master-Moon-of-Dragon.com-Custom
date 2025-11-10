@@ -66,7 +66,7 @@ namespace Playerbot
 
     bool BotMonitor::Initialize()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (_initialized)
             return true;
@@ -86,7 +86,7 @@ namespace Playerbot
 
     void BotMonitor::Shutdown()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (!_initialized)
             return;
@@ -112,7 +112,7 @@ namespace Playerbot
 
     void BotMonitor::Update(uint32 diff)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (!_initialized)
             return;
@@ -147,7 +147,7 @@ namespace Playerbot
 
     PerformanceSnapshot BotMonitor::CaptureSnapshot()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         PerformanceSnapshot snapshot;
         snapshot.timestamp = std::chrono::system_clock::now();
@@ -188,7 +188,7 @@ namespace Playerbot
 
     PerformanceSnapshot BotMonitor::GetLatestSnapshot() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (_snapshotHistory.empty())
             return const_cast<BotMonitor*>(this)->CaptureSnapshot();
@@ -198,7 +198,7 @@ namespace Playerbot
 
     std::vector<PerformanceSnapshot> BotMonitor::GetSnapshotHistory(uint32 count) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         std::vector<PerformanceSnapshot> result;
 
@@ -219,7 +219,7 @@ namespace Playerbot
 
     void BotMonitor::RecordBotCombatStart(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsInCombat.insert(botGuid);
         _botActivityState[botGuid] = "combat";
         _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
@@ -227,14 +227,14 @@ namespace Playerbot
 
     void BotMonitor::RecordBotCombatEnd(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsInCombat.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotQuestStart(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsQuesting.insert(botGuid);
         _botActivityState[botGuid] = "questing";
         _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
@@ -242,14 +242,14 @@ namespace Playerbot
 
     void BotMonitor::RecordBotQuestEnd(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsQuesting.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotDeath(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsDead.insert(botGuid);
         _botActivityState[botGuid] = "dead";
         _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
@@ -257,14 +257,14 @@ namespace Playerbot
 
     void BotMonitor::RecordBotResurrection(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botsDead.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotUpdateTime(ObjectGuid botGuid, double updateTimeMs)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         _updateTimes.push_back(updateTimeMs);
         _totalUpdateTime += updateTimeMs;
@@ -283,7 +283,7 @@ namespace Playerbot
 
     void BotMonitor::RecordAIDecisionTime(ObjectGuid botGuid, double decisionTimeMs)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         _aiDecisionTimes.push_back(decisionTimeMs);
 
@@ -298,7 +298,7 @@ namespace Playerbot
 
     void BotMonitor::RecordDatabaseQuery(double queryTimeMs)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         _queryTimes.push_back(queryTimeMs);
         _totalQueries++;
@@ -317,19 +317,19 @@ namespace Playerbot
 
     void BotMonitor::RecordDatabaseCacheHit()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _totalCacheHits++;
     }
 
     void BotMonitor::RecordDatabaseCacheMiss()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _totalCacheMisses++;
     }
 
     void BotMonitor::RecordError(std::string const& category, std::string const& message)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _errorCount++;
         _errorsByCategory[category]++;
 
@@ -338,7 +338,7 @@ namespace Playerbot
 
     void BotMonitor::RecordWarning(std::string const& category, std::string const& message)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _warningCount++;
         _warningsByCategory[category]++;
 
@@ -351,25 +351,25 @@ namespace Playerbot
 
     TrendData BotMonitor::GetCpuTrend() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _cpuTrend;
     }
 
     TrendData BotMonitor::GetMemoryTrend() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _memoryTrend;
     }
 
     TrendData BotMonitor::GetBotCountTrend() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _botCountTrend;
     }
 
     TrendData BotMonitor::GetQueryTimeTrend() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _queryTimeTrend;
     }
 
@@ -379,19 +379,19 @@ namespace Playerbot
 
     AlertThresholds BotMonitor::GetAlertThresholds() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _alertThresholds;
     }
 
     void BotMonitor::SetAlertThresholds(AlertThresholds const& thresholds)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _alertThresholds = thresholds;
     }
 
     std::vector<PerformanceAlert> BotMonitor::GetActiveAlerts(AlertLevel minLevel) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         std::vector<PerformanceAlert> result;
 
@@ -413,7 +413,7 @@ namespace Playerbot
 
     std::vector<PerformanceAlert> BotMonitor::GetAlertHistory(uint32 count) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         std::vector<PerformanceAlert> result;
 
@@ -430,13 +430,13 @@ namespace Playerbot
 
     void BotMonitor::ClearAlertHistory()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _alertHistory.clear();
     }
 
     void BotMonitor::RegisterAlertCallback(std::function<void(PerformanceAlert const&)> callback)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _alertCallbacks.push_back(callback);
     }
 
@@ -446,7 +446,7 @@ namespace Playerbot
 
     std::string BotMonitor::GetStatisticsSummary() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         PerformanceSnapshot snapshot = const_cast<BotMonitor*>(this)->CaptureSnapshot();
 
@@ -503,7 +503,7 @@ namespace Playerbot
 
     uint64 BotMonitor::GetUptimeSeconds() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (!_initialized)
             return 0;
@@ -515,7 +515,7 @@ namespace Playerbot
 
     void BotMonitor::ResetStatistics()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         _totalUpdateTime = 0.0;
         _maxUpdateTime = 0.0;

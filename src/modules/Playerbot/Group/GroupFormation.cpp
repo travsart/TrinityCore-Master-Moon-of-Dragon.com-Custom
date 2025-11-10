@@ -29,7 +29,7 @@ GroupFormation::GroupFormation(uint32 groupId, FormationType type)
     , _formationSpacing(DEFAULT_FORMATION_SPACING)
     , _formationRadius(0.0f)
     , _lastDirection(0.0f)
-    , _lastUpdateTime(getMSTime())
+    , _lastUpdateTime(GameTime::GetGameTimeMS())
 {
     // Initialize formation templates if not done
     if (_formationTemplates.empty())
@@ -45,7 +45,7 @@ GroupFormation::GroupFormation(uint32 groupId, FormationType type)
 
 void GroupFormation::SetFormationType(FormationType type)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (_formationType == type)
         return;
@@ -59,7 +59,7 @@ void GroupFormation::SetFormationType(FormationType type)
 
 void GroupFormation::SetFormationBehavior(FormationBehavior behavior)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
     _behavior = behavior;
 
     // Adjust spacing based on behavior
@@ -90,7 +90,7 @@ void GroupFormation::SetFormationBehavior(FormationBehavior behavior)
 
 void GroupFormation::SetCustomFormation(const std::vector<Position>& positions)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (positions.size() != _members.size())
     {
@@ -109,7 +109,7 @@ void GroupFormation::SetCustomFormation(const std::vector<Position>& positions)
 
 void GroupFormation::AddMember(uint32 memberGuid, const Position& preferredPosition)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     // Check if member already exists
     for (const auto& member : _members)
@@ -139,7 +139,7 @@ void GroupFormation::AddMember(uint32 memberGuid, const Position& preferredPosit
 
 void GroupFormation::RemoveMember(uint32 memberGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     _members.erase(
         std::remove_if(_members.begin(), _members.end(),
@@ -161,7 +161,7 @@ void GroupFormation::RemoveMember(uint32 memberGuid)
 
 void GroupFormation::UpdateFormation(const Position& centerPosition, float direction)
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     bool positionChanged = _formationCenter.GetExactDist(centerPosition) > FORMATION_UPDATE_THRESHOLD;
     bool directionChanged = std::abs(_formationDirection - direction) > 0.1f;
@@ -177,12 +177,12 @@ void GroupFormation::UpdateFormation(const Position& centerPosition, float direc
         _metrics.positionAdjustments.fetch_add(1);
     }
 
-    _lastUpdateTime = getMSTime();
+    _lastUpdateTime = GameTime::GetGameTimeMS();
 }
 
 Position GroupFormation::GetAssignedPosition(uint32 memberGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     for (const auto& member : _members)
     {
@@ -195,19 +195,19 @@ Position GroupFormation::GetAssignedPosition(uint32 memberGuid) const
 
 Position GroupFormation::GetFormationCenter() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
     return _formationCenter;
 }
 
 float GroupFormation::GetFormationRadius() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
     return _formationRadius;
 }
 
 bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     for (const auto& member : _members)
     {
@@ -221,11 +221,16 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
                     return nullptr;
                 }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-    return 0;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
+
+    return 0;
+
+}
                 if (!player)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
@@ -241,7 +246,7 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
 
 std::vector<uint32> GroupFormation::GetMembersOutOfPosition(float tolerance) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
     std::vector<uint32> outOfPosition;
 
     for (const auto& member : _members)
@@ -267,7 +272,7 @@ void GroupFormation::Update(uint32 diff)
     if (!_isActive.load())
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Update formation metrics
     if (currentTime - _lastUpdateTime >= FORMATION_SMOOTHING_INTERVAL)
@@ -286,7 +291,7 @@ void GroupFormation::Update(uint32 diff)
 
 void GroupFormation::UpdateMetrics()
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (!player)
     {
@@ -329,7 +334,7 @@ void GroupFormation::UpdateMetrics()
 
 bool GroupFormation::IsFormationValid() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (_members.empty())
         return false;
@@ -498,7 +503,7 @@ void GroupFormation::UpdateMemberPositions()
     for (auto& member : _members)
     {
         member.assignedPosition = CalculateMemberPosition(member);
-        member.lastPositionUpdate = getMSTime();
+        member.lastPositionUpdate = GameTime::GetGameTimeMS();
     }
 }
 
@@ -785,7 +790,7 @@ std::vector<Position> GroupFormation::GenerateArrowFormation(uint32 memberCount,
 void GroupFormation::PerformFormationSmoothing()
 {
     // Implement formation smoothing logic
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     // Adjust positions for smoother transitions
     for (auto& member : _members)
@@ -800,7 +805,7 @@ void GroupFormation::PerformFormationSmoothing()
 
 void GroupFormation::HandleCollisionResolution()
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (_members.empty())
         return;
@@ -879,7 +884,7 @@ void GroupFormation::HandleCollisionResolution()
 
 void GroupFormation::ApplyFlexibilityAdjustments()
 {
-    std::lock_guard<std::recursive_mutex> lock(_formationMutex);
+    std::lock_guard lock(_formationMutex);
 
     if (_members.empty())
         return;
@@ -993,7 +998,7 @@ void GroupFormation::ApplyFlexibilityAdjustments()
         }
 
         // Update last position update time
-        member.lastPositionUpdate = getMSTime();
+        member.lastPositionUpdate = GameTime::GetGameTimeMS();
 
         TC_LOG_TRACE("playerbot", "GroupFormation: Applied flexibility adjustments for member {}, maxDev: {:.2f}",
                      member.memberGuid, member.maxDeviationDistance);

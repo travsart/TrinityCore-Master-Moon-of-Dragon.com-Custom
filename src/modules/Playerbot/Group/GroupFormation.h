@@ -58,7 +58,7 @@ struct FormationMember
 
     FormationMember(uint32 guid, const Position& assigned, float maxDev = 3.0f, float prio = 1.0f)
         : memberGuid(guid), assignedPosition(assigned), maxDeviationDistance(maxDev)
-        , priority(prio), isFlexible(true), isLeader(false), lastPositionUpdate(getMSTime()) {}
+        , priority(prio), isFlexible(true), isLeader(false), lastPositionUpdate(GameTime::GetGameTimeMS()) {}
 };
 
 struct FormationTemplate

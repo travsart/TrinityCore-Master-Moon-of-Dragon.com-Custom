@@ -104,7 +104,7 @@ void MemoryPool<T>::Deallocate(T* ptr)
 template<typename T>
 void MemoryPool<T>::AllocateChunk()
 {
-    std::lock_guard<std::recursive_mutex> lock(_chunkMutex);
+    std::lock_guard lock(_chunkMutex);
 
     size_t currentCapacity = _totalCapacity.load(std::memory_order_relaxed);
     if (currentCapacity >= _config.maxCapacity)
@@ -176,7 +176,7 @@ void BotMemoryManager::TrackAllocation(ObjectGuid guid, size_t size)
 {
     _totalAllocated.fetch_add(size, std::memory_order_relaxed);
 
-    std::lock_guard<std::recursive_mutex> lock(_usageMutex);
+    std::lock_guard lock(_usageMutex);
     auto& usage = _botMemoryUsage[guid];
     usage.totalMemory.fetch_add(size, std::memory_order_relaxed);
     usage.lastUpdate = std::chrono::steady_clock::now();
@@ -186,7 +186,7 @@ void BotMemoryManager::TrackDeallocation(ObjectGuid guid, size_t size)
 {
     _totalAllocated.fetch_sub(size, std::memory_order_relaxed);
 
-    std::lock_guard<std::recursive_mutex> lock(_usageMutex);
+    std::lock_guard lock(_usageMutex);
     auto it = _botMemoryUsage.find(guid);
     if (it != _botMemoryUsage.end())
     {

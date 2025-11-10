@@ -59,7 +59,7 @@ ObjectGuid TankCoordinator::GetTankForTarget(ObjectGuid targetGuid) const
 
 void TankCoordinator::RequestTankSwap()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check cooldown
     if (now < _lastTankSwapTime + _tankSwapCooldown)
@@ -280,7 +280,7 @@ void HealerCoordinator::AssignHealerToTank(ObjectGuid healerGuid, ObjectGuid tan
 
 ObjectGuid HealerCoordinator::GetNextCooldownHealer(std::string const& cooldownType) const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto const& pair : _healerCooldowns)
     {
@@ -300,7 +300,7 @@ ObjectGuid HealerCoordinator::GetNextCooldownHealer(std::string const& cooldownT
 
 void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, std::string const& cooldownType, uint32 durationMs)
 {
-    uint32 expireTime = getMSTime() + durationMs;
+    uint32 expireTime = GameTime::GetGameTimeMS() + durationMs;
     _healerCooldowns[healerGuid][cooldownType] = expireTime;
 
     TC_LOG_DEBUG("playerbot.coordination", "Healer {} used cooldown: {} (expires in {}ms)",
@@ -395,7 +395,7 @@ void HealerCoordinator::UpdateDispelCoordination(GroupCoordinator* group)
     // This method can be used for advanced dispel logic (e.g., prioritizing certain debuff types)
 
     // Clean up expired cooldowns
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto it = _healerCooldowns.begin(); it != _healerCooldowns.end(); ++it)
     {
@@ -506,7 +506,7 @@ void DPSCoordinator::SetFocusTarget(ObjectGuid targetGuid)
 
 ObjectGuid DPSCoordinator::GetNextInterrupter() const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto const& interrupt : _interruptRotation)
     {
@@ -521,7 +521,7 @@ ObjectGuid DPSCoordinator::GetNextInterrupter() const
 
 void DPSCoordinator::AssignInterrupt(ObjectGuid dpsGuid, ObjectGuid targetGuid)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     InterruptAssignment assignment;
     assignment.dpsGuid = dpsGuid;
@@ -557,7 +557,7 @@ ObjectGuid DPSCoordinator::GetCCAssignment(ObjectGuid dpsGuid) const
 
 void DPSCoordinator::AssignCC(ObjectGuid dpsGuid, ObjectGuid targetGuid, std::string const& ccType)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Remove old assignment
     _ccAssignments.erase(
@@ -590,7 +590,7 @@ void DPSCoordinator::RequestBurstWindow(uint32 durationMs)
     }
 
     _inBurstWindow = true;
-    _burstWindowStart = getMSTime();
+    _burstWindowStart = GameTime::GetGameTimeMS();
     _burstWindowDuration = durationMs;
 
     TC_LOG_DEBUG("playerbot.coordination", "Burst window activated for {}ms", durationMs);
@@ -601,7 +601,7 @@ bool DPSCoordinator::InBurstWindow() const
     if (!_inBurstWindow)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return now < _burstWindowStart + _burstWindowDuration;
 }
 
@@ -618,7 +618,7 @@ void DPSCoordinator::UpdateFocusTarget(GroupCoordinator* group)
 
 void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Clean up expired interrupt cooldowns
     _interruptRotation.erase(
@@ -665,7 +665,7 @@ void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
 
 void DPSCoordinator::UpdateCCAssignments(GroupCoordinator* group)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Clean up old CC assignments (>60s old)
     _ccAssignments.erase(

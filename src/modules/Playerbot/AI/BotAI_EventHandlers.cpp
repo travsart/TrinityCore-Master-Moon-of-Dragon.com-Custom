@@ -195,7 +195,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
                             _bot->GetName(), event.casterGuid.ToString(), event.spellId);
 
                         // Queue BotAction for main thread execution (CRITICAL: no Map access from worker threads!)
-                        BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, getMSTime());
+                        BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, GameTime::GetGameTimeMS());
                         sBotActionMgr->QueueAction(action);
                     }
                 }
@@ -222,7 +222,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
                         _bot->GetName(), event.casterGuid.ToString());
 
                     // Queue BotAction for main thread execution (CRITICAL: no Map access from worker threads!)
-                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, getMSTime());
+                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, GameTime::GetGameTimeMS());
                     sBotActionMgr->QueueAction(action);
                 }
             }
@@ -251,7 +251,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
                         _bot->GetName(), event.casterGuid.ToString());
 
                     // Queue BotAction for main thread execution (CRITICAL: no Map access from worker threads!)
-                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, getMSTime());
+                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, GameTime::GetGameTimeMS());
                     sBotActionMgr->QueueAction(action);
                 }
             }
@@ -270,7 +270,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
                         _bot->GetName(), event.casterGuid.ToString());
 
                     // Queue BotAction for main thread execution (CRITICAL: no Map access from worker threads!)
-                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, getMSTime());
+                    BotAction action = BotAction::AttackTarget(_bot->GetGUID(), event.casterGuid, GameTime::GetGameTimeMS());
                     sBotActionMgr->QueueAction(action);
                 }
             }

@@ -154,7 +154,7 @@ void CrowdControlManager::ApplyCC(Unit* target, CrowdControlType type, uint32 du
     cc.type = type;
     cc.duration = duration;
     cc.appliedBy = bot;
-    cc.expiryTime = getMSTime() + duration;
+    cc.expiryTime = GameTime::GetGameTimeMS() + duration;
     cc.spellId = spellId;
 
     _activeCCs[target->GetGUID()] = cc;
@@ -456,7 +456,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
 
 void CrowdControlManager::UpdateExpiredCCs()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (auto it = _activeCCs.begin(); it != _activeCCs.end();)
     {

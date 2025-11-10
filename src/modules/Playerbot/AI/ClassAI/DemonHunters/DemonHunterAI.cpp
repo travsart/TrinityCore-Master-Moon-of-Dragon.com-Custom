@@ -156,7 +156,7 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
     if (!IsTargetInterruptible(interruptTarget))
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Disrupt - Main interrupt ability
     if (currentTime - _lastInterruptTime > INTERRUPT_COOLDOWN && CanUseAbility(DISRUPT))
@@ -204,7 +204,7 @@ void DemonHunterAI::HandleDefensives()
     if (!_bot)
         return;
 
-    float healthPct = _bot->GetHealthPct();    uint32 currentTime = getMSTime();
+    float healthPct = _bot->GetHealthPct();    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Netherwalk - Emergency immunity
     if (healthPct < HEALTH_EMERGENCY_THRESHOLD && CanUseAbility(NETHERWALK))
@@ -524,7 +524,7 @@ void DemonHunterAI::HandleMobility(::Unit* target)
             {
                 RecordAbilityUsage(FEL_RUSH);
                 _dhMetrics.mobilityAbilitiesUsed++;
-                _lastMobilityTime = getMSTime();
+                _lastMobilityTime = GameTime::GetGameTimeMS();
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} used Fel Rush to reach {}",
                              _bot->GetName(), target->GetName());
                 return;

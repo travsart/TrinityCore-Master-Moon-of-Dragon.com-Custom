@@ -113,46 +113,46 @@ public:
 
     void ApplyRake(ObjectGuid guid, uint32 duration)
     {
-        _rakeTargets[guid] = getMSTime() + duration;
+        _rakeTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyRip(ObjectGuid guid, uint32 duration)
     {
-        _ripTargets[guid] = getMSTime() + duration;
+        _ripTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyThrash(ObjectGuid guid, uint32 duration)
     {
-        _thrashTargets[guid] = getMSTime() + duration;
+        _thrashTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyMoonfire(ObjectGuid guid, uint32 duration)
     {
-        _moonfireTargets[guid] = getMSTime() + duration;
+        _moonfireTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     [[nodiscard]] bool HasRake(ObjectGuid guid) const
     {
         auto it = _rakeTargets.find(guid);
-        return it != _rakeTargets.end() && getMSTime() < it->second;
+        return it != _rakeTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasRip(ObjectGuid guid) const
     {
         auto it = _ripTargets.find(guid);
-        return it != _ripTargets.end() && getMSTime() < it->second;
+        return it != _ripTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasThrash(ObjectGuid guid) const
     {
         auto it = _thrashTargets.find(guid);
-        return it != _thrashTargets.end() && getMSTime() < it->second;
+        return it != _thrashTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasMoonfire(ObjectGuid guid) const
     {
         auto it = _moonfireTargets.find(guid);
-        return it != _moonfireTargets.end() && getMSTime() < it->second;
+        return it != _moonfireTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetRakeTimeRemaining(ObjectGuid guid) const
@@ -160,7 +160,7 @@ public:
         auto it = _rakeTargets.find(guid);
         if (it != _rakeTargets.end())
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return now < it->second ? (it->second - now) : 0;
         }
         return 0;
@@ -174,7 +174,7 @@ public:
     {
         return false;    }
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return now < it->second ? (it->second - now) : 0;
         if (!rake)
         {
@@ -210,7 +210,7 @@ if (!thrash)
 
         ObjectGuid guid = target->GetGUID();        // Sync with actual auras
         if (Aura* rake = target->GetAura(FERAL_RAKE))
-            _rakeTargets[guid] = getMSTime() + rake->GetDuration();
+            _rakeTargets[guid] = GameTime::GetGameTimeMS() + rake->GetDuration();
             if (!rake)
             {
                 return nullptr;
@@ -219,7 +219,7 @@ if (!thrash)
             _rakeTargets.erase(guid);
 
         if (Aura* rip = target->GetAura(FERAL_RIP))
-            _ripTargets[guid] = getMSTime() + rip->GetDuration();
+            _ripTargets[guid] = GameTime::GetGameTimeMS() + rip->GetDuration();
             if (!rip)
             {
                 return nullptr;
@@ -228,7 +228,7 @@ if (!thrash)
             _ripTargets.erase(guid);
 
         if (Aura* thrash = target->GetAura(FERAL_THRASH_CAT))
-            _thrashTargets[guid] = getMSTime() + thrash->GetDuration();
+            _thrashTargets[guid] = GameTime::GetGameTimeMS() + thrash->GetDuration();
             if (!thrash)
             {
                 return nullptr;
@@ -237,7 +237,7 @@ if (!thrash)
             _thrashTargets.erase(guid);
 
         if (Aura* moonfire = target->GetAura(FERAL_MOONFIRE_CAT))
-            _moonfireTargets[guid] = getMSTime() + moonfire->GetDuration();
+            _moonfireTargets[guid] = GameTime::GetGameTimeMS() + moonfire->GetDuration();
             if (!moonfire)
             {
                 return nullptr;
@@ -248,7 +248,7 @@ if (!thrash)
 
     void CleanupExpired()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         for (auto it = _rakeTargets.begin(); it != _rakeTargets.end();)
         {
@@ -299,7 +299,7 @@ public:
     {
         _bloodtalonsActive = true;
         _bloodtalonsStacks = stacks;
-        _bloodtalonsEndTime = getMSTime() + 30000; // 30 sec duration
+        _bloodtalonsEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec duration
     }
 
     void ConsumeStack()
@@ -311,7 +311,7 @@ public:
             _bloodtalonsActive = false;
     }
 
-    [[nodiscard]] bool IsActive() const { return _bloodtalonsActive && getMSTime() < _bloodtalonsEndTime; }
+    [[nodiscard]] bool IsActive() const { return _bloodtalonsActive && GameTime::GetGameTimeMS() < _bloodtalonsEndTime; }
     [[nodiscard]] uint32 GetStacks() const { return _bloodtalonsStacks; }
 
     void Update(Player* bot)
@@ -322,7 +322,7 @@ public:
         if (Aura* aura = bot->GetAura(FERAL_BLOODTALONS))
         {
             _bloodtalonsActive = true;
-            _bloodtalonsStacks = aura->GetStackAmount();            _bloodtalonsEndTime = getMSTime() + aura->GetDuration();        }
+            _bloodtalonsStacks = aura->GetStackAmount();            _bloodtalonsEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _bloodtalonsActive = false;
@@ -442,17 +442,17 @@ private:
     void UpdateCooldownStates()
     {
         // Tiger's Fury state
-        if (_tigersFuryActive && getMSTime() >= _tigersFuryEndTime)
+        if (_tigersFuryActive && GameTime::GetGameTimeMS() >= _tigersFuryEndTime)
             _tigersFuryActive = false;
 
         if (bot->HasAura(FERAL_TIGERS_FURY))
         {
             _tigersFuryActive = true;
             if (Aura* aura = bot->GetAura(FERAL_TIGERS_FURY))
-                _tigersFuryEndTime = getMSTime() + aura->GetDuration();        }
+                _tigersFuryEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
 
         // Berserk state
-        if (_berserkActive && getMSTime() >= _berserkEndTime)
+        if (_berserkActive && GameTime::GetGameTimeMS() >= _berserkEndTime)
             _berserkActive = false;
 
         if (bot->HasAura(FERAL_BERSERK) || bot->HasAura(FERAL_INCARNATION_KING))
@@ -462,7 +462,7 @@ private:
             if (!aura)
                 aura = bot->GetAura(FERAL_INCARNATION_KING);
             if (aura)
-                _berserkEndTime = getMSTime() + aura->GetDuration();
+                _berserkEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
         }
     }
 
@@ -488,8 +488,8 @@ private:
             {
                 this->CastSpell(bot, FERAL_TIGERS_FURY);
                 _tigersFuryActive = true;
-                _tigersFuryEndTime = getMSTime() + 15000; // 15 sec duration
-                _lastTigersFuryTime = getMSTime();
+                _tigersFuryEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
+                _lastTigersFuryTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -501,16 +501,16 @@ private:
             {
                 this->CastSpell(bot, FERAL_INCARNATION_KING);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 30000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 30000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
             else if (this->CanCastSpell(FERAL_BERSERK, bot))
             {
                 this->CastSpell(bot, FERAL_BERSERK);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 15000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 15000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -605,8 +605,8 @@ private:
             {
                 this->CastSpell(bot, FERAL_TIGERS_FURY);
                 _tigersFuryActive = true;
-                _tigersFuryEndTime = getMSTime() + 15000;
-                _lastTigersFuryTime = getMSTime();
+                _tigersFuryEndTime = GameTime::GetGameTimeMS() + 15000;
+                _lastTigersFuryTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -618,16 +618,16 @@ private:
             {
                 this->CastSpell(bot, FERAL_INCARNATION_KING);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 30000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 30000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
             else if (this->CanCastSpell(FERAL_BERSERK, bot))
             {
                 this->CastSpell(bot, FERAL_BERSERK);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 15000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 15000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -826,7 +826,7 @@ private:
                                 {
                                     this->CastSpell(bot, FERAL_INCARNATION_KING);
                                     this->_berserkActive = true;
-                                    this->_berserkEndTime = getMSTime() + 30000;
+                                    this->_berserkEndTime = GameTime::GetGameTimeMS() + 30000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -838,7 +838,7 @@ private:
                                 {
                                     this->CastSpell(bot, FERAL_BERSERK);
                                     this->_berserkActive = true;
-                                    this->_berserkEndTime = getMSTime() + 15000;
+                                    this->_berserkEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -926,7 +926,7 @@ private:
                                 {
                                     this->CastSpell(bot, FERAL_TIGERS_FURY);
                                     this->_tigersFuryActive = true;
-                                    this->_tigersFuryEndTime = getMSTime() + 15000;
+                                    this->_tigersFuryEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

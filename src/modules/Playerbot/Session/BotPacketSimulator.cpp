@@ -28,7 +28,7 @@ BotPacketSimulator::BotPacketSimulator(BotSession* session)
     : _session(session)
 {
     // Initialize simulated client time with current server time
-    _simulatedClientTime = getMSTime();
+    _simulatedClientTime = GameTime::GetGameTimeMS();
 }
 
 void BotPacketSimulator::SimulateQueuedMessagesEnd()
@@ -71,11 +71,16 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     // Create WorldPacket with CMSG_QUEUED_MESSAGES_END opcode
     WorldPacket packet(CMSG_QUEUED_MESSAGES_END);
     packet << _simulatedClientTime;  // Write timestamp
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     // Construct packet structure from WorldPacket
     WorldPackets::Auth::QueuedMessagesEnd queuedMessagesEnd(std::move(packet));
@@ -169,11 +174,16 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     // Construct packet structure from WorldPacket
     WorldPackets::Movement::MoveInitActiveMoverComplete moveInitComplete(std::move(packet));
     moveInitComplete.Read();  // Extract data from WorldPacket
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+
+    return;
+
+}
 
     // Call the handler directly (packet forging)
     _session->HandleMoveInitActiveMoverComplete(moveInitComplete);
@@ -209,11 +219,16 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
         return;
 
     Player* bot = _session->GetPlayer();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
         if (!bot)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
@@ -238,11 +253,16 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
 
     // Call the handler directly
     _session->HandleTimeSyncResponse(timeSyncResponse);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     TC_LOG_TRACE("module.playerbot.packet",
         "Bot {} simulated CMSG_TIME_SYNC_RESPONSE (counter: {}, clientTime: {})",

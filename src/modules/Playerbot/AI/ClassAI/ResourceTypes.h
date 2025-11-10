@@ -97,7 +97,7 @@ public:
             {
                 rune.available = false;
                 rune.cooldownRemaining = RUNE_COOLDOWN_MS;
-                rune.lastUsedTime = getMSTime();
+                rune.lastUsedTime = GameTime::GetGameTimeMS();
                 consumed++;
             }
         }
@@ -195,7 +195,7 @@ public:
                 {
                     rune.available = false;
                     rune.cooldownRemaining = RUNE_COOLDOWN_MS;
-                    rune.lastUsedTime = getMSTime();
+                    rune.lastUsedTime = GameTime::GetGameTimeMS();
                     consumed++;
                 }
             }

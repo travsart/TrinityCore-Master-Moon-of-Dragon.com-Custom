@@ -104,11 +104,11 @@ void InventoryManager::Update(uint32 diff)
     _metrics.totalUpdates++;
 
     // Update caches periodically (every 10 seconds)
-    if (getMSTime() - _lastCacheUpdate > 10000)
+    if (GameTime::GetGameTimeMS() - _lastCacheUpdate > 10000)
     {
         UpdateEquipmentCache();
         UpdateInventoryCache();
-        _lastCacheUpdate = getMSTime();
+        _lastCacheUpdate = GameTime::GetGameTimeMS();
     }
 
     // Auto-loot nearby corpses and objects
@@ -129,20 +129,20 @@ void InventoryManager::Update(uint32 diff)
     }
 
     // Optimize equipment (scan every 5 seconds)
-    if (_autoEquipEnabled && getMSTime() - _lastEquipScan > 5000)
+    if (_autoEquipEnabled && GameTime::GetGameTimeMS() - _lastEquipScan > 5000)
     {
         uint32 equippedCount = OptimizeEquipment();
         _metrics.itemsEquipped += equippedCount;
-        _lastEquipScan = getMSTime();
+        _lastEquipScan = GameTime::GetGameTimeMS();
     }
 
     // Organize bags when getting full (every 30 seconds or when < minFreeSlots)
     uint32 freeSlots = GetBagSpace();
-    if (freeSlots < _minFreeSlots || getMSTime() - _lastBagOrganize > 30000)
+    if (freeSlots < _minFreeSlots || GameTime::GetGameTimeMS() - _lastBagOrganize > 30000)
     {
         OrganizeBags();
         _metrics.bagsOrganized++;
-        _lastBagOrganize = getMSTime();
+        _lastBagOrganize = GameTime::GetGameTimeMS();
 
         // Destroy vendor trash if still full
         if (GetBagSpace() < _minFreeSlots)
@@ -174,7 +174,7 @@ uint32 InventoryManager::AutoLoot(float maxRange)
 
     // Clear looted objects cache periodically (every 60 seconds)
     static uint32 lastClear = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - lastClear > 60000)
     {
         _lootedObjects.clear();
@@ -1075,11 +1075,16 @@ bool InventoryManager::ShouldSellItem(Item* item) const
     int32 allowableClass = proto->GetAllowableClass();
     if (allowableClass && !(allowableClass & _bot->GetClassMask()))
         return true;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
+
+    return;
+
+}
 
     return false;
 }
@@ -1387,11 +1392,16 @@ bool InventoryManager::IsItemEquipped(Item* item) const
 
     return item->IsEquipped();
 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
+
+    return;
+
+}
 
 uint32 InventoryManager::GetItemCount(uint32 itemId, bool includeBank) const
 {
@@ -1532,11 +1542,16 @@ void InventoryManager::UpdateInventoryCache()
     }
     if (!_bot)
         return;
-if (!go)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
-    return nullptr;
-}
+
+if (!go)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
+
+    return nullptr;
+
+}
 
     // Main backpack
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
@@ -1558,11 +1573,16 @@ void InventoryManager::UpdateInventoryCache()
     for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
     {
         Bag* pBag = _bot->GetBagByPos(bag);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return nullptr;
+
+}
         if (!pBag)
             continue;
 

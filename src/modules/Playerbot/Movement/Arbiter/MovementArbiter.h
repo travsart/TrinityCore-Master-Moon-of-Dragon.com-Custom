@@ -437,7 +437,7 @@ private:
      *
      * Removes expired entries (older than deduplication window).
      *
-     * @param currentTime Current time (getMSTime())
+     * @param currentTime Current time (GameTime::GetGameTimeMS())
      */
     void UpdateDeduplicationCache(uint32 currentTime);
 

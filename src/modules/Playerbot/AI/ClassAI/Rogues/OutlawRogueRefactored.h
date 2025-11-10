@@ -78,10 +78,10 @@ public:
 
         Buff(uint32 id) : spellId(id), active(false), endTime(0) {}
 
-        bool IsActive() const { return active && getMSTime() < endTime; }
+        bool IsActive() const { return active && GameTime::GetGameTimeMS() < endTime; }
         uint32 GetTimeRemaining() const {
             if (!active) return 0;
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return endTime > now ? endTime - now : 0;
         }
     };
@@ -112,7 +112,7 @@ public:
         {
             uint32 randomIndex = rand() % this->_buffs.size();
             _buffs[randomIndex].active = true;
-            _buffs[randomIndex].endTime = getMSTime() + 30000; // 30 sec duration
+            _buffs[randomIndex].endTime = GameTime::GetGameTimeMS() + 30000; // 30 sec duration
         }
     }
 
@@ -182,7 +182,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto& buff : _buffs)
         {
             if (buff.active && now >= buff.endTime)
@@ -298,7 +298,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
             _adrenalineRushActive = true;
-            _adrenalineRushEndTime = getMSTime() + 20000;
+            _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
@@ -333,7 +333,7 @@ protected:
             if (this->CanCastSpell(DISPATCH_OUTLAW, target))
             {
                 this->CastSpell(target, DISPATCH_OUTLAW);
-                _lastDispatchTime = getMSTime();
+                _lastDispatchTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -367,7 +367,7 @@ protected:
             if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
             {
                 this->CastSpell(target, RogueAI::SINISTER_STRIKE);
-                _lastSinisterStrikeTime = getMSTime();
+                _lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(45);
                 GenerateComboPoints(1);
                 // Broadside buff gives extra CP
@@ -403,7 +403,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), RogueAI::BLADE_FLURRY);
                 _bladeFlurryActive = true;
-                _bladeFlurryEndTime = getMSTime() + 12000;
+                _bladeFlurryEndTime = GameTime::GetGameTimeMS() + 12000;
                 ConsumeEnergy(15);
                 return;
             }
@@ -414,7 +414,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
             _adrenalineRushActive = true;
-            _adrenalineRushEndTime = getMSTime() + 20000;
+            _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
@@ -471,7 +471,7 @@ protected:
 private:
     void UpdateOutlawState()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Roll the Bones buffs
         _rollTheBonesTracker.Update();
@@ -632,7 +632,7 @@ private:
                                 {
                                     this->CastSpell(bot, RogueAI::ADRENALINE_RUSH);
                                     this->_adrenalineRushActive = true;
-                                    this->_adrenalineRushEndTime = getMSTime() + 20000;
+                                    this->_adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -694,7 +694,7 @@ private:
                                 if (this->CanCastSpell(DISPATCH_OUTLAW, target))
                                 {
                                     this->CastSpell(target, DISPATCH_OUTLAW);
-                                    this->_lastDispatchTime = getMSTime();
+                                    this->_lastDispatchTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -753,7 +753,7 @@ private:
                                 if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
                                 {
                                     this->CastSpell(target, RogueAI::SINISTER_STRIKE);
-                                    this->_lastSinisterStrikeTime = getMSTime();
+                                    this->_lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(45);
                                     this->GenerateComboPoints(1);
                                     // Broadside buff gives extra CP

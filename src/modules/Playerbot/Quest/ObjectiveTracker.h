@@ -81,7 +81,7 @@ public:
 
         ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
             , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
-            , lastUpdateTime(getMSTime()), timeStarted(getMSTime()), estimatedTimeRemaining(0)
+            , lastUpdateTime(GameTime::GetGameTimeMS()), timeStarted(GameTime::GetGameTimeMS()), estimatedTimeRemaining(0)
             , completionVelocity(0.0f), isOptimized(false), failureCount(0)
             , isStuck(false), stuckTime(0) {}
     };

@@ -261,7 +261,7 @@ void EnhancedBotAI::OnCombatStart(Unit* target)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
             return;
         }
-    _combatStartTime = getMSTime();
+    _combatStartTime = GameTime::GetGameTimeMS();
 
     TransitionToState(BotAIState::COMBAT);
 
@@ -581,11 +581,16 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
 
     _lastMovementUpdate = 0;
 }
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
-    return;
-}
+
+if (!leader)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
+
+    return;
+
+}
 
 void EnhancedBotAI::UpdateGroupCoordination(uint32 diff)
 {
@@ -812,7 +817,7 @@ void EnhancedBotAI::TransitionToState(BotAIState newState)
     BotAIState oldState = _currentState;
     _previousState = _currentState;
     _currentState = newState;
-    _stateTransitionTime = getMSTime();
+    _stateTransitionTime = GameTime::GetGameTimeMS();
 
     HandleStateTransition(oldState, newState);
 

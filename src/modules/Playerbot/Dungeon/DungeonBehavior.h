@@ -149,7 +149,7 @@ struct GroupDungeonState
     GroupDungeonState(uint32 gId, uint32 dId) : groupId(gId), dungeonId(dId)
         , currentPhase(DungeonPhase::ENTERING), currentEncounterId(0)
         , encountersCompleted(0), totalEncounters(0), wipeCount(0)
-        , startTime(getMSTime()), lastProgressTime(getMSTime())
+        , startTime(GameTime::GetGameTimeMS()), lastProgressTime(GameTime::GetGameTimeMS())
         , isStuck(false), stuckTime(0), activeStrategy(EncounterStrategy::BALANCED) {}
 };
 

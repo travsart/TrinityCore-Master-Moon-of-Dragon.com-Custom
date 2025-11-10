@@ -87,11 +87,16 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
             return;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
                 if (!bot)
                 {
                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -106,11 +111,16 @@ namespace Playerbot
             _totalFailures.fetch_add(1);
             return false;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return;
+
+}
 
         // Check if destination is in dangerous terrain
         if (IsDangerousTerrain(map, destination))
@@ -144,11 +154,16 @@ namespace Playerbot
             _totalFailures.fetch_add(1);
             return false;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         // Check if destination is reachable (basic LOS check)
         if (!bot)
@@ -319,11 +334,16 @@ namespace Playerbot
 
         return true;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
 
     bool MovementValidator::IsDangerousTerrain(Map* map, Position const& position) const
     {
@@ -339,11 +359,16 @@ namespace Playerbot
                 return true;
             }
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return nullptr;
+
+}
 
         // Check liquid type at position
         PhaseShift phaseShift;
@@ -417,7 +442,7 @@ namespace Playerbot
         }
         auto now = std::chrono::steady_clock::now();
 
-        std::lock_guard<std::recursive_mutex> lock(_dataLock);
+        std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         // Check if enough time has passed since last check
@@ -469,11 +494,16 @@ namespace Playerbot
             // Moving normally, reset counter
             if (data.stuckCounter > 0)
                 data.stuckCounter--;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
             if (data.isStuck && distance > _stuckThreshold * 2)
             {
@@ -513,7 +543,7 @@ namespace Playerbot
             return;
         }
 
-        std::lock_guard<std::recursive_mutex> lock(_dataLock);
+        std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         if (!data.isStuck)
@@ -592,7 +622,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard<std::recursive_mutex> lock(_dataLock);
+        std::lock_guard lock(_dataLock);
         auto it = _stuckData.find(bot->GetGUID());
         if (!bot)
         {

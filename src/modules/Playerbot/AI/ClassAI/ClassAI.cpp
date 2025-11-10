@@ -89,7 +89,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
     // DIAGNOSTIC: Log spell queue check
     static uint32 lastSpellQueueLog = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - lastSpellQueueLog > 500) // Every 500ms
     {
         TC_LOG_ERROR("module.playerbot.classai", "🔍 OnCombatUpdate: Checking spell queue for bot {} - hasPending={}",
@@ -820,7 +820,7 @@ void ClassAI::ExecutePendingSpell()
     // - Range/LOS checks
     // - Cast time processing
     // - Combat state management
-    SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = getMSTime() - _pendingSpellCastRequest->queuedAtTime;
+    SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = GameTime::GetGameTimeMS() - _pendingSpellCastRequest->queuedAtTime;
 
     if (result == SPELL_CAST_OK)
     {

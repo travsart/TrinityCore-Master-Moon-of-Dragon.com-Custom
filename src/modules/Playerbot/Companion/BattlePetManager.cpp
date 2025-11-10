@@ -149,7 +149,7 @@ void BattlePetManager::Update(::Player* player, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle updates
     if (_lastUpdateTimes.count(playerGuid))
@@ -279,11 +279,16 @@ bool BattlePetManager::CapturePet(::Player* player, uint32 speciesId, PetQuality
     // Add to player's collection
     _playerPets[playerGuid].insert(speciesId);
     _playerPetInstances[playerGuid][speciesId] = petInfo;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
     // Update metrics
     _playerMetrics[playerGuid].petsCollected++;
@@ -345,16 +350,26 @@ if (!player)
     // No lock needed - battle pet data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -724,11 +739,16 @@ void BattlePetManager::AwardPetXP(::Player* player, uint32 speciesId, uint32 xp)
 }
 
 bool BattlePetManager::LevelUpPet(::Player* player, uint32 speciesId)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 {
     if (!player)
         return false;
@@ -831,11 +851,16 @@ std::vector<PetTeam> BattlePetManager::GetPlayerTeams(::Player* player) const
     // No lock needed - battle pet data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
@@ -875,11 +900,16 @@ bool BattlePetManager::SetActiveTeam(::Player* player, std::string const& teamNa
         {
             team.isActive = true;
             _activeTeams[playerGuid] = teamName;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
             TC_LOG_INFO("playerbot", "BattlePetManager: Player {} activated team '{}'",
                 playerGuid, teamName);
@@ -1007,11 +1037,16 @@ bool BattlePetManager::HealAllPets(::Player* player)
 
     return healedCount > 0;
 }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
 bool BattlePetManager::HealPet(::Player* player, uint32 speciesId)
 {

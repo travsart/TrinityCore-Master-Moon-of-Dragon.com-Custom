@@ -23,7 +23,7 @@
 #include "ObjectGuid.h"
 #include "Common.h"
 #include "Timer.h"
-#include "GameTime.h"  // PHASE 0 - Quick Win #3: For getMSTime()
+#include "GameTime.h"  // PHASE 0 - Quick Win #3: For GameTime::GetGameTimeMS()
 #include <string>
 #include <functional>
 #include <memory>
@@ -84,7 +84,7 @@ namespace Events
             : type(StateMachine::EventType::BOT_CREATED)
             , sourceGuid(ObjectGuid::Empty)
             , targetGuid(ObjectGuid::Empty)
-            , timestamp(getMSTime())
+            , timestamp(GameTime::GetGameTimeMS())
             , data("")
         {
         }
@@ -94,7 +94,7 @@ namespace Events
             : type(t)
             , sourceGuid(source)
             , targetGuid(ObjectGuid::Empty)
-            , timestamp(getMSTime())
+            , timestamp(GameTime::GetGameTimeMS())
             , data("")
         {
             static std::atomic<uint32> s_eventIdCounter{1};
@@ -106,7 +106,7 @@ namespace Events
             : type(t)
             , sourceGuid(source)
             , targetGuid(target)
-            , timestamp(getMSTime())
+            , timestamp(GameTime::GetGameTimeMS())
             , data("")
         {
             static std::atomic<uint32> s_eventIdCounter{1};

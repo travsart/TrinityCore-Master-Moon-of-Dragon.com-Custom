@@ -86,8 +86,8 @@ struct GuildEvent
     GuildEvent() : eventId(0), guildId(0), organizerGuid(0)
         , eventType(GuildEventType::SOCIAL_GATHERING), status(EventStatus::PLANNING)
         , priority(EventPriority::NORMAL), scheduledTime(0), duration(7200000) // 2 hours
-        , maxParticipants(40), minParticipants(5), creationTime(getMSTime())
-        , lastUpdateTime(getMSTime()), isRecurring(false), recurringInterval(0) {}
+        , maxParticipants(40), minParticipants(5), creationTime(GameTime::GetGameTimeMS())
+        , lastUpdateTime(GameTime::GetGameTimeMS()), isRecurring(false), recurringInterval(0) {}
 };
 
 /**
@@ -163,7 +163,7 @@ public:
 
         EventParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
             , totalEventsCreated(0), totalEventsAttended(0), organizationRating(0.5f)
-            , participationRating(0.7f), lastEventActivity(getMSTime()) {}
+            , participationRating(0.7f), lastEventActivity(GameTime::GetGameTimeMS()) {}
     };
 
     EventParticipation GetEventParticipation(uint32 playerGuid) override;

@@ -57,7 +57,7 @@ void KitingManager::UpdateKiting(uint32 diff)
 {
     // No lock needed - kiting state is per-bot instance data
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastMovementTime < _updateInterval && !_emergencyKiting)
         return;
 
@@ -271,7 +271,7 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
             return nullptr;
         }
-        _kitingStartTime = getMSTime();
+        _kitingStartTime = GameTime::GetGameTimeMS();
 
         switch (kitingType)
         {
@@ -370,7 +370,7 @@ void KitingManager::StopKiting()
 
     if (_kitingStartTime > 0)
     {
-        uint32 duration = getMSTime() - _kitingStartTime;
+        uint32 duration = GameTime::GetGameTimeMS() - _kitingStartTime;
         if (duration > _metrics.maxKitingDuration.count() / 1000)
         {
             _metrics.maxKitingDuration = std::chrono::microseconds(duration * 1000);
@@ -467,11 +467,16 @@ KitingPattern KitingManager::GenerateKitingPattern(KitingType type, const Kiting
                 return nullptr;
             }
             break;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+
+    return;
+
+}
 
         case KitingType::LINE_KITING:
             {
@@ -512,11 +517,16 @@ KitingPattern KitingManager::GenerateKitingPattern(KitingType type, const Kiting
 
         default:
             pattern.waypoints = GenerateCircularWaypoints(target, _optimalKitingDistance, 6);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return nullptr;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+
+    return nullptr;
+
+}
             pattern.description = "Default kiting pattern";
             break;
     }
@@ -678,7 +688,7 @@ KitingResult KitingManager::ExecuteStutterStep(const KitingContext& context)
         result.nextPosition = retreatPos;
         _currentState = KitingState::KITING;
 
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         _attackWindowStart = currentTime + 500;
         _attackWindowEnd = _attackWindowStart + 1500;
     }
@@ -852,7 +862,7 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetName");
             return;
         }
-        threat.lastUpdate = getMSTime();
+        threat.lastUpdate = GameTime::GetGameTimeMS();
 
         if (threat.isMoving)
         {
@@ -882,11 +892,16 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         }
 
         threat.threatLevel = enemy->GetThreatManager().GetThreat(_bot);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return;
+
+}
         threats.push_back(threat);
     }
 
@@ -1334,7 +1349,7 @@ float KitingManager::CalculateSafetyRating(const Position& pos, const std::vecto
 
 void KitingManager::UpdateAttackTiming()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     _inAttackWindow = currentTime >= _attackWindowStart && currentTime <= _attackWindowEnd;
 
     if (currentTime > _attackWindowEnd)

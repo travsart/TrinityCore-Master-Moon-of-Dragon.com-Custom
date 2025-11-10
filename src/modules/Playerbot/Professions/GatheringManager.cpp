@@ -593,7 +593,7 @@ GatheringNode GatheringManager::CreateNodeInfo(GameObject* gameObject, Gathering
     node.entry = gameObject->GetEntry();
     node.position = gameObject->GetPosition();
     node.requiredSkill = 1;  // Would need proper skill requirement lookup
-    node.detectionTime = getMSTime();
+    node.detectionTime = GameTime::GetGameTimeMS();
     node.isActive = gameObject->isSpawned() && gameObject->GetGoState() == GO_STATE_READY;
     node.distance = GetBot() ? GetBot()->GetDistance(gameObject) : 0.0f;
 
@@ -612,7 +612,7 @@ GatheringNode GatheringManager::CreateNodeInfo(Creature* creature)
     node.entry = creature->GetEntry();
     node.position = creature->GetPosition();
     node.requiredSkill = 1;  // Would need proper skill requirement lookup
-    node.detectionTime = getMSTime();
+    node.detectionTime = GameTime::GetGameTimeMS();
     node.isActive = creature->isDead() && creature->HasUnitFlag(UNIT_FLAG_SKINNABLE);
     node.distance = GetBot() ? GetBot()->GetDistance(creature) : 0.0f;
 
@@ -792,7 +792,7 @@ void GatheringManager::ProcessCurrentGathering()
 void GatheringManager::CleanupExpiredNodes()
 {
     // No lock needed - _detectedNodes is per-bot instance data
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Remove nodes that are too old or no longer valid
     _detectedNodes.erase(

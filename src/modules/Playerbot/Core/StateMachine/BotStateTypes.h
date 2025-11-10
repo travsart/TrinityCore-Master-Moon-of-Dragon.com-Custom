@@ -676,7 +676,7 @@ namespace StateMachine
      * stateInfo.previousState = stateInfo.currentState.load();
      * stateInfo.currentState = BotInitState::IN_WORLD;
      * stateInfo.transitionCount++;
-     * stateInfo.lastTransitionTime = getMSTime();
+     * stateInfo.lastTransitionTime = GameTime::GetGameTimeMS();
      *
      * // Handle events
      * void OnEvent(EventType event)

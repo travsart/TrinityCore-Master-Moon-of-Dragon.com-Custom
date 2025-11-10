@@ -143,7 +143,7 @@ DispelCoordinator::DispelCoordinator(BotAI* ai)
     // Initialize database if needed
     if (!s_databaseInitialized)
     {
-        std::lock_guard<std::recursive_mutex> lock(s_databaseMutex);
+        std::lock_guard lock(s_databaseMutex);
         if (!s_databaseInitialized)
         {
             InitializeGlobalDatabase();
@@ -340,7 +340,7 @@ void DispelCoordinator::Update(uint32 diff)
     if (!m_bot || !m_group)
         return;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Update dispeller capabilities periodically
     if (now - m_lastCapabilityUpdate > m_config.capabilityUpdateInterval)
@@ -388,7 +388,7 @@ void DispelCoordinator::UpdateDispelAssignments()
             return a.adjustedPriority > b.adjustedPriority;
         });
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Process high priority debuffs
     for (const auto& debuff : debuffs)
@@ -541,7 +541,7 @@ float DispelCoordinator::CalculateDispellerScore(const DispellerCapability& disp
     float score = 100.0f;
 
     // Check cooldown availability
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (dispeller.dispelCooldown > 0 &&
         now - dispeller.lastDispelTime < dispeller.dispelCooldown)
     {
@@ -812,7 +812,7 @@ bool DispelCoordinator::ExecuteDispel()
     if (m_currentAssignment.fulfilled)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check GCD
     if (now < m_globalCooldownUntil)
@@ -917,7 +917,7 @@ bool DispelCoordinator::ExecutePurge()
     if (!m_bot)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Check GCD
     if (now < m_globalCooldownUntil)
@@ -1350,7 +1350,7 @@ void DispelCoordinator::MarkDispellerBusy(ObjectGuid dispeller, uint32 busyTimeM
         if (disp.botGuid == dispeller)
         {
             disp.globalCooldown = busyTimeMs;
-            disp.lastDispelTime = getMSTime();
+            disp.lastDispelTime = GameTime::GetGameTimeMS();
             break;
         }
     }
@@ -1363,7 +1363,7 @@ bool DispelCoordinator::CanDispel(const DispellerCapability& dispeller, const De
         return false;
 
     // Check if on cooldown
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (dispeller.dispelCooldown > 0 &&
         now - dispeller.lastDispelTime < dispeller.dispelCooldown)
         return false;
@@ -1381,7 +1381,7 @@ bool DispelCoordinator::CanDispel(const DispellerCapability& dispeller, const De
 
 void DispelCoordinator::CleanupAssignments()
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Remove expired or fulfilled assignments
     m_assignments.erase(

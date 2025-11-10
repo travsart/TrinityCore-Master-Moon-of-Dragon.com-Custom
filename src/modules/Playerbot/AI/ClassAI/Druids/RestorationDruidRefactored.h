@@ -65,46 +65,46 @@ public:
 
     void ApplyRejuvenation(ObjectGuid guid, uint32 duration = 15000)
     {
-        _rejuvenationTargets[guid] = getMSTime() + duration;
+        _rejuvenationTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyLifebloom(ObjectGuid guid, uint32 duration = 15000)
     {
-        _lifebloomTargets[guid] = getMSTime() + duration;
+        _lifebloomTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyWildGrowth(ObjectGuid guid, uint32 duration = 7000)
     {
-        _wildGrowthTargets[guid] = getMSTime() + duration;
+        _wildGrowthTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void ApplyCenarionWard(ObjectGuid guid, uint32 duration = 30000)
     {
-        _cenarionWardTargets[guid] = getMSTime() + duration;
+        _cenarionWardTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     [[nodiscard]] bool HasRejuvenation(ObjectGuid guid) const
     {
         auto it = _rejuvenationTargets.find(guid);
-        return it != _rejuvenationTargets.end() && getMSTime() < it->second;
+        return it != _rejuvenationTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasLifebloom(ObjectGuid guid) const
     {
         auto it = _lifebloomTargets.find(guid);
-        return it != _lifebloomTargets.end() && getMSTime() < it->second;
+        return it != _lifebloomTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasWildGrowth(ObjectGuid guid) const
     {
         auto it = _wildGrowthTargets.find(guid);
-        return it != _wildGrowthTargets.end() && getMSTime() < it->second;
+        return it != _wildGrowthTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasCenarionWard(ObjectGuid guid) const
     {
         auto it = _cenarionWardTargets.find(guid);
-        return it != _cenarionWardTargets.end() && getMSTime() < it->second;
+        return it != _cenarionWardTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetLifebloomTimeRemaining(ObjectGuid guid) const
@@ -112,7 +112,7 @@ public:
         auto it = _lifebloomTargets.find(guid);
         if (it != _lifebloomTargets.end())
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return now < it->second ? (it->second - now) : 0;
         }
         return 0;
@@ -127,7 +127,7 @@ public:
     [[nodiscard]] uint32 GetActiveRejuvenationCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _rejuvenationTargets)
         {
             if (now < pair.second)
@@ -158,7 +158,7 @@ public:
                 {
                     return nullptr;
                 }
-                _rejuvenationTargets[guid] = getMSTime() + rejuv->GetDuration();
+                _rejuvenationTargets[guid] = GameTime::GetGameTimeMS() + rejuv->GetDuration();
                 if (!rejuv)
                 {
                     return nullptr;
@@ -175,7 +175,7 @@ public:
                 {
                     return nullptr;
                 }
-                _lifebloomTargets[guid] = getMSTime() + lifebloom->GetDuration();
+                _lifebloomTargets[guid] = GameTime::GetGameTimeMS() + lifebloom->GetDuration();
                 if (!lifebloom)
                 {
                     return nullptr;
@@ -184,7 +184,7 @@ public:
                 _lifebloomTargets.erase(guid);
 
             if (Aura* wildGrowth = member->GetAura(RESTO_WILD_GROWTH))
-                _wildGrowthTargets[guid] = getMSTime() + wildGrowth->GetDuration();
+                _wildGrowthTargets[guid] = GameTime::GetGameTimeMS() + wildGrowth->GetDuration();
                 if (!wildGrowth)
                 {
                     return nullptr;
@@ -193,7 +193,7 @@ public:
                 _wildGrowthTargets.erase(guid);
 
             if (Aura* cenarionWard = member->GetAura(RESTO_CENARION_WARD))
-                _cenarionWardTargets[guid] = getMSTime() + cenarionWard->GetDuration();
+                _cenarionWardTargets[guid] = GameTime::GetGameTimeMS() + cenarionWard->GetDuration();
                 if (!cenarionWard)
                 {
                     return nullptr;
@@ -220,12 +220,12 @@ public:
     [[nodiscard]] bool CanUseSwiftmend() const
     {
         // 15 sec cooldown
-        return (getMSTime() - _lastSwiftmendTime) >= 15000;
+        return (GameTime::GetGameTimeMS() - _lastSwiftmendTime) >= 15000;
     }
 
     void UseSwiftmend()
     {
-        _lastSwiftmendTime = getMSTime();
+        _lastSwiftmendTime = GameTime::GetGameTimeMS();
     }private:
     uint32 _lastSwiftmendTime;
 };
@@ -292,7 +292,7 @@ public:
             if (this->CanCastSpell(RESTO_INNERVATE, bot))
             {
                 this->CastSpell(bot, RESTO_INNERVATE);
-                _lastInnervateTime = getMSTime();
+                _lastInnervateTime = GameTime::GetGameTimeMS();
             }
         }
     }
@@ -339,14 +339,14 @@ private:
             return;
 
         // Tree Form state
-        if (_treeFormActive && getMSTime() >= _treeFormEndTime)
+        if (_treeFormActive && GameTime::GetGameTimeMS() >= _treeFormEndTime)
             _treeFormActive = false;
 
         if (bot->HasAura(RESTO_INCARNATION_TREE))
         {
             _treeFormActive = true;
             if (Aura* aura = bot->GetAura(RESTO_INCARNATION_TREE))
-                _treeFormEndTime = getMSTime() + aura->GetDuration();        }
+                _treeFormEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteHealingRotation(const std::vector<Unit*>& group)
@@ -400,12 +400,12 @@ private:
         }
 
         // Tranquility (raid-wide emergency healing)
-        if (criticalCount >= 3 && (getMSTime() - _lastTranquilityTime) >= 180000) // 3 min CD
+        if (criticalCount >= 3 && (GameTime::GetGameTimeMS() - _lastTranquilityTime) >= 180000) // 3 min CD
         {
             if (this->CanCastSpell(RESTO_TRANQUILITY, bot))
             {
                 this->CastSpell(bot, RESTO_TRANQUILITY);
-                _lastTranquilityTime = getMSTime();
+                _lastTranquilityTime = GameTime::GetGameTimeMS();
                 return true;
             }
         }
@@ -417,7 +417,7 @@ private:
             {
                 this->CastSpell(bot, RESTO_INCARNATION_TREE);
                 _treeFormActive = true;
-                _treeFormEndTime = getMSTime() + 30000; // 30 sec
+                _treeFormEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec
                 return true;
             }
         }
@@ -875,7 +875,7 @@ private:
                             Action("Cast Tranquility", [this](Player* bot) {
                                 if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
                                     this->CastSpell(bot, RESTO_TRANQUILITY);
-                                    this->_lastTranquilityTime = getMSTime();
+                                    this->_lastTranquilityTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -918,7 +918,7 @@ private:
                                 if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
                                     this->CastSpell(bot, RESTO_INCARNATION_TREE);
                                     this->_treeFormActive = true;
-                                    this->_treeFormEndTime = getMSTime() + 30000;
+                                    this->_treeFormEndTime = GameTime::GetGameTimeMS() + 30000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

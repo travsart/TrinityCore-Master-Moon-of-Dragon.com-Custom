@@ -40,7 +40,7 @@ EventDispatcher::~EventDispatcher()
 {
     // Clear queue on shutdown
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         _eventQueue.clear();
     }
 
@@ -56,7 +56,7 @@ void EventDispatcher::Subscribe(StateMachine::EventType eventType, IManagerBase*
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
+    std::lock_guard lock(_subscriptionMutex);
 
     auto& subscribers = _subscriptions[eventType];
 
@@ -91,7 +91,7 @@ void EventDispatcher::Unsubscribe(StateMachine::EventType eventType, IManagerBas
         managerId = "<unknown>";
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
+    std::lock_guard lock(_subscriptionMutex);
 
     auto subIt = _subscriptions.find(eventType);
     if (subIt == _subscriptions.end())
@@ -124,7 +124,7 @@ void EventDispatcher::UnsubscribeAll(IManagerBase* manager)
         managerId = "<unknown>";
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
+    std::lock_guard lock(_subscriptionMutex);
 
     for (auto& pair : _subscriptions)
     {
@@ -142,7 +142,7 @@ void EventDispatcher::Dispatch(BotEvent const& event)
         return;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         _eventQueue.push_back(event);
     }
 
@@ -155,7 +155,7 @@ void EventDispatcher::Dispatch(BotEvent&& event)
         return;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         _eventQueue.push_back(std::move(event));
     }
 
@@ -167,13 +167,13 @@ uint32 EventDispatcher::ProcessQueue(uint32 maxEvents)
     if (maxEvents == 0)
         return 0;
 
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
     uint32 eventsProcessed = 0;
 
     // Dequeue events into local buffer
     std::vector<BotEvent> events;
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
 
         size_t processCount = std::min<size_t>(maxEvents, _eventQueue.size());
         if (processCount == 0)
@@ -196,7 +196,7 @@ uint32 EventDispatcher::ProcessQueue(uint32 maxEvents)
 
     _totalEventsProcessed.fetch_add(eventsProcessed, std::memory_order_relaxed);
 
-    uint32 processingTime = getMSTimeDiff(startTime, getMSTime());
+    uint32 processingTime = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
     _totalProcessingTimeMs.fetch_add(processingTime, std::memory_order_relaxed);
 
     return eventsProcessed;
@@ -204,7 +204,7 @@ uint32 EventDispatcher::ProcessQueue(uint32 maxEvents)
 
 void EventDispatcher::RouteEvent(BotEvent const& event)
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
+    std::lock_guard lock(_subscriptionMutex);
 
     auto it = _subscriptions.find(event.type);
     if (it == _subscriptions.end())
@@ -235,13 +235,13 @@ void EventDispatcher::RouteEvent(BotEvent const& event)
 
 size_t EventDispatcher::GetQueueSize() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     return _eventQueue.size();
 }
 
 size_t EventDispatcher::GetSubscriberCount(StateMachine::EventType eventType) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriptionMutex);
+    std::lock_guard lock(_subscriptionMutex);
 
     auto it = _subscriptions.find(eventType);
     return (it != _subscriptions.end()) ? it->second.size() : 0;
@@ -249,7 +249,7 @@ size_t EventDispatcher::GetSubscriberCount(StateMachine::EventType eventType) co
 
 void EventDispatcher::ClearQueue()
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     _eventQueue.clear();
 
     TC_LOG_INFO("module.playerbot", "EventDispatcher::ClearQueue: Event queue cleared");

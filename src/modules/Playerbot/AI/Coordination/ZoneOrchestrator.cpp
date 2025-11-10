@@ -32,7 +32,7 @@ namespace Coordination
 
 bool ZoneObjective::IsActive() const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return now < expirationTime && !IsComplete();
 }
 
@@ -66,7 +66,7 @@ void ZoneOrchestrator::Update(uint32 diff)
     UpdateLoadBalancing(diff);
 
     // Update statistics every 5s
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now > _lastStatsUpdate + 5000)
     {
         _lastStatsUpdate = now;
@@ -398,7 +398,7 @@ void ZoneOrchestrator::UpdateLoadBalancing(uint32 diff)
 {
     // Periodically rebalance raids every 30s
     static uint32 lastBalance = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     if (now > lastBalance + 30000)
     {
@@ -438,7 +438,7 @@ void ZoneOrchestrator::DetectWorldBoss()
                 objective.assignedBots = 0;
                 objective.targetGuid = creature->GetGUID();
                 objective.targetPosition = creature->GetPosition();
-                objective.timestamp = getMSTime();
+                objective.timestamp = GameTime::GetGameTimeMS();
                 objective.expirationTime = objective.timestamp + 3600000; // 1 hour
 
                 CreateObjective(objective);

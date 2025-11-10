@@ -93,12 +93,12 @@ public:
     void OnAimedShotCast()
     {
         _charges = 2; // Grants 2 charges of Precise Shots
-        _expireTime = getMSTime() + 15000; // 15 second duration
+        _expireTime = GameTime::GetGameTimeMS() + 15000; // 15 second duration
     }
 
     bool HasCharges() const
     {
-        if (getMSTime() > _expireTime)
+        if (GameTime::GetGameTimeMS() > _expireTime)
             return false;
         return _charges > 0;
     }
@@ -154,7 +154,7 @@ public:
             return;
 
         _isCasting = true;
-        _castEndTime = getMSTime() + 2500; // 2.5 second base cast
+        _castEndTime = GameTime::GetGameTimeMS() + 2500; // 2.5 second base cast
         _currentCastSpell = SPELL_AIMED_SHOT;
 
         // Apply Careful Aim bonus if target is above 70% or below 20%
@@ -170,13 +170,13 @@ public:
             return;
 
         _isChanneling = true;
-        _channelEndTime = getMSTime() + 3000; // 3 second channel
+        _channelEndTime = GameTime::GetGameTimeMS() + 3000; // 3 second channel
         _currentCastSpell = SPELL_RAPID_FIRE;
     }
 
     void Update()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         if (_isCasting && currentTime >= _castEndTime)
         {
@@ -374,7 +374,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_TRUESHOT);
             _trueshotActive = true;
-            _trueshotEndTime = getMSTime() + 15000;
+            _trueshotEndTime = GameTime::GetGameTimeMS() + 15000;
             return;
         }
 
@@ -383,7 +383,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_DOUBLE_TAP);
             _doubleTapActive = true;
-            _doubleTapEndTime = getMSTime() + 3000;
+            _doubleTapEndTime = GameTime::GetGameTimeMS() + 3000;
             return;
         }
 
@@ -392,7 +392,7 @@ protected:
         {
             _castManager.StartRapidFire();
             this->CastSpell(target, SPELL_RAPID_FIRE);
-            _lastRapidFire = getMSTime();
+            _lastRapidFire = GameTime::GetGameTimeMS();
             this->ConsumeResource(30);
             return;
         }
@@ -404,7 +404,7 @@ protected:
             {
                 _castManager.StartAimedShot(target);
                 this->CastSpell(target, SPELL_AIMED_SHOT);
-                _lastAimedShot = getMSTime();
+                _lastAimedShot = GameTime::GetGameTimeMS();
                 _preciseShotsTracker.OnAimedShotCast();
                 this->ConsumeResource(35);
                 return;
@@ -432,7 +432,7 @@ protected:
         if (currentFocus < 70)
         {
             this->CastSpell(target, SPELL_STEADY_SHOT);
-            _lastSteadyShot = getMSTime();
+            _lastSteadyShot = GameTime::GetGameTimeMS();
             this->_resource = std::min<uint32>(this->_resource + 10, 100);
             return;
         }
@@ -505,7 +505,7 @@ private:
 
     void UpdateMarksmanshipState()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check Trueshot expiry
         if (_trueshotActive && currentTime > _trueshotEndTime)
@@ -731,7 +731,7 @@ private:
                                 {
                                     this->CastSpell(bot, SPELL_TRUESHOT);
                                     this->_trueshotActive = true;
-                                    this->_trueshotEndTime = getMSTime() + 15000;
+                                    this->_trueshotEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -748,7 +748,7 @@ private:
                                 {
                                     this->CastSpell(bot, SPELL_DOUBLE_TAP);
                                     this->_doubleTapActive = true;
-                                    this->_doubleTapEndTime = getMSTime() + 3000;
+                                    this->_doubleTapEndTime = GameTime::GetGameTimeMS() + 3000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -765,7 +765,7 @@ private:
                                 {
                                     this->_castManager.StartRapidFire();
                                     this->CastSpell(target, SPELL_RAPID_FIRE);
-                                    this->_lastRapidFire = getMSTime();
+                                    this->_lastRapidFire = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(30);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -791,7 +791,7 @@ private:
                                 {
                                     this->_castManager.StartAimedShot(target);
                                     this->CastSpell(target, SPELL_AIMED_SHOT);
-                                    this->_lastAimedShot = getMSTime();
+                                    this->_lastAimedShot = GameTime::GetGameTimeMS();
                                     this->_preciseShotsTracker.OnAimedShotCast();
                                     this->ConsumeResource(35);
                                     return NodeStatus::SUCCESS;
@@ -856,7 +856,7 @@ private:
                             }),
                             Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
                                 this->CastSpell(target, SPELL_STEADY_SHOT);
-                                this->_lastSteadyShot = getMSTime();
+                                this->_lastSteadyShot = GameTime::GetGameTimeMS();
                                 this->_resource = std::min<uint32>(this->_resource + 10, 100);
                                 return NodeStatus::SUCCESS;
                             })

@@ -122,7 +122,7 @@ bool LootEventBus::PublishEvent(LootEvent const& event)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -149,7 +149,7 @@ bool LootEventBus::Subscribe(BotAI* subscriber, std::vector<LootEventType> const
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (LootEventType type : types)
     {
@@ -169,7 +169,7 @@ bool LootEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
@@ -183,7 +183,7 @@ void LootEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
@@ -214,7 +214,7 @@ uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<LootEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -238,7 +238,7 @@ uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+            std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -276,7 +276,7 @@ uint32 LootEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void LootEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<LootEvent> remainingEvents;
 
@@ -297,13 +297,13 @@ void LootEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 LootEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 LootEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -339,7 +339,7 @@ bool LootEventBus::ValidateEvent(LootEvent const& event) const
 
 uint32 LootEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<LootEvent> validEvents;
@@ -376,19 +376,19 @@ void LootEventBus::LogEvent(LootEvent const& event, std::string const& action) c
 
 void LootEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.loot", "=== LootEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void LootEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.loot", "=== LootEventBus Queue: {} events ===", _eventQueue.size());
 }
 
 std::vector<LootEvent> LootEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<LootEvent> snapshot;
     std::priority_queue<LootEvent> tempQueue = _eventQueue;

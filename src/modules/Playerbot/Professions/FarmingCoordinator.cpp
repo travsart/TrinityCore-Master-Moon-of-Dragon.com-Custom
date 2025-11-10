@@ -60,9 +60,9 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Check if player has active farming session
     auto sessionIt = _activeSessions.find(playerGuid);
@@ -112,7 +112,7 @@ void FarmingCoordinator::SetEnabled(::Player* player, bool enabled)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
         if (!player)
         {
@@ -136,7 +136,7 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
     {
@@ -153,7 +153,7 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
 
 void FarmingCoordinator::SetCoordinatorProfile(uint32 playerGuid, FarmingCoordinatorProfile const& profile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _profiles[playerGuid] = profile;
 if (!player)
 {
@@ -164,7 +164,7 @@ if (!player)
 
 FarmingCoordinatorProfile FarmingCoordinator::GetCoordinatorProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _profiles.find(playerGuid);
     if (it != _profiles.end())
@@ -257,11 +257,16 @@ std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Play
         if (NeedsFarming(player, profInfo.profession))
         {
             int32 skillGap = GetSkillGap(player, profInfo.profession);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
             professions.push_back(profInfo.profession);
         }
     }
@@ -321,7 +326,7 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
     if (!player || !CanStartFarming(player))
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
     {
@@ -367,7 +372,7 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
     session.sessionType = sessionType;
     session.profession = profession;
     session.zone = *zone;
-    session.startTime = getMSTime();
+    session.startTime = GameTime::GetGameTimeMS();
     session.duration = CalculateFarmingDuration(player, profession);
     session.startingSkill = ProfessionManager::instance()->GetProfessionSkill(player, profession);
     session.targetSkill = GetTargetSkillLevel(player, profession);
@@ -407,7 +412,7 @@ if (!player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
         if (!player)
         {
@@ -429,12 +434,12 @@ if (!player)
 
     // Update statistics
     _playerStatistics[playerGuid].sessionsCompleted++;
-    _playerStatistics[playerGuid].totalTimeSpent += (getMSTime() - session.startTime);
+    _playerStatistics[playerGuid].totalTimeSpent += (GameTime::GetGameTimeMS() - session.startTime);
     _playerStatistics[playerGuid].totalNodesGathered += session.nodesGathered;
     _playerStatistics[playerGuid].zonesVisited++;
 
     _globalStatistics.sessionsCompleted++;
-    _globalStatistics.totalTimeSpent += (getMSTime() - session.startTime);
+    _globalStatistics.totalTimeSpent += (GameTime::GetGameTimeMS() - session.startTime);
     _globalStatistics.totalNodesGathered += session.nodesGathered;
 
     // Return to original position
@@ -443,7 +448,7 @@ if (!player)
         ReturnToOriginalPosition(player, session);
 
     // Record last farming time for cooldown
-    _lastFarmingTimes[playerGuid] = getMSTime();
+    _lastFarmingTimes[playerGuid] = GameTime::GetGameTimeMS();
         if (!player)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -458,7 +463,7 @@ if (!player)
 
 FarmingSession const* FarmingCoordinator::GetActiveFarmingSession(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _activeSessions.find(playerGuid);
         if (!player)
@@ -477,7 +482,7 @@ bool FarmingCoordinator::HasActiveFarmingSession(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     return _activeSessions.find(player->GetGUID().GetCounter()) != _activeSessions.end();
     if (!player)
     {
@@ -518,11 +523,16 @@ void FarmingCoordinator::UpdateFarmingSession(::Player* player, uint32 diff)
     // Update session progress (gather stats from GatheringAutomation)
     // In full implementation, track nodes gathered during this session
 }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+
+    return;
+
+}
 
 bool FarmingCoordinator::ShouldEndFarmingSession(::Player* player, FarmingSession const& session) const
 {
@@ -549,7 +559,7 @@ bool FarmingCoordinator::ShouldEndFarmingSession(::Player* player, FarmingSessio
     }
 
     // Check if duration exceeded
-    uint32 sessionTime = getMSTime() - session.startTime;
+    uint32 sessionTime = GameTime::GetGameTimeMS() - session.startTime;
     if (sessionTime >= session.duration)
     {
         TC_LOG_INFO("playerbots", "FarmingCoordinator: Session duration exceeded ({} ms)", sessionTime);
@@ -595,7 +605,7 @@ FarmingZoneInfo const* FarmingCoordinator::GetOptimalFarmingZone(::Player* playe
         }
     }
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     return bestZone;
 }
 
@@ -606,7 +616,7 @@ std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* play
     if (!player)
         return suitable;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _farmingZones.find(profession);
     if (it == _farmingZones.end())
@@ -710,7 +720,7 @@ std::vector<std::pair<uint32, uint32>> FarmingCoordinator::GetNeededMaterials(::
 
 FarmingStatistics const& FarmingCoordinator::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     static FarmingStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -727,7 +737,7 @@ FarmingStatistics const& FarmingCoordinator::GetGlobalStatistics() const
 
 void FarmingCoordinator::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
@@ -764,11 +774,16 @@ void FarmingCoordinator::InitializeZoneDatabase()
 void FarmingCoordinator::InitializeMiningZones()
 {
     std::vector<FarmingZoneInfo> miningZones;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
+
+    return;
+
+}
 
     // Elwynn Forest (Alliance - Copper 1-75)
     FarmingZoneInfo elwynn;
@@ -792,11 +807,16 @@ void FarmingCoordinator::InitializeMiningZones()
     elwynn.recommendedCharLevel = 5;
     elwynn.isContested = false;
     miningZones.push_back(elwynn);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
     // Westfall (Alliance - Copper/Tin 50-125)
     FarmingZoneInfo westfall;
@@ -916,7 +936,7 @@ bool FarmingCoordinator::CanStartFarming(::Player* player) const
     //     return false;
 
     // Check farming cooldown
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
     {
@@ -928,7 +948,7 @@ bool FarmingCoordinator::CanStartFarming(::Player* player) const
     if (it != _lastFarmingTimes.end())
     {
         FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(playerGuid);
-        uint32 timeSinceLastFarm = getMSTime() - it->second;
+        uint32 timeSinceLastFarm = GameTime::GetGameTimeMS() - it->second;
 
         if (timeSinceLastFarm < profile.farmingCooldown)
             return false;

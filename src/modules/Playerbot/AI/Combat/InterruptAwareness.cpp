@@ -84,7 +84,7 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
         std::chrono::steady_clock::now() - updateStart);
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+        std::lock_guard lock(_metricsMutex);
         _metrics.totalScans.fetch_add(1);
         _metrics.unitsScanned.fetch_add(result.totalUnitsScanned);
         _metrics.spellsDetected.fetch_add(result.totalSpellsDetected);
@@ -121,7 +121,7 @@ if (!observer)
     return nullptr;
 }
 {
-    std::lock_guard<std::recursive_mutex> lock(_observerMutex);
+    std::lock_guard lock(_observerMutex);
     _observer = observer;
                  if (!observer)
                  {
@@ -135,7 +135,7 @@ if (!observer)
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     std::vector<DetectedSpellCast> allCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -152,7 +152,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid casterGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
@@ -169,7 +169,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid c
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float maxRange) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     std::vector<DetectedSpellCast> interruptibleCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -198,7 +198,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float m
 
 std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     std::vector<DetectedSpellCast> hostileCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
@@ -217,7 +217,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 
 bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(unitGuid);
     if (it != _activeCasts.end())
     {
@@ -232,7 +232,7 @@ bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 
 DetectedSpellCast const* InterruptAwareness::GetSpellCast(ObjectGuid casterGuid, uint32 spellId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
@@ -253,19 +253,19 @@ void InterruptAwareness::SetInterruptCoordinator(std::shared_ptr<InterruptCoordi
 
 void InterruptAwareness::RegisterSpellCastCallback(std::function<void(DetectedSpellCast const&)> callback)
 {
-    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+    std::lock_guard lock(_callbackMutex);
     _spellCastCallbacks.push_back(callback);
 }
 
 void InterruptAwareness::RegisterSpellCompleteCallback(std::function<void(ObjectGuid, uint32, bool)> callback)
 {
-    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+    std::lock_guard lock(_callbackMutex);
     _spellCompleteCallbacks.push_back(callback);
 }
 
 size_t InterruptAwareness::GetActiveCastCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     size_t count = 0;
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -280,7 +280,7 @@ size_t InterruptAwareness::GetActiveCastCount() const
 
 void InterruptAwareness::ResetMetrics()
 {
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
     _metrics.totalScans.store(0);
     _metrics.unitsScanned.store(0);
     _metrics.spellsDetected.store(0);
@@ -295,7 +295,7 @@ void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const
     if (spellSequence.empty())
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
+    std::lock_guard lock(_patternMutex);
     SpellPattern pattern;
     pattern.npcId = npcId;
     pattern.spellSequence = spellSequence;
@@ -310,19 +310,19 @@ void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const
 
 void InterruptAwareness::ClearSpellPatterns()
 {
-    std::lock_guard<std::recursive_mutex> lock(_patternMutex);
+    std::lock_guard lock(_patternMutex);
     _spellPatterns.clear();
 }
 
 void InterruptAwareness::SetScanPriority(CreatureType creatureType, uint32 priority)
 {
-    std::lock_guard<std::recursive_mutex> lock(_priorityMutex);
+    std::lock_guard lock(_priorityMutex);
     _creatureTypePriorities[creatureType] = priority;
 }
 
 void InterruptAwareness::SetScanPriority(uint32 npcId, uint32 priority)
 {
-    std::lock_guard<std::recursive_mutex> lock(_priorityMutex);
+    std::lock_guard lock(_priorityMutex);
     _npcPriorities[npcId] = priority;
 }
 
@@ -410,7 +410,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Check if this is a new cast or an update
                     bool isNewCast = true;
                     {
-                        std::lock_guard<std::recursive_mutex> lock(_castMutex);
+                        std::lock_guard lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -457,7 +457,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Similar new cast check as above
                     bool isNewCast = true;
                     {
-                        std::lock_guard<std::recursive_mutex> lock(_castMutex);
+                        std::lock_guard lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -491,16 +491,26 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
         for (const auto& cast : result.newCasts)
         {
             if (cast.casterGuid == unitGuid)
-    if (!caster)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
-        return nullptr;
-    }
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPositionX");
-    return;
-}
+
+    if (!caster)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
+
+        return nullptr;
+
+    }
+
+if (!caster)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPositionX");
+
+    return;
+
+}
             {
                 UpdateSpellPatterns(cast);
             }
@@ -700,7 +710,7 @@ void InterruptAwareness::UpdateActiveCasts()
     RemoveExpiredCasts();
 
     // Update remaining times for active casts
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
     for (auto& [casterGuid, casts] : _activeCasts)
     {
         for (auto& cast : casts)
@@ -715,7 +725,7 @@ void InterruptAwareness::UpdateActiveCasts()
 
 void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
 
     // Limit total active casts to prevent memory issues
     if (GetActiveCastCount() >= MAX_ACTIVE_CASTS)
@@ -740,7 +750,7 @@ void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 
 void InterruptAwareness::RemoveExpiredCasts()
 {
-    std::lock_guard<std::recursive_mutex> lock(_castMutex);
+    std::lock_guard lock(_castMutex);
 
     for (auto it = _activeCasts.begin(); it != _activeCasts.end();)
     if (!observer)
@@ -779,11 +789,16 @@ void InterruptAwareness::ProcessCompletedCasts(SpellScanResult& result)
     // Implementation would depend on how TrinityCore reports spell completion
     // For now, we rely on the expiration system
 }
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsInCombat");
-    return;
-}
+
+if (!unit)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsInCombat");
+
+    return;
+
+}
 
 std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
 {
@@ -965,7 +980,7 @@ void InterruptAwareness::OptimizeForPerformance()
 
     // Reset metrics if they get too large
     {
-        std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+        std::lock_guard lock(_metricsMutex);
         if (_metrics.totalScans.load() > 100000)
         {
             // Scale down metrics to prevent overflow
@@ -1016,7 +1031,7 @@ void InterruptAwareness::NotifySpellDetected(DetectedSpellCast const& cast)
     }
 
     // Notify registered callbacks
-    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+    std::lock_guard lock(_callbackMutex);
     for (const auto& callback : _spellCastCallbacks)
     {
         try
@@ -1042,7 +1057,7 @@ void InterruptAwareness::NotifySpellCompleted(ObjectGuid casterGuid, uint32 spel
     }
 
     // Notify registered callbacks
-    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+    std::lock_guard lock(_callbackMutex);
     for (const auto& callback : _spellCompleteCallbacks)
     {
         try

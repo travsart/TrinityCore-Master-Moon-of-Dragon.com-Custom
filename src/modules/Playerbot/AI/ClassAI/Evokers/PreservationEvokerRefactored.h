@@ -130,7 +130,7 @@ public:
         _isChanneling = true;
         _currentSpellId = spellId;
         _targetLevel = targetLevel;
-        _channelStartTime = getMSTime();
+        _channelStartTime = GameTime::GetGameTimeMS();
     }
 
     void StopEmpower() { _isChanneling = false; _currentSpellId = 0; }
@@ -141,7 +141,7 @@ public:
     {
         if (!_isChanneling) return false;
         uint32 requiredTime = static_cast<uint32>(_targetLevel) * 750;
-        uint32 channelTime = getMSTime() - _channelStartTime;
+        uint32 channelTime = GameTime::GetGameTimeMS() - _channelStartTime;
         return channelTime >= requiredTime;
     }
 
@@ -167,16 +167,16 @@ struct Echo
     Echo() : remainingHeals(0), healAmount(0), lastHealTime(0), healInterval(2000) {}
 
     Echo(ObjectGuid guid, uint32 heals, uint32 amount)
-        : targetGuid(guid), remainingHeals(heals), healAmount(amount), lastHealTime(getMSTime()), healInterval(2000) {}
+        : targetGuid(guid), remainingHeals(heals), healAmount(amount), lastHealTime(GameTime::GetGameTimeMS()), healInterval(2000) {}
 
     bool ShouldHeal() const {
-        return getMSTime() - lastHealTime >= healInterval && remainingHeals > 0;
+        return GameTime::GetGameTimeMS() - lastHealTime >= healInterval && remainingHeals > 0;
     }
 
     void ProcessHeal() {
         if (remainingHeals > 0) {
             remainingHeals--;
-            lastHealTime = getMSTime();
+            lastHealTime = GameTime::GetGameTimeMS();
         }
     }
 

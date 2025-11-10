@@ -30,7 +30,7 @@ TEST_CASE("RaidDirective: Activity tracking", "[coordination][raid][directive]")
     RaidDirective directive;
     directive.directiveType = "test";
     directive.priority = 50;
-    directive.timestamp = getMSTime();
+    directive.timestamp = GameTime::GetGameTimeMS();
     directive.duration = 5000; // 5s
 
     SECTION("Directive is active within duration")
@@ -94,7 +94,7 @@ TEST_CASE("RaidOrchestrator: Directive management", "[coordination][raid][direct
         RaidDirective directive;
         directive.directiveType = "spread";
         directive.priority = 80;
-        directive.timestamp = getMSTime();
+        directive.timestamp = GameTime::GetGameTimeMS();
         directive.duration = 10000;
 
         orchestrator.IssueDirective(directive);
@@ -109,13 +109,13 @@ TEST_CASE("RaidOrchestrator: Directive management", "[coordination][raid][direct
         RaidDirective d1;
         d1.directiveType = "spread";
         d1.priority = 80;
-        d1.timestamp = getMSTime();
+        d1.timestamp = GameTime::GetGameTimeMS();
         d1.duration = 10000;
 
         RaidDirective d2;
         d2.directiveType = "bloodlust";
         d2.priority = 100;
-        d2.timestamp = getMSTime();
+        d2.timestamp = GameTime::GetGameTimeMS();
         d2.duration = 40000;
 
         orchestrator.IssueDirective(d1);
@@ -130,7 +130,7 @@ TEST_CASE("RaidOrchestrator: Directive management", "[coordination][raid][direct
         RaidDirective directive;
         directive.directiveType = "test";
         directive.priority = 50;
-        directive.timestamp = getMSTime() - 20000; // 20s ago
+        directive.timestamp = GameTime::GetGameTimeMS() - 20000; // 20s ago
         directive.duration = 5000; // 5s duration (expired)
 
         orchestrator.IssueDirective(directive);
@@ -634,7 +634,7 @@ TEST_CASE("RaidOrchestrator: Performance characteristics", "[coordination][raid]
             RaidDirective directive;
             directive.directiveType = "test";
             directive.priority = 50;
-            directive.timestamp = getMSTime();
+            directive.timestamp = GameTime::GetGameTimeMS();
             directive.duration = 10000;
 
             orchestrator.IssueDirective(directive);

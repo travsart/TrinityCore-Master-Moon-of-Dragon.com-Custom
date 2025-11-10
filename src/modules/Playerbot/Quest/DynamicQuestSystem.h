@@ -120,7 +120,7 @@ struct QuestProgress
     uint32 retryCount;
 
     QuestProgress(uint32 qId, uint32 guid) : questId(qId), botGuid(guid)
-        , startTime(getMSTime()), lastUpdateTime(getMSTime())
+        , startTime(GameTime::GetGameTimeMS()), lastUpdateTime(GameTime::GetGameTimeMS())
         , completionPercentage(0.0f), isStuck(false), stuckTime(0), retryCount(0) {}
 };
 

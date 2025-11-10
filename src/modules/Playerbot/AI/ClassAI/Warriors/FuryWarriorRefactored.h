@@ -133,7 +133,7 @@ protected:
         if (ShouldUseRampage() && this->CanUseAbility(SPELL_RAMPAGE))
         {
             this->CastSpell(target, SPELL_RAMPAGE);
-            _lastRampage = getMSTime();
+            _lastRampage = GameTime::GetGameTimeMS();
             TriggerEnrage();
             return;
         }
@@ -149,7 +149,7 @@ protected:
         if (this->CanUseAbility(SPELL_BLOODTHIRST))
         {
             this->CastSpell(target, SPELL_BLOODTHIRST);
-            _lastBloodthirst = getMSTime();
+            _lastBloodthirst = GameTime::GetGameTimeMS();
 
             // 30% chance to trigger Enrage
             if (!_isEnraged && (rand() % 100) < 30)
@@ -211,7 +211,7 @@ protected:
         if (this->CanUseAbility(SPELL_BLOODTHIRST))
         {
             this->CastSpell(target, SPELL_BLOODTHIRST);
-            _lastBloodthirst = getMSTime();
+            _lastBloodthirst = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -238,7 +238,7 @@ protected:
     void UpdateFuryState(::Unit* target)
     {
         Player* bot = this->GetBot();
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check Enrage status
         if (bot->HasAura(SPELL_ENRAGE))
@@ -266,7 +266,7 @@ protected:
     void TriggerEnrage()
     {
         _isEnraged = true;
-        _enrageEndTime = getMSTime() + 4000; // 4 seconds
+        _enrageEndTime = GameTime::GetGameTimeMS() + 4000; // 4 seconds
     }
 
     void CheckDualWieldStatus()
@@ -295,7 +295,7 @@ protected:
         // 2. Enrage is about to expire
         // 3. At rage cap
 
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         if (!_isEnraged && this->_resource >= 85)
             return true;

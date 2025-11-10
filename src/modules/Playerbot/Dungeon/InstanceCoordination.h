@@ -92,7 +92,7 @@ public:
         std::vector<std::string> progressNotes;
 
         InstanceProgress(uint32 gId, uint32 iId, uint32 mId) : groupId(gId), instanceId(iId)
-            , mapId(mId), startTime(getMSTime()), currentCheckpoint(0)
+            , mapId(mId), startTime(GameTime::GetGameTimeMS()), currentCheckpoint(0)
             , progressPercentage(0.0f), estimatedCompletionTime(2700000) // 45 minutes
             , isOnTrack(true) {}
     };
@@ -191,7 +191,7 @@ private:
         uint32 lastUpdateTime;
 
         FormationData() : formationType("default"), formationRadius(10.0f)
-            , movementSpeed(1.0f), isCompact(true), lastUpdateTime(getMSTime()) {}
+            , movementSpeed(1.0f), isCompact(true), lastUpdateTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, FormationData> _groupFormations; // groupId -> formation
@@ -208,7 +208,7 @@ private:
         bool requiresConsensus;
         uint32 coordinationLevel;
 
-        CoordinationState(uint32 gId) : groupId(gId), lastCoordinationTime(getMSTime())
+        CoordinationState(uint32 gId) : groupId(gId), lastCoordinationTime(GameTime::GetGameTimeMS())
             , requiresConsensus(false), coordinationLevel(2) {}
     };
 
@@ -224,7 +224,7 @@ private:
         uint32 lastResourceCheck;
         bool needsRestBreak;
 
-        ResourceCoordination() : groupReadiness(100), lastResourceCheck(getMSTime())
+        ResourceCoordination() : groupReadiness(100), lastResourceCheck(GameTime::GetGameTimeMS())
             , needsRestBreak(false) {}
     };
 

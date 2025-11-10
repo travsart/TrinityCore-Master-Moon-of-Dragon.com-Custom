@@ -171,7 +171,7 @@ if (!questGiver)
         AcceptQuest(questGiver, quest);
 
         // Cooldown between accepts
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastAcceptTime < QUEST_ACCEPT_COOLDOWN)
         {
             break; // Don't spam quest accepts
@@ -228,11 +228,16 @@ float QuestAcceptanceManager::CalculateQuestPriority(Quest const* quest) const
     priority += GetChainPriority(quest);
 
     TC_LOG_TRACE("module.playerbot.quest", "Quest {} priority: {:.1f} (XP={:.1f}, Gold={:.1f}, Rep={:.1f}, Zone={:.1f})",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return;
+
+}
         quest->GetQuestId(), priority, GetXPPriority(quest), GetGoldPriority(quest),
         GetReputationPriority(quest), GetZonePriority(quest));
 
@@ -486,7 +491,7 @@ void QuestAcceptanceManager::AcceptQuest(Creature* questGiver, Quest const* ques
     _bot->AddQuestAndCheckCompletion(quest, questGiver);
 
     _questsAccepted++;
-    _lastAcceptTime = getMSTime();
+    _lastAcceptTime = GameTime::GetGameTimeMS();
 
     TC_LOG_INFO("module.playerbot.quest",
         if (!bot)

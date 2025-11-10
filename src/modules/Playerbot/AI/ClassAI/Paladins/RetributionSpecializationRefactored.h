@@ -198,7 +198,7 @@ protected:
      */
     void UpdateSealTwisting()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Twist between Seal of Truth and Seal of Righteousness
         if (currentTime > _sealTwistWindow)

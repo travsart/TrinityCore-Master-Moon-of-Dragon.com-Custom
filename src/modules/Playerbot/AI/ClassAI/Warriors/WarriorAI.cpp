@@ -321,7 +321,7 @@ void WarriorAI::UpdateWarriorBuffs()
 
 void WarriorAI::CastBattleShout()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastBattleShout > BATTLE_SHOUT_DURATION)
     {
         // Cast Battle Shout if available
@@ -331,7 +331,7 @@ void WarriorAI::CastBattleShout()
 
 void WarriorAI::CastCommandingShout()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastCommandingShout > COMMANDING_SHOUT_DURATION)
     {
         // Cast Commanding Shout if available

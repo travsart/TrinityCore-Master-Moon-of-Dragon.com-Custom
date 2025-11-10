@@ -188,7 +188,7 @@ protected:
      */
     void ManageStagger()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Accumulate stagger from recent damage
         float staggerPct = static_cast<float>(_staggerAmount) / this->GetBot()->GetMaxHealth();
@@ -238,7 +238,7 @@ protected:
      */
     void ManageShieldBlock()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Regenerate shield block charges
         if (currentTime - _lastShieldBlock > 12000) // 12 second recharge
@@ -391,7 +391,7 @@ protected:
      */
     void ManageBurstWindow()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check if burst is available
         if (!_burstWindowActive && currentTime - _lastBurstTime > _burstCooldown)
@@ -554,7 +554,7 @@ public:
         snap.targetGuid = target->GetGUID().GetCounter();        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
         snap.critChance = caster->GetUnitCriticalChanceAgainst(BASE_ATTACK, target);
         snap.haste = caster->GetRatingBonusValue(CR_HASTE_MELEE);
-        snap.timestamp = getMSTime();
+        snap.timestamp = GameTime::GetGameTimeMS();
 
         _snapshots[GetKey(spellId, target)] = snap;
     }

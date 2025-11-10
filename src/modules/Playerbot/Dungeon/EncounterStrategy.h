@@ -266,7 +266,7 @@ private:
         uint32 lastLearningUpdate;
 
         StrategyLearningData() : totalEncountersAttempted(0), totalEncountersSuccessful(0)
-            , lastLearningUpdate(getMSTime()) {}
+            , lastLearningUpdate(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, StrategyLearningData> _learningData; // encounterId -> learning data

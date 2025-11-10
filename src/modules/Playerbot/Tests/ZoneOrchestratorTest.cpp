@@ -32,7 +32,7 @@ TEST_CASE("ZoneObjective: Activity and completion tracking", "[coordination][zon
     objective.priority = 90;
     objective.assignedBots = 0;
     objective.requiredBots = 40;
-    objective.timestamp = getMSTime();
+    objective.timestamp = GameTime::GetGameTimeMS();
     objective.expirationTime = objective.timestamp + 60000; // 1 minute
 
     SECTION("Objective is active when not expired and not complete")
@@ -186,7 +186,7 @@ TEST_CASE("ZoneOrchestrator: Objective management", "[coordination][zone][object
         objective.priority = 80;
         objective.requiredBots = 20;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 60000;
 
         orchestrator.CreateObjective(objective);
@@ -203,7 +203,7 @@ TEST_CASE("ZoneOrchestrator: Objective management", "[coordination][zone][object
         obj1.priority = 90;
         obj1.requiredBots = 10;
         obj1.assignedBots = 0;
-        obj1.timestamp = getMSTime();
+        obj1.timestamp = GameTime::GetGameTimeMS();
         obj1.expirationTime = obj1.timestamp + 60000;
 
         ZoneObjective obj2;
@@ -211,7 +211,7 @@ TEST_CASE("ZoneOrchestrator: Objective management", "[coordination][zone][object
         obj2.priority = 70;
         obj2.requiredBots = 15;
         obj2.assignedBots = 0;
-        obj2.timestamp = getMSTime();
+        obj2.timestamp = GameTime::GetGameTimeMS();
         obj2.expirationTime = obj2.timestamp + 60000;
 
         orchestrator.CreateObjective(obj1);
@@ -227,7 +227,7 @@ TEST_CASE("ZoneOrchestrator: Objective management", "[coordination][zone][object
         objective.priority = 50;
         objective.requiredBots = 5;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 60000;
 
         orchestrator.CreateObjective(objective);
@@ -244,7 +244,7 @@ TEST_CASE("ZoneOrchestrator: Objective management", "[coordination][zone][object
         objective.priority = 60;
         objective.requiredBots = 10;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 60000;
 
         orchestrator.CreateObjective(objective);
@@ -518,7 +518,7 @@ TEST_CASE("ZoneOrchestrator: Complete zone scenario", "[coordination][zone][inte
         objective.priority = 100;
         objective.requiredBots = 40;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 3600000;
 
         orchestrator->CreateObjective(objective);
@@ -554,7 +554,7 @@ TEST_CASE("ZoneOrchestrator: Performance characteristics", "[coordination][zone]
             objective.priority = i;
             objective.requiredBots = 10;
             objective.assignedBots = 0;
-            objective.timestamp = getMSTime();
+            objective.timestamp = GameTime::GetGameTimeMS();
             objective.expirationTime = objective.timestamp + 60000;
 
             orchestrator.CreateObjective(objective);

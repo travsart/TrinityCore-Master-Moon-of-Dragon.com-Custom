@@ -118,7 +118,7 @@ void BotPerformanceMonitor::RecordMetric(const PerformanceMetric& metric)
         return;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+        std::lock_guard lock(_metricsMutex);
         _metricsQueue.push(metric);
     }
     _metricsCondition.notify_one();
@@ -143,7 +143,7 @@ void BotPerformanceMonitor::RecordMemoryUsage(uint32_t botGuid, uint64_t bytes, 
 
     // Update bot memory tracking
     {
-        std::lock_guard<std::recursive_mutex> lock(_botsMutex);
+        std::lock_guard lock(_botsMutex);
         _botMemoryUsage[botGuid] = bytes;
     }
 }
@@ -169,14 +169,14 @@ void BotPerformanceMonitor::RecordMovementCalculation(uint32_t botGuid, uint64_t
 
 MetricStatistics BotPerformanceMonitor::GetStatistics(MetricType type) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
     auto it = _globalStatistics.find(type);
     return it != _globalStatistics.end() ? it->second : MetricStatistics();
 }
 
 MetricStatistics BotPerformanceMonitor::GetBotStatistics(uint32_t botGuid, MetricType type) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
     auto botIt = _botStatistics.find(botGuid);
     if (botIt != _botStatistics.end())
     {
@@ -189,7 +189,7 @@ MetricStatistics BotPerformanceMonitor::GetBotStatistics(uint32_t botGuid, Metri
 
 std::vector<PerformanceAlert> BotPerformanceMonitor::GetRecentAlerts(uint32_t maxCount) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_alertsMutex);
+    std::lock_guard lock(_alertsMutex);
     std::vector<PerformanceAlert> alerts;
 
     size_t count = std::min(static_cast<size_t>(maxCount), _recentAlerts.size());
@@ -264,7 +264,7 @@ void BotPerformanceMonitor::GeneratePerformanceReport(std::string& report) const
 
     // Metric statistics
     oss << "Performance Metrics:\n";
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
 
     for (const auto& [type, stats] : _globalStatistics)
     {
@@ -289,7 +289,7 @@ void BotPerformanceMonitor::GeneratePerformanceReport(std::string& report) const
 
     // Recent alerts
     {
-        std::lock_guard<std::recursive_mutex> alertLock(_alertsMutex);
+        std::lock_guard alertLock(_alertsMutex);
         if (!_recentAlerts.empty())
         {
             oss << "Recent Alerts (" << std::min(size_t(10), _recentAlerts.size()) << " most recent):\n";
@@ -324,7 +324,7 @@ uint64_t BotPerformanceMonitor::GetThreshold(MetricType type, AlertLevel level) 
 
 void BotPerformanceMonitor::RegisterBot(uint32_t botGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_botsMutex);
+    std::lock_guard lock(_botsMutex);
     _registeredBots.insert(botGuid);
     _botMemoryUsage[botGuid] = 0;
 
@@ -334,7 +334,7 @@ void BotPerformanceMonitor::RegisterBot(uint32_t botGuid)
 void BotPerformanceMonitor::UnregisterBot(uint32_t botGuid)
 {
     {
-        std::lock_guard<std::recursive_mutex> lock(_botsMutex);
+        std::lock_guard lock(_botsMutex);
         _registeredBots.erase(botGuid);
         _botMemoryUsage.erase(botGuid);
     }
@@ -346,19 +346,19 @@ void BotPerformanceMonitor::UnregisterBot(uint32_t botGuid)
 
 void BotPerformanceMonitor::ClearBotMetrics(uint32_t botGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
     _botStatistics.erase(botGuid);
 }
 
 uint32_t BotPerformanceMonitor::GetActiveBotsCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_botsMutex);
+    std::lock_guard lock(_botsMutex);
     return static_cast<uint32_t>(_registeredBots.size());
 }
 
 uint64_t BotPerformanceMonitor::GetTotalMemoryUsage() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_botsMutex);
+    std::lock_guard lock(_botsMutex);
     uint64_t total = 0;
     for (const auto& [botGuid, memory] : _botMemoryUsage)
         total += memory;
@@ -451,7 +451,7 @@ void BotPerformanceMonitor::UpdateSystemMetrics()
 
 void BotPerformanceMonitor::FlushMetrics()
 {
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
 
     while (!_metricsQueue.empty())
     {
@@ -466,7 +466,7 @@ void BotPerformanceMonitor::ArchiveOldMetrics(uint64_t olderThanMicroseconds)
     uint64_t cutoffTime = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count() - olderThanMicroseconds;
 
-    std::lock_guard<std::recursive_mutex> lock(_alertsMutex);
+    std::lock_guard lock(_alertsMutex);
 
     // Remove old alerts
     _recentAlerts.erase(
@@ -486,7 +486,7 @@ void BotPerformanceMonitor::ExportMetrics(const std::string& filename) const
 
     file << "timestamp,botGuid,metricType,value,context\n";
 
-    std::lock_guard<std::recursive_mutex> lock(_metricsMutex);
+    std::lock_guard lock(_metricsMutex);
 
     // Export current statistics
     for (const auto& [type, stats] : _globalStatistics)
@@ -588,7 +588,7 @@ void BotPerformanceMonitor::GenerateAlert(AlertLevel level, MetricType type, uin
                                         uint64_t value, uint64_t threshold, const std::string& message)
 {
     {
-        std::lock_guard<std::recursive_mutex> lock(_alertsMutex);
+        std::lock_guard lock(_alertsMutex);
         _alertsQueue.emplace(level, type, botGuid, value, threshold, message);
     }
     _alertsCondition.notify_one();

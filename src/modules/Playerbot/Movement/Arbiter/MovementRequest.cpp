@@ -163,7 +163,7 @@ MovementRequest::MovementRequest(PlayerBotMovementPriority priority, std::string
     , _reason(std::move(reason))
     , _sourceSystem("")
     , _sourceThreadId(GetCurrentThreadId())
-    , _timestamp(getMSTime())
+    , _timestamp(GameTime::GetGameTimeMS())
     , _expectedDuration(0)
     , _allowInterrupt(true)
     , _params(std::monostate{})

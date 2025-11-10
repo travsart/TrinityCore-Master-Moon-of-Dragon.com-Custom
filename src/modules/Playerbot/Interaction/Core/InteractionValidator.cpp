@@ -53,7 +53,7 @@ namespace Playerbot
         auto now = std::chrono::steady_clock::now();
 
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard lock(m_mutex);
             auto lastCheck = m_lastValidation.find(cacheKey);
             if (lastCheck != m_lastValidation.end())
             {
@@ -132,7 +132,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard lock(m_mutex);
             m_lastValidation[cacheKey] = now;
             m_validationCache[cacheKey] = result;
         }
@@ -153,11 +153,16 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CheckFaction(::Player* bot, ::Creature* creature) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return nullptr;
+
+}
     {
         if (!bot || !creature)
             return false;
@@ -346,11 +351,16 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ValidateVendor(::Player* bot, ::Creature* vendor) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
+
+    return nullptr;
+
+}
         if (!vendor)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: vendor in method IsVendor");
@@ -398,7 +408,7 @@ namespace Playerbot
 
         // Check cache
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard lock(m_mutex);
             auto it = m_usefulItemCache.find(itemId);
             if (it != m_usefulItemCache.end())
                 return it->second;
@@ -490,7 +500,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard lock(m_mutex);
             m_usefulItemCache[itemId] = isUseful;
         }
 
@@ -716,11 +726,16 @@ namespace Playerbot
     }
 
     bool InteractionValidator::ShouldBankItem(::Player* bot, ::Item* item) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return nullptr;
+
+}
     {
         if (!bot || !item)
             return false;
@@ -744,11 +759,16 @@ namespace Playerbot
     }
 
     bool InteractionValidator::CanUseMail(::Player* bot) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
+
+    return;
+
+}
     {
         if (!bot)
             return false;
@@ -781,11 +801,16 @@ namespace Playerbot
     }
 
     std::vector<std::string> InteractionValidator::GetMissingRequirements(::Player* bot, ::WorldObject* target,
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
+
+    return;
+
+}
                                                                           InteractionType type) const
     {
         std::vector<std::string> missing;
@@ -917,13 +942,13 @@ namespace Playerbot
 
     InteractionValidator::ValidationMetrics InteractionValidator::GetMetrics() const
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         return m_metrics;
     }
 
     void InteractionValidator::ResetMetrics()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         m_metrics = ValidationMetrics();
     }
 
@@ -966,7 +991,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto botIt = m_cooldowns.find(bot->GetGUID());
         if (botIt == m_cooldowns.end())
@@ -989,7 +1014,7 @@ namespace Playerbot
 
     void InteractionValidator::RecordValidation(InteractionType type, bool passed) const
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         ++m_metrics.totalValidations;
         if (passed)

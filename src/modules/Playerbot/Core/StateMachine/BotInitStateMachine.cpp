@@ -369,7 +369,7 @@ void BotInitStateMachine::OnTransitionFailed(
         ToString(result.result), result.reason);
 
     m_lastErrorReason = std::string(result.reason);
-    m_lastErrorTime = getMSTime();
+    m_lastErrorTime = GameTime::GetGameTimeMS();
 }
 
 void BotInitStateMachine::OnUpdate(uint32 diff)
@@ -385,21 +385,31 @@ void BotInitStateMachine::OnUpdate(uint32 diff)
 bool BotInitStateMachine::HandleLoadingCharacter()
 {
     Player* bot = GetBot();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
             if (!bot)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
                 return;
             }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
@@ -443,11 +453,16 @@ bool BotInitStateMachine::HandleLoadingCharacter()
             return;
         }
         bot->GetName());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     return true; // Ready to proceed to IN_WORLD
 }
@@ -521,11 +536,16 @@ bool BotInitStateMachine::HandleInWorld()
             return;
         }
         bot->GetName());
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
-    return;
-}
+
+if (!leader)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
+
+    return;
+
+}
 
     return true; // Ready to proceed to CHECKING_GROUP
 }

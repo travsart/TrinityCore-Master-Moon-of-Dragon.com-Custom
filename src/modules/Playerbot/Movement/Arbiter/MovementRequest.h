@@ -309,7 +309,7 @@ private:
     uint32 _sourceThreadId;                     // Thread ID (for thread safety checks)
 
     // Timing
-    uint32 _timestamp;                          // getMSTime() when created
+    uint32 _timestamp;                          // GameTime::GetGameTimeMS() when created
     uint32 _expectedDuration;                   // Expected duration (ms)
     bool _allowInterrupt;                       // Can be interrupted?
 

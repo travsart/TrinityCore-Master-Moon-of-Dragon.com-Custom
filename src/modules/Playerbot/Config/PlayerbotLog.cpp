@@ -22,7 +22,7 @@
 #include "Timer.h"
 
 PlayerbotPerformanceLogger::PlayerbotPerformanceLogger(std::string const& operation)
-    : m_operation(operation), m_startTime(getMSTime())
+    : m_operation(operation), m_startTime(GameTime::GetGameTimeMS())
 {
     TC_LOG_PLAYERBOT_PERF_DEBUG("Starting performance measurement for: {}", m_operation);
 }

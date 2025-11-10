@@ -1440,7 +1440,7 @@ if (!target)
 
     void TargetScanner::AddToBlacklist(ObjectGuid guid, uint32 duration)
     {
-        uint32 expireTime = getMSTime() + duration;
+        uint32 expireTime = GameTime::GetGameTimeMS() + duration;
 
         // Check if already blacklisted
         for (auto& entry : m_blacklist)

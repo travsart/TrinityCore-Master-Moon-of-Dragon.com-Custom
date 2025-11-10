@@ -181,7 +181,7 @@ void CooldownStackingOptimizer::Update(uint32 diff)
         return;
     }
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Update phase detection every 500ms
     if (now - _lastPhaseUpdate > 500)
@@ -307,7 +307,7 @@ void CooldownStackingOptimizer::UpdateCooldownUsed(uint32 spellId)
     auto it = _cooldowns.find(spellId);
     if (it != _cooldowns.end())
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         it->second.lastUsedTime = now;
         it->second.nextAvailable = now + it->second.cooldownMs;
 
@@ -330,7 +330,7 @@ void CooldownStackingOptimizer::UpdateCooldownUsed(uint32 spellId)
 CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalStackWindow(uint32 lookAheadMs) const
 {
     // Cache optimization result
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - _lastOptimizationCalc < 2000)
         return _cachedOptimalWindow;
 
@@ -584,7 +584,7 @@ float CooldownStackingOptimizer::GetCooldownPriority(uint32 spellId) const
         return 0.0f;
 
     // Check if on cooldown
-    if (data.nextAvailable > getMSTime())
+    if (data.nextAvailable > GameTime::GetGameTimeMS())
         return 0.0f;
 
     // Base priority on phase
@@ -705,13 +705,13 @@ uint32 CooldownStackingOptimizer::PredictBloodlustTiming() const
 
         // Common Bloodlust timings
         if (healthPct > 95.0f)
-            return getMSTime() + 5000;  // Start of fight
+            return GameTime::GetGameTimeMS() + 5000;  // Start of fight
 
         if (healthPct <= 30.0f && healthPct > 20.0f)
-            return getMSTime() + 2000;  // Sub-30%
+            return GameTime::GetGameTimeMS() + 2000;  // Sub-30%
 
         if (healthPct <= 20.0f)
-            return getMSTime();  // Execute phase - immediate
+            return GameTime::GetGameTimeMS();  // Execute phase - immediate
     }
 
     return 0;
@@ -726,7 +726,7 @@ bool CooldownStackingOptimizer::ShouldAlignWithBloodlust(uint32 cooldownDuration
     if (predictedTime == 0)
         return false;
 
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     uint32 timeUntilLust = (predictedTime > now) ? predictedTime - now : 0;
 
     // Align if Bloodlust is coming within the cooldown duration
@@ -861,7 +861,7 @@ void CooldownStackingOptimizer::UpdatePhaseDetection()
         {
             _lastPhase = _currentPhase;
             _currentPhase = newPhase;
-            _phaseStartTime = getMSTime();
+            _phaseStartTime = GameTime::GetGameTimeMS();
 
             // Track Bloodlust usage
             if (newPhase == BURN && IsBloodlustActive())

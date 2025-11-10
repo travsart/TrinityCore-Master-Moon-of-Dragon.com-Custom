@@ -88,7 +88,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 
     // Performance logging (throttled)
     static uint32 lastLogTime = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - lastLogTime > 5000) // Every 5 seconds
     {
         TC_LOG_DEBUG("playerbot.combat",

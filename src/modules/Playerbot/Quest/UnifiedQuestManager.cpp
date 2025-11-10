@@ -1507,7 +1507,7 @@ void UnifiedQuestManager::EnableQuestGrouping(uint32 botGuid, bool enable)
 void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
-    auto startTime = getMSTime();
+    auto startTime = GameTime::GetGameTimeMS();
     _totalOperations++;
 
     // 1. Discovery and validation
@@ -1527,7 +1527,7 @@ void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
         _turnIn->ExecuteImmediateTurnInStrategy(bot);
     }
 
-    auto endTime = getMSTime();
+    auto endTime = GameTime::GetGameTimeMS();
     _totalProcessingTimeMs += (endTime - startTime);
 }
 

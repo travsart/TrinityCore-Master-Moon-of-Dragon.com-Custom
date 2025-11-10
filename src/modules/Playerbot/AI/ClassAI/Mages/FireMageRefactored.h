@@ -64,7 +64,7 @@ public:
     {
         _hotStreakActive = true;
         _heatingUpActive = false;
-        _hotStreakEndTime = getMSTime() + 15000; // 15 sec duration
+        _hotStreakEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeHotStreak()
@@ -75,7 +75,7 @@ public:
 
     [[nodiscard]] bool IsHotStreakActive() const
     {
-        return _hotStreakActive && getMSTime() < _hotStreakEndTime;
+        return _hotStreakActive && GameTime::GetGameTimeMS() < _hotStreakEndTime;
     }
 
     [[nodiscard]] bool IsHeatingUpActive() const { return _heatingUpActive; }
@@ -90,7 +90,7 @@ public:
         {
             _hotStreakActive = true;
             if (Aura* aura = bot->GetAura(48108))
-                _hotStreakEndTime = getMSTime() + aura->GetDuration();        }
+                _hotStreakEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _hotStreakActive = false;
@@ -117,7 +117,7 @@ public:
         if (_charges > 0)
         {
             _charges--;
-            _lastChargeTime = getMSTime();
+            _lastChargeTime = GameTime::GetGameTimeMS();
         }
     }
 
@@ -262,14 +262,14 @@ private:
         if (!bot)            return;
 
         // Combustion state
-        if (_combustionActive && getMSTime() >= _combustionEndTime)
+        if (_combustionActive && GameTime::GetGameTimeMS() >= _combustionEndTime)
             _combustionActive = false;
 
         if (bot->HasAura(FIRE_COMBUSTION))
         {
             _combustionActive = true;
             if (Aura* aura = bot->GetAura(FIRE_COMBUSTION))
-                _combustionEndTime = getMSTime() + aura->GetDuration();        }
+                _combustionEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -285,7 +285,7 @@ private:
             {
                 this->CastSpell(bot, FIRE_COMBUSTION);
                 _combustionActive = true;
-                _combustionEndTime = getMSTime() + 10000; // 10 sec
+                _combustionEndTime = GameTime::GetGameTimeMS() + 10000; // 10 sec
                 return;
             }
         }
@@ -373,7 +373,7 @@ private:
             {
                 this->CastSpell(bot, FIRE_COMBUSTION);
                 _combustionActive = true;
-                _combustionEndTime = getMSTime() + 10000;
+                _combustionEndTime = GameTime::GetGameTimeMS() + 10000;
                 return;
             }
         }
@@ -516,7 +516,7 @@ private:
                                 if (this->CanCastSpell(FIRE_COMBUSTION, bot)) {
                                     this->CastSpell(bot, FIRE_COMBUSTION);
                                     this->_combustionActive = true;
-                                    this->_combustionEndTime = getMSTime() + 10000;
+                                    this->_combustionEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

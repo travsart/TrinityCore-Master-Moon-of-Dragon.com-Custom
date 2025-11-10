@@ -73,7 +73,7 @@ struct MaterialRequirement
     MaterialRequirement()
         : itemId(0), quantityNeeded(0), quantityHave(0), quantityGathering(0)
         , priority(MaterialPriority::NONE), forProfession(ProfessionType::NONE)
-        , forRecipeId(0), addedTime(getMSTime()) {}
+        , forRecipeId(0), addedTime(GameTime::GetGameTimeMS()) {}
 
     uint32 GetRemainingNeeded() const { return quantityNeeded > quantityHave ? quantityNeeded - quantityHave : 0; }
     bool IsFulfilled() const { return quantityHave >= quantityNeeded; }
@@ -100,10 +100,10 @@ struct GatheringMaterialSession
     GatheringMaterialSession()
         : sessionId(0), playerGuid(0), targetItemId(0), targetQuantity(0)
         , gatheredSoFar(0), nodeType(GatheringNodeType::NONE)
-        , startTime(getMSTime()), endTime(0), isActive(true) {}
+        , startTime(GameTime::GetGameTimeMS()), endTime(0), isActive(true) {}
 
     float GetProgress() const { return targetQuantity > 0 ? (float)gatheredSoFar / targetQuantity : 0.0f; }
-    uint32 GetDuration() const { return isActive ? (getMSTime() - startTime) : (endTime - startTime); }
+    uint32 GetDuration() const { return isActive ? (GameTime::GetGameTimeMS() - startTime) : (endTime - startTime); }
 };
 
 /**

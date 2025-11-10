@@ -70,8 +70,8 @@ void LFGGroupCoordinator::Shutdown()
 {
     TC_LOG_INFO("server.loading", "Shutting down LFG Group Coordinator...");
 
-    std::lock_guard<std::recursive_mutex> lockTeleport(_teleportMutex);
-    std::lock_guard<std::recursive_mutex> lockGroup(_groupMutex);
+    std::lock_guard lockTeleport(_teleportMutex);
+    std::lock_guard lockGroup(_groupMutex);
 
     _pendingTeleports.clear();
     _groupFormations.clear();
@@ -102,12 +102,12 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
 
     // Track group formation
     {
-        std::lock_guard<std::recursive_mutex> lock(_groupMutex);
+        std::lock_guard lock(_groupMutex);
 
         GroupFormationInfo& info = _groupFormations[groupGuid];
         info.groupGuid = groupGuid;
         info.dungeonId = dungeonId;
-        info.formationTime = getMSTime();
+        info.formationTime = GameTime::GetGameTimeMS();
         info.pendingTeleports.clear();
 
         // Add all group members to pending teleports
@@ -155,7 +155,7 @@ bool LFGGroupCoordinator::OnGroupReady(ObjectGuid groupGuid)
 
     uint32 dungeonId = 0;
     {
-        std::lock_guard<std::recursive_mutex> lock(_groupMutex);
+        std::lock_guard lock(_groupMutex);
         auto itr = _groupFormations.find(groupGuid);
         if (itr == _groupFormations.end())
         {
@@ -249,11 +249,16 @@ if (!player)
 
     // Send notification
     NotifyTeleportStart(player, dungeonName);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+
+    return nullptr;
+
+}
 
     // Track teleport
     if (!player)
@@ -266,7 +271,7 @@ if (!player)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return nullptr;
     }
-    TrackTeleport(player->GetGUID(), dungeonId, getMSTime());
+    TrackTeleport(player->GetGUID(), dungeonId, GameTime::GetGameTimeMS());
 
     // Perform actual teleportation
     bool result = player->TeleportTo(mapId, x, y, z, orientation, TELE_TO_NOT_LEAVE_COMBAT);
@@ -311,19 +316,29 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
 {
     if (!_enabled || !group)
         return false;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
+
+    return nullptr;
+
+}
 
     TC_LOG_DEBUG("lfg.playerbot", "LFGGroupCoordinator::TeleportGroupToDungeon - Group: {}, Dungeon: {}",
         group->GetGUID().ToString(), dungeonId);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+
+    return;
+
+}
 
     uint32 successCount = 0;
     uint32 totalMembers = 0;
@@ -498,7 +513,7 @@ bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, fl
 
 void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId, uint32 timestamp)
 {
-    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
+    std::lock_guard lock(_teleportMutex);
 
     TeleportInfo& info = _pendingTeleports[playerGuid];
     info.playerGuid = playerGuid;
@@ -512,7 +527,7 @@ void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId,
 
 void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
+    std::lock_guard lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
     if (itr != _pendingTeleports.end())
@@ -524,13 +539,13 @@ void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 
 bool LFGGroupCoordinator::HasPendingTeleport(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
+    std::lock_guard lock(_teleportMutex);
     return _pendingTeleports.find(playerGuid) != _pendingTeleports.end();
 }
 
 uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
+    std::lock_guard lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
 if (!player)
@@ -548,11 +563,16 @@ if (!player)
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
     return;
 }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return 0;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+
+    return 0;
+
+}
     if (itr != _pendingTeleports.end())
         return itr->second.dungeonId;
 
@@ -565,9 +585,9 @@ if (!player)
 
 void LFGGroupCoordinator::ProcessTeleportTimeouts()
 {
-    std::lock_guard<std::recursive_mutex> lock(_teleportMutex);
+    std::lock_guard lock(_teleportMutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     std::vector<ObjectGuid> timedOut;
 
     // Find timed-out teleports
@@ -661,11 +681,16 @@ void LFGGroupCoordinator::HandleTeleportFailure(Player* player, std::string cons
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
         return;
     }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+
+    return nullptr;
+
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");

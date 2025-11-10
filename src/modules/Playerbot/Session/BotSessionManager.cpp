@@ -85,23 +85,33 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
             session->GetAccountId());
     }
 }
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
-    return;
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
-    return;
-}
-}
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+
+    return;
+
+if (!session)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetAccountId");
+
+    return;
+
+}
+
+}
 
 void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
 {
     if (!session || !ai)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
+    std::lock_guard lock(s_botAIMutex);
     s_botAIRegistry[session] = ai;
     if (!session)
     {
@@ -133,7 +143,7 @@ if (!session)
     if (!session)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
+    std::lock_guard lock(s_botAIMutex);
     auto it = s_botAIRegistry.find(session);
             if (!session)
             {
@@ -216,7 +226,7 @@ void BotSessionManager::ProcessBotAI(WorldSession* session, uint32 diff)
     // Get registered AI
     BotAI* ai = nullptr;
     {
-        std::lock_guard<std::recursive_mutex> lock(s_botAIMutex);
+        std::lock_guard lock(s_botAIMutex);
         auto it = s_botAIRegistry.find(session);
             if (!session)
             {

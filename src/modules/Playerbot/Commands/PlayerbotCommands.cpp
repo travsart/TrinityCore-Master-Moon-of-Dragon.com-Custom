@@ -106,28 +106,7 @@ namespace Playerbot
 
         // Default to player's race/class if not specified
         uint8 botRace = race ? *race : player->GetRace();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
-            return;
-        }
         uint8 botClass = classId ? *classId : player->GetClass();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-            return;
-        }
-
         // Validate race/class combination
         if (!ValidateRaceClass(botRace, botClass, handler))
             return false;
@@ -154,11 +133,6 @@ namespace Playerbot
     }
 
     bool PlayerbotCommandScript::HandleBotDeleteCommand(ChatHandler* handler, std::string name)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-        return;
-    }
     {
         Player* bot = FindBotByName(name);
         if (!bot)
@@ -169,11 +143,6 @@ namespace Playerbot
 
         // Check if bot is actually a bot (not a real player)
         WorldSession* session = bot->GetSession();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-            return nullptr;
-        }
         if (!session)
         {
             handler->PSendSysMessage("'%s' has no session.", name.c_str());
@@ -227,44 +196,13 @@ namespace Playerbot
     // =====================================================================
     // BOT TELEPORTATION COMMANDS
     // =====================================================================
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
-    return;
-}
-
     bool PlayerbotCommandScript::HandleBotTeleportCommand(ChatHandler* handler, std::string name)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
-        return;
-    }
     {
         Player* player = handler->GetSession()->GetPlayer();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
-            return;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
-                return;
-            }
         if (!player)
             return false;
 
         Player* bot = FindBotByName(name);
-                              if (!bot)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
-                                  return nullptr;
-                              }
-                          if (!bot)
-                          {
-                              TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
-                              return;
-                          }
         if (!bot)
         {
             handler->PSendSysMessage("Bot '%s' not found.", name.c_str());
@@ -283,31 +221,11 @@ namespace Playerbot
     {
         Player* player = handler->GetSession()->GetPlayer();
         if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-            return;
-        }
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
-                return;
-            }
-                       if (!player)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
-                           return;
-                       }
-        if (!player)
             return false;
 
         Player* bot = FindBotByName(name);
             if (!bot)
             {
-                if (!member)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method TeleportTo");
-                    return nullptr;
-                }
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
                 return;
             }
@@ -332,11 +250,6 @@ namespace Playerbot
             return false;
 
         Group* group = player->GetGroup();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-            return;
-        }
         if (!group)
         {
             handler->SendSysMessage("You must be in a group to summon all bots.");
@@ -350,16 +263,6 @@ namespace Playerbot
         {
             Player* member = itr.GetSource();
             if (!member || member == player)
-                                  if (!member)
-                                  {
-                                      TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method TeleportTo");
-                                      return nullptr;
-                                  }
-                              if (!player)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetOrientation");
-                                  return nullptr;
-                              }
                 continue;
 
             // Check if member is a bot (implement proper bot detection)
@@ -448,12 +351,6 @@ namespace Playerbot
 
         return true;
     }
-
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-        return;
-    }
     bool PlayerbotCommandScript::HandleBotFormationListCommand(ChatHandler* handler)
     {
         handler->SendSysMessage("Available Bot Formations:");
@@ -502,11 +399,6 @@ namespace Playerbot
         handler->PSendSysMessage("Zone: %u | Area: %u", bot->GetZoneId(), bot->GetAreaId());
 
         if (Group* group = bot->GetGroup())
-                                    if (!group)
-                                    {
-                                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                                        return nullptr;
-                                    }
         {
             handler->PSendSysMessage("Group: %s (%u members)",
                                     group->GetLeaderGUID().ToString().c_str(),

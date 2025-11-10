@@ -107,7 +107,7 @@ MovementArbiter::MovementArbiter(Player* bot)
                 return;
             }
     : _bot(bot)
-    , _lastUpdateTime(getMSTime())
+    , _lastUpdateTime(GameTime::GetGameTimeMS())
 {
     if (!_bot)
         throw std::invalid_argument("MovementArbiter: bot cannot be null");
@@ -189,11 +189,16 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
         // Update queue size statistics
         uint32 queueSize = static_cast<uint32>(_pendingRequests.size());
         _statistics.currentQueueSize.store(queueSize, std::memory_order_relaxed);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
         uint32 maxQueue = _statistics.maxQueueSize.load(std::memory_order_relaxed);
         if (queueSize > maxQueue)
@@ -218,7 +223,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     {
         std::lock_guard<std::mutex> dedupLock(_deduplicationMutex);
         uint64 hash = request.GetSpatialTemporalHash();
-        _recentRequests[hash] = getMSTime();
+        _recentRequests[hash] = GameTime::GetGameTimeMS();
     }
 
     // Calculate arbitration time
@@ -246,7 +251,7 @@ void MovementArbiter::Update(uint32 diff)
     // Update deduplication cache (remove expired entries)
     if (_config.enableDeduplication)
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         UpdateDeduplicationCache(currentTime);
     }
 
@@ -637,14 +642,19 @@ bool MovementArbiter::IsDuplicate(MovementRequest const& request) const
 
     if (it == _recentRequests.end())
         return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
     // Check if within deduplication window
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 lastRequestTime = it->second;
 
     if (currentTime - lastRequestTime < _config.minTimeBetweenDuplicatesMs)

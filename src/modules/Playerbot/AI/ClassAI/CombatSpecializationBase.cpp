@@ -76,7 +76,7 @@ CombatSpecializationBase::CombatSpecializationBase(Player* bot, CombatRole role,
 // Core buff management with batched updates for performance
 void CombatSpecializationBase::UpdateBuffs()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle buff checks to reduce CPU usage
     if (currentTime - _lastBuffCheck < 500) // 500ms minimum between checks
@@ -96,7 +96,7 @@ void CombatSpecializationBase::UpdateBuffs()
 // Optimized cooldown management with lock-free updates
 void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Update global cooldown
     UpdateGlobalCooldown(diff);
@@ -161,7 +161,7 @@ bool CombatSpecializationBase::CanUseAbility(uint32 spellId)
 void CombatSpecializationBase::OnCombatStart(::Unit* target)
 {
     _inCombat = true;
-    _combatStartTime = getMSTime();
+    _combatStartTime = GameTime::GetGameTimeMS();
     _currentTarget = target;
     _consecutiveFailedCasts = 0;
 
@@ -227,7 +227,7 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
     if (!target)
         return _bot->GetPosition();
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Use cached position if recent enough (100ms cache)
     if (currentTime - _lastOptimalPositionCheck < 100)
@@ -461,7 +461,7 @@ void CombatSpecializationBase::UpdateDoTTracking(::Unit* target)
     if (!target)
         return;
 
-    uint64 targetGuid = target->GetGUID().GetRawValue();    uint32 currentTime = getMSTime();
+    uint64 targetGuid = target->GetGUID().GetRawValue();    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Check target's auras for our DoTs
     Unit::AuraApplicationMap const& auras = target->GetAppliedAuras();
@@ -502,7 +502,7 @@ bool CombatSpecializationBase::ShouldRefreshDoT(::Unit* target, uint32 spellId, 
     auto dotIt = targetIt->second.find(spellId);
     if (dotIt == targetIt->second.end())
         return true; // This DoT not on target    // Check remaining time
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 remaining = dotIt->second > currentTime ? dotIt->second - currentTime : 0;
 
     return remaining < threshold;
@@ -513,7 +513,7 @@ void CombatSpecializationBase::HandleEmergencySituation()
 {    if (!_bot || !_bot->IsAlive())
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle emergency checks to avoid spam
     if (currentTime - _lastEmergencyCheck < 200)
@@ -601,7 +601,7 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
 
         // Set global cooldown
         if (!spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
-            _globalCooldownEnd = getMSTime() + GLOBAL_COOLDOWN_MS;
+            _globalCooldownEnd = GameTime::GetGameTimeMS() + GLOBAL_COOLDOWN_MS;
 
         // Consume resource
         ConsumeResource(spellId);
@@ -647,7 +647,7 @@ void CombatSpecializationBase::LogPerformance() const
 // Internal update methods
 void CombatSpecializationBase::UpdateGlobalCooldown(uint32 diff)
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (_globalCooldownEnd > currentTime)
     {
         // Still on GCD
@@ -659,7 +659,7 @@ void CombatSpecializationBase::UpdateGlobalCooldown(uint32 diff)
 
 void CombatSpecializationBase::UpdateBuffTimers(uint32 diff)
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Update buff expiration times    for (auto it = _buffExpirationTimes.begin(); it != _buffExpirationTimes.end();)
     {
@@ -712,12 +712,12 @@ bool CombatSpecializationBase::IsSpellReady(uint32 spellId) const
     if (it == _cooldowns.end())
         return true; // No cooldown tracked
 
-    return it->second <= getMSTime();
+    return it->second <= GameTime::GetGameTimeMS();
 }
 
 void CombatSpecializationBase::SetSpellCooldown(uint32 spellId, uint32 cooldownMs)
 {
-    _cooldowns[spellId] = getMSTime() + cooldownMs;
+    _cooldowns[spellId] = GameTime::GetGameTimeMS() + cooldownMs;
 }
 
 bool CombatSpecializationBase::IsCasting() const
@@ -736,7 +736,7 @@ float CombatSpecializationBase::GetDistance(::Unit* target) const
         return 999.0f;
 
     // Use cached distance if available and recent
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (g_distanceCacheTime == currentTime && target == _currentTarget)
     {
         return g_distanceCache[0];
@@ -777,7 +777,7 @@ bool CombatSpecializationBase::IsInRaid() const
 Player* CombatSpecializationBase::GetGroupTank() const
 {
     // Use cached value if recent
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastGroupUpdate < 5000) // 5 second cache
         return _cachedTank;
 
@@ -804,7 +804,7 @@ Player* CombatSpecializationBase::GetGroupTank() const
 
 std::vector<Player*> CombatSpecializationBase::GetGroupMembers() const{
     // Use cached value if recent
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastGroupUpdate < 2000 && !_cachedGroupMembers.empty())
         return _cachedGroupMembers;
 
@@ -995,7 +995,7 @@ float CombatSpecializationBase::CalculateThreatLevel(::Unit* target) const
 void CombatSpecializationBase::UpdateThreatTable()
 {
     // Clean old threat entries
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastThreatUpdate < 1000)
         return;
 
@@ -1045,7 +1045,7 @@ bool CombatSpecializationBase::IsInEmergencyState() const
 
 bool CombatSpecializationBase::HasGlobalCooldown() const
 {
-    return _globalCooldownEnd > getMSTime();
+    return _globalCooldownEnd > GameTime::GetGameTimeMS();
 }
 
 bool CombatSpecializationBase::ShouldUseAoE() const
@@ -1075,7 +1075,7 @@ void CombatSpecializationBase::UpdatePositioning(::Unit* target)
 {    if (!target || !_bot->IsAlive())
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle position updates
     if (currentTime - _lastPositionUpdate < 250) // 250ms minimum between updates
@@ -1146,7 +1146,7 @@ bool CombatSpecializationBase::ShouldReposition(::Unit* target) const
 Player* CombatSpecializationBase::GetGroupHealer() const
 {
     // Similar to GetGroupTank but for healers
-    if (_cachedHealer && getMSTime() - _lastGroupUpdate < 5000)
+    if (_cachedHealer && GameTime::GetGameTimeMS() - _lastGroupUpdate < 5000)
         return _cachedHealer;
 
     // Find healer in group

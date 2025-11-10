@@ -171,7 +171,7 @@ protected:
     void UpdateCooldowns(uint32 diff) final override
     {
         // Thread-safe cooldown update
-        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
+        std::lock_guard lock(_cooldownMutex);
 
         // Update global cooldown
         if (_globalCooldownEnd > diff)
@@ -218,7 +218,7 @@ protected:
     bool CanUseAbility(uint32 spellId) final override
     {
         // Thread-safe ability check
-        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
+        std::lock_guard lock(_cooldownMutex);
 
         // Check global cooldown
         if (_globalCooldownEnd > 0)
@@ -250,7 +250,7 @@ protected:
      */
     void RegisterCooldown(uint32 spellId, uint32 cooldownMs)
     {
-        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);
+        std::lock_guard lock(_cooldownMutex);
         _cooldowns[spellId] = 0; // Initialize to 0, will be set when spell is cast
         // Store the cooldown duration for reference
         _cooldownDurations[spellId] = cooldownMs;
@@ -264,7 +264,7 @@ protected:
     {
         ClassAI::OnCombatStart(target);
 
-        _combatStartTime = getMSTime();
+        _combatStartTime = GameTime::GetGameTimeMS();
         _currentTarget = target;        _consecutiveFailedCasts = 0;
 
         // Reset performance metrics for this combat
@@ -284,7 +284,7 @@ protected:
     {
         ClassAI::OnCombatEnd();
 
-        uint32 combatDuration = getMSTime() - _combatStartTime;
+        uint32 combatDuration = GameTime::GetGameTimeMS() - _combatStartTime;
         _performanceMetrics.totalCombatTime += std::chrono::milliseconds(combatDuration);
 
         // Clean up combat state
@@ -450,7 +450,7 @@ private:
      */
     void ConsumeResourceInternal(uint32 amount)
     {
-        std::lock_guard<std::recursive_mutex> lock(_resourceMutex);
+        std::lock_guard lock(_resourceMutex);
 
         if constexpr (SimpleResource<ResourceType>)
         {
@@ -485,7 +485,7 @@ private:
     {
         if constexpr (ResourceTraits<ResourceType>::regenerates)
         {
-            std::lock_guard<std::recursive_mutex> lock(_resourceMutex);
+            std::lock_guard lock(_resourceMutex);
 
             if constexpr (SimpleResource<ResourceType>)
             {
@@ -505,7 +505,7 @@ private:
      */
     void CleanupExpiredDots()
     {
-        std::lock_guard<std::recursive_mutex> lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
+        std::lock_guard lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
         std::erase_if(_activeDots, [bot](const auto& pair) {
             Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);            return !target || !target->IsAlive();
@@ -832,7 +832,7 @@ protected:
 
         // Check if we have aggro
         if (target->GetVictim() != this->GetBot())        {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastTauntTime > 8000) // 8 second taunt cooldown
             {
                 // Use taunt ability (implementation depends on class)

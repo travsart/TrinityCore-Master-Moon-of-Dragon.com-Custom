@@ -105,7 +105,7 @@ public:
     void GenerateFragments(uint32 count)
     {
         _fragmentCount = std::min<uint32>(_fragmentCount + count, _maxFragments);
-        _lastFragmentTime = getMSTime();
+        _lastFragmentTime = GameTime::GetGameTimeMS();
     }
 
     bool ConsumeFragments(uint32 count = 1)
@@ -124,7 +124,7 @@ public:
     void UpdateFragments()
     {
         // Soul fragments expire after 20 seconds
-        if (_fragmentCount > 0 && getMSTime() - _lastFragmentTime > 20000)
+        if (_fragmentCount > 0 && GameTime::GetGameTimeMS() - _lastFragmentTime > 20000)
         {
             _fragmentCount = 0;
         }
@@ -160,17 +160,17 @@ public:
     void TriggerMomentum()
     {
         _momentumActive = true;
-        _momentumEndTime = getMSTime() + 6000; // 6 second buff
+        _momentumEndTime = GameTime::GetGameTimeMS() + 6000; // 6 second buff
     }
 
     bool HasMomentum() const
     {
-        return _momentumActive && getMSTime() < _momentumEndTime;
+        return _momentumActive && GameTime::GetGameTimeMS() < _momentumEndTime;
     }
 
     void UpdateMomentum()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check momentum expiry
         if (_momentumActive && currentTime >= _momentumEndTime)
@@ -205,7 +205,7 @@ public:
         {
             _felRushCharges--;
             if (_felRushCharges == 1) // Just consumed first charge
-                _lastFelRushRecharge = getMSTime();
+                _lastFelRushRecharge = GameTime::GetGameTimeMS();
             TriggerMomentum();
         }
     }
@@ -213,7 +213,7 @@ public:
     void UseVengefulRetreat()
     {
         _vengefulRetreatReady = false;
-        _lastVengefulRetreat = getMSTime();
+        _lastVengefulRetreat = GameTime::GetGameTimeMS();
         TriggerMomentum();
     }
 
@@ -291,7 +291,7 @@ public:
         // Handle Eye Beam channeling
         if (_eyeBeamChanneling)
         {
-            if (getMSTime() < _eyeBeamEndTime)
+            if (GameTime::GetGameTimeMS() < _eyeBeamEndTime)
                 return; // Still channeling
             else
             {
@@ -330,7 +330,7 @@ public:
         {
             this->CastSpell(bot, SPELL_IMMOLATION_AURA);
             _immolationAuraActive = true;
-            _immolationAuraEndTime = getMSTime() + 6000;
+            _immolationAuraEndTime = GameTime::GetGameTimeMS() + 6000;
         }
 
         // Use Darkness for group defense
@@ -405,7 +405,7 @@ protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
         uint32 currentFury = _resource;
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Priority 1: Metamorphosis for burst phase
         if (ShouldUseMetamorphosis() && this->CanUseAbility(SPELL_METAMORPHOSIS))
@@ -494,7 +494,7 @@ protected:
         {
             this->CastSpell(target, SPELL_EYE_BEAM);
             _eyeBeamChanneling = true;
-            _eyeBeamEndTime = getMSTime() + 2000;
+            _eyeBeamEndTime = GameTime::GetGameTimeMS() + 2000;
             this->ConsumeResource(SPELL_EYE_BEAM);
             GenerateFury(this->GetBot()->HasSpell(SPELL_BLIND_FURY) ? 50 : 30);
             return;
@@ -542,7 +542,7 @@ private:
 
     void UpdateHavocState()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Update soul fragments
         _soulFragments.UpdateFragments();
@@ -593,7 +593,7 @@ private:
         // Use for dodge when taking damage or in AoE
         return GetBot()->GetHealthPct() < 70.0f ||
                this->GetEnemiesInRange(8.0f) >= 2 ||
-               (getMSTime() - _lastBladeDance > 9000); // Use on CD for First Blood
+               (GameTime::GetGameTimeMS() - _lastBladeDance > 9000); // Use on CD for First Blood
     }
 
     bool ShouldPrepareEyeBeam() const
@@ -666,7 +666,7 @@ private:
     {
         // Demonic talent grants 6 second Meta after Eye Beam
         _metamorphosisActive = true;
-        _metamorphosisEndTime = getMSTime() + 6000;
+        _metamorphosisEndTime = GameTime::GetGameTimeMS() + 6000;
     }
 
     bool IsGroupTakingHeavyDamage() const
@@ -931,7 +931,7 @@ private:
                                 if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
                                     this->CastSpell(bot, SPELL_METAMORPHOSIS);
                                     this->_metamorphosisActive = true;
-                                    this->_metamorphosisEndTime = getMSTime() + 30000;
+                                    this->_metamorphosisEndTime = GameTime::GetGameTimeMS() + 30000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -979,12 +979,12 @@ private:
                                 if (target && this->CanCastSpell(SPELL_EYE_BEAM, target)) {
                                     this->CastSpell(target, SPELL_EYE_BEAM);
                                     this->_eyeBeamChanneling = true;
-                                    this->_eyeBeamEndTime = getMSTime() + 2000;
+                                    this->_eyeBeamEndTime = GameTime::GetGameTimeMS() + 2000;
                                     this->ConsumeResource(SPELL_EYE_BEAM);
                                     uint32 furyGen = this->GetBot()->HasSpell(SPELL_BLIND_FURY) ? 50 : 30;
                                     this->GenerateFury(furyGen);
                                     this->_furiousGazeActive = true;
-                                    this->_furiousGazeEndTime = getMSTime() + 10000;
+                                    this->_furiousGazeEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -1020,7 +1020,7 @@ private:
                             Action("Cast Blade Dance", [this](Player* bot) {
                                 if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
                                     this->CastSpell(bot, SPELL_BLADE_DANCE);
-                                    this->_lastBladeDance = getMSTime();
+                                    this->_lastBladeDance = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(SPELL_BLADE_DANCE);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -1035,7 +1035,7 @@ private:
                                 if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
                                     this->CastSpell(bot, SPELL_IMMOLATION_AURA);
                                     this->_immolationAuraActive = true;
-                                    this->_immolationAuraEndTime = getMSTime() + 6000;
+                                    this->_immolationAuraEndTime = GameTime::GetGameTimeMS() + 6000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -1107,7 +1107,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SPELL_ANNIHILATION, target)) {
                                     this->CastSpell(target, SPELL_ANNIHILATION);
-                                    this->_lastChaosStrike = getMSTime();
+                                    this->_lastChaosStrike = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(SPELL_CHAOS_STRIKE);
                                     if (rand() % 100 < 40) this->GenerateFury(20);
                                     if (rand() % 100 < 25) this->_soulFragments.GenerateFragments(1);
@@ -1128,7 +1128,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SPELL_CHAOS_STRIKE, target)) {
                                     this->CastSpell(target, SPELL_CHAOS_STRIKE);
-                                    this->_lastChaosStrike = getMSTime();
+                                    this->_lastChaosStrike = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(SPELL_CHAOS_STRIKE);
                                     if (rand() % 100 < 40) this->GenerateFury(20);
                                     if (rand() % 100 < 25) this->_soulFragments.GenerateFragments(1);
@@ -1152,7 +1152,7 @@ private:
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(SPELL_DEMONS_BITE, target)) {
                             this->CastSpell(target, SPELL_DEMONS_BITE);
-                            this->_lastDemonsBite = getMSTime();
+                            this->_lastDemonsBite = GameTime::GetGameTimeMS();
                             this->GenerateFury(rand() % 11 + 20);
                             return NodeStatus::SUCCESS;
                         }

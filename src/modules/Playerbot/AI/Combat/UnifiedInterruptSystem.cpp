@@ -64,7 +64,7 @@ UnifiedInterruptSystem::~UnifiedInterruptSystem()
 
 bool UnifiedInterruptSystem::Initialize()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (_initialized)
         return true;
@@ -81,7 +81,7 @@ bool UnifiedInterruptSystem::Initialize()
 
 void UnifiedInterruptSystem::Shutdown()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (!_initialized)
         return;
@@ -107,7 +107,7 @@ void UnifiedInterruptSystem::Update(Player* bot, uint32 diff)
     if (!bot || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -138,7 +138,7 @@ void UnifiedInterruptSystem::Update(Player* bot, uint32 diff)
     }
 
     // Clean up old cast entries (older than 30 seconds)
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     for (auto castIt = _activeCasts.begin(); castIt != _activeCasts.end();)
     {
         if (currentTime - castIt->second.castStartTime > 30000)
@@ -162,7 +162,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
     if (!bot || !ai)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -234,7 +234,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
 
 void UnifiedInterruptSystem::UnregisterBot(ObjectGuid botGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _registeredBots.erase(botGuid);
     _botAI.erase(botGuid);
@@ -260,7 +260,7 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
     if (!caster || !_initialized)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid casterGuid = caster->GetGUID();
     if (!caster)
@@ -272,7 +272,7 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
     CastingSpellInfo castInfo;
     castInfo.casterGuid = casterGuid;
     castInfo.spellId = spellId;
-    castInfo.castStartTime = getMSTime();
+    castInfo.castStartTime = GameTime::GetGameTimeMS();
     castInfo.castEndTime = castInfo.castStartTime + castTime;
     castInfo.interrupted = false;
 
@@ -288,7 +288,7 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
 
 void UnifiedInterruptSystem::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
@@ -303,7 +303,7 @@ void UnifiedInterruptSystem::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint3
 
 void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end() && !it->second.interrupted)
@@ -315,7 +315,7 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 
 // TODO Phase 4D: std::vector<CastingSpellInfo> UnifiedInterruptSystem::GetActiveCasts() const
 // TODO Phase 4D: {
-// TODO Phase 4D:     std::lock_guard<std::recursive_mutex> lock(_mutex);
+// TODO Phase 4D:     std::lock_guard lock(_mutex);
 // TODO Phase 4D: 
 // TODO Phase 4D:     std::vector<CastingSpellInfo> casts;
 // TODO Phase 4D:     casts.reserve(_activeCasts.size());
@@ -375,9 +375,9 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
 
     std::vector<UnifiedInterruptTarget> targets;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (auto const& [casterGuid, castInfo] : _activeCasts)
     {
@@ -433,7 +433,7 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
     if (!bot)
         return {};
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -554,7 +554,7 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
     if (!bot || !plan.target || !plan.capability)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _metrics.interruptAttempts.fetch_add(1, std::memory_order_relaxed);
 
@@ -585,11 +585,16 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
 
     // Execute based on method
     bool success = false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
 
     switch (plan.method)
     {
@@ -609,11 +614,16 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
 
         case InterruptMethod::SILENCE:
             success = ExecuteSilence(bot, caster);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
             break;
 
         case InterruptMethod::LINE_OF_SIGHT:
@@ -644,7 +654,7 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
 
         // Add to history
         InterruptHistoryEntry entry;
-        entry.timestamp = getMSTime();
+        entry.timestamp = GameTime::GetGameTimeMS();
         entry.botGuid = bot->GetGUID();
         if (!bot)
         {
@@ -689,7 +699,7 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
     if (!group)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _metrics.groupCoordinations.fetch_add(1, std::memory_order_relaxed);
 
@@ -739,7 +749,7 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
         assignment.spellId = castInfo.spellId;
         assignment.assignedBotGuid = assignedBot;
         assignment.backupBotGuid = (botIndex + 1 < availableBots.size()) ? availableBots[botIndex + 1] : ObjectGuid::Empty;
-        assignment.assignmentTime = getMSTime();
+        assignment.assignmentTime = GameTime::GetGameTimeMS();
         assignment.priority = castInfo.priority;
         assignment.executed = false;
 
@@ -751,7 +761,7 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
 
 bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _groupAssignments.find(botGuid);
     if (!bot)
@@ -776,7 +786,7 @@ bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& 
 
 BotInterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _groupAssignments.find(botGuid);
     if (it != _groupAssignments.end())
@@ -787,7 +797,7 @@ BotInterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGu
 
 void UnifiedInterruptSystem::ClearAssignments(ObjectGuid groupGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Clear all assignments for bots in this group
     for (auto it = _groupAssignments.begin(); it != _groupAssignments.end();)
@@ -807,7 +817,7 @@ ObjectGuid UnifiedInterruptSystem::GetNextInRotation(Group* group)
     if (!group)
         return ObjectGuid::Empty;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid groupGuid = group->GetGUID();
 
@@ -862,7 +872,7 @@ ObjectGuid UnifiedInterruptSystem::GetNextInRotation(Group* group)
 
 void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _registeredBots.find(botGuid);
     if (!bot)
@@ -902,7 +912,7 @@ void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellI
 
 void UnifiedInterruptSystem::ResetRotation(ObjectGuid groupGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _rotationIndex[groupGuid] = 0;
 }
@@ -916,7 +926,7 @@ bool UnifiedInterruptSystem::HandleFailedInterrupt(Player* bot, Unit* target, ui
     if (!bot || !target)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     FallbackMethod method = SelectFallbackMethod(bot, target, failedSpellId);
 
@@ -936,7 +946,7 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     if (!bot || !target)
         return FallbackMethod::NONE;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -1047,7 +1057,7 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
     if (!bot || !target)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -1117,7 +1127,7 @@ UnifiedInterruptMetrics UnifiedInterruptSystem::GetMetrics() const
 
 BotInterruptStats UnifiedInterruptSystem::GetBotStats(ObjectGuid botGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     BotInterruptStats stats;
     stats.botGuid = botGuid;
@@ -1144,7 +1154,7 @@ BotInterruptStats UnifiedInterruptSystem::GetBotStats(ObjectGuid botGuid) const
 
 std::vector<InterruptHistoryEntry> UnifiedInterruptSystem::GetInterruptHistory(uint32 count) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     std::vector<InterruptHistoryEntry> history;
 
@@ -1163,7 +1173,7 @@ std::vector<InterruptHistoryEntry> UnifiedInterruptSystem::GetInterruptHistory(u
 
 void UnifiedInterruptSystem::ResetMetrics()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _metrics.spellsDetected.store(0, std::memory_order_relaxed);
     _metrics.interruptAttempts.store(0, std::memory_order_relaxed);
@@ -1186,13 +1196,18 @@ uint32 UnifiedInterruptSystem::CalculateThreatLevel(CastingSpellInfo const& cast
     // Threat level based on priority and remaining time
     uint32 baseThreat = static_cast<uint32>(castInfo.priority) * 100;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 remainingTime = (castInfo.castEndTime > currentTime) ? (castInfo.castEndTime - currentTime) : 0;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return;
+
+}
 
     // Threat increases as cast nears completion
     if (remainingTime < 500)
@@ -1276,7 +1291,7 @@ bool UnifiedInterruptSystem::ExecuteStun(Player* bot, Unit* target)
     if (!bot || !target)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -1318,7 +1333,7 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
     if (!bot || !target)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -1327,11 +1342,16 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
         return;
     }
     auto it = _registeredBots.find(botGuid);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+    return;
+
+}
     if (it == _registeredBots.end())
         return false;
 
@@ -1421,7 +1441,7 @@ bool UnifiedInterruptSystem::ExecuteLOSBreak(Player* bot, Unit* target)
         return false;
 
     // Request movement to break LOS
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)
@@ -1463,7 +1483,7 @@ bool UnifiedInterruptSystem::ExecuteRangeEscape(Player* bot, Unit* target)
         return false;
 
     // Move away from target
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     if (!bot)

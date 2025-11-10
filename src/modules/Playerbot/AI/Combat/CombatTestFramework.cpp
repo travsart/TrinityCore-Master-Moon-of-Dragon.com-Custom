@@ -293,7 +293,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
 
     // Store in history
     {
-        std::lock_guard<std::recursive_mutex> lock(_resultMutex);
+        std::lock_guard lock(_resultMutex);
         _scenarioHistory[scenario.name].push_back(result);
         if (_scenarioHistory[scenario.name].size() > MAX_HISTORY_ENTRIES)
             _scenarioHistory[scenario.name].erase(_scenarioHistory[scenario.name].begin());
@@ -786,14 +786,14 @@ bool CombatTestFramework::SaveTestResults(const TestResult& result, const std::s
 
 std::vector<TestResult> CombatTestFramework::LoadTestHistory(const std::string& scenarioName) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_resultMutex);
+    std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
     return it != _scenarioHistory.end() ? it->second : std::vector<TestResult>();
 }
 
 void CombatTestFramework::LogTestEvent(const std::string& event, const std::string& details)
 {
-    std::lock_guard<std::recursive_mutex> lock(_logMutex);
+    std::lock_guard lock(_logMutex);
 
     auto now = std::chrono::steady_clock::now();
     auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
@@ -910,7 +910,7 @@ TestScenario CombatTestFramework::CreateBossEncounterScenario(uint32 bossId)
 
 float CombatTestFramework::GetAverageExecutionTime(const std::string& scenarioName) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_resultMutex);
+    std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
     if (it == _scenarioHistory.end() || it->second.empty())
         return 0.0f;
@@ -924,7 +924,7 @@ float CombatTestFramework::GetAverageExecutionTime(const std::string& scenarioNa
 
 float CombatTestFramework::GetScenarioSuccessRate(const std::string& scenarioName) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_resultMutex);
+    std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
     if (it == _scenarioHistory.end() || it->second.empty())
         return 0.0f;
@@ -944,7 +944,7 @@ std::vector<std::string> CombatTestFramework::GetMostFailedScenarios(uint32 coun
     std::vector<std::pair<std::string, float>> failureRates;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_resultMutex);
+        std::lock_guard lock(_resultMutex);
         for (const auto& [name, history] : _scenarioHistory)
         {
             if (!history.empty())

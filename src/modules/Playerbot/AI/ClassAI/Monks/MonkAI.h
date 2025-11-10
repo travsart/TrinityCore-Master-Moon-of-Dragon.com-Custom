@@ -100,7 +100,7 @@ private:
             if (oldChi + amount > maximum.load()) {
                 wastedChi.store(wastedChi.load() + (oldChi + amount - maximum.load()));
             }
-            lastGeneration.store(getMSTime());
+            lastGeneration.store(GameTime::GetGameTimeMS());
             generationHistory.push(amount);
             while (generationHistory.size() > 10)
                 generationHistory.pop();
@@ -148,7 +148,7 @@ private:
             if (current.load() >= amount) {
                 current.store(current.load() - amount);
                 totalSpent.store(totalSpent.load() + amount);
-                spendingHistory.push({amount, getMSTime()});
+                spendingHistory.push({amount, GameTime::GetGameTimeMS()});
                 while (spendingHistory.size() > 20)
                     spendingHistory.pop();
             }
@@ -160,7 +160,7 @@ private:
             uint32 newEnergy = std::min(static_cast<uint32>(oldEnergy + regen), maximum.load());
             current.store(newEnergy);
             totalRegen.store(totalRegen.load() + (newEnergy - oldEnergy));
-            lastRegen.store(getMSTime());
+            lastRegen.store(GameTime::GetGameTimeMS());
         }
 
         float GetEnergyPercent() const {
@@ -209,7 +209,7 @@ private:
         void AddStagger(uint32 damage) {
             currentStagger.store(currentStagger.load() + damage);
             totalAbsorbed.store(totalAbsorbed.load() + damage);
-            staggerHistory.push({damage, getMSTime()});
+            staggerHistory.push({damage, GameTime::GetGameTimeMS()});
             while (staggerHistory.size() > 30)
                 staggerHistory.pop();
         }
@@ -260,7 +260,7 @@ private:
         void ChangeForm(MartialForm newForm) {
             if (currentForm.load() != newForm) {
                 currentForm.store(newForm);
-                lastFormChange.store(getMSTime());
+                lastFormChange.store(GameTime::GetGameTimeMS());
                 formChanges.store(formChanges.load() + 1);
             }
         }
@@ -394,7 +394,7 @@ private:
                 target.priority = CalculatePriority(ally);
                 target.hasRenewingMist = false; // Check for actual aura
                 target.hasEnvelopingMist = false; // Check for actual aura
-                target.timestamp = getMSTime();
+                target.timestamp = GameTime::GetGameTimeMS();
 
                 healQueue.push(target);
             }

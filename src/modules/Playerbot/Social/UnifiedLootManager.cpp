@@ -425,7 +425,7 @@ void UnifiedLootManager::ProcessCompleteLootFlow(Group* group, Loot* loot)
 {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
 
-    auto startTime = getMSTime();
+    auto startTime = GameTime::GetGameTimeMS();
     _totalOperations++;
 
     // Step 1: Initiate session (Coordination)
@@ -437,7 +437,7 @@ void UnifiedLootManager::ProcessCompleteLootFlow(Group* group, Loot* loot)
     // Step 3: Execute distribution (Distribution)
     // This happens when players roll
 
-    auto endTime = getMSTime();
+    auto endTime = GameTime::GetGameTimeMS();
     _totalProcessingTimeMs += (endTime - startTime);
 
     TC_LOG_DEBUG("playerbot.loot", "Processed complete loot flow in {} ms", endTime - startTime);

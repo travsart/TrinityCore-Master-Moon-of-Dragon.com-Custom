@@ -136,11 +136,16 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 {
     if (!ai || !ai->GetBot())
         return;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
+
+    return nullptr;
+
+}
 
     Player* bot = ai->GetBot();
             if (!bot)
@@ -202,7 +207,7 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     }
                  bot->GetName(), healthPct, manaPct, NeedsFood(ai), NeedsDrink(ai));
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Check for rest timeout (prevent infinite resting)
     if (_restStartTime > 0 && (currentTime - _restStartTime) > _maxRestTime)
@@ -296,11 +301,16 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                              return;
                          }
                          bot->GetName(), food->GetTemplate()->GetName(DEFAULT_LOCALE));
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
             if (EatFood(ai, food))
             {

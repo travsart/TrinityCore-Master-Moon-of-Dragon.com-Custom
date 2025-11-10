@@ -211,7 +211,7 @@ public:
     void SummonGargoyle()
     {
         _gargoyleActive = true;
-        _gargoyleEndTime = getMSTime() + 30000; // 30 sec duration
+        _gargoyleEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec duration
     }
 
     bool IsGargoyleActive() const { return _gargoyleActive; }
@@ -219,7 +219,7 @@ public:
     void ActivateDarkTransformation()
     {
         _darkTransformationActive = true;
-        _darkTransformationEndTime = getMSTime() + 15000; // 15 sec duration
+        _darkTransformationEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     bool IsDarkTransformationActive() const { return _darkTransformationActive; }
@@ -234,7 +234,7 @@ public:
         _ghoulActive = (pet && pet->IsAlive());
 
         // Update gargoyle
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (_gargoyleActive && now >= _gargoyleEndTime)
         {
             _gargoyleActive = false;
@@ -322,7 +322,7 @@ protected:
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
         {
             this->CastSpell(target, OUTBREAK);
-            _lastOutbreakTime = getMSTime();
+            _lastOutbreakTime = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -572,7 +572,7 @@ private:
             this->_resource.runicPower = this->GetBot()->GetPower(POWER_RUNIC_POWER);
 
         // Update runes (simplified)
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         static uint32 lastRuneUpdate = 0;
         if (now - lastRuneUpdate > 10000) // Every 10 seconds
         {

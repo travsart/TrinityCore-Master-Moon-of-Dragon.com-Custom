@@ -80,7 +80,7 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
         _updateCount = 0;
     }
 
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     try
     {
@@ -199,7 +199,7 @@ void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMas
 void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
 {
     static uint32 lastDebugLog = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastDebugLog > 5000); // Log every 5 seconds
 
     // Update BotSpawner for population management and character creation

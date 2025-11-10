@@ -30,7 +30,7 @@ namespace Playerbot
 
     bool ConfigManager::Initialize()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (_initialized)
             return true;
@@ -222,7 +222,7 @@ namespace Playerbot
 
     bool ConfigManager::SetValue(std::string const& key, ConfigValue const& value)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         if (!_initialized)
         {
@@ -266,7 +266,7 @@ namespace Playerbot
 
     bool ConfigManager::GetBool(std::string const& key, bool defaultValue) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -285,7 +285,7 @@ namespace Playerbot
 
     int32 ConfigManager::GetInt(std::string const& key, int32 defaultValue) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -304,7 +304,7 @@ namespace Playerbot
 
     uint32 ConfigManager::GetUInt(std::string const& key, uint32 defaultValue) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -323,7 +323,7 @@ namespace Playerbot
 
     float ConfigManager::GetFloat(std::string const& key, float defaultValue) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -342,7 +342,7 @@ namespace Playerbot
 
     std::string ConfigManager::GetString(std::string const& key, std::string const& defaultValue) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -361,19 +361,19 @@ namespace Playerbot
 
     void ConfigManager::RegisterCallback(std::string const& key, ChangeCallback callback)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _callbacks[key].push_back(callback);
     }
 
     std::map<std::string, ConfigManager::ConfigEntry> ConfigManager::GetAllEntries() const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _entries;
     }
 
     void ConfigManager::ResetToDefaults()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         TC_LOG_INFO("playerbot.config", "Resetting all configuration to defaults");
 
@@ -385,7 +385,7 @@ namespace Playerbot
 
     bool ConfigManager::SaveToFile(std::string const& filePath) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         std::string path = filePath.empty() ? "playerbots_runtime.conf" : filePath;
 
@@ -429,7 +429,7 @@ namespace Playerbot
 
     bool ConfigManager::LoadFromFile(std::string const& filePath)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         std::ifstream file(filePath);
         if (!file.is_open())
@@ -511,13 +511,13 @@ namespace Playerbot
 
     bool ConfigManager::HasKey(std::string const& key) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         return _entries.find(key) != _entries.end();
     }
 
     std::optional<ConfigManager::ConfigEntry> ConfigManager::GetEntry(std::string const& key) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())

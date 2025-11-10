@@ -487,11 +487,16 @@ void GuildIntegration::ShareGuildInformation(Player* player, const std::string& 
             "The guild calendar has upcoming events marked."
         };
     }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+    return nullptr;
+
+}
 
     if (!infoMessages.empty())
     {
@@ -545,7 +550,7 @@ void GuildIntegration::AutomateGuildBankInteractions(Player* player)
         return;
     }
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     auto& state = _playerStates[playerGuid];
 
     // Check cooldown
@@ -658,11 +663,16 @@ void GuildIntegration::DepositItemsToGuildBank(Player* player)
                     }
                     }
                     player->GetName(), item->GetEntry());
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+    return;
+
+}
 
         if (itemsToDeposit.size() >= 3) // Limit deposits per session
             break;
@@ -793,11 +803,16 @@ if (!player)
 }
 
 void GuildIntegration::ScheduleGuildActivities(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+    return nullptr;
+
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
@@ -815,16 +830,26 @@ void GuildIntegration::ScheduleGuildActivities(Player* player)
 }
 
 void GuildIntegration::ManageGuildCalendar(Player* player)
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-        return nullptr;
-    }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-    return nullptr;
-}
+
+    if (!player)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+        return nullptr;
+
+    }
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+    return nullptr;
+
+}
     if (!player)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
@@ -874,7 +899,7 @@ void GuildIntegration::OrganizeGuildRuns(Player* player)
 
 void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& profile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
     _playerProfiles[playerGuid] = profile;
 if (!player)
 {
@@ -885,7 +910,7 @@ if (!player)
 
 GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
     auto it = _playerProfiles.find(playerGuid);
     if (it != _playerProfiles.end())
     if (!player)
@@ -900,7 +925,7 @@ GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGu
 
 GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
     auto it = _playerParticipation.find(playerGuid);
     if (!player)
     {
@@ -915,7 +940,7 @@ GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uin
 
 void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
 
     auto& participation = _playerParticipation[playerGuid];
         if (!player)
@@ -929,7 +954,7 @@ void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivity
             return nullptr;
         }
     participation.activityCounts[activityType]++;
-    participation.lastActivity = getMSTime();
+    participation.lastActivity = GameTime::GetGameTimeMS();
 
     // Update specific metrics based on activity type
     switch (activityType)
@@ -1250,16 +1275,26 @@ bool GuildIntegration::ShouldRespondToMessage(Player* player, const GuildChatMes
         return;
     }
     GuildProfile profile = GetGuildProfile(playerGuid);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuild");
+
+    return;
+
+}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
+
+    return nullptr;
+
+}
 
     // Check if message requires response
     if (message.requiresResponse)
@@ -1389,14 +1424,19 @@ void GuildIntegration::CelebrateGuildAchievements(Player* player)
 
 GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+
+    return;
+
+}
         return it->second;
 
     GuildMetrics metrics;
@@ -1410,7 +1450,7 @@ GuildIntegration::GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guild
     combinedMetrics.Reset();
 
     // Aggregate metrics from all bots in the guild
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
 
     for (const auto& metricsPair : _playerMetrics)
     {
@@ -1502,7 +1542,7 @@ if (!player)
     // Check if it's an appropriate time to participate in guild chat
     // Consider time of day, recent activity, etc.
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     auto& chatIntel = _chatIntelligence[player->GetGUID().GetCounter()];
     if (!player)
     {
@@ -1759,7 +1799,7 @@ void GuildIntegration::OfferGuildAssistance(Player* player, const std::string& a
 
 void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType activity, bool wasSuccessful)
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
 
     auto& metrics = _playerMetrics[playerGuid];
     metrics.guildInteractions++;
@@ -1817,7 +1857,7 @@ void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType a
 void GuildIntegration::Update(uint32 diff)
 {
     static uint32 lastUpdate = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     if (currentTime - lastUpdate < GUILD_UPDATE_INTERVAL)
         return;
@@ -1836,9 +1876,9 @@ void GuildIntegration::Update(uint32 diff)
 
 void GuildIntegration::UpdateGuildParticipation()
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Apply social score decay for inactive players
     for (auto& participationPair : _playerParticipation)
@@ -1862,9 +1902,9 @@ void GuildIntegration::ProcessGuildEvents()
 
 void GuildIntegration::CleanupGuildData()
 {
-    std::lock_guard<std::recursive_mutex> lock(_guildMutex);
+    std::lock_guard lock(_guildMutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Clean up old participation data for inactive players
     for (auto it = _playerParticipation.begin(); it != _playerParticipation.end();)

@@ -205,7 +205,7 @@ protected:
         if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
             bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
-            _lastTaunt = getMSTime();
+            _lastTaunt = GameTime::GetGameTimeMS();
         }
     }
 
@@ -219,7 +219,7 @@ protected:
         if (_hasShieldEquipped && this->CanUseAbility(SPELL_SHIELD_SLAM))
         {
             this->CastSpell(target, SPELL_SHIELD_SLAM);
-            _lastShieldSlam = getMSTime();
+            _lastShieldSlam = GameTime::GetGameTimeMS();
             return;
         }
 
@@ -304,7 +304,7 @@ protected:
     void UpdateProtectionState(::Unit* target)
     {
         Player* bot = this->GetBot();
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check emergency status
         _emergencyMode = bot->GetHealthPct() < 40.0f;
@@ -331,7 +331,7 @@ protected:
 
         this->CastSpell(this->GetBot(), SPELL_SHIELD_BLOCK);
         _shieldBlockCharges = std::min(_shieldBlockCharges + 1, 2u);
-        _lastShieldBlock = getMSTime();
+        _lastShieldBlock = GameTime::GetGameTimeMS();
     }
 
     void CheckShieldStatus()
@@ -363,7 +363,7 @@ protected:
         if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
             bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
-            _lastTaunt = getMSTime();
+            _lastTaunt = GameTime::GetGameTimeMS();
         }
     }
 

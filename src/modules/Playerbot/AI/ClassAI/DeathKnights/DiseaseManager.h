@@ -38,7 +38,7 @@ struct DiseaseInfo
 
     DiseaseInfo() : type(DiseaseType::BLOOD_PLAGUE), spellId(0), expirationTime(0), remainingTime(0), stacks(0), needsRefresh(false) {}
     DiseaseInfo(DiseaseType t, uint32 spell, uint32 duration)
-        : type(t), spellId(spell), expirationTime(getMSTime() + duration), remainingTime(duration), stacks(1), needsRefresh(false) {}
+        : type(t), spellId(spell), expirationTime(GameTime::GetGameTimeMS() + duration), remainingTime(duration), stacks(1), needsRefresh(false) {}
 
     bool IsActive() const { return remainingTime > 0; }
 };

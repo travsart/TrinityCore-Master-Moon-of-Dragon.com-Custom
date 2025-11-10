@@ -66,7 +66,7 @@ void AuctionMaterialsBridge::Update(::Player* player, uint32 diff)
         return;
 
     // Throttle updates
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     auto lastUpdateItr = _lastUpdateTimes.find(playerGuid);
     if (lastUpdateItr != _lastUpdateTimes.end())
     {

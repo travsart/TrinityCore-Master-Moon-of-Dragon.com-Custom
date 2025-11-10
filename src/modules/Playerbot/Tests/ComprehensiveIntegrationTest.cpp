@@ -195,7 +195,7 @@ TEST_CASE("Integration: Group coordination hierarchy", "[integration][phase3][co
         objective.priority = 100;
         objective.requiredBots = 40;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 3600000;
 
         zone->CreateObjective(objective);
@@ -419,7 +419,7 @@ TEST_CASE("Integration: Complete raid scenario", "[integration][scenario][raid]"
         objective.priority = 100;
         objective.requiredBots = 40;
         objective.assignedBots = 0;
-        objective.timestamp = getMSTime();
+        objective.timestamp = GameTime::GetGameTimeMS();
         objective.expirationTime = objective.timestamp + 3600000;
 
         zone->CreateObjective(objective);

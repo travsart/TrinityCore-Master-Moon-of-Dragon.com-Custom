@@ -142,7 +142,7 @@ InterruptRotationManager::~InterruptRotationManager()
 
 void InterruptRotationManager::Update(uint32 diff)
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Process delayed interrupts
     ProcessDelayedInterrupts();
@@ -209,7 +209,7 @@ void InterruptRotationManager::RegisterCast(Unit* caster, uint32 spellId, uint32
     if (IsTrackingCast(caster->GetGUID(), spellId))
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Calculate cast end time
     if (castTime == 0 && it != s_interruptDatabase.end())
@@ -450,7 +450,7 @@ ObjectGuid InterruptRotationManager::GetNextInRotation() const
 
 void InterruptRotationManager::MarkInterruptUsed(ObjectGuid bot, uint32 timeMs)
 {
-    uint32 currentTime = timeMs ? timeMs : getMSTime();
+    uint32 currentTime = timeMs ? timeMs : GameTime::GetGameTimeMS();
 
     for (auto& interrupter : _interrupters)
     {
@@ -785,14 +785,14 @@ void InterruptRotationManager::ScheduleDelayedInterrupt(ObjectGuid bot, ObjectGu
         return;
     }
     delayed.spellId = spellId;
-    delayed.executeTime = getMSTime() + delayMs;
+    delayed.executeTime = GameTime::GetGameTimeMS() + delayMs;
 
     _delayedInterrupts.push_back(delayed);
 }
 
 void InterruptRotationManager::ProcessDelayedInterrupts()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     auto it = _delayedInterrupts.begin();
     while (it != _delayedInterrupts.end())
@@ -958,7 +958,7 @@ void InterruptRotationManager::RecordInterruptAttempt(uint32 spellId, bool succe
 
 uint32 InterruptRotationManager::GetTimeToComplete(const ActiveCast& cast) const
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     if (cast.castEndTime > currentTime)
         return cast.castEndTime - currentTime;
@@ -983,7 +983,7 @@ void InterruptRotationManager::Reset()
 
 void InterruptRotationManager::CleanupExpiredData()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Remove completed or expired casts
     _activeCasts.erase(

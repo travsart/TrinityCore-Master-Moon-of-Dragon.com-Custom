@@ -97,7 +97,7 @@ struct QuestObjectiveData
     QuestObjectiveData(uint32 qId, uint32 index, QuestObjectiveType t, uint32 tId, uint32 required)
         : questId(qId), objectiveIndex(index), type(t), targetId(tId), requiredCount(required)
         , currentCount(0), searchRadius(50.0f), status(ObjectiveStatus::NOT_STARTED)
-        , lastUpdateTime(getMSTime()), timeSpent(0), retryCount(0)
+        , lastUpdateTime(GameTime::GetGameTimeMS()), timeSpent(0), retryCount(0)
         , isOptional(false), requiresGroup(false) {}
 };
 
@@ -121,8 +121,8 @@ struct QuestProgressData
     Position questGiverLocation;
 
     QuestProgressData(uint32 qId, uint32 bGuid) : questId(qId), botGuid(bGuid)
-        , strategy(QuestCompletionStrategy::EFFICIENT_COMPLETION), startTime(getMSTime())
-        , lastUpdateTime(getMSTime()), estimatedCompletionTime(1200000) // 20 minutes
+        , strategy(QuestCompletionStrategy::EFFICIENT_COMPLETION), startTime(GameTime::GetGameTimeMS())
+        , lastUpdateTime(GameTime::GetGameTimeMS()), estimatedCompletionTime(1200000) // 20 minutes
         , completionPercentage(0.0f), isStuck(false), stuckTime(0)
         , consecutiveFailures(0), requiresTurnIn(true), questGiverGuid(0) {}
 };

@@ -70,7 +70,7 @@ struct TransitionEvent {
     BotInitState fromState;
     BotInitState toState;
     EventType triggerEvent;
-    uint64_t timestamp;      // getMSTime()
+    uint64_t timestamp;      // GameTime::GetGameTimeMS()
     std::string_view reason; // Human-readable reason
     bool wasForced;          // True if transition was forced
 

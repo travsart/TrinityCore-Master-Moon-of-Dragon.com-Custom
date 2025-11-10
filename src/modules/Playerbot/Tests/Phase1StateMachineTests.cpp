@@ -284,14 +284,14 @@ TEST_F(Phase1StateMachineTest, InitStateInfo_IsTerminal) {
 
 TEST_F(Phase1StateMachineTest, InitStateInfo_TimeTracking) {
     InitStateInfo info;
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     info.stateStartTime = startTime;
 
     // Wait 100ms
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 timeInState = info.GetTimeInCurrentState(currentTime);
 
     EXPECT_GE(timeInState, 100u) << "Should have spent at least 100ms in state";

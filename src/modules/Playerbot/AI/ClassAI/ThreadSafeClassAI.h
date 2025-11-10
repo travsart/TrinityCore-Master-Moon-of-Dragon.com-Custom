@@ -96,7 +96,7 @@ public:
     public:
         bool IsOnCooldown(uint32 spellId) const
         {
-            uint64 currentTime = getMSTime();
+            uint64 currentTime = GameTime::GetGameTimeMS();
             typename CooldownMap::const_accessor accessor;
             if (_cooldowns.find(accessor, spellId))
             {
@@ -107,7 +107,7 @@ public:
 
         void SetCooldown(uint32 spellId, uint32 durationMs)
         {
-            uint64 endTime = getMSTime() + durationMs;
+            uint64 endTime = GameTime::GetGameTimeMS() + durationMs;
             typename CooldownMap::accessor accessor;
             _cooldowns.insert(accessor, spellId);
             accessor->second = endTime;
@@ -115,7 +115,7 @@ public:
 
         uint32 GetRemainingCooldown(uint32 spellId) const
         {
-            uint64 currentTime = getMSTime();
+            uint64 currentTime = GameTime::GetGameTimeMS();
             typename CooldownMap::const_accessor accessor;
             if (_cooldowns.find(accessor, spellId))
             {
@@ -127,7 +127,7 @@ public:
 
         void UpdateCooldowns()
         {
-            uint64 currentTime = getMSTime();
+            uint64 currentTime = GameTime::GetGameTimeMS();
             for (auto it = _cooldowns.begin(); it != _cooldowns.end(); )
             {
                 if (it->second <= currentTime)

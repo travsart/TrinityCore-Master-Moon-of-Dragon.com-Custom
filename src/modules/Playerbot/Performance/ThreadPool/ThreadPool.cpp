@@ -134,7 +134,7 @@ bool WorkStealingQueue<T>::Steal(T& item)
 template<typename T>
 void WorkStealingQueue<T>::Expand()
 {
-    std::lock_guard<std::recursive_mutex> lock(_expansionMutex);
+    std::lock_guard lock(_expansionMutex);
 
     size_t oldCapacity = _capacity.load(std::memory_order_relaxed);
     size_t newCapacity = std::min(oldCapacity * 2, MAX_CAPACITY);
@@ -595,7 +595,7 @@ void ThreadPool::EnsureWorkersCreated()
         return;
 
     // Slow path: Need to create workers (with locking for thread-safety)
-    std::lock_guard<std::recursive_mutex> lock(_workerCreationMutex);
+    std::lock_guard lock(_workerCreationMutex);
 
     // Double-check after acquiring lock (another thread may have created workers)
     if (_workersCreated.load(std::memory_order_relaxed))
@@ -898,7 +898,7 @@ static std::recursive_mutex g_threadPoolMutex;
 
 ThreadPool& GetThreadPool()
 {
-    std::lock_guard<std::recursive_mutex> lock(g_threadPoolMutex);
+    std::lock_guard lock(g_threadPoolMutex);
     if (!g_threadPool)
     {
         ThreadPool::Configuration config;

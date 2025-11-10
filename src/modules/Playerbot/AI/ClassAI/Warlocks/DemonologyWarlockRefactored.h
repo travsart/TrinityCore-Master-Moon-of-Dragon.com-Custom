@@ -163,7 +163,7 @@ public:
     void SummonDreadstalkers()
     {
         _dreadstalkerActive = true;
-        _dreadstalkerEndTime = getMSTime() + 12000; // 12 sec duration
+        _dreadstalkerEndTime = GameTime::GetGameTimeMS() + 12000; // 12 sec duration
     }
 
     bool AreDreadstalkersActive() const { return _dreadstalkerActive; }
@@ -171,7 +171,7 @@ public:
     void SummonVilefiend()
     {
         _vileFiendActive = true;
-        _vileFiendEndTime = getMSTime() + 15000; // 15 sec duration
+        _vileFiendEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     bool IsVilefiendActive() const { return _vileFiendActive; }
@@ -179,7 +179,7 @@ public:
     void SummonTyrant()
     {
         _tyrantActive = true;
-        _tyrantEndTime = getMSTime() + 15000; // 15 sec base duration
+        _tyrantEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec base duration
     }
 
     bool IsTyrantActive() const { return _tyrantActive; }
@@ -195,7 +195,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Dreadstalkers
         if (_dreadstalkerActive && now >= _dreadstalkerEndTime)
@@ -304,7 +304,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), SUMMON_DEMONIC_TYRANT);
             _demonTracker.SummonTyrant();
-            _lastTyrantTime = getMSTime();
+            _lastTyrantTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Demonic Tyrant ({} demons)", demonCount);
             return;
         }

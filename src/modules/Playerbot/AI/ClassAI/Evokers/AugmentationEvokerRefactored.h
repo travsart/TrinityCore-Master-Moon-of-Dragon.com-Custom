@@ -60,21 +60,21 @@ public:
     std::unordered_map<ObjectGuid, uint32> _ebonMightTargets;
     std::unordered_map<ObjectGuid, uint32> _prescienceTargets;
 
-    void ApplyEbonMight(ObjectGuid guid) { _ebonMightTargets[guid] = getMSTime() + 10000; }
-    void ApplyPrescience(ObjectGuid guid) { _prescienceTargets[guid] = getMSTime() + 18000; }
+    void ApplyEbonMight(ObjectGuid guid) { _ebonMightTargets[guid] = GameTime::GetGameTimeMS() + 10000; }
+    void ApplyPrescience(ObjectGuid guid) { _prescienceTargets[guid] = GameTime::GetGameTimeMS() + 18000; }
 
     bool HasEbonMight(ObjectGuid guid) const {
         auto it = _ebonMightTargets.find(guid);
-        return it != _ebonMightTargets.end() && getMSTime() < it->second;
+        return it != _ebonMightTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     bool HasPrescience(ObjectGuid guid) const {
         auto it = _prescienceTargets.find(guid);
-        return it != _prescienceTargets.end() && getMSTime() < it->second;
+        return it != _prescienceTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
     void Update() {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _ebonMightTargets.begin(); it != _ebonMightTargets.end();)
             it = (now >= it->second) ? _ebonMightTargets.erase(it) : ++it;
         for (auto it = _prescienceTargets.begin(); it != _prescienceTargets.end();)

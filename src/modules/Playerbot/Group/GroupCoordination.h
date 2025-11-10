@@ -78,7 +78,7 @@ struct CoordinationTarget
 
     CoordinationTarget(ObjectGuid guid, uint32 prio = 100, ThreatLevel threat = ThreatLevel::MEDIUM)
         : targetGuid(guid), priority(prio), threatLevel(threat), estimatedTimeToKill(0.0f)
-        , lastSeen(getMSTime()) {}
+        , lastSeen(GameTime::GetGameTimeMS()) {}
 };
 
 struct MovementWaypoint
@@ -229,7 +229,7 @@ private:
         uint32 priority;
 
         CoordinationCommandData(CoordinationCommand cmd, const std::vector<uint32>& tgts, uint32 issuer, uint32 prio = 100)
-            : command(cmd), targets(tgts), issuerGuid(issuer), timestamp(getMSTime()), priority(prio) {}
+            : command(cmd), targets(tgts), issuerGuid(issuer), timestamp(GameTime::GetGameTimeMS()), priority(prio) {}
     };
 
     std::priority_queue<CoordinationCommandData> _commandQueue;
@@ -244,14 +244,14 @@ private:
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> cooldownMutex;
 
         bool IsSpellOnCooldown(uint32 spellId) const {
-            std::lock_guard<std::recursive_mutex> lock(cooldownMutex);
+            std::lock_guard lock(cooldownMutex);
             auto it = spellCooldowns.find(spellId);
-            return it != spellCooldowns.end() && it->second > getMSTime();
+            return it != spellCooldowns.end() && it->second > GameTime::GetGameTimeMS();
         }
 
         void SetSpellCooldown(uint32 spellId, uint32 duration) {
-            std::lock_guard<std::recursive_mutex> lock(cooldownMutex);
-            spellCooldowns[spellId] = getMSTime() + duration;
+            std::lock_guard lock(cooldownMutex);
+            spellCooldowns[spellId] = GameTime::GetGameTimeMS() + duration;
         }
     } _cooldownCoordination;
 

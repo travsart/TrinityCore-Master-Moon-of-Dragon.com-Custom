@@ -97,7 +97,7 @@ public:
     {
         _clearcastingActive = true;
         _clearcastingStacks = std::min(_clearcastingStacks + stacks, 3u); // Max 3 stacks
-        _clearcastingEndTime = getMSTime() + 15000; // 15 sec duration
+        _clearcastingEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
     void ConsumeProc()
@@ -111,7 +111,7 @@ public:
 
     [[nodiscard]] bool IsActive() const
     {
-        return _clearcastingActive && getMSTime() < _clearcastingEndTime;
+        return _clearcastingActive && GameTime::GetGameTimeMS() < _clearcastingEndTime;
     }
 
     [[nodiscard]] uint32 GetStacks() const { return _clearcastingStacks; }
@@ -124,7 +124,7 @@ public:
         if (Aura* aura = bot->GetAura(263725)) // Clearcasting buff ID
         {
             _clearcastingActive = true;
-            _clearcastingStacks = aura->GetStackAmount();            _clearcastingEndTime = getMSTime() + aura->GetDuration();        }
+            _clearcastingStacks = aura->GetStackAmount();            _clearcastingEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _clearcastingActive = false;
@@ -263,13 +263,13 @@ private:
             return;
 
         // Arcane Surge state
-        if (_arcaneSurgeActive && getMSTime() >= _arcaneSurgeEndTime)
+        if (_arcaneSurgeActive && GameTime::GetGameTimeMS() >= _arcaneSurgeEndTime)
             _arcaneSurgeActive = false;
 
         if (bot->HasAura(ARCANE_SURGE))
         {
             _arcaneSurgeActive = true;
-            if (Aura* aura = bot->GetAura(ARCANE_SURGE))                _arcaneSurgeEndTime = getMSTime() + aura->GetDuration();        }
+            if (Aura* aura = bot->GetAura(ARCANE_SURGE))                _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -288,7 +288,7 @@ private:
             {
                 this->CastSpell(bot, ARCANE_SURGE);
                 _arcaneSurgeActive = true;
-                _arcaneSurgeEndTime = getMSTime() + 15000; // 15 sec
+                _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec
                 return;
             }
         }
@@ -380,7 +380,7 @@ private:
             {
                 this->CastSpell(bot, ARCANE_SURGE);
                 _arcaneSurgeActive = true;
-                _arcaneSurgeEndTime = getMSTime() + 15000;
+                _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000;
                 return;
             }
         }
@@ -564,7 +564,7 @@ private:
                                 {
                                     this->CastSpell(bot, ARCANE_SURGE);
                                     this->_arcaneSurgeActive = true;
-                                    this->_arcaneSurgeEndTime = getMSTime() + 15000;
+                                    this->_arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

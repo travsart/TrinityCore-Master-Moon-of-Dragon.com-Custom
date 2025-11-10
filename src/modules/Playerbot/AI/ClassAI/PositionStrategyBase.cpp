@@ -44,7 +44,7 @@ PositionStrategyBase::PositionStrategyBase(Map* map)
     _botPositions.reserve(5000);  // Pre-allocate for 5000 bots
     _dangerZones.reserve(100);    // Pre-allocate danger zones
     _cache.entries.reserve(1000);  // Pre-allocate cache
-    _cache.lastCleanup = getMSTime();
+    _cache.lastCleanup = GameTime::GetGameTimeMS();
 
     // Initialize spatial grid
     ClearGrid();
@@ -156,7 +156,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
                 Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
 
                 // Thread-safe result insertion
-                std::lock_guard<std::recursive_mutex> lock(resultMutex);
+                std::lock_guard lock(resultMutex);
                 results.push_back(pos);
 
                 // Mark grid cell as occupied
@@ -263,7 +263,7 @@ void PositionStrategyBase::RegisterPosition(Player* bot, const Position& pos)
     if (!bot)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
+    std::lock_guard lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();    // Unregister old position
     auto oldIt = _botPositions.find(guid);
@@ -284,7 +284,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
     if (!bot)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
+    std::lock_guard lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();    auto it = _botPositions.find(guid);
     if (it != _botPositions.end())
@@ -298,13 +298,13 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
 // Danger zone management
 void PositionStrategyBase::AddDangerZone(const Position& center, float radius, float duration, float dangerLevel)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
+    std::lock_guard lock(_dangerMutex);
 
     DangerZone zone;
     zone.center = center;
     zone.radius = radius;
     zone.dangerLevel = dangerLevel;
-    zone.expirationTime = getMSTime() + static_cast<uint32>(duration * 1000);
+    zone.expirationTime = GameTime::GetGameTimeMS() + static_cast<uint32>(duration * 1000);
 
     _dangerZones.push_back(zone);
 
@@ -344,7 +344,7 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
     float gridDanger = (*_spatialGrid)[grid.first][grid.second].dangerLevel.load(std::memory_order_acquire);
 
     // Check specific danger zones
-    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
+    std::lock_guard lock(_dangerMutex);
     float maxDanger = gridDanger;
 
     for (const auto& zone : _dangerZones)
@@ -362,9 +362,9 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
 
 void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 {
-    std::lock_guard<std::recursive_mutex> lock(_dangerMutex);
+    std::lock_guard lock(_dangerMutex);
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Remove expired danger zones
     _dangerZones.erase(
@@ -582,7 +582,7 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 // Collision detection
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
+    std::lock_guard lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
     if (!excludeBot)
     {
         return;
@@ -632,7 +632,7 @@ float PositionStrategyBase::CalculateTerrainScore(const Position& pos) const
 
 float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Player* bot) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
+    std::lock_guard lock(_positionMutex);
 
     float totalDistance = 0.0f;
     uint32 allyCount = 0;
@@ -670,13 +670,13 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 // Cache management
 std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bot, Unit* target) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    auto it = _cache.entries.find(key);
 
     if (it != _cache.entries.end())
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - it->second.calculatedTime < CACHE_DURATION_MS)
         {
             return it->second;
@@ -688,18 +688,18 @@ std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bo
 
 void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Position& pos, float score)
 {
-    std::lock_guard<std::recursive_mutex> lock(_cacheMutex);
+    std::lock_guard lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    CachedPosition cached;
     cached.position = pos;
-    cached.calculatedTime = getMSTime();
+    cached.calculatedTime = GameTime::GetGameTimeMS();
     cached.score = score;
     cached.isValid = true;
 
     _cache.entries[key] = cached;
 
     // Periodic cleanup
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _cache.lastCleanup > 5000)  // Every 5 seconds
     {
         CleanupCache();
@@ -709,7 +709,7 @@ void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Positi
 
 void PositionStrategyBase::CleanupCache()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     std::erase_if(_cache.entries, [currentTime](const auto& pair) {
         return currentTime - pair.second.calculatedTime > CACHE_DURATION_MS * 10;
@@ -733,7 +733,7 @@ void PositionStrategyBase::UpdateGridCell(uint32 x, uint32 y, int32 deltaOccupan
         uint16_t newValue = (current > -deltaOccupants) ? current + deltaOccupants : 0;
         cell.occupantCount.store(newValue, std::memory_order_release);
     }
-    cell.lastUpdate.store(getMSTime(), std::memory_order_release);
+    cell.lastUpdate.store(GameTime::GetGameTimeMS(), std::memory_order_release);
 }
 
 void PositionStrategyBase::UpdateGridDanger(uint32 x, uint32 y, float dangerLevel)
@@ -888,7 +888,7 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
 
 void PositionStrategyBase::ClearAllPositions()
 {
-    std::lock_guard<std::recursive_mutex> lock(_positionMutex);
+    std::lock_guard lock(_positionMutex);
     _botPositions.clear();
     ClearGrid();
 }

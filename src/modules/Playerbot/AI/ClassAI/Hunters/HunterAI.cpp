@@ -164,7 +164,7 @@ bool HunterAI::HandleInterrupts(::Unit* target)
         // Counter Shot (primary interrupt)
         if (CanInterruptTarget(interruptTarget))
         {
-            uint32 now = getMSTime();            // Try Counter Shot first            if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
+            uint32 now = GameTime::GetGameTimeMS();            // Try Counter Shot first            if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
                 now - _lastCounterShot > 24000) // 24 second cooldown
             {
                 if (CastSpell(interruptTarget, COUNTER_SHOT))
@@ -197,7 +197,7 @@ bool HunterAI::HandleDefensives(::Unit* target)
         return false;    if (_combatBehaviors->NeedsDefensive())
     {
         float healthPct = GetBot()->GetHealthPct();
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Feign Death - emergency escape
         if (healthPct < FEIGN_DEATH_THRESHOLD && ShouldFeignDeath())
@@ -282,7 +282,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
             {
                 // Too close - use disengage or move back                if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE))
                 {
-                    uint32 now = getMSTime();
+                    uint32 now = GameTime::GetGameTimeMS();
                     if (now - _lastDisengage > 20000)
                     {
                         if (CastSpell(HUNTER_DISENGAGE))
@@ -338,7 +338,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     // Priority: Revive dead pet
     if (NeedsPetRevive())
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastPetRevive > 10000) // Don't spam revive
         {
             RevivePet();
@@ -372,7 +372,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     }
     if (NeedsPetHeal())
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastPetHeal > 3000) // Don't spam heal
         {
             HealPet();
@@ -482,7 +482,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
             if (HasActivePet())
             {
                 CommandPetAttack(priorityTarget);
-                _petTargetSwitch = getMSTime();
+                _petTargetSwitch = GameTime::GetGameTimeMS();
             }
 
             // Update current target
@@ -524,7 +524,7 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
                                      return;
                                  }
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
 
             // Freezing Trap for long CC
             if (ShouldPlaceFreezingTrap(ccTarget))
@@ -623,7 +623,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
         // Place explosive trap for AoE damage
         if (ShouldPlaceExplosiveTrap())
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             if (now - _lastTrapPlacement > 30000)
             {                PlaceTrap(13813, target->GetPosition()); // Explosive Trap spell ID
                 _lastTrapPlacement = now;
@@ -986,7 +986,7 @@ void HunterAI::CommandPetAttack(::Unit* target)
     Pet* pet = GetPet();    if (pet)
     {
         pet->AI()->AttackStart(target);
-        _lastPetCommand = getMSTime();
+        _lastPetCommand = GameTime::GetGameTimeMS();
     }
 }
 
@@ -996,7 +996,7 @@ void HunterAI::CommandPetFollow()
     if (pet)
     {
         pet->GetMotionMaster()->MoveFollow(_bot, 2.0f, M_PI);
-        _lastPetCommand = getMSTime();
+        _lastPetCommand = GameTime::GetGameTimeMS();
     }
 }
 
@@ -1007,7 +1007,7 @@ void HunterAI::CommandPetStay()
     {
         pet->StopMoving();
         pet->GetMotionMaster()->Clear();
-        _lastPetCommand = getMSTime();
+        _lastPetCommand = GameTime::GetGameTimeMS();
     }
 }
 
@@ -1042,7 +1042,7 @@ void HunterAI::CallPet()
 // Trap management implementation
 bool HunterAI::CanPlaceTrap() const
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     return (now - _lastTrapPlacement) > 30000; // 30 second cooldown
 }
 
@@ -1214,7 +1214,7 @@ void HunterAI::ManageAspects()
 
     if (currentAspect != optimalAspect)
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastAspectSwitch > 1000) // 1 second GCD
         {            if (_bot->HasSpell(optimalAspect) && CanUseAbility(optimalAspect))
             {
@@ -1429,7 +1429,7 @@ void HunterAI::SwitchToCombatAspect()
     uint32 combatAspect = _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;    if (!HasAura(combatAspect) && _bot->HasSpell(combatAspect))
     {
         CastSpell(combatAspect);
-        _lastAspectSwitch = getMSTime();
+        _lastAspectSwitch = GameTime::GetGameTimeMS();
     }
 }
 
@@ -1438,7 +1438,7 @@ void HunterAI::SwitchToMovementAspect()
     uint32 moveAspect = _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;    if (!HasAura(moveAspect) && _bot->HasSpell(moveAspect))
     {
         CastSpell(moveAspect);
-        _lastAspectSwitch = getMSTime();
+        _lastAspectSwitch = GameTime::GetGameTimeMS();
     }
 }
 

@@ -103,7 +103,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
     }
 
     // Thread safety
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Check minimum update interval
     _lastUpdate += diff;
@@ -202,7 +202,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
 
 void CombatAIIntegrator::Reset()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _inCombat = false;
     _currentPhase = CombatPhase::NONE;
@@ -236,12 +236,12 @@ void CombatAIIntegrator::Reset()
 
 void CombatAIIntegrator::OnCombatStart(Unit* target)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _inCombat = true;
     _currentTarget = target;
     _currentPhase = CombatPhase::ENGAGING;
-    _combatStartTime = getMSTime();
+    _combatStartTime = GameTime::GetGameTimeMS();
     _phaseStartTime = _combatStartTime;
 
     // Initialize combat components with target
@@ -277,7 +277,7 @@ void CombatAIIntegrator::OnCombatEnd()
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
         return;
     }
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     _inCombat = false;
     _currentPhase = CombatPhase::RECOVERING;
@@ -301,23 +301,38 @@ void CombatAIIntegrator::OnCombatEnd()
 }
 
 void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
-if (!newTarget)
-if (!oldTarget)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: oldTarget in method GetName");
-    return;
-}
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
+
+if (!newTarget)
+
+if (!oldTarget)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: oldTarget in method GetName");
+
+    return;
+
+}
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
+
+    return nullptr;
+
+}
+{
+    std::lock_guard lock(_mutex);
 
     Unit* oldTarget = _currentTarget;
     if (!oldTarget)
@@ -363,7 +378,7 @@ void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
 
 void CombatAIIntegrator::SetGroup(Group* group)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _group = group;
 
     // Update formation manager with group
@@ -416,7 +431,7 @@ void CombatAIIntegrator::UpdateCombatPhase(uint32 diff)
         return;
     }
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 phaseTime = currentTime - _phaseStartTime;
 
     // Phase transition logic
@@ -919,11 +934,16 @@ void CombatAIIntegrator::HandleDefensivePhase()
         if (botAI && botAI->GetMovementArbiter())
         {
             bool accepted = botAI->RequestPointMovement(
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return false;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return false;
+
+}
                     if (!bot)
                     {
                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
@@ -1139,7 +1159,7 @@ bool CombatAIIntegrator::ShouldSwitchTarget()
 
     // Check cooldown
     static uint32 lastSwitch = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (now - lastSwitch < _config.targetSwitchCooldownMs)
         return false;
 

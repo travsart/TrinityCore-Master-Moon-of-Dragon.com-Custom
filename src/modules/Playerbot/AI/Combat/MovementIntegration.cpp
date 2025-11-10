@@ -190,7 +190,7 @@ void MovementIntegration::RegisterDangerZone(const Position& center, float radiu
     DangerZone zone;
     zone.center = center;
     zone.radius = radius;
-    zone.expiryTime = getMSTime() + duration;
+    zone.expiryTime = GameTime::GetGameTimeMS() + duration;
     zone.dangerLevel = dangerLevel;
 
     _dangerZones.push_back(zone);
@@ -323,7 +323,7 @@ MovementCommand MovementIntegration::EvaluatePositioning()
         command.urgency = MovementUrgency::MEDIUM;
         command.reason = MovementReason::OPTIMIZE_POSITION;
         command.acceptableRadius = 2.0f;
-        command.expiryTime = getMSTime() + 5000;  // 5 second validity
+        command.expiryTime = GameTime::GetGameTimeMS() + 5000;  // 5 second validity
     }
 
     return command;
@@ -357,7 +357,7 @@ MovementCommand MovementIntegration::CheckRange()
         command.urgency = MovementUrgency::HIGH;
         command.reason = MovementReason::MAINTAIN_RANGE;
         command.acceptableRadius = 2.0f;
-        command.expiryTime = getMSTime() + 3000;
+        command.expiryTime = GameTime::GetGameTimeMS() + 3000;
     }
     // Too close for ranged?
     else if (GetCombatRole() == CombatRole::RANGED_DPS && currentDistance < optimalRange - 10.0f)
@@ -367,7 +367,7 @@ MovementCommand MovementIntegration::CheckRange()
         command.urgency = MovementUrgency::HIGH;
         command.reason = MovementReason::KITING;
         command.acceptableRadius = 2.0f;
-        command.expiryTime = getMSTime() + 3000;
+        command.expiryTime = GameTime::GetGameTimeMS() + 3000;
     }
 
     return command;
@@ -392,7 +392,7 @@ MovementCommand MovementIntegration::CheckDanger()
         command.urgency = MovementUrgency::EMERGENCY;
         command.reason = MovementReason::AVOID_DANGER;
         command.acceptableRadius = 1.0f;
-        command.expiryTime = getMSTime() + 2000;  // 2 second validity
+        command.expiryTime = GameTime::GetGameTimeMS() + 2000;  // 2 second validity
 
         TC_LOG_DEBUG("playerbot", "MovementIntegration: {} in danger (level {}), moving to safety",
             _bot->GetName(), danger);
@@ -427,7 +427,7 @@ MovementCommand MovementIntegration::CheckLineOfSight()
         command.urgency = MovementUrgency::HIGH;
         command.reason = MovementReason::LINE_OF_SIGHT;
         command.acceptableRadius = 2.0f;
-        command.expiryTime = getMSTime() + 3000;
+        command.expiryTime = GameTime::GetGameTimeMS() + 3000;
     }
 
     return command;

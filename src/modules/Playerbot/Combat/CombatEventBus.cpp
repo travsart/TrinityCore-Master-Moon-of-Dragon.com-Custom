@@ -214,7 +214,7 @@ bool CombatEventBus::PublishEvent(CombatEvent const& event)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -233,7 +233,7 @@ bool CombatEventBus::Subscribe(BotAI* subscriber, std::vector<CombatEventType> c
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     for (CombatEventType type : types)
         _subscribers[type].push_back(subscriber);
     return true;
@@ -244,7 +244,7 @@ bool CombatEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     _globalSubscribers.push_back(subscriber);
     return true;
 }
@@ -254,7 +254,7 @@ void CombatEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
@@ -281,7 +281,7 @@ uint32 CombatEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<CombatEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
             CombatEvent event = _eventQueue.top();
@@ -304,7 +304,7 @@ uint32 CombatEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+            std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -337,7 +337,7 @@ uint32 CombatEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void CombatEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     std::vector<CombatEvent> remainingEvents;
 
     while (!_eventQueue.empty())
@@ -380,7 +380,7 @@ bool CombatEventBus::ValidateEvent(CombatEvent const& event) const
 
 uint32 CombatEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     uint32 cleanedCount = 0;
     std::vector<CombatEvent> validEvents;
 
@@ -416,21 +416,21 @@ void CombatEventBus::LogEvent(CombatEvent const& event, std::string const& actio
 
 void CombatEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.combat", "=== CombatEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.combat", "Global subscribers: {}", _globalSubscribers.size());
 }
 
 void CombatEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.combat", "=== CombatEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.combat", "Queue size: {}", _eventQueue.size());
 }
 
 std::vector<CombatEvent> CombatEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     std::vector<CombatEvent> snapshot;
     std::priority_queue<CombatEvent> tempQueue = _eventQueue;
 

@@ -124,7 +124,7 @@ void BotPacketRelay::Shutdown()
 
     // Clear opcode whitelist
     {
-        std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
+        std::lock_guard lock(_opcodesMutex);
         _relayOpcodes.clear();
     }
 
@@ -152,13 +152,13 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
     if (!_initialized.load())
     {
         // Queue packet for delivery after initialization completes
-        std::lock_guard<std::recursive_mutex> lock(_deferredMutex);
+        std::lock_guard lock(_deferredMutex);
 
         // Create a copy of the packet (WorldPacket must be copied, not moved)
         auto packetCopy = std::make_unique<WorldPacket>(*packet);
 
         // Queue the deferred packet with timestamp
-        _deferredPackets.push({botSession, std::move(packetCopy), getMSTime()});
+        _deferredPackets.push({botSession, std::move(packetCopy), GameTime::GetGameTimeMS()});
 
         TC_LOG_DEBUG("playerbot", "BotPacketRelay: Queued packet (opcode {}) from bot {} for delivery after initialization",
                      packet->GetOpcode(), botSession->GetPlayer() ? botSession->GetPlayer()->GetName() : "Unknown");
@@ -281,11 +281,16 @@ void BotPacketRelay::RelayToPlayer(BotSession* botSession, WorldPacket const* pa
 }
 
 void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const* packet, bool ignoreBot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return nullptr;
+
+}
 {
     // Validate inputs
     if (!botSession || !packet)
@@ -379,7 +384,7 @@ bool BotPacketRelay::ShouldRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 {
-    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
+    std::lock_guard lock(_opcodesMutex);
 
     auto result = _relayOpcodes.insert(opcode);
     if (result.second && _debugLogging.load())
@@ -390,7 +395,7 @@ void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
 {
-    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
+    std::lock_guard lock(_opcodesMutex);
 
     size_t removed = _relayOpcodes.erase(opcode);
     if (removed > 0 && _debugLogging.load())
@@ -426,11 +431,16 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
         return humanPlayers;
 
     Group* group = bot->GetGroup();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return nullptr;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -557,11 +567,16 @@ if (!bot)
 }
 
 Group* BotPacketRelay::GetBotGroup(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -655,15 +670,20 @@ void BotPacketRelay::SetDebugLogging(bool enabled)
 // ============================================================================
 // INTERNAL IMPLEMENTATION
 // ============================================================================
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
+
+    return;
+
+}
 
 void BotPacketRelay::InitializeOpcodeWhitelist()
 {
-    std::lock_guard<std::recursive_mutex> lock(_opcodesMutex);
+    std::lock_guard lock(_opcodesMutex);
     _relayOpcodes.clear();
 
     // ========================================================================
@@ -727,11 +747,16 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
     // CHAT PACKETS
     // ========================================================================
     // These packets enable bot chat to appear for human players
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
+
+    return nullptr;
+
+}
 
     _relayOpcodes.insert(SMSG_CHAT);                         // Main chat packet (all types)
     _relayOpcodes.insert(SMSG_CHAT_AUTO_RESPONDED);          // Auto-response (AFK, DND)
@@ -764,11 +789,16 @@ void BotPacketRelay::InitializeOpcodeWhitelist()
 }
 
 bool BotPacketRelay::SendPacketToPlayer(Player* player, WorldPacket const* packet)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method SendDirectMessage");
+
+    return nullptr;
+
+}
             if (!player)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
@@ -909,7 +939,7 @@ char const* BotPacketRelay::GetPacketCategory(uint32 opcode)
 
 void BotPacketRelay::ProcessDeferredPackets()
 {
-    std::lock_guard<std::recursive_mutex> lock(_deferredMutex);
+    std::lock_guard lock(_deferredMutex);
 
     if (_deferredPackets.empty())
     {

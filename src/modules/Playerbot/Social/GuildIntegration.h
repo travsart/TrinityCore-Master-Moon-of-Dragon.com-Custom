@@ -70,7 +70,7 @@ struct GuildChatMessage
     std::vector<std::string> keywords;
     float relevanceScore;
 
-    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(getMSTime())
+    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
         , requiresResponse(false), relevanceScore(0.0f) {}
 };
 
@@ -152,13 +152,13 @@ public:
         // Default constructor for std::unordered_map compatibility
         GuildParticipation() : playerGuid(0), guildId(0)
             , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(getMSTime())
-            , joinDate(getMSTime()) {}
+            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
+            , joinDate(GameTime::GetGameTimeMS()) {}
 
         GuildParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
             , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(getMSTime())
-            , joinDate(getMSTime()) {}
+            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
+            , joinDate(GameTime::GetGameTimeMS()) {}
     };
 
     GuildParticipation GetGuildParticipation(uint32 playerGuid) override;
@@ -335,10 +335,10 @@ private:
 
         // Default constructor for std::unordered_map compatibility
         GuildActivityTracker() : guildId(0), overallMorale(0.8f)
-            , activityLevel(0.6f), lastAnalysisTime(getMSTime()) {}
+            , activityLevel(0.6f), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
 
         GuildActivityTracker(uint32 gId) : guildId(gId), overallMorale(0.8f)
-            , activityLevel(0.6f), lastAnalysisTime(getMSTime()) {}
+            , activityLevel(0.6f), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, GuildActivityTracker> _guildTracking; // guildId -> tracker

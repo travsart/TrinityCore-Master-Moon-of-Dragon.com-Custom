@@ -52,11 +52,11 @@ void GatheringMaterialsBridge::Update(::Player* player, uint32 diff)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Update material requirements every 30 seconds
     static std::unordered_map<uint32, uint32> lastRequirementUpdate;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     if (currentTime - lastRequirementUpdate[playerGuid] >= REQUIREMENT_UPDATE_INTERVAL)
     {
@@ -77,7 +77,7 @@ void GatheringMaterialsBridge::SetEnabled(::Player* player, bool enabled)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     _enabledState[playerGuid] = enabled;
 }
@@ -87,7 +87,7 @@ bool GatheringMaterialsBridge::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _enabledState.find(playerGuid);
@@ -108,7 +108,7 @@ std::vector<MaterialRequirement> GatheringMaterialsBridge::GetNeededMaterials(::
     if (!player)
         return needed;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     // Return cached requirements if available
@@ -133,7 +133,7 @@ MaterialPriority GatheringMaterialsBridge::GetMaterialPriority(::Player* player,
     if (!player)
         return MaterialPriority::NONE;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     auto it = _materialRequirements.find(playerGuid);
@@ -155,7 +155,7 @@ void GatheringMaterialsBridge::UpdateMaterialRequirements(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     std::vector<MaterialRequirement> requirements;
@@ -242,7 +242,7 @@ bool GatheringMaterialsBridge::StartGatheringForMaterial(::Player* player, uint3
     if (!player)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     // Check if already has active session
@@ -277,7 +277,7 @@ bool GatheringMaterialsBridge::StartGatheringForMaterial(::Player* player, uint3
 
 void GatheringMaterialsBridge::StopGatheringSession(uint32 sessionId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _activeSessions.find(sessionId);
     if (it == _activeSessions.end())
@@ -288,7 +288,7 @@ void GatheringMaterialsBridge::StopGatheringSession(uint32 sessionId)
 
 GatheringMaterialSession const* GatheringMaterialsBridge::GetActiveSession(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _playerActiveSessions.find(playerGuid);
     if (it == _playerActiveSessions.end())
@@ -306,7 +306,7 @@ void GatheringMaterialsBridge::OnMaterialGathered(::Player* player, uint32 itemI
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     // Check if this material is for an active gathering session
@@ -473,7 +473,7 @@ void GatheringMaterialsBridge::SynchronizeWithGatheringManager(::Player* player)
 
 GatheringMaterialsStatistics const& GatheringMaterialsBridge::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     static GatheringMaterialsStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -490,7 +490,7 @@ GatheringMaterialsStatistics const& GatheringMaterialsBridge::GetGlobalStatistic
 
 void GatheringMaterialsBridge::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
@@ -669,7 +669,7 @@ void GatheringMaterialsBridge::CompleteGatheringSession(uint32 sessionId, bool s
 
     GatheringMaterialSession& session = it->second;
     session.isActive = false;
-    session.endTime = getMSTime();
+    session.endTime = GameTime::GetGameTimeMS();
 
     uint32 playerGuid = session.playerGuid;
 

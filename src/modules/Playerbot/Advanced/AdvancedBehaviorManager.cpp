@@ -414,7 +414,7 @@ void AdvancedBehaviorManager::AvoidDangerZone(Position const& center, float radi
     DangerZone zone;
     zone.center = center;
     zone.radius = radius;
-    zone.expiryTime = getMSTime() + 10000; // 10 seconds
+    zone.expiryTime = GameTime::GetGameTimeMS() + 10000; // 10 seconds
     zone.damagePerSecond = 1000;
     m_dangerZones.push_back(zone);
 }
@@ -428,11 +428,16 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
             return nullptr;
         }
         return;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
+
+    return nullptr;
+
+}
 
     // Find interrupt spell based on class
     uint32 interruptSpell = 0;
@@ -778,16 +783,26 @@ void AdvancedBehaviorManager::ExecuteBattlegroundStrategy()
         return;
 
     Battleground* bg = m_bot->GetBattleground();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-        return nullptr;
-    }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
+
+    if (!bot)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
+
+        return nullptr;
+
+    }
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return;
+
+}
     if (!bg)
         return;
 
@@ -1443,11 +1458,16 @@ bool AdvancedBehaviorManager::ParticipateInWorldEvent(WorldEventType type)
 {
     if (!m_bot || !m_eventEnabled)
         return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return false;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return false;
+
+}
 
     if (!IsEventActive(type))
         return false;
@@ -1651,11 +1671,16 @@ void AdvancedBehaviorManager::TrackRareSpawn(Creature* rare)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetEntry");
         return;
     }
-if (!rare)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetName");
-    return;
-}
+
+if (!rare)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetName");
+
+    return;
+
+}
 
     m_trackedRares[rare->GetEntry()] = spawn;
         if (!rare)
@@ -1690,11 +1715,16 @@ if (!rare)
 {
     if (!m_bot || !rare)
         return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return nullptr;
+
+}
 
     // Check if bot is strong enough
     if (rare->GetLevel() > m_bot->GetLevel() + 3)
@@ -1890,7 +1920,7 @@ void AdvancedBehaviorManager::StartBossFight(Creature* boss)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: boss in method GetEntry");
         return nullptr;
     }
-    m_currentBossFight->startTime = getMSTime();
+    m_currentBossFight->startTime = GameTime::GetGameTimeMS();
     m_currentBossFight->phase = 1;
 }
 
@@ -1962,11 +1992,16 @@ void AdvancedBehaviorManager::LoadBattlegroundStrategies()
 
     m_bgStrategies[strategy.type] = strategy;
 }
-if (!go)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
-    return;
-}
+
+if (!go)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetGUID");
+
+    return;
+
+}
 
 if (!go)
 {
@@ -2287,7 +2322,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
 
 void AdvancedBehaviorManager::UpdateDangerZones(uint32 diff)
 {
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     // Remove expired danger zones
     m_dangerZones.erase(

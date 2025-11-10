@@ -45,7 +45,7 @@ struct PrioritizedAction
     PrioritizedAction() : spellId(0), priority(ActionPriority::IDLE), score(0.0f), target(nullptr), timestamp(0) {}
 
     PrioritizedAction(uint32 spell, ActionPriority prio, float sc, ::Unit* tgt = nullptr)
-        : spellId(spell), priority(prio), score(sc), target(tgt), timestamp(getMSTime()) {}
+        : spellId(spell), priority(prio), score(sc), target(tgt), timestamp(GameTime::GetGameTimeMS()) {}
 
     // Comparison operator for priority queue (higher priority = lower enum value)
     bool operator<(const PrioritizedAction& other) const
@@ -63,7 +63,7 @@ struct PrioritizedAction
     // Check if this action is still valid (not too old)
     bool IsValid(uint32 maxAgeMs = 5000) const
     {
-        return (getMSTime() - timestamp) <= maxAgeMs;
+        return (GameTime::GetGameTimeMS() - timestamp) <= maxAgeMs;
     }
 };
 

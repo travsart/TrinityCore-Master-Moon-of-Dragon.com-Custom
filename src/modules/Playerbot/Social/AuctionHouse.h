@@ -69,7 +69,7 @@ struct AuctionItem
         , currentBid(0), buyoutPrice(0), timeLeft(0), sellerGuid(0)
         , quality(0), itemLevel(0), hasEnchants(false), hasSockets(false)
         , marketValue(0.0f), pricePerItem(0.0f), isBargain(false)
-        , lastSeen(getMSTime()) {}
+        , lastSeen(GameTime::GetGameTimeMS()) {}
 };
 
 struct AuctionSearchQuery
@@ -168,7 +168,7 @@ public:
         bool isActive;
 
         AuctionSession(uint32 id, uint32 pGuid) : sessionId(id), playerGuid(pGuid)
-            , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(getMSTime())
+            , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(GameTime::GetGameTimeMS())
             , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
     };
 
@@ -291,7 +291,7 @@ private:
 
         MarketData(uint32 id) : itemId(id), averagePrice(0.0f), medianPrice(0.0f)
             , totalVolume(0), activeListings(0), volatility(0.0f)
-            , lastAnalysisTime(getMSTime()) {}
+            , lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, MarketData> _marketData; // itemId -> market data
@@ -313,7 +313,7 @@ private:
 
         CompetitorProfile(uint32 guid) : sellerGuid(guid), averageUndercutRate(0.05f)
             , aggressiveness(0.5f), totalAuctions(0), successfulSales(0)
-            , lastActivity(getMSTime()) {}
+            , lastActivity(GameTime::GetGameTimeMS()) {}
     };
 
     std::unordered_map<uint32, CompetitorProfile> _competitors; // sellerGuid -> profile

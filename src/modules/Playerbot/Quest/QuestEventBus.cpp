@@ -123,7 +123,7 @@ bool QuestEventBus::PublishEvent(QuestEvent const& event)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -150,7 +150,7 @@ bool QuestEventBus::Subscribe(BotAI* subscriber, std::vector<QuestEventType> con
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (QuestEventType type : types)
     {
@@ -170,7 +170,7 @@ bool QuestEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
@@ -184,7 +184,7 @@ void QuestEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
@@ -215,7 +215,7 @@ uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     std::vector<QuestEvent> eventsToProcess;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+        std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -239,7 +239,7 @@ uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+            std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -277,7 +277,7 @@ uint32 QuestEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void QuestEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<QuestEvent> remainingEvents;
 
@@ -298,13 +298,13 @@ void QuestEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 QuestEventBus::GetPendingEventCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 QuestEventBus::GetSubscriberCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -340,7 +340,7 @@ bool QuestEventBus::ValidateEvent(QuestEvent const& event) const
 
 uint32 QuestEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
     std::vector<QuestEvent> validEvents;
@@ -377,19 +377,19 @@ void QuestEventBus::LogEvent(QuestEvent const& event, std::string const& action)
 
 void QuestEventBus::DumpSubscribers() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_subscriberMutex);
+    std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.quest", "=== QuestEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void QuestEventBus::DumpEventQueue() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.quest", "=== QuestEventBus Queue: {} events ===", _eventQueue.size());
 }
 
 std::vector<QuestEvent> QuestEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_queueMutex);
+    std::lock_guard lock(_queueMutex);
 
     std::vector<QuestEvent> snapshot;
     std::priority_queue<QuestEvent> tempQueue = _eventQueue;

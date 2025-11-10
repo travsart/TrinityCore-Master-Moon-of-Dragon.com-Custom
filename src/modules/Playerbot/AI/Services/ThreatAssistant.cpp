@@ -412,7 +412,7 @@ uint32 ThreatAssistant::GetTimeOutOfControl(Unit* target)
     if (it == _lostAggroTimestamps.end())
         return 0;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     return currentTime - it->second;
 }
 

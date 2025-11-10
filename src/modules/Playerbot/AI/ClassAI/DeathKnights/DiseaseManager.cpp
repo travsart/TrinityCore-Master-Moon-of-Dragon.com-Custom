@@ -21,7 +21,7 @@ void DiseaseManager::UpdateDiseases(Unit* target)
     if (!target)
         return;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     ObjectGuid targetGuid = target->GetGUID();    // Clean up expired diseases
     CleanupExpiredDiseases();
 
@@ -47,7 +47,7 @@ bool DiseaseManager::HasDisease(Unit* target, DiseaseType type){
     if (it == _activeDiseases.end())
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     for (const auto& disease : it->second)
     {
         if (disease.type == type && currentTime < disease.expirationTime)
@@ -83,7 +83,7 @@ uint32 DiseaseManager::GetDiseaseTimeRemaining(Unit* target, DiseaseType type)
     if (it == _activeDiseases.end())
         return 0;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     for (const auto& disease : it->second)
     {
         if (disease.type == type && currentTime < disease.expirationTime)
@@ -95,7 +95,7 @@ uint32 DiseaseManager::GetDiseaseTimeRemaining(Unit* target, DiseaseType type)
 
 void DiseaseManager::CleanupExpiredDiseases()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (auto it = _activeDiseases.begin(); it != _activeDiseases.end();)
     {

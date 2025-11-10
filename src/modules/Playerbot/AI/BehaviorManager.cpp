@@ -59,14 +59,19 @@ namespace Playerbot
             m_enabled.store(false, std::memory_order_release);
             return;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         // Initialize with current time to prevent immediate update
-        m_lastUpdate = getMSTime();
+        m_lastUpdate = GameTime::GetGameTimeMS();
 
         TC_LOG_DEBUG("module.playerbot", "[{}] Created for bot {} with {}ms update interval",
                      if (!bot)
@@ -160,11 +165,16 @@ namespace Playerbot
                 TC_LOG_ERROR("module.playerbot", "⏳ [{}] BUSY - returning early", m_managerName);
             return;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         // Validate pointers are still valid
         if (!ValidatePointers())
@@ -198,7 +208,7 @@ namespace Playerbot
             }
 
             m_initialized.store(true, std::memory_order_release);
-            m_lastUpdate = getMSTime();
+            m_lastUpdate = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("module.playerbot", "[{}] Initialized successfully for bot {}",
                         if (!bot)
                         {
@@ -263,14 +273,19 @@ namespace Playerbot
     {
         // Mark as busy (prevents re-entrance)
         m_isBusy.store(true, std::memory_order_release);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
         // Performance monitoring - capture start time
-        uint32 startTime = getMSTime();
+        uint32 startTime = GameTime::GetGameTimeMS();
 
         try
         if (!bot)
@@ -321,7 +336,7 @@ namespace Playerbot
         }
 
         // Calculate update duration
-        uint32 updateDuration = getMSTimeDiff(startTime, getMSTime());
+        uint32 updateDuration = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
 
         // Performance monitoring - check for slow updates
         if (updateDuration > m_slowUpdateThreshold)
@@ -413,12 +428,17 @@ namespace Playerbot
         }
 
         // Update last update timestamp
-        m_lastUpdate = getMSTime();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+        m_lastUpdate = GameTime::GetGameTimeMS();
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
 
         // Clear busy flag
         m_isBusy.store(false, std::memory_order_release);
@@ -443,7 +463,7 @@ namespace Playerbot
         if (m_lastUpdate == 0)
             return 0;
 
-        return getMSTimeDiff(m_lastUpdate, getMSTime());
+        return getMSTimeDiff(m_lastUpdate, GameTime::GetGameTimeMS());
     }
 
     bool BehaviorManager::ValidatePointers() const

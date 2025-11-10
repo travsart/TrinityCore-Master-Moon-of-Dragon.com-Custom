@@ -367,7 +367,7 @@ void ProfessionManager::Update(::Player* player, uint32 diff)
     uint32 playerGuid = player->GetGUID().GetCounter();
 
     // Throttle updates to PROFESSION_UPDATE_INTERVAL
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     if (_lastUpdateTimes[playerGuid] + PROFESSION_UPDATE_INTERVAL > now)
         return;
 
@@ -500,7 +500,7 @@ std::vector<ProfessionSkillInfo> ProfessionManager::GetPlayerProfessions(::Playe
             info.profession = profession;
             info.currentSkill = GetProfessionSkill(player, profession);
             info.maxSkill = GetMaxProfessionSkill(player, profession);
-            info.lastUpdate = getMSTime();
+            info.lastUpdate = GameTime::GetGameTimeMS();
             info.isPrimary = GetProfessionCategory(profession) != ProfessionCategory::SECONDARY;
 
             professions.push_back(info);
@@ -1000,7 +1000,7 @@ void ProfessionManager::QueueCraft(::Player* player, uint32 recipeId, uint32 qua
     CraftingTask task;
     task.recipeId = recipeId;
     task.quantity = quantity;
-    task.queueTime = getMSTime();
+    task.queueTime = GameTime::GetGameTimeMS();
 
     // No lock needed - profession data is per-bot instance data
     _craftingQueues[playerGuid].push_back(task);

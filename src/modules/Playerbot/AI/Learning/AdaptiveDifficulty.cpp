@@ -482,8 +482,8 @@ void AdaptiveDifficulty::Shutdown()
 
     TC_LOG_INFO("playerbot.difficulty", "Shutting down Adaptive Difficulty System");
 
-    std::lock_guard<std::recursive_mutex> profileLock(_profilesMutex);
-    std::lock_guard<std::recursive_mutex> difficultyLock(_botDifficultyMutex);
+    std::lock_guard profileLock(_profilesMutex);
+    std::lock_guard difficultyLock(_botDifficultyMutex);
 
     _playerProfiles.clear();
     _botDifficulties.clear();
@@ -508,7 +508,7 @@ void AdaptiveDifficulty::CreatePlayerProfile(Player* player)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
+    std::lock_guard lock(_profilesMutex);
 
     if (_playerProfiles.find(guid) == _playerProfiles.end())
     {
@@ -521,7 +521,7 @@ void AdaptiveDifficulty::CreatePlayerProfile(Player* player)
 
 std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetPlayerProfile(ObjectGuid guid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
+    std::lock_guard lock(_profilesMutex);
 
     auto it = _playerProfiles.find(guid);
     if (it != _playerProfiles.end())
@@ -650,7 +650,7 @@ void AdaptiveDifficulty::SetBotDifficulty(BotAI* bot, float difficulty)
 
     difficulty = std::clamp(difficulty, MIN_DIFFICULTY, MAX_DIFFICULTY);
 
-    std::lock_guard<std::recursive_mutex> lock(_botDifficultyMutex);
+    std::lock_guard lock(_botDifficultyMutex);
 
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     DifficultySettings settings;
@@ -669,7 +669,7 @@ if (!player)
     if (!bot)
         return DEFAULT_DIFFICULTY;
 
-    std::lock_guard<std::recursive_mutex> lock(_botDifficultyMutex);
+    std::lock_guard lock(_botDifficultyMutex);
 
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     auto it = _botDifficulties.find(botId);
@@ -762,11 +762,16 @@ void AdaptiveDifficulty::OptimizeForFlow(BotAI* bot, Player* player)
 
     // Ensure challenge is neither too easy nor too hard
     optimalDifficulty = std::clamp(optimalDifficulty, playerSkill - 0.15f, playerSkill + 0.15f);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
     SetBotDifficulty(bot, optimalDifficulty);
 
@@ -859,7 +864,7 @@ std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetOrCreateProfile(Objec
     if (!profile)
     {
         // Create profile if it doesn't exist
-        std::lock_guard<std::recursive_mutex> lock(_profilesMutex);
+        std::lock_guard lock(_profilesMutex);
         profile = std::make_shared<PlayerSkillProfile>(guid);
         _playerProfiles[guid] = profile;
         _difficultyCurves[guid] = std::make_unique<DifficultyCurve>(DEFAULT_DIFFICULTY);
@@ -875,7 +880,7 @@ void AdaptiveDifficulty::ApplyPreset(BotAI* bot, DifficultyPreset preset)
 
     DifficultySettings settings = GetPresetSettings(preset);
 
-    std::lock_guard<std::recursive_mutex> lock(_botDifficultyMutex);
+    std::lock_guard lock(_botDifficultyMutex);
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     _botDifficulties[botId] = settings;
 }

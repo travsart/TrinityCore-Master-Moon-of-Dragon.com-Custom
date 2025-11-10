@@ -37,7 +37,7 @@ bool BotCharacterDistribution::LoadFromDatabase()
     TC_LOG_INFO("server.loading", "BotCharacterDistribution::LoadFromDatabase() - ENTRY POINT");
     TC_LOG_PLAYERBOT_CHAR_INFO("Loading Bot Character Distribution from database...");
 
-    auto startTime = getMSTime();
+    auto startTime = GameTime::GetGameTimeMS();
 
     // Lade alle Verteilungsdaten
     LoadRaceClassDistribution();

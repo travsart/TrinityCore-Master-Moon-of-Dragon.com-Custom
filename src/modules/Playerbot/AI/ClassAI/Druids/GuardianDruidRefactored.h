@@ -63,7 +63,7 @@ public:
     void ApplyIronfur(uint32 duration = 7000)
     {
         _ironfurStacks = std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
-        _ironfurEndTime = getMSTime() + duration;
+        _ironfurEndTime = GameTime::GetGameTimeMS() + duration;
     }
 
     void Update(Player* bot)
@@ -74,7 +74,7 @@ public:
         // Sync with actual aura
         if (Aura* aura = bot->GetAura(GUARDIAN_IRONFUR))
         {
-            _ironfurStacks = aura->GetStackAmount();            _ironfurEndTime = getMSTime() + aura->GetDuration();        }
+            _ironfurStacks = aura->GetStackAmount();            _ironfurEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _ironfurStacks = 0;
@@ -83,17 +83,17 @@ public:
     }
 
     [[nodiscard]] uint32 GetStacks() const { return _ironfurStacks; }
-    [[nodiscard]] bool IsActive() const { return _ironfurStacks > 0 && getMSTime() < _ironfurEndTime; }
+    [[nodiscard]] bool IsActive() const { return _ironfurStacks > 0 && GameTime::GetGameTimeMS() < _ironfurEndTime; }
     [[nodiscard]] bool NeedsRefresh() const
     {
         // Refresh if no stacks or about to expire
-        return _ironfurStacks == 0 || (_ironfurEndTime > 0 && (getMSTime() + 2000) >= _ironfurEndTime);
+        return _ironfurStacks == 0 || (_ironfurEndTime > 0 && (GameTime::GetGameTimeMS() + 2000) >= _ironfurEndTime);
     }
     [[nodiscard]] uint32 GetTimeRemaining() const
     {
         if (_ironfurEndTime == 0)
             return 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return now < _ironfurEndTime ? (_ironfurEndTime - now) : 0;
     }
 
@@ -112,7 +112,7 @@ public:
     void ApplyThrash(ObjectGuid guid, uint32 duration, uint32 stacks = 1)
     {
         auto& thrash = _thrashTargets[guid];
-        thrash.endTime = getMSTime() + duration;
+        thrash.endTime = GameTime::GetGameTimeMS() + duration;
         thrash.stacks = std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
     }
 
@@ -124,7 +124,7 @@ public:
     [[nodiscard]] uint32 GetStacks(ObjectGuid guid) const
     {
         auto it = _thrashTargets.find(guid);
-        if (it != _thrashTargets.end() && getMSTime() < it->second.endTime)
+        if (it != _thrashTargets.end() && GameTime::GetGameTimeMS() < it->second.endTime)
             return it->second.stacks;
         return 0;
     }    [[nodiscard]] bool HasThrash(ObjectGuid guid) const
@@ -140,7 +140,7 @@ public:
         if (Aura* aura = target->GetAura(GUARDIAN_THRASH))
         {
             auto& thrash = _thrashTargets[guid];
-            thrash.stacks = aura->GetStackAmount();            thrash.endTime = getMSTime() + aura->GetDuration();        }
+            thrash.stacks = aura->GetStackAmount();            thrash.endTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _thrashTargets.erase(guid);
@@ -239,8 +239,8 @@ public:
             {
                 this->CastSpell(bot, GUARDIAN_FRENZIED_REGENERATION);
                 _frenziedRegenerationActive = true;
-                _frenziedRegenerationEndTime = getMSTime() + 3000; // 3 sec heal over time
-                _lastFrenziedRegenerationTime = getMSTime();
+                _frenziedRegenerationEndTime = GameTime::GetGameTimeMS() + 3000; // 3 sec heal over time
+                _lastFrenziedRegenerationTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -278,7 +278,7 @@ public:
         if (tauntTarget && this->CanCastSpell(GUARDIAN_GROWL, tauntTarget))
         {
             bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, GUARDIAN_GROWL);
-            _lastTaunt = getMSTime();
+            _lastTaunt = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Guardian: Growl taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }
@@ -298,17 +298,17 @@ private:
     {
         Player* bot = this->GetBot();
         // Frenzied Regeneration state
-        if (_frenziedRegenerationActive && getMSTime() >= _frenziedRegenerationEndTime)
+        if (_frenziedRegenerationActive && GameTime::GetGameTimeMS() >= _frenziedRegenerationEndTime)
             _frenziedRegenerationActive = false;
 
         if (bot->HasAura(GUARDIAN_FRENZIED_REGENERATION))
         {
             _frenziedRegenerationActive = true;
             if (Aura* aura = bot->GetAura(GUARDIAN_FRENZIED_REGENERATION))
-                _frenziedRegenerationEndTime = getMSTime() + aura->GetDuration();        }
+                _frenziedRegenerationEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
 
         // Berserk state
-        if (_berserkActive && getMSTime() >= _berserkEndTime)
+        if (_berserkActive && GameTime::GetGameTimeMS() >= _berserkEndTime)
             _berserkActive = false;
 
         if (bot->HasAura(GUARDIAN_BERSERK) || bot->HasAura(GUARDIAN_INCARNATION_BEAR))
@@ -318,7 +318,7 @@ private:
             if (!aura)
                 aura = bot->GetAura(GUARDIAN_INCARNATION_BEAR);
             if (aura)
-                _berserkEndTime = getMSTime() + aura->GetDuration();
+                _berserkEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
         }
     }
 
@@ -370,16 +370,16 @@ private:
             {
                 this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 30000; // 30 sec
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
             else if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
             {
                 this->CastSpell(bot, GUARDIAN_BERSERK);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 15000; // 15 sec
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -454,16 +454,16 @@ private:
             {
                 this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 30000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 30000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
             else if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
             {
                 this->CastSpell(bot, GUARDIAN_BERSERK);
                 _berserkActive = true;
-                _berserkEndTime = getMSTime() + 15000;
-                _lastBerserkTime = getMSTime();
+                _berserkEndTime = GameTime::GetGameTimeMS() + 15000;
+                _lastBerserkTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -652,7 +652,7 @@ private:
                                 {
                                     this->CastSpell(bot, GUARDIAN_FRENZIED_REGENERATION);
                                     this->_frenziedRegenerationActive = true;
-                                    this->_frenziedRegenerationEndTime = getMSTime() + 3000;
+                                    this->_frenziedRegenerationEndTime = GameTime::GetGameTimeMS() + 3000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -710,7 +710,7 @@ private:
                                         {
                                             this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
                                             this->_berserkActive = true;
-                                            this->_berserkEndTime = getMSTime() + 30000;
+                                            this->_berserkEndTime = GameTime::GetGameTimeMS() + 30000;
                                             return NodeStatus::SUCCESS;
                                         }
                                         return NodeStatus::FAILURE;
@@ -722,7 +722,7 @@ private:
                                         {
                                             this->CastSpell(bot, GUARDIAN_BERSERK);
                                             this->_berserkActive = true;
-                                            this->_berserkEndTime = getMSTime() + 15000;
+                                            this->_berserkEndTime = GameTime::GetGameTimeMS() + 15000;
                                             return NodeStatus::SUCCESS;
                                         }
                                         return NodeStatus::FAILURE;

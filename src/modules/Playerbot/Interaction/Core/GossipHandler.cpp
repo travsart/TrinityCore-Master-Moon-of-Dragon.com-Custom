@@ -216,21 +216,31 @@ namespace Playerbot
     }
 
     int32 GossipHandler::ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-        return nullptr;
-    }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+    if (!bot)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+        return nullptr;
+
+    }
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
     {
         if (!bot || !target)
             return -1;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         // Get or create session
         GossipSession& session = m_activeSessions[bot->GetGUID()];
@@ -261,11 +271,16 @@ namespace Playerbot
 
         // Parse menu options
         session.options = ParseGossipMenu(bot, menuId);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return nullptr;
+
+}
             if (!bot)
             if (!creature)
             {
@@ -328,7 +343,7 @@ namespace Playerbot
 
         // The actual packet handling would be done by the session
         // We just track the state here
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto it = m_activeSessions.find(bot->GetGUID());
         if (!bot)
@@ -505,7 +520,7 @@ namespace Playerbot
 
     void GossipHandler::CacheGossipPath(uint32 creatureEntry, InteractionType type, const std::vector<uint32>& path)
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         m_gossipPathCache[creatureEntry][type] = path;
 
@@ -541,7 +556,7 @@ namespace Playerbot
 
     std::vector<uint32> GossipHandler::GetCachedPath(uint32 creatureEntry, InteractionType type) const
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto creatureIt = m_gossipPathCache.find(creatureEntry);
         if (creatureIt != m_gossipPathCache.end())
@@ -561,16 +576,21 @@ namespace Playerbot
         return;
     }
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         m_gossipPathCache.clear();
         m_pathStatistics.clear();
         m_activeSessions.clear();
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
+
+    return;
+
+}
 
     GossipSelectType GossipHandler::GetIconType(uint8 icon) const
     {

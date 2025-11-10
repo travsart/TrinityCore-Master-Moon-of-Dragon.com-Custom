@@ -217,7 +217,7 @@ void DefensiveBehaviorManager::Update(uint32 diff)
     auto startTime = std::chrono::steady_clock::now();
 
     // Update defensive state (throttled for performance)
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _currentState.lastUpdateTime >= STATE_UPDATE_INTERVAL)
     {
         UpdateState();
@@ -395,7 +395,7 @@ uint32 DefensiveBehaviorManager::SelectDefensive() const
 // Get current defensive priority
 DefensiveBehaviorManager::DefensivePriority DefensiveBehaviorManager::GetCurrentPriority() const
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Use cached priority if still valid
     if (currentTime - _priorityCacheTime < PRIORITY_CACHE_DURATION)
@@ -428,7 +428,7 @@ DefensiveBehaviorManager::DefensivePriority DefensiveBehaviorManager::EvaluatePr
 void DefensiveBehaviorManager::RegisterDamage(uint32 damage, uint32 timestamp)
 {
     if (timestamp == 0)
-        timestamp = getMSTime();
+        timestamp = GameTime::GetGameTimeMS();
 
     // Store in circular buffer
     DamageEntry& entry = _damageHistory[_damageHistoryIndex];
@@ -494,7 +494,7 @@ void DefensiveBehaviorManager::PrepareForIncoming(uint32 spellId)
 // Calculate incoming DPS
 float DefensiveBehaviorManager::GetIncomingDPS() const
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 totalDamage = 0;
     uint32 oldestTime = currentTime;
 
@@ -575,7 +575,7 @@ void DefensiveBehaviorManager::MarkDefensiveUsed(uint32 spellId)
     auto it = _defensiveCooldowns.find(spellId);
     if (it != _defensiveCooldowns.end())
     {
-        it->second.lastUsedTime = getMSTime();
+        it->second.lastUsedTime = GameTime::GetGameTimeMS();
         it->second.usageCount++;
         _metrics.defensivesUsed++;
     }
@@ -600,7 +600,7 @@ void DefensiveBehaviorManager::RequestExternalDefensive(ObjectGuid target, Defen
     ExternalDefensiveRequest request;
     request.targetGuid = target;
     request.priority = priority;
-    request.requestTime = getMSTime();
+    request.requestTime = GameTime::GetGameTimeMS();
     request.fulfilled = false;
 
     // PHASE 5B: Thread-safe spatial grid query (replaces ObjectAccessor::GetUnit)
@@ -631,7 +631,7 @@ ObjectGuid DefensiveBehaviorManager::GetExternalDefensiveTarget() const
         auto it = _providedDefensives.find(req.targetGuid);
         if (it != _providedDefensives.end())
         {
-            if (getMSTime() - it->second < 10000) // 10 second cooldown
+            if (GameTime::GetGameTimeMS() - it->second < 10000) // 10 second cooldown
                 continue;
         }
 
@@ -812,7 +812,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
 
             if (provided)
             {
-                _providedDefensives[targetGuid] = getMSTime();
+                _providedDefensives[targetGuid] = GameTime::GetGameTimeMS();
                 _metrics.externalDefensivesProvided++;
 
                 // Mark request as fulfilled
@@ -1086,7 +1086,7 @@ uint32 DefensiveBehaviorManager::SelectBestDefensive(DefensivePriority priority)
     if (!_bot)
         return 0;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Update sorted defensives cache if needed
     if (currentTime - _sortedDefensivesTime >= SORTED_DEFENSIVES_CACHE_DURATION)
@@ -1175,7 +1175,7 @@ float DefensiveBehaviorManager::CalculateDefensiveScore(const DefensiveCooldown&
         score += 15.0f;
 
     // Recent usage penalty
-    uint32 timeSinceUse = getMSTime() - cooldown.lastUsedTime;
+    uint32 timeSinceUse = GameTime::GetGameTimeMS() - cooldown.lastUsedTime;
     if (timeSinceUse < 30000) // Used in last 30 seconds
         score -= 20.0f;
 
@@ -1239,7 +1239,7 @@ bool DefensiveBehaviorManager::IsDamageMostlyMagical() const
 {
     uint32 magicalDamage = 0;
     uint32 physicalDamage = 0;
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (const auto& entry : _damageHistory)
     {

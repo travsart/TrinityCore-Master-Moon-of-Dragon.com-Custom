@@ -66,7 +66,7 @@ public:
 
     void ApplyRenew(ObjectGuid guid, uint32 duration = 15000)
     {
-        _renewTargets[guid] = getMSTime() + duration;
+        _renewTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveRenew(ObjectGuid guid)
@@ -79,7 +79,7 @@ public:
         auto it = _renewTargets.find(guid);
         if (it == _renewTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] uint32 GetRenewTimeRemaining(ObjectGuid guid) const
@@ -88,7 +88,7 @@ public:
         if (it == _renewTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
             return 0;
 
@@ -104,7 +104,7 @@ public:
     [[nodiscard]] uint32 GetActiveRenewCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _renewTargets)
         {
             if (now < pair.second)
@@ -119,7 +119,7 @@ public:
             return;
 
         // Clean up expired Renews
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _renewTargets.begin(); it != _renewTargets.end();)
         {
             if (now >= it->second)
@@ -142,7 +142,7 @@ public:
 
     void ApplyPoM(ObjectGuid guid, uint32 duration = 30000)
     {
-        _pomTargets[guid] = getMSTime() + duration;
+        _pomTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemovePoM(ObjectGuid guid)
@@ -155,12 +155,12 @@ public:
         auto it = _pomTargets.find(guid);
         if (it == _pomTargets.end())
             return false;
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     [[nodiscard]] bool HasActivePomOnAnyTarget() const
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _pomTargets)
         {
             if (now < pair.second)
@@ -175,7 +175,7 @@ public:
             return;
 
         // Clean up expired PoMs
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _pomTargets.begin(); it != _pomTargets.end();)
         {
             if (now >= it->second)
@@ -295,12 +295,12 @@ public:
         }
 
         // Guardian Spirit (self - cheat death)
-        if (healthPct < 20.0f && (getMSTime() - _lastGuardianSpiritTime) >= 120000)
+        if (healthPct < 20.0f && (GameTime::GetGameTimeMS() - _lastGuardianSpiritTime) >= 120000)
         {
             if (this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, bot))
             {
                 this->CastSpell(bot, HOLY_GUARDIAN_SPIRIT);
-                _lastGuardianSpiritTime = getMSTime();
+                _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
@@ -335,14 +335,14 @@ private:
             return;
 
         // Apotheosis state (massive healing cooldown)
-        if (_apotheosisActive && getMSTime() >= _apotheosisEndTime)
+        if (_apotheosisActive && GameTime::GetGameTimeMS() >= _apotheosisEndTime)
             _apotheosisActive = false;
 
         if (bot->HasAura(HOLY_APOTHEOSIS))
         {
             _apotheosisActive = true;
             if (Aura* aura = bot->GetAura(HOLY_APOTHEOSIS))
-                _apotheosisEndTime = getMSTime() + aura->GetDuration();        }
+                _apotheosisEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
@@ -378,13 +378,13 @@ private:
                 ++criticalHealthCount;
         }
 
-        if (criticalHealthCount >= 3 && (getMSTime() - _lastSalvationTime) >= 720000) // 12 min CD
+        if (criticalHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastSalvationTime) >= 720000) // 12 min CD
         {            if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
             {
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SALVATION, bot))
                 {
                     this->CastSpell(bot, HOLY_HOLY_WORD_SALVATION);
-                    _lastSalvationTime = getMSTime();
+                    _lastSalvationTime = GameTime::GetGameTimeMS();
                     return true;                }
             }
         }
@@ -397,25 +397,25 @@ private:
                 ++lowHealthCount;
         }
 
-        if (lowHealthCount >= 4 && (getMSTime() - _lastDivineHymnTime) >= 180000) // 3 min CD
+        if (lowHealthCount >= 4 && (GameTime::GetGameTimeMS() - _lastDivineHymnTime) >= 180000) // 3 min CD
         {
             if (this->CanCastSpell(HOLY_DIVINE_HYMN, bot))
             {
                 this->CastSpell(bot, HOLY_DIVINE_HYMN);
-                _lastDivineHymnTime = getMSTime();
+                _lastDivineHymnTime = GameTime::GetGameTimeMS();
                 return true;
             }
         }
 
         // Apotheosis (healing burst mode)
-        if (lowHealthCount >= 3 && (getMSTime() - _lastApotheosisTime) >= 120000) // 2 min CD
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastApotheosisTime) >= 120000) // 2 min CD
         {            if (bot->HasSpell(HOLY_APOTHEOSIS))
             {
                 if (this->CanCastSpell(HOLY_APOTHEOSIS, bot))
                 {
                     this->CastSpell(bot, HOLY_APOTHEOSIS);                    _apotheosisActive = true;
-                    _apotheosisEndTime = getMSTime() + 20000; // 20 sec
-                    _lastApotheosisTime = getMSTime();                    return true;
+                    _apotheosisEndTime = GameTime::GetGameTimeMS() + 20000; // 20 sec
+                    _lastApotheosisTime = GameTime::GetGameTimeMS();                    return true;
                 }
             }
         }
@@ -425,12 +425,12 @@ private:
         {
             if (member && member->GetHealthPct() < 25.0f && IsTankRole(member))
             {
-                if ((getMSTime() - _lastGuardianSpiritTime) >= 120000) // 2 min CD
+                if ((GameTime::GetGameTimeMS() - _lastGuardianSpiritTime) >= 120000) // 2 min CD
                 {
                     if (this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, member))
                     {
                         this->CastSpell(member, HOLY_GUARDIAN_SPIRIT);
-                        _lastGuardianSpiritTime = getMSTime();
+                        _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
                         return true;
                     }
                 }
@@ -442,13 +442,13 @@ private:
         if (!bot)
             return false;
 
-        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);        if (manaPercent < 20 && (getMSTime() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
+        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);        if (manaPercent < 20 && (GameTime::GetGameTimeMS() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
         {
             if (bot->HasSpell(HOLY_SYMBOL_OF_HOPE))
             {                if (this->CanCastSpell(HOLY_SYMBOL_OF_HOPE, bot))
                 {
                     this->CastSpell(bot, HOLY_SYMBOL_OF_HOPE);
-                    _lastSymbolOfHopeTime = getMSTime();
+                    _lastSymbolOfHopeTime = GameTime::GetGameTimeMS();
                     return true;                }
             }
         }

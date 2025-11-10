@@ -42,7 +42,7 @@ ArenaAI::ArenaAI()
 
 void ArenaAI::Initialize()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     TC_LOG_INFO("playerbot", "ArenaAI: Initializing arena systems...");
 
@@ -153,7 +153,7 @@ void ArenaAI::Update(::Player* player, uint32 diff)
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
         return;
     }
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Throttle updates (100ms for arena responsiveness)
     if (_lastUpdateTimes.count(playerGuid))
@@ -165,7 +165,7 @@ void ArenaAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     // Update match state
     UpdateMatchState(player);
@@ -211,7 +211,7 @@ void ArenaAI::OnMatchStart(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
@@ -222,7 +222,7 @@ void ArenaAI::OnMatchStart(::Player* player)
 
     // Initialize match state
     ArenaMatchState state;
-    state.matchStartTime = getMSTime();
+    state.matchStartTime = GameTime::GetGameTimeMS();
     _matchStates[playerGuid] = state;
     if (!player)
     {
@@ -241,7 +241,7 @@ void ArenaAI::OnMatchEnd(::Player* player, bool won)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
@@ -290,7 +290,7 @@ void ArenaAI::AnalyzeTeamComposition(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
@@ -894,16 +894,26 @@ bool ArenaAI::ExecutePillarKite(::Player* player)
 
     // Break LoS with enemies
     std::vector<::Unit*> enemies = GetEnemyTeam(player);
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-        return nullptr;
-    }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+    if (!player)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+        return nullptr;
+
+    }
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
     for (::Unit* enemy : enemies)
     {
         if (IsInLineOfSight(player, enemy))
@@ -1005,11 +1015,16 @@ bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
     for (::Player* teammate : teammates)
     {
         float distance = std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
         if (distance > BURST_COORDINATION_RANGE)
             return false;
 
@@ -1024,7 +1039,7 @@ void ArenaAI::SignalBurst(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (!enemyHealer)
     {
@@ -1097,11 +1112,16 @@ bool ArenaAI::TeammateHasCCAvailable(::Player* player) const
         return false;
 
     std::vector<::Player*> teammates = GetTeammates(player);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return nullptr;
+
+}
 
     for (::Player* teammate : teammates)
     {
@@ -1167,11 +1187,16 @@ void ArenaAI::Execute2v2DoubleDPS(::Player* player)
 
     // Double DPS: Aggressive strategy, burst same target
     ::Unit* target = SelectFocusTarget(player);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
         if (!target)
         {
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
@@ -1255,11 +1280,16 @@ void ArenaAI::Execute3v3Strategy(::Player* player)
         return;
     }
     TeamComposition comp = _teamCompositions[playerGuid];
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
+
+if (!player)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
+
+    return;
+
+}
 
     switch (comp)
     {
@@ -1297,7 +1327,7 @@ void ArenaAI::Execute3v3TripleDPS(::Player* player)
         player->SetSelection(target->GetGUID());
 
         // Save target as focus
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _focusTargets[player->GetGUID().GetCounter()] = target->GetGUID();
         if (!player)
         {
@@ -1454,7 +1484,7 @@ ArenaMatchState ArenaAI::GetMatchState(::Player* player) const
     if (!player)
         return ArenaMatchState();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
@@ -1473,7 +1503,7 @@ void ArenaAI::UpdateMatchState(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!player)
@@ -1522,7 +1552,7 @@ uint32 ArenaAI::GetMatchDuration(::Player* player) const
         return 0;
 
     ArenaMatchState state = GetMatchState(player);
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     return (currentTime - state.matchStartTime) / 1000; // Convert to seconds
 }
@@ -1533,13 +1563,13 @@ uint32 ArenaAI::GetMatchDuration(::Player* player) const
 
 void ArenaAI::SetArenaProfile(uint32 playerGuid, ArenaProfile const& profile)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -1553,7 +1583,7 @@ ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 
 ArenaAI::ArenaMetrics const& ArenaAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {

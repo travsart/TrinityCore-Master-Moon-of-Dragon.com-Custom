@@ -66,13 +66,13 @@ namespace Playerbot
 
         [[nodiscard]] bool IsAvailable() const
         {
-            uint32 now = getMSTime();
+            uint32 now = GameTime::GetGameTimeMS();
             return (now - lastUsed) >= cooldown;
         }
 
         void MarkUsed()
         {
-            lastUsed = getMSTime();
+            lastUsed = GameTime::GetGameTimeMS();
         }
     };
 

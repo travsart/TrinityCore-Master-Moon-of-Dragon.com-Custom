@@ -114,7 +114,7 @@ struct QuestPickupRequest
 
     QuestPickupRequest(uint32 qId, uint32 bGuid, uint32 gGuid, QuestGiverType gType)
         : questId(qId), botGuid(bGuid), questGiverGuid(gGuid), giverType(gType)
-        , requestTime(getMSTime()), priority(100), isGroupQuest(false)
+        , requestTime(GameTime::GetGameTimeMS()), priority(100), isGroupQuest(false)
         , requiresMovement(true) {}
 };
 

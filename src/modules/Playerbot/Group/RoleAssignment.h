@@ -98,7 +98,7 @@ struct PlayerRoleProfile
     PlayerRoleProfile(uint32 guid, uint8 cls, uint8 spec, uint32 level)
         : playerGuid(guid), playerClass(cls), playerSpec(spec), playerLevel(level)
         , preferredRole(GroupRole::NONE), assignedRole(GroupRole::NONE)
-        , lastRoleUpdate(getMSTime()), isFlexible(true), overallRating(5.0f) {}
+        , lastRoleUpdate(GameTime::GetGameTimeMS()), isFlexible(true), overallRating(5.0f) {}
 };
 
 struct GroupComposition

@@ -226,7 +226,7 @@ public:
 
     void RecordUpdate(uint32 botGuid, uint32 updateTimeUs)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto& stats = _botStats[botGuid];
         stats.totalUpdates++;
@@ -237,13 +237,13 @@ public:
 
     void RecordTemplateInstantiation(const std::string& templateType)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _templateInstantiations[templateType]++;
     }
 
     void PrintStatistics()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         LOG_INFO("module.playerbot", "=== Template Performance Statistics ===");
 
@@ -279,7 +279,7 @@ public:
 
     void Reset()
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botStats.clear();
         _templateInstantiations.clear();
     }

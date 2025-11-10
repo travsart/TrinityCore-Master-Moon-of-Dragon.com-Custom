@@ -71,7 +71,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
     BotBankingProfile const& profile = profileItr->second;
 
     // Throttle updates
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     auto lastAccessItr = _lastBankAccessTimes.find(playerGuid);
     if (lastAccessItr != _lastBankAccessTimes.end())
     {
@@ -112,7 +112,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
     _currentlyBanking.insert(playerGuid);
     _lastBankAccessTimes[playerGuid] = now;
 
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     // Gold management
     if (profile.autoDepositGold && ShouldDepositGold(player))
@@ -140,7 +140,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
         WithdrawMaterialsForCrafting(player);
     }
 
-    uint32 endTime = getMSTime();
+    uint32 endTime = GameTime::GetGameTimeMS();
     uint32 duration = endTime - startTime;
 
     _playerStatistics[playerGuid].timeSpentBanking += duration;
@@ -270,7 +270,7 @@ bool BankingManager::DepositGold(::Player* player, uint32 amount)
     // Record transaction
     BankingTransaction transaction;
     transaction.type = BankingTransaction::Type::DEPOSIT_GOLD;
-    transaction.timestamp = getMSTime();
+    transaction.timestamp = GameTime::GetGameTimeMS();
     transaction.goldAmount = amount;
     transaction.reason = "Automatic gold deposit";
 
@@ -308,7 +308,7 @@ bool BankingManager::WithdrawGold(::Player* player, uint32 amount)
     // Record transaction
     BankingTransaction transaction;
     transaction.type = BankingTransaction::Type::WITHDRAW_GOLD;
-    transaction.timestamp = getMSTime();
+    transaction.timestamp = GameTime::GetGameTimeMS();
     transaction.goldAmount = amount;
     transaction.reason = "Automatic gold withdrawal";
 
@@ -410,7 +410,7 @@ bool BankingManager::DepositItem(::Player* player, uint32 itemGuid, uint32 quant
     // Record transaction
     BankingTransaction transaction;
     transaction.type = BankingTransaction::Type::DEPOSIT_ITEM;
-    transaction.timestamp = getMSTime();
+    transaction.timestamp = GameTime::GetGameTimeMS();
     transaction.itemId = itemId;
     transaction.quantity = quantity;
     transaction.reason = "Automatic item deposit";
@@ -442,7 +442,7 @@ bool BankingManager::WithdrawItem(::Player* player, uint32 itemId, uint32 quanti
     // Record transaction
     BankingTransaction transaction;
     transaction.type = BankingTransaction::Type::WITHDRAW_ITEM;
-    transaction.timestamp = getMSTime();
+    transaction.timestamp = GameTime::GetGameTimeMS();
     transaction.itemId = itemId;
     transaction.quantity = quantity;
     transaction.reason = "Automatic item withdrawal";

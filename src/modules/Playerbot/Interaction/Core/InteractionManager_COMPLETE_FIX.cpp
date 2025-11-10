@@ -81,7 +81,7 @@ namespace Playerbot
 
     bool InteractionManager::Initialize()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         if (m_initialized)
             return true;
@@ -115,7 +115,7 @@ namespace Playerbot
 
     void InteractionManager::Shutdown()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         if (!m_initialized)
             return false;
@@ -153,7 +153,7 @@ namespace Playerbot
 
     void InteractionManager::Update(uint32 diff)
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         if (!m_initialized)
             return false;
@@ -223,7 +223,7 @@ namespace Playerbot
         if (!bot || !target)
             return InteractionResult::InvalidTarget;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         // Check if bot already has active interaction
         if (HasActiveInteraction(bot))
@@ -279,11 +279,16 @@ namespace Playerbot
         // Validate interaction requirements
         if (!m_validator->CanInteract(bot, target, type))
             return InteractionResult::RequirementNotMet;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return 0;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return 0;
+
+}
 
         if (!target)
         {
@@ -380,7 +385,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (!bot)
@@ -404,7 +409,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         return m_activeInteractions.find(bot->GetGUID()) != m_activeInteractions.end();
         if (!bot)
         {
@@ -418,7 +423,7 @@ namespace Playerbot
         if (!bot)
             return nullptr;
 
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto it = m_activeInteractions.find(bot->GetGUID());
         if (!bot)
@@ -446,11 +451,16 @@ namespace Playerbot
 
         // Check NPC flags for type detection
         NPCFlags npcFlags = target->GetNpcFlags();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return;
+
+}
 
         // Priority order for multi-flag NPCs
         if (npcFlags & UNIT_NPC_FLAG_TRAINER)
@@ -698,11 +708,16 @@ namespace Playerbot
             if (startResult != InteractionResult::Pending)
                 return startResult;
         }
-if (!mailbox)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
-    return nullptr;
-}
+
+if (!mailbox)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: mailbox in method GetGoType");
+
+    return nullptr;
+
+}
 
         // TODO: Implement when FlightMasterInteraction is created
         // if (destinationNode == 0)
@@ -826,7 +841,7 @@ namespace Playerbot
 
     InteractionMetrics InteractionManager::GetMetrics(InteractionType type) const
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         if (type == InteractionType::None)
         {
@@ -857,7 +872,7 @@ namespace Playerbot
 
     void InteractionManager::ResetMetrics()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         m_metrics.clear();
         m_totalInteractionsStarted = 0;
         m_totalInteractionsCompleted = 0;

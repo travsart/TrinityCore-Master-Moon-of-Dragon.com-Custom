@@ -90,7 +90,7 @@ private:
      */
     void UpdateCombatContext()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastContextUpdate < _contextUpdateInterval)
             return; // Not time to update yet
 
@@ -606,7 +606,7 @@ private:
 
                 case ARCANE_SURGE:
                     _arcaneSurgeActive = true;
-                    _arcaneSurgeEndTime = getMSTime() + 15000; // 15 sec
+                    _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec
                     break;
 
                 default:

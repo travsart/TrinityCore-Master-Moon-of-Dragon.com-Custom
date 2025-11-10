@@ -83,9 +83,9 @@ struct EmpoweredSpell
 
     EmpoweredSpell(uint32 spell, EmpowermentLevel level, ::Unit* tgt)
         : spellId(spell), currentLevel(EmpowermentLevel::NONE), targetLevel(level),
-          channelStart(getMSTime()), channelDuration(0), isChanneling(true), target(tgt) {}
+          channelStart(GameTime::GetGameTimeMS()), channelDuration(0), isChanneling(true), target(tgt) {}
 
-    uint32 GetChannelTime() const { return getMSTime() - channelStart; }
+    uint32 GetChannelTime() const { return GameTime::GetGameTimeMS() - channelStart; }
     bool ShouldRelease() const { return GetChannelTime() >= GetRequiredChannelTime(); }
     uint32 GetRequiredChannelTime() const { return static_cast<uint32>(targetLevel) * 1000; } // 1 sec per rank
 };
@@ -102,10 +102,10 @@ struct Echo
     Echo() : target(nullptr), remainingHeals(0), healAmount(0), lastHeal(0), healInterval(2000) {}
 
     Echo(::Unit* tgt, uint32 heals, uint32 amount)
-        : target(tgt), remainingHeals(heals), healAmount(amount), lastHeal(getMSTime()), healInterval(2000) {}
+        : target(tgt), remainingHeals(heals), healAmount(amount), lastHeal(GameTime::GetGameTimeMS()), healInterval(2000) {}
 
-    bool ShouldHeal() const { return getMSTime() - lastHeal >= healInterval && remainingHeals > 0; }
-    void ProcessHeal() { if (remainingHeals > 0) { remainingHeals--; lastHeal = getMSTime(); } }
+    bool ShouldHeal() const { return GameTime::GetGameTimeMS() - lastHeal >= healInterval && remainingHeals > 0; }
+    void ProcessHeal() { if (remainingHeals > 0) { remainingHeals--; lastHeal = GameTime::GetGameTimeMS(); } }
 };
 
 // Evoker AI implementation with full essence and empowerment management

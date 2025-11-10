@@ -58,7 +58,7 @@ namespace Playerbot
         if (!GetBot() || !GetBot()->IsInWorld() || !IsEnabled())
             return;
 
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         _updateTimer += elapsed;
         _marketScanTimer += elapsed;
@@ -110,7 +110,7 @@ namespace Playerbot
             return;
         }
 
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         // Get all auctions for market analysis using iterator API
         std::unordered_map<uint32, std::vector<uint64>> itemPrices;
@@ -156,7 +156,7 @@ namespace Playerbot
         if (!bot || !IsEnabled())
             return;
 
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         for (auto& [itemId, priceData] : _priceCache)
         {
@@ -176,7 +176,7 @@ namespace Playerbot
 
     ItemPriceData AuctionManager::GetItemPriceData(uint32 itemId) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _priceCache.find(itemId);
         if (it != _priceCache.end())
@@ -202,7 +202,7 @@ namespace Playerbot
         if (!ah)
             return opportunities;
 
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         for (auto auctionIt = ah->GetAuctionsBegin(); auctionIt != ah->GetAuctionsEnd(); ++auctionIt)
         {
@@ -692,13 +692,13 @@ namespace Playerbot
     }
 
     void AuctionManager::RegisterBotAuction(Player* bot, uint32 auctionId, const BotAuctionData& data){
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botAuctions[bot->GetGUID()].push_back(data);
     }
 
     void AuctionManager::UnregisterBotAuction(Player* bot, uint32 auctionId)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _botAuctions.find(bot->GetGUID());if (it != _botAuctions.end())
         {
@@ -711,7 +711,7 @@ namespace Playerbot
 
     std::vector<BotAuctionData> AuctionManager::GetBotAuctions(Player* bot) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _botAuctions.find(bot->GetGUID());if (it != _botAuctions.end())
             return it->second;
@@ -752,7 +752,7 @@ namespace Playerbot
 
     AuctionHouseStats AuctionManager::GetBotStats(ObjectGuid botGuid) const
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto it = _botStats.find(botGuid);
         if (it != _botStats.end())
@@ -763,7 +763,7 @@ namespace Playerbot
 
     void AuctionManager::RecordAuctionSold(ObjectGuid botGuid, uint64 salePrice, uint64 costBasis)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto& stats = _botStats[botGuid];
         stats.TotalAuctionsSold++;
@@ -778,21 +778,21 @@ namespace Playerbot
 
     void AuctionManager::RecordAuctionCreated(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botStats[botGuid].TotalAuctionsCreated++;
         _botStats[botGuid].UpdateSuccessRate();
     }
 
     void AuctionManager::RecordAuctionCancelled(ObjectGuid botGuid)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
         _botStats[botGuid].TotalAuctionsCancelled++;
         _botStats[botGuid].UpdateSuccessRate();
     }
 
     void AuctionManager::RecordCommodityPurchase(ObjectGuid botGuid, uint64 cost)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto& stats = _botStats[botGuid];
         stats.TotalCommoditiesBought++;
@@ -801,7 +801,7 @@ namespace Playerbot
 
     void AuctionManager::RecordBidPlaced(ObjectGuid botGuid, uint64 bidAmount)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::lock_guard lock(_mutex);
 
         auto& stats = _botStats[botGuid];
         stats.TotalBidsPlaced++;

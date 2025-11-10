@@ -95,7 +95,7 @@ public:
 
     void AddTarget(ObjectGuid guid)
     {
-        _trackedTargets[guid] = getMSTime() + 20000; // 20 sec duration
+        _trackedTargets[guid] = GameTime::GetGameTimeMS() + 20000; // 20 sec duration
     }
 
     void RemoveTarget(ObjectGuid guid)
@@ -109,13 +109,13 @@ public:
         if (it == _trackedTargets.end())
             return false;
 
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     uint32 GetActiveCount() const
     {
         uint32 count = 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _trackedTargets)
         {
             if (now < pair.second)
@@ -126,7 +126,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _trackedTargets.begin(); it != _trackedTargets.end();)
         {
             if (now >= it->second)
@@ -158,7 +158,7 @@ public:
     void StartChannel(ObjectGuid guid)
     {
         _currentTargetGuid = guid;
-        _channelStartTime = getMSTime();
+        _channelStartTime = GameTime::GetGameTimeMS();
         _isChanneling = true;
     }
 
@@ -175,7 +175,7 @@ public:
     bool CanInstantCast() const
     {
         // Soothing Mist enables instant Vivify/Enveloping Mist
-        return _isChanneling && (getMSTime() - _channelStartTime) > 500;
+        return _isChanneling && (GameTime::GetGameTimeMS() - _channelStartTime) > 500;
     }
 
     void Update(Player* bot)
@@ -431,7 +431,7 @@ protected:
         if (injuredCount >= 3 && this->CanCastSpell(ESSENCE_FONT, this->GetBot()))
         {
             this->CastSpell(ESSENCE_FONT, this->GetBot());
-            _lastEssenceFontTime = getMSTime();
+            _lastEssenceFontTime = GameTime::GetGameTimeMS();
             return true;
         }
 
@@ -749,7 +749,7 @@ private:
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
                                 if (target && this->CanCastSpell(ESSENCE_FONT, target)) {
                                     this->CastSpell(target, ESSENCE_FONT);
-                                    this->_lastEssenceFontTime = getMSTime();
+                                    this->_lastEssenceFontTime = GameTime::GetGameTimeMS();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

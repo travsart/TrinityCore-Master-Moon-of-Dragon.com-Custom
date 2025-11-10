@@ -101,7 +101,7 @@ void BotAccountMgr::ProcessPendingCallbacks()
 
         // Extract callback from queue
         {
-            std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+            std::lock_guard lock(_callbackMutex);
             if (_pendingCallbacks.empty())
                 break;
 
@@ -125,7 +125,7 @@ void BotAccountMgr::ProcessPendingCallbacks()
 
 void BotAccountMgr::QueueCallback(std::function<void()> callback)
 {
-    std::lock_guard<std::recursive_mutex> lock(_callbackMutex);
+    std::lock_guard lock(_callbackMutex);
 
     PendingCallback pending;
     pending.callback = std::move(callback);
@@ -422,7 +422,7 @@ void BotAccountMgr::RefillAccountPool()
             {
                 // Add to pool
                 {
-                    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
+                    std::lock_guard lock(_poolMutex);
                     for (uint32 accountId : accounts)
                     {
                         _accountPool.push(accountId);
@@ -458,7 +458,7 @@ uint32 BotAccountMgr::AcquireAccount()
 {
     // Try to get from pool first
     {
-        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
+        std::lock_guard lock(_poolMutex);
         if (!_accountPool.empty())
         {
             uint32 accountId = _accountPool.front();
@@ -518,7 +518,7 @@ uint32 BotAccountMgr::AcquireAccount()
 
 void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
+    std::lock_guard lock(_poolMutex);
 
     // Check if account exists
     auto it = _accounts.find(bnetAccountId);
@@ -556,13 +556,13 @@ void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
 
 uint32 BotAccountMgr::GetPoolSize() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_poolMutex);
+    std::lock_guard lock(_poolMutex);
     return _accountPool.size();
 }
 
 bool BotAccountMgr::CanCreateCharacter(uint32 bnetAccountId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
+    std::lock_guard lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     if (it == _accounts.end())
@@ -595,7 +595,7 @@ void BotAccountMgr::UpdateCharacterCount(uint32 bnetAccountId, int8 delta)
 
 BotAccountMgr::BotAccountInfo const* BotAccountMgr::GetAccountInfo(uint32 bnetAccountId) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
+    std::lock_guard lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     return (it != _accounts.end()) ? &it->second : nullptr;
@@ -642,7 +642,7 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
 
     std::vector<uint32> accountIds;
     {
-        std::lock_guard<std::recursive_mutex> lock(_accountsMutex);
+        std::lock_guard lock(_accountsMutex);
         accountIds.reserve(_accounts.size());
         for (auto const& [id, info] : _accounts)
         {
@@ -856,7 +856,7 @@ void BotAccountMgr::LoadAccountMetadata()
 
                     // CRITICAL FIX: Add loaded accounts to the account pool so they can be acquired
                     {
-                        std::lock_guard<std::recursive_mutex> lock(_poolMutex);
+                        std::lock_guard lock(_poolMutex);
                         _accountPool.push(legacyAccountId);  // Use legacy account ID for the pool
                         _accounts[bnetAccountId].isInPool = true;  // Mark as in pool
                     }

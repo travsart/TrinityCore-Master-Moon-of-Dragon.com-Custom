@@ -74,7 +74,7 @@ namespace Playerbot
 
         [[nodiscard]] bool IsExpired() const
         {
-            return getMSTime() > expiryTime;
+            return GameTime::GetGameTimeMS() > expiryTime;
         }
 
         [[nodiscard]] bool IsValid() const
@@ -101,7 +101,7 @@ namespace Playerbot
 
         [[nodiscard]] bool IsExpired() const
         {
-            return getMSTime() > expiryTime;
+            return GameTime::GetGameTimeMS() > expiryTime;
         }
     };
 

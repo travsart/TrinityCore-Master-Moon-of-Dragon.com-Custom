@@ -164,7 +164,7 @@ public:
 
     void MendPet()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastMendPet < 10000) // 10 second cooldown
             return;
 
@@ -180,7 +180,7 @@ public:
 
     void UpdatePetFrenzy()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Check if frenzy has expired
         if (_petFrenzyExpireTime > 0 && currentTime > _petFrenzyExpireTime)
@@ -194,7 +194,7 @@ public:
     {
         // Barbed Shot applies/refreshes Pet Frenzy
         _petFrenzyStacks = std::min<uint32>(_petFrenzyStacks + 1, 3);
-        _petFrenzyExpireTime = getMSTime() + 8000; // 8 second duration
+        _petFrenzyExpireTime = GameTime::GetGameTimeMS() + 8000; // 8 second duration
     }
 
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
@@ -373,7 +373,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_BESTIAL_WRATH);
             _bestialWrathActive = true;
-            _bestialWrathEndTime = getMSTime() + 15000;
+            _bestialWrathEndTime = GameTime::GetGameTimeMS() + 15000;
             return;
         }
 
@@ -382,7 +382,7 @@ protected:
         {
             this->CastSpell(this->GetBot(), SPELL_ASPECT_OF_THE_WILD);
             _aspectOfTheWildActive = true;
-            _aspectEndTime = getMSTime() + 20000;
+            _aspectEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
@@ -390,7 +390,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_KILL_COMMAND))
         {
             this->CastSpell(target, SPELL_KILL_COMMAND);
-            _lastKillCommand = getMSTime();
+            _lastKillCommand = GameTime::GetGameTimeMS();
             this->ConsumeResource(30);
             return;
         }
@@ -417,7 +417,7 @@ protected:
         if (currentFocus >= 35)
         {
             this->CastSpell(target, SPELL_COBRA_SHOT);
-            _lastCobraShot = getMSTime();
+            _lastCobraShot = GameTime::GetGameTimeMS();
             this->ConsumeResource(35);
             _resource = std::min<uint32>(_resource + 5, 100); // Small focus return
             return;
@@ -463,7 +463,7 @@ private:
 
     void UpdateBeastMasteryState()
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
 
         // Update pet frenzy
         _petManager.UpdatePetFrenzy();
@@ -523,7 +523,7 @@ private:
         if (this->GetBot()->IsInCombat())
         {
             static uint32 lastCheck = 0;
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
 
             if (currentTime - lastCheck > 3000) // Check every 3 seconds
             {
@@ -685,7 +685,7 @@ private:
                                 {
                                     this->CastSpell(bot, SPELL_BESTIAL_WRATH);
                                     this->_bestialWrathActive = true;
-                                    this->_bestialWrathEndTime = getMSTime() + 15000;
+                                    this->_bestialWrathEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -701,7 +701,7 @@ private:
                                 {
                                     this->CastSpell(bot, SPELL_ASPECT_OF_THE_WILD);
                                     this->_aspectOfTheWildActive = true;
-                                    this->_aspectEndTime = getMSTime() + 20000;
+                                    this->_aspectEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -725,7 +725,7 @@ private:
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND))
                                 {
                                     this->CastSpell(target, SPELL_KILL_COMMAND);
-                                    this->_lastKillCommand = getMSTime();
+                                    this->_lastKillCommand = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(30);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -810,7 +810,7 @@ private:
                                 if (this->_resource >= 35)
                                 {
                                     this->CastSpell(target, SPELL_COBRA_SHOT);
-                                    this->_lastCobraShot = getMSTime();
+                                    this->_lastCobraShot = GameTime::GetGameTimeMS();
                                     this->ConsumeResource(35);
                                     this->_resource = std::min<uint32>(this->_resource + 5, 100);
                                     return NodeStatus::SUCCESS;

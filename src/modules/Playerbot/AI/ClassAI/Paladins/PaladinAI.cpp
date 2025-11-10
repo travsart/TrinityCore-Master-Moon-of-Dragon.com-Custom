@@ -158,7 +158,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         // Consecration for AoE damage/threat
         if (nearbyEnemies >= 2 && CanUseAbility(CONSECRATION))
         {
-            uint32 currentTime = getMSTime();
+            uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastConsecration > 8000)  // 8 second duration
             {
                 if (CastSpell(CONSECRATION))
@@ -389,7 +389,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     // Maintain Consecration for AoE/threat
     if (GetNearbyEnemyCount(CONSECRATION_RADIUS) > 0 && CanUseAbility(CONSECRATION))
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastConsecration > 8000)
         {
             if (CastSpell(CONSECRATION))
@@ -419,7 +419,7 @@ void PaladinAI::UseDefensiveCooldowns()
     // Lay on Hands at critical health
     if (healthPct < LAY_ON_HANDS_THRESHOLD && CanUseAbility(LAY_ON_HANDS))
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastLayOnHands > 600000)  // 10 minute cooldown
         {
             if (CastSpell(GetBot(), LAY_ON_HANDS))
@@ -436,7 +436,7 @@ void PaladinAI::UseDefensiveCooldowns()
     // Divine Shield at emergency health
     if (healthPct < HEALTH_CRITICAL_THRESHOLD && CanUseAbility(DIVINE_SHIELD))
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastDivineShield > 300000)  // 5 minute cooldown
         {
             if (CastSpell(DIVINE_SHIELD))
@@ -595,7 +595,7 @@ void PaladinAI::ManageHolyPower(::Unit* target)
 
 void PaladinAI::UpdateBlessingManagement()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastBlessingTime < 30000)  // Check every 30 seconds
         return;
 
@@ -645,7 +645,7 @@ void PaladinAI::UpdateBlessingManagement()
 
 void PaladinAI::UpdateAuraManagement()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastAuraChange < 10000)  // Check every 10 seconds
         return;
 

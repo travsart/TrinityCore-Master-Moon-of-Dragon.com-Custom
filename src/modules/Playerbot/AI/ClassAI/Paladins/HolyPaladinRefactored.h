@@ -265,7 +265,7 @@ protected:
             {
                 this->CastSpell(bot, AVENGING_WRATH_HOLY);
                 _avengingWrathActive = true;
-                _avengingWrathEndTime = getMSTime() + 20000;
+                _avengingWrathEndTime = GameTime::GetGameTimeMS() + 20000;
                 return;
             }
         }
@@ -277,7 +277,7 @@ protected:
             if (healTarget && this->CanCastSpell(HOLY_SHOCK, healTarget))
             {
                 this->CastSpell(healTarget, HOLY_SHOCK);
-                _lastHolyShockTime = getMSTime();
+                _lastHolyShockTime = GameTime::GetGameTimeMS();
                 GenerateHolyPower(1);
                 return;
             }
@@ -459,7 +459,7 @@ protected:
 private:
     void UpdateHolyPaladinState()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
 
         // Update Avenging Wrath
         if (_avengingWrathActive && now >= _avengingWrathEndTime)
@@ -944,7 +944,7 @@ private:
                                 {
                                     this->CastSpell(bot, AVENGING_WRATH_HOLY);
                                     this->_avengingWrathActive = true;
-                                    this->_avengingWrathEndTime = getMSTime() + 20000;
+                                    this->_avengingWrathEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;

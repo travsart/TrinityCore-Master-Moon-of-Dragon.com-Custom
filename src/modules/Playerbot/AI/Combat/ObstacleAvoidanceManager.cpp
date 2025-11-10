@@ -62,7 +62,7 @@ void ObstacleAvoidanceManager::UpdateObstacleDetection(const DetectionContext& c
 
     try
     {
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastUpdate < _updateInterval && !context.emergencyMode)
             return;
 
@@ -279,11 +279,16 @@ bool ObstacleAvoidanceManager::ExecuteAvoidanceManeuver(const AvoidanceManeuver&
             case AvoidanceBehavior::WAIT_AND_PASS:
                 _bot->GetMotionMaster()->Clear();
                 break;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
             case AvoidanceBehavior::JUMP_OVER:
                 if (maneuver.requiresJump)
@@ -534,7 +539,7 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetName");
                 return;
             }
-            obstacle.firstDetected = getMSTime();
+            obstacle.firstDetected = GameTime::GetGameTimeMS();
             obstacle.lastSeen = obstacle.firstDetected;
 
             if (obstacle.isMoving)
@@ -792,11 +797,16 @@ AvoidanceManeuver ObstacleAvoidanceManager::GenerateJumpOver(const CollisionPred
         maneuver.successProbability = 0.0f;
         return maneuver;
     }
-if (!gameObj)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: gameObj in method GetGoType");
-    return nullptr;
-}
+
+if (!gameObj)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: gameObj in method GetGoType");
+
+    return nullptr;
+
+}
 
     Position botPos = _bot->GetPosition();
     Position obstaclePos = collision.obstacle->position;
@@ -983,19 +993,24 @@ void ObstacleAvoidanceManager::UpdateObstacle(const ObstacleInfo& obstacle)
     {
         it->second.position = obstacle.position;
         it->second.velocity = obstacle.velocity;
-        it->second.lastSeen = getMSTime();
+        it->second.lastSeen = GameTime::GetGameTimeMS();
         it->second.predictedPosition = PredictObstaclePosition(it->second, _lookaheadTime);
     }
 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return;
+
+}
 
 void ObstacleAvoidanceManager::CleanupExpiredObstacles()
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastCleanup < CLEANUP_INTERVAL)
         return;
 
@@ -1028,11 +1043,16 @@ void ObstacleAvoidanceManager::CleanupExpiredObstacles()
 
     _lastCleanup = currentTime;
 }
-if (!obj)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
-    return;
-}
+
+if (!obj)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGUID");
+
+    return;
+
+}
 
 float ObstacleAvoidanceManager::CalculateTimeToCollision(const ObstacleInfo& obstacle, const DetectionContext& context)
 {
@@ -1052,11 +1072,16 @@ float ObstacleAvoidanceManager::CalculateTimeToCollision(const ObstacleInfo& obs
     float a = relativeVel.m_positionX * relativeVel.m_positionX +
               relativeVel.m_positionY * relativeVel.m_positionY +
               relativeVel.m_positionZ * relativeVel.m_positionZ;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
+
+    return;
+
+}
 
     float b = 2.0f * (relativePos.m_positionX * relativeVel.m_positionX +
                       relativePos.m_positionY * relativeVel.m_positionY +
@@ -1192,14 +1217,19 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
         }
         return;
     }
-        obstacle.firstDetected = getMSTime();
+        obstacle.firstDetected = GameTime::GetGameTimeMS();
         obstacle.lastSeen = obstacle.firstDetected;
         obstacle.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(obstacle.radius, GetBotRadius());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return;
+
+}
 
         obstacles.push_back(obstacle);
     }
@@ -1315,9 +1345,9 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
         hazard.isTemporary = true;
         hazard.priority = ObstaclePriority::HIGH;  // Damaging effects are high priority
         hazard.name = spellInfo->SpellName[0];
-        hazard.firstDetected = getMSTime();
+        hazard.firstDetected = GameTime::GetGameTimeMS();
         hazard.lastSeen = hazard.firstDetected;
-        hazard.expirationTime = dynObj->GetDuration() > 0 ? getMSTime() + dynObj->GetDuration() : getMSTime() + 60000;
+        hazard.expirationTime = dynObj->GetDuration() > 0 ? GameTime::GetGameTimeMS() + dynObj->GetDuration() : GameTime::GetGameTimeMS() + 60000;
         hazard.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(hazard.radius, GetBotRadius(), 2.0f);  // Extra safety margin
         hazard.recommendedBehavior = AvoidanceBehavior::DIRECT_AVOIDANCE;
 
@@ -1422,7 +1452,7 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                 hazard.isTemporary = false;  // GameObjects persist until despawned
                 hazard.priority = ObstaclePriority::HIGH;
                 hazard.name = obj->GetName();
-                hazard.firstDetected = getMSTime();
+                hazard.firstDetected = GameTime::GetGameTimeMS();
                 hazard.lastSeen = hazard.firstDetected;
                 hazard.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(hazard.radius, GetBotRadius(), 2.0f);
                 hazard.recommendedBehavior = AvoidanceBehavior::DIRECT_AVOIDANCE;
@@ -1464,7 +1494,7 @@ bool ObstacleAvoidanceManager::ShouldIgnoreObstacle(const ObstacleInfo& obstacle
     if (!IsInScanRange(obstacle.position, context))
         return true;
 
-    if (obstacle.isTemporary && getMSTime() > obstacle.expirationTime)
+    if (obstacle.isTemporary && GameTime::GetGameTimeMS() > obstacle.expirationTime)
         return true;
 
     return false;

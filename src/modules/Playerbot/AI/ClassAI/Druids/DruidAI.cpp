@@ -188,7 +188,7 @@ bool DruidAI::HandleDefensives()
     if (!bot)
         return false;
 
-    float healthPercent = bot->GetHealthPct();    uint32 currentTime = getMSTime();
+    float healthPercent = bot->GetHealthPct();    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Survival Instincts - critical health
     if (healthPercent < 30.0f &&
@@ -289,7 +289,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
     if (!target)
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
 
     switch (spec)
@@ -451,7 +451,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
     if (!target)
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     ChrSpecialization spec = GetBot()->GetPrimarySpecialization();
 
     switch (spec)
@@ -1049,7 +1049,7 @@ bool DruidAI::ShiftToForm(DruidForm form)
     if (IsInForm(form))
         return false;
 
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime < _lastFormShift + 1500) // GCD for form shifting
         return false;
 

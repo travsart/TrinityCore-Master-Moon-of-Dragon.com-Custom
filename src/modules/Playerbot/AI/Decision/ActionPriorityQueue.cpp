@@ -264,7 +264,7 @@ void ActionPriorityQueue::RecordCast(uint32 spellId)
 {
     PrioritizedSpell* spell = FindSpell(spellId);
     if (spell)
-        spell->lastCastTime = getMSTime();
+        spell->lastCastTime = GameTime::GetGameTimeMS();
 }
 
 void ActionPriorityQueue::Clear()

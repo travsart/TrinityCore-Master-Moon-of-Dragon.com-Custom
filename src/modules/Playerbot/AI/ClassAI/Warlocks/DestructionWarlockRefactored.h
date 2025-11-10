@@ -141,7 +141,7 @@ public:
 
     void ApplyImmolate(ObjectGuid guid, uint32 duration)
     {
-        _trackedTargets[guid] = getMSTime() + duration;
+        _trackedTargets[guid] = GameTime::GetGameTimeMS() + duration;
     }
 
     void RemoveImmolate(ObjectGuid guid)
@@ -155,7 +155,7 @@ public:
         if (it == _trackedTargets.end())
             return false;
 
-        return getMSTime() < it->second;
+        return GameTime::GetGameTimeMS() < it->second;
     }
 
     uint32 GetTimeRemaining(ObjectGuid guid) const
@@ -164,7 +164,7 @@ public:
         if (it == _trackedTargets.end())
             return 0;
 
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return (it->second > now) ? (it->second - now) : 0;
     }
 
@@ -176,7 +176,7 @@ public:
 
     void Update()
     {
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _trackedTargets.begin(); it != _trackedTargets.end();)
         {
             if (now >= it->second)
@@ -208,7 +208,7 @@ public:
     void ApplyHavoc(ObjectGuid guid)
     {
         _havocTargetGuid = guid;
-        _havocEndTime = getMSTime() + 12000; // 12 sec duration
+        _havocEndTime = GameTime::GetGameTimeMS() + 12000; // 12 sec duration
         _havocActive = true;
     }
 
@@ -217,7 +217,7 @@ public:
 
     void Update()
     {
-        if (_havocActive && getMSTime() >= _havocEndTime)
+        if (_havocActive && GameTime::GetGameTimeMS() >= _havocEndTime)
         {
             _havocActive = false;
             _havocTargetGuid = ObjectGuid::Empty;
@@ -302,7 +302,7 @@ public:
         if (shards >= 2 && this->CanCastSpell(SUMMON_INFERNAL, this->GetBot()))
         {
             this->CastSpell(this->GetBot(), SUMMON_INFERNAL);
-            _lastInfernalTime = getMSTime();
+            _lastInfernalTime = GameTime::GetGameTimeMS();
             
 
         // Register cooldowns using CooldownManager
@@ -455,7 +455,7 @@ public:
         if (shards >= 2 && this->CanCastSpell(SUMMON_INFERNAL, this->GetBot()))
         {
             this->CastSpell(this->GetBot(), SUMMON_INFERNAL);
-            _lastInfernalTime = getMSTime();
+            _lastInfernalTime = GameTime::GetGameTimeMS();
             return;
         }
 

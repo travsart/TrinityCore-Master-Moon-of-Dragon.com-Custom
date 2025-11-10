@@ -74,7 +74,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
     auto startTime = std::chrono::steady_clock::now();
     SelectionResult result;
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::lock_guard lock(_mutex);
 
     try
     {
@@ -115,7 +115,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             targetInfo.isInterruptTarget = IsInterruptible(candidate);
             targetInfo.isGroupFocus = (candidate == context.groupTarget);
             targetInfo.isVulnerable = IsVulnerable(candidate);
-            targetInfo.lastUpdate = getMSTime();
+            targetInfo.lastUpdate = GameTime::GetGameTimeMS();
 
             targetInfo.priority = DetermineTargetPriority(candidate, context);
             targetInfo.score = CalculateTargetScore(candidate, context);
@@ -340,11 +340,16 @@ SelectionResult TargetSelector::SelectInterruptTarget(float maxRange)
     context.bot = _bot;
     context.maxRange = maxRange > 0.0f ? maxRange : 30.0f;
     context.inCombat = _bot->IsInCombat();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
+
+    return;
+
+}
     if (!bot)
     {
         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
@@ -583,11 +588,16 @@ float TargetSelector::CalculateTargetScore(Unit* target, const SelectionContext&
 
     return std::max(0.0f, totalScore);
 }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
+
+    return;
+
+}
 
 TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const SelectionContext& context)
 {
@@ -725,11 +735,16 @@ float TargetSelector::CalculateThreatScore(Unit* target, const SelectionContext&
 {
     if (!_threatManager || !target)
         return 0.0f;
-if (!currentSpell)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
-    return nullptr;
-}
+
+if (!currentSpell)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
+
+    return nullptr;
+
+}
 
     float threat = _threatManager->GetThreat(target);
     float maxThreat = 100.0f;

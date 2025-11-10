@@ -163,7 +163,7 @@ protected:
         {
             this->CastSpell(target, VENDETTA);
             _vendettaActive = true;
-            _vendettaEndTime = getMSTime() + 20000;
+            _vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
         }
 
@@ -207,7 +207,7 @@ protected:
             if (energy >= 35 && this->CanCastSpell(ENVENOM, target))
             {
                 this->CastSpell(target, ENVENOM);
-                _lastEnvenomTime = getMSTime();
+                _lastEnvenomTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -228,7 +228,7 @@ protected:
             if (this->CanCastSpell(MUTILATE, target))
             {
                 this->CastSpell(target, MUTILATE);
-                _lastMutilateTime = getMSTime();
+                _lastMutilateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(50);
                 GenerateComboPoints(2);
                 return;
@@ -320,14 +320,14 @@ private:
         _dotTracker.Update();
 
         // Check Vendetta expiry
-        if (_vendettaActive && getMSTime() >= _vendettaEndTime)
+        if (_vendettaActive && GameTime::GetGameTimeMS() >= _vendettaEndTime)
         {
             _vendettaActive = false;
             _vendettaEndTime = 0;
         }
 
         // Regenerate energy (10 per second)
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         static uint32 lastRegenTime = now;
         uint32 timeDiff = now - lastRegenTime;
 
@@ -490,7 +490,7 @@ private:
                                 {
                                     this->CastSpell(target, VENDETTA);
                                     this->_vendettaActive = true;
-                                    this->_vendettaEndTime = getMSTime() + 20000;
+                                    this->_vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -573,7 +573,7 @@ private:
                                 if (this->CanCastSpell(ENVENOM, target))
                                 {
                                     this->CastSpell(target, ENVENOM);
-                                    this->_lastEnvenomTime = getMSTime();
+                                    this->_lastEnvenomTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -607,7 +607,7 @@ private:
                                 if (this->CanCastSpell(MUTILATE, target))
                                 {
                                     this->CastSpell(target, MUTILATE);
-                                    this->_lastMutilateTime = getMSTime();
+                                    this->_lastMutilateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(50);
                                     this->GenerateComboPoints(2);
                                     return NodeStatus::SUCCESS;

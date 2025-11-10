@@ -75,11 +75,16 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
 {
     auto startTime = std::chrono::steady_clock::now();
     MovementResult result;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
+
+    return;
+
+}
 
     // No lock needed - position data is per-bot instance data
 
@@ -104,7 +109,7 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
             return result;
         }
 
-        uint32 currentTime = getMSTime();
+        uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastUpdate < _updateInterval && !context.emergencyMode)
         {
             result.failureReason = "Update interval not reached";
@@ -286,7 +291,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
 
     // FIX #1: DUPLICATE MOVEMENT PREVENTION - Check if already moving to same position
     // This prevents the infinite movement cancellation bug (60+ MovePoint calls/second)
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
     float distanceToLastTarget = _lastTargetPosition.GetExactDist(&targetPos);
 
     if (distanceToLastTarget < _positionTolerance && (currentTime - _lastMovePointTime) < 500)
@@ -360,7 +365,7 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     auto startTime = std::chrono::steady_clock::now();
     PositionInfo info;
     info.position = pos;
-    info.evaluationTime = getMSTime();
+    info.evaluationTime = GameTime::GetGameTimeMS();
 
     if (!ValidatePosition(pos, context.validationFlags))
     {
@@ -381,11 +386,16 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     info.score = std::max(0.0f, totalScore);
     info.distanceToTarget = context.target ? pos.GetExactDist(context.target) : 0.0f;
     info.hasLineOfSight = context.target ? _bot->IsWithinLOSInMap(context.target) : true;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return;
-}
+
+if (!target)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
+
+    return;
+
+}
     info.isOptimalRange = (info.distanceToTarget >= context.preferredRange * 0.8f &&
                           info.distanceToTarget <= context.preferredRange * 1.2f);
     info.safetyRating = CalculateSafetyScore(pos, context);
@@ -744,7 +754,7 @@ bool PositionManager::IsPositionSafe(const Position& pos, const MovementContext&
 
 bool PositionManager::IsInDangerZone(const Position& pos)
 {
-    uint32 currentTime = getMSTime();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     for (const AoEZone& zone : _activeZones)
     {
@@ -773,11 +783,16 @@ Position PositionManager::FindSafePosition(const Position& fromPos, float minDis
             return pos;
         }
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return nullptr;
+
+}
 
     std::vector<Position> farPositions = GenerateCircularPositions(fromPos, minDistance * 2.0f, 16);
     for (const Position& pos : farPositions)
@@ -1242,11 +1257,16 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
             return nullptr;
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
+
+    return nullptr;
+
+}
             if (!member)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");

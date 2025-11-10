@@ -302,32 +302,32 @@ private:
                             action = BotActionExtended::KillQuestTarget(
                                 ObjectGuid::Create<HighGuid::Player>(i),
                                 ObjectGuid::Create<HighGuid::Creature>(j),
-                                1000 + j, 0, getMSTime());
+                                1000 + j, 0, GameTime::GetGameTimeMS());
                             break;
                         case 1:
                             action = BotActionExtended::TalkToQuestNPC(
                                 ObjectGuid::Create<HighGuid::Player>(i),
                                 ObjectGuid::Create<HighGuid::Creature>(j),
-                                2000 + j, getMSTime());
+                                2000 + j, GameTime::GetGameTimeMS());
                             break;
                         case 2:
                             action = BotActionExtended::SkinCreature(
                                 ObjectGuid::Create<HighGuid::Player>(i),
                                 ObjectGuid::Create<HighGuid::Creature>(j),
-                                8613, 100, getMSTime());
+                                8613, 100, GameTime::GetGameTimeMS());
                             break;
                         case 3:
                             action = BotActionExtended::GatherObject(
                                 ObjectGuid::Create<HighGuid::Player>(i),
                                 ObjectGuid::Create<HighGuid::GameObject>(j),
-                                2575, 186, 75, getMSTime());
+                                2575, 186, 75, GameTime::GetGameTimeMS());
                             break;
                         case 4:
                             action = BotActionExtended::AssistPlayer(
                                 ObjectGuid::Create<HighGuid::Player>(i),
                                 ObjectGuid::Create<HighGuid::Player>(i + 1),
                                 ObjectGuid::Create<HighGuid::Creature>(j),
-                                getMSTime());
+                                GameTime::GetGameTimeMS());
                             break;
                     }
 
@@ -352,7 +352,7 @@ private:
                     _metrics.actionsProcessed++;
 
                     // Measure latency
-                    uint32 latency = getMSTimeDiff(action.queuedTime, getMSTime());
+                    uint32 latency = getMSTimeDiff(action.queuedTime, GameTime::GetGameTimeMS());
                     _metrics.totalLatencyMs += latency;
 
                     uint32 currentMax = _metrics.maxLatencyMs.load();
@@ -421,7 +421,7 @@ private:
                                 action = BotActionExtended::KillQuestTarget(
                                     botGuid,
                                     ObjectGuid::Create<HighGuid::Creature>(rand()),
-                                    1000 + rand() % 100, 0, getMSTime());
+                                    1000 + rand() % 100, 0, GameTime::GetGameTimeMS());
                                 break;
 
                             case 3:
@@ -430,7 +430,7 @@ private:
                                 action.type = BotActionType::MOVE_TO_POSITION;
                                 action.botGuid = botGuid;
                                 action.position = Position(rand() % 1000, rand() % 1000, 0);
-                                action.queuedTime = getMSTime();
+                                action.queuedTime = GameTime::GetGameTimeMS();
                                 break;
 
                             case 5:
@@ -439,7 +439,7 @@ private:
                                 action = BotActionExtended::GatherObject(
                                     botGuid,
                                     ObjectGuid::Create<HighGuid::GameObject>(rand()),
-                                    2575, 186, 75, getMSTime());
+                                    2575, 186, 75, GameTime::GetGameTimeMS());
                                 break;
 
                             case 7:
@@ -447,7 +447,7 @@ private:
                                 action = BotActionExtended::TalkToQuestNPC(
                                     botGuid,
                                     ObjectGuid::Create<HighGuid::Creature>(rand()),
-                                    2000 + rand() % 100, getMSTime());
+                                    2000 + rand() % 100, GameTime::GetGameTimeMS());
                                 break;
 
                             case 8:
@@ -455,7 +455,7 @@ private:
                                 action.type = BotActionType::LOOT_OBJECT;
                                 action.botGuid = botGuid;
                                 action.targetGuid = ObjectGuid::Create<HighGuid::Creature>(rand());
-                                action.queuedTime = getMSTime();
+                                action.queuedTime = GameTime::GetGameTimeMS();
                                 break;
 
                             case 9:
@@ -463,7 +463,7 @@ private:
                                 action.type = BotActionType::SEND_CHAT_MESSAGE;
                                 action.botGuid = botGuid;
                                 action.text = "Test message " + std::to_string(actionCount);
-                                action.queuedTime = getMSTime();
+                                action.queuedTime = GameTime::GetGameTimeMS();
                                 break;
                         }
 
@@ -485,13 +485,13 @@ private:
 
             while (_testRunning)
             {
-                uint32 startTime = getMSTime();
+                uint32 startTime = GameTime::GetGameTimeMS();
 
                 // Process up to 1000 actions per frame
                 uint32 processed = processor.ProcessActions(1000);
                 _metrics.actionsProcessed += processed;
 
-                uint32 frameTime = getMSTimeDiff(startTime, getMSTime());
+                uint32 frameTime = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
 
                 // Log if frame took too long
                 if (frameTime > 50)
@@ -580,13 +580,13 @@ private:
                     {
                         // Half threads queue attack actions
                         action = BotActionExtended::KillQuestTarget(
-                            botGuid, targetGuid, 1000, 0, getMSTime());
+                            botGuid, targetGuid, 1000, 0, GameTime::GetGameTimeMS());
                     }
                     else
                     {
                         // Other half queue gathering actions
                         action = BotActionExtended::SkinCreature(
-                            botGuid, targetGuid, 8613, 100, getMSTime());
+                            botGuid, targetGuid, 8613, 100, GameTime::GetGameTimeMS());
                     }
 
                     // Try to queue with timeout
@@ -659,7 +659,7 @@ private:
             action.type = BotActionType::MOVE_TO_POSITION;
             action.botGuid = ObjectGuid::Create<HighGuid::Player>(i);
             action.position = Position(i, i, 0);
-            action.queuedTime = getMSTime();
+            action.queuedTime = GameTime::GetGameTimeMS();
 
             BotActionQueue::Instance()->Push(action);
         }

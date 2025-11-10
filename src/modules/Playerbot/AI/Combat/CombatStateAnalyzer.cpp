@@ -58,7 +58,7 @@ CombatStateAnalyzer::~CombatStateAnalyzer() = default;
 
 void CombatStateAnalyzer::Update(uint32 diff)
 {
-    uint32 startTime = getMSTime();
+    uint32 startTime = GameTime::GetGameTimeMS();
 
     _updateTimer += diff;
     _timeSinceSituationChange += diff;
@@ -70,10 +70,10 @@ void CombatStateAnalyzer::Update(uint32 diff)
         _updateTimer = 0;
 
         // Record snapshot every 500ms for trend analysis
-        if (getMSTime() - _lastSnapshotTime >= 500)
+        if (GameTime::GetGameTimeMS() - _lastSnapshotTime >= 500)
         {
             RecordSnapshot();
-            _lastSnapshotTime = getMSTime();
+            _lastSnapshotTime = GameTime::GetGameTimeMS();
         }
 
         // Analyze situation
@@ -113,7 +113,7 @@ void CombatStateAnalyzer::Update(uint32 diff)
     }
 
     // Track performance
-    _lastUpdateTime = getMSTime() - startTime;
+    _lastUpdateTime = GameTime::GetGameTimeMS() - startTime;
     _totalUpdateTime += _lastUpdateTime;
     _updateCount++;
 
@@ -174,7 +174,7 @@ void CombatStateAnalyzer::UpdateMetrics(uint32 diff)
     UpdateThreatData();
 
     // Calculate DPS metrics (simplified for now)
-    if (_history[0].timestamp > 0 && getMSTime() - _history[0].timestamp >= 1000)
+    if (_history[0].timestamp > 0 && GameTime::GetGameTimeMS() - _history[0].timestamp >= 1000)
     {
         // This would need actual damage tracking in production
         _currentMetrics.personalDPS = 0.0f; // Placeholder
@@ -297,10 +297,10 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
     _currentMetrics.hasRangedEnemies = false;
 
     // Clear enemy cache if too old
-    if (getMSTime() - _enemyCacheTime > 500)
+    if (GameTime::GetGameTimeMS() - _enemyCacheTime > 500)
     {
         _enemyCache.clear();
-        _enemyCacheTime = getMSTime();
+        _enemyCacheTime = GameTime::GetGameTimeMS();
             if (!enemy)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetTypeId");
@@ -509,7 +509,7 @@ void CombatStateAnalyzer::UpdateBossTimers(uint32 diff)
     // Update known mechanic cooldowns
     for (BossMechanic& mechanic : _knownMechanics)
     {
-        if (mechanic.lastSeen > 0 && getMSTime() - mechanic.lastSeen < mechanic.cooldown)
+        if (mechanic.lastSeen > 0 && GameTime::GetGameTimeMS() - mechanic.lastSeen < mechanic.cooldown)
         {
             // Mechanic is on cooldown
             continue;
@@ -751,11 +751,16 @@ bool CombatStateAnalyzer::CheckForKiteNeed() const
     }
     bool canTank = (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
                     botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DRUID);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
+
+    return nullptr;
+
+}
 if (!bot)
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
@@ -794,11 +799,16 @@ bool CombatStateAnalyzer::CheckForWipe() const
     }
     if (_currentMetrics.averageGroupHealth < 20.0f)
         return true;
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPosition");
-    return false;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetPosition");
+
+    return false;
+
+}
 
     // Wipe if tank dead and boss still has high health
     if (!_currentMetrics.tankAlive && _currentMetrics.bossCount > 0)
@@ -898,11 +908,16 @@ bool CombatStateAnalyzer::ShouldUseConsumables() const
            }
            (_currentMetrics.bossCount > 0 && _currentMetrics.averageGroupHealth < 50.0f);
 }
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
-    return;
-}
+
+if (!enemy)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+
+    return;
+
+}
 
 if (!creature)
 {
@@ -958,11 +973,16 @@ float CombatStateAnalyzer::GetSafeDistance() const
     }
     return 5.0f; // Default safe distance
 }
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
-    return;
-}
+
+if (!enemy)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method ToCreature");
+
+    return;
+
+}
 
 if (!creature)
 {
@@ -1032,11 +1052,16 @@ Position CombatStateAnalyzer::GetSafePosition() const
                     }
                 }
             }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
+
+    return nullptr;
+
+}
 
             if (count > 0)
             {
@@ -1126,11 +1151,16 @@ bool CombatStateAnalyzer::IsMetricImproving(std::function<float(const CombatMetr
     float trend = GetMetricTrend(selector);
     return trend > threshold;
 }
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
-    return;
-}
+
+if (!member)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsAlive");
+
+    return;
+
+}
 
 uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
 {
@@ -1281,11 +1311,16 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
 
         // Close enemies are dangerous
         float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
+
+if (!bot)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+}
         if (distance < 5.0f)
             danger *= 2.0f;
 
@@ -1365,11 +1400,11 @@ Player* CombatStateAnalyzer::GetLowestHealthAlly() const
 Player* CombatStateAnalyzer::GetMainTank() const
 {
     // Cache for performance
-    if (_mainTankCache && getMSTime() - _roleCacheTime < 1000)
+    if (_mainTankCache && GameTime::GetGameTimeMS() - _roleCacheTime < 1000)
         return _mainTankCache;
 
     _mainTankCache = nullptr;
-    _roleCacheTime = getMSTime();
+    _roleCacheTime = GameTime::GetGameTimeMS();
 
     if (Group* group = _bot->GetGroup())
     if (!bot)
@@ -1411,7 +1446,7 @@ Player* CombatStateAnalyzer::GetMainTank() const
 Player* CombatStateAnalyzer::GetMainHealer() const
 {
     // Cache for performance
-    if (_mainHealerCache && getMSTime() - _roleCacheTime < 1000)
+    if (_mainHealerCache && GameTime::GetGameTimeMS() - _roleCacheTime < 1000)
         return _mainHealerCache;
 
     _mainHealerCache = nullptr;
@@ -1621,21 +1656,36 @@ bool CombatStateAnalyzer::ShouldDropThreat() const
     }
     bool canTank = (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
                     botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DRUID);
-if (!bot)
-{
-    if (!creature)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
-        return nullptr;
-    }
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-if (!creature)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
-    return;
-}
-}
+
+if (!bot)
+
+{
+
+    if (!creature)
+
+    {
+
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsDungeonBoss");
+
+        return nullptr;
+
+    }
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
+
+    return nullptr;
+
+if (!creature)
+
+{
+
+    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method IsElite");
+
+    return;
+
+}
+
+}
 
     return !canTank && _currentMetrics.hasAggro &&
            (_currentMetrics.eliteCount > 0 || _currentMetrics.bossCount > 0);
@@ -1667,10 +1717,10 @@ bool CombatStateAnalyzer::IsBossMechanicIncoming(uint32& spellId, uint32& timeUn
         if (mechanic.lastSeen > 0)
         {
             uint32 nextCast = mechanic.lastSeen + mechanic.cooldown;
-            if (getMSTime() < nextCast)
+            if (GameTime::GetGameTimeMS() < nextCast)
             {
                 spellId = mechanic.spellId;
-                timeUntil = nextCast - getMSTime();
+                timeUntil = nextCast - GameTime::GetGameTimeMS();
                 return timeUntil < 3000; // Mechanic incoming in next 3 seconds
             }
         }
@@ -1727,7 +1777,7 @@ CombatMetrics CombatStateAnalyzer::GetAverageMetrics(uint32 periodMs) const
 {
     CombatMetrics average;
     uint32 count = 0;
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
 
     for (const MetricsSnapshot& snapshot : _history)
     {
@@ -2015,7 +2065,7 @@ void CombatStateAnalyzer::RecordSnapshot()
 {
     MetricsSnapshot snapshot;
     snapshot.metrics = _currentMetrics;
-    snapshot.timestamp = getMSTime();
+    snapshot.timestamp = GameTime::GetGameTimeMS();
     snapshot.situation = _currentSituation;
 
     _history[_historyIndex % 10] = snapshot;
@@ -2025,7 +2075,7 @@ void CombatStateAnalyzer::RecordSnapshot()
 void CombatStateAnalyzer::PruneOldData()
 {
     // Clean up old mechanic casts
-    uint32 now = getMSTime();
+    uint32 now = GameTime::GetGameTimeMS();
     _recentMechanicCasts.erase(
         std::remove_if(_recentMechanicCasts.begin(), _recentMechanicCasts.end(),
             [now](uint32 castTime) { return now - castTime > 30000; }),

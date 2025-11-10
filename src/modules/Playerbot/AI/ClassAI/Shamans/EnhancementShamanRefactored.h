@@ -67,7 +67,7 @@ public:
     void AddStack(uint32 amount = 1)
     {
         _maelstromStacks = std::min(_maelstromStacks + amount, 5u); // Max 5 stacks
-        _maelstromEndTime = getMSTime() + 30000; // 30 sec duration
+        _maelstromEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec duration
     }
 
     void ConsumeStacks()
@@ -87,14 +87,14 @@ public:
         // Check if Maelstrom Weapon buff is active
         if (Aura* aura = bot->GetAura(187880)) // Maelstrom Weapon buff ID
         {
-            _maelstromStacks = aura->GetStackAmount();            _maelstromEndTime = getMSTime() + aura->GetDuration();        }
+            _maelstromStacks = aura->GetStackAmount();            _maelstromEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _maelstromStacks = 0;
         }
 
         // Expire if time is up
-        if (_maelstromStacks > 0 && getMSTime() >= _maelstromEndTime)
+        if (_maelstromStacks > 0 && GameTime::GetGameTimeMS() >= _maelstromEndTime)
             _maelstromStacks = 0;
     }
 
@@ -113,7 +113,7 @@ public:
     void ActivateProc()
     {
         _stormbringerActive = true;
-        _stormbringerEndTime = getMSTime() + 12000; // 12 sec duration
+        _stormbringerEndTime = GameTime::GetGameTimeMS() + 12000; // 12 sec duration
     }
 
     void ConsumeProc()
@@ -123,7 +123,7 @@ public:
 
     [[nodiscard]] bool IsActive() const
     {
-        return _stormbringerActive && getMSTime() < _stormbringerEndTime;
+        return _stormbringerActive && GameTime::GetGameTimeMS() < _stormbringerEndTime;
     }
 
     void Update(Player* bot)
@@ -136,14 +136,14 @@ public:
         {
             _stormbringerActive = true;
             if (Aura* aura = bot->GetAura(201846))
-                _stormbringerEndTime = getMSTime() + aura->GetDuration();        }
+                _stormbringerEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _stormbringerActive = false;
         }
 
         // Expire if time is up
-        if (_stormbringerActive && getMSTime() >= _stormbringerEndTime)
+        if (_stormbringerActive && GameTime::GetGameTimeMS() >= _stormbringerEndTime)
             _stormbringerActive = false;
     }
 
@@ -260,13 +260,13 @@ private:
     void UpdateCooldownStates()
     {
         // Ascendance state (transforms into Air Ascendant)
-        if (_ascendanceActive && getMSTime() >= _ascendanceEndTime)
+        if (_ascendanceActive && GameTime::GetGameTimeMS() >= _ascendanceEndTime)
             _ascendanceActive = false;
 
         if (bot->HasAura(ENH_ASCENDANCE))
         {
             _ascendanceActive = true;
-            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))                _ascendanceEndTime = getMSTime() + aura->GetDuration();        }
+            if (Aura* aura = bot->GetAura(ENH_ASCENDANCE))                _ascendanceEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -274,26 +274,26 @@ private:
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 
         // Feral Spirit (major DPS cooldown - summon wolves)
-        if ((getMSTime() - _lastFeralSpiritTime) >= 120000) // 2 min CD
+        if ((GameTime::GetGameTimeMS() - _lastFeralSpiritTime) >= 120000) // 2 min CD
         {
             if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot))
             {
                 this->CastSpell(bot, ENH_FERAL_SPIRIT);
-                _lastFeralSpiritTime = getMSTime();
+                _lastFeralSpiritTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Ascendance (burst mode - Stormstrike becomes Windstrike)
-        if ((getMSTime() - _lastAscendanceTime) >= 180000) // 3 min CD
+        if ((GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000) // 3 min CD
         {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
                     this->CastSpell(bot, ENH_ASCENDANCE);
                     _ascendanceActive = true;
-                    _ascendanceEndTime = getMSTime() + 15000;
-                    _lastAscendanceTime = getMSTime();
+                    _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastAscendanceTime = GameTime::GetGameTimeMS();
                     return;                }
             }
         }
@@ -403,26 +403,26 @@ private:
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 
         // Feral Spirit for AoE burst
-        if ((getMSTime() - _lastFeralSpiritTime) >= 120000 && enemyCount >= 4)
+        if ((GameTime::GetGameTimeMS() - _lastFeralSpiritTime) >= 120000 && enemyCount >= 4)
         {
             if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot))
             {
                 this->CastSpell(bot, ENH_FERAL_SPIRIT);
-                _lastFeralSpiritTime = getMSTime();
+                _lastFeralSpiritTime = GameTime::GetGameTimeMS();
                 return;
             }
         }
 
         // Ascendance for AoE burst
-        if ((getMSTime() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
+        if ((GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
         {            if (bot->HasSpell(ENH_ASCENDANCE))
             {
                 if (this->CanCastSpell(ENH_ASCENDANCE, bot))
                 {
                     this->CastSpell(bot, ENH_ASCENDANCE);
                     _ascendanceActive = true;
-                    _ascendanceEndTime = getMSTime() + 15000;
-                    _lastAscendanceTime = getMSTime();
+                    _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
+                    _lastAscendanceTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
@@ -430,12 +430,12 @@ private:
 
         // Sundering (AoE damage + debuff)
         if (bot->HasSpell(ENH_SUNDERING) && enemyCount >= 3)        {
-            if ((getMSTime() - _lastSunderingTime) >= 40000) // 40 sec CD
+            if ((GameTime::GetGameTimeMS() - _lastSunderingTime) >= 40000) // 40 sec CD
             {
                 if (this->CanCastSpell(ENH_SUNDERING, target))
                 {
                     this->CastSpell(target, ENH_SUNDERING);
-                    _lastSunderingTime = getMSTime();
+                    _lastSunderingTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }

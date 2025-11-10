@@ -129,7 +129,7 @@ public:
         _isChanneling = true;
         _currentSpellId = spellId;
         _targetLevel = targetLevel;
-        _channelStartTime = getMSTime();
+        _channelStartTime = GameTime::GetGameTimeMS();
     }
 
     void StopEmpower()
@@ -146,7 +146,7 @@ public:
     uint32 GetChannelTime() const
     {
         if (!_isChanneling) return 0;
-        return getMSTime() - _channelStartTime;
+        return GameTime::GetGameTimeMS() - _channelStartTime;
     }
 
     bool ShouldRelease() const
@@ -191,12 +191,12 @@ public:
     void Activate()
     {
         _isActive = true;
-        _endTime = getMSTime() + 18000; // 18 second duration
+        _endTime = GameTime::GetGameTimeMS() + 18000; // 18 second duration
     }
 
     void Update()
     {
-        if (_isActive && getMSTime() >= _endTime)
+        if (_isActive && GameTime::GetGameTimeMS() >= _endTime)
         {
             _isActive = false;
             _endTime = 0;
@@ -207,7 +207,7 @@ public:
     uint32 GetTimeRemaining() const
     {
         if (!_isActive) return 0;
-        uint32 now = getMSTime();
+        uint32 now = GameTime::GetGameTimeMS();
         return _endTime > now ? _endTime - now : 0;
     }
 

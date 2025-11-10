@@ -111,8 +111,8 @@ struct LootRoll
 
     // Parametrized constructor
     LootRoll(uint32 id, uint32 item, uint32 slot, uint32 group) : rollId(id), itemId(item)
-        , lootSlot(slot), groupId(group), rollStartTime(getMSTime())
-        , rollTimeout(getMSTime() + 60000), isCompleted(false), winnerGuid(0)
+        , lootSlot(slot), groupId(group), rollStartTime(GameTime::GetGameTimeMS())
+        , rollTimeout(GameTime::GetGameTimeMS() + 60000), isCompleted(false), winnerGuid(0)
         , winningRollType(LootRollType::PASS) {}
 
     // Copy constructor
